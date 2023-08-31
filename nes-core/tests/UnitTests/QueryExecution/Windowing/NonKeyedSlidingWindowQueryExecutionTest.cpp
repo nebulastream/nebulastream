@@ -73,7 +73,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(30);
 }
 
-TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
+TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 

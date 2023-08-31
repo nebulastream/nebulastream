@@ -29,7 +29,9 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     pageSize = ConfigurationOption<uint32_t>::create("pageSize", 4096, "pageSize in HT");
     preAllocPageCnt = ConfigurationOption<uint32_t>::create("preAllocPageCnt", 1, "preAllocPageCnt in Bucket");
     numberOfPartitions = ConfigurationOption<uint32_t>::create("numberOfPartitions", 1, "numberOfPartitions in HT");
-    maxHashTableSize = ConfigurationOption<uint64_t>::create("maxHashTableSize", 0, ",max hash table size");
+    maxHashTableSize = ConfigurationOption<uint64_t>::create("maxHashTableSize", 0, "max hash table size");
+    query = ConfigurationOption<std::string>::create("query", "", "query to execute");
+    windowingStrategy = ConfigurationOption<std::string>::create("windowingStrategy", "Slicing", "windowingStrategy");
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -45,7 +47,9 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- pageSize: " << pageSize->getValueAsString() << std::endl
         << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString() << std::endl
         << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
-        << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl;
+        << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl
+        << "- query: " << query->getValue() << std::endl
+        << "- windowingStrategy: " << windowingStrategy->getValue() << std::endl;
 
     std::cout << oss.str() << std::endl;
     return oss.str();
@@ -81,6 +85,9 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     auto maxHashTableSizes = Util::splitAndFillIfEmpty<uint64_t>(yamlConfig["maxHashTableSize"].As<std::string>(),
                                                                  configPerRun.maxHashTableSize->getDefaultValue());
 
+    auto queries = Util::splitString(yamlConfig["query"].As<std::string>(), configPerRun.query->getDefaultValue(), "@");
+    auto windowingStrategies = Util::splitString(yamlConfig["windowingStrategy"].As<std::string>(), configPerRun.windowingStrategy->getDefaultValue(), ",");
+
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
         NES_THROW_RUNTIME_ERROR("logicalSources could not been found in the yaml config file!");
@@ -98,6 +105,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfPartitions.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, maxHashTableSizes.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, queries.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, windowingStrategies.size());
 
     /* Padding all vectors to the desired size */
     Util::padVectorToSize<uint32_t>(numWorkerOfThreads, totalBenchmarkRuns, numWorkerOfThreads.back());
@@ -113,6 +122,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(preAllocPageCnts, totalBenchmarkRuns, preAllocPageCnts.back());
     Util::padVectorToSize<uint32_t>(numberOfPartitions, totalBenchmarkRuns, numberOfPartitions.back());
     Util::padVectorToSize<uint64_t>(maxHashTableSizes, totalBenchmarkRuns, maxHashTableSizes.back());
+    Util::padVectorToSize<std::string>(queries, totalBenchmarkRuns, queries.back());
+    Util::padVectorToSize<std::string>(windowingStrategies, totalBenchmarkRuns, windowingStrategies.back());
     Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
                                                            totalBenchmarkRuns,
                                                            allLogicalSrcToPhysicalSources.back());
@@ -130,6 +141,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.numberOfPartitions->setValue(numberOfPartitions[i]);
         e2EBenchmarkConfigPerRun.maxHashTableSize->setValue(maxHashTableSizes[i]);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
+        e2EBenchmarkConfigPerRun.query->setValue(queries[i]);
+        e2EBenchmarkConfigPerRun.windowingStrategy->setValue(windowingStrategies[i]);
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
     }

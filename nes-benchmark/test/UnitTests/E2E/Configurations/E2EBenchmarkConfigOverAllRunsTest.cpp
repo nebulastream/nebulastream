@@ -62,7 +62,6 @@ namespace NES::Benchmark {
             << "- benchmarkName: E2ERunner" << std::endl
             << "- inputType: Auto" << std::endl
             << "- sourceSharing: off" << std::endl
-            << "- query: " << std::endl
             << "- numberOfPreAllocatedBuffer: 1" << std::endl
             << "- numberOfBuffersToProduce: 5000000" << std::endl
             << "- batchSize: 1" << std::endl
@@ -99,7 +98,6 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterOneSource.csv");
         ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterOneSource");
-        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
         ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "Auto");
@@ -134,7 +132,6 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterWithDynamicIngestionRate.csv");
         ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterWithDynamicIngestionRate");
-        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
         ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "MemoryMode");
@@ -169,7 +166,6 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterWithCustomIngestionRate.csv");
         ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterWithCustomIngestionRate");
-        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
         ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "MemoryMode");

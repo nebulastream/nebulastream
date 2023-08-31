@@ -68,6 +68,23 @@ static std::vector<T> splitAndFillIfEmpty(const std::string& stringToBeSplit, T 
 }
 
 /**
+ * @brief splits the string
+ * @tparam T
+ * @param vector
+ * @param stringToBeSplit
+ * @param defaultValue
+ */
+[[maybe_unused]] static std::vector<std::string> splitString(const std::string& stringToBeSplit, std::string defaultValue, std::string separator) {
+    auto vec = NES::Util::splitWithStringDelimiter<std::string>(stringToBeSplit, separator);
+
+    if (vec.empty()) {
+        vec.emplace_back(defaultValue);
+    }
+
+    return vec;
+}
+
+/**
  * @brief creates a vector with a range of [start, stop). This will increase by a power of two. So e.g. 2kb, 4kb, 8kb
  */
 template<typename T>

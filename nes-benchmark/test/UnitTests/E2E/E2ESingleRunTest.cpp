@@ -164,6 +164,7 @@ namespace NES::Benchmark {
         configPerRun.numberOfWorkerThreads->setValue(numberOfWorkerThreads);
         configPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy);
         configPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes);
+        configPerRun.query->setValue(queryString);
 
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.benchmarkName->setValue(bmName);
@@ -172,7 +173,6 @@ namespace NES::Benchmark {
         configOverAllRuns.sourceNameToDataGenerator[zipfianDataGeneratorName] = std::move(zipfianDataGenerator);
         configOverAllRuns.inputType->setValue(inputType);
         configOverAllRuns.dataProviderMode->setValue(dataProviderMode);
-        configOverAllRuns.query->setValue(queryString);
         configOverAllRuns.outputFile->setValue(csvFile);
         std::filesystem::remove(csvFile);
 

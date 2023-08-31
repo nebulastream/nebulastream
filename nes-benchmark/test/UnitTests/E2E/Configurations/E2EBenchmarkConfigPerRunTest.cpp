@@ -60,7 +60,9 @@ namespace NES::Benchmark {
             << "- pageSize: " << defaultConfigPerRun.pageSize->getValueAsString() << std::endl
             << "- preAllocPageCnt: " << defaultConfigPerRun.preAllocPageCnt->getValueAsString() << std::endl
             << "- numberOfPartitions: " << defaultConfigPerRun.numberOfPartitions->getValueAsString() << std::endl
-            << "- maxHashTableSize: " << defaultConfigPerRun.maxHashTableSize->getValueAsString() << std::endl;
+            << "- maxHashTableSize: " << defaultConfigPerRun.maxHashTableSize->getValueAsString() << std::endl
+            << "- query: " << defaultConfigPerRun.query->getValue() << std::endl
+            << "- windowingStrategy: " << defaultConfigPerRun.windowingStrategy->getValue() << std::endl;
         auto expectedString = oss.str();
 
         ASSERT_EQ(defaultString, expectedString);

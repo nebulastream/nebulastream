@@ -53,7 +53,13 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
+    // TODO check if we can do this somehow better, maybe store the enum directly in the configPerRun.windowingStrategy
+    if(configPerRun.windowingStrategy->getValue() == "Slicing") {
+        coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
+    } else {
+        coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::BUCKET;
+    }
+
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
@@ -143,9 +149,8 @@ void E2ESingleRun::runQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
-        NES_INFO("E2EBase: Submitting query = {}", configOverAllRuns.query->getValue());
-        auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(),
-                                                                     Optimizer::PlacementStrategy::BottomUp);
+        NES_INFO("E2EBase: Submitting query = {}", configPerRun.query->getValue());
+        auto queryId = queryService->validateAndQueueAddQueryRequest(configPerRun.query->getValue(), Optimizer::PlacementStrategy::BottomUp);
         submittedIds.push_back(queryId);
 
         if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {
@@ -248,7 +253,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to {}", configOverAllRuns.outputFile->getValue());
     std::stringstream resultOnConsole;
     auto schemaSizeInB = configOverAllRuns.getTotalSchemaSize();
-    std::string queryString = configOverAllRuns.query->getValue();
+    std::string queryString = configPerRun.query->getValue();
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
     std::stringstream outputCsvStream;

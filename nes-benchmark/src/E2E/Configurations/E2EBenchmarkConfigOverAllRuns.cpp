@@ -32,7 +32,6 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfPreAllocatedBuffer = ConfigurationOption<uint32_t>::create("numberOfPreAllocatedBuffer", 1, "Pre-allocated buffer");
     outputFile = ConfigurationOption<std::string>::create("outputFile", "e2eBenchmarkRunner", "Filename of the output");
     benchmarkName = ConfigurationOption<std::string>::create("benchmarkName", "E2ERunner", "Name of the benchmark");
-    query = ConfigurationOption<std::string>::create("query", "", "Query to be run");
     inputType = ConfigurationOption<std::string>::create("inputType", "Auto", "If sources are shared");
     sourceSharing = ConfigurationOption<std::string>::create("sourceSharing", "off", "How to read the input data");
     dataProviderMode =
@@ -63,7 +62,6 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- benchmarkName: " << benchmarkName->getValue() << std::endl
         << "- inputType: " << inputType->getValue() << std::endl
         << "- sourceSharing: " << sourceSharing->getValue() << std::endl
-        << "- query: " << query->getValue() << std::endl
         << "- numberOfPreAllocatedBuffer: " << numberOfPreAllocatedBuffer->getValueAsString() << std::endl
         << "- numberOfBuffersToProduce: " << numberOfBuffersToProduce->getValueAsString() << std::endl
         << "- batchSize: " << batchSize->getValueAsString() << std::endl
@@ -89,7 +87,6 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.experimentMeasureIntervalInSeconds->setValueIfDefined(yamlConfig["experimentMeasureIntervalInSeconds"]);
     configOverAllRuns.outputFile->setValueIfDefined(yamlConfig["outputFile"]);
     configOverAllRuns.benchmarkName->setValueIfDefined(yamlConfig["benchmarkName"]);
-    configOverAllRuns.query->setValueIfDefined(yamlConfig["query"]);
     configOverAllRuns.dataProviderMode->setValueIfDefined(yamlConfig["dataProviderMode"]);
     configOverAllRuns.joinStrategy->setValueIfDefined(yamlConfig["joinStrategy"]);
     configOverAllRuns.connectionString->setValueIfDefined(yamlConfig["connectionString"]);
