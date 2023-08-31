@@ -92,7 +92,7 @@ class ILPStrategy : public BasePlacementStrategy {
      * @param z3Model a Z3 z3Model from the Z3 Optimize
      * @param placementVariables a mapping between concatenation of operator id and placement id and their z3 expression
      */
-    bool pinOperators(z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables);
+    uint64_t pinOperators(uint64_t currentOperatorId, uint64_t topologyIdSet ,z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables);
 
     /**
     * @brief Populate the placement variables and adds constraints to the optimizer
@@ -110,7 +110,8 @@ class ILPStrategy : public BasePlacementStrategy {
                         std::map<std::string, z3::expr>& placementVariable,
                         std::map<OperatorId, z3::expr>& operatorDistanceMap,
                         std::map<uint64_t, z3::expr>& nodeUtilizationMap,
-                        std::map<uint64_t, double>& nodeMileageMap);
+                        std::map<uint64_t, double>& nodeMileageMap,
+                        uint64_t lowerBoundVariable);
 
     /**
     * @brief computes heuristics for distance

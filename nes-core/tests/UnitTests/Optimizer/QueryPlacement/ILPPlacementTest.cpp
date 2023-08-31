@@ -346,7 +346,6 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
 
     //Perform placement
     queryPlacementPhase->execute(sharedQueryPlan);
-    NES_INFO("fails before here");
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
