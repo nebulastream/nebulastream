@@ -136,7 +136,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          "defaultPhysicalStreamName",
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
-    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER(32 bits) ), BROKER(localhost:9092), TOPIC(sourceTest). "
+    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER(32 bits)), BROKER(localhost:9092), TOPIC(sourceTest). "
                            "OFFSETMODE(earliest). BATCHSIZE(1). ";
 
     EXPECT_EQ(kafkaSource->toString(), expected);

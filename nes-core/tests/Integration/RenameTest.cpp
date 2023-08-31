@@ -93,20 +93,17 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     std::ifstream ifs(getTestResourceFolder() / "test.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|default_logical$NewName:UINT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent = "default_logical$NewName:INTEGER(32 bits)\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n";
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): content={}", content);
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -175,20 +172,17 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     std::ifstream ifs(outputFile);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|default_logical$id:UINT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent = "default_logical$id:INTEGER(32 bits)\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n";
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): content={}", content);
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);

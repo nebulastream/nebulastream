@@ -230,8 +230,8 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
-        "|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
-        "|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622580000|73.166664|5|1|\n";
+        "1543622400000,1543622700000,1,R2000070,1543622580000,75.111115,6,1,R2000073,1543622580000,73.166664,5,1\n"
+        "1543622400000,1543622700000,1,R2000070,1543622640000,70.222221,7,1,R2000073,1543622580000,73.166664,5,1\n";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -239,7 +239,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
     NES_DEBUG("contents={}", content);
 
-    EXPECT_EQ(removeRandomKey(content), expectedContent);
+    ASSERT_TRUE(Util::endsWith(content, expectedContent));
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
