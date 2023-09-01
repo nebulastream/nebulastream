@@ -39,12 +39,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <csignal>
 #include <future>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
 
+#include <fstream>
 #include <utility>
 
 using namespace std;
@@ -143,6 +145,145 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
+    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t a;
+            uint64_t b;
+            uint64_t c;
+            uint64_t d;
+            uint64_t e;
+            uint64_t f;
+            //            uint64_t g;
+            //            uint64_t h;
+            //            uint64_t i;
+            //            uint64_t j;
+            //            uint64_t k;
+            //            uint64_t l;
+            //            uint64_t m;
+            //            uint64_t n;
+            //            uint64_t o;
+            //            uint64_t p;
+            //            uint64_t q;
+            //            uint64_t r;
+            //            uint64_t s;
+            //            uint64_t t;
+            //            uint64_t u;
+            //            uint64_t v;
+            //            uint64_t w;
+            //            uint64_t x;
+            uint64_t timestamp1;
+            uint64_t timestamp2;
+        };
+
+        auto* records = buffer.getBuffer<Record>();
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto epoch = now_ms.time_since_epoch();
+        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].a = u;
+            records[u].b = u % 2;
+            records[u].c = u % 3;
+            records[u].d = u % 4;
+            records[u].e = u % 5;
+            records[u].f = u % 6;
+            //            records[u].g = u % 7;
+            //            records[u].h = u % 8;
+            //            records[u].i = u % 9;
+            //            records[u].j = u % 10;
+            //            records[u].k = u % 11;
+            //            records[u].l = u % 12;
+            //            records[u].m = u % 13;
+            //            records[u].n = u % 14;
+            //            records[u].o = u % 15;
+            //            records[u].p = u % 16;
+            //            records[u].q = u % 17;
+            //            records[u].r = u % 18;
+            //            records[u].s = u % 19;
+            //            records[u].t = u % 20;
+            //            records[u].w = u % 21;
+            //            records[u].x = u % 22;
+            records[u].timestamp1 = value.count();
+            records[u].timestamp2 = value.count();
+        }
+    };
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1),
+                                                      workerConfig->numberOfBuffersToProduce,
+                                                      workerConfig->sourceGatheringInterval,
+                                                      GatheringMode::INGESTION_RATE_MODE);
+    switch (workerConfig->lambdaSource) {
+        case 1: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 2: {
+            auto physicalSource1 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 3: {
+            auto physicalSource1 = PhysicalSource::create("A", "A3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 4: {
+            auto physicalSource1 = PhysicalSource::create("A", "A4", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 5: {
+            auto physicalSource1 = PhysicalSource::create("A", "A5", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 6: {
+            auto physicalSource1 = PhysicalSource::create("A", "A6", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 7: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            break;
+        }
+        case 8: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            break;
+        }
+        case 9: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource3);
+            auto physicalSource4 = PhysicalSource::create("A", "A4", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource3);
+            break;
+        }
+        case 10: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource3);
+            auto physicalSource4 = PhysicalSource::create("A", "A4", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource4);
+            auto physicalSource5 = PhysicalSource::create("A", "A5", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource5);
+            break;
+        }
+    }
+
 
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring={}", workerConfig->enableMonitoring.getValue());
@@ -198,6 +339,40 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
+    if (workerConfig->enableStatisticOutput) {
+        statisticOutputThread = std::make_shared<std::thread>(([this]() {
+            NES_DEBUG("NesWorker: start statistic collection");
+            std::ofstream statisticsFile;
+            statisticsFile.open("statistics.csv", ios::out);
+            if (statisticsFile.is_open()) {
+                statisticsFile << "timestamp,";
+                statisticsFile << "queryId,";
+                statisticsFile << "subPlanId,";
+                statisticsFile << "processedTasks,";
+                statisticsFile << "processedTuple,";
+                statisticsFile << "processedBuffers,";
+                statisticsFile << "processedWatermarks,";
+                statisticsFile << "latencyAVG,";
+                statisticsFile << "queueSizeAVG,";
+                statisticsFile << "availableGlobalBufferAVG,";
+                statisticsFile << "availableFixedBufferAVG\n";
+                while (isRunning) {
+                    auto ts = std::chrono::system_clock::now();
+                    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+                    auto stats = nodeEngine->getQueryStatistics(true);
+                    for (auto& query : stats) {
+                        statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
+                                       << query.getQueryStatisticsAsString() << "\n";
+                        statisticsFile.flush();
+                    }
+                    sleep(1);
+                }
+            }
+            NES_DEBUG("NesWorker: statistic collection end");
+            statisticsFile.close();
+        }));
+    }
+
     if (withConnect && locationProvider
         && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
         workerMobilityHandler =
@@ -215,22 +390,22 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         }
     }
 
-    if (workerConfig->enableStatisticOuput) {
-        statisticOutputThread = std::make_shared<std::thread>(([this]() {
-            NES_DEBUG("NesWorker: start statistic collection");
-            while (isRunning) {
-                auto ts = std::chrono::system_clock::now();
-                auto timeNow = std::chrono::system_clock::to_time_t(ts);
-                auto stats = nodeEngine->getQueryStatistics(true);
-                for (auto& query : stats) {
-                    std::cout << "Statistics " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
-                              << query.getQueryStatisticsAsString() << std::endl;
-                }
-                sleep(1);
-            }
-            NES_DEBUG("NesWorker: statistic collection end");
-        }));
-    }
+//    if (workerConfig->enableStatisticOutput) {
+//        statisticOutputThread = std::make_shared<std::thread>(([this]() {
+//            NES_DEBUG("NesWorker: start statistic collection");
+//            while (isRunning) {
+//                auto ts = std::chrono::system_clock::now();
+//                auto timeNow = std::chrono::system_clock::to_time_t(ts);
+//                auto stats = nodeEngine->getQueryStatistics(true);
+//                for (auto& query : stats) {
+//                    std::cout << "Statistics " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
+//                              << query.getQueryStatisticsAsString() << std::endl;
+//                }
+//                sleep(1);
+//            }
+//            NES_DEBUG("NesWorker: statistic collection end");
+//        }));
+//    }
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
         signal(SIGINT, termFunc);

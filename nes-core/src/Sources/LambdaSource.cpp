@@ -69,22 +69,29 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     NES_TRACE("LambdaSource::receiveData called on operatorId= {}", operatorId);
     using namespace std::chrono_literals;
 
-    auto buffer = allocateBuffer();
-    NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer.getBuffer().getBufferSize(),
+    auto buffer = bufferManager->getBufferBlocking();
+    NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer.getBufferSize(),
                     "value to write is larger than the buffer");
 
-    auto rawBuffer = buffer.getBuffer();
-    generationFunction(rawBuffer, numberOfTuplesToProduce);
+    generationFunction(buffer, numberOfTuplesToProduce);
+    if (!buffer) {
+        return std::nullopt;
+    }
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    buffer.setCreationTimestampInMS(value.count());
     buffer.setNumberOfTuples(numberOfTuplesToProduce);
+    buffer.setWatermark(value.count());
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_TRACE("LambdaSource: Current buffer content {}", buffer.toString(schema));
-    NES_TRACE("LambdaSource: ReceiveData filled buffer with tuples={}, outOrgID={}",
-              buffer.getNumberOfTuples(),
-              rawBuffer.getOriginId());
+    //NES_TRACE("LambdaSource: Current buffer content {}", buffer.toString(schema));
+    NES_TRACE("LambdaSource::receiveData filled buffer with tuples={}, outOrgID={}", buffer.getNumberOfTuples()
+                                                                                         , buffer.getOriginId());
 
-    return rawBuffer;
+    return buffer;
 }
 
 std::string LambdaSource::toString() const { return "LambdaSource"; }
