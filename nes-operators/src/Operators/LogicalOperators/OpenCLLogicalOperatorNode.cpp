@@ -26,7 +26,8 @@ OpenCLLogicalOperatorNode::OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescr
 
 std::string OpenCLLogicalOperatorNode::toString() const {
     auto javaUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
-    return "OPENCL_LOGICAL_OPERATOR(" + javaUDFDescriptor->getClassName() + "." + javaUDFDescriptor->getMethodName() + ")";
+    return "OPENCL_LOGICAL_OPERATOR(" + javaUDFDescriptor->getClassName() + "." + javaUDFDescriptor->getMethodName()
+        + "; openCLCode : " + openCLCode + " )";
 }
 
 OperatorNodePtr OpenCLLogicalOperatorNode::copy() {
