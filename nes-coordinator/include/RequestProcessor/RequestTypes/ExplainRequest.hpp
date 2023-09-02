@@ -103,7 +103,6 @@ using ExplainRequestPtr = std::shared_ptr<ExplainRequest>;
 
 class ExplainRequest : public AbstractRequest {
   public:
-
     /**
      * @brief Constructor
      * @param queryPlan: the query plan
@@ -114,11 +113,11 @@ class ExplainRequest : public AbstractRequest {
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     ExplainRequest(const QueryPlanPtr& queryPlan,
-                    const Optimizer::PlacementStrategy queryPlacementStrategy,
-                    const FaultToleranceType faultTolerance,
-                    const LineageType lineage,
-                    const uint8_t maxRetries,
-                    const z3::ContextPtr& z3Context);
+                   const Optimizer::PlacementStrategy queryPlacementStrategy,
+                   const FaultToleranceType faultTolerance,
+                   const LineageType lineage,
+                   const uint8_t maxRetries,
+                   const z3::ContextPtr& z3Context);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -130,11 +129,11 @@ class ExplainRequest : public AbstractRequest {
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     static ExplainRequestPtr create(const QueryPlanPtr& queryPlan,
-                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                     const FaultToleranceType faultTolerance,
-                                     const LineageType lineage,
-                                     const uint8_t maxRetries,
-                                     const z3::ContextPtr& z3Context);
+                                    const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                    const FaultToleranceType faultTolerance,
+                                    const LineageType lineage,
+                                    const uint8_t maxRetries,
+                                    const z3::ContextPtr& z3Context);
 
   protected:
     /**
@@ -180,13 +179,31 @@ class ExplainRequest : public AbstractRequest {
      */
     void assignOperatorIds(const QueryPlanPtr& queryPlan);
 
+  private:
+    /**
+     * @brief Add opencl acceleration code to the query plan
+     * @param accelerationServiceURL: acceleration service url
+     * @param queryPlan : the query plan
+     * @param topologyNode : the topology node
+     */
+    void addOpenCLAccelerationCode(const std::string& accelerationServiceURL,
+                                   const QueryPlanPtr& queryPlan,
+                                   const TopologyNodePtr& topologyNode);
+
     /**
      * @brief create json from the execution plan
      * @param SharedQueryId : the shared query id
      * @param globalExecutionPlan : the global execution plan
+     * @param topology : topology pointer
+     * @param accelerateJavaUDFs : accelerate java udfs
+     * @param accelerationServiceURL: url for fetching acceleration code
      * @return json representing the global execution plan
      */
-    nlohmann::json getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId, const GlobalExecutionPlanPtr& globalExecutionPlan);
+    nlohmann::json getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
+                                                        const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                        const TopologyPtr& topology,
+                                                        bool accelerateJavaUDFs,
+                                                        const std::string& accelerationServiceURL);
 
   private:
     QueryId queryId;
@@ -197,6 +214,21 @@ class ExplainRequest : public AbstractRequest {
     LineageType lineage;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
+
+    const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
+
+    //OpenCL payload constants
+    const std::string DEVICE_INFO_KEY = "deviceInfo";
+    const std::string DEVICE_INFO_NAME_KEY = "deviceName";
+    const std::string DEVICE_INFO_DOUBLE_FP_SUPPORT_KEY = "doubleFPSupport";
+    const std::string DEVICE_MAX_WORK_ITEMS_KEY = "maxWorkItems";
+    const std::string DEVICE_MAX_WORK_ITEMS_DIM1_KEY = "dim1";
+    const std::string DEVICE_MAX_WORK_ITEMS_DIM2_KEY = "dim2";
+    const std::string DEVICE_MAX_WORK_ITEMS_DIM3_KEY = "dim3";
+    const std::string DEVICE_INFO_ADDRESS_BITS_KEY = "deviceAddressBits";
+    const std::string DEVICE_INFO_TYPE_KEY = "deviceType";
+    const std::string DEVICE_INFO_EXTENSIONS_KEY = "deviceExtensions";
+    const std::string DEVICE_INFO_AVAILABLE_PROCESSORS_KEY = "availableProcessors";
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES
