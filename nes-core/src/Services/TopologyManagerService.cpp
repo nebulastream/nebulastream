@@ -441,7 +441,7 @@ void TopologyManagerService::splitTopologyIntoZones() {
 
 // TODO: implement more methods for leader election
 TopologyNodePtr TopologyManagerService::electLeaderInZone(std::vector<TopologyNodePtr> workersInZone) {
-    return workersInZone.at(0);
+    return workersInZone.at(workersInZone.size()-1);
 }
 
 void TopologyManagerService::reelectLeaderInZone(TopologyNodeId oldLeaderWorkerId) {
