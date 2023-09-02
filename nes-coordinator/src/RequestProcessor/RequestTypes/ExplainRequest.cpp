@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
@@ -29,6 +30,7 @@
 #include <Exceptions/SignatureComputationException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Exceptions/UDFException.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
@@ -58,8 +60,10 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
+#include <cpr/cpr.h>
 #include <string>
 #include <utility>
 
@@ -285,20 +289,27 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                           + std::to_string(sharedQueryId));
         }
 
-        auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+        //22. Fetch configurations for elegant optimizations
+        auto accelerateJavaUdFs = coordinatorConfiguration->elegantConfiguration.accelerateJavaUDFs;
+        auto accelerationServiceURL = coordinatorConfiguration->elegantConfiguration.accelerationServiceURL;
 
-        auto response = getExecutionPlanForSharedQueryAsJson(queryId, globalExecutionPlan);
+        //23. Compute the json response explaining the optimization steps
+        auto response = getExecutionPlanForSharedQueryAsJson(sharedQueryId,
+                                                             globalExecutionPlan,
+                                                             topology,
+                                                             accelerateJavaUdFs,
+                                                             accelerationServiceURL);
 
-        // respond to the calling service with the query id
+        //24. respond to the calling service with the query id
         responsePromise.set_value(std::make_shared<ExplainResponse>(response));
 
-        // clean up the data structure
+        //25. clean up the data structure
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
         globalExecutionPlan->removeQuerySubPlans(queryId);
 
-        //2. Set query status as Explained
+        //26. Set query status as Explained
         queryCatalogService->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
-    } catch (RequestExecutionException exception) {
+    } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
         handleError(exception, storageHandler);
     }
@@ -315,7 +326,10 @@ void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
 }
 
 nlohmann::json ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
-                                                                    const GlobalExecutionPlanPtr& globalExecutionPlan) {
+                                                                    const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                                    const TopologyPtr& topology,
+                                                                    bool accelerateJavaUDFs,
+                                                                    const std::string& accelerationServiceURL) {
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
     nlohmann::json executionPlanJson{};
@@ -326,6 +340,8 @@ nlohmann::json ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryI
         nlohmann::json executionNodeMetaData{};
 
         executionNodeMetaData["nodeId"] = executionNode->getId();
+        auto topologyNode = topology->findNodeWithId(executionNode->getId());
+
         // loop over all query sub plans inside the current executionNode
         nlohmann::json scheduledSubQueries{};
         for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
@@ -336,8 +352,15 @@ nlohmann::json ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryI
             // id of current query sub plan
             currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
 
-            // add the string containing operator to the json object of current query sub plan
-            currentQuerySubPlan["querySubPlan"] = querySubPlan->toString();
+            // add open cl acceleration code
+            if (accelerateJavaUDFs) {
+                addOpenCLAccelerationCode(accelerationServiceURL, querySubPlan, topologyNode);
+            }
+
+            // add logical query plan to the json object
+            currentQuerySubPlan["logicalQuerySubPlan"] = querySubPlan->toString();
+
+            // TODO: add the optimized code of the query sub plan to the json object
 
             scheduledSubQueries.push_back(currentQuerySubPlan);
         }
@@ -349,6 +372,83 @@ nlohmann::json ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryI
     executionPlanJson["executionNodes"] = nodes;
 
     return executionPlanJson;
+}
+
+void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationServiceURL,
+                                               const QueryPlanPtr& queryPlan,
+                                               const TopologyNodePtr& topologyNode) {
+
+    //Elegant acceleration service call
+    //1. Fetch the OpenCL Operators
+    auto openCLOperators = queryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+
+    //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
+    for (const auto& openCLOperator : openCLOperators) {
+
+        // FIXME: populate information from node with the correct property keys
+        // FIXME: pick a naming + id scheme for deviceName
+        //3. Fetch the topology node and compute the topology node payload
+        nlohmann::json payload;
+        nlohmann::json deviceInfo;
+        deviceInfo[DEVICE_INFO_NAME_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_NAME"));
+        deviceInfo[DEVICE_INFO_DOUBLE_FP_SUPPORT_KEY] =
+            std::any_cast<bool>(topologyNode->getNodeProperty("DEVICE_DOUBLE_FP_SUPPORT"));
+        nlohmann::json maxWorkItems{};
+        maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM1_KEY] =
+            std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM1"));
+        maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM2_KEY] =
+            std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM2"));
+        maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM3_KEY] =
+            std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM3"));
+        deviceInfo[DEVICE_MAX_WORK_ITEMS_KEY] = maxWorkItems;
+        deviceInfo[DEVICE_INFO_ADDRESS_BITS_KEY] =
+            std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_ADDRESS_BITS"));
+        deviceInfo[DEVICE_INFO_EXTENSIONS_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_EXTENSIONS"));
+        deviceInfo[DEVICE_INFO_AVAILABLE_PROCESSORS_KEY] =
+            std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_AVAILABLE_PROCESSORS"));
+        payload[DEVICE_INFO_KEY] = deviceInfo;
+
+        //4. Extract the Java UDF metadata
+        auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
+        payload["functionCode"] = javaDescriptor->getMethodName();
+
+        //find the bytecode for the udf class
+        auto className = javaDescriptor->getClassName();
+        auto byteCodeList = javaDescriptor->getByteCodeList();
+        auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
+            return c.first == className;
+        });
+
+        if (classByteCode == byteCodeList.end()) {
+            throw QueryDeploymentException(queryId,
+                                           "The bytecode list of classes implementing the "
+                                           "UDF must contain the fully-qualified name of the UDF");
+        }
+        jni::JavaByteCode javaByteCode = classByteCode->second;
+
+        //5. Prepare the multi-part message
+        cpr::Part part1 = {"firstPayload", to_string(payload)};
+        cpr::Part part2 = {"secondPayload", &javaByteCode[0]};
+        cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
+
+        //6. Make Acceleration Service Call
+        cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
+                                           cpr::Header{{"Content-Type", "application/json"}},
+                                           multipartPayload,
+                                           cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
+        if (response.status_code != 200) {
+            throw QueryDeploymentException(queryPlan->getQueryId(),
+                                           "ExplainRequest: Error in call to Elegant acceleration service with code "
+                                               + std::to_string(response.status_code) + " and msg " + response.reason);
+        }
+
+        nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
+        //Fetch the acceleration Code
+        //FIXME: use the correct key
+        auto openCLCode = jsonResponse["AccelerationCode"];
+        //6. Set the Open CL code
+        openCLOperator->setOpenClCode(openCLCode);
+    }
 }
 
 }// namespace NES::RequestProcessor::Experimental
