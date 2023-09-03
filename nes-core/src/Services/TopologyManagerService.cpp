@@ -466,21 +466,6 @@ void TopologyManagerService::splitTopologyIntoZones() {
     healthCheckService->addWorkerAsZoneLeader(zone4Leader->getId());
     addZoneLeader(zone4Leader->getId());
 
-    // === ZONE 5 ===
-    NES::Spatial::DataTypes::Experimental::GeoLocation centerZone5(93.001, 93.001);
-    auto nodesInZone5 = getNodesIdsInRange(centerZone5, 10);
-    std::vector<TopologyNodePtr> workersInZone5;
-    for (auto nodeInZone5 : nodesInZone5) {
-        NES_DEBUG("Found node in zone 5, workerId {}", nodeInZone5.first);
-        auto worker = findNodeWithId(nodeInZone5.first);
-        workersInZone5.push_back(worker);
-    }
-    auto zone5Leader = electLeaderInZone(workersInZone5);
-    NES_DEBUG("Elected leader in zone 5 with workerId {}", zone5Leader->getId());
-    addEntryInLeaderToZoneMap(zone5Leader->getId(), centerZone5);
-    healthCheckService->addWorkerAsZoneLeader(zone5Leader->getId());
-    addZoneLeader(zone5Leader->getId());
-
     // start coordinator health check
     healthCheckService->startHealthCheck();
 }
