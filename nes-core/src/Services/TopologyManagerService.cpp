@@ -435,6 +435,52 @@ void TopologyManagerService::splitTopologyIntoZones() {
     healthCheckService->addWorkerAsZoneLeader(zone2Leader->getId());
     addZoneLeader(zone2Leader->getId());
 
+
+    // === ZONE 3 ===
+    NES::Spatial::DataTypes::Experimental::GeoLocation centerZone3(53.001, 53.001);
+    auto nodesInZone3 = getNodesIdsInRange(centerZone3, 10);
+    std::vector<TopologyNodePtr> workersInZone3;
+    for (auto nodeInZone3 : nodesInZone3) {
+        NES_DEBUG("Found node in zone3, workerId {}", nodeInZone3.first);
+        auto worker = findNodeWithId(nodeInZone3.first);
+        workersInZone3.push_back(worker);
+    }
+    auto zone3Leader = electLeaderInZone(workersInZone3);
+    NES_DEBUG("Elected leader in zone 3 with workerId {}", zone3Leader->getId());
+    addEntryInLeaderToZoneMap(zone3Leader->getId(), centerZone3);
+    healthCheckService->addWorkerAsZoneLeader(zone3Leader->getId());
+    addZoneLeader(zone3Leader->getId());
+
+    // === ZONE 4 ===
+    NES::Spatial::DataTypes::Experimental::GeoLocation centerZone4(73.001, 73.001);
+    auto nodesInZone4 = getNodesIdsInRange(centerZone4, 10);
+    std::vector<TopologyNodePtr> workersInZone4;
+    for (auto nodeInZone4 : nodesInZone4) {
+        NES_DEBUG("Found node in zone 4, workerId {}", nodeInZone4.first);
+        auto worker = findNodeWithId(nodeInZone4.first);
+        workersInZone4.push_back(worker);
+    }
+    auto zone4Leader = electLeaderInZone(workersInZone4);
+    NES_DEBUG("Elected leader in zone 4 with workerId {}", zone4Leader->getId());
+    addEntryInLeaderToZoneMap(zone4Leader->getId(), centerZone4);
+    healthCheckService->addWorkerAsZoneLeader(zone4Leader->getId());
+    addZoneLeader(zone4Leader->getId());
+
+    // === ZONE 5 ===
+    NES::Spatial::DataTypes::Experimental::GeoLocation centerZone5(93.001, 93.001);
+    auto nodesInZone5 = getNodesIdsInRange(centerZone5, 10);
+    std::vector<TopologyNodePtr> workersInZone5;
+    for (auto nodeInZone5 : nodesInZone5) {
+        NES_DEBUG("Found node in zone 5, workerId {}", nodeInZone5.first);
+        auto worker = findNodeWithId(nodeInZone5.first);
+        workersInZone5.push_back(worker);
+    }
+    auto zone5Leader = electLeaderInZone(workersInZone5);
+    NES_DEBUG("Elected leader in zone 5 with workerId {}", zone5Leader->getId());
+    addEntryInLeaderToZoneMap(zone5Leader->getId(), centerZone5);
+    healthCheckService->addWorkerAsZoneLeader(zone5Leader->getId());
+    addZoneLeader(zone5Leader->getId());
+
     // start coordinator health check
     healthCheckService->startHealthCheck();
 }
