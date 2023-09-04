@@ -43,6 +43,9 @@ class MemRefInvocationPlugin : public InvocationPlugin {
         if (left->isType<MemRef>() && right->isType<Int32>()) {
             auto result = left.getValue().staticCast<MemRef>().value == nullptr;
             return Value(std::make_shared<Boolean>(result));
+        } else if (left->isType<MemRef>() && right->isType<MemRef>()) {
+            auto result = left.getValue().staticCast<MemRef>().value == right.getValue().staticCast<MemRef>().value;
+            return Value(std::make_shared<Boolean>(result));
         }
         return InvocationPlugin::Equals(left, right);
     }

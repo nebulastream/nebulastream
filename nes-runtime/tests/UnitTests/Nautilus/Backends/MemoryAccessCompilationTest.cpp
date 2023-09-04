@@ -99,6 +99,42 @@ TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
     ASSERT_EQ(function(7, array), 28);
 }
 
+Value<Boolean> checkEqualityMemRefs(Value<MemRef> lhs, Value<MemRef> rhs) {
+    Value<Boolean> val(false);
+    val = (lhs == rhs);
+    return val;
+}
+
+TEST_P(MemoryAccessCompilationTest, memEqualFunctionTest) {
+    // Same value but different addresses
+    uint64_t someValLHS = 42;
+    uint64_t someValRHS = 42;
+    auto memRefLHS = Value<MemRef>((int8_t*) &someValLHS);
+    auto memRefRHS = Value<MemRef>((int8_t*) &someValRHS);
+
+    memRefLHS.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+    memRefRHS.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&memRefLHS, &memRefRHS]() {
+        return checkEqualityMemRefs(memRefLHS, memRefRHS);
+    });
+    auto engine = prepare(executionTrace);
+    auto function = engine->getInvocableMember<bool, void*, void*>("execute");
+
+
+    // Testing memRef == memRef for different options
+    int i = 42, i2 = 42, i3 = 42;
+    EXPECT_EQ(function(&i, &i), true);
+    EXPECT_EQ(function(&i2, &i2), true);
+    EXPECT_EQ(function(&i3, &i3), true);
+
+    EXPECT_EQ(function(&i, &i2), false);
+    EXPECT_EQ(function(&i2, &i), false);
+    EXPECT_EQ(function(&i, &i3), false);
+    EXPECT_EQ(function(&i3, &i), false);
+    EXPECT_EQ(function(&i3, &i2), false);
+    EXPECT_EQ(function(&i2, &i3), false);
+}
+
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 INSTANTIATE_TEST_CASE_P(testLoopCompilation,

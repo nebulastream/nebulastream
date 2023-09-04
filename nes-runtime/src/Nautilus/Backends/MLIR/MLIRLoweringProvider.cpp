@@ -601,6 +601,13 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
                                                          frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                          null);
         frame.setValue(compareOp->getIdentifier(), cmpOp);
+    } else if (compareOp->getComparator() == IR::Operations::CompareOperation::EQ
+               && compareOp->getLeftInput()->getStamp()->isAddress() && compareOp->getRightInput()->getStamp()->isAddress()) {
+        auto cmpOp = builder->create<mlir::LLVM::ICmpOp>(getNameLoc("comparison"),
+                                                         mlir::LLVM::ICmpPredicate::eq,
+                                                         frame.getValue(compareOp->getLeftInput()->getIdentifier()),
+                                                         frame.getValue(compareOp->getRightInput()->getIdentifier()));
+        frame.setValue(compareOp->getIdentifier(), cmpOp);
     } else if (leftStamp->isInteger() && rightStamp->isInteger()) {
         // handle integer
         auto cmpOp = builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
