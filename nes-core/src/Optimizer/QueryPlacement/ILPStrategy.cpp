@@ -321,12 +321,12 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                 opt.add(P_IJ == 1);// Fix the placement of source and sink
                 if (i==0){
                     P_IJ_stored.emplace_back(P_IJ);
-                    NES_INFO("the {}. operator node added to PIJ Variable", i+1);
+                    NES_INFO("{}. operator node added to PIJ Variable", i+1);
                 }
             } else if (i == 0 && j != 0){
-                opt.add(P_IJ == 0);// Fix the placement of source and sink
+                opt.add(P_IJ == 0);
                 P_IJ_stored.emplace_back(P_IJ);
-                NES_INFO("the {}. operator node added to PIJ Variable", i+1);
+                NES_INFO("{}. operator node added to PIJ Variable", i+1);
             }
             else {
                 // The binary decision on whether to place or not, hence we constrain it to be either 0 or 1
@@ -337,7 +337,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                 }
                 opt.add(P_IJ==0 || (P_IJ==1 && check_previous_expression));
                 P_IJ_stored.emplace_back(P_IJ);
-                NES_INFO("the {}. operator node added to PIJ Variable", i+1);
+                NES_INFO("{}. operator node added to PIJ Variable", i+1);
             }
             placementVariable.insert(std::make_pair(variableID, P_IJ));
             sum_i = sum_i + P_IJ;
