@@ -37,9 +37,9 @@ class ArrowFormat : public SinkFormat {
     std::string getFormattedSchema() override;
 
     /**
-    * @brief method to write a TupleBuffer
+    * @brief method to format a TupleBuffer
     * @param a reference to input TupleBuffer
-    * @return vector of Tuple buffer containing the content of the tuple buffer
+    * @return Formatted content of tuple buffer
      */
     std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
 

@@ -29,9 +29,16 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-    SinkDescriptor();
-    SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
+    /**
+     * @brief Ctor to create a new sink descriptor
+     * @param faultToleranceType: fault tolerance type of a query
+     * @param numberOfOrigins: number of origins of a given query
+     * @param addTimestamp flat to indicate if timestamp shall be added when writing to sink
+     * @return descriptor for sink
+     */
     SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins, bool addTimestamp);
+    SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
+    SinkDescriptor();
 
     virtual ~SinkDescriptor() = default;
 
