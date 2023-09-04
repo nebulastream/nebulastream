@@ -95,7 +95,7 @@ class FileSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-    /**T
+    /**
      * @brief method to return if the sink is appended
      * @return bool indicating append
      */

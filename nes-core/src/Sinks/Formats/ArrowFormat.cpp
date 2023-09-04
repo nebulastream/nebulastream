@@ -36,8 +36,7 @@ ArrowFormat::ArrowFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManag
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
 std::string ArrowFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
-    // since arrow writes it owns file separately along with the schema we do not need
-    // getData for Arrow
+    // since arrow writes it owns file separately along with the schema we do not need it
     NES_NOT_IMPLEMENTED();
 }
 

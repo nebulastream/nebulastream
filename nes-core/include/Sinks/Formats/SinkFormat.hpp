@@ -49,9 +49,9 @@ class SinkFormat {
     virtual std::string getFormattedSchema() = 0;
 
     /**
-    * @brief method to write a TupleBuffer
+    * @brief method to format a TupleBuffer
     * @param a tuple buffers pointer
-    * @return vector of Tuple buffer containing the content of the tuplebuffer
+    * @return formatted content of TupleBuffer
      */
     virtual std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) = 0;
 

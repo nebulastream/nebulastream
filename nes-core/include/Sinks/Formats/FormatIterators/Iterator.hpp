@@ -20,6 +20,8 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatType.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES {
 
 class Iterator {
@@ -66,7 +68,7 @@ class Iterator {
             case FormatTypes::JSON_FORMAT: return dataJson();
             case FormatTypes::NES_FORMAT:
             case FormatTypes::CSV_FORMAT:
-            default: throw Exceptions::NotImplementedException("SinkFormat not implemented");
+            default: NES_NOT_IMPLEMENTED();
         }
     };
 

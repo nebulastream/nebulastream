@@ -50,8 +50,6 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param sinkFormat the sink format
      * @param append flag to indicate if to append to file
      * @param addTimestamp flat to indicate if timestamp shall be add when writing to file
-     * @param faultToleranceType: fault tolerance type of a query
-     * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for file sink
      */
     static SinkDescriptorPtr create(std::string fileName,
