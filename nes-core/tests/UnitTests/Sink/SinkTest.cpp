@@ -254,7 +254,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
         std::string schemaStr;
         schemaStr.assign(bufSchema.getBuffer<char>(), bufSchema.getNumberOfTuples());
         //cout << "Schema=" << schemaStr << endl;
-        ASSERT_EQ(Util::toCSVString(test_schema), schemaStr);
+        EXPECT_EQ(Util::toCSVString(test_schema), schemaStr);
 
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
@@ -264,7 +264,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
         std::string dataStr;
         dataStr.assign(bufData.getBuffer<char>(), bufferContent.size());
         //cout << "Buffer Content received= " << bufferContent << endl;
-        ASSERT_EQ(bufferContent, dataStr);
+        EXPECT_EQ(bufferContent, dataStr);
         receiving_finished = true;
     });
 
@@ -354,7 +354,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     diskCollector.setNodeId(nodeId1);
     Monitoring::MetricPtr diskMetric = diskCollector.readMetric();
     Monitoring::DiskMetrics typedMetric = diskMetric->getValue<Monitoring::DiskMetrics>();
-    ASSERT_EQ(diskMetric->getMetricType(), Monitoring::MetricType::DiskMetric);
+    EXPECT_EQ(diskMetric->getMetricType(), Monitoring::MetricType::DiskMetric);
     auto bufferSize = Monitoring::DiskMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);
@@ -365,7 +365,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     cpuCollector.setNodeId(nodeId2);
     Monitoring::MetricPtr cpuMetric = cpuCollector.readMetric();
     Monitoring::CpuMetricsWrapper typedMetricCpu = cpuMetric->getValue<Monitoring::CpuMetricsWrapper>();
-    ASSERT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
+    EXPECT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
     auto bufferSizeCpu = Monitoring::CpuMetrics::getSchema("")->getSchemaSizeInBytes() * typedMetricCpu.size() + 64;
     auto tupleBufferCpu = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSizeCpu).value();
     writeToBuffer(typedMetricCpu, tupleBufferCpu, 0);
@@ -390,7 +390,7 @@ TEST_F(SinkTest, testMonitoringSink) {
 
     NES_INFO("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetrics));
     ASSERT_TRUE(storedMetrics->size() == 1);
-    ASSERT_EQ(parsedMetrics, typedMetric);
+    EXPECT_EQ(parsedMetrics, typedMetric);
 
     // test cpu metrics
     Monitoring::StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId2));
@@ -401,7 +401,7 @@ TEST_F(SinkTest, testMonitoringSink) {
 
     NES_INFO("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetricsCpu));
     ASSERT_TRUE(storedMetricsCpu->size() == 1);
-    ASSERT_EQ(parsedMetricsCpu, typedMetricCpu);
+    EXPECT_EQ(parsedMetricsCpu, typedMetricCpu);
 
     tupleBuffer.release();
 }

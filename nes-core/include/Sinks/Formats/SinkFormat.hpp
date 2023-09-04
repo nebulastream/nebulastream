@@ -35,8 +35,9 @@ class SinkFormat {
 
     /**
      * @brief constructor for a sink format
-     * @param schema
-     * @param append
+     * @param schema the schema
+     * @param append flag to append or not
+     * @param addTimestamp flag to add a timestamp in getFormattedBuffer
      */
     SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp);
 

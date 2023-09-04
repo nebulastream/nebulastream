@@ -441,7 +441,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
         "R2000070,1543625280000,108.166664,5\n"
         "R2000073,1543624020000,102.629631,8\n";
 
-    ASSERT_EQ(expectedContent, resultContent);
+    EXPECT_EQ(expectedContent, resultContent);
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);

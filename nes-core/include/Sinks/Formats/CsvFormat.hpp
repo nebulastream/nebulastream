@@ -39,7 +39,7 @@ class CsvFormat : public SinkFormat {
     /**
     * @brief method to format a TupleBuffer
     * @param a tuple buffers pointer
-    * @return formatted content of TupleBuffer
+    * @return formatted content of TupleBuffer, contains timestamp if specified
      */
     std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
 
