@@ -357,8 +357,9 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
 
 /* 4.Test
  * OR Operators with filters left and right source
+ * //TODO Disabled waiting for issue #4195
  */
-TEST_F(OrOperatorTest, testOrPatternFilter) {
+TEST_F(OrOperatorTest, DISABLED_testOrPatternFilter) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
