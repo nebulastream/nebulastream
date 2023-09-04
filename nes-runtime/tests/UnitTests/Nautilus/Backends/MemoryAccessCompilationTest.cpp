@@ -120,6 +120,7 @@ TEST_P(MemoryAccessCompilationTest, memEqualFunctionTest) {
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<bool, void*, void*>("execute");
 
+
     // Testing memRef == memRef for different options
     int i = 42, i2 = 42, i3 = 42;
     EXPECT_EQ(function(&i, &i), true);
