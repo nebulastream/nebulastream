@@ -470,9 +470,17 @@ void TopologyManagerService::splitTopologyIntoZones() {
     healthCheckService->startHealthCheck();
 }
 
-// TODO: implement more methods for leader election
+struct less_than_key
+{
+    inline bool operator() (const TopologyNodePtr& struct1, const TopologyNodePtr& struct2)
+    {
+        return (struct1->getAvailableResources() > struct2->getAvailableResources());
+    }
+};
+
 TopologyNodePtr TopologyManagerService::electLeaderInZone(std::vector<TopologyNodePtr> workersInZone) {
-    return workersInZone.at(workersInZone.size()-1);
+    std::sort(workersInZone.begin(), workersInZone.end(), less_than_key());
+    return workersInZone.at(0);
 }
 
 void TopologyManagerService::reelectLeaderInZone(TopologyNodeId oldLeaderWorkerId) {
