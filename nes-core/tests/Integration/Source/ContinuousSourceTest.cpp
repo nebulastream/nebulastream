@@ -577,7 +577,7 @@ TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
     auto query = Query::from("testStream").filter(Attribute("val1") < 10).sink(FileSinkDescriptor::create(outputFilePath, true));
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -651,7 +651,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     for (uint64_t i = 0; i < numBufferToProduce; i++) {
         expectedOutput.push_back({1, 1, (i + 1) * 100});
     }
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
