@@ -165,7 +165,10 @@ class Schema {
 
     /**
      * @brief returns a string representation
-     * @return
+     * @param prefix of the string
+     * @param delimitor between each field
+     * @param suffix, for the end of the string
+     * @return schema as string
      */
     [[nodiscard]] std::string
     toString(const std::string& prefix = "", const std::string& sep = " ", const std::string& suffix = "") const;
