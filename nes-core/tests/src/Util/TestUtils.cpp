@@ -867,13 +867,13 @@ std::vector<PhysicalTypePtr> TestUtils::getPhysicalTypes(const SchemaPtr& schema
     return retVector;
 }
 
-uint64_t countOccurrences(const std::string& searchString, const std::string& targetString) {
-    uint64_t count = 0;
-    size_t pos = 0;
+uint64_t countOccurrences(const std::string& subString, const std::string& mainString) {
+    int count = 0;
+    size_t pos = mainString.find(subString, 0);
 
-    while ((pos = searchString.find(targetString, pos)) != std::string::npos) {
-        ++count;
-        pos += targetString.length();// Move past the found occurrence
+    while (pos != std::string::npos) {
+        count++;
+        pos = mainString.find(subString, pos + 1);
     }
 
     return count;

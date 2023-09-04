@@ -317,20 +317,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$onTime:BOOLEAN|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|1|\n"
-        "|42|5.893000|1|\n"
-        "|42|5.893000|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$onTime:BOOLEAN|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|1|\n"
-        "|42|5.893000|1|\n"
-        "|42|5.893000|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "tcpStream$id:INTEGER(32 bits),tcpStream$value:Float(32 bits),tcpStream$onTime:Boolean\n"
+                             "42,5.893000,1\n"
+                             "42,5.893000,1\n"
+                             "42,5.893000,1\n"
+                             "42,5.893000,1\n"
+                             "42,5.893000,1\n"
+                             "42,5.893000,1\n";
 
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
@@ -421,20 +414,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "tcpStream$id:INTEGER(32 bits),tcpStream$value:Float(32 bits),tcpStream$name:ArrayType\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n";
 
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
@@ -525,20 +511,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "tcpStream$id:INTEGER(32 bits),tcpStream$value:Float(32 bits),tcpStream$name:ArrayType\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n";
 
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
@@ -629,20 +608,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|100|4.986000|sonne|\n"
-        "|192|4.960000|sonne|\n"
-        "|130|4.900000|stern|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|589|4.986210|sonne|\n"
-        "|39|4.198000|malen|\n"
-        "|102|9.986000|hello|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "tcpStream$id:INTEGER(32 bits),tcpStream$value:Float(32 bits),tcpStream$name:ArrayType\n"
+                             "100,4.986000,sonne\n"
+                             "192,4.960000,sonne\n"
+                             "130,4.900000,stern\n"
+                             "589,4.986210,sonne\n"
+                             "39,4.198000,malen\n"
+                             "102,9.986000,hello\n";
 
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
@@ -733,20 +705,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "tcpStream$id:INTEGER(32 bits),tcpStream$value:Float(32 bits),tcpStream$name:ArrayType\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n";
 
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
@@ -837,20 +802,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|4|5.893000|hello|\n"
-        "|8|5.893900|hello|\n"
-        "|432|5.830000|hello|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|99|0.893000|hello|\n"
-        "|911|5.889300|hello|\n"
-        "|4293|5.893110|hello|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "tcpStream$id:INTEGER(32 bits),tcpStream$value:Float(32 bits),tcpStream$name:ArrayType\n"
+                             "4,5.893000,hello\n"
+                             "8,5.893900,hello\n"
+                             "432,5.830000,hello\n"
+                             "99,0.893000,hello\n"
+                             "911,5.889300,hello\n"
+                             "4293,5.893110,hello\n";
 
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
@@ -941,20 +899,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "tcpStream$id:INTEGER(32 bits),tcpStream$value:Float(32 bits),tcpStream$name:ArrayType\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n";
 
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
@@ -1045,20 +996,13 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|tcpStream$id:UINT32|tcpStream$value:FLOAT32|tcpStream$name:CHAR[5]|\n"
-        "+----------------------------------------------------+\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "|42|5.893000|hello|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "tcpStream$id:INTEGER(32 bits),tcpStream$value:Float(32 bits),tcpStream$name:ArrayType\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n"
+                             "42,5.893000,hello\n";
 
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
