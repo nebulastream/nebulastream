@@ -335,14 +335,10 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
         Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
                                                              sourceCatalogForILP,
                                                              Configurations::OptimizerConfiguration());
-    NES_INFO("queryPlan origin is: {}", queryPlan->toString());
-    QueryPlanPtr queryPlan0 = topologySpecificQueryRewrite->execute(queryPlan);
-    NES_INFO("queryPlan after topology... execute is: {}", queryPlan0->toString());
-    QueryPlanPtr queryPlan1 = typeInferencePhase->execute(queryPlan);
-    NES_INFO("queryPlan after typeInference ... execute is: {}", queryPlan1->toString());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getId();
-    NES_INFO("queryPlan of shared queryPlan before queryPlacement-execute: {}", sharedQueryPlan->getQueryPlan()->toString());
 
     //Perform placement
     queryPlacementPhase->execute(sharedQueryPlan);
