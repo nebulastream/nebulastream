@@ -511,10 +511,11 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "testStream$val1:INTEGER(64 bits),testStream$val2:INTEGER(64 bits),testStream$val3:INTEGER(64 bits)\n"
-                             "1,2,3\n"
-                             "1,2,4\n"
-                             "4,3,6\n";
+    string expectedContent =
+        "testStream$val1:INTEGER(64 bits),testStream$val2:INTEGER(64 bits),testStream$val3:INTEGER(64 bits)\n"
+        "1,2,3\n"
+        "1,2,4\n"
+        "4,3,6\n";
     NES_INFO("ContinuousSourceTest: content={}", content);
     NES_INFO("ContinuousSourceTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -593,8 +594,8 @@ TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("ContinuousSourceTest: content=\n{}", content);
-    EXPECT_EQ(countOccurrences(content, "\n"), 4);
-    EXPECT_EQ(countOccurrences(content, ","), 3 * 4);
+    EXPECT_EQ(countOccurrences("\n", content), 4);
+    EXPECT_EQ(countOccurrences(",", content), 3 * 4);
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
