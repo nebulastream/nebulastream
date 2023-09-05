@@ -236,6 +236,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     pinOperators(z3Model, placementVariables);
 
     // 8. Perform operator placement.
+    NES_INFO("placement starts:");
     placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     // 9. Add network source and sink operators.
