@@ -52,10 +52,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param addTimestamp flat to indicate if timestamp shall be add when writing to file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string fileName,
-                                    std::string sinkFormat,
-                                    const std::string& append,
-                                    bool addTimestamp);
+    static SinkDescriptorPtr create(std::string fileName, std::string sinkFormat, const std::string& append, bool addTimestamp);
 
     /**
      * @brief Factory method to create a new file sink descriptor
