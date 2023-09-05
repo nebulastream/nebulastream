@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.209](https://github.com/nebulastream/nebulastream/tree/v0.5.209) (2023-09-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.208...v0.5.209)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Add timestamp option at csv sink [\#4116](https://github.com/nebulastream/nebulastream/issues/4116)
+
 ## [v0.5.208](https://github.com/nebulastream/nebulastream/tree/v0.5.208) (2023-09-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.207...v0.5.208)
