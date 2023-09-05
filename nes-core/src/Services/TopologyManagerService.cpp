@@ -479,8 +479,8 @@ struct less_than_key
 };
 
 TopologyNodePtr TopologyManagerService::electLeaderInZone(std::vector<TopologyNodePtr> workersInZone) {
-    std::sort(workersInZone.begin(), workersInZone.end(), less_than_key());
-    return workersInZone.at(0);
+    //std::sort(workersInZone.begin(), workersInZone.end(), less_than_key());
+    return workersInZone.at(workersInZone.size()-1);
 }
 
 void TopologyManagerService::reelectLeaderInZone(TopologyNodeId oldLeaderWorkerId) {
