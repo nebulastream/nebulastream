@@ -25,8 +25,8 @@ using ContextPtr = std::shared_ptr<context>;
 
 namespace NES::Optimizer {
 
-class SignatureContainmentUtil;
-using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
+class SignatureContainmentCheck;
+using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentCheck>;
 
 class Z3SignatureBasedBottomUpQueryContainmentRule;
 using Z3SignatureBasedBottomUpQueryContainmentRulePtr = std::shared_ptr<Z3SignatureBasedBottomUpQueryContainmentRule>;

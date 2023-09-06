@@ -21,23 +21,28 @@
 namespace NES {
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
+
+class MatchedOperatorPair;
+using MatchedOperatorPairPtr = std::shared_ptr<MatchedOperatorPair>;
 }
 
 namespace NES::Optimizer {
 
-class SignatureContainmentUtil;
-using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
+class SignatureContainmentCheck;
+using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentCheck>;
 
-class Z3SignatureBasedPartialQueryContainmentMergerRule;
-using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3SignatureBasedPartialQueryContainmentMergerRule>;
+class Z3SignatureBasedTopDownQueryContainmentMergerRule;
+using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3SignatureBasedTopDownQueryContainmentMergerRule>;
 
 /**
- * @brief Z3SignatureBasedPartialQueryContainmentMergerRule is responsible for merging together all Queries sharing a common upstream operator
- * chain. After running this rule only a single representative operator chain should exists in the Global Query Plan for the common
+ * @brief Z3SignatureBasedTopDownQueryContainmentMergerRule utilizes containment relationships for the merging process.
+ * It identifies equivalent subqueries and passes on the correct operators for merging.
+ * Further, it identifies containment relationships among subqueries and passes on the correct operators for merging.
+ * After running this rule only a single representative operator chain should exists in the Global Query Plan for the common
  * upstream operator chain.
- * Effectively this rule will prune the global query plan for duplicate operators.
+ * Effectively this rule will prune the global query plan to remove duplicate and contained operators.
  *
- * Following is the example:
+ * Example:
  * Given a Global Query Plan with two Global Query Node chains as follow:
  *                                                         GQPRoot
  *                                                         /     \
@@ -45,64 +50,49 @@ using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3S
  *                                                     /           \
  *                                         GQN1({Sink1},{Q1})  GQN5({Sink2},{Q2})
  *                                                |                 |
- *                                        GQN2({Map2},{Q1})    GQN6({Map1},{Q2})
+ *                                        GQN2({Map1},{Q1})    GQN7({Filter1},{Q2})
  *                                                |                 |
- *                                     GQN3({Filter1},{Q1})    GQN7({Filter1},{Q2})
+ *                                     GQN3({Filter2},{Q1})    GQN6({Map1},{Q2})
  *                                                |                 |
  *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
  *
  *
+ * where Filter1 contains Filter2.
  * After running the Z3SignatureBasedPartialQueryMergerRule, the resulting Global Query Plan will look as follow:
  *
  *                                                         GQPRoot
  *                                                         /     \
  *                                                        /       \
- *                                           GQN1({Sink1},{Q1}) GQN5({Sink2},{Q2})
+ *                                                       |    GQN1({Sink1},{Q1})
  *                                                       |         |
- *                                           GQN2({Map2},{Q1}) GQN6({Map1},{Q2})
- *                                                        \      /
- *                                                         \   /
- *                                                  GQN3({Filter1},{Q1,Q2})
+ *                                           GQN1({Sink1},{Q1}) GQN3({Filter2},{Q1})
+ *                                                       |         |
+ *                                                 GQN7({Filter1},{Q2})
+ *                                                           |
+ *                                                  GQN6({Map1},{Q2})
  *                                                           |
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
- * Additionally, in case a containment relationship was detected by the signature containment util, the contained operations from the
+ * Additionally information: In case a containment relationship was detected by the signature containment util, the contained operations from the
  * contained query will be added to the equivalent operator chain of the container query. We can do this for
- * 1. filter operations: All upstream filter operators from the contained query will be extracted and added to the equivalent
- * container's upstream operator chain
+ * 1. filter operations: All upstream filter predicates from the contained query will be extracted and combined to one filter predicate. This filter
+ * will then be added as parent to the container operator together with the remaining contained operator chain
+ * This does not work, in case a map transformation is assigned to a filter predicate and we would need to pull up the filter from below that map operator.
  * 2. projection operations: We extract all upstream projection operators and add the most downstream projection operator to the
  * container's upstream operator chain
  * 3. window operations: We extract all upstream window operators, identify the contained window operator, and add it to the container's
  * upstream operator chain
  */
-class Z3SignatureBasedPartialQueryContainmentMergerRule final : public BaseQueryMergerRule {
+class Z3SignatureBasedTopDownQueryContainmentMergerRule final : public BaseQueryMergerRule {
 
   public:
     static Z3SignatureBasedPartialQueryContainmentMergerRulePtr create(z3::ContextPtr context);
-    ~Z3SignatureBasedPartialQueryContainmentMergerRule() noexcept final = default;
+    ~Z3SignatureBasedTopDownQueryContainmentMergerRule() noexcept final = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
   private:
-    explicit Z3SignatureBasedPartialQueryContainmentMergerRule(z3::ContextPtr context);
-
-    /**
-     * @brief adds the containment operator chain to the correct container operator
-     * * 1. filter operations: All upstream filter operators from the contained query will be extracted and added to the equivalent
-     * container's upstream operator chain
-     * 2. projection operations: We extract all upstream projection operators and add the most downstream projection operator to the
-     * container's upstream operator chain
-     * 3. window operations: We extract all upstream window operators, identify the contained window operator, and add it to the container's
-     * upstream operator chain
-     * @param containerQueryPlan the containers query plan to add the contained operator chain to
-     * @param containerOperator the current container operator
-     * @param containedOperatorChain vector with all extracted operators from the contained query
-     */
-    void addContainmentOperatorChain(
-        SharedQueryPlanPtr& containerQueryPlan,
-        const OperatorNodePtr& containerOperator,
-        const OperatorNodePtr& containedOperator,
-        const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const;
+    explicit Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context);
 
     SignatureContainmentUtilPtr SignatureContainmentUtil;
 

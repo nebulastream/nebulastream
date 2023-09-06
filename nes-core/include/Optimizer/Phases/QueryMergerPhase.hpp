@@ -39,7 +39,7 @@ enum class QueryMergerRule : uint8_t {
     DefaultQueryMergerRule,
     HybridCompleteQueryMergerRule,
     Z3SignatureBasedBottomUpQueryContainmentRule,
-    Z3SignatureBasedPartialQueryContainmentRule
+    Z3SignatureBasedTopDownQueryContainmentMergerRule
 };
 
 class QueryMergerPhase;

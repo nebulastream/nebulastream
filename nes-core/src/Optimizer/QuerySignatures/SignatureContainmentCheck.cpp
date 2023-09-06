@@ -12,45 +12,36 @@
     limitations under the License.
 */
 
-#include "Util/Common.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Optimizer/QuerySignatures/ExtractContainedOperatorsUtil.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES::Optimizer {
 
-SignatureContainmentUtilPtr SignatureContainmentUtil::create(const z3::ContextPtr& context) {
-    return std::make_shared<SignatureContainmentUtil>(context);
+SignatureContainmentUtilPtr SignatureContainmentCheck::create(const z3::ContextPtr& context) {
+    return std::make_shared<SignatureContainmentCheck>(context);
 }
 
-SignatureContainmentUtil::SignatureContainmentUtil(const z3::ContextPtr& context) {
+SignatureContainmentCheck::SignatureContainmentCheck(const z3::ContextPtr& context) {
     this->context = context;
     this->solver = std::make_unique<z3::solver>(*this->context);
 }
 
-ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature,
-                                                           const QuerySignaturePtr& rightSignature) {
+ContainmentType SignatureContainmentCheck::checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature,
+                                                                              const QuerySignaturePtr& rightSignature) {
     NES_TRACE("Checking for containment.");
     ContainmentType containmentRelationship = ContainmentType::NO_CONTAINMENT;
     auto otherConditions = rightSignature->getConditions();
@@ -96,8 +87,8 @@ ContainmentType SignatureContainmentUtil::checkContainmentForBottomUpMerging(con
 }
 
 std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
-SignatureContainmentUtil::checkContainmentRelationshipTopDown(const LogicalOperatorNodePtr& leftOperator,
-                                                              const LogicalOperatorNodePtr& rightOperator) {
+SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const LogicalOperatorNodePtr& leftOperator,
+                                                                         const LogicalOperatorNodePtr& rightOperator) {
     NES_TRACE("Checking for containment.");
     if (leftOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()
         || rightOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
@@ -131,25 +122,25 @@ SignatureContainmentUtil::checkContainmentRelationshipTopDown(const LogicalOpera
                 if (containmentRelationship == ContainmentType::EQUALITY) {
                     return {ContainmentType::EQUALITY, {}};
                 } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
-                    containmentOperators = createFilterOperators(leftOperator, rightOperator);
+                    containmentOperators = createContainedFilterOperators(leftOperator, rightOperator);
                     if (containmentOperators.empty()) {
                         containmentRelationship = ContainmentType::NO_CONTAINMENT;
                     }
                 } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
-                    containmentOperators = createFilterOperators(rightOperator, leftOperator);
+                    containmentOperators = createContainedFilterOperators(rightOperator, leftOperator);
                     if (containmentOperators.empty()) {
                         containmentRelationship = ContainmentType::NO_CONTAINMENT;
                     }
                 }
             } else if (containmentRelationship == ContainmentType::RIGHT_SIG_CONTAINED) {
-                auto projectionOperator = createProjectionOperator(rightOperator);
+                auto projectionOperator = createContainedProjectionOperator(rightOperator);
                 if (projectionOperator == nullptr) {
                     containmentRelationship = ContainmentType::NO_CONTAINMENT;
                 } else {
                     containmentOperators.push_back(projectionOperator);
                 }
             } else if (containmentRelationship == ContainmentType::LEFT_SIG_CONTAINED) {
-                auto projectionOperator = createProjectionOperator(leftOperator);
+                auto projectionOperator = createContainedProjectionOperator(leftOperator);
                 if (projectionOperator == nullptr) {
                     containmentRelationship = ContainmentType::NO_CONTAINMENT;
                 } else {
@@ -173,15 +164,15 @@ SignatureContainmentUtil::checkContainmentRelationshipTopDown(const LogicalOpera
             std::rethrow_exception(exception);
         } catch (const std::exception& e) {
             NES_ERROR("SignatureContainmentUtil: Exception occurred while performing containment check among "
-                       "queryIdAndCatalogEntryMapping {}",
-                       e.what());
+                      "queryIdAndCatalogEntryMapping {}",
+                      e.what());
         }
     }
     return std::tuple(containmentRelationship, containmentOperators);
 }
 
-ContainmentType SignatureContainmentUtil::checkProjectionContainment(const QuerySignaturePtr& leftSignature,
-                                                                     const QuerySignaturePtr& rightSignature) {
+ContainmentType SignatureContainmentCheck::checkProjectionContainment(const QuerySignaturePtr& leftSignature,
+                                                                      const QuerySignaturePtr& rightSignature) {
     z3::expr_vector leftQueryProjectionFOL(*context);
     z3::expr_vector rightQueryProjectionFOL(*context);
     //create the projection conditions for each signature
@@ -221,8 +212,8 @@ ContainmentType SignatureContainmentUtil::checkProjectionContainment(const Query
     return ContainmentType::NO_CONTAINMENT;
 }
 
-ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySignaturePtr& leftSignature,
-                                                                 const QuerySignaturePtr& rightSignature) {
+ContainmentType SignatureContainmentCheck::checkWindowContainment(const QuerySignaturePtr& leftSignature,
+                                                                  const QuerySignaturePtr& rightSignature) {
     // if no window signature is present, return equality
     if (leftSignature->getWindowsExpressions().empty() && rightSignature->getWindowsExpressions().empty()) {
         //0 indicates that there are no window operations in the queries
@@ -334,8 +325,8 @@ ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySign
     return containmentRelationship;
 }
 
-ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
-                                                                 const QuerySignaturePtr& rightSignature) {
+ContainmentType SignatureContainmentCheck::checkFilterContainment(const QuerySignaturePtr& leftSignature,
+                                                                  const QuerySignaturePtr& rightSignature) {
     NES_TRACE("Create new condition vectors.");
     z3::expr_vector leftQueryFilterConditions(*context);
     z3::expr_vector rightQueryFilterConditions(*context);
@@ -369,197 +360,7 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
     return ContainmentType::NO_CONTAINMENT;
 }
 
-std::vector<LogicalOperatorNodePtr>
-SignatureContainmentUtil::createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
-                                                        const LogicalOperatorNodePtr& containerOperator) {
-    NES_INFO("Contained operator: {}", containedOperator->toString());
-    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
-    auto containedWindowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
-    //obtain the most downstream window operator from the container query plan
-    auto containerWindowOperators = containerOperator->getNodesByType<WindowLogicalOperatorNode>().front();
-    Windowing::TimeBasedWindowTypePtr containerTimeBasedWindow;
-    if (containerWindowOperators->as<WindowLogicalOperatorNode>()
-            ->getWindowDefinition()
-            ->getWindowType()
-            ->isTimeBasedWindowType()) {
-        containerTimeBasedWindow =
-            containerWindowOperators->as<WindowLogicalOperatorNode>()
-                ->getWindowDefinition()
-                ->getWindowType()
-                ->asTimeBasedWindowType(
-                    containerWindowOperators->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getWindowType());
-    }
-    NES_INFO("Contained operator: {}", containedOperator->toString());
-    if (containerTimeBasedWindow == nullptr) {
-        return {};
-    }
-    //get the correct window operator
-    if (!containedWindowOperators.empty()) {
-        auto windowOperatorCopy = containedWindowOperators.front()->copy();
-        auto watermarkOperatorCopy =
-            containedWindowOperators.front()->getChildren()[0]->as<WatermarkAssignerLogicalOperatorNode>()->copy();
-        auto windowDefinition = windowOperatorCopy->as<WindowLogicalOperatorNode>()->getWindowDefinition();
-        //check that containee is a time based window, else return false
-        if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
-            auto timeBasedWindow = windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType());
-            //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
-            auto field = containerOperator->getOutputSchema()->hasFieldName("start");
-            //return false if this is not possible
-            if (field == nullptr) {
-                return {};
-            }
-            timeBasedWindow->getTimeCharacteristic()->setField(field);
-            timeBasedWindow->getTimeCharacteristic()->setTimeUnit(
-                containerTimeBasedWindow->getTimeCharacteristic()->getTimeUnit());
-            containmentOperators.push_back(windowOperatorCopy->as<LogicalOperatorNode>());
-            //obtain the watermark operator
-            auto watermarkOperator = watermarkOperatorCopy->as<WatermarkAssignerLogicalOperatorNode>();
-            if (watermarkOperator->getWatermarkStrategyDescriptor()
-                    ->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
-                auto fieldName = field->getName();
-                auto containerSourceNames = NES::Util::splitWithStringDelimiter<std::string>(fieldName, "$")[0];
-                auto watermarkStrategyDescriptor =
-                    watermarkOperator->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
-                watermarkStrategyDescriptor->setOnField(Attribute(containerSourceNames + "$start").getExpressionNode());
-                watermarkStrategyDescriptor->setTimeUnit(containerTimeBasedWindow->getTimeCharacteristic()->getTimeUnit());
-            } else {
-                return {};
-            }
-            containmentOperators.push_back(watermarkOperator);
-            NES_TRACE("Window containment possible.");
-        }
-    }
-    if (!containmentOperators.empty()
-        && !checkDownstreamOperatorChainForSingleParent(
-            containedOperator,
-            containedWindowOperators.front()->getChildren()[0]->as<LogicalOperatorNode>())) {
-        return {};
-    }
-    containmentOperators.back()->addParent(containmentOperators.front());
-    return containmentOperators;
-}
-
-LogicalOperatorNodePtr SignatureContainmentUtil::createProjectionOperator(const LogicalOperatorNodePtr& containedOperator) {
-    auto projectionOperators = containedOperator->getNodesByType<ProjectionLogicalOperatorNode>();
-    //get the most downstream projection operator
-    if (!projectionOperators.empty()) {
-        if (!checkDownstreamOperatorChainForSingleParent(containedOperator, projectionOperators.at(0))) {
-            return {};
-        }
-        return projectionOperators.at(0)->copy()->as<LogicalOperatorNode>();
-    }
-    return nullptr;
-}
-
-std::vector<LogicalOperatorNodePtr> SignatureContainmentUtil::createFilterOperators(const LogicalOperatorNodePtr& container,
-                                                                                    const LogicalOperatorNodePtr& containee) {
-    NES_DEBUG("Check if filter containment is possible for container {}, containee {}.",
-               container->toString(),
-               containee->toString());
-    //we don't pull up filters from under windows or unions
-    if (containee->instanceOf<WindowLogicalOperatorNode>() || containee->instanceOf<UnionLogicalOperatorNode>()) {
-        return {};
-    }
-    //if all checks pass, we extract the filter operators
-    std::vector<LogicalOperatorNodePtr> containmentOperators = {};
-    std::vector<FilterLogicalOperatorNodePtr> upstreamFilterOperatorsCopy = {};
-    std::vector<FilterLogicalOperatorNodePtr> upstreamFilterOperators = containee->getNodesByType<FilterLogicalOperatorNode>();
-    for (const auto& filterOperator : upstreamFilterOperators) {
-        upstreamFilterOperatorsCopy.push_back(filterOperator->copy()->as<FilterLogicalOperatorNode>());
-    }
-    try {
-        containee->getNodesByType<FilterLogicalOperatorNode>();
-        if (upstreamFilterOperators.empty()) {
-            return {};
-        } else if (upstreamFilterOperators.size() == 1) {
-            std::map<std::string, ExpressionNodePtr> mapAttributeNamesAndAssignment = {};
-            if (!checkDownstreamOperatorChainForSingleParent(containee,
-                                                             upstreamFilterOperators.front(),
-                                                             mapAttributeNamesAndAssignment)) {
-                return {};
-            }
-            auto predicate = upstreamFilterOperatorsCopy.front()->getPredicate();
-            if (!mapPredicateSupstitutionSuccessful(upstreamFilterOperatorsCopy.front(),
-                                                    mapAttributeNamesAndAssignment,
-                                                    container->getOutputSchema())) {
-                return {};
-            }
-            return {upstreamFilterOperatorsCopy.front()};
-        } else {
-            std::map<std::string, ExpressionNodePtr> mapAttributeNamesAndAssignment = {};
-            NES_DEBUG("Filter predicate: {}", upstreamFilterOperators.back()->toString());
-            if (checkDownstreamOperatorChainForSingleParent(containee,
-                                                            upstreamFilterOperators.back(),
-                                                            mapAttributeNamesAndAssignment)) {
-                NES_DEBUG("Filter predicate: {}", upstreamFilterOperators.back()->toString());
-                auto predicate = upstreamFilterOperatorsCopy.front()->getPredicate();
-                if (!mapPredicateSupstitutionSuccessful(upstreamFilterOperatorsCopy.front(),
-                                                        mapAttributeNamesAndAssignment,
-                                                        container->getOutputSchema())) {
-                    return {};
-                }
-                for (size_t i = 1; i < upstreamFilterOperatorsCopy.size(); ++i) {
-                    if (!mapPredicateSupstitutionSuccessful(upstreamFilterOperatorsCopy.at(i),
-                                                            mapAttributeNamesAndAssignment,
-                                                            container->getOutputSchema())) {
-                        return {};
-                    }
-                    predicate = AndExpressionNode::create(predicate, upstreamFilterOperatorsCopy.at(i)->getPredicate());
-                }
-                NES_DEBUG("Filter predicate: {}", predicate->toString());
-                upstreamFilterOperatorsCopy.front()->setPredicate(predicate);
-                return {upstreamFilterOperatorsCopy.front()};
-            } else {
-                return {};
-            }
-        }
-        return containmentOperators;
-    } catch (const std::exception& e) {
-        NES_WARNING("Filter extraction failed: {}", e.what());
-        return {};
-    }
-}
-
-bool SignatureContainmentUtil::mapPredicateSupstitutionSuccessful(FilterLogicalOperatorNodePtr const& filterOperator,
-                                                                  const std::map<std::string, ExpressionNodePtr>& fieldNames,
-                                                                  const SchemaPtr& containerOutputSchema) {
-
-    NES_DEBUG("Create an iterator for traversing the filter {} predicates {}, and check output schema {}",
-               filterOperator->toString(),
-               filterOperator->getPredicate()->toString(),
-               containerOutputSchema->toString());
-    const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
-    DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
-    for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
-        NES_TRACE("Iterate and find the predicate with FieldAccessExpression Node");
-        if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
-            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-            NES_INFO("Is field {} still in container output schema {}? {}",
-                      accessExpressionNode->getFieldName(),
-                      containerOutputSchema->toString(),
-                      containerOutputSchema->contains(accessExpressionNode->getFieldName()));
-            if (!containerOutputSchema->contains(accessExpressionNode->getFieldName())) {
-                return false;
-            }
-            NES_TRACE("Check if the input field name is same as the FieldAccessExpression field name");
-            if (fieldNames.find(accessExpressionNode->getFieldName()) != fieldNames.end()) {
-                return false;
-            }
-        }
-        NES_INFO2("New filter predicate: {}", filterPredicate->toString());
-    }
-    return true;
-}
-
-std::pair<std::string, ExpressionNodePtr> SignatureContainmentUtil::getFieldNameUsedByMapOperator(const NodePtr& node) {
-    NES_TRACE("Find the field name used in map operator");
-    MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
-    const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
-    const FieldAccessExpressionNodePtr field = mapExpression->getField();
-    return std::pair<std::string, ExpressionNodePtr>(field->getFieldName(), mapExpression->getAssignment());
-}
-
-void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {
+void SignatureContainmentCheck::createProjectionFOL(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL) {
     //create projection FOL
     //We create a boolean value that we set to true for each attribute present in the schemaFieldToExprMaps
     //We create an and expression for those values
@@ -585,8 +386,8 @@ void SignatureContainmentUtil::createProjectionFOL(const QuerySignaturePtr& sign
     NES_TRACE("Projection FOL: {}", projectionFOL.to_string());
 }
 
-bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignaturePtr& leftSignature,
-                                                            const QuerySignaturePtr& rightSignature) {
+bool SignatureContainmentCheck::checkForEqualTransformations(const QuerySignaturePtr& leftSignature,
+                                                             const QuerySignaturePtr& rightSignature) {
     auto schemaFieldToExprMaps = leftSignature->getSchemaFieldToExprMaps();
     auto otherSchemaFieldToExprMaps = rightSignature->getSchemaFieldToExprMaps();
     auto columns = leftSignature->getColumns();
@@ -605,8 +406,8 @@ bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignature
                 auto otherColExpr = (*otherSchemaMapItr)[containedAttributes[index]];
                 auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
                 NES_TRACE("Equivalence check for transformations: {} on attribute {}",
-                           equivalenceCheck.to_string(),
-                           containedAttributes[index]);
+                          equivalenceCheck.to_string(),
+                          containedAttributes[index]);
                 colChecks.push_back(equivalenceCheck);
             }
 
@@ -636,8 +437,8 @@ bool SignatureContainmentUtil::checkForEqualTransformations(const QuerySignature
     return true;
 }
 
-bool SignatureContainmentUtil::checkContainmentConditionsUnsatisfied(z3::expr_vector& negatedCondition,
-                                                                     z3::expr_vector& condition) {
+bool SignatureContainmentCheck::checkContainmentConditionsUnsatisfied(z3::expr_vector& negatedCondition,
+                                                                      z3::expr_vector& condition) {
     solver->push();
     solver->add(!mk_and(negatedCondition).simplify());
     solver->push();
@@ -656,8 +457,8 @@ bool SignatureContainmentUtil::checkContainmentConditionsUnsatisfied(z3::expr_ve
     return conditionUnsatisfied;
 }
 
-bool SignatureContainmentUtil::checkAttributeOrder(const QuerySignaturePtr& leftSignature,
-                                                   const QuerySignaturePtr& rightSignature) const {
+bool SignatureContainmentCheck::checkAttributeOrder(const QuerySignaturePtr& leftSignature,
+                                                    const QuerySignaturePtr& rightSignature) const {
     for (size_t j = 0; j < rightSignature->getColumns().size(); ++j) {
         NES_TRACE("Containment order check for {}", rightSignature->getColumns()[j]);
         NES_TRACE(" and {}", leftSignature->getColumns()[j]);
@@ -668,10 +469,10 @@ bool SignatureContainmentUtil::checkAttributeOrder(const QuerySignaturePtr& left
     return true;
 }
 
-void SignatureContainmentUtil::combineWindowAndProjectionFOL(const QuerySignaturePtr& leftSignature,
-                                                             const QuerySignaturePtr& rightSignature,
-                                                             z3::expr_vector& leftFOL,
-                                                             z3::expr_vector& rightFOL) {
+void SignatureContainmentCheck::combineWindowAndProjectionFOL(const QuerySignaturePtr& leftSignature,
+                                                              const QuerySignaturePtr& rightSignature,
+                                                              z3::expr_vector& leftFOL,
+                                                              z3::expr_vector& rightFOL) {
     z3::expr_vector leftQueryFOL(*context);
     z3::expr_vector rightQueryFOL(*context);
     //create conditions for projection containment
@@ -685,10 +486,10 @@ void SignatureContainmentUtil::combineWindowAndProjectionFOL(const QuerySignatur
     }
 }
 
-bool SignatureContainmentUtil::checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& containerWindow,
-                                                              const std::map<std::string, z3::ExprPtr>& containedWindow,
-                                                              const QuerySignaturePtr& leftSignature,
-                                                              const QuerySignaturePtr& rightSignature) {
+bool SignatureContainmentCheck::checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& containerWindow,
+                                                               const std::map<std::string, z3::ExprPtr>& containedWindow,
+                                                               const QuerySignaturePtr& leftSignature,
+                                                               const QuerySignaturePtr& rightSignature) {
     const auto& median = Windowing::WindowAggregationDescriptor::Type::Median;
     const auto& avg = Windowing::WindowAggregationDescriptor::Type::Avg;
     NES_TRACE("Current window-id: {}", containerWindow.at("window-id")->to_string());
@@ -739,8 +540,8 @@ bool SignatureContainmentUtil::checkWindowContainmentPossible(const std::map<std
     return windowContainmentPossible;
 }
 
-bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignaturePtr& container,
-                                                              const QuerySignaturePtr& containee) {
+bool SignatureContainmentCheck::checkFilterContainmentPossible(const QuerySignaturePtr& container,
+                                                               const QuerySignaturePtr& containee) {
     if (container->getSchemaFieldToExprMaps().size() > 1) {
         for (const auto& [containerSourceName, containerConditions] : container->getUnionExpressions()) {
             NES_TRACE("Container source name: {}", containerSourceName);
@@ -762,78 +563,7 @@ bool SignatureContainmentUtil::checkFilterContainmentPossible(const QuerySignatu
     return true;
 }
 
-bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
-    const LogicalOperatorNodePtr& containedOperator,
-    const LogicalOperatorNodePtr& extractedContainedOperator) {
-    NES_INFO("Extracted contained operator: {}", extractedContainedOperator->toString());
-    for (const auto& source : containedOperator->getAllLeafNodes()) {
-        NodePtr parent = source;
-        bool foundExtracted = false;
-        while (!parent->equal(containedOperator)) {
-            if (parent->equal(extractedContainedOperator)) {
-                foundExtracted = true;
-            }
-            if (parent->getParents().size() != 1) {
-                return false;
-            } else {
-                parent = parent->getParents()[0];
-            }
-            if (foundExtracted) {
-                if (parent->instanceOf<UnionLogicalOperatorNode>()
-                    || (extractedContainedOperator->instanceOf<ProjectionLogicalOperatorNode>()
-                        && parent->instanceOf<WindowLogicalOperatorNode>())) {
-                    return false;
-                }
-            }
-        }
-    }
-    return true;
-}
-
-bool SignatureContainmentUtil::checkDownstreamOperatorChainForSingleParent(
-    const LogicalOperatorNodePtr& containedOperator,
-    const LogicalOperatorNodePtr& extractedContainedOperator,
-    std::map<std::string, ExpressionNodePtr>& mapAttributeNames) {
-    NES_DEBUG("extractedContainedOperator parents size: {}", extractedContainedOperator->getParents().size());
-    if (extractedContainedOperator->hasMultipleParents()) {
-        return false;
-    }
-    for (const auto& source : containedOperator->getAllLeafNodes()) {
-        NodePtr parent = source;
-        NES_DEBUG2("Parent: {}", parent->toString());
-        bool foundExtracted = false;
-        while (!parent->equal(containedOperator)) {
-            NES_DEBUG2("Parent: {}", parent->toString());
-            if (parent->equal(extractedContainedOperator)) {
-                foundExtracted = true;
-            }
-            if (foundExtracted) {
-                //we don't pull up filter operators from under union operators
-                if (parent->instanceOf<WindowLogicalOperatorNode>()
-                    || parent->instanceOf<UnionLogicalOperatorNode>()) {
-                    return false;
-                }
-            }
-            //we don't pull up filter operators from under union operators
-            if (parent->getParents().size() != 1) {
-                return false;
-            } else {
-                if (foundExtracted) {
-                    if (parent->instanceOf<MapLogicalOperatorNode>()) {
-                        auto mapOperator = parent->as<MapLogicalOperatorNode>();
-                        auto attributeAndAssignmentPair = getFieldNameUsedByMapOperator(mapOperator);
-                        mapAttributeNames.insert(attributeAndAssignmentPair);
-                    }
-                }
-                parent = parent->getParents()[0];
-            }
-        }
-    }
-    return true;
-}
-
-
-void SignatureContainmentUtil::resetSolver() {
+void SignatureContainmentCheck::resetSolver() {
     solver->reset();
     counter = 0;
 }

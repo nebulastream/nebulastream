@@ -23,5 +23,6 @@ add_source_files(nes-core
         HybridCompleteQueryMergerRule.cpp
         Z3SignatureBasedBottomUpQueryContainmentRule.cpp
         MatchedOperatorPair.cpp
-        Z3SignatureBasedPartialQueryContainmentMergerRule.cpp
+        Z3SignatureBasedTopDownQueryContainmentMergerRule.cpp
+        ExtractContainedOperatorsUtil.cpp
 )

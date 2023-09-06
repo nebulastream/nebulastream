@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_
 
+#include "ExtractContainedOperatorsUtil.hpp"
 #include <memory>
 #include <z3++.h>
 
@@ -48,8 +49,8 @@ namespace NES::Optimizer {
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 
-class SignatureContainmentUtil;
-using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
+class SignatureContainmentCheck;
+using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentCheck>;
 /**
  * @brief enum describing the given containment relationship
  */
@@ -58,7 +59,7 @@ enum class ContainmentType : uint8_t { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT
 /**
  * @brief This is a utility to compare two signatures
  */
-class SignatureContainmentUtil {
+class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
 
   public:
     /**
@@ -72,7 +73,7 @@ class SignatureContainmentUtil {
      * @brief constructor for signatureContainmentUtil
      * @param context The Z3 context for the SMT solver
      */
-    explicit SignatureContainmentUtil(const z3::ContextPtr& context);
+    explicit SignatureContainmentCheck(const z3::ContextPtr& context);
 
     /**
      * @brief Check containment relationships for the given signatures as follows
@@ -100,7 +101,7 @@ class SignatureContainmentUtil {
      * equivalence or no containment was detected.
      */
     std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
-    checkContainmentRelationshipTopDown(const LogicalOperatorNodePtr& leftOperator, const LogicalOperatorNodePtr& rightOperator);
+    checkContainmentRelationshipForTopDownMerging(const LogicalOperatorNodePtr& leftOperator, const LogicalOperatorNodePtr& rightOperator);
 
   private:
     /**
@@ -164,50 +165,14 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature,
-                                                                const QuerySignaturePtr& rightSignature);
-
-    /**
-     * @brief extracts the contained window operator together with its watermark operator
-     * @param containedOperator operator that we identified as contained
-     * @param containedWindowIndex index of the contained window operator
-     * @return contained window operator and its watermark operator
-     */
-    std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
-                                                                      const LogicalOperatorNodePtr& containerOperator);
-
-    /**
-     * @brief extracts the contained projection operator, i.e. extracts the most downstream projection operator from the contained upstream operator chain
-     * @param containedOperator operator that we identified as contained
-     * @return contained projection operator
-     */
-    LogicalOperatorNodePtr createProjectionOperator(const LogicalOperatorNodePtr& containedOperator);
-
-    /**
-     * @brief extracts all upstream filter operators from the contained operator chain
-     * @param container the current operator from the container query
-     * @param containee the current operator from the contained query
-     * @return all filter upstream filter operations from the contained query
-     */
-    std::vector<LogicalOperatorNodePtr> createFilterOperators(const LogicalOperatorNodePtr& container,
-                                                              const LogicalOperatorNodePtr& containee);
+    ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief Get the name of the field manipulated by the Map operator
      * @param Operator pointer
      * @return name of the field
      */
-    std::pair<std::string, ExpressionNodePtr> getFieldNameUsedByMapOperator(const NodePtr& node);
-
-    /**
-     * @brief Validate if the input field is used in the filter predicate of the operator
-     * @param filterOperator : filter operator whose predicate need to be checked
-     * @param fieldName :  name of the field to be checked
-     * @return true if field use in the filter predicate else false
-     */
-    bool mapPredicateSupstitutionSuccessful(FilterLogicalOperatorNodePtr const& filterOperator,
-                                            const std::map<std::string, ExpressionNodePtr>& fieldNames,
-                                            const SchemaPtr& containerOutputSchema);
+    std::string getFieldNameUsedByMapOperator(const NodePtr& node);
 
     /**
      * @brief creates conditions for checking projection containment:
@@ -276,28 +241,6 @@ class SignatureContainmentUtil {
      * @return true, if no union is present or all unions have an equal amount of filters per attribute, false otherwise
      */
     bool checkFilterContainmentPossible(const QuerySignaturePtr& container, const QuerySignaturePtr& containee);
-
-    /**
-     * @brief checks if we can safely extract the contained operator chain from the container operator chain, i.e.
-     * if the container chain has multiple parent relationships, we end up with wrong query results if we extract the contained chain
-     * therefore this method returns true, if the container chain has only one parent relationship, false otherwise
-     * @param containedOperator the operator for which we identified a containment relationship
-     * @param extractedContainedOperator the most upstream operator from the extracted contained operator chain
-     * @return true, if the container chain has only one parent relationship, false otherwise
-     */
-    bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator,
-                                                     const LogicalOperatorNodePtr& extractedContainedOperator);
-    /**
-     * @brief checks if we can safely extract the contained operator chain from the container operator chain, i.e.
-     * if the container chain has multiple parent relationships, we end up with wrong query results if we extract the contained chain
-     * therefore this method returns true, if the container chain has only one parent relationship, false otherwise
-     * @param containedOperator the operator for which we identified a containment relationship
-     * @param extractedContainedOperator the most upstream operator from the extracted contained operator chain
-     * @return true, if the container chain has only one parent relationship, false otherwise
-     */
-    bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator,
-                                                     const LogicalOperatorNodePtr& extractedContainedOperator,
-                                                     std::map<std::string, ExpressionNodePtr>& mapAttributeNames);
 
     /**
      * @brief Reset z3 solver

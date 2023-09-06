@@ -154,7 +154,6 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
                 hostOperator->addParent(downstreamTargetOperator);
             }
         }
-
         //Add new hash based signatures to the shared query plan for newly added downstream operators
         for (const auto& newDownstreamOperator : clEntryDownstreamOperators) {
             auto hashBasedSignature = newDownstreamOperator->as<LogicalOperatorNode>()->getHashBasedSignature();
@@ -177,6 +176,81 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
             now,
             Optimizer::Experimental::ChangeLogEntry::create(clEntryUpstreamOperators, clEntryDownstreamOperators));
     }
+
+    //add the new sink operators as root to the query plan
+    for (const auto& targetSinkOperator : sinkOperators) {
+        queryPlan->addRootOperator(targetSinkOperator);
+    }
+
+    //Add sink list for the newly inserted query
+    queryIdToSinkOperatorMap[queryId] = sinkOperators;
+
+    //add the query id
+    queryIds.emplace_back(queryId);
+}
+
+void SharedQueryPlan::addQuery(QueryId queryId,
+                               const OperatorNodePtr& containerOperator,
+                               const OperatorNodePtr& containedOperator,
+                               const std::vector<LogicalOperatorNodePtr> containedOperatorChain) {
+
+    NES_DEBUG("SharedQueryPlan: Create the new shared query plan utilizing the detected containment relationship of query with "
+              "id {}.",
+              queryId);
+    std::set<LogicalOperatorNodePtr> sinkOperators;
+    std::set<LogicalOperatorNodePtr> clEntryUpstreamOperators;
+    std::set<LogicalOperatorNodePtr> clEntryDownstreamOperators;
+
+    //Downstream operator and upstreamContainedOperator are equal in case of filter or projection operators
+    //But in case of a contained window operation, the downstream operator is the associated watermark operator
+    auto downstreamOperator = containedOperatorChain.front();
+    auto upstreamContainedOperator = containedOperatorChain.back();
+    NES_TRACE("ContainerOperator: {}", containerOperator->toString());
+    NES_TRACE("DownstreamOperator: {}", downstreamOperator->toString());
+    NES_TRACE("ContainedOperator: {}", containedOperator->toString());
+    NES_TRACE("upstreamContainedOperator: {}", upstreamContainedOperator->toString());
+    NES_TRACE("downstreamOperator children size: {}", downstreamOperator->getChildren().size());
+    auto parents = containedOperator->getParents();
+    for (const auto& parent : parents) {
+        // Contained operator and downstream operator are often not the same
+        // Therefore, we have to remove the contained operator from its parents
+        // and add its parents as new parents to the downstream operator
+        parent->removeChild(containedOperator);
+        NES_TRACE("Parent: {}", parent->toString());
+        downstreamOperator->addParent(parent);
+    }
+    //add the contained operator chain to the host operator
+    bool addedNewParent = containerOperator->addParent(upstreamContainedOperator);
+    NES_TRACE("Children upstreamContainedOperator size: {}", upstreamContainedOperator->getChildren().size());
+    NES_TRACE("Children upstreamContainedOperator: {}", upstreamContainedOperator->getChildren()[0]->toString());
+    if (!addedNewParent) {
+        NES_WARNING("SharedQueryPlan: Failed to add new parent");
+    }
+    // the container operator marks the new upstream operators chain
+    clEntryUpstreamOperators.insert(containerOperator->as<LogicalOperatorNode>());
+    // the downstream operator marks the new downstream operator chain
+    clEntryDownstreamOperators.insert(downstreamOperator);
+
+    //Add new hash based signatures to the shared query plan for newly added downstream operators
+    for (const auto& newDownstreamOperator : clEntryDownstreamOperators) {
+        auto hashBasedSignature = newDownstreamOperator->as<LogicalOperatorNode>()->getHashBasedSignature();
+        for (const auto& signatureEntry : hashBasedSignature) {
+            for (const auto& stringValue : signatureEntry.second) {
+                updateHashBasedSignature(signatureEntry.first, stringValue);
+            }
+        }
+    }
+
+    //add the sink operators as root to the set
+    for (const auto& targetSinkOperator : clEntryDownstreamOperators) {
+        sinkOperators.insert(targetSinkOperator);
+    }
+
+    //add change log entry indicating the addition
+    auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    changeLog->addChangeLogEntry(
+        now,
+        Optimizer::Experimental::ChangeLogEntry::create(clEntryUpstreamOperators, clEntryDownstreamOperators));
 
     //add the new sink operators as root to the query plan
     for (const auto& targetSinkOperator : sinkOperators) {
