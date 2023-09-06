@@ -319,12 +319,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             auto P_IJ = z3Context->int_const(variableID.c_str());
             if ((i == 0 && j == 0) || (i == operatorNodePath.size() - 1 && j == topologyNodePath.size() - 1)) {
                 opt.add(P_IJ == 1); // Fix the placement of source and sink
-                if (i==0){
-                    P_IJ_stored.emplace_back(P_IJ);
-                }
-                else if (i == operatorNodePath.size() - 1 && j == topologyNodePath.size() - 1){
-                    P_IJ_stored.emplace_back(P_IJ);
-                }
+                P_IJ_stored.emplace_back(P_IJ);
             } else if (i == 0 && j != 0){
                 opt.add(P_IJ == 0);
                 P_IJ_stored.emplace_back(P_IJ);
