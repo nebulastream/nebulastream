@@ -462,7 +462,7 @@ TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
         signatureInferencePhase->execute(queryPlanNewQuery);
         SinkLogicalOperatorNodePtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
         SinkLogicalOperatorNodePtr sinkOperatorNewQuery = queryPlanSQPQuery->getSinkOperators()[0];
-        auto signatureContainmentUtil = Optimizer::SignatureContainmentUtil::create(context);
+        auto signatureContainmentUtil = Optimizer::SignatureContainmentCheck::create(context);
         std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
         auto sqpSink = queryPlanSQPQuery->getSinkOperators()[0];
         auto newSink = queryPlanNewQuery->getSinkOperators()[0];

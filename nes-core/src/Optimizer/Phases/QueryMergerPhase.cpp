@@ -55,8 +55,8 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
         case QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule:
             queryMergerRule = Z3SignatureBasedBottomUpQueryContainmentRule::create(std::move(context));
             break;
-        case QueryMergerRule::Z3SignatureBasedPartialQueryContainmentRule:
-            queryMergerRule = Z3SignatureBasedPartialQueryContainmentMergerRule::create(std::move(context));
+        case QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule:
+            queryMergerRule = Z3SignatureBasedTopDownQueryContainmentMergerRule::create(std::move(context));
             break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();

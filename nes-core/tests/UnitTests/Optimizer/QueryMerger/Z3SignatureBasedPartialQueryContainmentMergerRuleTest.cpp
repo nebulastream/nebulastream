@@ -889,7 +889,7 @@ TEST_P(Z3SignatureBasedPartialQueryContainmentMergerRuleTest, DISABLED_testMergi
         z3::ContextPtr context = std::make_shared<z3::context>();
         auto z3InferencePhase =
             Optimizer::SignatureInferencePhase::create(context,
-                                                       Optimizer::QueryMergerRule::Z3SignatureBasedPartialQueryContainmentRule);
+                                                       Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
         z3InferencePhase->execute(queryPlanSQPQuery);
         z3InferencePhase->execute(queryPlanNewQuery);
 
@@ -898,7 +898,7 @@ TEST_P(Z3SignatureBasedPartialQueryContainmentMergerRuleTest, DISABLED_testMergi
         globalQueryPlan->addQueryPlan(queryPlanNewQuery);
 
         //execute
-        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryContainmentMergerRule::create(context);
+        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context);
         signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
         //assert
