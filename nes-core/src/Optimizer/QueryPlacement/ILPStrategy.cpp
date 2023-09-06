@@ -236,7 +236,6 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     pinOperators(z3Model, placementVariables);
 
     // 8. Perform operator placement.
-    NES_INFO("placement starts:");
     placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     // 9. Add network source and sink operators.
@@ -319,30 +318,26 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             std::string variableID = std::to_string(operatorID) + KEY_SEPARATOR + std::to_string(topologyID);
             auto P_IJ = z3Context->int_const(variableID.c_str());
             if ((i == 0 && j == 0) || (i == operatorNodePath.size() - 1 && j == topologyNodePath.size() - 1)) {
-                opt.add(P_IJ == 1);// Fix the placement of source and sink
+                opt.add(P_IJ == 1); // Fix the placement of source and sink
                 if (i==0){
                     P_IJ_stored.emplace_back(P_IJ);
-                    NES_INFO("{}. operator node added to PIJ Variable", i+1);
                 }
                 else if (i == operatorNodePath.size() - 1 && j == topologyNodePath.size() - 1){
                     P_IJ_stored.emplace_back(P_IJ);
-                    NES_INFO("{}. operator node added to PIJ Variable", i+1);
                 }
             } else if (i == 0 && j != 0){
                 opt.add(P_IJ == 0);
                 P_IJ_stored.emplace_back(P_IJ);
-                NES_INFO("{}. operator node added to PIJ Variable", i+1);
             }
             else {
                 // The binary decision on whether to place or not, hence we constrain it to be either 0 or 1
-                // with the additional constraint of keeping order of operator nodes
+                // Creating z3 expression for storing possibilities of placement to implement an additional constraint of keeping the right order of operator nodes
                 z3::expr check_previous_expression = (P_IJ_stored[0] == 1);
                 for (uint64_t k = 1; k<=j; ++k) {
                     check_previous_expression = check_previous_expression || (P_IJ_stored[k] == 1);
                 }
                 opt.add(P_IJ==0 || (P_IJ==1 && check_previous_expression));
                 P_IJ_stored.emplace_back(P_IJ);
-                NES_INFO("{}. operator node added to PIJ Variable", i+1);
             }
             placementVariable.insert(std::make_pair(variableID, P_IJ));
             sum_i = sum_i + P_IJ;
@@ -375,14 +370,13 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
 }
 
 bool ILPStrategy::pinOperators(z3::model& z3Model, std::map<std::string, z3::expr>& placementVariables) {
-    NES_INFO("pin operator");
     for (const auto& placementMapping : placementVariables) {
         auto key = placementMapping.first;
         uint64_t operatorId = std::stoi(key.substr(0, key.find(KEY_SEPARATOR)));
         uint64_t topologyNodeId = std::stoi(key.substr(key.find(KEY_SEPARATOR) + 1));
 
         if (z3Model.eval(placementMapping.second).get_numeral_int() == 1) {
-            NES_INFO("pinning: {}", operatorId);
+            NES_INFO("Pinning operator with ID {}", operatorId);
             //Pin the operator to the location identified by ILP algorithm
             auto logicalOperator = operatorMap[operatorId];
             logicalOperator->addProperty(PINNED_NODE_ID, topologyNodeId);
