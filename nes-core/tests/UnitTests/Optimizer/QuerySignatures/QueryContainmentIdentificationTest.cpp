@@ -25,7 +25,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>

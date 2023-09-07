@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDBOTTOMUPQUERYCONTAINMENTRULE_HPP_
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 
 namespace z3 {
 class context;

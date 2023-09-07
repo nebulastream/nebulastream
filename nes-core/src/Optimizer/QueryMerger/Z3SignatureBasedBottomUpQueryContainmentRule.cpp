@@ -23,7 +23,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>

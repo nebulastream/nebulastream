@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYCONTAINMENTMERGERRULE_HPP_
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 
 namespace NES {
 class SharedQueryPlan;
