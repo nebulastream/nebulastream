@@ -21,11 +21,18 @@
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
-CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
+CpuMetricsWrapper::CpuMetricsWrapper() : CpuMetricsWrapper(0) {}
 
-CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
+CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId)
+    : nodeId(nodeId),
+      timestamp(duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) {}
+
+CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) : CpuMetricsWrapper() {
     if (!arr.empty()) {
         cpuMetrics = std::move(arr);
+        for (auto& metric : cpuMetrics) {
+            metric.timestamp = timestamp;
+        }
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetricsWrapper: Object cannot be allocated with less than 0 cores.");
     }
@@ -48,6 +55,7 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
     for (unsigned int i = 0; i < size(); i++) {
         CpuMetrics metrics = getValue(i);
         metrics.nodeId = nodeId;
+        metrics.timestamp = timestamp;
         metrics.writeToBuffer(buf, tupleIndex + i);
     }
 }
@@ -65,6 +73,7 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
     }
     cpuMetrics = std::move(cpuList);
     nodeId = cpuMetrics[0].nodeId;
+    timestamp = cpuMetrics[0].timestamp;
 }
 
 uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
@@ -74,6 +83,7 @@ CpuMetrics CpuMetricsWrapper::getTotal() const { return getValue(0); }
 nlohmann::json CpuMetricsWrapper::toJson() const {
     nlohmann::json metricsJsonWrapper{};
     metricsJsonWrapper["NODE_ID"] = nodeId;
+    metricsJsonWrapper["TIMESTAMP"] = timestamp;
 
     nlohmann::json metricsJson{};
     for (auto i = 0; i < (int) cpuMetrics.size(); i++) {

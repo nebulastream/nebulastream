@@ -21,12 +21,18 @@
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
+NetworkMetricsWrapper::NetworkMetricsWrapper() : NetworkMetricsWrapper(0) {}
 
-NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
+NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId)
+    : nodeId(nodeId),
+      timestamp(duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) {}
 
-NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) {
+NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) : NetworkMetricsWrapper() {
     if (!arr.empty()) {
         networkMetrics = std::move(arr);
+        for (auto& metric : networkMetrics) {
+            metric.timestamp = timestamp;
+        }
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: Object cannot be allocated with less than 0 cores.");
     }
@@ -64,6 +70,7 @@ void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t t
     }
     networkMetrics = std::move(interfaceList);
     nodeId = networkMetrics[0].nodeId;
+    timestamp = networkMetrics[0].timestamp;
 }
 
 NetworkMetrics NetworkMetricsWrapper::getNetworkValue(uint64_t interfaceNo) const {
@@ -76,6 +83,7 @@ NetworkMetrics NetworkMetricsWrapper::getNetworkValue(uint64_t interfaceNo) cons
 
 void NetworkMetricsWrapper::addNetworkMetrics(NetworkMetrics&& nwValue) {
     nwValue.nodeId = this->nodeId;
+    nwValue.timestamp = this->timestamp;
     networkMetrics.emplace_back(nwValue);
 }
 
@@ -95,6 +103,7 @@ std::vector<std::string> NetworkMetricsWrapper::getInterfaceNames() {
 nlohmann::json NetworkMetricsWrapper::toJson() const {
     nlohmann::json metricsJsonWrapper{};
     metricsJsonWrapper["NODE_ID"] = nodeId;
+    metricsJsonWrapper["TIMESTAMP"] = timestamp;
 
     nlohmann::json metricsJson{};
     for (auto networkVal : networkMetrics) {
