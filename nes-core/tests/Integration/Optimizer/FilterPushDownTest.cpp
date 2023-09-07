@@ -69,7 +69,6 @@ class FilterPushDownTest : public Testing::BaseIntegrationTest {
                     && QnV1$quantity == rhs.QnV1$quantity);
         }
     };
-
 };
 
 /* 1.Test
