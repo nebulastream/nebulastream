@@ -21,9 +21,9 @@
 #include <Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryContainmentMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerBottomUpRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedTopDownQueryContainmentMergerRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

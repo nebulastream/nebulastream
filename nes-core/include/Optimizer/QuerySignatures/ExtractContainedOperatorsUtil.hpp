@@ -12,17 +12,26 @@
     limitations under the License.
 */
 
-
 #ifndef NES_EXTRACTCONTAINEDOPERATORSUTIL_HPP
 #define NES_EXTRACTCONTAINEDOPERATORSUTIL_HPP
 
 #include <memory>
 #include <z3++.h>
 namespace NES {
+
+class LogicalOperatorNode;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+
+class FilterLogicalOperatorNode;
+using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+
 namespace Optimizer {
 
 class ExtractContainedOperatorsUtil {
-    public:
+  public:
     /**
      * @brief extracts the contained window operator together with its watermark operator
      * @param containedOperator operator that we identified as contained
@@ -44,7 +53,7 @@ class ExtractContainedOperatorsUtil {
      * @return all filter upstream filter operations from the contained query
      */
     std::vector<LogicalOperatorNodePtr> createContainedFilterOperators(const LogicalOperatorNodePtr& container,
-                                                              const LogicalOperatorNodePtr& containee);
+                                                                       const LogicalOperatorNodePtr& containee);
     /**
      * @brief Validate if the map assignment field is used in the filter predicate of the operator
      * @param filterOperator : filter operator whose predicate need to be checked
@@ -73,8 +82,8 @@ class ExtractContainedOperatorsUtil {
      * @return true, if the container chain has only one parent relationship, false otherwise
      */
     bool checkDownstreamOperatorChainForSingleParentAndMapOperator(const LogicalOperatorNodePtr& containedOperator,
-                                                     const LogicalOperatorNodePtr& extractedContainedOperator,
-                                                     std::vector<std::string>& mapAttributeNames);
+                                                                   const LogicalOperatorNodePtr& extractedContainedOperator,
+                                                                   std::vector<std::string>& mapAttributeNames);
 };
 
 }// namespace Optimizer

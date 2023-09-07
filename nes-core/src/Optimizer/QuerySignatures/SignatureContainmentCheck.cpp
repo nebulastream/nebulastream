@@ -21,7 +21,7 @@
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/ExtractContainedOperatorsUtil.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
+#include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Windowing/TimeCharacteristic.hpp>

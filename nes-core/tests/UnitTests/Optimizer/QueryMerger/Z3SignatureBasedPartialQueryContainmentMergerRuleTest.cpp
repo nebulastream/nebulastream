@@ -30,7 +30,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryContainmentMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedTopDownQueryContainmentMergerRule.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>

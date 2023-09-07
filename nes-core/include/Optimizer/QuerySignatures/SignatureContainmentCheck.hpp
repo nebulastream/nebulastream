@@ -34,12 +34,6 @@ namespace NES {
 class LogicalOperatorNode;
 using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
-
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
-
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 }// namespace NES
