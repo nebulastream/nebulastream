@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.5.210](https://github.com/nebulastream/nebulastream/tree/v0.5.210) (2023-09-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.209...v0.5.210)
+
+**Implemented enhancements:**
+
+- \[TASK\] Reduce CI timeout [\#4110](https://github.com/nebulastream/nebulastream/issues/4110)
+- \[TASK\] Filter push down below map  [\#4054](https://github.com/nebulastream/nebulastream/issues/4054)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Timestamp missing for Metrics [\#4203](https://github.com/nebulastream/nebulastream/issues/4203)
+
 ## [v0.5.209](https://github.com/nebulastream/nebulastream/tree/v0.5.209) (2023-09-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.208...v0.5.209)
