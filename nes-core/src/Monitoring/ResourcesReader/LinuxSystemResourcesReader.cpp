@@ -337,6 +337,7 @@ MemoryMetrics LinuxSystemResourcesReader::readMemoryStats() {
             NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: Error reading memory stats");
         }
 
+        output.timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         output.TOTAL_RAM = sinfo->totalram;
         output.TOTAL_SWAP = sinfo->totalswap;
         output.FREE_RAM = sinfo->freeram;
@@ -369,6 +370,7 @@ DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
             NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: Error reading disk stats");
         }
 
+        output.timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         output.fBsize = svfs->f_bsize;
         output.fFrsize = svfs->f_frsize;
         output.fBlocks = svfs->f_blocks;

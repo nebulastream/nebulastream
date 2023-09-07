@@ -131,7 +131,6 @@ class NemoIntegrationTest : public Testing::BaseIntegrationTest {
     };
 };
 
-// TODO enable this test with 4149
 TEST_F(NemoIntegrationTest, testThreeLevelsTopologyTopDown) {
     int64_t childThreshold = 1000;
     int64_t combinerThreshold = 1;
@@ -148,7 +147,6 @@ TEST_F(NemoIntegrationTest, testThreeLevelsTopologyTopDown) {
     EXPECT_EQ(1, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
 }
 
-// TODO enable this test with 4149
 TEST_F(NemoIntegrationTest, testThreeLevelsTopologyBottomUp) {
     int64_t childThreshold = 1;
     int64_t combinerThreshold = 1000;
@@ -165,7 +163,6 @@ TEST_F(NemoIntegrationTest, testThreeLevelsTopologyBottomUp) {
     EXPECT_EQ(8, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
 }
 
-// TODO enable this test with 4149
 TEST_F(NemoIntegrationTest, testNemoThreelevels) {
     int64_t childThreshold = 1;
     int64_t combinerThreshold = 1;
