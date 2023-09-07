@@ -26,9 +26,20 @@ namespace NES::Monitoring {
  */
 class CpuMetricsWrapper {
   public:
+    /**
+     * Default Ctor for CpuMetricsWrapper with timestamp=0.
+     */
     CpuMetricsWrapper();
-    CpuMetricsWrapper(uint64_t nodeId);
-    CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
+    /**
+     * Ctor for CpuMetricsWrapper with a nodeId.
+     * @param nodeId
+     */
+    explicit CpuMetricsWrapper(uint64_t nodeId);
+    /**
+     * Ctor for CpuMetricsWrapper with a set of CpuMetrics. Node is 0 here.
+     * @param arr CpuMetrics
+     */
+    explicit CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.

@@ -267,14 +267,14 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
 
     NES_INFO("ContinuousSourceTest: content=\n{}", content);
     auto lineCnt = countOccurrences("\n", content);
-    ASSERT_EQ(countOccurrences(",", content), 4 * lineCnt);
-    ASSERT_EQ(countOccurrences("timestamp", content), 1);
+    EXPECT_EQ(countOccurrences(",", content), 4 * lineCnt);
+    EXPECT_EQ(countOccurrences("timestamp", content), 1);
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    ASSERT_TRUE(retStopCord);
+    EXPECT_TRUE(retStopCord);
 }
 
 }// namespace NES
