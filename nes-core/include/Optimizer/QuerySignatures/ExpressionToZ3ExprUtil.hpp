@@ -45,9 +45,6 @@ class ExpressionToZ3ExprUtil {
      * @brief Convert input expression into an equivalent Z3 expressions
      * @param expression: the input expression
      * @param context: Z3 context
-     * @param filterAttributesAndIsMapFunctionApplied: Keeps track of all predicates in a stream, bool is true if a map
-     * operation was applied to the attribute otherwise it is false
-     * @param isMapExpression: true if the expression is a map expression, false otherwise
      * @return returns Z3 expression and field map
      */
     static Z3ExprAndFieldMapPtr createForExpression(const ExpressionNodePtr& expression, const z3::ContextPtr& context);
@@ -57,9 +54,6 @@ class ExpressionToZ3ExprUtil {
      * @brief Convert input Logical expression into an equivalent Z3 expression
      * @param expression: the input logical expression
      * @param context: the Z3 context
-     * @param filterAttributesAndIsMapFunctionApplied: Keeps track of all predicates in a stream, bool is true if a map
-     * operation was applied to the attribute otherwise it is false
-     * @param isMapExpression: true if the expression is a map expression, false otherwise
      * @return returns Z3 expression and field map
      */
     static Z3ExprAndFieldMapPtr createForLogicalExpressions(const ExpressionNodePtr& expression, const z3::ContextPtr& context);
@@ -68,9 +62,6 @@ class ExpressionToZ3ExprUtil {
      * @brief Convert input arithmetic expression into an equivalent Z3 expression
      * @param expression: the input arithmetic expression
      * @param context: the Z3 context
-     * @param filterAttributesAndIsMapFunctionApplied: Keeps track of all predicates in a stream, bool is true if a map
-     * operation was applied to the attribute otherwise it is false
-     * @param isMapExpression: true if the expression is a map expression, false otherwise
      * @return returns Z3 expression and field map
      */
     static Z3ExprAndFieldMapPtr createForArithmeticalExpressions(const ExpressionNodePtr& expression,
