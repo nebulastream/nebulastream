@@ -114,7 +114,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * joinOperator and parOperator.
      */
     void pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator,
-                             JoinLogicalOperatorNodePtr joinOperator, NodePtr parentOperator);
+                             JoinLogicalOperatorNodePtr joinOperator,
+                             NodePtr parentOperator);
 
     /**
      * @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
@@ -224,7 +225,8 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param fieldName field name of the attribute that is assigned a field by the map transformation
      */
     void substituteFilterAttributeWithMapTransformation(const FilterLogicalOperatorNodePtr& filterOperator,
-                                                                            const MapLogicalOperatorNodePtr& mapOperator, const std::string& fieldName);
+                                                        const MapLogicalOperatorNodePtr& mapOperator,
+                                                        const std::string& fieldName);
 };
 
 }// namespace NES::Optimizer
