@@ -77,6 +77,7 @@ class CpuMetrics {
     bool operator!=(const CpuMetrics& rhs) const;
 
     uint64_t nodeId;
+    uint64_t timestamp;
     uint64_t coreNum;
     uint64_t user;
     uint64_t nice;
