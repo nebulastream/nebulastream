@@ -68,6 +68,7 @@ class E2EBenchmarkConfigPerRun {
     Configurations::IntConfigOption numberOfPartitions;
     Configurations::LongConfigOption maxHashTableSize;
     Configurations::ConfigurationOptionPtr<QueryCompilation::QueryCompilerOptions::NautilusBackend> nautilusBackend;
+    Configurations::BoolConfigOption vectorize;
 };
 }// namespace NES::Benchmark
 

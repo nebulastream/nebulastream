@@ -35,6 +35,7 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
         QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER,
         "Nautilus back-end"
     );
+    vectorize = ConfigurationOption<bool>::create("vectorize", false, "use vectorization");
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -51,7 +52,8 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString() << std::endl
         << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
         << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl
-        << "- nautilusBackend: " << magic_enum::enum_name(nautilusBackend->getValue()) << std::endl;
+        << "- nautilusBackend: " << magic_enum::enum_name(nautilusBackend->getValue()) << std::endl
+        << "- vectorize: " << vectorize->getValueAsString() << std::endl;
 
     std::cout << oss.str() << std::endl;
     return oss.str();
@@ -103,6 +105,9 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         NES_THROW_RUNTIME_ERROR("Failed to parse nautilusBackend. Unrecognized value '" << nautilusBackendStr << "'");
     }
 
+    auto vectorize = !yamlConfig["vectorize"].IsNone() ? yamlConfig["vectorize"].As<bool>() : configPerRun.vectorize->getDefaultValue();
+
+
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
         NES_THROW_RUNTIME_ERROR("logicalSources could not been found in the yaml config file!");
@@ -152,6 +157,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.numberOfPartitions->setValue(numberOfPartitions[i]);
         e2EBenchmarkConfigPerRun.maxHashTableSize->setValue(maxHashTableSizes[i]);
         e2EBenchmarkConfigPerRun.nautilusBackend->setValue(nautilusBackend);
+        e2EBenchmarkConfigPerRun.vectorize->setValue(vectorize);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
