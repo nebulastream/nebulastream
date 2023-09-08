@@ -30,6 +30,11 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     preAllocPageCnt = ConfigurationOption<uint32_t>::create("preAllocPageCnt", 1, "preAllocPageCnt in Bucket");
     numberOfPartitions = ConfigurationOption<uint32_t>::create("numberOfPartitions", 1, "numberOfPartitions in HT");
     maxHashTableSize = ConfigurationOption<uint64_t>::create("maxHashTableSize", 0, ",max hash table size");
+    nautilusBackend = ConfigurationOption<QueryCompilation::QueryCompilerOptions::NautilusBackend>::create(
+        "nautilusBackend",
+        QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER,
+        "Nautilus back-end"
+    );
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -45,7 +50,8 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- pageSize: " << pageSize->getValueAsString() << std::endl
         << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString() << std::endl
         << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
-        << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl;
+        << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl
+        << "- nautilusBackend: " << magic_enum::enum_name(nautilusBackend->getValue()) << std::endl;
 
     std::cout << oss.str() << std::endl;
     return oss.str();
@@ -80,6 +86,22 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
 
     auto maxHashTableSizes = Util::splitAndFillIfEmpty<uint64_t>(yamlConfig["maxHashTableSize"].As<std::string>(),
                                                                  configPerRun.maxHashTableSize->getDefaultValue());
+
+    auto nautilusBackendStr = !yamlConfig["nautilusBackend"].IsNone() ? yamlConfig["nautilusBackend"].As<std::string>() : "MLIR_COMPILER";
+    QueryCompilation::QueryCompilerOptions::NautilusBackend nautilusBackend;
+    if (nautilusBackendStr == "INTERPRETER") {
+        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::INTERPRETER;
+    } else if (nautilusBackendStr == "MLIR_COMPILER") {
+        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
+    } else if (nautilusBackendStr == "BC_INTERPRETER") {
+        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::BC_INTERPRETER;
+    } else if (nautilusBackendStr == "FLOUNDER_COMPILER") {
+        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::FLOUNDER_COMPILER;
+    } else if (nautilusBackendStr == "CPP_COMPILER") {
+        nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::CPP_COMPILER;
+    } else {
+        NES_THROW_RUNTIME_ERROR("Failed to parse nautilusBackend. Unrecognized value '" << nautilusBackendStr << "'");
+    }
 
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
@@ -129,6 +151,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.preAllocPageCnt->setValue(preAllocPageCnts[i]);
         e2EBenchmarkConfigPerRun.numberOfPartitions->setValue(numberOfPartitions[i]);
         e2EBenchmarkConfigPerRun.maxHashTableSize->setValue(maxHashTableSizes[i]);
+        e2EBenchmarkConfigPerRun.nautilusBackend->setValue(nautilusBackend);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
