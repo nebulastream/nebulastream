@@ -15,9 +15,6 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_STAGINGHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXPERIMENTAL_VECTORIZATION_STAGINGHANDLER_HPP_
 
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
-#include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
