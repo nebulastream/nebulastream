@@ -90,15 +90,20 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer) {
     // Set the stage buffer size to half of the tuple buffer's size. Hence, the number of invocations should be two.
     auto schemaSize = schema->getSchemaSizeInBytes();
     auto stageBufferSize = (dynamicBufferCapacity * schemaSize) / 2;
-    auto handler = std::make_shared<StagingHandler>(stageBufferSize, schemaSize);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    std::vector<OperatorHandlerPtr> handlers;
+    auto stagingHandler = std::make_shared<StagingHandler>(stageBufferSize, schemaSize);
+    handlers.push_back(stagingHandler);
+    auto bufferManager = std::make_shared<BufferManager>();
+    auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers, bufferManager);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) pipelineContext.get()));
+
+    stagingHandler->start(pipelineContext, nullptr, 0);
 
     std::vector<Record::RecordFieldIdentifier> projections = {"f1", "f2"};
     auto collectMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto collectOperator = std::make_shared<VectorizedCollectOperator>(std::move(collectMemoryProviderPtr), projections);
     auto vectorizeMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto vectorizeOperator = Vectorize(pipelineContext.getOperatorHandlers().size() - 1, std::move(vectorizeMemoryProviderPtr));
+    auto vectorizeOperator = Vectorize(pipelineContext->getOperatorHandlers().size() - 1, std::move(vectorizeMemoryProviderPtr));
     vectorizeOperator.setChild(collectOperator);
 
     auto bufferRef = Value<MemRef>((int8_t*) std::addressof(buffer));
@@ -119,6 +124,8 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer) {
         ASSERT_EQ(record.read("f1"), (int64_t) i % 2);
         ASSERT_EQ(record.read("f2"), (int64_t) i);
     }
+
+    stagingHandler->stop(QueryTerminationType::Graceful, pipelineContext);
 }
 
 } // namespace NES::Runtime::Execution::Operators
