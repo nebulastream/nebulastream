@@ -15,11 +15,11 @@
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 namespace NES::Runtime::Execution {
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext()
+MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handlers, Runtime::BufferManagerPtr bufferManager)
     : PipelineExecutionContext(
         -1,// mock pipeline id
         0, // mock query id
-        nullptr,
+        bufferManager,
         1,
         [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
             this->buffers.emplace_back(std::move(buffer));
@@ -27,24 +27,21 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext()
         [this](TupleBuffer& buffer) {
             this->buffers.emplace_back(std::move(buffer));
         },
-        {}){
-        // nop
-    };
+        handlers)
+{
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler)
-    : PipelineExecutionContext(
-        -1,// mock pipeline id
-        0, // mock query id
-        nullptr,
-        1,
-        [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-            this->buffers.emplace_back(std::move(buffer));
-        },
-        [this](TupleBuffer& buffer) {
-            this->buffers.emplace_back(std::move(buffer));
-        },
-        handler){
-        // nop
-    };
+}
+
+MockedPipelineExecutionContext::MockedPipelineExecutionContext()
+    : MockedPipelineExecutionContext({}, nullptr)
+{
+
+}
+
+MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handlers)
+    : MockedPipelineExecutionContext(handlers, nullptr)
+{
+
+}
 
 }// namespace NES::Runtime::Execution
