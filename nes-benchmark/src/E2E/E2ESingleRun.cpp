@@ -70,6 +70,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.maxHashTableSize = configPerRun.maxHashTableSize->getValue();
 
     coordinatorConf->worker.queryCompiler.useVectorization = configPerRun.vectorize->getValue();
+    coordinatorConf->worker.queryCompiler.stageBufferSize = configPerRun.stageBufferSize->getValue();
 
     if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
         coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
@@ -276,6 +277,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << NES_VERSION;
         outputCsvStream << "," << configPerRun.nautilusBackend;
         outputCsvStream << "," << schemaSizeInB;
+        outputCsvStream << "," << configPerRun.stageBufferSize;
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();

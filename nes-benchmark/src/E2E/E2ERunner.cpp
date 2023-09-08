@@ -44,6 +44,7 @@ void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
     std::ofstream ofs;
     ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::out | std::ofstream::app);
     ofs << "BenchmarkName,NES_VERSION,nautilusBackend,SchemaSize,"
+           "stageBufferSize,"
            "timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
