@@ -37,6 +37,7 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     );
     vectorize = ConfigurationOption<bool>::create("vectorize", false, "use vectorization");
     stageBufferSize = ConfigurationOption<uint64_t>::create("stageBufferSize", 4096, "stage buffer size");
+    useCuda = ConfigurationOption<bool>::create("useCuda", false, "use CUDA back-end");
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -55,7 +56,8 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl
         << "- nautilusBackend: " << magic_enum::enum_name(nautilusBackend->getValue()) << std::endl
         << "- vectorize: " << vectorize->getValueAsString() << std::endl
-        << "- stageBufferSize: " << stageBufferSize->getValueAsString() << std::endl;
+        << "- stageBufferSize: " << stageBufferSize->getValueAsString() << std::endl
+        << "- useCuda: " << useCuda->getValueAsString() << std::endl;
 
     std::cout << oss.str() << std::endl;
     return oss.str();
@@ -114,6 +116,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         configPerRun.stageBufferSize->getDefaultValue()
     );
 
+    auto useCuda = !yamlConfig["useCuda"].IsNone() ? yamlConfig["useCuda"].As<bool>() : configPerRun.useCuda->getDefaultValue();
+
 
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
@@ -168,6 +172,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.nautilusBackend->setValue(nautilusBackend);
         e2EBenchmarkConfigPerRun.vectorize->setValue(vectorize);
         e2EBenchmarkConfigPerRun.stageBufferSize->setValue(stageBufferSizes[i]);
+        e2EBenchmarkConfigPerRun.useCuda->setValue(useCuda);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);

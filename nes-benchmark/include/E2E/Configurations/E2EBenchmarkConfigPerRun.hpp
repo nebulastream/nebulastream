@@ -70,6 +70,7 @@ class E2EBenchmarkConfigPerRun {
     Configurations::ConfigurationOptionPtr<QueryCompilation::QueryCompilerOptions::NautilusBackend> nautilusBackend;
     Configurations::BoolConfigOption vectorize;
     Configurations::LongConfigOption stageBufferSize;
+    Configurations::BoolConfigOption useCuda;
 };
 }// namespace NES::Benchmark
 
