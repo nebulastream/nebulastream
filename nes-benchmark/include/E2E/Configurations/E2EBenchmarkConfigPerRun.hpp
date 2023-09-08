@@ -69,6 +69,7 @@ class E2EBenchmarkConfigPerRun {
     Configurations::LongConfigOption maxHashTableSize;
     Configurations::ConfigurationOptionPtr<QueryCompilation::QueryCompilerOptions::NautilusBackend> nautilusBackend;
     Configurations::BoolConfigOption vectorize;
+    Configurations::LongConfigOption stageBufferSize;
 };
 }// namespace NES::Benchmark
 

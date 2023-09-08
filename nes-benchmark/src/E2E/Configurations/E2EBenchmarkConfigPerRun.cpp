@@ -36,6 +36,7 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
         "Nautilus back-end"
     );
     vectorize = ConfigurationOption<bool>::create("vectorize", false, "use vectorization");
+    stageBufferSize = ConfigurationOption<uint64_t>::create("stageBufferSize", 4096, "stage buffer size");
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -53,7 +54,8 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
         << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl
         << "- nautilusBackend: " << magic_enum::enum_name(nautilusBackend->getValue()) << std::endl
-        << "- vectorize: " << vectorize->getValueAsString() << std::endl;
+        << "- vectorize: " << vectorize->getValueAsString() << std::endl
+        << "- stageBufferSize: " << stageBufferSize->getValueAsString() << std::endl;
 
     std::cout << oss.str() << std::endl;
     return oss.str();
@@ -107,6 +109,11 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
 
     auto vectorize = !yamlConfig["vectorize"].IsNone() ? yamlConfig["vectorize"].As<bool>() : configPerRun.vectorize->getDefaultValue();
 
+    auto stageBufferSizes = Util::splitAndFillIfEmpty<uint64_t>(
+        yamlConfig["stageBufferSize"].As<std::string>(),
+        configPerRun.stageBufferSize->getDefaultValue()
+    );
+
 
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
@@ -125,6 +132,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfPartitions.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, maxHashTableSizes.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, stageBufferSizes.size());
 
     /* Padding all vectors to the desired size */
     Util::padVectorToSize<uint32_t>(numWorkerOfThreads, totalBenchmarkRuns, numWorkerOfThreads.back());
@@ -140,6 +148,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(preAllocPageCnts, totalBenchmarkRuns, preAllocPageCnts.back());
     Util::padVectorToSize<uint32_t>(numberOfPartitions, totalBenchmarkRuns, numberOfPartitions.back());
     Util::padVectorToSize<uint64_t>(maxHashTableSizes, totalBenchmarkRuns, maxHashTableSizes.back());
+    Util::padVectorToSize<uint64_t>(stageBufferSizes, totalBenchmarkRuns, stageBufferSizes.back());
     Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
                                                            totalBenchmarkRuns,
                                                            allLogicalSrcToPhysicalSources.back());
@@ -158,6 +167,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.maxHashTableSize->setValue(maxHashTableSizes[i]);
         e2EBenchmarkConfigPerRun.nautilusBackend->setValue(nautilusBackend);
         e2EBenchmarkConfigPerRun.vectorize->setValue(vectorize);
+        e2EBenchmarkConfigPerRun.stageBufferSize->setValue(stageBufferSizes[i]);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
