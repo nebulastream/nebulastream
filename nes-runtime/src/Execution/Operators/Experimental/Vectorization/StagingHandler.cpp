@@ -13,7 +13,6 @@
 */
 
 #include <Execution/Operators/Experimental/Vectorization/StagingHandler.hpp>
-
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -56,15 +55,13 @@ TupleBuffer* StagingHandler::getTupleBuffer() const {
     return tupleBuffer.get();
 }
 
-uint64_t StagingHandler::getCurrentWritePosition() const {
-    return currentWritePosition;
-}
-
-void StagingHandler::incrementWritePosition() {
+uint64_t StagingHandler::getCurrentWritePositionAndIncrement() {
+    auto oldWritePosition = currentWritePosition;
     currentWritePosition = currentWritePosition + 1;
     if (tupleBuffer) {
         tupleBuffer->setNumberOfTuples(currentWritePosition);
     }
+    return oldWritePosition;
 }
 
 } // namespace NES::Runtime::Execution::Operators
