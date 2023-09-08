@@ -36,14 +36,9 @@ void* getStageBuffer(void* state) {
     return tupleBuffer->getBuffer();
 }
 
-uint64_t getCurrentWritePosition(void* state) {
+uint64_t getCurrentWriteIndexAndIncrement(void* state) {
     auto handler = static_cast<StagingHandler*>(state);
-    return handler->getCurrentWritePosition();
-}
-
-void incrementWriteIndex(void* state) {
-    auto handler = static_cast<StagingHandler*>(state);
-    handler->incrementWritePosition();
+    return handler->getCurrentWritePositionAndIncrement();
 }
 
 bool isStageBufferFull(void* state) {
@@ -67,9 +62,8 @@ void Vectorize::execute(ExecutionContext& ctx, Record& record) const {
     if (hasChild()) {
         auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         auto stageBufferAddress = Nautilus::FunctionCall("getStageBuffer", getStageBuffer, globalOperatorHandler);
-        auto writeIndex = Nautilus::FunctionCall("getCurrentWritePosition", getCurrentWritePosition, globalOperatorHandler);
+        auto writeIndex = Nautilus::FunctionCall("getCurrentWriteIndexAndIncrement", getCurrentWriteIndexAndIncrement, globalOperatorHandler);
         memoryProvider->write(writeIndex, stageBufferAddress, record);
-        Nautilus::FunctionCall("incrementWriteIndex", incrementWriteIndex, globalOperatorHandler);
         auto stageBufferFull = Nautilus::FunctionCall("isStageBufferFull", isStageBufferFull, globalOperatorHandler);
         if (stageBufferFull) {
             auto tupleBufferRef = Nautilus::FunctionCall("getTupleBuffer", getTupleBuffer, globalOperatorHandler);

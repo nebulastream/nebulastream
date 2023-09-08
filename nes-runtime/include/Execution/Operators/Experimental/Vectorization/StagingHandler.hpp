@@ -55,14 +55,10 @@ public:
     TupleBuffer* getTupleBuffer() const;
 
     /**
-     * @return Get the current offset for writing to the staging buffer.
+     * @brief Increment the current write offset of the staging buffer.
+     * @return Get the current (pre-increment) offset for writing to the staging buffer.
      */
-    uint64_t getCurrentWritePosition() const;
-
-    /**
-     * @return Increment the current write offset of the staging buffer.
-     */
-    void incrementWritePosition();
+    uint64_t getCurrentWritePositionAndIncrement();
 
 private:
     uint64_t stageBufferSize;
