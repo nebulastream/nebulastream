@@ -16,6 +16,7 @@
 #define NES_E2EBENCHMARKCONFIGPERRUN_HPP
 
 #include <Configurations/ConfigurationOption.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <vector>
 
@@ -66,6 +67,7 @@ class E2EBenchmarkConfigPerRun {
     Configurations::IntConfigOption preAllocPageCnt;
     Configurations::IntConfigOption numberOfPartitions;
     Configurations::LongConfigOption maxHashTableSize;
+    Configurations::ConfigurationOptionPtr<QueryCompilation::QueryCompilerOptions::NautilusBackend> nautilusBackend;
 };
 }// namespace NES::Benchmark
 

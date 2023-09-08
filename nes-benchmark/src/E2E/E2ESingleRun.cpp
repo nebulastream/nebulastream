@@ -62,8 +62,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConf->worker.queryCompiler.queryCompilerDumpMode =
         QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
-    coordinatorConf->worker.queryCompiler.nautilusBackend =
-        QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
+    coordinatorConf->worker.queryCompiler.nautilusBackend = configPerRun.nautilusBackend->getValue();
 
     coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();
     coordinatorConf->worker.queryCompiler.numberOfPartitions = configPerRun.numberOfPartitions->getValue();
@@ -257,7 +256,9 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     for (const auto& measurementsCsv :
          measurements.getMeasurementsAsCSV(schemaSizeInB, configPerRun.numberOfQueriesToDeploy->getValue())) {
         outputCsvStream << "\"" << configOverAllRuns.benchmarkName->getValue() << "\"";
-        outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
+        outputCsvStream << "," << NES_VERSION;
+        outputCsvStream << "," << configPerRun.nautilusBackend;
+        outputCsvStream << "," << schemaSizeInB;
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
