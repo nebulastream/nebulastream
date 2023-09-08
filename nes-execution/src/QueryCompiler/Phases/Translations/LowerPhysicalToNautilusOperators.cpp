@@ -440,7 +440,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalUnvectorizeOperator>()) {
         auto schema = operatorNode->getOutputSchema();
         NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
-        auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+        auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
+        auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
         auto unvectorize = std::make_shared<Runtime::Execution::Operators::Unvectorize>(std::move(memoryProvider));
         parentOperator->setChild(unvectorize);
         return unvectorize;
