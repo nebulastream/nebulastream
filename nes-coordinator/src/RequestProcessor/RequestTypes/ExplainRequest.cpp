@@ -298,7 +298,8 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                              globalExecutionPlan,
                                                              topology,
                                                              accelerateJavaUdFs,
-                                                             accelerationServiceURL);
+                                                             accelerationServiceURL,
+                                                             sampleCodeGenerationPhase);
 
         //24. respond to the calling service with the query id
         responsePromise.set_value(std::make_shared<ExplainResponse>(response));
@@ -325,11 +326,13 @@ void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     }
 }
 
-nlohmann::json ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
-                                                                    const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                    const TopologyPtr& topology,
-                                                                    bool accelerateJavaUDFs,
-                                                                    const std::string& accelerationServiceURL) {
+nlohmann::json
+ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
+                                                     const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                     const TopologyPtr& topology,
+                                                     bool accelerateJavaUDFs,
+                                                     const std::string& accelerationServiceURL,
+                                                     const Optimizer::SampleCodeGenerationPhasePtr& sampleCodeGenerationPhase) {
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
     nlohmann::json executionPlanJson{};
@@ -347,10 +350,10 @@ nlohmann::json ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryI
         for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
 
             // prepare json object to hold information on current query sub plan
-            nlohmann::json currentQuerySubPlan{};
+            nlohmann::json currentQuerySubPlanMetaData{};
 
             // id of current query sub plan
-            currentQuerySubPlan["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
+            currentQuerySubPlanMetaData["querySubPlanId"] = querySubPlan->getQuerySubPlanId();
 
             // add open cl acceleration code
             if (accelerateJavaUDFs) {
@@ -358,11 +361,30 @@ nlohmann::json ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryI
             }
 
             // add logical query plan to the json object
-            currentQuerySubPlan["logicalQuerySubPlan"] = querySubPlan->toString();
+            currentQuerySubPlanMetaData["logicalQuerySubPlan"] = querySubPlan->toString();
 
-            // TODO: add the optimized code of the query sub plan to the json object
+            // Generate Code Snippets for the sub query plan
+            auto updatedSubQueryPlan = sampleCodeGenerationPhase->execute(querySubPlan);
+            std::vector<std::string> generatedCodeSnippets;
+            std::set<uint64_t> pipelineIds;
+            auto queryPlanIterator = QueryPlanIterator(updatedSubQueryPlan);
+            for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+                auto visitingOp = (*itr)->as<OperatorNode>();
+                auto pipelineId = std::any_cast<uint64_t>(visitingOp->getProperty("PIPELINE_ID"));
+                if (pipelineIds.emplace(pipelineId).second) {
+                    generatedCodeSnippets.emplace_back(std::any_cast<std::string>(visitingOp->getProperty("SOURCE_CODE")));
+                }
+            }
 
-            scheduledSubQueries.push_back(currentQuerySubPlan);
+            // Added generated code snippets to the response
+            nlohmann::json generatedPipelineCodeSnippets{};
+            for (const auto& generatedCodeSnippet : generatedCodeSnippets){
+                generatedPipelineCodeSnippets.emplace_back(generatedCodeSnippet);
+            }
+
+            currentQuerySubPlanMetaData["Pipelines"] = generatedPipelineCodeSnippets;
+
+            scheduledSubQueries.push_back(currentQuerySubPlanMetaData);
         }
         executionNodeMetaData["querySubPlans"] = scheduledSubQueries;
         nodes.push_back(executionNodeMetaData);

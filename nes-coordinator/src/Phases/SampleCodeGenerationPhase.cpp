@@ -86,11 +86,11 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
             pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
             timer.snapshot("AfterNautilusCompilationPhase");
 
-            for (auto& pipe : pipelinedQueryPlan->getPipelines()) {
-                if (pipe->getQueryPlan()->getRootOperators()[0]->instanceOf<QueryCompilation::ExecutableOperator>()) {
+            for (auto& pipeline : pipelinedQueryPlan->getPipelines()) {
+                if (pipeline->getQueryPlan()->getRootOperators()[0]->instanceOf<QueryCompilation::ExecutableOperator>()) {
                     auto executableOperator =
-                        pipe->getQueryPlan()->getRootOperators()[0]->as<QueryCompilation::ExecutableOperator>();
-                    NES_DEBUG("executable pipeline id {}", pipe->getPipelineId());
+                        pipeline->getQueryPlan()->getRootOperators()[0]->as<QueryCompilation::ExecutableOperator>();
+                    NES_DEBUG("executable pipeline id {}", pipeline->getPipelineId());
                     auto stage = executableOperator->getExecutablePipelineStage();
                     auto cStage = std::dynamic_pointer_cast<Runtime::Execution::CompiledExecutablePipelineStage>(stage);
                     auto dumpHelper = DumpHelper::create("", false, false);
@@ -98,11 +98,12 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
                     auto ir = cStage->createIR(dumpHelper, timer);
                     auto lp = Nautilus::Backends::CPP::CPPLoweringProvider();
                     auto pipelineCPPSourceCode = lp.lower(ir);
-                    auto& operatorsInPipeline = pipe->getOperatorIds();
+                    auto& operatorsInPipeline = pipeline->getOperatorIds();
                     for (auto& operatorId : operatorsInPipeline) {
                         auto op = inputPlan->getOperatorWithId(operatorId);
                         if (op) {
                             op->addProperty(NES::Optimizer::ElegantPlacementStrategy::sourceCodeKey, pipelineCPPSourceCode);
+                            op->addProperty("PIPELINE_ID", pipeline->getPipelineId());
                         }
                     }
                 }
