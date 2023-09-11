@@ -197,13 +197,15 @@ class ExplainRequest : public AbstractRequest {
      * @param topology : topology pointer
      * @param accelerateJavaUDFs : accelerate java udfs
      * @param accelerationServiceURL: url for fetching acceleration code
+     * @param sampleCodeGenerationPhase> phase used to generate sample code
      * @return json representing the global execution plan
      */
     nlohmann::json getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId,
                                                         const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                         const TopologyPtr& topology,
                                                         bool accelerateJavaUDFs,
-                                                        const std::string& accelerationServiceURL);
+                                                        const std::string& accelerationServiceURL,
+                                                        const Optimizer::SampleCodeGenerationPhasePtr& sampleCodeGenerationPhase);
 
   private:
     QueryId queryId;
