@@ -31,15 +31,19 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     const std::string& compilationBackend,
     const Nautilus::CompilationOptions& options)
     : NautilusExecutablePipelineStage(physicalOperatorPipeline), compilationBackend(compilationBackend), options(options),
-      pipelineFunction(nullptr) {}
+      cpuPipelineFunction(nullptr), gpuPipelineFunction(nullptr) {}
 
 ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                          PipelineExecutionContext& pipelineExecutionContext,
                                                          WorkerContext& workerContext) {
     // wait till pipeline is ready
-    executablePipeline.wait();
+//    cpuExecutablePipeline.wait();
+    gpuExecutablePipeline.wait();
 
-    pipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+//    cpuPipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+    gpuPipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+
+
     return ExecutionResult::Ok;
 }
 
@@ -80,7 +84,7 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> CompiledExecutablePipelineStage::cre
     return ir;
 }
 
-std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compilePipeline() {
+std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compileCPUPipeline() {
     // compile after setup
     auto dumpHelper = DumpHelper::create(options.getIdentifier(),
                                          options.isDumpToConsole(),
@@ -101,11 +105,37 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
 uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext) {
     NautilusExecutablePipelineStage::setup(pipelineExecutionContext);
     // TODO enable async compilation #3357
-    executablePipeline = std::async(std::launch::deferred, [this] {
-                             return this->compilePipeline();
-                         }).share();
-    pipelineFunction = executablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
+
+    // Prepare the CPU pipeline
+//    cpuExecutablePipeline = std::async(std::launch::deferred, [this] {
+//                             return this->compileCPUPipeline();
+//                         }).share();
+//    cpuPipelineFunction = cpuExecutablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
+
+    // Prepare the GPU pipeline
+    gpuExecutablePipeline =std::async(std::launch::deferred, [this] {
+                                return this->compileGPUPipeline();
+                            }).share();
+    gpuPipelineFunction = gpuExecutablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
+
     return 0;
+}
+std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compileGPUPipeline() {
+    // compile after setup
+    auto dumpHelper = DumpHelper::create(options.getIdentifier(),
+                                         options.isDumpToConsole(),
+                                         options.isDumpToFile(),
+                                         options.getDumpOutputPath());
+    Timer timer("CompilationBasedPipelineExecutionEngine " + options.getIdentifier());
+    timer.start();
+    auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin("CPPCompiler");
+    auto ir = createIR(dumpHelper, timer);
+    auto executable = compiler->compile(ir, options, dumpHelper);
+    timer.snapshot("Compilation");
+    std::stringstream timerAsString;
+    timerAsString << timer;
+    NES_INFO("{}", timerAsString.str());
+    return executable;
 }
 
 }// namespace NES::Runtime::Execution

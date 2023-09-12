@@ -82,7 +82,7 @@ RuntimePathConfig loadRuntimePathConfig() {
         const std::string runtimeBinaryDir = PATH_TO_BINARY_DIR "/nes-runtime/";
         const std::string commonBinaryDir = PATH_TO_BINARY_DIR "/nes-core/";
         const std::string dataTypesBinaryDir = PATH_TO_BINARY_DIR "/nes-data-types/";
-        runtimePathConfig.clangBinaryPath = CLANG_EXECUTABLE;
+        runtimePathConfig.clangBinaryPath = "/home/dwi/Documents/NebulaStream/experimental_nes_co_processing/clang-llvm-16.0.4/bin/clang";
         runtimePathConfig.libPaths.push_back(coreBinaryDir);
         runtimePathConfig.libPaths.push_back(runtimeBinaryDir);
         runtimePathConfig.libPaths.push_back(commonBinaryDir);

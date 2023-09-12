@@ -46,11 +46,14 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
     std::shared_ptr<NES::Nautilus::IR::IRGraph> createIR(DumpHelper& dumpHelper, Timer<>& timer);
 
   private:
-    std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();
+    std::unique_ptr<Nautilus::Backends::Executable> compileCPUPipeline();
+    std::unique_ptr<Nautilus::Backends::Executable> compileGPUPipeline();
     std::string compilationBackend;
     const Nautilus::CompilationOptions options;
-    std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> executablePipeline;
-    Nautilus::Backends::Executable::Invocable<void, void*, void*, void*> pipelineFunction;
+    std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> cpuExecutablePipeline;
+    std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> gpuExecutablePipeline;
+    Nautilus::Backends::Executable::Invocable<void, void*, void*, void*> cpuPipelineFunction;
+    Nautilus::Backends::Executable::Invocable<void, void*, void*, void*> gpuPipelineFunction;
 };
 
 }// namespace NES::Runtime::Execution
