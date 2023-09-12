@@ -16,6 +16,7 @@ add_nes_unit_test(query-execution-test
         "ProjectionQueryExecutionTest.cpp"
         "MergeQueryExecutionTest.cpp"
         "MapQueryExecutionTest.cpp"
+        "MapGPUExecutionTest.cpp"
         "UnionQueryExecutionTest.cpp"
         "DemoCityQueryExecutionTest.cpp")
 

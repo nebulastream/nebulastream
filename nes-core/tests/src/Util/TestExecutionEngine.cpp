@@ -27,13 +27,18 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
     workerConfiguration->queryCompiler.queryCompilerType = compiler;
-    workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
+    workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::CPP_COMPILER;
     workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
     workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
     workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     workerConfiguration->numWorkerThreads = numWorkerThreads;
     workerConfiguration->numberOfBuffersInGlobalBufferManager = numWorkerThreads * 10240;
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool = numWorkerThreads * 512;
+
+    workerConfiguration->queryCompiler.useVectorization = true;
+    workerConfiguration->queryCompiler.stageBufferSize = 64;
+    workerConfiguration->queryCompiler.useCUDA = true;
+    workerConfiguration->queryCompiler.cudaSdkPath = "/usr/local/cuda";
 
     auto defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
