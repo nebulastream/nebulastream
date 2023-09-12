@@ -55,8 +55,6 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Streaming/InferModel/InferModelHandler.hpp>
-#include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/JoinPhases/NLJProbe.hpp>
@@ -449,13 +447,16 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;
     }
-#ifdef TFDEF
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
-        auto inferModel = lowerInferModelOperator(operatorNode, operatorHandlers);
-        parentOperator->setChild(inferModel);
-        return inferModel;
+
+    // Check if a plugin is registered that handles this physical operator
+    for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins()) {
+        auto resultOperator = plugin->lower(operatorNode, operatorHandlers);
+        if (resultOperator.has_value()) {
+            parentOperator->setChild(*resultOperator);
+            return *resultOperator;
+        }
     }
-#endif
+
     NES_NOT_IMPLEMENTED();
 }
 
@@ -1067,38 +1068,6 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
         default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
     }
 }
-
-#ifdef TFDEF
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                                          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-
-    auto inferModelOperator = physicalOperator->as<PhysicalOperators::PhysicalInferModelOperator>();
-    auto model = inferModelOperator->getModel();
-
-    //Fetch the name of input fields
-    std::vector<std::string> inputFields;
-    for (const auto& inputField : inferModelOperator->getInputFields()) {
-        auto fieldAccessExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
-        inputFields.push_back(fieldAccessExpression->getFieldName());
-    }
-
-    //Fetch the name of output fields
-    std::vector<std::string> outputFields;
-    for (const auto& outputField : inferModelOperator->getOutputFields()) {
-        auto fieldAccessExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
-        outputFields.push_back(fieldAccessExpression->getFieldName());
-    }
-
-    //build the handler to invoke model during execution
-    auto handler = std::make_shared<Runtime::Execution::Operators::InferModelHandler>(model);
-    operatorHandlers.push_back(handler);
-    auto indexForThisHandler = operatorHandlers.size() - 1;
-
-    //build nautilus infer model operator
-    return std::make_shared<Runtime::Execution::Operators::InferModelOperator>(indexForThisHandler, inputFields, outputFields);
-}
-#endif
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 

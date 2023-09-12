@@ -18,7 +18,6 @@
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
-#include <Operators/LogicalOperators/Sources/ArrowSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
@@ -499,29 +498,6 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                size_t numSourceLocalBuffers,
                                const std::string& physicalSourceName,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-#endif
-
-#ifdef ENABLE_ARROW_BUILD
-
-/* @brief function to create an Arrow IPC source
- * @param schema of data source
- * @param bufferManager
- * @param queryManager
- * @param arrowSourceType
- * @param numberOfTuplesToProducePerBuffer
- * @param numBuffersToProcess
- * @param operatorId
- * @return a const data source pointer
- */
-DataSourcePtr createArrowSource(const SchemaPtr& schema,
-                                const Runtime::BufferManagerPtr& bufferManager,
-                                const Runtime::QueryManagerPtr& queryManager,
-                                const ArrowSourceTypePtr& arrowSourceType,
-                                OperatorId operatorId,
-                                OriginId originId,
-                                size_t numSourceLocalBuffers,
-                                const std::string& physicalSourceName,
-                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 
 /**

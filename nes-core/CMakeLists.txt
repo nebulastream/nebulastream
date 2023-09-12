@@ -62,6 +62,15 @@ install(TARGETS nes-grpc
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
+
+
+#add_custom_command(
+#        TARGET nes
+#        POST_BUILD        # This ensures the command is executed after building target z
+#        COMMAND ${CMAKE_COMMAND} --build . --target build_all_plugins --config $<CONFIGURATION>
+#        COMMENT "Building all_plugins"
+#)
+
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -71,6 +80,8 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 if (NES_USE_TF)
     message(STATUS "Building with tensorflowlite")
+    find_package(tensorflow-lite-c REQUIRED)
+
     target_link_libraries(nes PUBLIC tensorflowlite_c::tensorflowlite_c)
 endif ()
 
@@ -119,7 +130,7 @@ add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
-target_link_libraries(nesWorker PUBLIC nes )
+target_link_libraries(nesWorker PUBLIC nes)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

@@ -28,11 +28,3 @@ add_nes_runtime_test(runtime-limit-pipeline-test "LimitPipelineTest.cpp")
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_nes_runtime_test(runtime-javaudf-pipeline-test "MapJavaUDFPipelineTest.cpp" "FlatMapJavaUDFPipelineTest.cpp")
 endif ()
-
-if (NES_USE_TF)
-    add_nes_runtime_test(runtime-infer-model-pipeline-test "InferModelPipelineTest.cpp")
-endif ()
-
-if (NES_USE_ARROW)
-    add_nes_runtime_test(runtime-arrow-scan-pipeline-test "ArrowScanEmitPipelineTest.cpp")
-endif ()

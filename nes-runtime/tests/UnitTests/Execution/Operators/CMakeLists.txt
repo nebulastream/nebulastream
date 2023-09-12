@@ -16,7 +16,4 @@ add_subdirectory(ThresholdWindow)
 add_subdirectory(Streaming)
 
 add_nes_runtime_test(runtime-scan-operator-test "ScanOperatorTest.cpp")
-if (NES_USE_ARROW)
-    add_nes_runtime_test(runtime-arrow-scan-operator-test "ArrowScanOperatorTest.cpp")
-endif ()
 add_nes_runtime_test(runtime-emit-operator-test "EmitOperatorTest.cpp")

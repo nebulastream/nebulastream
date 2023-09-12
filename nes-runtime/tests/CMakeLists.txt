@@ -42,7 +42,7 @@ function(add_nes_runtime_test)
         message(STATUS "Added cc test ${TARGET_NAME}")
     endif ()
     gtest_add_tests(TARGET ${TARGET_NAME})
-    message(STATUS "Added ut test ${TARGET_NAME}")
+    message(STATUS "Added unit test ${TARGET_NAME}")
 endfunction()
 
 add_subdirectory(UnitTests)
