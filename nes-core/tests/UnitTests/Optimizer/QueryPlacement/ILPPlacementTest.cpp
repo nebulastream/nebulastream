@@ -129,6 +129,55 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
     }
 
+    void setupTopologyAndSourceCatalogBigForILP() {
+
+        topologyForILP = Topology::create();
+
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+        TopologyNodePtr rootNode = TopologyNode::create(4, "localhost", 123, 124, 100, properties);
+        rootNode->addNodeProperty("slots", 100);
+        topologyForILP->setAsRoot(rootNode);
+
+        TopologyNodePtr middleNode = TopologyNode::create(3, "localhost", 123, 124, 10, properties);
+        middleNode->addNodeProperty("slots", 10);
+        topologyForILP->addNewTopologyNodeAsChild(rootNode, middleNode);
+
+        TopologyNodePtr secondMiddleNode = TopologyNode::create(2, "localhost", 123, 124, 10, properties);
+        secondMiddleNode->addNodeProperty("slots", 10);
+        topologyForILP->addNewTopologyNodeAsChild(middleNode, secondMiddleNode);
+
+        TopologyNodePtr sourceNode = TopologyNode::create(1, "localhost", 123, 124, 1, properties);
+        sourceNode->addNodeProperty("slots", 1);
+        topologyForILP->addNewTopologyNodeAsChild(secondMiddleNode, sourceNode);
+
+        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+
+        sourceNode->addLinkProperty(secondMiddleNode, linkProperty);
+        secondMiddleNode->addLinkProperty(sourceNode, linkProperty);
+        secondMiddleNode->addLinkProperty(middleNode, linkProperty);
+        middleNode->addLinkProperty(secondMiddleNode, linkProperty);
+        middleNode->addLinkProperty(rootNode, linkProperty);
+        rootNode->addLinkProperty(middleNode, linkProperty);
+
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string sourceName = "car";
+
+        sourceCatalogForILP = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalogForILP->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalogForILP->getLogicalSource(sourceName);
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+        sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
+    }
+
     void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode) {
         int cost = 1;
         double dmf = 1;
@@ -385,6 +434,67 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
     }
 }
 
+/* Test query placement with ILP strategy - window query with one topology node more */
+TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategyWithBiggerTopologyPlan) {
+    setupTopologyAndSourceCatalogBigForILP();
+
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP, udfCatalog);
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
+
+    //Prepare query plan
+    Query query = Query::from("car").window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+    }
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ILP);
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topologyForILP,
+                                                             sourceCatalogForILP,
+                                                             Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getId();
+
+    //Perform placement
+    queryPlacementPhase->execute(sharedQueryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 4U);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        }
+        else if (executionNode->getId() == 4) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        }
+
+    }
+}
+
 /* Test query placement with ILP strategy - window query with sliding windiow */
 TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
@@ -397,7 +507,7 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query plan
-    Query query = Query::from("car").window(SlidingWindow::of(EventTime(Attribute("id")), Seconds(1), Milliseconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").window(SlidingWindow::of(EventTime(Attribute("id")), Seconds(1), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
