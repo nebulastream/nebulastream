@@ -283,12 +283,15 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
                                  std::map<uint64_t, z3::expr>& nodeUtilizationMap,
                                  std::map<uint64_t, double>& nodeMileageMap) {
 
+    // Creating z3 expression vector to implement an additional constraint of keeping the right order of operator nodes
     std::vector<z3::expr> P_IJ_stored;
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
         auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
         OperatorId operatorID = operatorNode->getId();
-        if (i>1){
+        // we only need to store the possibilities of the node before the one we look at, so we have to erase "old" data
+        if (i>1){ // if i == 0 noting to erase, if i == 1 we need to remember these values for this same iteration
             P_IJ_stored.erase(P_IJ_stored.begin(), P_IJ_stored.begin()+topologyNodePath.size());
+            NES_DEBUG("Deleting old placement constraints");
         }
         if (operatorMap.find(operatorID) != operatorMap.end()) {
             // Initialize the path constraint variable to 0
@@ -326,14 +329,19 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             }
             else {
                 // The binary decision on whether to place or not, hence we constrain it to be either 0 or 1
-                // Creating z3 expression for storing possibilities of placement to implement an additional constraint of keeping the right order of operator nodes
-                z3::expr check_previous_expression = (P_IJ_stored[0] == 1);
+                // Adding a z3 expression as an additional constraint to store the placement possibilities' conditions while maintaining the correct order of operator nodes.
+                z3::expr check_previous_expression = (P_IJ_stored[0] == 1); // possible use of first topology node as constraint to ensure right order
+                // Iterating over all positions of topologyNodePath up to the current one (j) and adding them to the storing variable
                 for (uint64_t k = 1; k<=j; ++k) {
                     check_previous_expression = check_previous_expression || (P_IJ_stored[k] == 1);
                 }
+                // Either P_IJ is 0 and the operator node is not be placed at current topology position (first condition)
+                // or operator node is 1 and then placed at current topology node but only if the previous operator node is set at the same or a previous topology node (second condition)
                 opt.add(P_IJ==0 || (P_IJ==1 && check_previous_expression));
+                // Add the current state of P_IJ to the vector that is storing all possible operator node placements
                 P_IJ_stored.emplace_back(P_IJ);
             }
+
             placementVariable.insert(std::make_pair(variableID, P_IJ));
             sum_i = sum_i + P_IJ;
 
@@ -371,7 +379,7 @@ bool ILPStrategy::pinOperators(z3::model& z3Model, std::map<std::string, z3::exp
         uint64_t topologyNodeId = std::stoi(key.substr(key.find(KEY_SEPARATOR) + 1));
 
         if (z3Model.eval(placementMapping.second).get_numeral_int() == 1) {
-            NES_INFO("Pinning operator with ID {}", operatorId);
+            NES_DEBUG("Pinning operator with ID {}", operatorId);
             //Pin the operator to the location identified by ILP algorithm
             auto logicalOperator = operatorMap[operatorId];
             logicalOperator->addProperty(PINNED_NODE_ID, topologyNodeId);
