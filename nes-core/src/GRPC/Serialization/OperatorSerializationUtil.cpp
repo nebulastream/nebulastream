@@ -36,7 +36,6 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/ArrowSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -1153,34 +1152,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         SchemaSerializationUtil::serializeSchema(opcSourceDescriptor->getSchema(),
                                                  opcSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
-    }
-#endif
-#ifdef ENABLE_ARROW_BUILD
-    else if (sourceDescriptor.instanceOf<ArrowSourceDescriptor>()) {
-        // serialize arrow source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableArrowSourceDescriptor");
-        auto arrowSourceDescriptor = sourceDescriptor.as<const ArrowSourceDescriptor>();
-        // init serializable source config
-        auto serializedSourceConfig = new SerializablePhysicalSourceType();
-        serializedSourceConfig->set_sourcetype(arrowSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
-        // init serializable arrow source config
-        auto arrowSerializedSourceConfig = SerializablePhysicalSourceType_SerializableArrowSourceType();
-        arrowSerializedSourceConfig.set_numberofbufferstoproduce(
-            arrowSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
-        arrowSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
-            arrowSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
-        arrowSerializedSourceConfig.set_sourcegatheringinterval(
-            arrowSourceDescriptor->getSourceConfig()->getGatheringInterval()->getValue());
-        arrowSerializedSourceConfig.set_filepath(arrowSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
-        serializedSourceConfig->mutable_specificphysicalsourcetype()->PackFrom(arrowSerializedSourceConfig);
-        // init serializable arrow source descriptor
-        auto arrowSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableArrowSourceDescriptor();
-        arrowSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedSourceConfig);
-        // serialize source schema
-        SchemaSerializationUtil::serializeSchema(arrowSourceDescriptor->getSchema(),
-                                                 arrowSerializedSourceDescriptor.mutable_sourceschema());
-        sourceDetails.mutable_sourcedescriptor()->PackFrom(arrowSerializedSourceDescriptor);
     }
 #endif
     else if (sourceDescriptor.instanceOf<const TCPSourceDescriptor>()) {

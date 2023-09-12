@@ -1,0 +1,1 @@
+add_nes_integration_test(tensorflow-inference-deployment-test "TensorflowInferenceDeploymentTest.cpp")

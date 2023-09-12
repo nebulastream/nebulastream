@@ -16,6 +16,7 @@
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Sources/DataSourcePlugin.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -32,6 +33,19 @@ DataSourcePtr DefaultDataSourceProvider::lower(OperatorId operatorId,
                                                SourceDescriptorPtr sourceDescriptor,
                                                Runtime::NodeEnginePtr nodeEngine,
                                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
+
+    for (const auto& plugin : SourcePluginRegistry::getPlugins()) {
+        auto dataSource = plugin->createDataSource(operatorId,
+                                                   originId,
+                                                   sourceDescriptor,
+                                                   nodeEngine,
+                                                   compilerOptions->getNumSourceLocalBuffers(),
+                                                   successors);
+        if (dataSource.has_value()) {
+            return dataSource.value();
+        }
+    }
+
     return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                             originId,
                                                             std::move(sourceDescriptor),

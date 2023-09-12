@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -26,7 +25,6 @@
 #include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/ArrowSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -38,6 +36,7 @@
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
@@ -322,12 +321,6 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
             return MQTTSourceDescriptor::create(schema, mqttSourceType);
         }
 #endif
-#ifdef ENABLE_ARROW_BUILD
-        case SourceType::ARROW_SOURCE: {
-            auto arrowSourceType = physicalSourceType->as<ArrowSourceType>();
-            return ArrowSourceDescriptor::create(schema, arrowSourceType);
-        }
-#endif
         case SourceType::CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
             return CsvSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
@@ -411,9 +404,17 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                  kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
                                                  kafkaSourceType->getBatchSize()->getValue());
         }
-        default:
+        default: {
+            // check if a plugin can create the correct source descriptor
+            for (const auto& plugin : SourceDescriptorPluginRegistry ::getPlugins()) {
+                auto descriptor = plugin->create(schema, physicalSource);
+                if (descriptor != nullptr) {
+                    return descriptor;
+                }
+            }
             throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()
                                             + " not supported");
+        }
     }
 }
 

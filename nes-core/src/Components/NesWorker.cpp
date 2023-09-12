@@ -43,7 +43,6 @@
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
-
 #include <utility>
 
 using namespace std;
@@ -142,6 +141,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
+
+    pluginLoader.loadDefaultPlugins();
+
+   // pluginLoader.loadPlugin("libnes-tensorflow.so");
 
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring={}", workerConfig->enableMonitoring.getValue());
