@@ -35,7 +35,9 @@ class MapGPUQueryExecutionTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+
+        auto numWorkerThreads = 4;
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode, numWorkerThreads);
     }
 
     /* Will be called before a test is executed. */

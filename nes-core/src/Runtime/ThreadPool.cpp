@@ -145,7 +145,15 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
             // TODO (2310) properly initialize the profiler with a file, thread, and core id
             auto workerId = NesThread::getId();
             NES_DEBUG("worker {} with workerId {} pins to queue {}", i, workerId, queueIdx);
-            runningRoutine(WorkerContext(workerId, localBufferManager, numberOfBuffersPerWorker, queueIdx));
+
+            // TODO #4187: Parameterized assignment of CPU/GPU executing thread
+            // Currently, we only use a simple policy where the second thread will execute the GPU pipeline.
+            // The rest of the threads will execute CPU pipeline, including the first thread.
+            if (i == 1) {
+                runningRoutine(WorkerContext(workerId, localBufferManager, numberOfBuffersPerWorker, queueIdx, ExecutingDevice::GPU));
+            } else {
+                runningRoutine(WorkerContext(workerId, localBufferManager, numberOfBuffersPerWorker, queueIdx, ExecutingDevice::CPU));
+            }
         });
     }
     barrier->wait();

@@ -21,6 +21,7 @@
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
 
@@ -36,14 +37,18 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                          PipelineExecutionContext& pipelineExecutionContext,
                                                          WorkerContext& workerContext) {
-    // wait till pipeline is ready
-//    cpuExecutablePipeline.wait();
-    gpuExecutablePipeline.wait();
 
-//    cpuPipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
-    gpuPipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
-
-
+    if (workerContext.getExecutingDevice() == ExecutingDevice::CPU) {
+        // wait till pipeline is ready
+        cpuExecutablePipeline.wait();
+        cpuPipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+    } else if (workerContext.getExecutingDevice() == ExecutingDevice::GPU) {
+        // wait till pipeline is ready
+        gpuExecutablePipeline.wait();
+        gpuPipelineFunction((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+    } else {
+        NES_THROW_RUNTIME_ERROR("Unknown executing device");
+    }
     return ExecutionResult::Ok;
 }
 
@@ -107,13 +112,13 @@ uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipeli
     // TODO enable async compilation #3357
 
     // Prepare the CPU pipeline
-//    cpuExecutablePipeline = std::async(std::launch::deferred, [this] {
-//                             return this->compileCPUPipeline();
-//                         }).share();
-//    cpuPipelineFunction = cpuExecutablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
+    cpuExecutablePipeline = std::async(std::launch::deferred, [this] {
+                                return this->compileCPUPipeline();
+                            }).share();
+    cpuPipelineFunction = cpuExecutablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
 
     // Prepare the GPU pipeline
-    gpuExecutablePipeline =std::async(std::launch::deferred, [this] {
+    gpuExecutablePipeline = std::async(std::launch::deferred, [this] {
                                 return this->compileGPUPipeline();
                             }).share();
     gpuPipelineFunction = gpuExecutablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");

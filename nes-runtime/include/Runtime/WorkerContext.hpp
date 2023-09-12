@@ -32,6 +32,8 @@ class AbstractBufferProvider;
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
+enum class ExecutingDevice : uint8_t { GPU, CPU };
+
 /**
  * @brief A WorkerContext represents the current state of a worker thread
  * Note that it is not thread-safe per se but it is meant to be used in
@@ -58,12 +60,15 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
+    // designated device in which the current worker should execute a task
+    ExecutingDevice executingDevice;
 
   public:
     explicit WorkerContext(uint32_t workerId,
                            const BufferManagerPtr& bufferManager,
                            uint64_t numberOfBuffersPerWorker,
-                           uint32_t queueId = 0);
+                           uint32_t queueId = 0,
+                           ExecutingDevice executingDevice = ExecutingDevice::CPU);
 
     ~WorkerContext();
 
@@ -194,6 +199,7 @@ class WorkerContext {
      * @return an output channel
      */
     Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(NES::OperatorId ownerId);
+    ExecutingDevice getExecutingDevice() const;
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime

@@ -25,8 +25,9 @@ folly::ThreadLocalPtr<LocalBufferPool> WorkerContext::localBufferPoolTLS{};
 WorkerContext::WorkerContext(uint32_t workerId,
                              const BufferManagerPtr& bufferManager,
                              uint64_t numberOfBuffersPerWorker,
-                             uint32_t queueId)
-    : workerId(workerId), queueId(queueId) {
+                             uint32_t queueId,
+                             ExecutingDevice executingDevice)
+    : workerId(workerId), queueId(queueId), executingDevice(executingDevice) {
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     localBufferPoolTLS.reset(localBufferPool.get(), [](auto*, folly::TLPDestructionMode) {
@@ -149,5 +150,7 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES:
 LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolTLS.get(); }
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
+
+ExecutingDevice WorkerContext::getExecutingDevice() const { return executingDevice; }
 
 }// namespace NES::Runtime
