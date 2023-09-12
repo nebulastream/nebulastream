@@ -79,8 +79,8 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     // setup Arrow source
     ArrowSourceTypePtr arrowSourceTypePtr = ArrowSourceType::create();
     arrowSourceTypePtr->setFilePath(inputFilePath);
-    arrowSourceTypePtr->setNumberOfTuplesToProducePerBuffer(32);
-    arrowSourceTypePtr->setNumberOfBuffersToProduce(1);
+    arrowSourceTypePtr->setNumberOfTuplesToProducePerBuffer(4);
+    arrowSourceTypePtr->setNumberOfBuffersToProduce(8);
     auto physicalSource = PhysicalSource::create("arrow_data", "test_stream", arrowSourceTypePtr);
 
     // setup worker
@@ -101,7 +101,7 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
 
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    "BottomUp",
+                                                    Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
