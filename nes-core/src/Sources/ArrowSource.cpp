@@ -163,6 +163,7 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer)
             if ((tupleCount + currentRecordBatch->num_rows()) <= generatedTuplesThisPass) {
                 writeRecordBatchToTupleBuffer(tupleCount, buffer, currentRecordBatch);
                 tupleCount += currentRecordBatch->num_rows();
+                indexWithinCurrentRecordBatch += currentRecordBatch->num_rows();
             }
             // case when we have to write only a part of the batch to the tuple buffer
             else {
@@ -182,6 +183,7 @@ void ArrowSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer)
         // write the batch to the tuple buffer
         writeRecordBatchToTupleBuffer(tupleCount, buffer, recordBatchSlice);
         tupleCount += generatedTuplesThisPass;
+        indexWithinCurrentRecordBatch += generatedTuplesThisPass;
     }
 
     buffer.setNumberOfTuples(tupleCount);
