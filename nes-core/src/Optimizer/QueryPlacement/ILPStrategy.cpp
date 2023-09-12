@@ -288,8 +288,8 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
         auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
         OperatorId operatorID = operatorNode->getId();
-        // we only need to store the possibilities of the node before the one we look at, so we have to erase "old" data
-        if (i>1){ // if i == 0 noting to erase, if i == 1 we need to remember these values for this same iteration
+        // we only need to store the possibilities of the node before the one we look at, so we have to erase "old" data (we keep the values of the last iteration though)
+        if (i>1){ // if i == 0 noting to erase, if i == 1 we only have one "set" of values (which we still need)
             P_IJ_stored.erase(P_IJ_stored.begin(), P_IJ_stored.begin()+topologyNodePath.size());
             NES_DEBUG("Deleting old placement constraints");
         }
