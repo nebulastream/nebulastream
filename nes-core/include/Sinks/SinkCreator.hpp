@@ -89,27 +89,6 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                uint64_t numberOfOrigins = 1);
 
-#ifdef ENABLE_ARROW_BUILD
-/**
- * @brief create a arrow ipc file sink with a schema
- * @param schema of arrow sink
- * @param bufferManager
- * @param path to arrow file
- * @param faultToleranceType: fault tolerance type of a query
- * @param numberOfOrigins: number of origins of a given query
- * @return a data sink pointer
- */
-DataSinkPtr createArrowIPCFileSink(const SchemaPtr& schema,
-                                   QueryId queryId,
-                                   QuerySubPlanId querySubPlanId,
-                                   const Runtime::NodeEnginePtr& nodeEngine,
-                                   uint32_t numOfProducers,
-                                   const std::string& filePath,
-                                   bool append,
-                                   FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                   uint64_t numberOfOrigins = 1);
-#endif
-
 /**
  * @brief create a ZMQ test sink with a schema and Csv format output
  * @param schema of sink

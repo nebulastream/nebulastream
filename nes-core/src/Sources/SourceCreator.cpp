@@ -39,9 +39,7 @@
 #ifdef ENABLE_MQTT_BUILD
 #include <Sources/MQTTSource.hpp>
 #endif
-#ifdef ENABLE_ARROW_BUILD
-#include <Sources/ArrowSource.hpp>
-#endif
+
 namespace NES {
 
 DataSourcePtr
@@ -465,28 +463,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
 }
 #endif
 
-#ifdef ENABLE_ARROW_BUILD
-DataSourcePtr createArrowSource(const SchemaPtr& schema,
-                                const Runtime::BufferManagerPtr& bufferManager,
-                                const Runtime::QueryManagerPtr& queryManager,
-                                const ArrowSourceTypePtr& arrowSourceType,
-                                OperatorId operatorId,
-                                OriginId originId,
-                                size_t numSourceLocalBuffers,
-                                const std::string& physicalSourceName,
-                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
-    return std::make_shared<ArrowSource>(schema,
-                                         bufferManager,
-                                         queryManager,
-                                         arrowSourceType,
-                                         operatorId,
-                                         originId,
-                                         numSourceLocalBuffers,
-                                         GatheringMode::INTERVAL_MODE,
-                                         physicalSourceName,
-                                         successors);
-}
-#endif
+
 
 DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const Runtime::BufferManagerPtr& bufferManager,

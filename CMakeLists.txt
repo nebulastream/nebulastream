@@ -57,7 +57,10 @@ option(NES_USE_CCACHE "USE CCACHE" OFF)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
-option(NES_USE_ARROW "Build with Apache Arrow support" OFF)
+
+# Plugins
+option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
+option(NES_BUILD_PLUGIN_TENSORFLOW "Build Tensorflow Plugin support" OFF)
 
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
@@ -195,6 +198,10 @@ set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wext
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
+
+# setup rpath for linker
+set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")
+set(CMAKE_INSTALL_RPATH "$ORIGIN/nes-plugins")
 
 if (ENABLE_FTIME_TRACE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")
@@ -443,7 +450,7 @@ if (NES_USE_KAFKA)
                 PROPERTIES
                 IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
                 INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
-                )
+        )
         message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
     else ()
         message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
@@ -465,34 +472,6 @@ if (NES_USE_MQTT)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
 
-# Library containing Apache Arrow
-if (NES_USE_ARROW)
-    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
-
-    if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch"))
-        # explicitly find the brotli package from Arrow and include it
-        find_package(unofficial-brotli REQUIRED)
-        if(unofficial-brotli_FOUND)
-            message(STATUS "Brotli lib required by Arrow found.")
-            set(LIBRARIES ${LIBRARIES} unofficial::brotli::brotlienc-static unofficial::brotli::brotlidec-static unofficial::brotli::brotlicommon-static)
-        else()
-            message(FATAL_ERROR "Brotli lib required by Arrow not found.")
-        endif()
-
-        # find Arrow package
-        find_package(Arrow REQUIRED CONFIG)
-        if(Arrow_FOUND)
-            message(STATUS "Arrow version ${ARROW_VERSION}")
-        else ()
-            message(FATAL_ERROR "Unable to find Arrow library")
-        endif ()
-        set(LIBRARIES ${LIBRARIES} arrow_static)
-        add_compile_definitions(ENABLE_ARROW_BUILD)
-    else()
-        message(WARNING "ENABLE_ARROW_BUILD not supported on this platform")
-    endif()
-endif (NES_USE_ARROW)
-
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
     enable_language(CUDA)
@@ -513,9 +492,9 @@ if (NES_USE_OPENCL)
         set(LIBRARIES ${LIBRARIES} ${OpenCL_LIBRARIES})
         include_directories(${OpenCL_INCLUDE_DIRS})
         add_compile_definitions(ENABLE_OPENCL)
-    else()
+    else ()
         message(FATAL_ERROR "Could not find OpenCL")
-    endif()
+    endif ()
 endif (NES_USE_OPENCL)
 
 if (NES_ENABLES_TESTS)
@@ -539,24 +518,24 @@ set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libantlr4-runtime
 if (CMAKE_USE_PAPI_PROFILER)
     find_path(PAPI_PREFIX
             NAMES include/papi.h
-            )
+    )
 
     find_library(PAPI_LIBRARIES
             # Pick the static library first for easier run-time linking.
             NAMES libpapi.so libpapi.a papi
             HINTS ${PAPI_PREFIX}/lib
-            )
+    )
 
     find_path(PAPI_INCLUDE_DIRS
             NAMES papi.h
             HINTS ${PAPI_PREFIX}/include
-            )
+    )
 
     include(FindPackageHandleStandardArgs)
     find_package_handle_standard_args(PAPI DEFAULT_MSG
             PAPI_LIBRARIES
             PAPI_INCLUDE_DIRS
-            )
+    )
 
     mark_as_advanced(
             PAPI_PREFIX_DIRS
@@ -653,15 +632,6 @@ add_definitions(-D '__STDC_LIMIT_MACROS')
 
 # Check if we build with TensorFlow Lite
 if (NES_USE_TF)
-    find_package(tensorflow-lite-c REQUIRED)
-    if (tensorflowlite_c_FOUND)
-        message(STATUS "Found tensorflow")
-        set(LIBRARIES ${LIBRARIES} tensorflowlite_c::tensorflowlite_c)
-        message(INFO "${LIBRARIES}")
-    endif ()
-
-    # Include tensorflow library in the deb package and install it in the lib folder
-    install(IMPORTED_RUNTIME_ARTIFACTS tensorflowlite_c::tensorflowlite_c DESTINATION lib)
     add_compile_definitions(TFDEF)
 endif ()
 
@@ -670,7 +640,7 @@ if (ORIGIN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
 endif ()
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
+#set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 ###########################################################################################
@@ -703,6 +673,8 @@ endif ()
 
 # code cov
 
+add_custom_target(build_all_plugins)
+
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
@@ -716,6 +688,9 @@ add_subdirectory(nes-runtime)
 add_subdirectory(nes-core)
 # Add target for client
 add_subdirectory(nes-client)
+# Add targets for plugins
+add_subdirectory(nes-plugins)
+
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
@@ -768,14 +743,14 @@ install(EXPORT NebulaStreamTargets
         EXPORT_LINK_INTERFACE_LIBRARIES
         DESTINATION
         ${ConfigPackageLocation}
-        )
+)
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
         DESTINATION ${LIB_INSTALL_DIR} ${ConfigPackageLocation})
 
 # Configure CPackage
-SET(CPACK_GENERATOR "DEB")
+set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
 set(CPACK_PACKAGE_RELEASE 1)
@@ -806,3 +781,5 @@ endif ()
 project_enable_release()
 project_enable_version()
 instrument_codebase()
+
+

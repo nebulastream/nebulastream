@@ -25,6 +25,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
+#include <Util/PluginLoader.hpp>
 
 namespace grpc {
 class Server;
@@ -293,6 +294,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<bool> connected{false};
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
+    Util::PluginLoader pluginLoader = Util::PluginLoader();
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

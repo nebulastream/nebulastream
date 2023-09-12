@@ -14,13 +14,11 @@
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/Formats/ArrowFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <iostream>
-#include <regex>
 #include <string>
 #include <utility>
 
@@ -55,26 +53,12 @@ FileSink::FileSink(SinkFormatPtr format,
     }
     NES_DEBUG("FileSink: open file= {}", filePath);
 
-    // only open the file stream if it is not an arrow file
-    if (sinkFormat->getSinkFormat() != FormatTypes::ARROW_IPC_FORMAT) {
-        if (!outputFile.is_open()) {
-            outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
-        }
-        NES_ASSERT(outputFile.is_open(), "file is not open");
-        NES_ASSERT(outputFile.good(), "file not good");
+    // open the file stream
+    if (!outputFile.is_open()) {
+        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
-
-#ifdef ENABLE_ARROW_BUILD
-    if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT) {
-        // raise a warning if the file path does not have the streaming "arrows" extension some other system might
-        // thus interpret the file differently with different extension
-        // the MIME types for arrow files are ".arrow" for file format, and ".arrows" for streaming file format
-        // see https://arrow.apache.org/faq/
-        if (!(filePath.find(".arrows"))) {
-            NES_WARNING("FileSink: An arrow ipc file without '.arrows' extension created as a file sink.");
-        }
-    }
-#endif
+    NES_ASSERT(outputFile.is_open(), "file is not open");
+    NES_ASSERT(outputFile.good(), "file not good");
 }
 
 FileSink::~FileSink() {
@@ -94,16 +78,7 @@ void FileSink::setup() {}
 
 void FileSink::shutdown() {}
 
-bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-#ifdef ENABLE_ARROW_BUILD
-    // handle the case if we write to an arrow file
-    if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT) {
-        return writeDataToArrowFile(inputBuffer);
-    }
-#endif//ENABLE_ARROW_BUILD
-    // otherwise call the regular function
-    return writeDataToFile(inputBuffer);
-}
+bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) { return writeDataToFile(inputBuffer); }
 
 std::string FileSink::getFilePath() const { return filePath; }
 
@@ -143,61 +118,5 @@ std::string FileSink::getAppendAsString() const {
     }
     return "OVERWRITE";
 }
-
-#ifdef ENABLE_ARROW_BUILD
-bool FileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
-    std::unique_lock lock(writeMutex);
-
-    // preliminary checks
-    NES_TRACE("FileSink: getSchema medium {} format {} and mode {}",
-              toString(),
-              sinkFormat->toString(),
-              this->getAppendAsString());
-
-    if (!inputBuffer) {
-        NES_ERROR("FileSink::writeDataToArrowFile input buffer invalid");
-        return false;
-    }
-
-    // make arrow schema
-    auto arrowFormat = std::dynamic_pointer_cast<ArrowFormat>(sinkFormat);
-    std::shared_ptr<arrow::Schema> arrowSchema = arrowFormat->getArrowSchema();
-
-    // open the arrow ipc file
-    std::shared_ptr<arrow::io::FileOutputStream> outfileArrow;
-    std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter;
-    arrow::Status openStatus = openArrowFile(outfileArrow, arrowSchema, arrowWriter);
-
-    if (!openStatus.ok()) {
-        return false;
-    }
-
-    // get arrow arrays from tuple buffer
-    std::vector<std::shared_ptr<arrow::Array>> arrowArrays = arrowFormat->getArrowArrays(inputBuffer);
-
-    // make a record batch
-    std::shared_ptr<arrow::RecordBatch> recordBatch =
-        arrow::RecordBatch::Make(arrowSchema, arrowArrays[0]->length(), arrowArrays);
-
-    // write the record batch
-    auto write = arrowWriter->WriteRecordBatch(*recordBatch);
-
-    // close the writer
-    auto close = arrowWriter->Close();
-
-    return true;
-}
-
-arrow::Status FileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
-                                      std::shared_ptr<arrow::Schema> arrowSchema,
-                                      std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowRecordBatchWriter) {
-    // the macros initialize the arrowFileOutputStream and arrowRecordBatchWriter
-    // if everything goes well return status OK
-    // else the macros return failure
-    ARROW_ASSIGN_OR_RAISE(arrowFileOutputStream, arrow::io::FileOutputStream::Open(filePath, append));
-    ARROW_ASSIGN_OR_RAISE(arrowRecordBatchWriter, arrow::ipc::MakeStreamWriter(arrowFileOutputStream, arrowSchema));
-    return arrow::Status::OK();
-}
-#endif//ENABLE_ARROW_BUILD
 
 }// namespace NES

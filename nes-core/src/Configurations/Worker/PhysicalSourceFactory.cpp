@@ -13,7 +13,6 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -24,11 +23,10 @@
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceFactoryPlugin.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
-
-namespace Configurations {
+namespace NES::Configurations {
 
 PhysicalSourcePtr PhysicalSourceFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
 
@@ -100,6 +98,14 @@ PhysicalSourcePtr PhysicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) 
 PhysicalSourceTypePtr
 PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
                                                 const std::map<std::string, std::string>& commandLineParams) {
+
+    // check a plugin is registered to handle this source type
+    for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins()) {
+        if (auto type = plugin->createPhysicalSourceType(sourceType, commandLineParams)) {
+            return type;
+        }
+    }
+
     switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
         case SourceType::CSV_SOURCE: return CSVSourceType::create(commandLineParams);
         case SourceType::MQTT_SOURCE: return MQTTSourceType::create(commandLineParams);
@@ -109,12 +115,18 @@ PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(commandLineParams);
         case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(commandLineParams);
         case SourceType::MATERIALIZEDVIEW_SOURCE: return DefaultSourceType::create(commandLineParams);
-        case SourceType::ARROW_SOURCE: return ArrowSourceType::create(commandLineParams);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
 
 PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig) {
+
+    // check a plugin is registered to handle this source type
+    for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins()) {
+        if (auto type = plugin->createPhysicalSourceType(sourceType, yamlConfig)) {
+            return type;
+        }
+    }
 
     if (!magic_enum::enum_cast<SourceType>(sourceType).has_value()) {
         NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
@@ -127,11 +139,9 @@ PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::strin
         case SourceType::OPC_SOURCE: return OPCSourceType::create(yamlConfig);
         case SourceType::BINARY_SOURCE: return BinarySourceType::create(yamlConfig);
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(yamlConfig);
-        case SourceType::ARROW_SOURCE: return ArrowSourceType::create(yamlConfig);
         case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(yamlConfig);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
 
-}// namespace Configurations
-}// namespace NES
+}// namespace NES::Configurations
