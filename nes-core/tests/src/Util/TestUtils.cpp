@@ -141,9 +141,7 @@ namespace TestUtils {
 }
 
 [[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
-    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG,
-                        std::string{"SLICING"},
-                        prefix);
+    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"SLICING"}, prefix);
 }
 
 [[nodiscard]] std::string enableNautilusWorker() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
