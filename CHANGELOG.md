@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.211](https://github.com/nebulastream/nebulastream/tree/v0.5.211) (2023-09-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.210...v0.5.211)
+
+**Implemented enhancements:**
+
+- \[TASK\] Rename Window Strategies [\#4133](https://github.com/nebulastream/nebulastream/issues/4133)
+
 ## [v0.5.210](https://github.com/nebulastream/nebulastream/tree/v0.5.210) (2023-09-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.209...v0.5.210)
