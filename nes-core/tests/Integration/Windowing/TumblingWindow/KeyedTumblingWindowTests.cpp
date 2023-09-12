@@ -41,8 +41,7 @@ class KeyedTumblingWindowTests : public Testing::BaseIntegrationTest, public ::t
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
+        workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
         workerConfiguration->queryCompiler.compilationStrategy =
             QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE;
     }

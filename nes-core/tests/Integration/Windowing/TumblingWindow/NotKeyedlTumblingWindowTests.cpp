@@ -43,8 +43,7 @@ class NonKeyedTumblingWindowTests : public Testing::BaseIntegrationTest {
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
+        workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
         workerConfiguration->queryCompiler.compilationStrategy =
             QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE;
         this->numberOfGeneratedBuffers = 100;
