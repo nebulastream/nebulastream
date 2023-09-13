@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Common.hpp>
 #include <Util/PocketFFT/PocketFFT.hpp>
 #include <cmath>
@@ -45,7 +45,7 @@ template<typename T1, typename T2> long double l2err (const std::vector<T1> &v1,
     return sqrt(sum1/sum2);
 }
 
-class FFTTest : public Testing::NESBaseTest {
+class FFTTest : public Testing::BaseIntegrationTest {
 public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FFTTest.log", NES::LogLevel::LOG_DEBUG);

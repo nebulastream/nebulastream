@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -21,7 +21,7 @@ namespace NES {
 
 uint16_t timeout = 5;
 
-class E2EChameleonTest : public Testing::NESBaseTest {
+class E2EChameleonTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2EChameleonTest.log", NES::LogLevel::LOG_DEBUG);
