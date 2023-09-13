@@ -526,13 +526,13 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     totalIntervalInseconds /= this->lastValuesBuf.size();
                     double skewedIntervalInseconds = (totalIntervalInseconds + currentIntervalInSeconds) / 2.;
                     NES_TRACE("DataSource skewedIntervalInseconds to {}ms", skewedIntervalInseconds);
-                    auto toVec = this->lastValuesBuf.toVector();
-                    std::string numbers = "";
-                    for (double item : toVec) {
-                        numbers.append(std::to_string(item) + ", ");
-                    }
+//                    auto toVec = this->lastValuesBuf.toVector();
+//                    std::string numbers = "";
+//                    for (double item : toVec) {
+//                        numbers.append(std::to_string(item) + ", ");
+//                    }
                     std::tuple<bool, double> res = NES::Util::computeNyquistAndEnergy(this->lastValuesBuf.toVector(), skewedIntervalInseconds);
-                    NES_TRACE("DataSource computeNyq: {}, proposed new freq: {}s", numbers, std::get<1>(res));
+//                    NES_TRACE("DataSource computeNyq: {}, proposed new freq: {}s", numbers, std::get<1>(res));
                     if (std::get<0>(res)) { // nyq rate is smaller than current skewed median interval
                         NES_TRACE("DataSource setSlowestInterval to {}ms", std::get<1>(res));
                         this->kFilter->setSlowestInterval(std::move(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(std::get<1>(res))))));
@@ -553,11 +553,11 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     this->operatorId,
                     this->operatorId);
 
-                if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
-                    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-                    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
-                    NES_TRACE("DataSource produced buffer content= {}", buffer.toString(schema));
-                }
+//                if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+//                    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+//                    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+//                    NES_TRACE("DataSource produced buffer content= {}", buffer.toString(schema));
+//                }
 
                  emitWorkFromSource(buf);
                 ++numberOfBuffersProduced;

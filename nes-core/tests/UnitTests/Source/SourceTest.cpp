@@ -210,6 +210,48 @@ class MockDataSource : public DataSource {
     MOCK_METHOD(SourceType, getType, (), (const));
 };
 
+class BenchmarkMockSource : public DataSource, public Runtime::BufferRecycler {
+  public:
+    BenchmarkMockSource(const SchemaPtr& schema,
+                        Runtime::BufferManagerPtr bufferManager,
+                        Runtime::QueryManagerPtr queryManager,
+                        OperatorId operatorId,
+                        size_t numSourceLocalBuffers,
+                        GatheringMode gatheringMode,
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
+        : DataSource(schema,
+                     bufferManager,
+                     queryManager,
+                     operatorId,
+                     0,
+                     numSourceLocalBuffers,
+                     gatheringMode,
+                     "defaultPhysicalStreamName",
+                     executableSuccessors) {};
+
+    MOCK_METHOD(void, runningRoutineWithIngestionRate, ());
+    MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ()); // TODO: return same val?
+    MOCK_METHOD(std::string, toString, (), (const));
+    MOCK_METHOD(SourceType, getType, (), (const));
+    MOCK_METHOD(void, emitWork, (Runtime::TupleBuffer & buffer));
+    MOCK_METHOD(void, emitWorkFromSource, (Runtime::TupleBuffer & buffer));
+    MOCK_METHOD(void, recycleUnpooledBuffer, (Runtime::detail::MemorySegment * buffer));
+
+    Runtime::TupleBuffer getRecyclableBuffer() {
+        auto* p = new uint8_t[5];
+        auto fakeBuffer = Runtime::TupleBuffer::wrapMemory(p, sizeof(uint8_t) * 5, this);
+        fakeBuffer.setNumberOfTuples(1);
+        return fakeBuffer;
+    }
+
+    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) { delete buffer->getPointer(); }
+    virtual ~BenchmarkMockSource() = default;
+
+  private:
+    FRIEND_TEST(SourceTest, testCpuOverhead);
+};
+using BenchmarkMockSourcePtr = std::shared_ptr<BenchmarkMockSource>;
+
 // testing w/ mocked running routine (no need for actual routines)
 class MockDataSourceWithRunningRoutine : public DataSource {
   public:
@@ -630,6 +672,22 @@ class SourceTest : public Testing::BaseIntegrationTest {
                                                  executableSuccessors);
     }
 
+    BenchmarkMockSourcePtr createBenchmarkMockSource(const SchemaPtr& schema,
+                                             Runtime::BufferManagerPtr bufferManager,
+                                             Runtime::QueryManagerPtr queryManager,
+                                             OperatorId operatorId,
+                                             size_t numSourceLocalBuffers,
+                                             GatheringMode gatheringMode,
+                                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors) {
+        return std::make_shared<BenchmarkMockSource>(schema,
+                                                 bufferManager,
+                                                 queryManager,
+                                                 operatorId,
+                                                 numSourceLocalBuffers,
+                                                 gatheringMode,
+                                                 executableSuccessors);
+    }
+
     std::shared_ptr<Runtime::Execution::ExecutablePipeline>
     createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage, std::shared_ptr<SinkMedium> sink) {
         auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
@@ -653,6 +711,49 @@ class SourceTest : public Testing::BaseIntegrationTest {
     size_t bufferAreaSize;
     std::shared_ptr<uint8_t> singleBufferMemoryArea;
 };
+
+TEST_F(SourceTest, testCpuOverhead) {
+    // create executable stage
+    auto executableStage = std::make_shared<MockedExecutablePipeline>();
+    // create sink
+    auto sink =
+        createNullOutputSink(this->queryId, this->queryId, this->nodeEngine, 1, FaultToleranceType::NONE, 1);
+    // get mocked pipeline to add to source
+    auto pipeline = this->createExecutablePipeline(executableStage, sink);
+    BenchmarkMockSourcePtr mockedAdaptiveSource = createBenchmarkMockSource(this->sensorValSchema,
+                                                                            this->nodeEngine->getBufferManager(),
+                                                                            this->nodeEngine->getQueryManager(),
+                                                                            this->operatorId,
+                                                                            this->numSourceLocalBuffersDefault,
+                                                                            GatheringMode::ADAPTIVE_MODE,
+                                                                            {pipeline});
+    mockedAdaptiveSource->numberOfBuffersToProduce = 3;
+    mockedAdaptiveSource->running = true;
+    mockedAdaptiveSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
+    mockedAdaptiveSource->setGatheringInterval(std::chrono::milliseconds{1000});
+    Runtime::TupleBuffer fakeBuffer = mockedAdaptiveSource->getRecyclableBuffer();
+    ON_CALL(*mockedAdaptiveSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
+    ON_CALL(*mockedAdaptiveSource, getType()).WillByDefault(Return(SourceType::ZMQ_SOURCE));
+    ON_CALL(*mockedAdaptiveSource, receiveData()).WillByDefault(Return(fakeBuffer));
+    ON_CALL(*mockedAdaptiveSource, emitWork(_)).WillByDefault(Return());
+    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
+                                                                         this->queryId,
+                                                                         {mockedAdaptiveSource},
+                                                                         {sink},
+                                                                         {pipeline},
+                                                                         this->nodeEngine->getQueryManager(),
+                                                                         this->nodeEngine->getBufferManager());
+    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+//    EXPECT_CALL(*mockedAdaptiveSource, receiveData()).Times(Exactly(mockedAdaptiveSource->numberOfBuffersToProduce));
+//    EXPECT_CALL(*mockedAdaptiveSource, emitWork(_)).Times(Exactly(mockedAdaptiveSource->numberOfBuffersToProduce));
+    // TODO: loop and time code here
+    mockedAdaptiveSource->runningRoutine();
+    EXPECT_FALSE(mockedAdaptiveSource->running);
+    EXPECT_EQ(mockedAdaptiveSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
+    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mockedAdaptiveSource.get()));
+}
 
 TEST_F(SourceTest, testDataSourceGetOperatorId) {
     const DataSourcePtr source =
