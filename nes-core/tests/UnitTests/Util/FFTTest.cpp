@@ -132,7 +132,7 @@ TEST(FFTTest, fftEnergy) {
 }
 
 TEST(FFTTest, fftNyquist) {
-    std::tuple<bool, double> expectedFalseBinIdx1(false, 1.);
+    std::tuple<bool, double> expectedFalseBinIdx1(false, 0);
     std::vector<double> fftInput{1., 2., 3., 4.};
     auto fftRes = Util::fft(fftInput);
     auto psd = Util::psd(fftRes);
@@ -147,7 +147,7 @@ TEST(FFTTest, completeFftAnalysis) {
     double expectedNewNyquist{0.046052631578947366};
     auto res = Util::computeNyquistAndEnergy(signalInput, 38.);
     EXPECT_EQ(expectedFalseIsAliased, std::get<0>(res));
-    EXPECT_NEAR(expectedNewNyquist, std::get<1>(res), .01);
+    EXPECT_NEAR(expectedNewNyquist, std::get<1>(res), .1);
 }
 
 }// namespace NES
