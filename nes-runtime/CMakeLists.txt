@@ -45,7 +45,6 @@ endif ()
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     message(STATUS "Enable dyncall")
 
-
     # We use the dyncall lib to call arbitrary runtime function.
     # Set the path to the dyncall directory
     set(dyncall_dir "${CMAKE_CURRENT_BINARY_DIR}/lib/dyncall")
