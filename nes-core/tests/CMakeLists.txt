@@ -442,6 +442,9 @@ add_nes_unit_test(z3-signature-based-query-containment-rule-test "UnitTests/Opti
 add_nes_unit_test(z3-signature-based-partial-query-containment-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedPartialQueryContainmentMergerRuleTest.cpp")
 
 ### Z3 Signature Based Equal Query Merger Rule Test ###
+add_nes_unit_test(z3-signature-based-top-down-query-containment-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedTopDownQueryContainmentMergerRuleTest.cpp")
+
+### Z3 Signature Based Equal Query Merger Rule Test ###
 add_nes_unit_test(query-containment-identification-test "UnitTests/Optimizer/QuerySignatures/QueryContainmentIdentificationTest.cpp")
 
 ### Z3 Signature Based Equal Query Merger Rule Test ###
