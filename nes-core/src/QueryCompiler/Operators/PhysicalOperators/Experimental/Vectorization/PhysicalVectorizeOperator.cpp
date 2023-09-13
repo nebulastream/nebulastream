@@ -19,7 +19,7 @@ PhysicalVectorizeOperator::PhysicalVectorizeOperator(OperatorId id, SchemaPtr in
     : OperatorNode(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
 {
-
+    // TODO(#4214) Refactor PhysicalUnaryOperator to achieve clearer ownership semantics.
 }
 
 PhysicalOperatorPtr PhysicalVectorizeOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema) {
