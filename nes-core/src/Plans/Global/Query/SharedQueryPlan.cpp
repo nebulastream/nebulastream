@@ -201,6 +201,13 @@ void SharedQueryPlan::addQuery(QueryId queryId,
     std::set<LogicalOperatorNodePtr> clEntryUpstreamOperators;
     std::set<LogicalOperatorNodePtr> clEntryDownstreamOperators;
 
+    NES_TRACE("Query plan before merge: {}", this->queryPlan->toString());
+    // add the container query plan before merge to the clEntryDownstreamOperators
+    for (const auto& rootNode : containerOperator->getAllRootNodes()) {
+        NES_TRACE("Container Root: {}", rootNode->toString());
+        clEntryDownstreamOperators.insert(rootNode->as<LogicalOperatorNode>());
+    }
+
     //Downstream operator and upstreamContainedOperator are equal in case of filter or projection operators
     //But in case of a contained window operation, the downstream operator is the associated watermark operator
     auto downstreamOperator = containedOperatorChain.front();
@@ -210,26 +217,22 @@ void SharedQueryPlan::addQuery(QueryId queryId,
     NES_TRACE("ContainedOperator: {}", containedOperator->toString());
     NES_TRACE("upstreamContainedOperator: {}", upstreamContainedOperator->toString());
     NES_TRACE("downstreamOperator children size: {}", downstreamOperator->getChildren().size());
-    auto parents = containedOperator->getParents();
-    for (const auto& parent : parents) {
+    auto containedParents = containedOperator->getParents();
+    for (const auto& parent : containedParents) {
         // Contained operator and downstream operator are often not the same
         // Therefore, we have to remove the contained operator from its parents
         // and add its parents as new parents to the downstream operator
         parent->removeChild(containedOperator);
-        NES_TRACE("Parent: {}", parent->toString());
+        NES_TRACE("Parent of contained Operator: {}", parent->toString());
         downstreamOperator->addParent(parent);
     }
     //add the contained operator chain to the host operator
     bool addedNewParent = containerOperator->addParent(upstreamContainedOperator);
-    NES_TRACE("Children upstreamContainedOperator size: {}", upstreamContainedOperator->getChildren().size());
-    NES_TRACE("Children upstreamContainedOperator: {}", upstreamContainedOperator->getChildren()[0]->toString());
     if (!addedNewParent) {
         NES_WARNING("SharedQueryPlan: Failed to add new parent");
     }
     // the container operator marks the new upstream operators chain
     clEntryUpstreamOperators.insert(containerOperator->as<LogicalOperatorNode>());
-    // the downstream operator marks the new downstream operator chain
-    clEntryDownstreamOperators.insert(downstreamOperator);
 
     //Add new hash based signatures to the shared query plan for newly added downstream operators
     for (const auto& newDownstreamOperator : clEntryDownstreamOperators) {
