@@ -11,13 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Configurations/details/EnumOptionDetails.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
-E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
+E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun()
+    : windowingStrategy("windowingStrategy", QueryCompilation::WindowingStrategy::SLICING, "Windowing strategy for the experiment"),
+      joinStrategy("joinStrategy", QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL, "Join strategy for the experiment"){
     using namespace Configurations;
     numberOfWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerOfThreads", 1, "No. Worker Threads");
     bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 1024, "Buffer size in bytes");
@@ -31,8 +33,6 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     numberOfPartitions = ConfigurationOption<uint32_t>::create("numberOfPartitions", 1, "numberOfPartitions in HT");
     maxHashTableSize = ConfigurationOption<uint64_t>::create("maxHashTableSize", 0, "max hash table size");
     query = ConfigurationOption<std::string>::create("query", "", "query to execute");
-    windowingStrategy = ConfigurationOption<std::string>::create("windowingStrategy", "Slicing", "windowingStrategy");
-
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
 
@@ -49,9 +49,8 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
         << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl
         << "- query: " << query->getValue() << std::endl
-        << "- windowingStrategy: " << windowingStrategy->getValue() << std::endl;
-
-    std::cout << oss.str() << std::endl;
+        << "- windowingStrategy: " << magic_enum::enum_name(windowingStrategy.getValue()) << std::endl
+        << "- joinStrategy: " << magic_enum::enum_name(joinStrategy.getValue()) << std::endl;
     return oss.str();
 }
 
@@ -86,7 +85,10 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
                                                                  configPerRun.maxHashTableSize->getDefaultValue());
 
     auto queries = Util::splitString(yamlConfig["query"].As<std::string>(), configPerRun.query->getDefaultValue(), "@");
-    auto windowingStrategies = Util::splitString(yamlConfig["windowingStrategy"].As<std::string>(), configPerRun.windowingStrategy->getDefaultValue(), ",");
+    auto windowingStrategies = NES::Util::splitStringIntoEnums<QueryCompilation::WindowingStrategy>(
+        yamlConfig["windowingStrategy"].As<std::string>(), configPerRun.windowingStrategy, ",");
+    auto joinStrategies = NES::Util::splitStringIntoEnums<QueryCompilation::StreamJoinStrategy>(
+        yamlConfig["joinStrategy"].As<std::string>(), configPerRun.joinStrategy, ",");
 
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
@@ -107,6 +109,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, queries.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, windowingStrategies.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, joinStrategies.size());
 
     /* Padding all vectors to the desired size */
     Util::padVectorToSize<uint32_t>(numWorkerOfThreads, totalBenchmarkRuns, numWorkerOfThreads.back());
@@ -123,7 +126,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(numberOfPartitions, totalBenchmarkRuns, numberOfPartitions.back());
     Util::padVectorToSize<uint64_t>(maxHashTableSizes, totalBenchmarkRuns, maxHashTableSizes.back());
     Util::padVectorToSize<std::string>(queries, totalBenchmarkRuns, queries.back());
-    Util::padVectorToSize<std::string>(windowingStrategies, totalBenchmarkRuns, windowingStrategies.back());
+    Util::padVectorToSize<QueryCompilation::WindowingStrategy>(windowingStrategies, totalBenchmarkRuns, windowingStrategies.back());
+    Util::padVectorToSize<QueryCompilation::StreamJoinStrategy>(joinStrategies, totalBenchmarkRuns, joinStrategies.back());
     Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
                                                            totalBenchmarkRuns,
                                                            allLogicalSrcToPhysicalSources.back());
@@ -142,7 +146,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.maxHashTableSize->setValue(maxHashTableSizes[i]);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
         e2EBenchmarkConfigPerRun.query->setValue(queries[i]);
-        e2EBenchmarkConfigPerRun.windowingStrategy->setValue(windowingStrategies[i]);
+        e2EBenchmarkConfigPerRun.windowingStrategy = windowingStrategies[i];
+        e2EBenchmarkConfigPerRun.joinStrategy = joinStrategies[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
     }

@@ -70,17 +70,17 @@ void* getHashSliceProxy(void* ptrOpHandler, uint64_t sliceIdentifier) {
     return opHandler->getSliceBySliceIdentifier(sliceIdentifier).value().get();
 }
 
-void* getPageFromBucketAtPosProxyForHashJoin(void* hashWindowPtr,
+void* getPageFromBucketAtPosProxyForHashJoin(void* hashSlicePtr,
                                               uint64_t joinBuildSideInt,
                                               uint64_t bucketPos,
                                               uint64_t pageNo) {
-    NES_ASSERT2_FMT(hashWindowPtr != nullptr, "hashWindowPtr should not be null");
-    auto hashWindow = static_cast<HJSlice*>(hashWindowPtr);
+    NES_ASSERT2_FMT(hashSlicePtr != nullptr, "hashSlicePtr should not be null");
+    auto hashSlice = static_cast<HJSlice*>(hashSlicePtr);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     NES_INFO("Probing for {} tuples {} with start {} end {}", magic_enum::enum_name(joinBuildSide),
-             hashWindow->getMergingHashTable(joinBuildSide).getNumItems(bucketPos),
-             hashWindow->getSliceStart(), hashWindow->getSliceEnd());
-    return hashWindow->getMergingHashTable(joinBuildSide).getPageFromBucketAtPos(bucketPos, pageNo);
+             hashSlice->getMergingHashTable(joinBuildSide).getNumItems(bucketPos),
+             hashSlice->getSliceStart(), hashSlice->getSliceEnd());
+    return hashSlice->getMergingHashTable(joinBuildSide).getPageFromBucketAtPos(bucketPos, pageNo);
 }
 
 uint64_t getNumberOfPagesProxyForHashJoin(void* ptrHashSlice, uint64_t joinBuildSideInt, uint64_t bucketPos) {

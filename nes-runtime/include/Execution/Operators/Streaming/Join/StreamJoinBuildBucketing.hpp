@@ -65,8 +65,9 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param localStateBucketing
      * @param opHandlerMemRef
      * @param ts
+     * @param workerId
      */
-    void updateLocalState(LocalStateBucketing* localStateBucketing, Value<MemRef>& opHandlerMemRef, Value<UInt64>& ts) const;
+    void updateLocalState(LocalStateBucketing* localStateBucketing, Value<MemRef>& opHandlerMemRef, Value<UInt64>& ts, Value<UInt64>& workerId) const;
 
     /**
      * @brief Checks if the current local hash join state is up-to-date, meaning the correct windows are stored

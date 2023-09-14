@@ -30,11 +30,12 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft, StreamSlice
         bufferMemory->windowInfo = windowInfo;
         tupleBuffer.setNumberOfTuples(1);
 
-        // As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
-        // As we have a global watermark that is larger than the slice end, we can set the watermarkTs to be the slice end.
+        /** As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
+         *  The watermark can not be the slice end as some buffer might be still waiting for getting processed.
+         */
         tupleBuffer.setOriginId(getOutputOriginId());
         tupleBuffer.setSequenceNumber(getNextSequenceNumber());
-        tupleBuffer.setWatermark(std::min(sliceLeft.getSliceEnd(), sliceRight.getSliceEnd()));
+        tupleBuffer.setWatermark(std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart()));
 
         pipelineCtx->dispatchBuffer(tupleBuffer);
         NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples {} and no. right tuples {}",
@@ -79,6 +80,4 @@ void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t join
         case QueryCompilation::JoinBuildSideType::Right: return nljSlice->getPagedVectorRefRight(workerId);
     }
 }
-
-
-}; // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

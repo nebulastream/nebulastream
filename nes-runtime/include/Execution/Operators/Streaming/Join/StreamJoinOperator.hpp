@@ -57,29 +57,25 @@ class StreamJoinOperator {
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL: {
-                switch (windowingStrategy) {
-                    case QueryCompilation::WindowingStrategy::DEFAULT: NES_NOT_IMPLEMENTED();
-                    case QueryCompilation::WindowingStrategy::SLICING: {
-                        auto* tmpOpHandler = static_cast<HJOperatorHandlerSlicing*>(ptrOpHandler);
-                        return dynamic_cast<OutputClass*>(tmpOpHandler);
-                    };
-                    case QueryCompilation::WindowingStrategy::BUCKET: {
-                        auto* tmpOpHandler = static_cast<HJOperatorHandlerBucketing*>(ptrOpHandler);
-                        return dynamic_cast<OutputClass*>(tmpOpHandler);
-                    };
+                if (windowingStrategy == QueryCompilation::WindowingStrategy::SLICING) {
+                    auto* tmpOpHandler = static_cast<HJOperatorHandlerSlicing*>(ptrOpHandler);
+                    return dynamic_cast<OutputClass*>(tmpOpHandler);
+                } else if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+                    auto* tmpOpHandler = static_cast<HJOperatorHandlerBucketing*>(ptrOpHandler);
+                    return dynamic_cast<OutputClass*>(tmpOpHandler);
+                } else {
+                    NES_THROW_RUNTIME_ERROR("Windowing strategy was used that is not supported with this compiler!");
                 }
             }
             case QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN: {
-                switch (windowingStrategy) {
-                    case QueryCompilation::WindowingStrategy::DEFAULT: NES_NOT_IMPLEMENTED();
-                    case QueryCompilation::WindowingStrategy::SLICING: {
-                        auto* tmpOpHandler = static_cast<NLJOperatorHandlerSlicing*>(ptrOpHandler);
-                        return dynamic_cast<OutputClass*>(tmpOpHandler);
-                    };
-                    case QueryCompilation::WindowingStrategy::BUCKET: {
-                        auto* tmpOpHandler = static_cast<NLJOperatorHandlerBucketing*>(ptrOpHandler);
-                        return dynamic_cast<OutputClass*>(tmpOpHandler);
-                    };
+                if (windowingStrategy == QueryCompilation::WindowingStrategy::SLICING) {
+                    auto* tmpOpHandler = static_cast<NLJOperatorHandlerSlicing*>(ptrOpHandler);
+                    return dynamic_cast<OutputClass*>(tmpOpHandler);
+                } else if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+                    auto* tmpOpHandler = static_cast<NLJOperatorHandlerBucketing*>(ptrOpHandler);
+                    return dynamic_cast<OutputClass*>(tmpOpHandler);
+                } else {
+                    NES_THROW_RUNTIME_ERROR("Windowing strategy was used that is not supported with this compiler!");
                 }
             }
         }

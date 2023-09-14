@@ -104,7 +104,9 @@ void BufferManager::initialize(uint32_t withAlignment) {
     auto memorySizeInBytes = static_cast<uint64_t>(pages * page_size);
 
     uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
-    NES_DEBUG("NES memory allocation requires {} out of {} available bytes", requiredMemorySpace, memorySizeInBytes);
+    double percentage = (100.0 * requiredMemorySpace) / memorySizeInBytes;
+    NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes,
+              percentage);
 
     //    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
     NES_ASSERT2_FMT(requiredMemorySpace < memorySizeInBytes,

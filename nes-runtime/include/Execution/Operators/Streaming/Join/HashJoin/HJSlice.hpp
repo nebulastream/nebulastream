@@ -38,16 +38,16 @@ class HJSlice : public StreamSlice {
      * @param numberOfWorkerThreads
      * @param sizeOfRecordLeft
      * @param sizeOfRecordRight
-     * @param windowStart
-     * @param windowEnd
+     * @param sliceStart
+     * @param sliceEnd
      * @param maxHashTableSize
      * @param pageSize
      * @param preAllocPageSizeCnt
      * @param numPartitions
      */
     explicit HJSlice(size_t numberOfWorkerThreads,
-                     uint64_t windowStart,
-                     uint64_t windowEnd,
+                     uint64_t sliceStart,
+                     uint64_t sliceEnd,
                      size_t sizeOfRecordLeft,
                      size_t sizeOfRecordRight,
                      size_t maxHashTableSize,

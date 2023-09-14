@@ -16,7 +16,6 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKING_HPP_
 
 #include <atomic>
-
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>

@@ -1,0 +1,89 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+benchmarkName: Nexmark8SlicingVsBucketing
+outputFile: nexmark8_slicing_vs_bucketing.csv
+
+#numberOfSources: 1,1,1,1,2,2,2,2
+#numberOfWorkerThreads: 1,2,4,8,16
+numberOfWorkerThreads: 1
+numberOfSources: 16
+
+# engine configuration parameter
+numberOfBuffersInGlobalBufferManager: 16384
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+#bufferSizeInBytes: 1048576
+bufferSizeInBytes: 131072
+#pageSize: 128,256,512,1024,4096,8192,16384,32768,65536,131072,262144
+pageSize: 65536
+#pageSize: 8192
+numberOfPartitions: 16
+preAllocPageCnt: 32
+
+#maxHashTableSize: 34359738368 #32GB
+#maxHashTableSize: 17179869184 #16GB
+#maxHashTableSize: 8589934592 #8GB
+maxHashTableSize: 6442450944 #6GB
+#maxHashTableSize: 4294967296 #4GB
+#maxHashTableSize: 1073741824 #1GB
+#for node55
+#maxHashTableSize: 137438953472
+windowingStrategy: SLICING,BUCKETING
+joinStrategy: HASH_JOIN_LOCAL,HASH_JOIN_LOCAL
+#windowingStrategy: BUCKETING
+#joinStrategy: HASH_JOIN_LOCAL
+
+
+logicalSources:
+  - name: bit
+    type: NEBit
+  - name: auction
+    type: NEAuction
+
+# configure data source
+#dataGenerator: NEBit,NEAuction
+#logicalStreamName: bit,auction
+
+numberOfPreAllocatedBuffer: 1000
+dataProvider: Internal
+dataProviderMode: ZeroCopy
+
+# 1 Slice as Hours(12),Hours(12)
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Hours(12))).sink(NullOutputSinkDescriptor::create());'
+
+# 2 Slices as Hours(12),Hours(6)
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Hours(6))).sink(NullOutputSinkDescriptor::create());'
+
+## 4 Slices as Hours(12),Hours(3)
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Hours(3))).sink(NullOutputSinkDescriptor::create());'
+
+## 8 Slices as Hours(12),Minutes(90)
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Minutes(90))).sink(NullOutputSinkDescriptor::create());'
+
+## 16 Slices as Hours(12),Minutes(45)
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Minutes(45))).sink(NullOutputSinkDescriptor::create());'
+
+## 25 Slices as Hours(12),Seconds(1728)
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Seconds(1728))).sink(NullOutputSinkDescriptor::create());'
+
+## 40 Slices as Hours(12),Minutes(18)
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Minutes(18))).sink(NullOutputSinkDescriptor::create());'
+
+## 80 Slices as Hours(12),Hours(9)
+query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Minutes(9))).sink(NullOutputSinkDescriptor::create());'
+
+
+
+#gatheringValues: 50000
+#generatorPinList: 12
+#workerPinList: 1,2,3,4,5,6,7,8,9,10
+#sourcePinList: 0
+
+#benchmark internal parameter
+numberOfBuffersToProduce: 5000000
+scalability: scale-up
+#logLevel: LOG_DEBUG
+logLevel: LOG_ERROR
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 5

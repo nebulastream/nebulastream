@@ -69,8 +69,8 @@ void HJSlice::mergeLocalToGlobalHashTable() {
 }
 
 HJSlice::HJSlice(size_t numberOfWorker,
-                 uint64_t windowStart,
-                 uint64_t windowEnd,
+                 uint64_t sliceStart,
+                 uint64_t sliceEnd,
                  size_t sizeOfRecordLeft,
                  size_t sizeOfRecordRight,
                  size_t maxHashTableSize,
@@ -78,10 +78,11 @@ HJSlice::HJSlice(size_t numberOfWorker,
                  size_t preAllocPageSizeCnt,
                  size_t numPartitions,
                  QueryCompilation::StreamJoinStrategy joinStrategy)
-    : StreamSlice(windowStart, windowEnd), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
+    : StreamSlice(sliceStart, sliceEnd), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
       mergingHashTableRightSide(Operators::MergingHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
       alreadyMergedLocalToGlobalHashTable(false), joinStrategy(joinStrategy) {
 
+    std::cout << "HJSlice for sliceStart: " << sliceStart << " and sliceEnd: " << sliceEnd << std::endl;
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL) {
         //TODO they all take the same allocator
         for (auto i = 0UL; i < numberOfWorker; ++i) {
@@ -138,8 +139,7 @@ HJSlice::HJSlice(size_t numberOfWorker,
 
 std::string HJSlice::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "StreamHashJoinWindow(windowState: "
-                       << " sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";
+    basicOstringstream << "StreamHashJoinWindow(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";
     return basicOstringstream.str();
 }
 

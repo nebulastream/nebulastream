@@ -12,19 +12,21 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <atomic>
 
 namespace NES::Nautilus::Interface {
 
 FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, double bloomFalsePosRate)
     : sizeOfRecord(sizeOfRecord), data(dataPtr), capacity(pageSize / sizeOfRecord), bloomFalsePosRate(bloomFalsePosRate) {
-    NES_ASSERT2_FMT(0 < capacity, "Capacity is zero " << capacity);
+    NES_ASSERT2_FMT(0 < capacity, "Capacity is zero for pageSize " + std::to_string(pageSize) + " and sizeOfRecord "
+                        + std::to_string(pageSize));
 
     bloomFilter = std::make_unique<Runtime::BloomFilter>(capacity, bloomFalsePosRate);
     currentPos = 0;

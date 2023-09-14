@@ -29,16 +29,16 @@ WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMe
 }
 
 void SlidingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const {
-    NES_TRACE("SlidingWindow::triggerWindows windows before={}", windows.size());
+    NES_TRACE("SlidingWindow::checkAndTriggerWindows windows before={}", windows.size());
     long lastStart = currentWatermark - ((currentWatermark + slide.getTime()) % slide.getTime());
-    NES_TRACE("SlidingWindow::triggerWindows= lastStart={} size.getTime()={} lastWatermark={}",
+    NES_TRACE("SlidingWindow::checkAndTriggerWindows= lastStart={} size.getTime()={} lastWatermark={}",
               lastStart,
               size.getTime(),
               lastWatermark);
     for (long windowStart = lastStart; windowStart + size.getTime() > lastWatermark && windowStart >= 0;
          windowStart -= slide.getTime()) {
         if (windowStart >= 0 && ((windowStart + size.getTime()) <= currentWatermark)) {
-            NES_TRACE("SlidingWindow::triggerWindows add window to be triggered = windowStart={}", windowStart);
+            NES_TRACE("SlidingWindow::checkAndTriggerWindows add window to be triggered = windowStart={}", windowStart);
             windows.emplace_back(windowStart, windowStart + size.getTime());
         }
     }

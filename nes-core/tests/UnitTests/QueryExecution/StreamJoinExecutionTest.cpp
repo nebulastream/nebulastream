@@ -111,9 +111,16 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
                                                  const WindowTypePtr& joinWindow) {
         // Getting the expected output tuples
         auto bufferManager = executionEngine->getBufferManager();
-        const auto expectedSinkBuffer =
-            TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
-        const auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
+
+        std::vector<ResultRecord> expectedSinkVector;
+        const auto expectedSinkBuffers =
+            TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager);
+
+        for (const auto& buf : expectedSinkBuffers) {
+            const auto tmpVec = TestUtils::createVecFromTupleBuffer<ResultRecord>(buf);
+            expectedSinkVector.insert(expectedSinkVector.end(), tmpVec.begin(), tmpVec.end());
+        }
+
 
         const auto testSink = executionEngine->createCollectSink<ResultRecord>(joinParams.outputSchema);
         const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -383,6 +390,44 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
 
     // Running a single join query
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+}
+
+TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
+    struct __attribute__((packed)) ResultRecord {
+        uint64_t window1window2Start;
+        uint64_t window1window2End;
+        uint64_t window1window2Key;
+        uint64_t window1value1;
+        uint64_t window1id1;
+        uint64_t window1timestamp;
+        uint64_t window2value2;
+        uint64_t window2id2;
+        uint64_t window2timestamp;
+        bool operator==(const ResultRecord& rhs) const {
+            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+                && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
+                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
+                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+        }
+    };
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("test1$value1", BasicType::UINT64)
+                                ->addField("test1$id1", BasicType::UINT64)
+                                ->addField("test1$timestamp", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("test2$value2", BasicType::UINT64)
+                                 ->addField("test2$id2", BasicType::UINT64)
+                                 ->addField("test2$timestamp", BasicType::UINT64);
+    const auto windowSize = Milliseconds(1000);
+    const auto windowSlide = Milliseconds(250);
+    const auto timestampFieldName = "timestamp";
+    const auto window = SlidingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize, windowSlide);
+
+    // Running a single join query
+    TestUtils::CsvFileParams csvFileParams("window7.csv", "window7.csv", "window_sink7.csv");
     TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }

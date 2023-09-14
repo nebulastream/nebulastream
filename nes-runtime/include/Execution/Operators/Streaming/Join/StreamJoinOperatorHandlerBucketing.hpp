@@ -24,24 +24,25 @@ namespace NES::Runtime::Execution::Operators {
 class StreamJoinOperatorHandlerBucketing : public JoinOperatorHandlerInterfaceBucketing, virtual public StreamJoinOperatorHandler {
   public:
 
-    std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts) override;
-    void triggerSlices(TriggerableWindows& triggerableWindows, PipelineExecutionContext* pipelineCtx) override;
+    std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
+    void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) override;
 
   private:
-    // TODO check if this should not be a vector of vectors, for each thread one in issue #4127
-    std::vector<StreamSlice*> windowsToFill;
+    std::vector<std::vector<StreamSlice*>> windowsToFill;
 };
 
 /**
  * @brief Proxy function that will call StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs()
  * @param ptrOpHandler
  * @param ts
+ * @param workerId
  * @param joinStrategyInt
  * @param windowingStrategyInt
  * @return Void* to the windowsToFill that contains the current windows to be filled
  */
-void* getAllWindowsToFillProxy(void* ptrOpHandler, uint64_t ts, uint64_t joinStrategyInt, uint64_t windowingStrategyInt);
+void* getAllWindowsToFillProxy(void* ptrOpHandler, uint64_t ts, uint64_t workerId, uint64_t joinStrategyInt,
+                               uint64_t windowingStrategyInt);
 }// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERBUCKETING_HPP_

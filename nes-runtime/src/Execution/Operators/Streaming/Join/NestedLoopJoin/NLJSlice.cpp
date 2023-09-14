@@ -62,7 +62,7 @@ uint64_t NLJSlice::getNumberOfTuplesRight() {
 
 std::string NLJSlice::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "(windowStart: " << sliceStart << " windowEnd: " << sliceEnd
+    basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd
                        << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
                        << " rightNumberOfTuples: " << getNumberOfTuplesRight() << ")";
     return basicOstringstream.str();

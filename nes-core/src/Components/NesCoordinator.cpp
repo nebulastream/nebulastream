@@ -217,26 +217,29 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         allowedOrigin = originString;
     }
 
-    restServer = std::make_shared<RestServer>(restIp,
-                                              restPort,
-                                              this->inherited0::weak_from_this(),
-                                              queryCatalogService,
-                                              sourceCatalogService,
-                                              topologyManagerService,
-                                              globalExecutionPlan,
-                                              queryService,
-                                              monitoringService,
-                                              globalQueryPlan,
-                                              udfCatalog,
-                                              worker->getNodeEngine()->getBufferManager(),
-                                              locationService,
-                                              allowedOrigin);
-    restThread = std::make_shared<std::thread>(([&]() {
-        setThreadName("nesREST");
-        restServer->start();//this call is blocking
-    }));
-
-    NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
+    if (coordinatorConfiguration->enableRestServerConfig) {
+        NES_DEBUG("RestServer is ready");
+        restServer = std::make_shared<RestServer>(restIp,
+                                                  restPort,
+                                                  this->inherited0::weak_from_this(),
+                                                  queryCatalogService,
+                                                  sourceCatalogService,
+                                                  topologyManagerService,
+                                                  globalExecutionPlan,
+                                                  queryService,
+                                                  monitoringService,
+                                                  globalQueryPlan,
+                                                  udfCatalog,
+                                                  worker->getNodeEngine()->getBufferManager(),
+                                                  locationService,
+                                                  allowedOrigin);
+        restThread = std::make_shared<std::thread>(([&]() {
+          setThreadName("nesREST");
+          restServer->start();//this call is blocking
+        }));
+    } else {
+        NES_DEBUG("REST Server disabled in configuration!");
+    }
 
     healthCheckService =
         std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, HEALTH_SERVICE_NAME, coordinatorConfiguration);
@@ -277,20 +280,22 @@ bool NesCoordinator::stopCoordinator(bool force) {
         NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
 
         NES_DEBUG("NesCoordinator: stopping rest server");
-        bool successStopRest = restServer->stop();
-        if (!successStopRest) {
-            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
-            NES_THROW_RUNTIME_ERROR("Error while stopping NesCoordinator");
+        if (restServer) {
+            bool successStopRest = restServer->stop();
+            if (!successStopRest) {
+                NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
+                NES_THROW_RUNTIME_ERROR("Error while stopping NesCoordinator");
+            }
+            NES_DEBUG("NesCoordinator: rest server stopped {}", successStopRest);
+            if (restThread->joinable()) {
+                NES_DEBUG("NesCoordinator: join restThread");
+                restThread->join();
+            } else {
+                NES_ERROR("NesCoordinator: rest thread not joinable");
+                NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
+            }
         }
-        NES_DEBUG("NesCoordinator: rest server stopped {}", successStopRest);
 
-        if (restThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join restThread");
-            restThread->join();
-        } else {
-            NES_ERROR("NesCoordinator: rest thread not joinable");
-            NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
-        }
 
         queryRequestProcessorService->shutDown();
         if (queryRequestProcessorThread->joinable()) {

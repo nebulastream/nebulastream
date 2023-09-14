@@ -62,7 +62,8 @@ namespace NES::Benchmark {
             << "- numberOfPartitions: " << defaultConfigPerRun.numberOfPartitions->getValueAsString() << std::endl
             << "- maxHashTableSize: " << defaultConfigPerRun.maxHashTableSize->getValueAsString() << std::endl
             << "- query: " << defaultConfigPerRun.query->getValue() << std::endl
-            << "- windowingStrategy: " << defaultConfigPerRun.windowingStrategy->getValue() << std::endl;
+            << "- windowingStrategy: " << defaultConfigPerRun.windowingStrategy.getValue() << std::endl
+            << "- joinStrategy: " << defaultConfigPerRun.joinStrategy.getValue() << std::endl;
         auto expectedString = oss.str();
 
         ASSERT_EQ(defaultString, expectedString);

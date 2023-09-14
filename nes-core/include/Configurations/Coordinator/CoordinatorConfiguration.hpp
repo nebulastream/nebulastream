@@ -53,6 +53,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption restPort = {REST_PORT_CONFIG, 8081, "Port exposed for rest endpoints"};
 
     /**
+     * @brief Indicates if the REST server should be started.
+     */
+    BoolOption enableRestServerConfig = {ENABLE_REST_SERVER_CONFIG, true, "Enable rest server"};
+
+    /**
      * @brief IP of the Coordinator.
      */
     StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator."};
@@ -171,6 +176,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &coordinatorIp,
                 &rpcPort,
                 &restPort,
+                &enableRestServerConfig,
                 &dataPort,
                 &logLevel,
                 &enableQueryReconfiguration,

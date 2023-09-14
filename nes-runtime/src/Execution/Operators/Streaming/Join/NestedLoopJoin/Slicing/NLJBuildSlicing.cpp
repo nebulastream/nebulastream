@@ -44,7 +44,7 @@ uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
 void* getCurrentWindowProxy(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<NLJOperatorHandlerSlicing*>(ptrOpHandler);
-    return opHandler->getCurrentWindowOrCreate();
+    return opHandler->getCurrentSliceOrCreate();
 }
 
 void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp) {

@@ -153,6 +153,8 @@ namespace NES::Benchmark {
         auto zipfianDataGenerator = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
         const auto defaultDataGeneratorName = defaultDataGenerator->getName();
         const auto zipfianDataGeneratorName = zipfianDataGenerator->getName();
+        const auto windowingStrategy = QueryCompilation::WindowingStrategy::BUCKETING;
+        const auto joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
 
 
         auto schemaSizeInB = defaultDataGenerator->getSchema()->getSchemaSizeInBytes() +
@@ -165,6 +167,8 @@ namespace NES::Benchmark {
         configPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy);
         configPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes);
         configPerRun.query->setValue(queryString);
+        configPerRun.windowingStrategy.setValue(windowingStrategy);
+        configPerRun.joinStrategy.setValue(joinStrategy);
 
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.benchmarkName->setValue(bmName);
@@ -194,7 +198,8 @@ namespace NES::Benchmark {
         assertedCsvFile << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
                            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
                            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
-                           "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
+                           "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,"
+                           "queryString,windowingStrategy,joinStrategy"
                         << std::endl;
 
         for (auto i = 0; i < MAX_TIMESTAMP; ++i) {
@@ -222,7 +227,9 @@ namespace NES::Benchmark {
                                 << "," << numberOfWorkerThreads << "," << numberOfQueriesToDeploy
                                 << "," << "\"" << configPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << "\""
                                 << "," << bufferSizeInBytes << "," << inputType
-                                << "," << dataProviderMode << "," << "\"" << queryString << "\"" << std::endl;
+                                << "," << dataProviderMode << "," << "\"" << queryString << "\""
+                                << "," << magic_enum::enum_name(windowingStrategy)
+                                << "," << magic_enum::enum_name(joinStrategy) << std::endl;
             }
         }
 

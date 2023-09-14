@@ -18,52 +18,41 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t ts) {
-    auto [slicesWriteLocked, windowSliceIdToStateLocked] = folly::acquireLocked(slices, windowSliceIdToState);
+void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) {
+    StreamJoinOperatorHandler::setNumberOfWorkerThreads(numberOfWorkerThreads);
+
+    windowsToFill.reserve(numberOfWorkerThreads);
+    for (auto i = 0_u64; i < numberOfWorkerThreads; ++i) {
+        windowsToFill.emplace_back(std::vector<StreamSlice*>());
+    }
+
+}
+
+std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) {
+    auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
 
     int64_t timestamp = ts;
     int64_t remainder = (timestamp % windowSlide);
     int64_t lastStart = (timestamp - remainder);
     int64_t lowerBound = timestamp - windowSize;
 
-    windowsToFill.clear();
+    // Getting the vector for the current worker (via workerId)
+    auto& workerVec = windowsToFill[workerId % windowsToFill.size()];
+    workerVec.clear();
     for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide) {
         WindowInfo windowInfo(start, start + windowSize);
         auto window = getSliceBySliceIdentifier(slicesWriteLocked, windowInfo.windowId);
         if (window.has_value()) {
-            windowsToFill.emplace_back(window.value().get());
+            workerVec.emplace_back(window.value().get());
         } else {
             auto newWindow = createNewSlice(windowInfo.windowStart, windowInfo.windowEnd);
-            windowSliceIdToStateLocked->insert({WindowSliceIdKey(newWindow->getSliceIdentifier(), windowInfo.windowId),
-                                                StreamSlice::SliceState::BOTH_SIDES_FILLING});
+            (*windowToSlicesLocked)[windowInfo].slices.emplace_back(newWindow);
+            (*windowToSlicesLocked)[windowInfo].windowState = WindowInfoState::BOTH_SIDES_FILLING;
             slicesWriteLocked->emplace_back(newWindow);
-            windowsToFill.emplace_back(newWindow.get());
+            workerVec.emplace_back(newWindow.get());
         }
     }
-
-    std::string windowsToFillStr = std::accumulate(windowsToFill.begin(), windowsToFill.end(), std::string(),
-                                                   [] (const std::string& acc, auto* window) {
-                                                      return acc.empty() ? window->toString() : acc + "," + window->toString();
-                                                   });
-    NES_INFO("getAllWindowsToFillForTs {}: windowsToFill:\n{}", ts, windowsToFillStr);
-    return &windowsToFill;
-}
-
-void StreamJoinOperatorHandlerBucketing::triggerSlices(TriggerableWindows& triggerableWindows, PipelineExecutionContext* pipelineCtx) {
-    /**
-     * We expect the sliceIdentifiersToBeTriggered to be sorted.
-     * Otherwise, it can happen that the buffer <seq 2, ts 1000> gets processed after <seq 1, ts 20000>, which will lead to wrong results upstream
-     * Also, we have to set the seq number in order of the slice end timestamps.
-     * Furthermore, we expect the sliceIdentifier to be the sliceEnd.
-     */
-    for (const auto& [windowId, slices] : triggerableWindows.windowIdToTriggerableSlices) {
-        if (slices.slicesToTrigger.size() == 1) {
-            emitSliceIdsToProbe(*slices.slicesToTrigger[0], *slices.slicesToTrigger[0], slices.windowInfo, pipelineCtx);
-        } else {
-            NES_THROW_RUNTIME_ERROR("There should only be one window during bucketing for a single windowId");
-        }
-
-    }
+    return &workerVec;
 }
 
 std::vector<WindowInfo> StreamJoinOperatorHandlerBucketing::getAllWindowsForSlice(StreamSlice& slice) {
@@ -71,13 +60,13 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerBucketing::getAllWindowsForSlic
     return {WindowInfo(slice.getSliceStart(), slice.getSliceEnd())};
 }
 
-
-void* getAllWindowsToFillProxy(void* ptrOpHandler, uint64_t ts, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+void* getAllWindowsToFillProxy(void* ptrOpHandler, uint64_t ts, uint64_t workerId, uint64_t joinStrategyInt,
+                               uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler<StreamJoinOperatorHandlerBucketing>(ptrOpHandler,
                                                                                                          joinStrategyInt,
                                                                                                          windowingStrategyInt);
-    return opHandler->getAllWindowsToFillForTs(ts);
+    return opHandler->getAllWindowsToFillForTs(ts, workerId);
 }
 
 }// namespace NES::Runtime::Execution::Operators

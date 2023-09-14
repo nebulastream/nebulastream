@@ -72,24 +72,14 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
 
     /**
      * @brief Triggers all slices/windows that have not been already emitted to the probe
-     * @return TriggerableWindows containing windows that have not been triggered.
      */
-    TriggerableWindows triggerAllSlices();
+    void triggerAllSlices(PipelineExecutionContext* pipelineCtx);
 
     /**
-     * @brief This method triggers the finished slices/windows and passes them to the join probe phase
-     * @param triggerableWindows
-     * @param pipelineCtx
-     */
-    virtual void triggerSlices(TriggerableWindows& triggerableWindows, PipelineExecutionContext* pipelineCtx) = 0;
-
-    /**
-     * @brief Checks if any window can be triggered and all triggerable slice/window identifiers are being returned in a vector.
-     * This method updates the watermarkProcessor and should be thread-safe
+     * @brief Triggers windows that are ready. This method updates the watermarkProcessor and should be thread-safe
      * @param bufferMetaData
-     * @return TriggerableSlices containing the slice ids of windows that can be triggered
      */
-    TriggerableWindows checkSlicesTrigger(const BufferMetaData& bufferMetaData);
+    void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
 
     /**
      * @brief Updates the corresponding watermark processor and then deletes all slices/windows that are not valid anymore.
@@ -152,7 +142,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @brief Sets the number of worker threads for this operator handler
      * @param numberOfWorkerThreads
      */
-    void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
+    virtual void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 
     /**
      * @brief update the watermark for a particular worker
@@ -185,7 +175,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     SliceAssigner sliceAssigner;
     uint64_t windowSize;
     uint64_t windowSlide;
-    folly::Synchronized<std::map<WindowSliceIdKey, StreamSlice::SliceState>> windowSliceIdToState;
+    folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windowToSlices;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     std::unordered_map<uint64_t, uint64_t> workerIdToWatermarkMap;

@@ -20,8 +20,9 @@
 
 #include <fstream>
 
-namespace NES::Runtime::Execution::Util {
+namespace NES::Runtime::Execution {
 
+namespace Util {
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const std::string& keyFieldName) {
     NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),
                "Left and right schema do not have the same layout type");
@@ -50,6 +51,28 @@ SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSc
 
     return retSchema;
 }
+} //namespace NES::Runtime::Execution::Util
+
+WindowInfo::WindowInfo(uint64_t windowStart, uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd), windowId(windowEnd) {
+    if (windowEnd < windowStart) {
+        NES_WARNING("WindowEnd is larger then windowStart and therefore, windowStart will be set to 0, as we detected an overflow");
+        this->windowStart = 0;
+    }
+}
+
+WindowInfo::WindowInfo() : WindowInfo(0_u64, 0_u64) {};
+
+bool WindowInfo::operator<(const WindowInfo& other) const {
+    return windowId < other.windowId;
+}
+
+std::string WindowInfo::toString() const {
+    std::ostringstream oss;
+    oss << windowStart << ","
+        << windowEnd << ","
+        << windowId;
+    return oss.str();
+}
 
 }
-// namespace NES::Runtime::Execution::Util
+// namespace NES::Runtime::Execution

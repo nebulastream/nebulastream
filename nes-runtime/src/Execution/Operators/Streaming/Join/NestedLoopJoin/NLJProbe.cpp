@@ -35,6 +35,7 @@ void* getNLJSliceRefFromIdProxy(void* ptrOpHandler, uint64_t sliceIdentifier) {
         return slice.value().get();
     }
     // For now this is fine. We should handle this as part of issue #4016
+    NES_ERROR("Could not find a slice with the id: {}", sliceIdentifier);
     return nullptr;
 }
 

@@ -43,7 +43,7 @@ class E2EBenchmarkConfig {
          * @param yamlConfigFile
          * @return loglevel
          */
-    static NES::LogLevel getLogLevel(const std::string& yamlConfigFile, NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_DEBUG);
+    static NES::LogLevel getLogLevel(const std::string& yamlConfigFile, NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_NONE);
 
     /**
          * @brief creates a string representation of this object

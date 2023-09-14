@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_DATASTRUCTURE_STREAMSLICE_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_DATASTRUCTURE_STREAMSLICE_HPP_
-
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -28,7 +27,6 @@ namespace NES::Runtime::Execution {
  */
 class StreamSlice {
   public:
-    enum class SliceState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_PROBE, ONCE_SEEN_DURING_TERMINATION };
 
     /**
      * @brief Constructor for creating a slice
@@ -82,6 +80,14 @@ class StreamSlice {
     uint64_t getSliceIdentifier() const;
 
     /**
+     * @brief Static method for getting the identifier from sliceStart and SliceEnd
+     * @param sliceStart
+     * @param sliceEnd
+     * @return uint64_t
+     */
+    static uint64_t getSliceIdentifier(uint64_t sliceStart, uint64_t sliceEnd);
+
+    /**
      * @brief Creates a string representation of this slice
      * @return String
      */
@@ -98,4 +104,4 @@ class StreamSlice {
 };
 }// namespace NES::Runtime::Execution
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_DATASTRUCTURE_STREAMSLICE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_

@@ -26,7 +26,8 @@ std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifi
     return getSliceBySliceIdentifier(slicesLocked, sliceIdentifier);
 }
 
-std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(const RLockedSlices& slicesLocked, uint64_t sliceIdentifier) {
+std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(const RLockedSlices& slicesLocked,
+                                                                                   uint64_t sliceIdentifier) {
     {
         for (auto& curSlice : *slicesLocked) {
             if (curSlice->getSliceIdentifier() == sliceIdentifier) {
@@ -37,7 +38,8 @@ std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifi
     return std::nullopt;
 }
 
-std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(const WLockedSlices& slicesLocked, uint64_t sliceIdentifier) {
+std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(const WLockedSlices& slicesLocked,
+                                                                                   uint64_t sliceIdentifier) {
     {
         for (auto& curSlice : *slicesLocked) {
             if (curSlice->getSliceIdentifier() == sliceIdentifier) {
@@ -49,60 +51,57 @@ std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifi
 }
 
 
-TriggerableWindows StreamJoinOperatorHandler::triggerAllSlices() {
-    TriggerableWindows sliceIdentifiers;
+void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipelineCtx) {
     {
-        // Getting a lock and then iterating over all slices. For each slice, we change the state to ONCE_SEEN_DURING_TERMINATION.
-        // If this was already the state, the slice has been seen by both sides during termination, and we can emit it to the probe
-        auto [slicesLocked, windowSliceIdToStateLocked] = folly::acquireLocked(slices, windowSliceIdToState);
-        for (auto& slice : *slicesLocked) {
-            for (auto& windowInfo : getAllWindowsForSlice(*slice)) {
-                const auto windowId = windowInfo.windowId;
-                auto& sliceState = windowSliceIdToStateLocked->at(WindowSliceIdKey(slice->getSliceIdentifier(), windowId));
+        auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
+        for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
+            switch (slicesAndStateForWindow.windowState) {
+                case WindowInfoState::BOTH_SIDES_FILLING: slicesAndStateForWindow.windowState = WindowInfoState::ONCE_SEEN_DURING_TERMINATION;
+                case WindowInfoState::EMITTED_TO_PROBE: continue;
+                case WindowInfoState::ONCE_SEEN_DURING_TERMINATION: {
+                    slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
 
-                if (sliceState == StreamSlice::SliceState::ONCE_SEEN_DURING_TERMINATION) {
-                    sliceState = StreamSlice::SliceState::EMITTED_TO_PROBE;
-                    sliceIdentifiers.windowIdToTriggerableSlices[windowId].add(slice);
-                    sliceIdentifiers.windowIdToTriggerableSlices[windowId].windowInfo = windowInfo;
-                } else if (sliceState == StreamSlice::SliceState::BOTH_SIDES_FILLING) {
-                    sliceState = StreamSlice::SliceState::ONCE_SEEN_DURING_TERMINATION;
+                    // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
+                    // For bucketing, this should be only done once
+                    for (auto& sliceLeft : slicesAndStateForWindow.slices) {
+                        for (auto& sliceRight : slicesAndStateForWindow.slices) {
+                            emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
+                        }
+                    }
                 }
             }
         }
     }
-    return sliceIdentifiers;
 }
 
-TriggerableWindows StreamJoinOperatorHandler::checkSlicesTrigger(const BufferMetaData& bufferMetaData) {
+void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx) {
     // The watermark processor handles the minimal watermark across both streams
     uint64_t newGlobalWatermark = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs,
                                                                            bufferMetaData.seqNumber,
                                                                            bufferMetaData.originId);
     NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
 
-    TriggerableWindows sliceIdentifiers;
     {
-        auto [slicesLocked, windowSliceIdToStateLocked] = folly::acquireLocked(slices, windowSliceIdToState);
-        for (auto& curSlice : *slicesLocked) {
-            if (curSlice->getSliceEnd() > newGlobalWatermark) {
+        auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
+        for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
+            if (windowInfo.windowEnd > newGlobalWatermark ||
+                slicesAndStateForWindow.windowState == WindowInfoState::EMITTED_TO_PROBE) {
+                // This window can not be triggered yet or has already been triggered
                 continue;
             }
-            auto allWindows = getAllWindowsForSlice(*curSlice);
-            for (auto& windowInfo : allWindows) {
-                const auto windowId = windowInfo.windowId;
-                auto& state = windowSliceIdToStateLocked->at(WindowSliceIdKey(curSlice->getSliceIdentifier(), windowId));
+            slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
+            NES_INFO("Emitting all slices for window {}", windowInfo.toString());
 
-                if (state == StreamSlice::SliceState::BOTH_SIDES_FILLING ||
-                    state == StreamSlice::SliceState::ONCE_SEEN_DURING_TERMINATION) {
-                    state = StreamSlice::SliceState::EMITTED_TO_PROBE;
-                    sliceIdentifiers.windowIdToTriggerableSlices[windowId].add(curSlice);
-                    sliceIdentifiers.windowIdToTriggerableSlices[windowId].windowInfo = windowInfo;
+
+            // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
+            // For bucketing, this should be only done once
+            for (auto& sliceLeft : slicesAndStateForWindow.slices) {
+                for (auto& sliceRight : slicesAndStateForWindow.slices) {
+                    emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
                 }
             }
         }
     }
-
-    return sliceIdentifiers;
 }
 
 void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaData) {
@@ -116,7 +115,8 @@ void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaDat
         auto& curSlice = *it;
         if (curSlice->getSliceStart() + windowSize < newGlobalWaterMarkProbe) {
             // We can delete this slice/window
-            NES_DEBUG("Deleting slice: {}", curSlice->toString());
+            NES_DEBUG("Deleting slice: {} as sliceStart+windowSize {} is smaller then watermark {}",
+                      curSlice->toString(), curSlice->getSliceStart() + windowSize, newGlobalWaterMarkProbe);
             it = slicesLocked->erase(it);
         }
     }

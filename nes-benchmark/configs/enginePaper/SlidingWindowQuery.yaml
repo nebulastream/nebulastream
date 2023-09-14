@@ -7,9 +7,9 @@ bufferSizeInBytes: 131072
 numberOfPreAllocatedBuffer: 1000
 
 numberOfQueriesToDeploy: 1
-windowingStrategy: Slicing,Bucketing
-#windowingStrategy: Bucketing
-#windowingStrategy: Bucketing
+windowingStrategy: SLICING
+#windowingStrategy: BUCKETING
+
 # ~~~ Benchmark parameter for the entire run ~~~
 numberOfBuffersToProduce: 100000000
 logLevel: LOG_NONE

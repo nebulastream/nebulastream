@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Configurations/EnumOption.hpp>
 #include <E2E/E2ERunner.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -92,13 +92,14 @@ int main(int argc, const char* argv[]) {
     NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
 
     int rpcPort = 8000, restPort = 10000;
+    uint64_t expCnt = 0;
+    uint64_t numExp = e2EBenchmarkConfig.getAllConfigPerRuns().size();
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
         rpcPort += 23;
         restPort += 23;
 
         NES::Benchmark::executeSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), rpcPort, restPort);
-
-        NES_INFO("Done with single experiment run!");
+        std::cout << "Done with experiment [" << ++expCnt << "/" << numExp << "]" << std::endl;
     }
 
     return 0;

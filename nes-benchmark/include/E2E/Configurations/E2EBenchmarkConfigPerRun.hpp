@@ -16,6 +16,9 @@
 #define NES_E2EBENCHMARKCONFIGPERRUN_HPP
 
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/EnumOption.hpp>
+#include <Configurations/details/EnumOptionDetails.hpp>
+#include <Util/Common.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <vector>
 
@@ -67,7 +70,8 @@ class E2EBenchmarkConfigPerRun {
     Configurations::IntConfigOption numberOfPartitions;
     Configurations::LongConfigOption maxHashTableSize;
     Configurations::StringConfigOption query;
-    Configurations::StringConfigOption windowingStrategy;
+    Configurations::EnumOption<QueryCompilation::WindowingStrategy> windowingStrategy;
+    Configurations::EnumOption<QueryCompilation::StreamJoinStrategy> joinStrategy;
 };
 }// namespace NES::Benchmark
 

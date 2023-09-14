@@ -47,41 +47,29 @@ static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
 /**
  * @brief Stores the information of a window. The start, end, and the identifier
  */
-struct WindowInfo {
-    WindowInfo(uint64_t windowStart, uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd), windowId(windowEnd) {}
-    WindowInfo() : WindowInfo(0_u64, 0_u64) {};
+enum class WindowInfoState : uint8_t { BOTH_SIDES_FILLING, EMITTED_TO_PROBE, ONCE_SEEN_DURING_TERMINATION };
+class WindowInfo {
+  public:
+    WindowInfo();
+    WindowInfo(uint64_t windowStart, uint64_t windowEnd);
+
+    bool operator<(const WindowInfo& other) const;
+
+    std::string toString() const;
 
     uint64_t windowStart;
     uint64_t windowEnd;
     uint64_t windowId;
-
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << windowStart << ","
-            << windowEnd << ","
-            << windowId;
-        return oss.str();
-    }
 };
 
 /**
- * @brief Stores triggerable slices for the windows to be triggered.
+ * @brief This struct stores a slice ptr and the state. We require this information, as we have to know the state of a slice for a given window
  */
-struct TriggerableWindows {
-    struct TriggerableSlices {
-        std::vector<StreamSlicePtr> slicesToTrigger;
-        WindowInfo windowInfo;
-
-        /**
-         * @brief Adds the slice to be triggered for this window
-         * @param slice
-         */
-        void add(const StreamSlicePtr& slice) {
-            slicesToTrigger.emplace_back(slice);
-        }
-    };
-    std::map<uint64_t, TriggerableSlices> windowIdToTriggerableSlices;
+struct SlicesAndState {
+    std::vector<StreamSlicePtr> slices;
+    WindowInfoState windowState;
 };
+
 
 namespace Operators {
 struct __attribute__((packed)) JoinPartitionIdSliceIdWindow {

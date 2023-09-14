@@ -73,7 +73,6 @@ namespace NES::Benchmark {
             << "- numberOfPeriods: 1" << std::endl
             << "- ingestionRateDistribution: Uniform" << std::endl
             << "- customValues: 50000" << std::endl
-            << "- joinStrategy: HASH_JOIN_LOCAL" << std::endl
             << "- dataProvider: Internal" << std::endl;
         auto expectedString = oss.str();
 

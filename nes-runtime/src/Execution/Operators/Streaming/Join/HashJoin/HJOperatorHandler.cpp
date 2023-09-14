@@ -54,9 +54,14 @@ void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
              * As we emit one buffer for each partition, the watermark can not be the slice end as some buffer might be
              * still waiting for getting processed.
              */
+            auto watermark = windowInfo.windowStart;
+            if (bufferAs->partitionId + 1 == getNumPartitions()) {
+                watermark = std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart());
+            }
+
             buffer.setOriginId(getOutputOriginId());
             buffer.setSequenceNumber(getNextSequenceNumber());
-            buffer.setWatermark(std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart()));
+            buffer.setWatermark(watermark);
 
             pipelineCtx->dispatchBuffer(buffer);
             NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples {} and no. right tuples {}",

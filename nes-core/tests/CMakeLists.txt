@@ -590,7 +590,12 @@ add_nes_integration_test(multi-join-test "Integration/MultipleJoinsTest.cpp")
 
 
 ### MultiThreadedTest ###
-add_nes_integration_test(multi-thread-test "Integration/MultiThreadedTest.cpp")
+if (NES_BUILD_JOIN_MULTITHREADED)
+    add_nes_integration_test(multi-thread-test "Integration/MultiThreadedTest.cpp"
+            "Integration/JoinMultiThreadedTest.cpp")
+else ()
+    add_nes_integration_test(multi-thread-test "Integration/MultiThreadedTest.cpp")
+endif ()
 
 
 ### AssignWatermarkTest ###

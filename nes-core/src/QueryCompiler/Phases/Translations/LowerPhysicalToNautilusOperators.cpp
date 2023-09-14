@@ -407,10 +407,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE: {
                 switch (buildOperator->getWindowingStrategy()) {
-                    case WindowingStrategy::DEFAULT: NES_NOT_IMPLEMENTED();
+                    case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
                     case WindowingStrategy::SLICING:
                         joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction)); break;
-                    case WindowingStrategy::BUCKET:
+                    case WindowingStrategy::BUCKETING:
                         joinBuildNautilus = lowerHJBucketing(buildOperator, handlerIndex, std::move(timeFunction),
                                                              windowSize, windowSlide); break;
                 }
@@ -418,10 +418,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             };
             case StreamJoinStrategy::NESTED_LOOP_JOIN: {
                 switch (buildOperator->getWindowingStrategy()) {
-                    case WindowingStrategy::DEFAULT: NES_NOT_IMPLEMENTED();
+                    case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
                     case WindowingStrategy::SLICING:
                         joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction)); break;
-                    case WindowingStrategy::BUCKET:
+                    case WindowingStrategy::BUCKETING:
                         joinBuildNautilus = lowerNLJBucketing(buildOperator, handlerIndex, std::move(timeFunction),
                                                               windowSize, windowSlide); break;
                 }

@@ -432,7 +432,7 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
                                                   joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
                                                   Nautilus::Interface::PagedVector::PAGE_SIZE,
                                                   Nautilus::Interface::PagedVector::PAGE_SIZE);
-    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKET) {
+    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::NLJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
                                                                              joinOperator->getOutputOriginIds()[0],
                                                                              streamJoinConfig.windowSize,
@@ -451,7 +451,6 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
                                                         const StreamJoinConfigs& streamJoinConfig) {
     using namespace Runtime::Execution;
     const auto joinOperator = streamJoinOperatorNodes.operatorNode->as<JoinLogicalOperatorNode>();
-
     Operators::HJOperatorHandlerPtr joinOperatorHandler;
     if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
         return Operators::HJOperatorHandlerSlicing::create(joinOperator->getAllInputOriginIds(),
@@ -465,7 +464,7 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
                                                         options->getHashJoinOptions()->getPreAllocPageCnt(),
                                                         options->getHashJoinOptions()->getPageSize(),
                                                         options->getHashJoinOptions()->getNumberOfPartitions());
-    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKET) {
+    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::HJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
                                                                             joinOperator->getOutputOriginIds()[0],
                                                                             streamJoinConfig.windowSize,
@@ -480,7 +479,6 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
     } else {
         NES_NOT_IMPLEMENTED();
     }
-
 }
 
 std::tuple<std::string, std::string>

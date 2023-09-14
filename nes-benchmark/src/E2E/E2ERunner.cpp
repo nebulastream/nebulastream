@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Configurations/EnumOption.hpp>
 #include <E2E/E2ERunner.hpp>
 #include <fstream>
 
@@ -36,8 +36,8 @@ void executeSingleRun(E2EBenchmarkConfigPerRun& configPerRun,
                       int rpcPort,
                       int restPort) {
     E2ESingleRun singleRun(configPerRun, configOverallRuns, rpcPort, restPort);
+    std::cout << "Running experiment: " << configPerRun.toString() << std::endl;
     singleRun.run();
-    NES_INFO("Done with single experiment!");
 }
 
 void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
@@ -47,7 +47,7 @@ void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
            "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,"
-           "queryString"
+           "queryString,windowingStrategy,joinStrategy"
         << std::endl;
     ofs.close();
 }

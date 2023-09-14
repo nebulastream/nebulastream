@@ -25,11 +25,12 @@ class JoinOperatorHandlerInterfaceBucketing {
   public:
     /**
      * @brief Gets the pointer to all windows (represented by StreamSlices) that should be filled for the given timestamp.
-     * If the windows do not exist, they will be created
+     * If any windows does not exist for the timestamp, it will be created
      * @param ts
+     * @param workerId
      * @return Vector of pointer to StreamSlices
      */
-    virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts) = 0;
+    virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) = 0;
 };
 } // namespace NES::Runtime::Execution::Operators
 

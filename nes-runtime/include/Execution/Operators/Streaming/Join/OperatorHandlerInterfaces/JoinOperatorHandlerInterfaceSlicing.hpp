@@ -26,19 +26,11 @@ class JoinOperatorHandlerInterfaceSlicing {
     virtual StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) = 0;
 
     /**
-     * @brief Returns the current window, by current we mean the last added window to the list. If no slice exists,
-     * a slice with the timestamp 0 will be created
+     * @brief Returns the current slice, by current we mean the last added window to the list. If no slice exists,
+     * a slice for the timestamp 0 will be created
      * @return StreamSlice*
      */
-    virtual StreamSlice* getCurrentWindowOrCreate() = 0;
-
-    /**
-     * @brief Returns the left and right slices for a given window, so that all tuples are being joined together
-     * @param windowId
-     * @return Vector<Pair<LeftSlice, RightSlice>>
-     */
-    virtual std::vector<std::pair<StreamSlicePtr, StreamSlicePtr>> getSlicesLeftRightForWindow(uint64_t windowId) = 0;
-
+    virtual StreamSlice* getCurrentSliceOrCreate() = 0;
 };
 } // namespace NES::Runtime::Execution::Operators
 

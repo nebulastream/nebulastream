@@ -18,13 +18,6 @@
 #include <numeric>
 
 namespace NES::Runtime::Execution::Operators {
-Value<UInt64> StreamJoinBuildBucketing::calcLastStartForTs(Value<UInt64>& ts) const {
-    auto remainder = (ts % windowSlide);
-    Value<UInt64> lastStart(0_u64);
-    lastStart = (ts - remainder);
-    return lastStart;
-}
-
 // TODO ask Philipp why I can not write this directly in Nautilus. How can I cast a UINT64 to INT64?
 uint64_t calcNumWindowsProxy(uint64_t ts, uint64_t windowSize, uint64_t windowSlide) {
     int64_t timestamp = ts;
@@ -38,14 +31,18 @@ uint64_t calcNumWindowsProxy(uint64_t ts, uint64_t windowSize, uint64_t windowSl
         numWindows++;
     }
 
-    NES_INFO("ts {} numWindows {} windowSize {} windowSlide {} lowerBound {} start {}",
-             ts, numWindows, windowSize, windowSlide, lowerBound, start);
-
     return numWindows;
 }
 
 Value<UInt64> StreamJoinBuildBucketing::calcNumWindows(Value<UInt64>& ts) const {
     return Nautilus::FunctionCall("calcNumWindowsProxy", calcNumWindowsProxy, ts, Value<UInt64>(windowSize),Value<UInt64>(windowSlide));
+}
+
+Value<UInt64> StreamJoinBuildBucketing::calcLastStartForTs(Value<UInt64>& ts) const {
+    auto remainder = (ts % windowSlide);
+    Value<UInt64> lastStart(0_u64);
+    lastStart = (ts - remainder);
+    return lastStart;
 }
 
 Value<UInt64> StreamJoinBuildBucketing::getMinWindowStartForTs(Value<UInt64>& ts) const {
@@ -68,16 +65,12 @@ Value<Boolean> StreamJoinBuildBucketing::checkIfLocalStateUpToDate(Value<UInt64>
     return (sameMinWindowStart && sameMaxWindowEnd).as<Boolean>();
 }
 
+void* getDefaultMemRefProxy() { return nullptr; }
+
 void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer&) const {
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto ts = ctx.getWatermarkTs();
-    auto allWindowsToFill = Nautilus::FunctionCall("getAllWindowsToFillProxy", getAllWindowsToFillProxy,
-                                                   opHandlerMemRef, ts,
-                                                   Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                                                   Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    Value<MemRef> allWindowsToFill = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRefProxy);
     ctx.setLocalOperatorState(this, std::make_unique<LocalStateBucketing>(allWindowsToFill));
-    auto joinState = dynamic_cast<LocalStateBucketing*>(ctx.getLocalState(this));
-    updateLocalState(joinState, opHandlerMemRef, ts);
 }
 
 void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) const {
@@ -85,10 +78,10 @@ void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) co
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
     Value<UInt64> workerId = ctx.getWorkerId();
 
-    if (checkIfLocalStateUpToDate(timestampVal, joinState) == false) {
+    if (!checkIfLocalStateUpToDate(timestampVal, joinState)) {
         // If the current local state is not up-to-date anymore then we have to update it
         auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-        updateLocalState(joinState, opHandlerMemRef, timestampVal);
+        updateLocalState(joinState, opHandlerMemRef, timestampVal, workerId);
     }
 
     // Iterating over all windows and then inserting the current record in all windows
@@ -98,10 +91,10 @@ void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) co
 }
 
 void StreamJoinBuildBucketing::updateLocalState(LocalStateBucketing* localStateBucketing, Value<MemRef>& opHandlerMemRef,
-                                                Value<UInt64>& ts) const {
+                                                Value<UInt64>& ts, Value<UInt64>& workerId) const {
     localStateBucketing->numWindowsToFill = calcNumWindows(ts);
     localStateBucketing->allWindowsToFill = Nautilus::FunctionCall("getAllWindowsToFillProxy", getAllWindowsToFillProxy,
-                                                            opHandlerMemRef, ts,
+                                                            opHandlerMemRef, ts, workerId,
                                                             Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                                                             Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     localStateBucketing->minWindowStart = getMinWindowStartForTs(ts);

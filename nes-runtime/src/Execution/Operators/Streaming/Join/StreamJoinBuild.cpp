@@ -45,10 +45,7 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
     BufferMetaData bufferMetaData(minWatermark, sequenceNumber, originId);
-    auto sliceIdentifiersToBeTriggered = opHandler->checkSlicesTrigger(bufferMetaData);
-    if (!sliceIdentifiersToBeTriggered.windowIdToTriggerableSlices.empty()) {
-        opHandler->triggerSlices(sliceIdentifiersToBeTriggered, pipelineCtx);
-    }
+    opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
 void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
@@ -59,10 +56,7 @@ void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx, uint64_t j
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     NES_DEBUG("Triggering all slices for pipelineId {}!", pipelineCtx->getPipelineID());
 
-    auto sliceIdentifiersToBeTriggered = opHandler->triggerAllSlices();
-    if (!sliceIdentifiersToBeTriggered.windowIdToTriggerableSlices.empty()) {
-        opHandler->triggerSlices(sliceIdentifiersToBeTriggered, pipelineCtx);
-    }
+    opHandler->triggerAllSlices(pipelineCtx);
 }
 
 void setNumberOfWorkerThreadsProxy(void* ptrOpHandler, void* ptrPipelineContext, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {

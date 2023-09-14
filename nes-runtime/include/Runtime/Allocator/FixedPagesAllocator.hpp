@@ -65,6 +65,7 @@ class FixedPagesAllocator {
   public:
     explicit FixedPagesAllocator(size_t totalSize) {
         head = NES::Runtime::detail::allocHugePages<uint8_t>(totalSize);
+        std::cout << "allocated size of " << totalSize << std::endl;
         overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSize;
         tail.store(reinterpret_cast<uintptr_t>(head));
         this->totalSize = totalSize;

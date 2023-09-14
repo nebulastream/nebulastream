@@ -35,6 +35,7 @@ enum class TCPDecideMessageSize : uint8_t { TUPLE_SEPARATOR, USER_SPECIFIED_BUFF
 //Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";
 const std::string RPC_PORT_CONFIG = "rpcPort";//used to be coordinator port, renamed to uniform naming
+const std::string ENABLE_REST_SERVER_CONFIG ="enameRestServerConfig";
 const std::string DATA_PORT_CONFIG = "dataPort";
 const std::string REST_IP_CONFIG = "restIp";
 const std::string COORDINATOR_IP_CONFIG = "coordinatorIp";

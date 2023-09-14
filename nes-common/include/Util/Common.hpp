@@ -14,6 +14,8 @@
 
 #ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+#include <Util/magicenum/magic_enum.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <functional>
 #include <memory>
 #include <string>
@@ -28,10 +30,12 @@ enum class StreamJoinStrategy : uint8_t {
 };
 
 enum class WindowingStrategy : uint8_t {
-    // Applies default windowing strategy.
-    DEFAULT,
+    // This is the legacy window strategy from the old query compiler
+    LEGACY,
+    // Applies slicing window computations. This is the default on nautilus.
     SLICING,
-    BUCKET
+    // Applies bucketing as an alternative to slicing.
+    BUCKETING
 };
 
 enum class JoinBuildSideType : uint8_t { Right, Left };
@@ -159,6 +163,26 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
     }
 
     return elems;
+}
+
+template<typename T>
+std::vector<T> splitStringIntoEnums(const std::string& inputString, const T defaultValue, const std::string& delim) {
+    auto splitString = splitWithStringDelimiter<std::string>(inputString, delim);
+    if (splitString.empty()) {
+        return {defaultValue};
+    }
+
+    std::vector<T> enumVec;
+    for (auto enumStr : splitString) {
+        auto castedEnum = magic_enum::enum_cast<T>(enumStr);
+        if (castedEnum.has_value()) {
+            enumVec.emplace_back(castedEnum.value());
+        } else {
+            NES_THROW_RUNTIME_ERROR("Could not cast to enum " + enumStr);
+        }
+    }
+
+    return enumVec;
 }
 
 /**

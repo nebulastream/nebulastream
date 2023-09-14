@@ -16,12 +16,14 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Configurations/details/EnumOptionDetails.hpp>
 #include <E2E/E2ESingleRun.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/BenchmarkUtils.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Version/version.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
@@ -39,6 +41,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     // Coordinator configuration
     coordinatorConf->rpcPort = rpcPortSingleRun;
     coordinatorConf->restPort = restPortSingleRun;
+    coordinatorConf->enableRestServerConfig = false;
     coordinatorConf->enableMonitoring = false;
     coordinatorConf->optimizer.distributedWindowChildThreshold = 100;
     coordinatorConf->optimizer.distributedWindowCombinerThreshold = 100;
@@ -53,20 +56,14 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    // TODO check if we can do this somehow better, maybe store the enum directly in the configPerRun.windowingStrategy
-    if(configPerRun.windowingStrategy->getValue() == "Slicing") {
-        coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
-    } else {
-        coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::BUCKET;
-    }
-
+    coordinatorConf->worker.queryCompiler.windowingStrategy =
+        QueryCompilation::WindowingStrategy::SLICING;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
     coordinatorConf->worker.queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode =
-        QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
     coordinatorConf->worker.queryCompiler.nautilusBackend =
         QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
 
@@ -74,21 +71,12 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.numberOfPartitions = configPerRun.numberOfPartitions->getValue();
     coordinatorConf->worker.queryCompiler.preAllocPageCnt = configPerRun.preAllocPageCnt->getValue();
     coordinatorConf->worker.queryCompiler.maxHashTableSize = configPerRun.maxHashTableSize->getValue();
+    coordinatorConf->worker.queryCompiler.windowingStrategy = configPerRun.windowingStrategy;
+    coordinatorConf->worker.queryCompiler.joinStrategy = configPerRun.joinStrategy;
 
-    if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
-        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
-    } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCKING") {
-        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING;
-    } else if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_GLOBAL_LOCK_FREE") {
-        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE;
-    } else if (configOverAllRuns.joinStrategy->getValue() == "NESTED_LOOP_JOIN") {
-        coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
-    } else {
-        NES_THROW_RUNTIME_ERROR("Join Strategy " << configOverAllRuns.joinStrategy->getValue() << " not supported");
-    }
-
-    NES_INFO("Using joinStrategy {}",
-             magic_enum::enum_name<QueryCompilation::StreamJoinStrategy>(coordinatorConf->worker.queryCompiler.joinStrategy));
+    NES_INFO("Using joinStrategy {} windowingStrategy {}",
+             magic_enum::enum_name<QueryCompilation::StreamJoinStrategy>(coordinatorConf->worker.queryCompiler.joinStrategy),
+             magic_enum::enum_name<QueryCompilation::WindowingStrategy>(coordinatorConf->worker.queryCompiler.windowingStrategy));
 
     if (configOverAllRuns.sourceSharing->getValue() == "on") {
         coordinatorConf->worker.enableSourceSharing = true;
@@ -167,6 +155,8 @@ void E2ESingleRun::runQuery() {
     // Wait for the system to come to a steady state
     NES_INFO("Waiting for {} seconds to let the system reach a steady state!",
              configOverAllRuns.startupSleepIntervalInSeconds->getValue());
+    std::cout << "Sleeping for " << configOverAllRuns.startupSleepIntervalInSeconds->getValue()
+              << " seconds to let the system reach a steady state!" << std::endl;
     sleep(configOverAllRuns.startupSleepIntervalInSeconds->getValue());
 
     // For now, we only support one way of collecting the measurements
@@ -201,10 +191,12 @@ void E2ESingleRun::stopQuery() {
 
     for (auto id : submittedIds) {
         // Sending a stop request to the coordinator with a timeout of 30 seconds
-        queryService->validateAndQueueStopQueryRequest(id);
-
-        if (!waitForQueryToStop(id, queryCatalog, defaultStartQueryTimeout)) {
-            NES_THROW_RUNTIME_ERROR("E2EBase: Could not stop query with id = " << id);
+        if (!coordinator->getNodeEngine()->stopQuery(id, Runtime::QueryTerminationType::HardStop)) {
+            NES_THROW_RUNTIME_ERROR("Could not stop query via nodeEngine->stopQuery()");
+        }
+        std::cout << "Stopped query " << id << ". Now stopping the nodeEngine" << std::endl;
+        if (!coordinator->getNodeEngine()->stop(true)) {
+            NES_THROW_RUNTIME_ERROR("Could not stop the nodeEngine");
         }
         NES_INFO("E2EBase: Query with id = {} stopped", id);
     }
@@ -270,8 +262,9 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
-        outputCsvStream << ","
-                        << "\"" << queryString << "\"";
+        outputCsvStream << "," << "\"" << queryString << "\"";
+        outputCsvStream << "," << magic_enum::enum_name(configPerRun.windowingStrategy.getValue());
+        outputCsvStream << "," << magic_enum::enum_name(configPerRun.joinStrategy.getValue());
         outputCsvStream << std::endl;
     }
 

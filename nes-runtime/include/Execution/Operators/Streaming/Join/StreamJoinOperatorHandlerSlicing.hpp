@@ -26,9 +26,7 @@ class StreamJoinOperatorHandlerSlicing : public virtual JoinOperatorHandlerInter
 
     ~StreamJoinOperatorHandlerSlicing()  override = default;
     StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) override;
-    StreamSlice* getCurrentWindowOrCreate() override;
-    std::vector<std::pair<StreamSlicePtr, StreamSlicePtr>> getSlicesLeftRightForWindow(uint64_t windowId) override;
-    void triggerSlices(TriggerableWindows& triggerableWindows, PipelineExecutionContext* pipelineCtx) override;
+    StreamSlice* getCurrentSliceOrCreate() override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
 };
 }// namespace NES::Runtime::Execution::Operators
