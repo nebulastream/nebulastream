@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.213](https://github.com/nebulastream/nebulastream/tree/v0.5.213) (2023-09-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.212...v0.5.213)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove dead code [\#4212](https://github.com/nebulastream/nebulastream/issues/4212)
+
 ## [v0.5.212](https://github.com/nebulastream/nebulastream/tree/v0.5.212) (2023-09-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.211...v0.5.212)
