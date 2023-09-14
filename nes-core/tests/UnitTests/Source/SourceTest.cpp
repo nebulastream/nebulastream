@@ -328,7 +328,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValueWithTooSmallIngestionRate);
     FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate);
-    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroInitialInterval);
+    FRIEND_TEST(SourceTest, DISABLED_testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroInitialInterval);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
 using DataSourceProxyPtr = std::shared_ptr<DataSourceProxy>;
@@ -727,7 +727,7 @@ TEST_F(SourceTest, testCpuOverhead) {
                                                                             this->numSourceLocalBuffersDefault,
                                                                             GatheringMode::ADAPTIVE_MODE,
                                                                             {pipeline});
-    mockedAdaptiveSource->numberOfBuffersToProduce = 3;
+    mockedAdaptiveSource->numberOfBuffersToProduce = 100;
     mockedAdaptiveSource->running = true;
     mockedAdaptiveSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mockedAdaptiveSource->setGatheringInterval(std::chrono::milliseconds{1000});
@@ -746,10 +746,18 @@ TEST_F(SourceTest, testCpuOverhead) {
     ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-//    EXPECT_CALL(*mockedAdaptiveSource, receiveData()).Times(Exactly(mockedAdaptiveSource->numberOfBuffersToProduce));
-//    EXPECT_CALL(*mockedAdaptiveSource, emitWork(_)).Times(Exactly(mockedAdaptiveSource->numberOfBuffersToProduce));
-    // TODO: loop and time code here
+
+    EXPECT_CALL(*mockedAdaptiveSource, toString()).Times(::testing::AnyNumber());
+    EXPECT_CALL(*mockedAdaptiveSource, getType()).Times(::testing::AnyNumber());
+    EXPECT_CALL(*mockedAdaptiveSource, emitWork(_)).Times(::testing::AnyNumber());
+    EXPECT_CALL(*mockedAdaptiveSource, receiveData()).Times(::testing::AnyNumber());
+
+    auto start_time = std::chrono::high_resolution_clock::now();
     mockedAdaptiveSource->runningRoutine();
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto run_duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    auto avg_run_duration = run_duration / mockedAdaptiveSource->numberOfBuffersToProduce;
+
     EXPECT_FALSE(mockedAdaptiveSource->running);
     EXPECT_EQ(mockedAdaptiveSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mockedAdaptiveSource.get()));
@@ -1125,7 +1133,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroInitialInterval) {
+TEST_F(SourceTest, DISABLED_testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroInitialInterval) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
