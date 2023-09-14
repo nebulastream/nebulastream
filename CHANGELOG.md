@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.212](https://github.com/nebulastream/nebulastream/tree/v0.5.212) (2023-09-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.211...v0.5.212)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Handle Arrow Buffering Edge Cases [\#4210](https://github.com/nebulastream/nebulastream/issues/4210)
+
 ## [v0.5.211](https://github.com/nebulastream/nebulastream/tree/v0.5.211) (2023-09-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.210...v0.5.211)
