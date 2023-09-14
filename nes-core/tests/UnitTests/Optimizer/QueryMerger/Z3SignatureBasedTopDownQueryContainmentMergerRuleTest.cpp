@@ -63,7 +63,7 @@ class Z3SignatureBasedTopDownQueryContainmentMergerRuleTest
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup Z3SignatureBasedBottomUpQueryContainmentRuleTest test case.");
     }
 
@@ -322,7 +322,6 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testPartialEqualit
     EXPECT_TRUE(query1SrcOperator->equal((*itrSecondSink)));
 }
 
-//todo: finish this test, add more tests
 TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourceOperationsDistinctQueries) {
     setupSensorNodeAndSourceCatalog();
 
@@ -338,13 +337,11 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourceOpe
 
     const NodePtr query1SinkOperator = (*leftItr);
     ++leftItr;
+    const NodePtr windowOperator1 = (*leftItr);
+    ++leftItr;
+    const NodePtr watermarkAssigner1 = (*leftItr);
+    ++leftItr;
     const NodePtr query1FilterOperator1 = (*leftItr);
-    ++leftItr;
-    const NodePtr query1FilterOperator2 = (*leftItr);
-    ++leftItr;
-    const NodePtr query1FilterOperator3 = (*leftItr);
-    ++leftItr;
-    const NodePtr query1FilterOperator4 = (*leftItr);
     ++leftItr;
     const NodePtr query1SrcOperator = (*leftItr);
 
@@ -352,6 +349,10 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourceOpe
     auto rightItr = queryPlan2NodeIterator.begin();
 
     const NodePtr query2SinkOperator = (*rightItr);
+    ++rightItr;
+    const NodePtr windowOperator2 = (*rightItr);
+    ++rightItr;
+    const NodePtr watermarkAssigner2 = (*rightItr);
 
     // Execute
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -384,18 +385,18 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourceOpe
     // UpdatedSharedQueryPlan should have 2 sink operators
     EXPECT_EQ(updatedSharedQueryPlan->getRootOperators().size(), 2);
 
+    NES_TRACE("UpdatedSharedQueryPlan: {}", updatedSharedQueryPlan->toString());
+
     // Validate
     DepthFirstNodeIterator updatedQueryPlanNodeIteratorFirstSink(updatedSharedQueryPlan->getRootOperators()[0]);
     auto itrFirstSink = updatedQueryPlanNodeIteratorFirstSink.begin();
     EXPECT_TRUE(query1SinkOperator->equal((*itrFirstSink)));
     ++itrFirstSink;
+    EXPECT_TRUE(windowOperator1->equal((*itrFirstSink)));
+    ++itrFirstSink;
+    EXPECT_TRUE(watermarkAssigner1->equal((*itrFirstSink)));
+    ++itrFirstSink;
     EXPECT_TRUE(query1FilterOperator1->equal((*itrFirstSink)));
-    ++itrFirstSink;
-    EXPECT_TRUE(query1FilterOperator2->equal((*itrFirstSink)));
-    ++itrFirstSink;
-    EXPECT_TRUE(query1FilterOperator3->equal((*itrFirstSink)));
-    ++itrFirstSink;
-    EXPECT_TRUE(query1FilterOperator4->equal((*itrFirstSink)));
     ++itrFirstSink;
     EXPECT_TRUE(query1SrcOperator->equal((*itrFirstSink)));
 
@@ -403,13 +404,101 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourceOpe
     auto itrSecondSink = updatedQueryPlanNodeIteratorSecondSink.begin();
     EXPECT_TRUE(query2SinkOperator->equal((*itrSecondSink)));
     ++itrSecondSink;
-    EXPECT_TRUE(query1FilterOperator1->equal((*itrSecondSink)));
+    EXPECT_TRUE(windowOperator2->equal((*itrSecondSink)));
     ++itrSecondSink;
-    EXPECT_TRUE(query1FilterOperator2->equal((*itrSecondSink)));
+    EXPECT_TRUE(watermarkAssigner2->equal((*itrSecondSink)));
     ++itrSecondSink;
-    EXPECT_TRUE(query1FilterOperator3->equal((*itrSecondSink)));
+    EXPECT_TRUE(query1SrcOperator->equal((*itrSecondSink)));
+}
+
+
+TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourcesWithEqualJoinsButFilterPreventsMerging) {
+    setupSensorNodeAndSourceCatalog();
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    Query query1 = Query::from("windTurbines").filter(Attribute("value") < 5).joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());
+    Query query2 = Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20))).sink(PrintSinkDescriptor::create());
+    const QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    const QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlan1NodeIterator(queryPlan1->getRootOperators()[0]);
+    auto leftItr = queryPlan1NodeIterator.begin();
+
+    const NodePtr query1SinkOperator = (*leftItr);
+    ++leftItr;
+    const NodePtr joinOperator1 = (*leftItr);
+    ++leftItr;
+    const NodePtr watermarkAssigner1 = (*leftItr);
+    ++leftItr;
+    const NodePtr watermarkAssigner2 = (*leftItr);
+    ++leftItr;
+    const NodePtr query1FilterOperator1 = (*leftItr);
+    ++leftItr;
+    const NodePtr query1SrcOperator = (*leftItr);
+
+    DepthFirstNodeIterator queryPlan2NodeIterator(queryPlan2->getRootOperators()[0]);
+    auto rightItr = queryPlan2NodeIterator.begin();
+
+    const NodePtr query2SinkOperator = (*rightItr);
+    ++rightItr;
+    const NodePtr windowOperator2 = (*rightItr);
+    ++rightItr;
+    const NodePtr watermarkAssigner2 = (*rightItr);
+
+    // Execute
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase =
+        Optimizer::SignatureInferencePhase::create(context,
+                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    queryPlan1->setQueryId(1);
+    queryPlan2->setQueryId(2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan);
+
+    // UpdatedSharedQueryPlan should have 2 sink operators
+    EXPECT_EQ(updatedSharedQueryPlan->getRootOperators().size(), 2);
+
+    NES_TRACE("UpdatedSharedQueryPlan: {}", updatedSharedQueryPlan->toString());
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIteratorFirstSink(updatedSharedQueryPlan->getRootOperators()[0]);
+    auto itrFirstSink = updatedQueryPlanNodeIteratorFirstSink.begin();
+    EXPECT_TRUE(query1SinkOperator->equal((*itrFirstSink)));
+    ++itrFirstSink;
+    EXPECT_TRUE(windowOperator1->equal((*itrFirstSink)));
+    ++itrFirstSink;
+    EXPECT_TRUE(watermarkAssigner1->equal((*itrFirstSink)));
+    ++itrFirstSink;
+    EXPECT_TRUE(query1FilterOperator1->equal((*itrFirstSink)));
+    ++itrFirstSink;
+    EXPECT_TRUE(query1SrcOperator->equal((*itrFirstSink)));
+
+    DepthFirstNodeIterator updatedQueryPlanNodeIteratorSecondSink(updatedSharedQueryPlan->getRootOperators()[1]);
+    auto itrSecondSink = updatedQueryPlanNodeIteratorSecondSink.begin();
+    EXPECT_TRUE(query2SinkOperator->equal((*itrSecondSink)));
     ++itrSecondSink;
-    EXPECT_TRUE(query1FilterOperator4->equal((*itrSecondSink)));
+    EXPECT_TRUE(windowOperator2->equal((*itrSecondSink)));
+    ++itrSecondSink;
+    EXPECT_TRUE(watermarkAssigner2->equal((*itrSecondSink)));
     ++itrSecondSink;
     EXPECT_TRUE(query1SrcOperator->equal((*itrSecondSink)));
 }
