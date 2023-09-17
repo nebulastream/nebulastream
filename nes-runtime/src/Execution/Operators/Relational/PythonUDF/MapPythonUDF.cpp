@@ -252,7 +252,7 @@ T transformOutputType(void* outputPtr, int position, int tupleSize) {
         value = PyLong_AsLong(output);
     } else if constexpr (std::is_same<T, TextValue*>::value) {
         auto string = PyUnicode_AsUTF8(output);
-        value = TextValue::create(string);  // TODO check whether it is ok that string is a const char
+        value = TextValue::create(string);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
@@ -344,7 +344,7 @@ int8_t transformByteType(void* outputPtr, int position, int tupleSize) {
 }
 
 /**
- * @brief Transforms the PyObject into a byte
+ * @brief Transforms the PyObject into a TextValue
  * @param outputPtr pyObject as a python tuple
  * @param position position in the pyObject tuple
  * @param tupleSize size of the tuple
