@@ -44,7 +44,7 @@ public:
 
 private:
     Descriptor descriptor;
-    std::unique_ptr<Backends::KernelExecutable> kernelExecutable;
+    mutable std::unique_ptr<Backends::KernelExecutable> kernelExecutable;
 };
 
 } // namespace NES::Runtime::Execution::Operators
