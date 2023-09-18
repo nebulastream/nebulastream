@@ -15,12 +15,12 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
@@ -71,7 +71,7 @@ using std::endl;
 using namespace NES::Runtime;
 namespace NES {
 
-class OperatorCodeGenerationTest : public Testing::NESBaseTest {
+class OperatorCodeGenerationTest : public Testing::BaseIntegrationTest {
   public:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     /* Will be called before any test in this class are executed. */
@@ -83,8 +83,8 @@ class OperatorCodeGenerationTest : public Testing::NESBaseTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
-        Testing::NESBaseTest::SetUp();
-        dataPort = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         listener = std::make_shared<DummyQueryListener>();
@@ -94,7 +94,7 @@ class OperatorCodeGenerationTest : public Testing::NESBaseTest {
     void TearDown() override {
         NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

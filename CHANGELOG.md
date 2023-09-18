@@ -1,12 +1,442 @@
 # Changelog
 
-## [v0.5.163](https://github.com/nebulastream/nebulastream/tree/v0.5.163) (2023-07-27)
+## [v0.5.213](https://github.com/nebulastream/nebulastream/tree/v0.5.213) (2023-09-14)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.162...v0.5.163)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.212...v0.5.213)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove dead code [\#4212](https://github.com/nebulastream/nebulastream/issues/4212)
+
+## [v0.5.212](https://github.com/nebulastream/nebulastream/tree/v0.5.212) (2023-09-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.211...v0.5.212)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Handle Arrow Buffering Edge Cases [\#4210](https://github.com/nebulastream/nebulastream/issues/4210)
+
+## [v0.5.211](https://github.com/nebulastream/nebulastream/tree/v0.5.211) (2023-09-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.210...v0.5.211)
+
+**Implemented enhancements:**
+
+- \[TASK\] Rename Window Strategies [\#4133](https://github.com/nebulastream/nebulastream/issues/4133)
+
+## [v0.5.210](https://github.com/nebulastream/nebulastream/tree/v0.5.210) (2023-09-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.209...v0.5.210)
+
+**Implemented enhancements:**
+
+- \[TASK\] Reduce CI timeout [\#4110](https://github.com/nebulastream/nebulastream/issues/4110)
+- \[TASK\] Filter push down below map  [\#4054](https://github.com/nebulastream/nebulastream/issues/4054)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Timestamp missing for Metrics [\#4203](https://github.com/nebulastream/nebulastream/issues/4203)
+
+## [v0.5.209](https://github.com/nebulastream/nebulastream/tree/v0.5.209) (2023-09-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.208...v0.5.209)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Add timestamp option at csv sink [\#4116](https://github.com/nebulastream/nebulastream/issues/4116)
+
+## [v0.5.208](https://github.com/nebulastream/nebulastream/tree/v0.5.208) (2023-09-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.207...v0.5.208)
+
+**Implemented enhancements:**
+
+- \[TASK\] Nautilus Compare two MemRefs [\#4190](https://github.com/nebulastream/nebulastream/issues/4190)
+- \[TASK\] Do not share PCHs among CI runs [\#4022](https://github.com/nebulastream/nebulastream/issues/4022)
+- \[BUG\] Enable HASH\_JOIN\_GLOBAL\_LOCKING and HASH\_JOIN\_GLOBAL\_LOCK\_FREE in Jointests [\#3926](https://github.com/nebulastream/nebulastream/issues/3926)
+- \[TASK\] Array return values for FlatMap JavaUdf [\#3771](https://github.com/nebulastream/nebulastream/issues/3771)
+- Lower logical operator for window-based Java UDFs to physical operator to Nautilus operator [\#3519](https://github.com/nebulastream/nebulastream/issues/3519)
+- Implement execution of window-based Java UDFs in Nautilus [\#3518](https://github.com/nebulastream/nebulastream/issues/3518)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Text MapFunctions fail in MapJavaUdfOperatorTest [\#3625](https://github.com/nebulastream/nebulastream/issues/3625)
+
+## [v0.5.207](https://github.com/nebulastream/nebulastream/tree/v0.5.207) (2023-08-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.206...v0.5.207)
+
+**Implemented enhancements:**
+
+- \[TASK\] Print timestamps during query execution to determine runtime [\#4172](https://github.com/nebulastream/nebulastream/issues/4172)
+- \[TASK\] StreamHashJoin Sliding Window Support [\#4125](https://github.com/nebulastream/nebulastream/issues/4125)
+
+## [v0.5.206](https://github.com/nebulastream/nebulastream/tree/v0.5.206) (2023-08-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.205...v0.5.206)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate WindowDeploymentTest to nautilus [\#4141](https://github.com/nebulastream/nebulastream/issues/4141)
+
+## [v0.5.205](https://github.com/nebulastream/nebulastream/tree/v0.5.205) (2023-08-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.204...v0.5.205)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor NestedLoopJoinOperatorTest [\#3925](https://github.com/nebulastream/nebulastream/issues/3925)
+
+## [v0.5.204](https://github.com/nebulastream/nebulastream/tree/v0.5.204) (2023-08-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.203...v0.5.204)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrage new request executor service [\#4078](https://github.com/nebulastream/nebulastream/issues/4078)
+
+## [v0.5.203](https://github.com/nebulastream/nebulastream/tree/v0.5.203) (2023-08-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.202...v0.5.203)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add Error handling to Add Request [\#4038](https://github.com/nebulastream/nebulastream/issues/4038)
+
+## [v0.5.202](https://github.com/nebulastream/nebulastream/tree/v0.5.202) (2023-08-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.201...v0.5.202)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Reduce Port Quering in Tests [\#4142](https://github.com/nebulastream/nebulastream/issues/4142)
+
+## [v0.5.201](https://github.com/nebulastream/nebulastream/tree/v0.5.201) (2023-08-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.200...v0.5.201)
+
+**Implemented enhancements:**
+
+- \[TASK\] Declare `NLJBuild` as fusible operator [\#4018](https://github.com/nebulastream/nebulastream/issues/4018)
+
+## [v0.5.200](https://github.com/nebulastream/nebulastream/tree/v0.5.200) (2023-08-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.199...v0.5.200)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix test harness join test  [\#4076](https://github.com/nebulastream/nebulastream/issues/4076)
+
+## [v0.5.199](https://github.com/nebulastream/nebulastream/tree/v0.5.199) (2023-08-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.198...v0.5.199)
+
+**Implemented enhancements:**
+
+- \[TASK\] Run CI on all PRs that want to merge into branch named "feature/\*" [\#4143](https://github.com/nebulastream/nebulastream/issues/4143)
+
+### Bug Fixes 🐛
+
+- \[BUG\] NemoPlacemenTest and NemoIntegrationTest [\#4149](https://github.com/nebulastream/nebulastream/issues/4149)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Disable Distributed Windows [\#3324](https://github.com/nebulastream/nebulastream/issues/3324)
+
+## [v0.5.198](https://github.com/nebulastream/nebulastream/tree/v0.5.198) (2023-08-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.197...v0.5.198)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Random failing test in MonitoringIntegrationTest [\#3237](https://github.com/nebulastream/nebulastream/issues/3237)
+
+## [v0.5.197](https://github.com/nebulastream/nebulastream/tree/v0.5.197) (2023-08-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.196...v0.5.197)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Wrong window strategy for Nautilus [\#4134](https://github.com/nebulastream/nebulastream/issues/4134)
+
+### Query Optimizer 🔧
+
+- Handle removal of queries from the shared query plans [\#2496](https://github.com/nebulastream/nebulastream/issues/2496)
+
+## [v0.5.196](https://github.com/nebulastream/nebulastream/tree/v0.5.196) (2023-08-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.195...v0.5.196)
+
+**Implemented enhancements:**
+
+- \[TASK\] Key Iterator for ChainedHashMap [\#4079](https://github.com/nebulastream/nebulastream/issues/4079)
+
+### Query Optimizer 🔧
+
+- \[Feature\] Define an interface for User/System requests of different type [\#3381](https://github.com/nebulastream/nebulastream/issues/3381)
+
+## [v0.5.195](https://github.com/nebulastream/nebulastream/tree/v0.5.195) (2023-08-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.194...v0.5.195)
+
+**Implemented enhancements:**
+
+- \[TASK\] Insert for ChainedHashMap that is able to append to the chain [\#4099](https://github.com/nebulastream/nebulastream/issues/4099)
+
+## [v0.5.194](https://github.com/nebulastream/nebulastream/tree/v0.5.194) (2023-08-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.193...v0.5.194)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Conversion from TEXT field to Java String creates random garbage content at the end [\#4111](https://github.com/nebulastream/nebulastream/issues/4111)
+
+## [v0.5.193](https://github.com/nebulastream/nebulastream/tree/v0.5.193) (2023-08-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.192...v0.5.193)
+
+**Implemented enhancements:**
+
+- \[TASK\] Zero-Copy Arrow Scan [\#4092](https://github.com/nebulastream/nebulastream/issues/4092)
+
+## [v0.5.192](https://github.com/nebulastream/nebulastream/tree/v0.5.192) (2023-08-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.191...v0.5.192)
+
+**Implemented enhancements:**
+
+- \[TASK\] Implement Bucket Windowing [\#4086](https://github.com/nebulastream/nebulastream/issues/4086)
+- \[TASK\] Refactor and Migrate sliding window aggregation tests [\#4072](https://github.com/nebulastream/nebulastream/issues/4072)
+
+## [v0.5.191](https://github.com/nebulastream/nebulastream/tree/v0.5.191) (2023-08-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.190...v0.5.191)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create Working Test for Demo City Query [\#4057](https://github.com/nebulastream/nebulastream/issues/4057)
+
+### Bug Fixes 🐛
+
+- \[BUG\] TestSink: waitTillCompleted Stalls Indefinitely if no TupleBuffers are Produced [\#4043](https://github.com/nebulastream/nebulastream/issues/4043)
+
+## [v0.5.190](https://github.com/nebulastream/nebulastream/tree/v0.5.190) (2023-08-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.189...v0.5.190)
+
+**Implemented enhancements:**
+
+- \[TASK\] Nautilus add sliding window support [\#3998](https://github.com/nebulastream/nebulastream/issues/3998)
+
+## [v0.5.189](https://github.com/nebulastream/nebulastream/tree/v0.5.189) (2023-08-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.188...v0.5.189)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Issues when compiling with `libstdc++` [\#4103](https://github.com/nebulastream/nebulastream/issues/4103)
+
+## [v0.5.188](https://github.com/nebulastream/nebulastream/tree/v0.5.188) (2023-08-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.187...v0.5.188)
+
+### Bug Fixes 🐛
+
+- \[BUG\] No sinks print results when fault tolerance is enabled [\#4097](https://github.com/nebulastream/nebulastream/issues/4097)
+
+## [v0.5.187](https://github.com/nebulastream/nebulastream/tree/v0.5.187) (2023-08-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.186...v0.5.187)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Windowed join query produces empty result in Nautilus [\#4058](https://github.com/nebulastream/nebulastream/issues/4058)
+- \[BUG\] Problems with Benchmark Configs & Runner [\#4028](https://github.com/nebulastream/nebulastream/issues/4028)
+
+## [v0.5.186](https://github.com/nebulastream/nebulastream/tree/v0.5.186) (2023-08-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.185...v0.5.186)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrate Apache Arrow [\#3905](https://github.com/nebulastream/nebulastream/issues/3905)
+
+## [v0.5.185](https://github.com/nebulastream/nebulastream/tree/v0.5.185) (2023-08-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.184...v0.5.185)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create coordinator side RequestExecutor [\#4033](https://github.com/nebulastream/nebulastream/issues/4033)
+
+## [v0.5.184](https://github.com/nebulastream/nebulastream/tree/v0.5.184) (2023-08-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.183...v0.5.184)
+
+**Implemented enhancements:**
+
+- \[TASK\] Reduce Source Integration Test Runtime [\#4080](https://github.com/nebulastream/nebulastream/issues/4080)
+
+## [v0.5.183](https://github.com/nebulastream/nebulastream/tree/v0.5.183) (2023-08-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.182...v0.5.183)
+
+**Implemented enhancements:**
+
+- \[TASK\] Error Handling for Stop Request [\#3724](https://github.com/nebulastream/nebulastream/issues/3724)
+
+## [v0.5.182](https://github.com/nebulastream/nebulastream/tree/v0.5.182) (2023-08-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.181...v0.5.182)
+
+## [v0.5.181](https://github.com/nebulastream/nebulastream/tree/v0.5.181) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.180...v0.5.181)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Count aggregation from the Java client causes runtime error [\#3429](https://github.com/nebulastream/nebulastream/issues/3429)
+
+## [v0.5.180](https://github.com/nebulastream/nebulastream/tree/v0.5.180) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.179...v0.5.180)
+
+**Implemented enhancements:**
+
+- \[TASK\] Compute C++ code for input query plan to be used by ELEGANT scheduler [\#3890](https://github.com/nebulastream/nebulastream/issues/3890)
+
+## [v0.5.179](https://github.com/nebulastream/nebulastream/tree/v0.5.179) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.178...v0.5.179)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate TestHarness UtilTests to Nautilus [\#4075](https://github.com/nebulastream/nebulastream/issues/4075)
+- \[TASK\] Rewrite to TumblingWindowExecutionTest [\#3449](https://github.com/nebulastream/nebulastream/issues/3449)
+
+## [v0.5.178](https://github.com/nebulastream/nebulastream/tree/v0.5.178) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.177...v0.5.178)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Initial OpenCV integration [\#3150](https://github.com/nebulastream/nebulastream/issues/3150)
+
+## [v0.5.177](https://github.com/nebulastream/nebulastream/tree/v0.5.177) (2023-08-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.176...v0.5.177)
+
+**Implemented enhancements:**
+
+- \[BUG\] Union support in Nautilus [\#4009](https://github.com/nebulastream/nebulastream/issues/4009)
+
+## [v0.5.176](https://github.com/nebulastream/nebulastream/tree/v0.5.176) (2023-08-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.175...v0.5.176)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create Logical Operator for the Python UDF  Map Operator [\#3912](https://github.com/nebulastream/nebulastream/issues/3912)
+- \[TASK\] Create Physical Operator for the Python UDF  Map Operator [\#3911](https://github.com/nebulastream/nebulastream/issues/3911)
+
+## [v0.5.175](https://github.com/nebulastream/nebulastream/tree/v0.5.175) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.174...v0.5.175)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate Query Shutdown [\#4034](https://github.com/nebulastream/nebulastream/issues/4034)
+
+## [v0.5.174](https://github.com/nebulastream/nebulastream/tree/v0.5.174) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.173...v0.5.174)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add predicted topology timeline [\#3649](https://github.com/nebulastream/nebulastream/issues/3649)
+
+## [v0.5.173](https://github.com/nebulastream/nebulastream/tree/v0.5.173) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.172...v0.5.173)
+
+**Implemented enhancements:**
+
+- \[Feature\] Query Add Request Implementation [\#3636](https://github.com/nebulastream/nebulastream/issues/3636)
+
+## [v0.5.172](https://github.com/nebulastream/nebulastream/tree/v0.5.172) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.171...v0.5.172)
+
+**Implemented enhancements:**
+
+- \[TASK\] Parameterize and Port MultipleJoinsTest  [\#3983](https://github.com/nebulastream/nebulastream/issues/3983)
+
+## [v0.5.171](https://github.com/nebulastream/nebulastream/tree/v0.5.171) (2023-08-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.170...v0.5.171)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor StreamJoinExecutionTest with CollectSink [\#4035](https://github.com/nebulastream/nebulastream/issues/4035)
+
+## [v0.5.170](https://github.com/nebulastream/nebulastream/tree/v0.5.170) (2023-07-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.169...v0.5.170)
+
+## [v0.5.169](https://github.com/nebulastream/nebulastream/tree/v0.5.169) (2023-07-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.168...v0.5.169)
+
+**Implemented enhancements:**
+
+- \[TASK\] Retrieve OpenCL device information in worker [\#3852](https://github.com/nebulastream/nebulastream/issues/3852)
+
+## [v0.5.168](https://github.com/nebulastream/nebulastream/tree/v0.5.168) (2023-07-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.167...v0.5.168)
 
 **Implemented enhancements:**
 
 - \[TASK\] Refactor Java UDF and JNI integration [\#3974](https://github.com/nebulastream/nebulastream/issues/3974)
+
+## [v0.5.167](https://github.com/nebulastream/nebulastream/tree/v0.5.167) (2023-07-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.166...v0.5.167)
+
+**Implemented enhancements:**
+
+- \[TASK\] Use parameterized tests in MapQueryExecutionTest.cpp [\#3761](https://github.com/nebulastream/nebulastream/issues/3761)
+
+## [v0.5.166](https://github.com/nebulastream/nebulastream/tree/v0.5.166) (2023-07-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.165...v0.5.166)
+
+**Implemented enhancements:**
+
+- \[TASK\] StreamJoin Replace leftSide with an Enum [\#3692](https://github.com/nebulastream/nebulastream/issues/3692)
+
+## [v0.5.165](https://github.com/nebulastream/nebulastream/tree/v0.5.165) (2023-07-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.164...v0.5.165)
+
+**Implemented enhancements:**
+
+- \[TASK\] split up filter \(where the predicate consits of andExpressionNodes\) [\#3970](https://github.com/nebulastream/nebulastream/issues/3970)
+- \[TASK\] add promise as member of AbstractRequest [\#3958](https://github.com/nebulastream/nebulastream/issues/3958)
+
+## [v0.5.164](https://github.com/nebulastream/nebulastream/tree/v0.5.164) (2023-07-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.163...v0.5.164)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate invalid OriginId for Multiworker Joins [\#4032](https://github.com/nebulastream/nebulastream/issues/4032)
+- \[TASK\] Port tests in JoinDeployment to use TestHarness [\#4021](https://github.com/nebulastream/nebulastream/issues/4021)
+- \[TASK\] TestHarness receive query as object not as string [\#4008](https://github.com/nebulastream/nebulastream/issues/4008)
+
+## [v0.5.163](https://github.com/nebulastream/nebulastream/tree/v0.5.163) (2023-07-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.162...v0.5.163)
 
 ## [v0.5.162](https://github.com/nebulastream/nebulastream/tree/v0.5.162) (2023-07-26)
 
@@ -1474,7 +1904,6 @@
 - \[DBPRO\] Add lower & upper  [\#3185](https://github.com/nebulastream/nebulastream/issues/3185)
 - \[JIT Compiler\] Add Loop Operations [\#3169](https://github.com/nebulastream/nebulastream/issues/3169)
 - \[Feature\] Spatial Data Type with functions  [\#3156](https://github.com/nebulastream/nebulastream/issues/3156)
-- \[Feature\] Initial OpenCV integration [\#3150](https://github.com/nebulastream/nebulastream/issues/3150)
 - \[Feature\] Java UDF Compiler Integration [\#3144](https://github.com/nebulastream/nebulastream/issues/3144)
 - \[DBPRO\] Add a test und `nes-runtime/tests/Execution/Expressions/Functions` [\#3100](https://github.com/nebulastream/nebulastream/issues/3100)
 - \[DBPRO\] Add the new expression under `nes-runtime/include/Execution/Expressions/Functions` and  `nes-runtime/src/Execution/Expressions/Functions`. [\#3099](https://github.com/nebulastream/nebulastream/issues/3099)

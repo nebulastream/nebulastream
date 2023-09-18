@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -25,7 +26,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class TestHarnessUtilTest : public Testing::NESBaseTest {
+class TestHarnessUtilTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TestHarnessUtilTest.log", NES::LogLevel::LOG_DEBUG);
@@ -52,8 +53,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({40, 40, 40}, 2)
@@ -103,8 +105,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")//2
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3
@@ -169,8 +172,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
+    auto queryWithFilterOperator = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   .addLogicalSource("truck", truckSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -225,13 +229,16 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
-        config->optimizer.distributedWindowChildThreshold.setValue(0);
+        config->optimizer.distributedWindowChildThreshold.setValue(10);
         config->optimizer.distributedWindowCombinerThreshold.setValue(1000);
     };
 
-    std::string queryWithWindowOperator =
-        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value"))))";
+    auto queryWithWindowOperator = Query::from("car")
+                                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                                       .byKey(Attribute("key"))
+                                       .apply(Sum(Attribute("value")));
     TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")//2
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3
@@ -280,14 +287,15 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 
     std::vector<Output> expectedOutput = {
         {1000, 2000, 1, 2},
-        {2000, 3000, 1, 0},
-        {3000, 4000, 1, 4},
-        {4000, 5000, 1, 0},
+        {2000, 3000, 1, 4},
+        {3000, 4000, 1, 18},
+        {4000, 5000, 1, 8},
         {1000, 2000, 4, 2},
         {2000, 3000, 11, 4},
-        {3000, 4000, 11, 0},
+        {3000, 4000, 11, 6},
         {1000, 2000, 12, 2},
         {2000, 3000, 16, 4},
+        {5000, 6000, 1, 10},
     };
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
@@ -320,21 +328,25 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
-    std::string queryWithJoinOperator =
-        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
+    auto queryWithJoinOperator = Query::from("window1")
+                                     .joinWith(Query::from("window2"))
+                                     .where(Attribute("id1"))
+                                     .equalsTo(Attribute("id2"))
+                                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithMemorySourceToCoordinator("window1")
                                   .attachWorkerWithMemorySourceToCoordinator("window2")
                                   //Source1
                                   .pushElement<Window1>({1, 1000}, 2)
-                                  .pushElement<Window2>({12, 1001}, 2)
-                                  .pushElement<Window2>({4, 1002}, 2)
-                                  .pushElement<Window2>({1, 2000}, 2)
-                                  .pushElement<Window2>({11, 2001}, 2)
-                                  .pushElement<Window2>({16, 2002}, 2)
-                                  .pushElement<Window2>({1, 3000}, 2)
+                                  .pushElement<Window1>({12, 1001}, 2)
+                                  .pushElement<Window1>({4, 1002}, 2)
+                                  .pushElement<Window1>({1, 2000}, 2)
+                                  .pushElement<Window1>({11, 2001}, 2)
+                                  .pushElement<Window1>({16, 2002}, 2)
+                                  .pushElement<Window1>({1, 3000}, 2)
                                   //Source2
                                   .pushElement<Window2>({21, 1003}, 3)
                                   .pushElement<Window2>({12, 1011}, 3)
@@ -367,7 +379,8 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     std::vector<Output> expectedOutput = {{1000, 2000, 4, 4, 1002, 4, 1102},
                                           {1000, 2000, 4, 4, 1002, 4, 1112},
                                           {1000, 2000, 12, 12, 1001, 12, 1011},
-                                          {2000, 3000, 11, 11, 2001, 11, 2301}};
+                                          {2000, 3000, 11, 11, 2001, 11, 2301},
+                                          {2000, 3000, 1, 1, 2000, 1, 2010}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -391,9 +404,10 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
+    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
+                                  .enableNautilus()
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({40, 40, 40}, 2)
                                   .pushElement<Car>({30, 30, 30}, 2)
@@ -442,9 +456,10 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
+    auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
+                                  .enableNautilus()
                                   /**
                                     * Expected topology:
                                         PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
@@ -535,8 +550,9 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
 
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 4);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
@@ -587,8 +603,9 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
 
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 4);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)//2
@@ -626,7 +643,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
         uint64_t timestamp;
     };
 
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
 
     EXPECT_THROW(
         TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(),
@@ -643,8 +660,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
         uint64_t timestamp;
     };
 
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
+    auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
+    TestHarness testHarness =
+        TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).enableNautilus();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
     EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), Exceptions::RuntimeException);
@@ -678,7 +696,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
                            ->addField("value", DataTypeFactory::createUInt32())
                            ->addField("timestamp", DataTypeFactory::createUInt64());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
+    auto queryWithFilterOperator = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .addLogicalSource("truck", truckSchema)

@@ -24,6 +24,7 @@ add_source_files(nes-runtime
         NesThread.cpp
         BloomFilter.cpp
         TaggedPointer.cpp
+        OpenCLManager.cpp
         )
 
 add_source_files(nes-runtime

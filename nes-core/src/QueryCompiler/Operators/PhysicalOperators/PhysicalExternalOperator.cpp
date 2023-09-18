@@ -40,7 +40,11 @@ PhysicalExternalOperator::create(OperatorId id,
 
 std::string PhysicalExternalOperator::toString() const { return "PhysicalExternalOperator"; }
 
-OperatorNodePtr PhysicalExternalOperator::copy() { return create(id, inputSchema, outputSchema, executablePipelineStage); }
+OperatorNodePtr PhysicalExternalOperator::copy() {
+    auto result = create(id, inputSchema, outputSchema, executablePipelineStage);
+    result->addAllProperties(properties);
+    return result;
+}
 
 Runtime::Execution::ExecutablePipelineStagePtr PhysicalExternalOperator::getExecutablePipelineStage() {
     return executablePipelineStage;

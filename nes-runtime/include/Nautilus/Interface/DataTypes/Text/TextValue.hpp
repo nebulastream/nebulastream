@@ -24,6 +24,8 @@ namespace NES::Nautilus {
  * A text value is backed by an tuple buffer.
  * Physical layout:
  * | ----- size 4 byte ----- | ----- variable length char*
+ * @note that the char* may have no null termination.
+ * Thus when reading char values, we have to check the length attribute. 
  */
 class TextValue final : public BaseVariableSizeType {
   public:
@@ -74,15 +76,23 @@ class TextValue final : public BaseVariableSizeType {
 
     /**
      * @brief Returns the char* to the text.
+     * @note char* may not be null terminated.
      * @return char*
      */
     [[nodiscard]] char* str();
 
     /**
      * @brief Returns the const char* to the text.
+     * @note char* may not be null terminated.
      * @return const char*
      */
     [[nodiscard]] const char* c_str() const;
+
+    /**
+     * @brief Returns a nullterminated copy of the string
+     * @return std::string_view
+     */
+    [[nodiscard]] std::string strn_copy() const;
 
     /**
      * @brief Retrieves the underling buffer of this text value.

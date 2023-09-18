@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
-class UtilFunctionTest : public Testing::TestWithErrorHandling {
+class UtilFunctionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);

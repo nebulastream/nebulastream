@@ -13,10 +13,10 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEMERGINGHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEMERGINGHANDLER_HPP_
+#include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-struct SliceMergeTask;
 class State;
 class KeyedSlice;
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
@@ -26,10 +26,7 @@ class KeyedSliceStaging;
  * @brief The GlobalSliceMergingHandler merges thread local pre-aggregated slices for global
  * tumbling and sliding window aggregations.
  */
-class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
-                                 public ::NES::detail::virtual_enable_shared_from_this<KeyedSliceMergingHandler, false> {
-    using inherited0 = ::NES::detail::virtual_enable_shared_from_this<KeyedSliceMergingHandler, false>;
-    using inherited1 = Runtime::Reconfigurable;
+class KeyedSliceMergingHandler : public OperatorHandler {
 
   public:
     static const uint64_t DEFAULT_NUMBER_OF_KEYS = 1000;
@@ -37,7 +34,7 @@ class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
      * @brief Constructor for the KeyedSliceMergingHandler
      * @param windowDefinition
      */
-    KeyedSliceMergingHandler(std::shared_ptr<KeyedSliceStaging> globalSliceStaging);
+    KeyedSliceMergingHandler();
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
 
@@ -47,32 +44,17 @@ class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
 
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
-
-    /**
-     * @brief Get a reference to the slice staging.
-     * @note This should be only called from the generated code.
-     * @return KeyedSliceStaging
-     */
-    inline KeyedSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
-
-    /**
-     * @brief Gets a weak pointer to the slice staging
-     * @return std::weak_ptr<KeyedSliceStaging>
-     */
-    std::weak_ptr<KeyedSliceStaging> getSliceStagingPtr();
-
     /**
      * @brief Creates a new global slice for a specific slice merge task
      * @param sliceMergeTask SliceMergeTask
      * @return GlobalSlicePtr
      */
-    KeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask, uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
+    KeyedSlicePtr createGlobalSlice(SliceMergeTask<KeyedSlice>* sliceMergeTask, uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
     ~KeyedSliceMergingHandler() override;
 
   private:
     uint64_t keySize;
     uint64_t valueSize;
-    std::shared_ptr<KeyedSliceStaging> sliceStaging;
 };
 
 }// namespace NES::Runtime::Execution::Operators

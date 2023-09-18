@@ -39,6 +39,10 @@ PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Field
 
 std::string PhysicalMapOperator::toString() const { return "PhysicalMapOperator"; }
 
-OperatorNodePtr PhysicalMapOperator::copy() { return create(id, inputSchema, outputSchema, getMapExpression()); }
+OperatorNodePtr PhysicalMapOperator::copy() {
+    auto result = create(id, inputSchema, outputSchema, getMapExpression());
+    result->addAllProperties(properties);
+    return result;
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

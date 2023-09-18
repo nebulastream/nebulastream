@@ -16,13 +16,14 @@
 
 namespace NES::Runtime::Execution {
 
-Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(bool leftSide, uint64_t workerId) {
+Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide,
+                                                                   uint64_t workerId) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {
         workerId = 0;
     }
 
-    if (leftSide) {
+    if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
         workerId = workerId % hashTableLeftSide.size();
         return hashTableLeftSide.at(workerId).get();
     } else {
@@ -31,12 +32,12 @@ Operators::StreamJoinHashTable* StreamHashJoinWindow::getHashTable(bool leftSide
     }
 }
 
-uint64_t StreamHashJoinWindow::getNumberOfTuplesOfWorker(bool isLeftSide, uint64_t workerIdx) {
-    return getHashTable(isLeftSide, workerIdx)->getNumberOfTuples();
+uint64_t StreamHashJoinWindow::getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx) {
+    return getHashTable(joinBuildSide, workerIdx)->getNumberOfTuples();
 }
 
-Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(bool isLeftSide) {
-    if (isLeftSide) {
+Operators::MergingHashTable& StreamHashJoinWindow::getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide) {
+    if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
         return mergingHashTableLeftSide;
     } else {
         return mergingHashTableRightSide;

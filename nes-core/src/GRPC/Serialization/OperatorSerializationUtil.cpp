@@ -21,13 +21,13 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -36,6 +36,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/ArrowSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -191,20 +192,20 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         renameDetails.set_newsourcename(operatorNode->as<RenameSourceOperatorNode>()->getNewSourceName());
         serializedOperator.mutable_details()->PackFrom(renameDetails);
 
-    } else if (operatorNode->instanceOf<MapJavaUDFLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<MapUDFLogicalOperatorNode>()) {
         // Serialize Map Java UDF operator
-        serializeJavaUDFOperator<MapJavaUDFLogicalOperatorNode, SerializableOperator_MapJavaUdfDetails>(
-            *operatorNode->as<MapJavaUDFLogicalOperatorNode>(),
+        serializeJavaUDFOperator<MapUDFLogicalOperatorNode, SerializableOperator_MapJavaUdfDetails>(
+            *operatorNode->as<MapUDFLogicalOperatorNode>(),
             serializedOperator);
 
-    } else if (operatorNode->instanceOf<FlatMapJavaUDFLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
         // Serialize FlatMap Java UDF operator
-        serializeJavaUDFOperator<FlatMapJavaUDFLogicalOperatorNode, SerializableOperator_FlatMapJavaUdfDetails>(
-            *operatorNode->as<FlatMapJavaUDFLogicalOperatorNode>(),
+        serializeJavaUDFOperator<FlatMapUDFLogicalOperatorNode, SerializableOperator_FlatMapJavaUdfDetails>(
+            *operatorNode->as<FlatMapUDFLogicalOperatorNode>(),
             serializedOperator);
 
     } else if (operatorNode->instanceOf<OpenCLLogicalOperatorNode>()) {
-        // Serialize map java udf operator
+        // Serialize map udf operator
         serializeOpenCLOperator(*operatorNode->as<OpenCLLogicalOperatorNode>(), serializedOperator);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", operatorNode->toString());
@@ -1155,6 +1156,34 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         sourceDetails->mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
     }
 #endif
+#ifdef ENABLE_ARROW_BUILD
+    else if (sourceDescriptor.instanceOf<ArrowSourceDescriptor>()) {
+        // serialize arrow source descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableArrowSourceDescriptor");
+        auto arrowSourceDescriptor = sourceDescriptor.as<const ArrowSourceDescriptor>();
+        // init serializable source config
+        auto serializedSourceConfig = new SerializablePhysicalSourceType();
+        serializedSourceConfig->set_sourcetype(arrowSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
+        // init serializable arrow source config
+        auto arrowSerializedSourceConfig = SerializablePhysicalSourceType_SerializableArrowSourceType();
+        arrowSerializedSourceConfig.set_numberofbufferstoproduce(
+            arrowSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
+        arrowSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
+            arrowSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
+        arrowSerializedSourceConfig.set_sourcegatheringinterval(
+            arrowSourceDescriptor->getSourceConfig()->getGatheringInterval()->getValue());
+        arrowSerializedSourceConfig.set_filepath(arrowSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
+        serializedSourceConfig->mutable_specificphysicalsourcetype()->PackFrom(arrowSerializedSourceConfig);
+        // init serializable arrow source descriptor
+        auto arrowSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableArrowSourceDescriptor();
+        arrowSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedSourceConfig);
+        // serialize source schema
+        SchemaSerializationUtil::serializeSchema(arrowSourceDescriptor->getSchema(),
+                                                 arrowSerializedSourceDescriptor.mutable_sourceschema());
+        sourceDetails.mutable_sourcedescriptor()->PackFrom(arrowSerializedSourceDescriptor);
+    }
+#endif
     else if (sourceDescriptor.instanceOf<const TCPSourceDescriptor>()) {
         // serialize TCP source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
@@ -1701,6 +1730,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
 
         serializedSinkDescriptor.set_filepath(fileSinkDescriptor->getFileName());
         serializedSinkDescriptor.set_append(fileSinkDescriptor->getAppend());
+        serializedSinkDescriptor.set_addtimestamp(fileSinkDescriptor->getAddTimestamp());
 
         auto format = fileSinkDescriptor->getSinkFormatAsString();
         if (format == "JSON_FORMAT") {
@@ -1829,6 +1859,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(),
                                           serializedSinkDescriptor.sinkformat(),
                                           serializedSinkDescriptor.append() ? "APPEND" : "OVERWRITE",
+                                          serializedSinkDescriptor.addtimestamp(),
                                           FaultToleranceType(deserializedFaultTolerance),
                                           deserializedNumberOfOrigins);
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor>()) {
@@ -2049,7 +2080,7 @@ template<typename T, typename D>
 void OperatorSerializationUtil::serializeJavaUDFOperator(const T& javaUdfOperatorNode, SerializableOperator& serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize {}", javaUdfOperatorNode.toString());
     auto javaUdfDetails = D();
-    UDFSerializationUtil::serializeJavaUDFDescriptor(*javaUdfOperatorNode.getJavaUDFDescriptor(),
+    UDFSerializationUtil::serializeJavaUDFDescriptor(javaUdfOperatorNode.getUDFDescriptor(),
                                                      *javaUdfDetails.mutable_javaudfdescriptor());
     serializedOperator.mutable_details()->PackFrom(javaUdfDetails);
 }
@@ -2057,20 +2088,20 @@ void OperatorSerializationUtil::serializeJavaUDFOperator(const T& javaUdfOperato
 LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails) {
     auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(mapJavaUdfDetails.javaudfdescriptor());
-    return LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
+    return LogicalOperatorFactory::createMapUDFLogicalOperator(javaUDFDescriptor);
 }
 
 LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeFlatMapJavaUDFOperator(
     const SerializableOperator_FlatMapJavaUdfDetails& flatMapJavaUdfDetails) {
     auto javaUDFDescriptor = UDFSerializationUtil::deserializeJavaUDFDescriptor(flatMapJavaUdfDetails.javaudfdescriptor());
-    return LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(javaUDFDescriptor);
+    return LogicalOperatorFactory::createFlatMapUDFLogicalOperator(javaUDFDescriptor);
 }
 
 void OperatorSerializationUtil::serializeOpenCLOperator(const OpenCLLogicalOperatorNode& openCLLogicalOperatorNode,
                                                         SerializableOperator& serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize to OpenCLLogicalOperatorNode");
     auto openCLDetails = SerializableOperator_OpenCLOperatorDetails();
-    UDFSerializationUtil::serializeJavaUDFDescriptor(*openCLLogicalOperatorNode.getJavaUDFDescriptor(),
+    UDFSerializationUtil::serializeJavaUDFDescriptor(openCLLogicalOperatorNode.getJavaUDFDescriptor(),
                                                      *openCLDetails.mutable_javaudfdescriptor());
     openCLDetails.set_deviceid(openCLLogicalOperatorNode.getDeviceId());
     openCLDetails.set_openclcode(openCLLogicalOperatorNode.getOpenClCode());

@@ -35,6 +35,7 @@ ExecutionResult Task::operator()(WorkerContextRef workerContext) {
     // execute this task.
     // a task could be a executable pipeline, or a data sink.
     try {
+        // Todo: #4040: refactor (use if - else if and get rid of bool in second if)
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
             return (*executablePipeline)->execute(buf, workerContext);
         }

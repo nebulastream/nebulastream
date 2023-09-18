@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -24,7 +25,6 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -37,7 +37,7 @@
 
 namespace NES::Runtime::Execution {
 
-class SelectionPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class SelectionPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -51,7 +51,7 @@ class SelectionPipelineTest : public Testing::NESBaseTest, public AbstractPipeli
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup SelectionPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

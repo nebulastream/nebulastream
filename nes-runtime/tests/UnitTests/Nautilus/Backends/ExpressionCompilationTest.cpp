@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -29,7 +29,7 @@ namespace NES::Nautilus {
 /**
  * @brief This test tests execution of scala expression
  */
-class ExpressionExecutionTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
+class ExpressionExecutionTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

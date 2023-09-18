@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/TruncExpression.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class TruncExpressionTest : public Testing::NESBaseTest {
+class TruncExpressionTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

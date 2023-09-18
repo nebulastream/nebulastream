@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_GRPC_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
 
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Catalogs/UDF/UDFDescriptor.hpp>
 #include <JavaUdfDescriptorMessage.pb.h>
 
 namespace NES {
@@ -30,7 +31,7 @@ class UDFSerializationUtil {
      * @param javaUdfDescriptor The Java UDF descriptor that should be serialized.
      * @param javaUdfDescriptorMessage A mutable protobuf message into which the Java UDF descriptor is serialized.
      */
-    static void serializeJavaUDFDescriptor(const Catalogs::UDF::JavaUDFDescriptor& javaUDFDescriptor,
+    static void serializeJavaUDFDescriptor(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
                                            JavaUdfDescriptorMessage& javaUDFDescriptorMessage);
 
     /**

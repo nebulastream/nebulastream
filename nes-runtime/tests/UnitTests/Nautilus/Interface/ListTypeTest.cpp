@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -19,7 +20,6 @@
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -27,7 +27,7 @@
 #include <memory>
 namespace NES::Nautilus {
 
-class ListTypeTest : public Testing::NESBaseTest {
+class ListTypeTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -37,7 +37,7 @@ class ListTypeTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
         NES_DEBUG("Setup ListTypeTest test case.");

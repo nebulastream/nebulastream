@@ -29,7 +29,16 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-    explicit SinkDescriptor(FaultToleranceType faultToleranceType = FaultToleranceType::NONE, uint64_t numberOfOrigins = 1);
+    /**
+     * @brief Ctor to create a new sink descriptor
+     * @param faultToleranceType: fault tolerance type of a query
+     * @param numberOfOrigins: number of origins of a given query
+     * @param addTimestamp flat to indicate if timestamp shall be added when writing to sink
+     * @return descriptor for sink
+     */
+    SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins, bool addTimestamp);
+    SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
+    SinkDescriptor();
 
     virtual ~SinkDescriptor() = default;
 
@@ -65,6 +74,12 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     uint64_t getNumberOfOrigins() const;
 
     /**
+     * @brief getter for addTimestamp field
+     * @return addTimestamp
+     */
+    bool getAddTimestamp() const;
+
+    /**
     * @brief Dynamically casts the node to a NodeType
     * @tparam NodeType
     * @return returns a shared pointer of the NodeType
@@ -87,6 +102,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
   protected:
     FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
+    bool addTimestamp;
 };
 
 }// namespace NES

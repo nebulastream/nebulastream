@@ -15,6 +15,8 @@
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Exceptions/UDFException.hpp>
 #include <algorithm>
+#include <numeric>
+#include <sstream>
 
 namespace NES::Catalogs::UDF {
 
@@ -26,13 +28,11 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
                                      const SchemaPtr outputSchema,
                                      const std::string& inputClassName,
                                      const std::string& outputClassName)
-    : UDFDescriptor(methodName), className(className), serializedInstance(serializedInstance), byteCodeList(byteCodeList),
-      inputSchema(inputSchema), outputSchema(outputSchema), inputClassName(inputClassName), outputClassName(outputClassName) {
+    : UDFDescriptor(methodName, inputSchema, outputSchema), className(className), serializedInstance(serializedInstance),
+      byteCodeList(byteCodeList), inputClassName(inputClassName), outputClassName(outputClassName) {
+
     if (className.empty()) {
         throw UDFException("The class name of a Java UDF must not be empty");
-    }
-    if (methodName.empty()) {
-        throw UDFException("The method name of a Java UDF must not be empty");
     }
     if (inputClassName.empty()) {
         throw UDFException("The class name of the UDF method input type must not be empty.");
@@ -60,20 +60,53 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
             throw UDFException("The bytecode of a class must not not be empty");
         }
     }
-    if (outputSchema->empty()) {
-        throw UDFException("The output schema of a Java UDF must not be empty");
-    }
-    // We allow the input schema to be empty for now so that we don't have to serialize it in the Java client. A possible
-    // improvement would be to serialize it in the Java client and compare it to the output schema of the parent operator.
+}
+
+std::stringstream JavaUDFDescriptor::generateInferStringSignature() {
+    // Infer signature for this operator based on the UDF metadata (class name and UDF method), the serialized instance,
+    // and the byte code list. We can ignore the schema information because it is determined by the UDF method signature.
+    auto signatureStream = std::stringstream{};
+    auto elementHash = std::hash<jni::JavaSerializedInstance::value_type>{};
+
+    // Hash the contents of a byte array (i.e., the serialized instance and the byte code of a class)
+    // based on the hashes of the individual elements.
+    auto charArrayHashHelper = [&elementHash](std::size_t h, char v) {
+        return h = h * 31 + elementHash(v);
+    };
+
+    // Compute hashed value of the UDF instance.
+    auto& instance = getSerializedInstance();
+    auto instanceHash = std::accumulate(instance.begin(), instance.end(), instance.size(), charArrayHashHelper);
+
+    // Compute hashed value of the UDF byte code list.
+    auto stringHash = std::hash<std::string>{};
+    auto& byteCodeList = getByteCodeList();
+    auto byteCodeListHash =
+        std::accumulate(byteCodeList.begin(),
+                        byteCodeList.end(),
+                        byteCodeList.size(),
+                        [&stringHash, &charArrayHashHelper](std::size_t h, jni::JavaUDFByteCodeList::value_type v) {
+                            /* It is not possible to hash unordered_map directly in C++, this will be
+                                     * investigated in issue #3584
+                                     */
+
+                            auto& className = v.first;
+                            h = h * 31 + stringHash(className);
+                            auto& byteCode = v.second;
+                            h = h * 31 + std::accumulate(byteCode.begin(), byteCode.end(), byteCode.size(), charArrayHashHelper);
+                            return h;
+                        });
+
+    signatureStream << "JAVA_UDF(" << className << "." << getMethodName() << ", instance=" << instanceHash
+                    << ", byteCode=" << byteCodeListHash << ")";
+
+    return signatureStream;
 }
 
 bool JavaUDFDescriptor::operator==(const JavaUDFDescriptor& other) const {
     return className == other.className && getMethodName() == other.getMethodName()
-        && inputSchema->equals(other.inputSchema, true) && outputSchema->equals(other.outputSchema, true)
+        && getInputSchema()->equals(other.getInputSchema(), true) && getOutputSchema()->equals(other.getOutputSchema(), true)
         && serializedInstance == other.serializedInstance && byteCodeList == other.byteCodeList
         && inputClassName == other.inputClassName && outputClassName == other.outputClassName;
 }
-
-void JavaUDFDescriptor::setInputSchema(const SchemaPtr& inputSchema) { JavaUDFDescriptor::inputSchema = inputSchema; }
-
 }// namespace NES::Catalogs::UDF

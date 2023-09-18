@@ -12,24 +12,28 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Services/QueryService.hpp>
+#include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
+
 #include <chrono>
 #include <gtest/gtest.h>
 #include <thread>
+
 using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;
 
@@ -73,7 +77,7 @@ struct __attribute__((packed)) ysbRecord {
  * First we check for sub-second unit-tests on a soruce and its behavior. Then,
  * we include an E2Etest with a source that samples at sub-second interval.
  */
-class MillisecondIntervalTest : public Testing::NESBaseTest {
+class MillisecondIntervalTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coordinatorConfig;
     WorkerConfigurationPtr wrkConf;
@@ -87,7 +91,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
 
     void SetUp() override {
 
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
 
         csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(550);
@@ -115,7 +119,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         NES_INFO("Tear down MillisecondIntervalTest test case.");
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
@@ -294,8 +298,10 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     std::string queryString =
         R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());)";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

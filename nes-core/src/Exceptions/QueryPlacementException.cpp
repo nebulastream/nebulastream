@@ -16,9 +16,7 @@
 
 namespace NES::Exceptions {
 QueryPlacementException::QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message)
-    : RequestExecutionException(message), sharedQueryId(sharedQueryId) {}
-
-SharedQueryId QueryPlacementException::getSharedQueryId() const { return sharedQueryId; }
+    : RequestExecutionException(sharedQueryId, message) {}
 
 const char* QueryPlacementException::what() const noexcept { return RequestExecutionException::what(); }
 

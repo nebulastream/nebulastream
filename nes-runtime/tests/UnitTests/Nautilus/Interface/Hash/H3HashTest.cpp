@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <array>
 #include <vector>
 
 namespace NES::Nautilus::Interface {
-class H3HashTest : public Testing::NESBaseTest {
+class H3HashTest : public Testing::BaseUnitTest {
   public:
     static constexpr auto NUMBER_OF_KEYS_TO_TEST = 5;
     static constexpr auto NUMBER_OF_ROWS = 3;
@@ -34,7 +34,7 @@ class H3HashTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        NESBaseTest::SetUp();
+        BaseUnitTest::SetUp();
 
         std::random_device rd;
         std::mt19937 gen(H3Hash::H3_SEED);

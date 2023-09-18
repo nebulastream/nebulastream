@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CompilationCache.hpp>
 #include <Compiler/CompilationRequest.hpp>
@@ -21,13 +22,12 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/File.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 namespace NES::Compiler {
 
-class CompilationCacheTest : public Testing::TestWithErrorHandling {
+class CompilationCacheTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -37,7 +37,7 @@ class CompilationCacheTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup CompilationCacheTest test case.");
         auto cppCompiler = CPPCompiler::create();
         auto compilerBuilder = JITCompilerBuilder();

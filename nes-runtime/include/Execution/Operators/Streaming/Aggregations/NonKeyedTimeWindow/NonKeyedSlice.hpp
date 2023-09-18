@@ -84,6 +84,8 @@ class NonKeyedSlice {
      */
     inline std::unique_ptr<State>& getState() { return state; }
 
+    ~NonKeyedSlice();
+
   private:
     uint64_t start;
     uint64_t end;

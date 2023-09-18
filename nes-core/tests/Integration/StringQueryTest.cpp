@@ -19,7 +19,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
@@ -28,7 +28,7 @@
 
 namespace NES {
 
-class StringQueryTest : public Testing::NESBaseTest {
+class StringQueryTest : public Testing::BaseIntegrationTest {
   public:
     /// Return the pointer to instance of Schema.
     template<std::size_t s>

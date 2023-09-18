@@ -15,6 +15,7 @@
 #define NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -22,7 +23,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -68,13 +68,15 @@ class TestExecutionEngine {
         const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
         const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
         const uint64_t numWorkerThreads = 1,
-        const QueryCompilation::StreamJoinStrategy& joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
+        const QueryCompilation::StreamJoinStrategy& joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+        const QueryCompilation::QueryCompilerOptions::WindowingStrategy& windowingStrategy =
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING);
 
     std::shared_ptr<TestSink> createDataSink(const SchemaPtr& outputSchema, uint32_t expectedBuffer = 1);
 
     template<class Type>
     auto createCollectSink(SchemaPtr outputSchema) {
-        return std::make_shared<CollectTestSink<Type>>(outputSchema, nodeEngine);
+        return CollectTestSink<Type>::create(outputSchema, nodeEngine);
     }
 
     std::shared_ptr<SourceDescriptor> createDataSource(SchemaPtr inputSchema);

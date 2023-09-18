@@ -23,4 +23,5 @@ add_source_files(nes-runtime
         Map.cpp
         Selection.cpp
         Limit.cpp
+        Project.cpp
         )

@@ -73,8 +73,9 @@ class MetricValidator {
 
     static bool checkNodeIds(Monitoring::MetricPtr metric, uint64_t nodeId);
 
-    static bool
-    waitForMonitoringStreamsOrTimeout(std::set<std::string> monitoringStreams, uint16_t maxTimeout, uint64_t restPort);
+    static bool waitForMonitoringStreamsOrTimeout(const std::set<Monitoring::MetricType>& monitoringStreams,
+                                                  uint16_t maxTimeout,
+                                                  uint64_t restPort);
 };
 
 }// namespace NES

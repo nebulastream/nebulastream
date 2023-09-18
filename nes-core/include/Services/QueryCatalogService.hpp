@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_SERVICES_QUERYCATALOGSERVICE_HPP_
 
 #include <Common/Identifiers.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <mutex>
 
@@ -52,8 +53,9 @@ class QueryCatalogService {
      * @param placementStrategyName: the placement strategy (e.g. bottomUp, topDown, etc)
      * @return query catalog entry or nullptr
      */
-    Catalogs::Query::QueryCatalogEntryPtr
-    createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
+    Catalogs::Query::QueryCatalogEntryPtr createNewEntry(const std::string& queryString,
+                                                         QueryPlanPtr const& queryPlan,
+                                                         const Optimizer::PlacementStrategy placementStrategyName);
 
     /**
      * Add sub query meta data to the query

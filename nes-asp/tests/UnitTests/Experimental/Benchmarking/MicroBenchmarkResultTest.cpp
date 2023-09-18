@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkResult.hpp>
 #include <Util/Logger/LogLevel.hpp>
 
 namespace NES::ASP::Benchmarking {
-    class MicroBenchmarkResultTest : public Testing::NESBaseTest {
+    class MicroBenchmarkResultTest : public Testing::BaseIntegrationTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {

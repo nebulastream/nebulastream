@@ -17,6 +17,10 @@ add_source_files(nes-runtime
         Scan.cpp
         ExecutionContext.cpp)
 
+if (NES_USE_ARROW)
+    add_subdirectory(Arrow)
+endif ()
+
 add_subdirectory(Relational)
 add_subdirectory(ThresholdWindow)
 add_subdirectory(Streaming)

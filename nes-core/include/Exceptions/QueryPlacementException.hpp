@@ -25,17 +25,12 @@ namespace NES::Exceptions {
 /**
  * @brief Exception indicating problem during operator placement phase
  */
-class QueryPlacementException : public RequestExecutionException {
+class QueryPlacementException : public Exceptions::RequestExecutionException {
 
   public:
     explicit QueryPlacementException(SharedQueryId sharedQueryId, const std::string& message);
 
-    SharedQueryId getSharedQueryId() const;
-
     const char* what() const noexcept override;
-
-  private:
-    SharedQueryId sharedQueryId;
 };
 }// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_

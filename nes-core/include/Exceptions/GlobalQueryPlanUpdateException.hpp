@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_GLOBALQUERYPLANUPDATEEXCEPTION_HPP_
 
+#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -23,7 +24,7 @@ namespace NES {
 /**
  * @brief This exception is thrown if some error occurred while performing update on Global query plan
  */
-class GlobalQueryPlanUpdateException : public std::runtime_error {
+class GlobalQueryPlanUpdateException : public Exceptions::RequestExecutionException {
   public:
     explicit GlobalQueryPlanUpdateException(const std::string& message);
 };

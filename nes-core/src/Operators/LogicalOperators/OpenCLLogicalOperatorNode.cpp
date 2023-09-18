@@ -21,16 +21,17 @@
 
 namespace NES {
 
-OpenCLLogicalOperatorNode::OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id)
-    : OperatorNode(id), JavaUDFLogicalOperator(javaUdfDescriptor, id) {}
+OpenCLLogicalOperatorNode::OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id)
+    : OperatorNode(id), UDFLogicalOperator(javaUDFDescriptor, id) {}
 
 std::string OpenCLLogicalOperatorNode::toString() const {
-    return "OPENCL_LOGICAL_OPERATOR(" + getJavaUDFDescriptor()->getClassName() + "." + getJavaUDFDescriptor()->getMethodName()
-        + ")";
+    auto javaUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
+    return "OPENCL_LOGICAL_OPERATOR(" + javaUDFDescriptor->getClassName() + "." + javaUDFDescriptor->getMethodName() + ")";
 }
 
 OperatorNodePtr OpenCLLogicalOperatorNode::copy() {
-    auto copy = std::make_shared<OpenCLLogicalOperatorNode>(this->getJavaUDFDescriptor(), id);
+    auto javaUDFDescriptor = getUDFDescriptor()->as<Catalogs::UDF::JavaUDFDescriptor>(getUDFDescriptor());
+    auto copy = std::make_shared<OpenCLLogicalOperatorNode>(javaUDFDescriptor, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -44,7 +45,7 @@ OperatorNodePtr OpenCLLogicalOperatorNode::copy() {
 
 bool OpenCLLogicalOperatorNode::equal(const NodePtr& other) const {
     return other->instanceOf<OpenCLLogicalOperatorNode>()
-        && *getJavaUDFDescriptor() == *other->as<OpenCLLogicalOperatorNode>()->getJavaUDFDescriptor();
+        && *getUDFDescriptor() == *other->as<OpenCLLogicalOperatorNode>()->getUDFDescriptor();
 }
 
 bool OpenCLLogicalOperatorNode::isIdentical(const NodePtr& other) const {
@@ -58,5 +59,9 @@ void OpenCLLogicalOperatorNode::setOpenClCode(const std::string& openClCode) { o
 const std::string& OpenCLLogicalOperatorNode::getDeviceId() const { return deviceId; }
 
 void OpenCLLogicalOperatorNode::setDeviceId(const std::string& deviceId) { OpenCLLogicalOperatorNode::deviceId = deviceId; }
+
+Catalogs::UDF::JavaUDFDescriptorPtr OpenCLLogicalOperatorNode::getJavaUDFDescriptor() const {
+    return udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
+}
 
 }// namespace NES

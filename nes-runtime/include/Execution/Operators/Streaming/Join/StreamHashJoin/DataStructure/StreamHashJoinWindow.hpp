@@ -74,11 +74,11 @@ class StreamHashJoinWindow : public StreamWindow {
 
     /**
      * @brief Returns the number of tuples in this window
+     * @param joinBuildSide
      * @param workerIdx
-     * @param isLeftSide
      * @return uint64_t
      */
-    uint64_t getNumberOfTuplesOfWorker(bool isLeftSide, uint64_t workerIdx);
+    uint64_t getNumberOfTuplesOfWorker(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerIdx);
 
     /**
      * @brief Creates a string representation of this window
@@ -88,18 +88,18 @@ class StreamHashJoinWindow : public StreamWindow {
 
     /**
      * @brief Returns the local hash table of either the left or the right join side
+     * @param joinBuildSide
      * @param index
-     * @param leftSide
      * @return Reference to the hash table
      */
-    Operators::StreamJoinHashTable* getHashTable(bool isLeftSide, uint64_t index);
+    Operators::StreamJoinHashTable* getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t index);
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
-     * @param isLeftSide
+     * @param joinBuildSide
      * @return Reference to the shared hash table
      */
-    Operators::MergingHashTable& getMergingHashTable(bool isLeftSide);
+    Operators::MergingHashTable& getMergingHashTable(QueryCompilation::JoinBuildSideType joinBuildSide);
 
     /**
      * @brief this method marks that one partition of this window was finally processed by the sink

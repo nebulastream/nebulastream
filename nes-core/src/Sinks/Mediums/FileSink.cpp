@@ -14,11 +14,13 @@
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Formats/ArrowFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <utility>
 
@@ -52,11 +54,27 @@ FileSink::FileSink(SinkFormatPtr format,
         }
     }
     NES_DEBUG("FileSink: open file= {}", filePath);
-    if (!outputFile.is_open()) {
-        outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+
+    // only open the file stream if it is not an arrow file
+    if (sinkFormat->getSinkFormat() != FormatTypes::ARROW_IPC_FORMAT) {
+        if (!outputFile.is_open()) {
+            outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+        }
+        NES_ASSERT(outputFile.is_open(), "file is not open");
+        NES_ASSERT(outputFile.good(), "file not good");
     }
-    NES_ASSERT(outputFile.is_open(), "file is not open");
-    NES_ASSERT(outputFile.good(), "file not good");
+
+#ifdef ENABLE_ARROW_BUILD
+    if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT) {
+        // raise a warning if the file path does not have the streaming "arrows" extension some other system might
+        // thus interpret the file differently with different extension
+        // the MIME types for arrow files are ".arrow" for file format, and ".arrows" for streaming file format
+        // see https://arrow.apache.org/faq/
+        if (!(filePath.find(".arrows"))) {
+            NES_WARNING("FileSink: An arrow ipc file without '.arrows' extension created as a file sink.");
+        }
+    }
+#endif
 }
 
 FileSink::~FileSink() {
@@ -77,60 +95,109 @@ void FileSink::setup() {}
 void FileSink::shutdown() {}
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+#ifdef ENABLE_ARROW_BUILD
+    // handle the case if we write to an arrow file
+    if (sinkFormat->getSinkFormat() == FormatTypes::ARROW_IPC_FORMAT) {
+        return writeDataToArrowFile(inputBuffer);
+    }
+#endif//ENABLE_ARROW_BUILD
+    // otherwise call the regular function
+    return writeDataToFile(inputBuffer);
+}
+
+std::string FileSink::getFilePath() const { return filePath; }
+
+bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
+    NES_DEBUG("FileSink: getSchema medium {} format {} mode {}", toString(), sinkFormat->toString(), this->getAppendAsString());
+
+    if (!inputBuffer) {
+        NES_ERROR("FileSink::writeDataToFile input buffer invalid");
+        return false;
+    }
+
+    if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
+        auto schemaStr = sinkFormat->getFormattedSchema();
+        outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
+        schemaWritten = true;
+    } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
+        NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
+    } else {
+        NES_DEBUG("FileSink::getData: schema already written");
+    }
+
+    auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
+    NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, fBuffer);
+    outputFile.write(fBuffer.c_str(), fBuffer.size());
+    outputFile.flush();
+    updateWatermarkCallback(inputBuffer);
+
+    return true;
+}
+
+bool FileSink::getAppend() const { return append; }
+
+std::string FileSink::getAppendAsString() const {
+    if (append) {
+        return "APPEND";
+    }
+    return "OVERWRITE";
+}
+
+#ifdef ENABLE_ARROW_BUILD
+bool FileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
+    std::unique_lock lock(writeMutex);
+
+    // preliminary checks
     NES_TRACE("FileSink: getSchema medium {} format {} and mode {}",
               toString(),
               sinkFormat->toString(),
               this->getAppendAsString());
 
     if (!inputBuffer) {
-        NES_ERROR("FileSink::writeData input buffer invalid");
+        NES_ERROR("FileSink::writeDataToArrowFile input buffer invalid");
         return false;
     }
-    if (!schemaWritten) {
-        NES_TRACE("FileSink::getData: write schema");
-        auto schemaBuffer = sinkFormat->getSchema();
-        if (schemaBuffer) {
-            std::ofstream outputFile;
-            if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
-                uint64_t idx = filePath.rfind('.');
-                std::string shrinkedPath = filePath.substr(0, idx + 1);
-                std::string schemaFile = shrinkedPath + "schema";
-                NES_TRACE("FileSink::writeData: schema is ={} to file={}", sinkFormat->getSchemaPtr()->toString(), schemaFile);
-                outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
-            } else {
-                outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
-            }
 
-            outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
-            outputFile.close();
+    // make arrow schema
+    auto arrowFormat = std::dynamic_pointer_cast<ArrowFormat>(sinkFormat);
+    std::shared_ptr<arrow::Schema> arrowSchema = arrowFormat->getArrowSchema();
 
-            schemaWritten = true;
-            NES_TRACE("FileSink::writeData: schema written");
-        } else {
-            NES_TRACE("FileSink::writeData: no schema written");
-        }
-    } else {
-        NES_TRACE("FileSink::getData: schema already written");
+    // open the arrow ipc file
+    std::shared_ptr<arrow::io::FileOutputStream> outfileArrow;
+    std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter;
+    arrow::Status openStatus = openArrowFile(outfileArrow, arrowSchema, arrowWriter);
+
+    if (!openStatus.ok()) {
+        return false;
     }
 
-    NES_TRACE("FileSink::getData: write data to file= {}", filePath);
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
+    // get arrow arrays from tuple buffer
+    std::vector<std::shared_ptr<arrow::Array>> arrowArrays = arrowFormat->getArrowArrays(inputBuffer);
 
-    for (auto& buffer : dataBuffers) {
-        NES_TRACE("FileSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
-        if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
-            outputFile.write((char*) buffer.getBuffer(),
-                             buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-        } else {
-            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
-        }
-    }
-    outputFile.flush();
-    updateWatermarkCallback(inputBuffer);
+    // make a record batch
+    std::shared_ptr<arrow::RecordBatch> recordBatch =
+        arrow::RecordBatch::Make(arrowSchema, arrowArrays[0]->length(), arrowArrays);
+
+    // write the record batch
+    auto write = arrowWriter->WriteRecordBatch(*recordBatch);
+
+    // close the writer
+    auto close = arrowWriter->Close();
+
     return true;
 }
 
-std::string FileSink::getFilePath() const { return filePath; }
+arrow::Status FileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
+                                      std::shared_ptr<arrow::Schema> arrowSchema,
+                                      std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowRecordBatchWriter) {
+    // the macros initialize the arrowFileOutputStream and arrowRecordBatchWriter
+    // if everything goes well return status OK
+    // else the macros return failure
+    ARROW_ASSIGN_OR_RAISE(arrowFileOutputStream, arrow::io::FileOutputStream::Open(filePath, append));
+    ARROW_ASSIGN_OR_RAISE(arrowRecordBatchWriter, arrow::ipc::MakeStreamWriter(arrowFileOutputStream, arrowSchema));
+    return arrow::Status::OK();
+}
+#endif//ENABLE_ARROW_BUILD
 
 }// namespace NES

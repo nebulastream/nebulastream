@@ -17,8 +17,8 @@ add_source_files(nes-core
         ProjectionLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
         InferModelLogicalOperatorNode.cpp
-        MapJavaUDFLogicalOperatorNode.cpp
-        FlatMapJavaUDFLogicalOperatorNode.cpp
+        MapUDFLogicalOperatorNode.cpp
+        FlatMapUDFLogicalOperatorNode.cpp
         UnionLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp
@@ -29,9 +29,9 @@ add_source_files(nes-core
         LogicalBinaryOperatorNode.cpp
         LogicalUnaryOperatorNode.cpp
         InferModelOperatorHandler.cpp
-        JavaUDFLogicalOperator.cpp
         OpenCLLogicalOperatorNode.cpp
         LimitLogicalOperatorNode.cpp
+        UDFLogicalOperator.cpp
         )
 
 add_subdirectory(CEP)

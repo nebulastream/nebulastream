@@ -65,7 +65,9 @@ PhysicalHashJoinBuildOperator::create(const SchemaPtr& inputSchema,
 std::string PhysicalHashJoinBuildOperator::toString() const { return "PhysicalHashJoinBuildOperator"; }
 
 OperatorNodePtr PhysicalHashJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName, joinFieldName);
+    auto result = create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName, joinFieldName);
+    result->addAllProperties(properties);
+    return result;
 }
 
 JoinBuildSideType PhysicalHashJoinBuildOperator::getBuildSide() const { return buildSide; }

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -19,7 +20,6 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
@@ -27,7 +27,7 @@
 #include <memory>
 namespace NES::Nautilus::Interface {
 
-class PagedVectorTest : public Testing::NESBaseTest {
+class PagedVectorTest : public Testing::BaseUnitTest {
   public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     std::unique_ptr<std::pmr::memory_resource> allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
@@ -37,7 +37,7 @@ class PagedVectorTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("PagedVectorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PagedVectorTest test class.");
     }
-    void SetUp() override { Testing::NESBaseTest::SetUp(); }
+    void SetUp() override { Testing::BaseUnitTest::SetUp(); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down PagedVectorTest test class."); }

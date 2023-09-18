@@ -361,6 +361,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         StateManagerPtr&&,
                         std::weak_ptr<AbstractQueryStatusListener>&&,
                         NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
+                        OpenCLManagerPtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -383,6 +384,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     AbstractQueryStatusListenerPtr nesWorker;
     Network::NetworkManagerPtr networkManager;
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
+    OpenCLManagerPtr openCLManager;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;
     [[maybe_unused]] uint64_t nodeEngineId;

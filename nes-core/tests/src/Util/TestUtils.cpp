@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/Identifiers.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -120,6 +121,10 @@ namespace TestUtils {
 
 [[nodiscard]] std::string enableMonitoring(bool prefix) { return configOption(ENABLE_MONITORING_CONFIG, true, prefix); }
 
+[[nodiscard]] std::string monitoringWaitTime(uint64_t monitoringWaitTime) {
+    return "--monitoringWaitTime=" + std::to_string(monitoringWaitTime);
+}
+
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization() {
     return "--optimizer.performDistributedWindowOptimization=false";
@@ -135,13 +140,15 @@ namespace TestUtils {
     return "--optimizer.distributedWindowCombinerThreshold=" + std::to_string(val);
 }
 
-[[nodiscard]] std::string enableThreadLocalWindowing(bool prefix) {
-    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG,
-                        std::string{"THREAD_LOCAL"},
-                        prefix);
+[[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
+    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"SLICING"}, prefix);
 }
 
-std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
+[[nodiscard]] std::string enableNautilusWorker() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
+
+[[nodiscard]] std::string enableNautilusCoordinator() {
+    return "--worker.queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER";
+}
 
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
@@ -402,10 +409,17 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     return false;
 }
 
-bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte) {
-    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
+/**
+   * @brief Check if two TupleBuffers contain the same tuples (order does not matter).
+   * @param buffer1: First TupleBuffer
+   * @param buffer2: Second TupleBuffer
+   * @param schemaSizeInByte: The schema size is used to read the correct number of bytes for tuple-based memcmp
+   * @return true if successful
+   */
+bool checkIfBuffersContainTheSameTuples(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte) {
+    NES_DEBUG("Checking if the buffers contain the same tuples...");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
-        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        NES_DEBUG("Buffers do not contain exactly the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
@@ -831,6 +845,15 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
     return allBuffers;
 }
 
+CSVSourceTypePtr TestUtils::createSourceConfig(const string& fileName) {
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + fileName);
+    sourceConfig->setGatheringInterval(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(0);
+    return sourceConfig;
+}
+
 std::vector<PhysicalTypePtr> TestUtils::getPhysicalTypes(const SchemaPtr& schema) {
     std::vector<PhysicalTypePtr> retVector;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
@@ -840,6 +863,18 @@ std::vector<PhysicalTypePtr> TestUtils::getPhysicalTypes(const SchemaPtr& schema
     }
 
     return retVector;
+}
+
+uint64_t countOccurrences(const std::string& subString, const std::string& mainString) {
+    int count = 0;
+    size_t pos = mainString.find(subString, 0);
+
+    while (pos != std::string::npos) {
+        count++;
+        pos = mainString.find(subString, pos + 1);
+    }
+
+    return count;
 }
 
 }// namespace NES

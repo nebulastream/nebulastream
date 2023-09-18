@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_
 
+#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -22,7 +23,7 @@ namespace NES {
 /**
  * @brief This Exception is thrown if the query is found to have invalid format or has a logical error.
  */
-class InvalidQueryException : public std::runtime_error {
+class InvalidQueryException : public Exceptions::RequestExecutionException {
   public:
     explicit InvalidQueryException(const std::string& message);
 };

@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -23,7 +24,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
@@ -35,7 +35,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class QueryFailureTest : public Testing::NESBaseTest {
+class QueryFailureTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
 };
@@ -79,8 +79,10 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query={}", query);
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 
@@ -129,7 +131,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     string query1 =
         R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query={}", query1);
-    QueryId queryId1 = queryService->validateAndQueueAddQueryRequest(query1, "BottomUp");
+    QueryId queryId1 = queryService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId1, queryCatalogService));
 
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
@@ -137,7 +139,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     NES_INFO("QueryFailureTest: Submit query");
     string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId2 = queryService->validateAndQueueAddQueryRequest(query2, "BottomUp");
+    QueryId queryId2 = queryService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp);
 
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
@@ -209,8 +211,11 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
 
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(FileSinkDescriptor::create(outputFilePath));
 
-    QueryId queryId =
-        queryService->addQueryRequest("", query.getQueryPlan(), "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->addQueryRequest("",
+                                                    query.getQueryPlan(),
+                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 

@@ -25,6 +25,9 @@ using NodePtr = std::shared_ptr<Node>;
 class FilterLogicalOperatorNode;
 using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
 
+class MapLogicalOperatorNode;
+using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
+
 class FieldAccessExpressionNode;
 using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 }// namespace NES
@@ -49,12 +52,11 @@ class FilterPushDownRule : public BaseRewriteRule {
     virtual ~FilterPushDownRule() = default;
 
     /**
-     * @brief Validate if the input field is used in the filter predicate of the operator
-     * @param filterOperator : filter operator whose predicate need to be checked
-     * @param fieldName :  name of the field to be checked
-     * @return true if field use in the filter predicate else false
+     * @brief Get the @link FieldAccessExpressionNodePtr @endlink used in the filter predicate
+     * @param filterOperator
+     * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
      */
-    static bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator, std::string const& fieldName);
+    static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate);
 
   private:
     explicit FilterPushDownRule();
@@ -111,7 +113,9 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param parentOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
      * joinOperator and parOperator.
      */
-    void pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator, NodePtr parentOperator);
+    void pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator,
+                             JoinLogicalOperatorNodePtr joinOperator,
+                             NodePtr parentOperator);
 
     /**
      * @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
@@ -131,16 +135,21 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param joinOperator the join operator to which the filter should be tried to be pushed down below. (it is currently the child of the filter)
      * @return true if we pushed the filter to both branches of this joinOperator
      */
-    bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator);
+    bool pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, JoinLogicalOperatorNodePtr joinOperator);
 
     /**
-     * @brief tries to push the filter below a map operator. This is possible as long as the map operator doesn't change any attribute that the filter uses
-     * @param filterOperator the filter operator that we try to push down
-     * @param mapOperator the map operator to which we want to push the filter down below. (it is currently the child of the filter)
-     * @param parOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
+     * @brief pushes the filter below a map operator. If the the map operator changes any attribute that the filter uses, we
+     * substitute the filter's field access expression by the map transformation.
+     * Example:
+     *          Filter(a <= 5)                             Map(a = 5*b)
+     *               |                           ====>          |
+     *         Map(a = 5*b)                               Filter(5*b <= 5)
+     *
+     * @param filterOperator the filter operator that we want to push down
+     * @param mapOperator the map operator below which we want to push the filter operator. (it is currently the child of the filter)
      * mapOperator and parOperator
      */
-    void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, NodePtr mapOperator, NodePtr parOperator);
+    void pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, MapLogicalOperatorNodePtr mapOperator);
 
     /**
      * @brief pushes the filter below a union operator to both branches of the union. Both branches of the union have the same Attributes,
@@ -172,14 +181,7 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @param node the map operator node
      * @return name of the field
      */
-    static std::string getFieldNameUsedByMapOperator(const NodePtr& node);
-
-    /**
-     * @brief Get the @link FieldAccessExpressionNodePtr @endlink used in the filter predicate
-     * @param filterOperator
-     * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
-     */
-    static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate);
+    static std::string getAssignmentFieldFromMapOperator(const NodePtr& node);
 
     /**
      * @brief pushes a filter below a projection operator. If the projection renames a attribute that is used by the filter,
@@ -215,6 +217,16 @@ class FilterPushDownRule : public BaseRewriteRule {
      */
     static void
     renameFieldAccessExpressionNodes(ExpressionNodePtr expressionNode, std::string toReplace, std::string replacement);
+
+    /**
+     * @brief Substitute the filter predicate's field access expression node with the map operator's expression node if needed
+     * @param filterOperator filter operator node to be pushed down
+     * @param mapOperator map operator node where the filter should be pushed below
+     * @param fieldName field name of the attribute that is assigned a field by the map transformation
+     */
+    void substituteFilterAttributeWithMapTransformation(const FilterLogicalOperatorNodePtr& filterOperator,
+                                                        const MapLogicalOperatorNodePtr& mapOperator,
+                                                        const std::string& fieldName);
 };
 
 }// namespace NES::Optimizer

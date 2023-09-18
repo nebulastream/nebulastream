@@ -14,6 +14,7 @@
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -23,6 +24,11 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <RequestProcessor/AsyncRequestProcessor.hpp>
+#include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
+#include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
+#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Core.hpp>
@@ -33,134 +39,160 @@
 #include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 
-#include <Util/magicenum/magic_enum.hpp>
-#include <utility>
-
 namespace NES {
 
-QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
-                           RequestQueuePtr queryRequestQueue,
-                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                           QueryParsingServicePtr queryParsingService,
+QueryService::QueryService(bool enableNewRequestExecutor,
                            Configurations::OptimizerConfiguration optimizerConfiguration,
-                           Catalogs::UDF::UDFCatalogPtr udfCatalog)
-    : queryCatalogService(std::move(queryCatalogService)), queryRequestQueue(std::move(queryRequestQueue)),
-      optimizerConfiguration(optimizerConfiguration) {
+                           const QueryCatalogServicePtr& queryCatalogService,
+                           const RequestQueuePtr& queryRequestQueue,
+                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                           const QueryParsingServicePtr& queryParsingService,
+                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                           const RequestProcessor::Experimental::AsyncRequestProcessorPtr& asyncRequestExecutor,
+                           const z3::ContextPtr& z3Context)
+    : enableNewRequestExecutor(enableNewRequestExecutor), optimizerConfiguration(optimizerConfiguration),
+      queryCatalogService(queryCatalogService), queryRequestQueue(queryRequestQueue), asyncRequestExecutor(asyncRequestExecutor),
+      z3Context(z3Context), queryParsingService(queryParsingService) {
     NES_DEBUG("QueryService()");
-    syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(std::move(queryParsingService));
-    semanticQueryValidation = Optimizer::SemanticQueryValidation::create(std::move(sourceCatalog),
+    syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(this->queryParsingService);
+    semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog,
                                                                          optimizerConfiguration.performAdvanceSemanticValidation,
                                                                          udfCatalog);
 }
 
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
-                                                      const std::string& placementStrategyName,
+                                                      const Optimizer::PlacementStrategy placementStrategy,
                                                       const FaultToleranceType faultTolerance,
                                                       const LineageType lineage) {
 
-    NES_INFO("QueryService: Validating and registering the user query.");
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    try {
-        // Checking the syntactic validity and compiling the query string to an object
-        NES_INFO("QueryService: check validation of a query.");
-        QueryPlanPtr queryPlan = syntacticQueryValidation->validate(queryString);
-
-        queryPlan->setQueryId(queryId);
-        queryPlan->setFaultToleranceType(faultTolerance);
-        queryPlan->setLineageType(lineage);
-
-        // perform semantic validation
-        semanticQueryValidation->validate(queryPlan);
-
-        Optimizer::PlacementStrategy placementStrategy;
+    if (!enableNewRequestExecutor) {
+        NES_INFO("QueryService: Validating and registering the user query.");
+        QueryId queryId = PlanIdGenerator::getNextQueryId();
         try {
-            placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
-        } catch (...) {
-            NES_ERROR("QueryService: Unknown placement strategy name: {}", placementStrategyName);
-            throw InvalidArgumentException("placementStrategyName", placementStrategyName);
-        }
+            // Checking the syntactic validity and compiling the query string to an object
+            NES_INFO("QueryService: check validation of a query.");
+            QueryPlanPtr queryPlan = syntacticQueryValidation->validate(queryString);
 
-        Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
-            queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
-        if (queryCatalogEntry) {
-            auto request = AddQueryRequest::create(queryPlan, placementStrategy);
-            queryRequestQueue->add(request);
-            return queryId;
+            queryPlan->setQueryId(queryId);
+            queryPlan->setFaultToleranceType(faultTolerance);
+            queryPlan->setLineageType(lineage);
+
+            // perform semantic validation
+            semanticQueryValidation->validate(queryPlan);
+
+            Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
+                queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategy);
+            if (queryCatalogEntry) {
+                auto request = AddQueryRequest::create(queryPlan, placementStrategy);
+                queryRequestQueue->add(request);
+                return queryId;
+            }
+        } catch (const InvalidQueryException& exc) {
+            NES_ERROR("QueryService: {}", std::string(exc.what()));
+            auto emptyQueryPlan = QueryPlan::create();
+            emptyQueryPlan->setQueryId(queryId);
+            queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategy);
+            queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
+            throw exc;
         }
-    } catch (const InvalidQueryException& exc) {
-        NES_ERROR("QueryService: {}", std::string(exc.what()));
-        auto emptyQueryPlan = QueryPlan::create();
-        emptyQueryPlan->setQueryId(queryId);
-        queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
-        queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
-        throw exc;
+        throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
+    } else {
+
+        auto addRequest = RequestProcessor::Experimental ::AddQueryRequest::create(queryString,
+                                                                                   placementStrategy,
+                                                                                   faultTolerance,
+                                                                                   lineage,
+                                                                                   1,
+                                                                                   z3Context,
+                                                                                   queryParsingService);
+        asyncRequestExecutor->runAsync(addRequest);
+        auto future = addRequest->getFuture();
+        return std::static_pointer_cast<RequestProcessor::Experimental::AddQueryResponse>(future.get())->queryId;
     }
-    throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
 }
 
 QueryId QueryService::addQueryRequest(const std::string& queryString,
                                       const QueryPlanPtr& queryPlan,
-                                      const std::string& placementStrategyName,
+                                      const Optimizer::PlacementStrategy placementStrategy,
                                       const FaultToleranceType faultTolerance,
                                       const LineageType lineage) {
 
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    auto promise = std::make_shared<std::promise<QueryId>>();
-    try {
-
-        //Assign additional configurations
-        queryPlan->setQueryId(queryId);
-        queryPlan->setFaultToleranceType(faultTolerance);
-        queryPlan->setLineageType(lineage);
-
-        // assign the id for the query and individual operators
-        assignOperatorIds(queryPlan);
-
-        // perform semantic validation
-        semanticQueryValidation->validate(queryPlan);
-
-        Optimizer::PlacementStrategy placementStrategy;
+    if (!enableNewRequestExecutor) {
+        QueryId queryId = PlanIdGenerator::getNextQueryId();
+        auto promise = std::make_shared<std::promise<QueryId>>();
         try {
-            placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
-        } catch (...) {
-            NES_ERROR("QueryService: Unknown placement strategy name: {}", placementStrategyName);
-            throw InvalidArgumentException("placementStrategyName", placementStrategyName);
-        }
 
-        Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
-            queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
-        if (queryCatalogEntry) {
-            auto request = AddQueryRequest::create(queryPlan, placementStrategy);
-            queryRequestQueue->add(request);
-            return queryId;
+            //Assign additional configurations
+            queryPlan->setQueryId(queryId);
+            queryPlan->setFaultToleranceType(faultTolerance);
+            queryPlan->setLineageType(lineage);
+
+            // assign the id for the query and individual operators
+            assignOperatorIds(queryPlan);
+
+            // perform semantic validation
+            semanticQueryValidation->validate(queryPlan);
+
+            Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry =
+                queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategy);
+            if (queryCatalogEntry) {
+                auto request = AddQueryRequest::create(queryPlan, placementStrategy);
+                queryRequestQueue->add(request);
+                return queryId;
+            }
+        } catch (const InvalidQueryException& exc) {
+            NES_ERROR("QueryService: {}", std::string(exc.what()));
+            auto emptyQueryPlan = QueryPlan::create();
+            emptyQueryPlan->setQueryId(queryId);
+            queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategy);
+            queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
+            throw exc;
         }
-    } catch (const InvalidQueryException& exc) {
-        NES_ERROR("QueryService: {}", std::string(exc.what()));
-        auto emptyQueryPlan = QueryPlan::create();
-        emptyQueryPlan->setQueryId(queryId);
-        queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
-        queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, exc.what());
-        throw exc;
+        throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
+    } else {
+        auto addRequest = RequestProcessor::Experimental::AddQueryRequest::create(queryPlan,
+                                                                                  placementStrategy,
+                                                                                  faultTolerance,
+                                                                                  lineage,
+                                                                                  1,
+                                                                                  z3Context);
+        asyncRequestExecutor->runAsync(addRequest);
+        auto future = addRequest->getFuture();
+        return std::static_pointer_cast<RequestProcessor::Experimental::AddQueryResponse>(future.get())->queryId;
     }
-    throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
 }
 
 bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
-    //Check and mark query for hard stop
-    bool success = queryCatalogService->checkAndMarkForHardStop(queryId);
+    if (!enableNewRequestExecutor) {
+        //Check and mark query for hard stop
+        bool success = queryCatalogService->checkAndMarkForHardStop(queryId);
 
-    //If success then queue the hard stop request
-    if (success) {
-        auto request = StopQueryRequest::create(queryId);
-        return queryRequestQueue->add(request);
+        //If success then queue the hard stop request
+        if (success) {
+            auto request = StopQueryRequest::create(queryId);
+            return queryRequestQueue->add(request);
+        }
+        return false;
+    } else {
+        auto stopRequest = RequestProcessor::Experimental::StopQueryRequest::create(queryId, 1);
+        asyncRequestExecutor->runAsync(stopRequest);
+        return true;
     }
-    return false;
 }
 
-bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId, const std::string& failureReason) {
-    auto request = FailQueryRequest::create(sharedQueryId, failureReason);
-    return queryRequestQueue->add(request);
+bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
+                                                    QuerySubPlanId querySubPlanId,
+                                                    const std::string& failureReason) {
+
+    if (!enableNewRequestExecutor) {
+        auto request = FailQueryRequest::create(sharedQueryId, failureReason);
+        return queryRequestQueue->add(request);
+    } else {
+        auto stopRequest = RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId, querySubPlanId, 1);
+        asyncRequestExecutor->runAsync(stopRequest);
+        return true;
+    }
 }
 
 void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {

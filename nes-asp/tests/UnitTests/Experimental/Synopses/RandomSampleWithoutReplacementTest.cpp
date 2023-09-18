@@ -12,20 +12,20 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
-#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
-#include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
+#include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacement.hpp>
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <gtest/gtest.h>
 
 namespace NES::ASP {
 
@@ -45,7 +45,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
         handlers){};
 };
 
-class RandomSampleWithoutReplacementTest : public Testing::NESBaseTest {
+class RandomSampleWithoutReplacementTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -55,7 +55,7 @@ class RandomSampleWithoutReplacementTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        BaseIntegrationTest::SetUp();
         NES_INFO("Setup RandomSampleWithoutReplacementTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
 

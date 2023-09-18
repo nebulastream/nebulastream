@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Monitoring/MonitoringCatalog.hpp>
@@ -33,7 +33,7 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class MetricStoreTest : public Testing::NESBaseTest {
+class MetricStoreTest : public Testing::BaseUnitTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
@@ -45,7 +45,7 @@ class MetricStoreTest : public Testing::NESBaseTest {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("MetricStoreTest: Setup MetricStoreTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();
@@ -68,7 +68,7 @@ TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
     metricStore->addMetrics(nodeId, std::make_shared<Monitoring::Metric>(myString));
 
     Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
-    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics).dump());
     ASSERT_EQ(storedMetrics->size(), 2);
     ASSERT_EQ(storedMetrics->at(Monitoring::MetricType::UnknownMetric)->size(), 1);
 
@@ -90,7 +90,7 @@ TEST_F(MetricStoreTest, testAllEntriesMetricStore) {
     metricStore->addMetrics(nodeId, networkMetrics);
 
     auto storedMetrics = metricStore->getAllMetrics(nodeId);
-    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics));
+    NES_INFO("MetricStoreTest: Stored metrics {}", Monitoring::MetricUtils::toJson(storedMetrics).dump());
     ASSERT_EQ(storedMetrics->size(), 2);
     ASSERT_EQ(storedMetrics->at(Monitoring::MetricType::UnknownMetric)->size(), 2);
 

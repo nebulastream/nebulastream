@@ -17,7 +17,7 @@
 
 #include <chrono>
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -37,7 +37,7 @@ namespace Sensors {
  * They are currently disabled but tested locally.
  * Ideally, these all should be mocked.
  */
-class SensorBusTest : public Testing::TestWithErrorHandling {
+class SensorBusTest : public Testing::BaseUnitTest {
 
   public:
     std::string path_to_bus;
@@ -65,7 +65,7 @@ class SensorBusTest : public Testing::TestWithErrorHandling {
    * Create an int64_t value to write and later read.
    */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup SourceBusTest test case.");
         bus_file_allocated_id = 1;
         snprintf(path_to_bus_str, 19, "/dev/i2c-%d", bus_file_allocated_id);

@@ -14,8 +14,8 @@ add_source_files(nes-runtime
         NonKeyedSlicePreAggregation.cpp
         NonKeyedSlicePreAggregationHandler.cpp
         NonKeyedSlice.cpp
-        NonKeyedSliceStaging.cpp
         NonKeyedThreadLocalSliceStore.cpp
         NonKeyedSliceMerging.cpp
         NonKeyedSliceMergingHandler.cpp
-        )
+        NonKeyedWindowEmitAction.cpp
+)

@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
 #include <Experimental/Synopses/Histograms/EquiWidthOneDimensionalHistogram.hpp>
 #include <Experimental/Synopses/Histograms/EquiWidthOneDimensionalHistogramOperatorHandler.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -44,7 +44,7 @@ public:
             handlers){};
 };
 
-class EquiWidthOneDimensionalHistogramTest : public Testing::NESBaseTest {
+class EquiWidthOneDimensionalHistogramTest : public Testing::BaseIntegrationTest {
 public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -54,7 +54,7 @@ public:
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        BaseIntegrationTest::SetUp();
         NES_INFO("Setup EquiWidthOneDimensionalHistogramTest test case.");
         bufferManager = std::make_shared<Runtime::BufferManager>();
 

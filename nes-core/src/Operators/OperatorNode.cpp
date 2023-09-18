@@ -197,5 +197,10 @@ bool OperatorNode::containAsGrandParent(NES::NodePtr operatorNode) {
         return ancestor->as<OperatorNode>()->getId() == operatorIdToCheck;
     });
 }
+void OperatorNode::addAllProperties(const OperatorProperties& properties) {
+    for (auto& [key, value] : properties) {
+        addProperty(key, value);
+    }
+}
 
 }// namespace NES

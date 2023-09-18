@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v29)
+set(VCPKG_BINARY_VERSION v30)
 set(LLVM_BINARY_VERSION v2)
 set(LLVM_VERSION 16)
 # Activate self hosting, such that the compiler from the dependencies is taken
@@ -57,6 +57,8 @@ option(NES_USE_CCACHE "USE CCACHE" OFF)
 option(NES_ENABLE_APPROXIMATE_STREAM_PROCESSING OFF)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
+option(NES_USE_OPENCL "Build with OpenCL support" OFF)
+option(NES_USE_ARROW "Build with Apache Arrow support" OFF)
 option(NES_USE_LORAWAN OFF)
 
 # Enable exception interception (for debugging purpose)
@@ -237,17 +239,6 @@ if (NES_BUILD_BENCHMARKS)
         message("use latency measurement")
     endif ()
     #-fno-omit-frame-pointer
-endif ()
-
-# Add Python UDF support
-option(ENABLE_PYTHON_UDF "Build supporting Python UDF" OFF)
-message(STATUS "Python UDF support: ${ENABLE_PYTHON_UDF}")
-if (ENABLE_PYTHON_UDF)
-    add_compile_definitions(PYTHON_UDF_ENABLED)
-    find_package(PythonLibs 3 REQUIRED)
-    include_directories(${PYTHON_INCLUDE_DIRS})
-    # Python needs to link against libutil. "python3-config --ldflags" will give the recommended flags
-    set(LIBRARIES ${LIBRARIES} ${PYTHON_LIBRARIES} -lutil)
 endif ()
 
 # Add Python UDF support using Nautilus
@@ -480,6 +471,34 @@ if (NES_USE_MQTT)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
 
+# Library containing Apache Arrow
+if (NES_USE_ARROW)
+    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+
+    if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch"))
+        # explicitly find the brotli package from Arrow and include it
+        find_package(unofficial-brotli REQUIRED)
+        if(unofficial-brotli_FOUND)
+            message(STATUS "Brotli lib required by Arrow found.")
+            set(LIBRARIES ${LIBRARIES} unofficial::brotli::brotlienc-static unofficial::brotli::brotlidec-static unofficial::brotli::brotlicommon-static)
+        else()
+            message(FATAL_ERROR "Brotli lib required by Arrow not found.")
+        endif()
+
+        # find Arrow package
+        find_package(Arrow REQUIRED CONFIG)
+        if(Arrow_FOUND)
+            message(STATUS "Arrow version ${ARROW_VERSION}")
+        else ()
+            message(FATAL_ERROR "Unable to find Arrow library")
+        endif ()
+        set(LIBRARIES ${LIBRARIES} arrow_static)
+        add_compile_definitions(ENABLE_ARROW_BUILD)
+    else()
+        message(WARNING "ENABLE_ARROW_BUILD not supported on this platform")
+    endif()
+endif (NES_USE_ARROW)
+
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
     enable_language(CUDA)
@@ -490,6 +509,20 @@ if (NES_USE_GPU)
     set(LIBRARIES ${LIBRARIES} CUDA::cudart CUDA::nvrtc)
     message("CUDA dependencies OK")
 endif (NES_USE_GPU)
+
+if (NES_USE_OPENCL)
+    find_package(OpenCL REQUIRED)
+    if (${OpenCL_FOUND})
+        MESSAGE(STATUS "Found OpenCL ${OpenCL_VERSION_STRING}")
+        MESSAGE(STATUS "OpenCL libraries: ${OpenCL_LIBRARIES}")
+        MESSAGE(STATUS "OpenCL includes: ${OpenCL_INCLUDE_DIRS}")
+        set(LIBRARIES ${LIBRARIES} ${OpenCL_LIBRARIES})
+        include_directories(${OpenCL_INCLUDE_DIRS})
+        add_compile_definitions(ENABLE_OPENCL)
+    else()
+        message(FATAL_ERROR "Could not find OpenCL")
+    endif()
+endif (NES_USE_OPENCL)
 
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)
@@ -542,6 +575,7 @@ if (CMAKE_USE_PAPI_PROFILER)
     add_compile_definitions(ENABLE_PAPI_PROFILER)
     include_directories(${PAPI_INCLUDE_DIRS})
 endif ()
+
 # LLVM
 find_package(LLVM ${LLVM_VERSION} CONFIG REQUIRED)
 if (LLVM_FOUND)

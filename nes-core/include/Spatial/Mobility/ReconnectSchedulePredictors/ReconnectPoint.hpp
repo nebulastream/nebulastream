@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTPOINT_HPP_
 
 #include <Spatial/DataTypes/GeoLocation.hpp>
+#include <cstdint>
 
 namespace NES {
 using Timestamp = uint64_t;

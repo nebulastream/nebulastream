@@ -24,12 +24,11 @@ namespace NES::Nautilus::Backends::MLIR {
 class MLIRExecutable : public Executable {
   public:
     MLIRExecutable(std::unique_ptr<mlir::ExecutionEngine> engine);
+    bool hasInvocableFunctionPtr() override;
+    ~MLIRExecutable() override;
 
   protected:
     void* getInvocableFunctionPtr(const std::string& member) override;
-
-  public:
-    bool hasInvocableFunctionPtr() override;
 
   private:
     std::unique_ptr<mlir::ExecutionEngine> engine;

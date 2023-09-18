@@ -46,7 +46,7 @@ class QueryCatalogEntry {
   public:
     explicit QueryCatalogEntry(QueryId queryId,
                                std::string queryString,
-                               std::string queryPlacementStrategy,
+                               Optimizer::PlacementStrategy queryPlacementStrategy,
                                QueryPlanPtr inputQueryPlan,
                                QueryState queryStatus);
 
@@ -102,7 +102,7 @@ class QueryCatalogEntry {
      * @brief Get name of the query placement strategy
      * @return query placement strategy
      */
-    [[nodiscard]] const std::string& getQueryPlacementStrategyAsString() const;
+    [[nodiscard]] const std::string getQueryPlacementStrategyAsString() const;
 
     /**
      * @brief Return placement strategy used for the query
@@ -152,7 +152,7 @@ class QueryCatalogEntry {
     mutable std::mutex mutex;
     QueryId queryId;
     std::string queryString;
-    std::string queryPlacementStrategy;
+    Optimizer::PlacementStrategy queryPlacementStrategy;
     QueryPlanPtr inputQueryPlan;
     QueryPlanPtr executedQueryPlan;
     QueryState queryState;

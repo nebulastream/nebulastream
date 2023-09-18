@@ -13,8 +13,8 @@
 */
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
+#include <BaseIntegrationTest.hpp>
 #include <Common/Identifiers.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -29,7 +29,7 @@ namespace NES {
 
 uint16_t timeout = 5;
 
-class E2ECoordinatorSingleWorkerTest : public Testing::NESBaseTest {
+class E2ECoordinatorSingleWorkerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LogLevel::LOG_DEBUG);
@@ -356,7 +356,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(3),
                                           TestUtils::sourceGatheringInterval(1),
-                                          TestUtils::enableThreadLocalWindowing()});
+                                          TestUtils::enableSlicingWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -778,10 +778,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
          TestUtils::physicalSourceName("test_stream"),
          TestUtils::logicalSourceName("ktm"),
          TestUtils::numberOfBuffersToProduce(1),
-         TestUtils::enableNautilus(),
+         TestUtils::enableNautilusWorker(),
          TestUtils::numberOfTuplesToProducePerBuffer(4),
          TestUtils::sourceGatheringInterval(1),
-         TestUtils::enableThreadLocalWindowing()});
+         TestUtils::enableSlicingWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     //TODO : without logicalStreamName$Attribute (qualified att names) the Nautilus query fails with the error: attr. does not exits
@@ -869,10 +869,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
          TestUtils::physicalSourceName("test_stream"),
          TestUtils::logicalSourceName("ktm"),
          TestUtils::numberOfBuffersToProduce(1),
-         TestUtils::enableNautilus(),
+         TestUtils::enableNautilusWorker(),
          TestUtils::numberOfTuplesToProducePerBuffer(4),
          TestUtils::sourceGatheringInterval(1),
-         TestUtils::enableThreadLocalWindowing()});
+         TestUtils::enableSlicingWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;

@@ -12,7 +12,11 @@
 
 add_subdirectory(NonKeyedTimeWindow)
 add_subdirectory(KeyedTimeWindow)
+add_subdirectory(Buckets)
 
 add_source_files(nes-runtime
         WindowProcessingException.cpp
-        )
+        SlidingWindowSliceStore.cpp
+        AppendToSliceStoreAction.cpp
+        AbstractSlicePreAggregationHandler.cpp
+)

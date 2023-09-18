@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/TextFunctions/PatternMatching/ExtractingRegex.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
@@ -24,7 +24,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class ExtractingRegexTest : public Testing::NESBaseTest {
+class ExtractingRegexTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -33,7 +33,7 @@ class ExtractingRegexTest : public Testing::NESBaseTest {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
         NES_DEBUG("Setup ExtractingRegexTest test case.")

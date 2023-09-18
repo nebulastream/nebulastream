@@ -17,4 +17,6 @@ add_source_files(nes-runtime
         AvgAggregation.cpp
         MinAggregation.cpp
         MaxAggregation.cpp
+        HyperLogLogDistinctCountApproximation.cpp
+        QuantileEstimationAggregation.cpp
         )

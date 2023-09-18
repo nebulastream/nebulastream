@@ -13,13 +13,13 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -35,7 +35,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class SeqOperatorTest : public Testing::NESBaseTest {
+class SeqOperatorTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coConf;
     CSVSourceTypePtr srcConf1;
@@ -129,8 +129,10 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -218,8 +220,10 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -230,8 +234,8 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
-        "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622880000|69.388885|7|1|\n"
-        "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622940000|66.222221|12|1|\n";
+        "1543622700000,1543623000000,1,R2000070,1543622820000,70.074074,4,1,R2000073,1543622880000,69.388885,7,1\n"
+        "1543622700000,1543623000000,1,R2000070,1543622820000,70.074074,4,1,R2000073,1543622940000,66.222221,12,1\n";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -239,7 +243,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
     NES_DEBUG("contents={}", content);
 
-    EXPECT_EQ(removeRandomKey(content), expectedContent);
+    ASSERT_TRUE(Util::endsWith(content, expectedContent));
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -315,8 +319,10 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -408,8 +414,10 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -529,8 +537,10 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

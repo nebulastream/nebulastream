@@ -15,6 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
 
+#include <Execution/Aggregation/Util/HyperLogLog.hpp>
+#include <Execution/Aggregation/Util/digestible.h>
 #include <cstdint>
 #include <numeric>
 namespace NES::Runtime::Execution::Aggregation {
@@ -63,6 +65,22 @@ struct MinAggregationValue : AggregationValue {
 template<typename T>
 struct MaxAggregationValue : AggregationValue {
     T max = std::numeric_limits<T>::min();
+};
+
+/**
+ * Class for HyperLogLog Algorithm, maintains the approximate distinct count value of all occurred tuples
+ */
+struct HyperLogLogDistinctCountApproximationValue : AggregationValue {
+    //TODO: #3889 for approximation we require some flexibility to define the size, e.g., appr. window count, etc. to get the best possible result
+    hll::HyperLogLog hyperLogLog = hll::HyperLogLog(10);
+};
+
+/**
+ * Class for quantile aggregation Value, maintains the quantile value of all occurred tuples
+ */
+struct QuantileEstimationValue : AggregationValue {
+    //TODO: #3889 here the same, unsigned is fix, size depends on use case? might be abitrary for this algorithm
+    digestible::tdigest<float, unsigned> digest = digestible::tdigest(10);
 };
 
 }// namespace NES::Runtime::Execution::Aggregation

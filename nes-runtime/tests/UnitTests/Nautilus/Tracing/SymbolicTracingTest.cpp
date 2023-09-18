@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/BasicTraceFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -25,7 +25,7 @@
 #include <memory>
 
 namespace NES::Nautilus::Tracing {
-class SymbolicTracingTest : public Testing::NESBaseTest {
+class SymbolicTracingTest : public Testing::BaseUnitTest {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     /* Will be called before any test in this class are executed. */

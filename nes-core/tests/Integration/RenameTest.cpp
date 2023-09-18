@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -36,7 +36,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class RenameTest : public Testing::NESBaseTest {
+class RenameTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RenameTest.log", NES::LogLevel::LOG_DEBUG);
@@ -75,8 +75,10 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     string query = "Query::from(\"default_logical\").project(Attribute(\"id\").as(\"NewName\")).sink(FileSinkDescriptor::"
                    "create(\""s
         + getTestResourceFolder().c_str() + "/test.out\"));";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
@@ -91,20 +93,17 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     std::ifstream ifs(getTestResourceFolder() / "test.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|default_logical$NewName:UINT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent = "default_logical$NewName:INTEGER(32 bits)\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n"
+                             "1\n";
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): content={}", content);
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -155,8 +154,10 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
                    ".project(Attribute(\"NewName\").as(\"id\"))"
                    ".sink(FileSinkDescriptor::create(\""s
         + outputFile.c_str() + "\"));";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
@@ -171,20 +172,17 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     std::ifstream ifs(outputFile);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent = "+----------------------------------------------------+\n"
-                             "|default_logical$id:UINT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "|2|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent = "default_logical$id:INTEGER(32 bits)\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n"
+                             "2\n";
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): content={}", content);
     NES_INFO("RenameTest (testDeployOneWorkerFileOutput): expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
@@ -233,8 +231,10 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
         R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create(")";
     query += outputFile;
     query += R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
@@ -310,8 +310,10 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
                    ".byKey(Attribute(\"newId\")).apply(Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -406,8 +408,10 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
             Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::TopDown,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

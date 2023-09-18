@@ -27,6 +27,10 @@ PhysicalOperatorPtr PhysicalScanOperator::create(OperatorId id, const SchemaPtr&
 
 std::string PhysicalScanOperator::toString() const { return "PhysicalScanOperator"; }
 
-OperatorNodePtr PhysicalScanOperator::copy() { return create(id, outputSchema); }
+OperatorNodePtr PhysicalScanOperator::copy() {
+    auto result = create(id, outputSchema);
+    result->addAllProperties(properties);
+    return result;
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

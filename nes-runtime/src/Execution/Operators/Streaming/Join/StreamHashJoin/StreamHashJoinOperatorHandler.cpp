@@ -50,7 +50,7 @@ void StreamHashJoinOperatorHandler::stop(QueryTerminationType, PipelineExecution
     NES_DEBUG("stop HashJoinOperatorHandler");
 }
 
-void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
                                                    WorkerContext* workerCtx,
                                                    PipelineExecutionContext* pipelineCtx) {
     //for every window
@@ -60,8 +60,8 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
         auto currentWindow = getWindowByWindowIdentifier(windowIdentifier);
         NES_ASSERT2_FMT(currentWindow.has_value(), "Triggering window does not exist for ts=" << windowIdentifier);
         auto hashWindow = dynamic_cast<StreamHashJoinWindow*>(currentWindow->get());
-        auto& sharedJoinHashTableLeft = hashWindow->getMergingHashTable(/* isLeftSide=*/true);
-        auto& sharedJoinHashTableRight = hashWindow->getMergingHashTable(/* isLeftSide=*/false);
+        auto& sharedJoinHashTableLeft = hashWindow->getMergingHashTable(QueryCompilation::JoinBuildSideType::Left);
+        auto& sharedJoinHashTableRight = hashWindow->getMergingHashTable(QueryCompilation::JoinBuildSideType::Right);
 
         for (auto i = 0UL; i < getNumPartitions(); ++i) {
             //for local we have to merge the tables first
@@ -70,11 +70,12 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
 
                 //page before merging:
 
-                auto localHashTableLeft = hashWindow->getHashTable(/* isLeftSide=*/true, workerCtx->getId());
+                auto localHashTableLeft = hashWindow->getHashTable(QueryCompilation::JoinBuildSideType::Left, workerCtx->getId());
                 sharedJoinHashTableLeft.insertBucket(i, localHashTableLeft->getBucketLinkedList(i));
 
                 //push actual bucket from local to global hash table for right side
-                auto localHashTableRight = hashWindow->getHashTable(/* isLeftSide=*/false, workerCtx->getId());
+                auto localHashTableRight =
+                    hashWindow->getHashTable(QueryCompilation::JoinBuildSideType::Right, workerCtx->getId());
                 sharedJoinHashTableRight.insertBucket(i, localHashTableRight->getBucketLinkedList(i));
             }
 
@@ -90,11 +91,13 @@ void StreamHashJoinOperatorHandler::triggerWindows(std::vector<uint64_t> windowI
     }
 }
 
-uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId, bool isLeftSide) {
+uint64_t StreamHashJoinOperatorHandler::getNumberOfTuplesInWindow(uint64_t windowIdentifier,
+                                                                  uint64_t workerId,
+                                                                  QueryCompilation::JoinBuildSideType joinBuildSide) {
     const auto window = getWindowByWindowIdentifier(windowIdentifier);
     if (window.has_value()) {
         auto hashWindow = dynamic_cast<StreamHashJoinWindow*>(window.value().get());
-        return hashWindow->getNumberOfTuplesOfWorker(isLeftSide, workerId);
+        return hashWindow->getNumberOfTuplesOfWorker(joinBuildSide, workerId);
     }
 
     return -1;

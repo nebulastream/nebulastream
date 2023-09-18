@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -21,7 +22,6 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Core.hpp>
@@ -38,7 +38,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class GrpcTests : public Testing::NESBaseTest {
+class GrpcTests : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GrpcTests.log", NES::LogLevel::LOG_DEBUG);
@@ -86,7 +86,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     string query =
         R"(Query::from("Win1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     QueryId subQueryId = 1;

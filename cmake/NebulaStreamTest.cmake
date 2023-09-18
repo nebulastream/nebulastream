@@ -49,8 +49,11 @@ function(add_nes_unit_test)
     message(STATUS "Added ut test ${TARGET_NAME}")
 endfunction()
 
-function(add_nes_integration_test TARGET_NAME FILE_PATH)
-    add_executable(${TARGET_NAME} ${FILE_PATH})
+function(add_nes_integration_test)
+    # create a test executable that may contain multiple source files.
+    # first param is TARGET_NAME
+    add_executable(${ARGN})
+    set(TARGET_NAME ${ARGV0})
     if (NES_ENABLE_PRECOMPILED_HEADERS)
         target_precompile_headers(${TARGET_NAME} REUSE_FROM nes-common)
     endif ()

@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <filesystem>
 #include <type_traits>
@@ -32,10 +33,10 @@ TestHarness::TestHarness(std::string queryWithoutSink,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSinkStr(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-      useNautilus(false), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
-      physicalSourceCount(0), topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-      validationDone(false), topologySetupDone(false),
-      testHarnessResourcePath(testHarnessResourcePath) {}
+      useNautilus(false), performDistributedWindowOptimization(false), useNewRequestExecutor(false),
+      memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
+      topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false),
+      topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness::TestHarness(Query queryWithoutSink,
                          uint16_t restPort,
@@ -44,10 +45,11 @@ TestHarness::TestHarness(Query queryWithoutSink,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSinkStr(""), queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))),
-      coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-      useNautilus(false), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
-      physicalSourceCount(0), topologyId(1),  joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-      validationDone(false), topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
+      coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort), useNautilus(false),
+      performDistributedWindowOptimization(false), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
+      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
+      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false), topologySetupDone(false),
+      testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema) {
     auto logicalSource = LogicalSource::create(logicalSourceName, schema);
@@ -57,7 +59,16 @@ TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName,
 
 TestHarness& TestHarness::enableNautilus() {
     useNautilus = true;
+    return *this;
+}
 
+TestHarness& TestHarness::enableDistributedWindowOptimization() {
+    performDistributedWindowOptimization = true;
+    return *this;
+}
+
+TestHarness& TestHarness::enableNewRequestExecutor() {
+    useNewRequestExecutor = true;
     return *this;
 }
 
@@ -258,7 +269,7 @@ PhysicalSourcePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorke
         memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
     }
 
-    NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
+    NES_ASSERT2_FMT(bufferSize >= schema->getSchemaSizeInBytes() * currentSourceNumOfRecords,
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                         << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
     auto memorySourceType =
@@ -276,16 +287,22 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
     coordinatorConfiguration->restPort = restPort;
     coordinatorConfiguration->rpcPort = rpcPort;
+
+    if (useNewRequestExecutor) {
+        coordinatorConfiguration->enableNewRequestExecutor = true;
+    }
+
     if (useNautilus) {
         coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode =
             QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
         coordinatorConfiguration->worker.queryCompiler.joinStrategy = joinStrategy;
+        coordinatorConfiguration->optimizer.performDistributedWindowOptimization = performDistributedWindowOptimization;
 
         // Only this is currently supported in Nautilus
         coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
     }
     crdConfigFunctor(coordinatorConfiguration);
 
@@ -293,6 +310,8 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     auto coordinatorRPCPort = nesCoordinator->startCoordinator(/**blocking**/ false);
     //Add all logical sources
     checkAndAddLogicalSources();
+
+    std::vector<TopologyNodeId> workerIds;
 
     for (auto& workerConf : testHarnessWorkerConfigurations) {
 
@@ -305,7 +324,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
             // Only this is currently supported in Nautilus
             workerConfiguration->queryCompiler.windowingStrategy =
-                QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+                QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
             workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
         }
 
@@ -329,6 +348,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
+        workerIds.emplace_back(nesWorker->getTopologyNodeId());
 
         //We are assuming that coordinator has a node id 1
         nesWorker->replaceParent(1, nesWorker->getWorkerConfiguration()->parentId.getValue());
@@ -338,6 +358,17 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         workerConf->setQueryStatusListener(nesWorker);
     }
 
+    auto topologyManagerService = nesCoordinator->getTopologyManagerService();
+
+    auto start_timestamp = std::chrono::system_clock::now();
+
+    for (const auto& workerId : workerIds) {
+        while (!topologyManagerService->findNodeWithId(workerId)) {
+            if (std::chrono::system_clock::now() > start_timestamp + SETUP_TIMEOUT_IN_SEC) {
+                NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find setup topology in given timeout.");
+            }
+        }
+    }
     topologySetupDone = true;
     return *this;
 }

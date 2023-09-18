@@ -13,8 +13,8 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -35,6 +35,7 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
@@ -47,7 +48,7 @@ namespace NES {
 using namespace NES::API;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class PipeliningPhaseTest : public Testing::NESBaseTest {
+class PipeliningPhaseTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PipeliningPhaseTest.log", NES::LogLevel::LOG_DEBUG);

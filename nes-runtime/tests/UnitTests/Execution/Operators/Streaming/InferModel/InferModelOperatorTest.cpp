@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
@@ -21,7 +22,6 @@
 #include <Execution/Operators/Streaming/InferModel/InferModelOperator.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -36,7 +36,7 @@ struct Output {
     float iris2;
 };
 
-class InferModelOperatorTest : public Testing::NESBaseTest {
+class InferModelOperatorTest : public Testing::BaseUnitTest {
   public:
     std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
     std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;

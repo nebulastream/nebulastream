@@ -14,9 +14,9 @@
 
 #ifdef ENABLE_MQTT_BUILD
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -63,7 +63,7 @@
 
 namespace NES {
 
-class MQTTSourceTest : public Testing::NESBaseTest {
+class MQTTSourceTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -72,7 +72,7 @@ class MQTTSourceTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         mqttSourceType = MQTTSourceType::create();
@@ -86,7 +86,7 @@ class MQTTSourceTest : public Testing::NESBaseTest {
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("MQTTSOURCETEST::TearDown() Tear down MQTTSourceTest");
     }
@@ -142,7 +142,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        PHYSICALSOURCENAME,
                                        SUCCESSORS);
 
-    std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER(32 bits) ), SERVERADDRESS=tcp://127.0.0.1:1883, "
+    std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER(32 bits)), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
                            "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
                            "DATATYPE=JSON, QOS=atLeastOnce, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=-1. ";
@@ -231,8 +231,10 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
@@ -305,8 +307,10 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
                 (Attribute("iris2") > Attribute("iris0") && Attribute("iris2") > Attribute("iris1") && Attribute("SpeciesCode") < 2), 0.1)
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(10);

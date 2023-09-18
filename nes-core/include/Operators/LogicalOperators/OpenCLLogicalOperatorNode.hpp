@@ -15,14 +15,14 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_OPENCLLOGICALOPERATORNODE_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_OPENCLLOGICALOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/JavaUDFLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UDFLogicalOperator.hpp>
 
 namespace NES {
 
-class OpenCLLogicalOperatorNode : public JavaUDFLogicalOperator {
+class OpenCLLogicalOperatorNode : public UDFLogicalOperator {
 
   public:
-    OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
+    OpenCLLogicalOperatorNode(Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id);
 
     /**
      * @see Node#toString
@@ -53,6 +53,12 @@ class OpenCLLogicalOperatorNode : public JavaUDFLogicalOperator {
     [[nodiscard]] const std::string& getDeviceId() const;
 
     void setDeviceId(const std::string& deviceId);
+
+    /**
+     * Getter for the Java UDF descriptor.
+     * @return The descriptor of the Java UDF used in the map operation.
+     */
+    Catalogs::UDF::JavaUDFDescriptorPtr getJavaUDFDescriptor() const;
 
   private:
     std::string openCLCode;

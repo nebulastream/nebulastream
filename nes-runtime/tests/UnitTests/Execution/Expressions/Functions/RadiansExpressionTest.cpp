@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/RadiansExpression.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class RadiansExpressionTest : public Testing::NESBaseTest {
+class RadiansExpressionTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

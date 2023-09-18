@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>
@@ -25,7 +25,7 @@
 
 namespace NES {
 
-class TopologyIteratorTest : public Testing::NESBaseTest {
+class TopologyIteratorTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
 
@@ -34,7 +34,7 @@ class TopologyIteratorTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
 
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;

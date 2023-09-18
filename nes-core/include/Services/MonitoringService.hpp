@@ -38,12 +38,8 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
  */
 class MonitoringService {
   public:
-    MonitoringService(WorkerRPCClientPtr workerClient,
-                      TopologyPtr topology,
-                      QueryServicePtr queryService,
-                      QueryCatalogServicePtr catalogService);
-    MonitoringService(WorkerRPCClientPtr workerClient,
-                      TopologyPtr topology,
+    MonitoringService(TopologyPtr topology, QueryServicePtr queryService, QueryCatalogServicePtr catalogService);
+    MonitoringService(TopologyPtr topology,
                       QueryServicePtr queryService,
                       QueryCatalogServicePtr catalogService,
                       bool enableMonitoring);

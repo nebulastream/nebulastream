@@ -88,7 +88,7 @@ void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
     auto hash = hashFunction->calculate(keyValues);
 
     // 5. lookup the key in the hashmap
-    auto entry = hashMap.findOne(hash, keyValues);
+    auto entry = hashMap.find(hash, keyValues);
 
     // 6. check if join partner was found
     if (entry != nullptr) {

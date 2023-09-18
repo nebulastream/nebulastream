@@ -14,7 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -24,9 +24,13 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -41,7 +45,7 @@
 
 using namespace NES;
 
-class FilterPushDownRuleTest : public Testing::NESBaseTest {
+class FilterPushDownRuleTest : public Testing::BaseIntegrationTest {
 
   public:
     SchemaPtr schema;
@@ -53,7 +57,7 @@ class FilterPushDownRuleTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 };
@@ -94,7 +98,7 @@ bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> a
     return count == 0;
 }
 
-TEST_F(FilterPushDownRuleTest, testPusingFilterBelowProjectionWithoutRename) {
+TEST_F(FilterPushDownRuleTest, testPushingFilterBelowProjectionWithoutRename) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
@@ -132,7 +136,7 @@ TEST_F(FilterPushDownRuleTest, testPusingFilterBelowProjectionWithoutRename) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterPushDownRuleTest, testPusingFilterBelowProjectionWithRename) {
+TEST_F(FilterPushDownRuleTest, testPushingFilterBelowProjectionWithRename) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
@@ -170,9 +174,15 @@ TEST_F(FilterPushDownRuleTest, testPusingFilterBelowProjectionWithRename) {
 
     ++itr;
     EXPECT_TRUE(filterOperator->equal((*itr)));
-    FilterLogicalOperatorNodePtr filterLogicalOperatorNodePtr = (*itr)->as<FilterLogicalOperatorNode>();
-    bool attributeChangedName =
-        Optimizer::FilterPushDownRule::isFieldUsedInFilterPredicate(filterLogicalOperatorNodePtr, "value");
+    FilterLogicalOperatorNodePtr filterLogicalOperatorNode = (*itr)->as<FilterLogicalOperatorNode>();
+    std::vector<FieldAccessExpressionNodePtr> filterAttributeNames =
+        Optimizer::FilterPushDownRule::getFilterAccessExpressions(filterLogicalOperatorNode->getPredicate());
+    bool attributeChangedName = std::any_of(filterAttributeNames.begin(),
+                                            filterAttributeNames.end(),
+                                            [&](const FieldAccessExpressionNodePtr& filterAttributeName) {
+                                                return filterAttributeName->getFieldName() == "value";
+                                            });
+
     EXPECT_TRUE(attributeChangedName);
 
     ++itr;
@@ -828,7 +838,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     }
 }
 
-TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
+TEST_F(FilterPushDownRuleTest, testPushingFilterBelowThreeMapsWithOneFieldSubstitution) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     NES::SchemaPtr schema = NES::Schema::create()
@@ -886,12 +896,103 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
     itr = updatedQueryPlanNodeIterator.begin();
     EXPECT_TRUE(sinkOperator->equal((*itr)));
+    NES_DEBUG("New filter Predicate: {}", filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->toString());
     ++itr;
     EXPECT_TRUE(mapOperatorPQ1->equal((*itr)));
     ++itr;
+    EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
+    ++itr;
     EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    NES_DEBUG("filterOperatorPQ1: {}", filterOperatorPQ1->toString());
+    NES_DEBUG(
+        "filterOperatorPQ1 Predicate: {}",
+        filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<SubExpressionNode>()[0]->toString());
+    NES_DEBUG("mapOperatorPQ2 map expression: {}",
+              mapOperatorPQ2->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()->toString());
+    EXPECT_TRUE(filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<SubExpressionNode>()[0]->equal(
+        mapOperatorPQ2->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()));
+    ++itr;
+    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+}
+
+TEST_F(FilterPushDownRuleTest, testPushingFilterBelowTwoMapsWithTwoFieldSubstitutions) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog =
+        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", NES::BasicType::UINT64)
+                                ->addField("val", NES::BasicType::UINT64)
+                                ->addField("X", NES::BasicType::UINT64)
+                                ->addField("Y", NES::BasicType::UINT64);
+    sourceCatalog->addLogicalSource("example", schema);
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+    NES_INFO("Setup FilterPushDownTest test case.");
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+
+    auto csvSourceType = CSVSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("example", "test_stream", csvSourceType);
+    LogicalSourcePtr logicalSource = LogicalSource::create("example", Schema::create());
+    Catalogs::Source::SourceCatalogEntryPtr sce1 =
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+
+    sourceCatalog->addPhysicalSource("example", sce1);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    auto query = Query::from("example")
+                     .map(Attribute("Y") = Attribute("Y") * 2)
+                     .map(Attribute("Y") = Attribute("Y") - 2)
+                     .map(Attribute("NEW_id2") = Attribute("Y") / Attribute("Y"))
+                     .filter(Attribute("Y") >= 49)
+                     .sink(NullOutputSinkDescriptor::create());
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperatorPQ1 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ1 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ2 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ3 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorPQ = (*itr);
+
+    // Execute
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
+    NES_DEBUG("Input Query Plan: {}", (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: {}", (updatedPlan)->toString());
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    NES_DEBUG("New filter Predicate: {}", filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->toString());
+    ++itr;
+    EXPECT_TRUE(mapOperatorPQ1->equal((*itr)));
     ++itr;
     EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperatorPQ3->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    NES_DEBUG("filterOperatorPQ1: {}", filterOperatorPQ1->toString());
+    NES_DEBUG(
+        "filterOperatorPQ1 Predicate: {}",
+        filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->toString());
+    NES_DEBUG("mapOperatorPQ3 map expression: {}",
+              mapOperatorPQ3->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()->toString());
+    EXPECT_TRUE(filterOperatorPQ1->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->equal(
+        mapOperatorPQ3->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()));
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
 }
@@ -1405,23 +1506,30 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    Query query = Query::from("src1")
-                      .map(Attribute("A") = Attribute("A") * 3)
-                      .joinWith(Query::from("src2"))
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
-                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                      .joinWith(Query::from("src3").map(Attribute("ts") = Attribute("ts") * 2))
-                      .where(Attribute("id"))
-                      .equalsTo(Attribute("id"))
-                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-                      .filter(Attribute("src3$id") != 0)// should be pushed directly above every src with the predicate changed
-                      .filter(Attribute("A") != 1)      // should be pushed above the map above src1
-                      .filter(Attribute("B") != 2)      // should be pushed above id filter above src2
-                      .filter(Attribute("C") != 3)      // should be pushed above id filter above src3
-                      .filter(Attribute("A") > 0 || Attribute("B") > 0)// should be pushed above join src1 & src2
-                      .filter(Attribute("A") > 0 || Attribute("C") > 0)// can not be pushed through any join
-                      .sink(printSinkDescriptor);
+    Query query =
+        Query::from("src1")
+            .map(Attribute("A") = Attribute("A") * 3)
+            .joinWith(Query::from("src2"))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
+            .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+            .joinWith(Query::from("src3").map(Attribute("ts") = Attribute("ts") * 2))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
+            .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+            .filter(
+                Attribute("src3$id")
+                != 0)// should be pushed directly above every src with the adequate predicate for each source as the filter predicate is applied to the join key
+            .filter(
+                Attribute("A")
+                != 1)// should be pushed above src1, plus, substitute field access with map transformation (Attribute("A") = Attribute("A") * 3)
+            .filter(Attribute("B") != 2)                     // should be pushed above id filter above src2
+            .filter(Attribute("C") != 3)                     // should be pushed above id filter above src3
+            .filter(Attribute("A") > 0 || Attribute("B") > 0)// should be pushed above join src1 & src2
+            .filter(Attribute("A") > 0
+                    || Attribute("C")
+                        > 0)// can not be pushed through any join; would need to split the filter otherwise (Not implemented)
+            .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     //type inference
@@ -1474,6 +1582,9 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorAorC->equal((*itr)));
+    NES_DEBUG("FilterOperatorAorC: {}", filterOperatorAorC->toString());
+    NES_DEBUG("FilterOperatorAorC Predicate: {}",
+              filterOperatorAorC->as<FilterLogicalOperatorNode>()->getPredicate()->toString());
     //check if schema still correct
     EXPECT_TRUE(
         (*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(sinkOperator->as<UnaryOperatorNode>()->getInputSchema()));
@@ -1487,6 +1598,8 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     EXPECT_TRUE(mapOperatorTs->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorC->equal((*itr)));
+    NES_DEBUG("filterOperatorC: {}", filterOperatorC->toString());
+    NES_DEBUG("filterOperatorC Predicate: {}", filterOperatorC->as<FilterLogicalOperatorNode>()->getPredicate()->toString());
     //check if schema updated correctly
     EXPECT_TRUE(
         (*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(mapOperatorTs->as<UnaryOperatorNode>()->getInputSchema()));
@@ -1494,6 +1607,8 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
         (*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(srcOperatorSrc3->as<UnaryOperatorNode>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(filterOperatorId->equal((*itr)));
+    NES_DEBUG("filterOperatorId: {}", filterOperatorId->toString());
+    NES_DEBUG("filterOperatorId Predicate: {}", filterOperatorId->as<FilterLogicalOperatorNode>()->getPredicate()->toString());
     //check if schema updated correctly
     EXPECT_TRUE(
         (*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(mapOperatorTs->as<UnaryOperatorNode>()->getInputSchema()));
@@ -1503,6 +1618,9 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     EXPECT_TRUE(srcOperatorSrc3->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorAorB->equal((*itr)));
+    NES_DEBUG("filterOperatorAorB: {}", filterOperatorAorB->toString());
+    NES_DEBUG("filterOperatorAorB Predicate: {}",
+              filterOperatorAorB->as<FilterLogicalOperatorNode>()->getPredicate()->toString());
     //check if schema updated correctly
     EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(
         joinOperator1and2and3->as<BinaryOperatorNode>()->getLeftInputSchema()));
@@ -1514,6 +1632,8 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     EXPECT_TRUE(watermarkOperator2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorB->equal((*itr)));
+    NES_DEBUG("filterOperatorB: {}", filterOperatorB->toString());
+    NES_DEBUG("filterOperatorB Predicate: {}", filterOperatorB->as<FilterLogicalOperatorNode>()->getPredicate()->toString());
     //check if schema updated correctly
     EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(
         watermarkOperator2->as<UnaryOperatorNode>()->getInputSchema()));
@@ -1532,8 +1652,6 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
     EXPECT_TRUE(srcOperatorSrc2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(watermarkOperator3->equal((*itr)));
-    ++itr;
-    EXPECT_TRUE(filterOperatorA->equal((*itr)));
     //check if schema updated correctly
     EXPECT_TRUE((*itr)->as<UnaryOperatorNode>()->getOutputSchema()->equals(
         watermarkOperator3->as<UnaryOperatorNode>()->getInputSchema()));
@@ -1541,6 +1659,16 @@ TEST_F(FilterPushDownRuleTest, testPushingDifferentFiltersThroughDifferentOperat
         (*itr)->as<UnaryOperatorNode>()->getInputSchema()->equals(mapOperatorA->as<UnaryOperatorNode>()->getOutputSchema()));
     ++itr;
     EXPECT_TRUE(mapOperatorA->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorA->equal((*itr)));
+    NES_DEBUG("filterOperatorA: {}", filterOperatorA->toString());
+    NES_DEBUG(
+        "filterOperatorA Predicate: {}",
+        filterOperatorA->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->toString());
+    NES_DEBUG("mapOperatorA map expression: {}",
+              mapOperatorA->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()->toString());
+    EXPECT_TRUE(filterOperatorA->as<FilterLogicalOperatorNode>()->getPredicate()->getNodesByType<MulExpressionNode>()[0]->equal(
+        mapOperatorA->as<MapLogicalOperatorNode>()->getMapExpression()->getAssignment()));
     ++itr;
     std::vector<std::string> accessedFields2;
     accessedFields2.push_back("src1$id");//a duplicate filter that accesses src2$id should be pushed down

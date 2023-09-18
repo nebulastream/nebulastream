@@ -18,27 +18,28 @@
 
 namespace NES {
 
-void UDFSerializationUtil::serializeJavaUDFDescriptor(const Catalogs::UDF::JavaUDFDescriptor& javaUDFDescriptor,
+void UDFSerializationUtil::serializeJavaUDFDescriptor(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor,
                                                       JavaUdfDescriptorMessage& JavaUdfDescriptorMessage) {
+    auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
     // Serialize UDF class name and method name.
-    JavaUdfDescriptorMessage.set_udf_class_name(javaUDFDescriptor.getClassName());
-    JavaUdfDescriptorMessage.set_udf_method_name(javaUDFDescriptor.getMethodName());
+    JavaUdfDescriptorMessage.set_udf_class_name(javaUDFDescriptor->getClassName());
+    JavaUdfDescriptorMessage.set_udf_method_name(javaUDFDescriptor->getMethodName());
     // Serialize UDF instance.
-    JavaUdfDescriptorMessage.set_serialized_instance(javaUDFDescriptor.getSerializedInstance().data(),
-                                                     javaUDFDescriptor.getSerializedInstance().size());
+    JavaUdfDescriptorMessage.set_serialized_instance(javaUDFDescriptor->getSerializedInstance().data(),
+                                                     javaUDFDescriptor->getSerializedInstance().size());
     // Serialize bytecode of dependent classes.
-    for (const auto& [className, byteCode] : javaUDFDescriptor.getByteCodeList()) {
+    for (const auto& [className, byteCode] : javaUDFDescriptor->getByteCodeList()) {
         auto* javaClass = JavaUdfDescriptorMessage.add_classes();
         javaClass->set_class_name(className);
         javaClass->set_byte_code(byteCode.data(), byteCode.size());
     }
     // Serialize the input and output schema.
-    SchemaSerializationUtil::serializeSchema(javaUDFDescriptor.getInputSchema(), JavaUdfDescriptorMessage.mutable_inputschema());
-    SchemaSerializationUtil::serializeSchema(javaUDFDescriptor.getOutputSchema(),
+    SchemaSerializationUtil::serializeSchema(javaUDFDescriptor->getInputSchema(), JavaUdfDescriptorMessage.mutable_inputschema());
+    SchemaSerializationUtil::serializeSchema(javaUDFDescriptor->getOutputSchema(),
                                              JavaUdfDescriptorMessage.mutable_outputschema());
     // Serialize the input and output class names.
-    JavaUdfDescriptorMessage.set_input_class_name(javaUDFDescriptor.getInputClassName());
-    JavaUdfDescriptorMessage.set_output_class_name(javaUDFDescriptor.getOutputClassName());
+    JavaUdfDescriptorMessage.set_input_class_name(javaUDFDescriptor->getInputClassName());
+    JavaUdfDescriptorMessage.set_output_class_name(javaUDFDescriptor->getOutputClassName());
 }
 
 Catalogs::UDF::JavaUDFDescriptorPtr

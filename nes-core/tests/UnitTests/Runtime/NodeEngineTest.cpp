@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/SignalHandling.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
@@ -33,10 +32,11 @@
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/SinkCreator.hpp>
-#include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -56,22 +56,9 @@ namespace NES {
 
 uint64_t testQueryId = 123;
 
-std::string expectedOutput = "+----------------------------------------------------+\n"
-                             "|sum:UINT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|10|\n"
-                             "+----------------------------------------------------+";
+std::string expectedOutput = "sum:INTEGER(32 bits)\n10\n";
 
-std::string joinedExpectedOutput =
-    "+----------------------------------------------------+\n"
-    "|sum:UINT32|\n"
-    "+----------------------------------------------------+\n"
-    "|10|\n"
-    "+----------------------------------------------------++----------------------------------------------------+\n"
-    "|sum:UINT32|\n"
-    "+----------------------------------------------------+\n"
-    "|10|\n"
-    "+----------------------------------------------------+";
+std::string joinedExpectedOutput = "sum:INTEGER(32 bits)\n10\n10\n";
 
 std::string joinedExpectedOutput10 =
     "+----------------------------------------------------+\n"
@@ -244,7 +231,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
  *  - long running queryIdAndCatalogEntryMapping
  *
  */
-class NodeEngineTest : public Testing::NESBaseTest {
+class NodeEngineTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("EngineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -254,15 +241,15 @@ class NodeEngineTest : public Testing::NESBaseTest {
 
     void SetUp() override {
         NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
-        Testing::NESBaseTest::SetUp();
-        dataPort = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
         dataPort.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -280,7 +267,7 @@ void testOutput(const std::string& path) {
     std::ifstream ifs(path.c_str());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    EXPECT_EQ(content, expectedOutput);
+    ASSERT_EQ(content, expectedOutput);
     ifs.close();
     int response = remove(path.c_str());
     ASSERT_TRUE(response == 0);
@@ -319,7 +306,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& outPath) {
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
 
-    DataSinkPtr sink = createTextFileSink(sch, queryId, queryId, engine, 1, outPath, false);
+    DataSinkPtr sink = createCSVFileSink(sch, queryId, queryId, engine, 1, outPath, false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, 0, queryId, engine->getQueryManager(), context, executable, 1, {sink});
@@ -441,7 +428,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     //  GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 = createTextFileSink(sch1, 1, 1, engine, 1, getTestResourceFolder() / "qep1.txt", false);
+    auto sink1 = createCSVFileSink(sch1, 1, 1, engine, 1, getTestResourceFolder() / "qep1.csv", false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sink1});
@@ -456,7 +443,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sink2 = createTextFileSink(sch2, 2, 2, engine, 1, getTestResourceFolder() / "qep2.txt", false);
+    auto sink2 = createCSVFileSink(sch2, 2, 2, engine, 1, getTestResourceFolder() / "qep2.csv", false);
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, 2, engine->getQueryManager(), context2, executable2, 1, {sink2});
@@ -493,8 +480,8 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
     ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Invalid);
 
-    testOutput(getTestResourceFolder() / "qep1.txt");
-    testOutput(getTestResourceFolder() / "qep2.txt");
+    testOutput(getTestResourceFolder() / "qep1.csv");
+    testOutput(getTestResourceFolder() / "qep2.csv");
 }
 //
 TEST_F(NodeEngineTest, testParallelSameSource) {
@@ -509,7 +496,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 = createTextFileSink(sch1, 1, 1, engine, 1, getTestResourceFolder() / "qep1.txt", true);
+    auto sink1 = createCSVFileSink(sch1, 1, 1, engine, 1, getTestResourceFolder() / "qep1.txt", true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sink1});
@@ -524,7 +511,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createTextFileSink(sch2, 2, 2, engine, 1, getTestResourceFolder() / "qep2.txt", true);
+    DataSinkPtr sink2 = createCSVFileSink(sch2, 2, 2, engine, 1, getTestResourceFolder() / "qep2.txt", true);
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
@@ -576,7 +563,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
 
     // create two executable query plans, which emit to the same sink
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sharedSink = createTextFileSink(sch1, 0, 0, engine, 1, getTestResourceFolder() / "qep12.txt", false);
+    auto sharedSink = createCSVFileSink(sch1, 0, 0, engine, 1, getTestResourceFolder() / "qep12.txt", false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(1, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sharedSink});
@@ -644,7 +631,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
                       .build();
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sink1 = createTextFileSink(sch1, 0, 0, engine, 1, getTestResourceFolder() / "qep3.txt", true);
+    auto sink1 = createCSVFileSink(sch1, 0, 0, engine, 1, getTestResourceFolder() / "qep3.txt", true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, 1, engine->getQueryManager(), context1, executable1, 1, {sink1});
@@ -799,6 +786,7 @@ void assertKiller() {
                          std::make_shared<NES::Runtime::StateManager>(nodeEngineId),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -845,6 +833,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          std::make_shared<NES::Runtime::StateManager>(nodeEngineId),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -874,7 +863,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     //DataSourcePtr source =
     //    createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, 0, 0, engine, 1, getTestResourceFolder() / "test.out", true);
+    DataSinkPtr sink = createCSVFileSink(sch, 0, 0, engine, 1, getTestResourceFolder() / "test.out", true);
     // builder.addSource(source);
     // builder.addSink(sink);
     // builder.setQueryId(testQueryId);
@@ -920,6 +909,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -946,7 +936,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     //DataSourcePtr source =
     //    createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, 0, 0, engine, 1, getTestResourceFolder() / "test.out", true);
+    DataSinkPtr sink = createCSVFileSink(sch, 0, 0, engine, 1, getTestResourceFolder() / "test.out", true);
     //builder.addSource(source);
     // builder.addSink(sink);
     //builder.setQueryId(testQueryId);

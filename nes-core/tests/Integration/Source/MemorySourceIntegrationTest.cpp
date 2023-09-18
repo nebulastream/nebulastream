@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -21,7 +22,6 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -30,7 +30,7 @@
 
 namespace NES {
 
-class MemorySourceIntegrationTest : public Testing::NESBaseTest {
+class MemorySourceIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MemorySourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
@@ -41,6 +41,8 @@ class MemorySourceIntegrationTest : public Testing::NESBaseTest {
 /// This test checks that a deployed MemorySource can write M records spanning exactly N records
 TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
@@ -69,7 +71,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     NES_INFO("MemorySourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
-
+    wrkConf->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     constexpr auto memAreaSize = 1 * 1024 * 1024;// 1 MB
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
@@ -96,10 +98,12 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     remove(filePath.c_str());
 
     //register query
-    std::string queryString =
-        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -140,6 +144,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
@@ -168,7 +174,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     NES_INFO("MemorySourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
-
+    wrkConf->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     constexpr auto memAreaSize = sizeof(Record) * 5;
     //constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto buffersToExpect = 1;
@@ -195,10 +201,12 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     remove(filePath.c_str());
 
     //register query
-    std::string queryString =
-        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -241,6 +249,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 
 TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
@@ -269,6 +279,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     NES_INFO("MemorySourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
+    wrkConf->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
 
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto memAreaSize = bufferSizeInNodeEngine * 64 + (bufferSizeInNodeEngine / 2);
@@ -296,10 +307,12 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     remove(filePath.c_str());
 
     //register query
-    std::string queryString =
-        R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

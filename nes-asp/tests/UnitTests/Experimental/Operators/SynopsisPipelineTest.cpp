@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
@@ -23,7 +24,6 @@
 #include <Experimental/Operators/SynopsesOperator.hpp>
 #include <Experimental/Synopses/AbstractSynopsis.hpp>
 #include <Experimental/Synopses/Samples/RandomSampleWithoutReplacementOperatorHandler.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -59,7 +59,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class SynopsisPipelineTest : public Testing::NESBaseTest, public ::testing::WithParamInterface<std::string> {
+class SynopsisPipelineTest : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<std::string> {
   public:
     ExecutablePipelineProvider* provider;
     BufferManagerPtr bufferManager;
@@ -73,7 +73,7 @@ class SynopsisPipelineTest : public Testing::NESBaseTest, public ::testing::With
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        BaseIntegrationTest::SetUp();
         NES_INFO("Setup SynopsisPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

@@ -14,12 +14,9 @@
 
 #ifndef NES_CORE_INCLUDE_SINKS_SINKCREATOR_HPP_
 #define NES_CORE_INCLUDE_SINKS_SINKCREATOR_HPP_
-#include <Network/NetworkSink.hpp>
-#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
-#include <Runtime/NodeEngine.hpp>
-
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/FaultToleranceType.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
@@ -30,12 +27,6 @@
 #endif
 
 namespace NES {
-/**
- * @brief create test sink
- * @Note this method is currently not implemented
- */
-DataSinkPtr createTestSink();
-
 /**
  * @brief create a csv test sink without a schema and append to existing file
  * @param schema of sink
@@ -54,28 +45,9 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               uint32_t activeProducers,
                               const std::string& filePath,
                               bool append,
+                              bool addTimestamp = false,
                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1);
-
-/**
- * @brief create a binary test sink with a schema
- * @param schema of sink
- * @param bufferManager
- * @param path to file
- * @param bool indicating if data is appended (true) or overwritten (false)
- * @param faultToleranceType: fault tolerance type of a query
- * @param numberOfOrigins: number of origins of a given query
- * @return a data sink pointer
- */
-DataSinkPtr createTextFileSink(const SchemaPtr& schema,
-                               QueryId queryId,
-                               QuerySubPlanId querySubPlanId,
-                               const Runtime::NodeEnginePtr& nodeEngine,
-                               uint32_t numOfProducers,
-                               const std::string& filePath,
-                               bool append,
-                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                               uint64_t numberOfOrigins = 1);
 
 /**
  * @brief create a binary test sink with a schema into the nes
@@ -117,8 +89,29 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                uint64_t numberOfOrigins = 1);
 
+#ifdef ENABLE_ARROW_BUILD
 /**
- * @brief create a ZMQ test sink with a schema and Text format output
+ * @brief create a arrow ipc file sink with a schema
+ * @param schema of arrow sink
+ * @param bufferManager
+ * @param path to arrow file
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfOrigins: number of origins of a given query
+ * @return a data sink pointer
+ */
+DataSinkPtr createArrowIPCFileSink(const SchemaPtr& schema,
+                                   QueryId queryId,
+                                   QuerySubPlanId querySubPlanId,
+                                   const Runtime::NodeEnginePtr& nodeEngine,
+                                   uint32_t numOfProducers,
+                                   const std::string& filePath,
+                                   bool append,
+                                   FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                   uint64_t numberOfOrigins = 1);
+#endif
+
+/**
+ * @brief create a ZMQ test sink with a schema and Csv format output
  * @param schema of sink
  * @param bufferManager
  * @param hostname as sting
@@ -128,15 +121,15 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
  * @param numberOfOrigins: number of origins of a given query
  * @return a data sink pointer
  */
-DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
-                              QueryId queryId,
-                              QuerySubPlanId querySubPlanId,
-                              const Runtime::NodeEnginePtr& nodeEngine,
-                              uint32_t numOfProducers,
-                              const std::string& host,
-                              uint16_t port,
-                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                              uint64_t numberOfOrigins = 1);
+DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
+                             QueryId queryId,
+                             QuerySubPlanId querySubPlanId,
+                             const Runtime::NodeEnginePtr& nodeEngine,
+                             uint32_t numOfProducers,
+                             const std::string& host,
+                             uint16_t port,
+                             FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                             uint64_t numberOfOrigins = 1);
 #ifdef ENABLE_OPC_BUILD
 /**
  * @brief create a OPC test sink with a schema
@@ -206,14 +199,14 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
  * @param numberOfOrigins: number of origins of a given query
  * @return a data sink pointer
  */
-DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
-                                QueryId queryId,
-                                QuerySubPlanId querySubPlanId,
-                                const Runtime::NodeEnginePtr& nodeEngine,
-                                uint32_t activeProducers,
-                                std::ostream& out,
-                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                uint64_t numberOfOrigins = 1);
+DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
+                               QueryId queryId,
+                               QuerySubPlanId querySubPlanId,
+                               const Runtime::NodeEnginePtr& nodeEngine,
+                               uint32_t activeProducers,
+                               std::ostream& out,
+                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                               uint64_t numberOfOrigins = 1);
 
 /**
  * @brief create a print that does not output something
@@ -327,16 +320,16 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
  * @param numberOfOrigins
  * @return a data sink pointer
  */
-DataSinkPtr createTextKafkaSink(SchemaPtr schema,
-                                QueryId queryId,
-                                QuerySubPlanId querySubPlanId,
-                                const Runtime::NodeEnginePtr& nodeEngine,
-                                uint32_t activeProducers,
-                                const std::string& brokers,
-                                const std::string& topic,
-                                uint64_t kafkaProducerTimeout,
-                                FaultToleranceType faultToleranceType,
-                                uint64_t numberOfOrigins);
+DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
+                               QueryId queryId,
+                               QuerySubPlanId querySubPlanId,
+                               const Runtime::NodeEnginePtr& nodeEngine,
+                               uint32_t activeProducers,
+                               const std::string& brokers,
+                               const std::string& topic,
+                               uint64_t kafkaProducerTimeout,
+                               FaultToleranceType faultToleranceType,
+                               uint64_t numberOfOrigins);
 #endif
 #ifdef ENABLE_MQTT_BUILD
 /**

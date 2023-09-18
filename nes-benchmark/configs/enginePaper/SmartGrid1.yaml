@@ -7,15 +7,19 @@ numberOfWorkerThreads: 1,2,4,8,16
 numberOfSources: 1
 
 # engine configuration parameter
-numberOfBuffersInGlobalBufferManager: 65536
+numberOfBuffersInGlobalBufferManager: 8192
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 1048576
 #bufferSizeInBytes: 131072
 
+logicalSources:
+  - name: sg
+    type: SmartGrid
+
 ##benchmark parameter for the entire run
 dataGenerator: SmartGrid
-numberOfPreAllocatedBuffer: 1000
+numberOfPreAllocatedBuffer: 100
 logicalStreamName: sg
 dataProvider: Internal
 dataProviderMode: ZeroCopy
@@ -29,7 +33,7 @@ gatheringValues: 50000
 #workerPinList: 1,2,3,4,5,6,7,8,9,10
 
 #benchmark internal parameter
-numberOfBuffersToProduce: 500000000
+numberOfBuffersToProduce: 50000000
 scalability: scale-up
 logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1

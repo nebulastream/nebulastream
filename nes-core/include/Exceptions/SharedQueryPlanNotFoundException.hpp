@@ -22,6 +22,8 @@ namespace NES::Exceptions {
  * @brief This exception indicates, that no shared query plan with the given id could be found
  */
 class SharedQueryPlanNotFoundException : public RequestExecutionException {
+
+  public:
     /**
      * @brief construct an exception containing a human readable message and a shared query id
      * @param message: A string to indicate to the user what caused the exception

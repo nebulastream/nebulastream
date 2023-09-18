@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
@@ -21,7 +22,6 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -31,7 +31,7 @@
 
 namespace NES {
 
-class VariableLengthIntegrationTest : public Testing::NESBaseTest {
+class VariableLengthIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("VariableLengthIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
@@ -62,12 +62,13 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     remove(outputFilePath.c_str());
 
     // elegant project test schema
-    std::string testSchema = R"(Schema::create()->addField("camera_id", BasicType::UINT64)
-                                                ->addField("timestamp", BasicType::UINT64)
-                                                ->addField("rows", BasicType::UINT64)
-                                                ->addField("cols", BasicType::UINT64)
-                                                ->addField("type", BasicType::UINT64)
-                                                ->addField("data", BasicType::TEXT);)";// TEXT is the variable length field
+    auto testSchema = Schema::create()
+                          ->addField("camera_id", BasicType::UINT64)
+                          ->addField("timestamp", BasicType::UINT64)
+                          ->addField("rows", BasicType::UINT64)
+                          ->addField("cols", BasicType::UINT64)
+                          ->addField("type", BasicType::UINT64)
+                          ->addField("data", BasicType::TEXT);// TEXT is the variable length field
 
     // setup coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
@@ -104,10 +105,12 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     // register query
-    std::string queryString = R"(Query::from("variable_length").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto query = Query::from("variable_length").sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
 

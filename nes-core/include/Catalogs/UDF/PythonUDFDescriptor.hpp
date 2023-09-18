@@ -27,21 +27,41 @@ using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 
 class PythonUDFDescriptor : public UDFDescriptor {
   public:
-    PythonUDFDescriptor(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType);
+    PythonUDFDescriptor(const std::string& functionName,
+                        const std::string& functionString,
+                        const SchemaPtr& inputSchema,
+                        const SchemaPtr& outputSchema);
 
-    static PythonUDFDescriptorPtr create(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType) {
-        return std::make_shared<PythonUDFDescriptor>(methodName, numberOfArgs, returnType);
+    static PythonUDFDescriptorPtr create(const std::string& functionName,
+                                         const std::string& functionString,
+                                         const SchemaPtr inputSchema,
+                                         const SchemaPtr outputSchema) {
+        return std::make_shared<PythonUDFDescriptor>(functionName, functionString, inputSchema, outputSchema);
     }
 
     /**
- * @brief Return the number of arguments for the UDF.
- * @return The number of arguments of the UDF method.
- */
-    [[nodiscard]] int getNumberOfArgs() const { return numberOfArgs; }
+     * @brief Return the fully-qualified class name of the class implementing the UDF.
+     * @return Fully-qualified class name of the class implementing the UDF.
+     */
+    const std::string& getFunctionString() const { return functionString; }
+
+    /**
+     * @brief Generates the infer string signature required for the logical operator
+     * @return the infer string signature stream
+     */
+    std::stringstream generateInferStringSignature() override;
+
+    /**
+     * Compare to Python UDF descriptors.
+     *
+     * @param other The other PythonUDFDescriptor in the comparison.
+     * @return True, if both PythonUdfDescriptors are the same, i.e., same UDF class and method name,
+     * same serialized instance (state), and same byte code list; False, otherwise.
+     */
+    bool operator==(const PythonUDFDescriptor& other) const;
 
   private:
-    const int numberOfArgs;
-    const DataTypePtr returnType;
+    const std::string functionString;
 };
 }// namespace NES::Catalogs::UDF
 #endif// NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -20,7 +21,6 @@
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/DumpHelper.hpp>
@@ -31,7 +31,7 @@
 
 namespace NES::Nautilus {
 
-class ProxyFunctionInliningCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
+class ProxyFunctionInliningCompilationTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

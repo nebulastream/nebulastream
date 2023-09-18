@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
@@ -26,13 +27,11 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -47,7 +46,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class KeyedSlicePreAggregationTest : public Testing::NESBaseTest {
+class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -58,7 +57,7 @@ class KeyedSlicePreAggregationTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
@@ -96,9 +95,8 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
                                  {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readV1, "sum")},
                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
-    auto sliceStaging = std::make_shared<KeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));

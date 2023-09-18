@@ -22,6 +22,10 @@ endfunction()
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/testData/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/testData")
 
+# Copy Benchmark Data --------------------------------------------------------------
+file(COPY configs/enginePaper/benchmark-data DESTINATION .)
+add_compile_definitions(BENCHMARK_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/benchmark-data/")
+message(STATUS "Benchmark Data Directory: ${BENCHMARK_DATA_DIRECTORY}/benchmark-data")
 
 # Include dirs
 include_directories("include/")

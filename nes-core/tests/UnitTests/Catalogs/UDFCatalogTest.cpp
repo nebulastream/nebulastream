@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 using namespace std::string_literals;
@@ -25,16 +25,9 @@ using namespace std::string_literals;
 
 namespace NES::Catalogs::UDF {
 
-class UDFCatalogTest : public Testing::NESBaseTest {
+class UDFCatalogTest : public Testing::BaseUnitTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
-
-    static PythonUDFDescriptorPtr createPythonDescriptor() {
-        auto methodName = "python_udf_method"s;
-        int numberOfArgs = 2;
-        DataTypePtr returnType = DataTypeFactory::createInt32();
-        return PythonUDFDescriptor::create(methodName, numberOfArgs, returnType);
-    }
 
   protected:
     UDFCatalog udfCatalog{};
@@ -51,19 +44,6 @@ TEST_F(UDFCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
     udfCatalog.registerUDF(udfName, udfDescriptor);
     // then
     ASSERT_EQ(udfDescriptor, UDFDescriptor::as<JavaUDFDescriptor>(udfCatalog.getUDFDescriptor(udfName)));
-}
-
-/**
- * @brief Test the behavior of registering and retrieving Python UDF descriptors.
- */
-TEST_F(UDFCatalogTest, RetrieveRegisteredPythonUdfDescriptor) {
-    // given
-    auto udfName = "py_udf"s;
-    auto udfDescriptor = createPythonDescriptor();
-    // when
-    udfCatalog.registerUDF(udfName, udfDescriptor);
-    // then
-    ASSERT_EQ(udfDescriptor, udfCatalog.getUDFDescriptor(udfName));
 }
 
 /**

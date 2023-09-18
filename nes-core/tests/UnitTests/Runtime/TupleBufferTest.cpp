@@ -13,8 +13,8 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -29,7 +29,7 @@
 using namespace std;
 namespace NES {
 
-class TupleBufferTest : public Testing::NESBaseTest {
+class TupleBufferTest : public Testing::BaseUnitTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
 
@@ -41,14 +41,14 @@ class TupleBufferTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1024);
     }
 
     /* Will be called after a test is executed. */
     void TearDown() override {
         bufferManager->destroy();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 };
 

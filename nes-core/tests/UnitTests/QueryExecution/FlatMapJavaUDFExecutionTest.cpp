@@ -15,8 +15,8 @@
 #ifdef ENABLE_JNI
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -29,7 +29,7 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class FlatMapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
+class FlatMapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FlatMapJavaUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -37,14 +37,14 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseUnitTest::TearDown();
         NES_DEBUG("QueryExecutionTest: Tear down FlatMapJavaUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
     }
@@ -142,7 +142,7 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
                                  .setOutputClassName("java.util.Collection")
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor).flatMapJavaUDF(javaUDFDescriptor).sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).flatMapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);

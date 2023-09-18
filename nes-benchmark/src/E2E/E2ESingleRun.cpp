@@ -53,8 +53,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.queryCompiler.windowingStrategy =
-        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
@@ -82,7 +81,6 @@ void E2ESingleRun::setupCoordinatorConfig() {
         NES_THROW_RUNTIME_ERROR("Join Strategy " << configOverAllRuns.joinStrategy->getValue() << " not supported");
     }
 
-    coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
     NES_INFO("Using joinStrategy {}",
              magic_enum::enum_name<QueryCompilation::StreamJoinStrategy>(coordinatorConf->worker.queryCompiler.joinStrategy));
 
@@ -146,7 +144,8 @@ void E2ESingleRun::runQuery() {
 
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
         NES_INFO("E2EBase: Submitting query = {}", configOverAllRuns.query->getValue());
-        auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
+        auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(),
+                                                                     Optimizer::PlacementStrategy::BottomUp);
         submittedIds.push_back(queryId);
 
         if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {

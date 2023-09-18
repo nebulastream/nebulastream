@@ -81,13 +81,12 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
 
     if (!schemaWritten && !internal) {//TODO:atomic
         NES_DEBUG("FileSink::getData: write schema");
-        auto schemaBuffer = sinkFormat->getSchema();
-        if (schemaBuffer) {
+        auto fSchema = sinkFormat->getFormattedSchema();
+        if (!fSchema.empty()) {
             NES_DEBUG("ZmqSink writes schema buffer");
             try {
-
                 // Send Header
-                std::array<uint64_t, 2> const envelopeData{schemaBuffer->getNumberOfTuples(), schemaBuffer->getWatermark()};
+                std::array<uint64_t, 2> const envelopeData{fSchema.size(), inputBuffer.getWatermark()};
                 constexpr auto envelopeSize = sizeof(uint64_t) * 2;
                 static_assert(envelopeSize == sizeof(envelopeData));
                 zmq::message_t envelope{&(envelopeData[0]), envelopeSize};
@@ -98,7 +97,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
                 }
 
                 // Send payload
-                zmq::mutable_buffer payload{schemaBuffer->getBuffer(), schemaBuffer->getBufferSize()};
+                zmq::mutable_buffer payload{fSchema.data(), fSchema.size()};
                 if (auto const sentPayloadSize = socket.send(payload, zmq::send_flags::none).value_or(0);
                     sentPayloadSize != payload.size()) {
                     NES_DEBUG("ZmqSink: sending payload failed.");
@@ -113,47 +112,47 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             }
             schemaWritten = true;
             NES_DEBUG("ZmqSink::writeData: schema written");
+        } else {
+            NES_DEBUG("ZmqSink::writeData: no schema written");
         }
-        { NES_DEBUG("ZmqSink::writeData: no schema written"); }
     } else {
         NES_DEBUG("ZmqSink::getData: schema already written");
     }
 
-    NES_DEBUG("ZmqSink: writes buffer with tupleCnt ={} watermark={}",
+    auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
+    NES_DEBUG("ZmqSink: writes buffer with tupleCnt ={} watermark={} content=\n{}",
               inputBuffer.getNumberOfTuples(),
-              inputBuffer.getWatermark());
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
-    for (auto buffer : dataBuffers) {// XXX: Is it actually our intention to iterate over buffers until no exception is thrown?
-        try {
-            ++sentBuffer;
+              inputBuffer.getWatermark(),
+              buffer);
+    try {
+        ++sentBuffer;
 
-            // Create envelope
-            std::array<uint64_t, 2> const envelopeData{buffer.getNumberOfTuples(), buffer.getWatermark()};
-            static_assert(sizeof(envelopeData) == sizeof(uint64_t) * 2);
-            zmq::message_t envelope{&(envelopeData[0]), sizeof(envelopeData)};
-            if (auto const sentEnvelope = socket.send(envelope, zmq::send_flags::sndmore).value_or(0);
-                sentEnvelope != sizeof(envelopeData)) {
-                NES_WARNING("ZmqSink: data payload send NOT successful");
-                return false;
-            }
+        // Create envelope
+        std::array<uint64_t, 2> const envelopeData{inputBuffer.getNumberOfTuples(), inputBuffer.getWatermark()};
+        static_assert(sizeof(envelopeData) == sizeof(uint64_t) * 2);
+        zmq::message_t envelope{&(envelopeData[0]), sizeof(envelopeData)};
+        if (auto const sentEnvelope = socket.send(envelope, zmq::send_flags::sndmore).value_or(0);
+            sentEnvelope != sizeof(envelopeData)) {
+            NES_WARNING("ZmqSink: data payload send NOT successful");
+            return false;
+        }
 
-            // Create message.
-            // Copying the entire payload here to avoid UB.
-            zmq::message_t payload{buffer.getBuffer(), buffer.getBufferSize()};
-            if (auto const sentPayload = socket.send(payload, zmq::send_flags::none).value_or(0);
-                sentPayload != buffer.getBufferSize()) {
-                NES_WARNING("ZmqSink: data send NOT successful");
-                return false;
-            }
-            NES_DEBUG("ZmqSink: data send successful");
-            return true;
+        // Create message.
+        // Copying the entire payload here to avoid UB.
+        zmq::message_t payload{buffer.data(), buffer.size()};
+        if (auto const sentPayload = socket.send(payload, zmq::send_flags::none).value_or(0);
+            sentPayload != inputBuffer.getBufferSize()) {
+            NES_WARNING("ZmqSink: data send NOT successful");
+            return false;
+        }
+        NES_DEBUG("ZmqSink: data send successful");
+        return true;
 
-        } catch (const zmq::error_t& ex) {
-            // recv() throws ETERM when the zmq context is destroyed,
-            //  as when AsyncZmqListener::Stop() is called
-            if (ex.num() != ETERM) {
-                NES_ERROR("ZmqSink:  {}", ex.what());
-            }
+    } catch (const zmq::error_t& ex) {
+        // recv() throws ETERM when the zmq context is destroyed,
+        //  as when AsyncZmqListener::Stop() is called
+        if (ex.num() != ETERM) {
+            NES_ERROR("ZmqSink:  {}", ex.what());
         }
     }
     updateWatermarkCallback(inputBuffer);
@@ -165,7 +164,8 @@ std::string ZmqSink::toString() const {
     ss << "ZMQ_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
     ss << "HOST=" << host << ", ";
-    ss << "PORT=" << port;
+    ss << "PORT=" << port << ", ";
+    ss << "INTERNAL=" << internal;
     ss << ")";
     return ss.str();
 }

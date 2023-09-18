@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -20,14 +21,13 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Experimental/Benchmarking/MicroBenchmarkSchemas.hpp>
 #include <Experimental/Parsing/SynopsisAggregationConfig.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <memory>
 
 namespace NES::ASP::Parsing {
-    class SynopsisAggregationConfigTest : public Testing::NESBaseTest {
+    class SynopsisAggregationConfigTest : public Testing::BaseIntegrationTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -37,7 +37,7 @@ namespace NES::ASP::Parsing {
 
         /* Will be called before a test is executed. */
         void SetUp() override {
-            Testing::NESBaseTest::SetUp();
+            Testing::BaseIntegrationTest::SetUp();
             NES_INFO("Setup SynopsisAggregationConfigTest test case.");
 
             Yaml::Node aggregationNode;

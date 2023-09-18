@@ -27,6 +27,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
+using OperatorProperties = std::unordered_map<std::string, std::any>;
 
 class OperatorNode : public Node {
   public:
@@ -153,6 +154,12 @@ class OperatorNode : public Node {
     void addProperty(const std::string& key, const std::any value);
 
     /**
+     * @brief Add a set of properties to this operator
+     * @param properties
+     */
+    void addAllProperties(const OperatorProperties& properties);
+
+    /**
      * @brief Get a the value of a property
      * @param key key of the value to retrieve
      * @return value of the property with the given key
@@ -201,7 +208,7 @@ class OperatorNode : public Node {
     /*
      * @brief Map of properties of the current node
      */
-    std::unordered_map<std::string, std::any> properties;
+    OperatorProperties properties;
 };
 
 }// namespace NES

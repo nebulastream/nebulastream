@@ -26,6 +26,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -41,19 +42,19 @@ class LowerPhysicalToNautilusOperators {
     /**
      * @brief Constructor to create a LowerPhysicalToGeneratableOperatorPhase
      */
-    explicit LowerPhysicalToNautilusOperators();
+    explicit LowerPhysicalToNautilusOperators(const QueryCompilation::QueryCompilerOptionsPtr& options);
 
     /**
      * @brief Create a LowerPhysicalToGeneratableOperatorPhase
      */
-    static std::shared_ptr<LowerPhysicalToNautilusOperators> create();
+    static std::shared_ptr<LowerPhysicalToNautilusOperators> create(const QueryCompilation::QueryCompilerOptionsPtr& options);
 
     /**
      * @brief Applies the phase on a pipelined query plan.
      * @param pipelined query plan
      * @return PipelineQueryPlanPtr
      */
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, const Runtime::NodeEnginePtr& nodeEngine);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize);
 
     /**
      * @brief Applies the phase on a pipelined and lower physical operator to generatable once.
@@ -111,6 +112,11 @@ class LowerPhysicalToNautilusOperators {
                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerKeyedSlidingWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerGlobalThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                  const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
@@ -125,6 +131,11 @@ class LowerPhysicalToNautilusOperators {
     lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerNonKeyedSlidingWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                           const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
@@ -142,31 +153,6 @@ class LowerPhysicalToNautilusOperators {
      */
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
-#ifdef ENABLE_JNI
-    /**
-     * @brief Creates an executable operator for a Java UDF that performs a map operation.
-     * @param pipeline PhysicalOperatorPipeline object that contains the pipeline of physical operators.
-     * @param sharedPtr A shared pointer to a PhysicalOperator object.
-     * @param handlerIndex An unsigned 64-bit integer that represents the index of the handler.
-     * @return A shared pointer to an ExecutableOperator object that represents the executable Java UDF operator for a map operation.
-     */
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                    const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
-                    uint64_t handlerIndex);
-
-    /**
-     * @brief Creates an executable operator for a Java UDF that performs a flatmap operation.
-     * @param pipeline PhysicalOperatorPipeline object that contains the pipeline of physical operators.
-     * @param sharedPtr A shared pointer to a PhysicalOperator object.
-     * @param handlerIndex An unsigned 64-bit integer that represents the index of the handler.
-     * @return A shared pointer to an ExecutableOperator object that represents the executable Java UDF operator for a flatmap operation.
-     */
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerFlatMapJavaUDF(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                        const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
-                        uint64_t handlerIndex);
-#endif// ENABLE_JNI
 
 #ifdef TFDEF
     /**
@@ -181,6 +167,7 @@ class LowerPhysicalToNautilusOperators {
 #endif
 
   private:
+    const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };
 }// namespace NES::QueryCompilation

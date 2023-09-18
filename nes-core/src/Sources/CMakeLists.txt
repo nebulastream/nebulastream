@@ -29,6 +29,7 @@ add_source_files(nes-core
         TCPSource.cpp
         KafkaSource.cpp
         LoRaWANProxySource.cpp
+        ArrowSource.cpp
 )
 add_subdirectory(Parsers)
 

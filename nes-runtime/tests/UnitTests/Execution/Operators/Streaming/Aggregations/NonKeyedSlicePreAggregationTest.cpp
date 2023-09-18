@@ -17,24 +17,17 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/Map.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
@@ -97,9 +90,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
         std::make_unique<EventTimeFunction>(readTs),
         {std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType, readF2, "count")});
 
-    auto sliceStaging = std::make_shared<NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
@@ -127,10 +119,10 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     ASSERT_EQ(*value, 1);
     emitWatermark(slicePreAggregation, ctx, 22, 0, 1);
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
-    auto smt = (SliceMergeTask*) pipelineContext.buffers[0].getBuffer();
+    auto smt = (SliceMergeTask<NonKeyedSlice>*) pipelineContext.buffers[0].getBuffer();
     ASSERT_EQ(smt->startSlice, 10);
     ASSERT_EQ(smt->endSlice, 20);
-    ASSERT_EQ(smt->sequenceNumber, 0);
+    ASSERT_EQ(smt->sequenceNumber, 1);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
 
@@ -148,9 +140,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
                                     {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
                                      std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
 
-    auto sliceStaging = std::make_shared<NonKeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
-    auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
@@ -183,10 +174,10 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
     ASSERT_EQ(value[0].sum, 42);
     ASSERT_EQ(value[0].count, 1);
     emitWatermark(slicePreAggregation, ctx, 22, 0, 1);
-    auto smt = (SliceMergeTask*) pipelineContext.buffers[0].getBuffer();
+    auto smt = (SliceMergeTask<NonKeyedSlice>*) pipelineContext.buffers[0].getBuffer();
     ASSERT_EQ(smt->startSlice, 10);
     ASSERT_EQ(smt->endSlice, 20);
-    ASSERT_EQ(smt->sequenceNumber, 0);
+    ASSERT_EQ(smt->sequenceNumber, 1);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
 

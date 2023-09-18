@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
@@ -19,7 +20,6 @@
 #include <Execution/Operators/Relational/Sort/BatchSortScan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
@@ -34,18 +34,13 @@
 namespace NES::Runtime::Execution::Operators {
 
 template<typename T>
-class BatchSortScanOperatorTest : public Testing::NESBaseTest {
+class BatchSortScanOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("BatchSortScanOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup BatchSortScanOperatorTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override { Testing::NESBaseTest::SetUp(); }
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down BatchSortScanOperatorTest test class."); }
 };
 
 constexpr uint32_t SEED = 42;

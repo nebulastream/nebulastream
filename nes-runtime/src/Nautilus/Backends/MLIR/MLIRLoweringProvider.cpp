@@ -166,6 +166,11 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
+MLIRLoweringProvider::~MLIRLoweringProvider() {
+    NES_DEBUG("~MLIRLoweringProvider");
+    delete globalInsertPoint;
+}
+
 mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromIR(std::shared_ptr<IR::IRGraph> ir) {
     ValueFrame firstFrame;
     generateMLIR(ir->getRootOperation(), firstFrame);
@@ -569,7 +574,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
         functionArgs.push_back(frame.getValue(arg->getIdentifier()));
     }
     if (!proxyCallOp->getStamp()->isVoid()) {
-        auto res = builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"),
+        auto res = builder->create<mlir::LLVM::CallOp>(getNameLoc(proxyCallOp->getFunctionSymbol()),
                                                        getMLIRType(proxyCallOp->getStamp()),
                                                        functionRef,
                                                        functionArgs);
@@ -595,6 +600,13 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
                                                          mlir::LLVM::ICmpPredicate::eq,
                                                          frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                          null);
+        frame.setValue(compareOp->getIdentifier(), cmpOp);
+    } else if (compareOp->getComparator() == IR::Operations::CompareOperation::EQ
+               && compareOp->getLeftInput()->getStamp()->isAddress() && compareOp->getRightInput()->getStamp()->isAddress()) {
+        auto cmpOp = builder->create<mlir::LLVM::ICmpOp>(getNameLoc("comparison"),
+                                                         mlir::LLVM::ICmpPredicate::eq,
+                                                         frame.getValue(compareOp->getLeftInput()->getIdentifier()),
+                                                         frame.getValue(compareOp->getRightInput()->getIdentifier()));
         frame.setValue(compareOp->getIdentifier(), cmpOp);
     } else if (leftStamp->isInteger() && rightStamp->isInteger()) {
         // handle integer

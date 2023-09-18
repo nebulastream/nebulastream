@@ -18,6 +18,7 @@ add_source_files(nes-core
         DistributedWindowRule.cpp
         FilterMergeRule.cpp
         FilterPushDownRule.cpp
+        FilterSplitUpRule.cpp
         LogicalSourceExpansionRule.cpp
         MapUDFsToOpenCLOperatorsRule.cpp
         NemoWindowPinningRule.cpp

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Common/Identifiers.hpp>
@@ -29,7 +29,7 @@ using namespace std;
 
 namespace NES {
 
-class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
+class MQTTSinkDeploymentTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coConf;
     WorkerConfigurationPtr wrkConf;
@@ -40,7 +40,7 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         coConf = CoordinatorConfiguration::createDefault();
         wrkConf = WorkerConfiguration::create();
         coConf->rpcPort = (*rpcCoordinatorPort);
@@ -50,7 +50,7 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
 
     void TearDown() override {
         NES_INFO("Tear down MQTTSinkDeploymentTest class.");
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 };
 
@@ -88,8 +88,10 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("ws://127.0.0.1:9001",
             "/nesui", "rfRqLGZRChg8eS30PEeR", 5, MQTTSinkDescriptor::milliseconds, 500, MQTTSinkDescriptor::atLeastOnce, false));)";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     // Comment for better understanding: From here on at some point the DataSource.cpp 'runningRoutine()' function is called
     // this function, because "default_logical" is used, uses 'DefaultSource.cpp', which create a TupleBuffer with 10 id:value

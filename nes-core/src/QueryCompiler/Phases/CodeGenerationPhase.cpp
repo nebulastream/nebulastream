@@ -26,9 +26,7 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
-#ifdef PYTHON_UDF_ENABLED
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
-#endif
+
 namespace NES::QueryCompilation {
 
 CodeGenerationPhase::CodeGenerationPhase(CodeGeneratorPtr codeGenerator,
@@ -68,18 +66,6 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
         pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
         return pipeline;
     }
-
-#ifdef PYTHON_UDF_ENABLED
-    // same as for external operators
-    if (rootOperator->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUDFOperator>()) {
-        auto PhysicalPythonUDFOperator = rootOperator->as<PhysicalOperators::Experimental::PhysicalPythonUDFOperator>();
-        auto pipelineStage = PhysicalPythonUDFOperator->getExecutablePipelineStage();
-        // todo register operator handler
-        auto executableOperator = ExecutableOperator::create(pipelineStage, {});
-        pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
-        return pipeline;
-    }
-#endif
 
     generate(rootOperator, [this, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateOpen(codeGenerator, context);

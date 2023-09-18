@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -22,7 +22,7 @@
 using namespace std;
 namespace NES::Windowing::Experimental {
 
-class KeyedThreadLocalSliceStoreTest : public Testing::NESBaseTest {
+class KeyedThreadLocalSliceStoreTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -32,7 +32,7 @@ class KeyedThreadLocalSliceStoreTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup KeyedThreadLocalSliceStoreTest test case.");
         auto bufferManager = std::make_shared<Runtime::BufferManager>();
         size_t keySize = 8;

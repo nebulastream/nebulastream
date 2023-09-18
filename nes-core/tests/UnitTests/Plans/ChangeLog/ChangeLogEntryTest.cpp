@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
@@ -28,7 +28,7 @@
 
 namespace NES {
 
-class ChangeLogEntryTest : public Testing::NESBaseTest {
+class ChangeLogEntryTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ChangeLogEntryTest.log", NES::LogLevel::LOG_DEBUG);
@@ -36,7 +36,7 @@ class ChangeLogEntryTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 

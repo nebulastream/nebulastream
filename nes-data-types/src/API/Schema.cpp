@@ -149,12 +149,18 @@ bool Schema::hasEqualTypes(const SchemaPtr& otherSchema) {
     return true;
 }
 
-std::string Schema::toString() const {
+std::string Schema::toString(const std::string& prefix, const std::string& sep, const std::string& suffix) const {
     std::stringstream ss;
+    uint64_t i = 1;
+    ss << prefix;
     for (const auto& f : fields) {
-        ss << f->toString() << " ";
+        if (i == fields.size()) {
+            ss << f->toString() << suffix;
+        } else {
+            ss << f->toString() << sep;
+        }
+        i++;
     }
-
     return ss.str();
 }
 
@@ -255,6 +261,15 @@ std::string Schema::getLayoutTypeAsString() const {
 Schema::MemoryLayoutType Schema::getLayoutType() const { return layoutType; }
 
 void Schema::setLayoutType(Schema::MemoryLayoutType layoutType) { Schema::layoutType = layoutType; }
+
+std::vector<std::string> Schema::getFieldNames() const {
+    std::vector<std::string> fieldNames;
+    //Todo: 4049: size can be corrupted if schema gets corrupted (18446741141687656808 fields)
+    for (const auto& attribute : fields) {
+        fieldNames.emplace_back(attribute->getName());
+    }
+    return fieldNames;
+}
 
 bool Schema::empty() { return fields.empty(); }
 

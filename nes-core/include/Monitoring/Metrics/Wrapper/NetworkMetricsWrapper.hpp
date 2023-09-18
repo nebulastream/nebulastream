@@ -28,7 +28,7 @@ namespace NES::Monitoring {
  */
 class NetworkMetricsWrapper {
   public:
-    NetworkMetricsWrapper() = default;
+    NetworkMetricsWrapper();
     NetworkMetricsWrapper(uint64_t nodeId);
     NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr);
 
@@ -74,6 +74,7 @@ class NetworkMetricsWrapper {
   private:
     std::vector<NetworkMetrics> networkMetrics;
     uint64_t nodeId;
+    uint64_t timestamp;
 } __attribute__((packed));
 
 /**

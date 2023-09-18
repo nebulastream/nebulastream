@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
+#include <Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>

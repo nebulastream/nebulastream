@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -20,7 +21,6 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <NesBaseTest.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
@@ -35,7 +35,7 @@ using namespace std;
 using namespace NES;
 using namespace Configurations;
 
-class SourceCatalogServiceTest : public Testing::NESBaseTest {
+class SourceCatalogServiceTest : public Testing::BaseIntegrationTest {
   public:
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
@@ -50,7 +50,7 @@ class SourceCatalogServiceTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("Setup NES SourceCatalogService test case.");
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();

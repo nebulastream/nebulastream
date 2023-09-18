@@ -11,9 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <atomic>
-#include <cstdint>
-
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -23,12 +20,14 @@
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/JoinPhases/StreamHashJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Util/magicenum/magic_enum.hpp>
+#include <atomic>
+
 namespace NES::Runtime::Execution::Operators {
 class LocalGlobalJoinState : public Operators::OperatorState {
   public:
@@ -63,11 +62,15 @@ uint64_t getWindowEndProxy(void* ptrHashWindow) {
     return hashWindow->getWindowEnd();
 }
 
-void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, bool isLeftSide) {
+void* getLocalHashTableProxy(void* ptrHashWindow, size_t workerIdx, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrHashWindow != nullptr, "hash window handler context should not be null");
-    StreamHashJoinWindow* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
-    NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}", hashWindow->getWindowIdentifier(), isLeftSide, workerIdx);
-    auto ptr = hashWindow->getHashTable(isLeftSide, workerIdx);
+    auto* hashWindow = static_cast<StreamHashJoinWindow*>(ptrHashWindow);
+    auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
+    NES_DEBUG("Insert into HT for window={} is left={} workerIdx={}",
+              hashWindow->getWindowIdentifier(),
+              magic_enum::enum_name(joinBuildSide),
+              workerIdx);
+    auto ptr = hashWindow->getHashTable(joinBuildSide, workerIdx);
     auto localHashTablePointer = static_cast<void*>(ptr);
     return localHashTablePointer;
 }
@@ -133,7 +136,7 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                                                getLocalHashTableProxy,
                                                                joinState->windowReference,
                                                                ctx.getWorkerId(),
-                                                               Value<Boolean>(isLeftSide));
+                                                               Value<UInt64>((uint64_t) magic_enum::enum_integer(joinBuildSide)));
 
         joinState->windowStart = Nautilus::FunctionCall("getWindowStartProxy", getWindowStartProxy, joinState->windowReference);
 
@@ -142,7 +145,7 @@ void StreamHashJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                   joinState->windowStart->toString(),
                   joinState->windowEnd->toString(),
                   tsValue->toString(),
-                  isLeftSide);
+                  magic_enum::enum_name(joinBuildSide));
     }
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -190,12 +193,12 @@ void StreamHashJoinBuild::setup(ExecutionContext& ctx) const {
 }
 
 StreamHashJoinBuild::StreamHashJoinBuild(uint64_t handlerIndex,
-                                         bool isLeftSide,
+                                         const QueryCompilation::JoinBuildSideType joinBuildSide,
                                          const std::string& joinFieldName,
                                          const std::string& timeStampField,
                                          SchemaPtr inputSchema,
                                          TimeFunctionPtr timeFunction)
-    : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), timeStampField(timeStampField),
+    : handlerIndex(handlerIndex), joinBuildSide(joinBuildSide), joinFieldName(joinFieldName), timeStampField(timeStampField),
       inputSchema(inputSchema), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators

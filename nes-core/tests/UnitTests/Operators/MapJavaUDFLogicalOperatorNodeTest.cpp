@@ -13,10 +13,10 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
@@ -30,7 +30,7 @@ using namespace std::string_literals;
 
 namespace NES {
 
-class MapJavaUDFLogicalOperatorNodeTest : public Testing::NESBaseTest {
+class MapJavaUDFLogicalOperatorNodeTest : public Testing::BaseUnitTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("MapJavaUDFLogicalOperatorNodeTest", NES::LogLevel::LOG_DEBUG); }
 };
@@ -41,7 +41,7 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
     auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}.setOutputSchema(outputSchema).build();
 
     // Create a MapUdfLogicalOperatorNode with the JavaUDFDescriptor.
-    auto mapUdfLogicalOperatorNode = std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, 1);
+    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, 1);
 
     // Create a SourceLogicalOperatorNode with a source schema
     // and add it as a child to the MapUdfLogicalOperatorNode to infer the input schema.
@@ -65,7 +65,7 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
 TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferStringSignature) {
     // Create a MapUdfLogicalOperatorNode with a JavaUDFDescriptor and a source as a child.
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-    auto mapUdfLogicalOperatorNode = std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUDFDescriptor, 1);
+    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUDFDescriptor, 1);
     auto child = std::make_shared<SourceLogicalOperatorNode>(
         std::make_shared<SchemaSourceDescriptor>(
             std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64())),
@@ -92,7 +92,7 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferStringSignature) {
 // Cause: n2 is a shallow copy of n1, so it retains the list of parents of n1 with the same IDs.
 TEST_F(MapJavaUDFLogicalOperatorNodeTest, AddParentToCopy) {
     // given: Create MapJavaUDFLogicalOperatorNode with a parent.
-    auto n1 = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(
+    auto n1 = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor());
     auto p1 = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
     n1->addParent(p1);

@@ -49,7 +49,9 @@ PhysicalWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
 std::string PhysicalWatermarkAssignmentOperator::toString() const { return "PhysicalWatermarkAssignmentOperator"; }
 
 OperatorNodePtr PhysicalWatermarkAssignmentOperator::copy() {
-    return create(id, inputSchema, outputSchema, getWatermarkStrategyDescriptor());
+    auto result = create(id, inputSchema, outputSchema, getWatermarkStrategyDescriptor());
+    result->addAllProperties(properties);
+    return result;
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

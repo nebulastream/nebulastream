@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/RandomExpression.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class RandomExpressionTest : public Testing::NESBaseTest {
+class RandomExpressionTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -83,6 +83,30 @@ TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger) {
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
+    // UInt8
+    {
+        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 1));
+        ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt16
+    {
+        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 2));
+        ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt32
+    {
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 3));
+        ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt64
+    {
+        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4));
+        ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 }
 
 TEST_F(RandomExpressionTest, evaluateRandomExpressionFloat) {
@@ -105,4 +129,5 @@ TEST_F(RandomExpressionTest, evaluateSinExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<RandomExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
+
 }// namespace NES::Runtime::Execution::Expressions

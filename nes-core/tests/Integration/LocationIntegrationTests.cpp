@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -24,7 +25,7 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <NesBaseTest.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
@@ -51,7 +52,7 @@ using std::string;
 uint16_t timeout = 5;
 namespace NES::Spatial {
 
-class LocationIntegrationTests : public Testing::NESBaseTest {
+class LocationIntegrationTests : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationIntegrationTests.log", NES::LogLevel::LOG_DEBUG);
@@ -757,7 +758,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
 
 TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 
-    WorkerRPCClientPtr client = std::make_shared<WorkerRPCClient>();
+    WorkerRPCClientPtr client = WorkerRPCClient::create();
     auto rpcPortWrk1 = getAvailablePort();
     auto rpcPortWrk2 = getAvailablePort();
     auto rpcPortWrk3 = getAvailablePort();
@@ -1062,7 +1063,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1082,7 +1083,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 
     QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
-        "BottomUp",
+        Optimizer::PlacementStrategy::BottomUp,
         FaultToleranceType::NONE,
         LineageType::NONE);
 
@@ -1161,7 +1162,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1183,7 +1184,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 
     QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
-        "BottomUp",
+        Optimizer::PlacementStrategy::BottomUp,
         FaultToleranceType::NONE,
         LineageType::NONE);
 
@@ -1252,7 +1253,7 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
     TopologyPtr topology = crd->getTopology();
     ASSERT_TRUE(waitForNodes(5, 1, topology));
 
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1382,7 +1383,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
 
     QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
-        "BottomUp",
+        Optimizer::PlacementStrategy::BottomUp,
         FaultToleranceType::NONE,
         LineageType::NONE);
 

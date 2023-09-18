@@ -13,9 +13,9 @@
 */
 
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -29,7 +29,7 @@
 
 using namespace NES;
 
-class GlobalExecutionPlanTest : public Testing::TestWithErrorHandling {
+class GlobalExecutionPlanTest : public Testing::BaseUnitTest {
 
   public:
     /* Will be called before a test is executed. */

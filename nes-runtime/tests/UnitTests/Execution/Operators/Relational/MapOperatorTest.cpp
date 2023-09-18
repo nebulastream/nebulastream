@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -25,7 +25,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class MapOperatorTest : public Testing::NESBaseTest {
+class MapOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

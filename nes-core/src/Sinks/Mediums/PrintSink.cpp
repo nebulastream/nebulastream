@@ -48,41 +48,13 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     NES_DEBUG("PrintSink: getSchema medium  {}  format  {}", toString(), sinkFormat->toString());
 
     if (!inputBuffer) {
-        // TODO throw exception here?
         throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
-    }
-    if (!schemaWritten) {
-        NES_TRACE("PrintSink::getData: write schema");
-        auto schemaBuffer = sinkFormat->getSchema();
-        if (schemaBuffer) {
-            NES_TRACE("PrintSink::getData: write schema of size  {}", schemaBuffer->getNumberOfTuples());
-            std::string ret;
-            char* bufferAsChar = schemaBuffer->getBuffer<char>();
-            for (uint64_t i = 0; i < schemaBuffer->getNumberOfTuples(); i++) {
-                ret = ret + bufferAsChar[i];
-            }
-            outputStream << ret << std::endl;
-        } else {
-            NES_DEBUG("PrintSink::getData: no schema buffer to write");
-        }
-        NES_TRACE("PrintSink::writeData: schema is = {}", sinkFormat->getSchemaPtr()->toString());
-        schemaWritten = true;
-    } else {
-        NES_DEBUG("PrintSink::getData: schema already written");
     }
 
     NES_TRACE("PrintSink::getData: write data");
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
-    for (auto buffer : dataBuffers) {
-        NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
-        std::string ret;
-        char* bufferAsChar = buffer.getBuffer<char>();
-        for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-            ret = ret + bufferAsChar[i];
-        }
-        NES_TRACE("PrintSink::getData: write buffer str=  {}", ret);
-        outputStream << ret << std::endl;
-    }
+    auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
+    NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
+    outputStream << buffer << std::endl;
     updateWatermarkCallback(inputBuffer);
     return true;
 }

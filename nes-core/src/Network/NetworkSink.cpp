@@ -23,7 +23,6 @@
 #include <Util/Core.hpp>
 
 namespace NES::Network {
-
 NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
                          QueryId queryId,
@@ -36,14 +35,15 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType,
                          uint64_t numberOfOrigins)
-    : inherited0(
+    : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
         numOfProducers,
         queryId,
         querySubPlanId,
         faultToleranceType,
-        numberOfOrigins),
+        numberOfOrigins,
+        nullptr),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),

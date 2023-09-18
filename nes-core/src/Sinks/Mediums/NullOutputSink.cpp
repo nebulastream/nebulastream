@@ -40,6 +40,7 @@ NullOutputSink::~NullOutputSink() = default;
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+    std::unique_lock lock(writeMutex);
     updateWatermarkCallback(inputBuffer);
     return true;
 }

@@ -26,6 +26,12 @@ enum class StreamJoinStrategy : uint8_t {
     HASH_JOIN_GLOBAL_LOCK_FREE,
     NESTED_LOOP_JOIN
 };
+
+enum class JoinBuildSideType : uint8_t { Right, Left };
+template<typename E = JoinBuildSideType, typename Out = uint64_t>
+constexpr Out to_underlying(E e) noexcept {
+    return static_cast<Out>(e);
+}
 }// namespace NES::QueryCompilation
 
 namespace NES::Util {

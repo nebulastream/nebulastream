@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/Log10Expression.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
@@ -22,7 +22,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class Log10ExpressionTest : public Testing::NESBaseTest {
+class Log10ExpressionTest : public Testing::BaseUnitTest {
 
   public:
     /* Will be called before any test in this class are executed. */

@@ -46,6 +46,10 @@ PhysicalBatchJoinBuildOperator::PhysicalBatchJoinBuildOperator(OperatorId id,
 
 std::string PhysicalBatchJoinBuildOperator::toString() const { return "PhysicalBatchJoinBuildOperator"; }
 
-OperatorNodePtr PhysicalBatchJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
+OperatorNodePtr PhysicalBatchJoinBuildOperator::copy() {
+    auto result = create(id, inputSchema, outputSchema, operatorHandler);
+    result->addAllProperties(properties);
+    return result;
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

@@ -20,8 +20,8 @@ include(GoogleTest)
 
 add_library(nes-test-util SHARED
         "Util/src/BorrowedPort.cpp"
-        "Util/src/NesBaseTest.cpp"
-        "Util/src/TestWithErrorHandling.cpp"
+        "Util/src/BaseIntegrationTest.cpp"
+        "Util/src/BaseUnitTest.cpp"
         "Util/src/detail/PortDispatcher.cpp")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -34,5 +34,5 @@ endif ()
 ### Thread Naming Test ###
 add_nes_common_test(nes-common-tests "UnitTests/Util/ThreadNamingTest.cpp" "UnitTests/Util/NonBlockingMonotonicSeqQueueTest.cpp")
 
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <API/Query.hpp>
@@ -25,7 +25,7 @@
 
 using namespace NES;
 
-class QueryPlanTest : public Testing::TestWithErrorHandling {
+class QueryPlanTest : public Testing::BaseUnitTest {
 
   public:
     /* Will be called before a test is executed. */

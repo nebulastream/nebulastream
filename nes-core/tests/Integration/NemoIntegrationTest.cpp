@@ -12,27 +12,24 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/MetricValidator.hpp>
-#include <Util/TestUtils.hpp>
-#include <assert.h>
-#include <cstdint>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
-#include <memory>
 
-using std::cout;
-using std::endl;
 namespace NES {
-
-uint16_t timeout = 15;
+using namespace Configurations;
 
 /**
  * @brief Test the NEMO placement on different topologies to check if shared nodes contain the window operator based on the configs
  * of setDistributedWindowChildThreshold and setDistributedWindowCombinerThreshold.
  */
-class NemoIntegrationTest : public Testing::NESBaseTest {
+class NemoIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
 
@@ -42,52 +39,55 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
-        NES_INFO("NemoIntegrationTest: Setting up test with rpc port {}, rest port {}", rpcCoordinatorPort, restPort);
     }
 
-    std::string testTopology(uint64_t restPort,
-                             uint64_t rpcCoordinatorPort,
-                             uint64_t layers,
-                             uint64_t nodesPerNode,
-                             uint64_t leafNodesPerNode,
-                             uint64_t childThreshold,
-                             uint64_t combinerThreshold,
-                             uint64_t expectedNumberBuffers) {
-        NES_INFO(" start coordinator");
-        std::string outputFilePath = this->getTestResourceFolder().string() + "/windowOut.csv";
-        remove(outputFilePath.c_str());
+    static CSVSourceTypePtr createCSVSourceType(std::string inputPath) {
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setFilePath(std::move(inputPath));
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(50);
+        csvSourceType->setNumberOfBuffersToProduce(1);
+        csvSourceType->setSkipHeader(false);
+        csvSourceType->setGatheringInterval(1000);
+        return csvSourceType;
+    }
 
-        uint64_t nodeId = 1;
-        uint64_t leafNodes = 0;
+    TestHarness createTestHarness(uint64_t layers,
+                                  uint64_t nodesPerNode,
+                                  uint64_t leafNodesPerNode,
+                                  int64_t childThreshold,
+                                  int64_t combinerThreshold) {
+        std::function<void(CoordinatorConfigurationPtr)> crdFunctor =
+            [childThreshold, combinerThreshold](const CoordinatorConfigurationPtr& config) {
+                config->optimizer.enableNemoPlacement.setValue(true);
+                config->optimizer.distributedWindowChildThreshold.setValue(childThreshold);
+                config->optimizer.distributedWindowCombinerThreshold.setValue(combinerThreshold);
+            };
+
+        auto inputSchema = Schema::create()
+                               ->addField("key", DataTypeFactory::createUInt32())
+                               ->addField("value", DataTypeFactory::createUInt32())
+                               ->addField("timestamp", DataTypeFactory::createUInt64());
+
+        auto query = Query::from("car")
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                         .byKey(Attribute("key"))
+                         .apply(Sum(Attribute("value")));
+
+        TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                      .enableNautilus()
+                                      .enableDistributedWindowOptimization()
+                                      .addLogicalSource("car", inputSchema);
 
         std::vector<uint64_t> nodes;
         std::vector<uint64_t> parents;
-        std::vector<std::shared_ptr<Util::Subprocess>> workerProcs;
-
-        // Setup the topology
-        auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcCoordinatorPort),
-                                                        TestUtils::restPort(restPort),
-                                                        TestUtils::enableDebug(),
-                                                        TestUtils::enableNemoPlacement(),
-                                                        TestUtils::setDistributedWindowChildThreshold(childThreshold),
-                                                        TestUtils::setDistributedWindowCombinerThreshold(combinerThreshold)});
-        assert(TestUtils::waitForWorkers(restPort, timeout, 0));
-
-        std::stringstream schema;
-        schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
-                  ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-                  "addField(createField(\\\"timestamp\\\",UINT64));\"}";
-        schema << endl;
-
-        NES_INFO("schema submit={}", schema.str());
-        bool logSource = TestUtils::addLogicalSource(schema.str(), std::to_string(restPort));
-        assert(logSource);
-
+        uint64_t nodeId = 1;
+        uint64_t leafNodes = 0;
         nodes.emplace_back(1);
         parents.emplace_back(1);
 
+        auto cnt = 1;
         for (uint64_t i = 2; i <= layers; i++) {
             std::vector<uint64_t> newParents;
             for (auto parent : parents) {
@@ -102,226 +102,81 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
 
                     if (i == layers) {
                         leafNodes++;
-                        auto workerProc = TestUtils::startWorkerPtr(
-                            {TestUtils::rpcPort(0),
-                             TestUtils::dataPort(0),
-                             TestUtils::coordinatorPort(rpcCoordinatorPort),
-                             TestUtils::parentId(parent),
-                             TestUtils::sourceType("CSVSource"),
-                             TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                             TestUtils::physicalSourceName("test_stream_" + std::to_string(nodeId)),
-                             TestUtils::logicalSourceName("window"),
-                             TestUtils::numberOfBuffersToProduce(1),
-                             TestUtils::numberOfTuplesToProducePerBuffer(28),
-                             TestUtils::sourceGatheringInterval(1000),
-                             TestUtils::workerHealthCheckWaitTime(1)});
-                        workerProcs.emplace_back(std::move(workerProc));
-                        assert(TestUtils::waitForWorkers(restPort, timeout, nodeId - 1));
+                        auto csvSource = createCSVSourceType(std::string(TEST_DATA_DIRECTORY) + "keyed_windows/window_"
+                                                             + std::to_string(cnt++) + ".csv");
+                        testHarness.attachWorkerWithCSVSourceToWorkerWithId("car", csvSource, parent);
+                        NES_DEBUG("NemoIntegrationTest: Adding CSV source for node:{}", nodeId);
                         continue;
                     }
-
-                    auto workerProc = TestUtils::startWorkerPtr({TestUtils::rpcPort(0),
-                                                                 TestUtils::dataPort(0),
-                                                                 TestUtils::coordinatorPort(rpcCoordinatorPort),
-                                                                 TestUtils::parentId(parent),
-                                                                 TestUtils::workerHealthCheckWaitTime(1)});
-                    workerProcs.emplace_back(std::move(workerProc));
-                    assert(TestUtils::waitForWorkers(restPort, timeout, nodeId - 1));
+                    testHarness.attachWorkerToWorkerWithId(parent);
+                    NES_DEBUG("NemoIntegrationTest: Adding worker to worker with ID:{}", parent);
                 }
             }
             parents = newParents;
         }
-
-        NES_INFO("NemoIntegrationTest: Finished setting up topology.");
-
-        std::stringstream ss;
-        ss << "{\"userQuery\" : ";
-        ss << "\"Query::from(\\\"window\\\")"
-              ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
-              ".byKey(Attribute(\\\"id\\\"))"
-              ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
-        ss << outputFilePath;
-        ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-        ss << R"());","placement" : "BottomUp"})";
-        ss << endl;
-
-        NES_INFO("query string submit={}", ss.str());
-
-        nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
-        QueryId queryId = json_return["queryId"].get<uint64_t>();
-
-        NES_INFO("try to acc return");
-        NES_INFO("Query ID: {}", queryId);
-
-        auto checkCompleted = TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort));
-        assert(checkCompleted);
-
-        auto queryStopped = TestUtils::stopQueryViaRest(queryId, std::to_string(restPort));
-        assert(queryStopped);
-
-        std::ifstream ifs(outputFilePath.c_str());
-        assert(ifs.good());
-        std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-        NES_INFO("content={}", content);
-
-        return content;
+        testHarness.validate().setupTopology(crdFunctor);
+        return testHarness;
     }
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        uint32_t id;
+        uint32_t value;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && id == rhs.id && value == rhs.value);
+        }
+    };
 };
 
-TEST_F(NemoIntegrationTest, testNemoFlatTopologyMerge) {
-    uint64_t childThreshold = 0;
-    uint64_t combinerThreshold = 0;
-    uint64_t expectedNoBuffers = 3;
-    auto content = testTopology(*restPort, *rpcCoordinatorPort, 2, 2, 2, childThreshold, combinerThreshold, expectedNoBuffers);
+TEST_F(NemoIntegrationTest, testThreeLevelsTopologyTopDown) {
+    int64_t childThreshold = 1000;
+    int64_t combinerThreshold = 1;
+    uint64_t expectedTuples = 80;
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,102\n"
-                             "10000,20000,1,290\n"
-                             "0,10000,4,2\n"
-                             "0,10000,11,10\n"
-                             "0,10000,12,2\n"
-                             "0,10000,16,4\n";
+    auto testHarness = createTestHarness(3, 2, 4, childThreshold, combinerThreshold);
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedTuples, "BottomUp", "NONE", "IN_MEMORY");
+    EXPECT_EQ(actualOutput.size(), expectedTuples);
 
-    NES_INFO("content={}", content);
-    NES_INFO("expContent={}", expectedContent);
-    ASSERT_EQ(content, expectedContent);
+    TopologyPtr topology = testHarness.getTopology();
+    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
+    NES_DEBUG("NemoIntegrationTest: Executed with topology \n{}", topology->toString());
+    NES_INFO("NemoIntegrationTest: Executed with plan \n{}", queryPlan->toString());
+    EXPECT_EQ(1, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
 }
 
-TEST_F(NemoIntegrationTest, testNemoFlatTopologyNoMerge) {
-    uint64_t childThreshold = 0;
-    uint64_t combinerThreshold = 100;
-    uint64_t expectedNoBuffers = 2;
-    auto content = testTopology(*restPort, *rpcCoordinatorPort, 2, 2, 2, childThreshold, combinerThreshold, expectedNoBuffers);
+TEST_F(NemoIntegrationTest, testThreeLevelsTopologyBottomUp) {
+    int64_t childThreshold = 1;
+    int64_t combinerThreshold = 1000;
+    uint64_t expectedTuples = 80;
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,51\n"
-                             "10000,20000,1,145\n"
-                             "0,10000,4,1\n"
-                             "0,10000,11,5\n"
-                             "0,10000,12,1\n"
-                             "0,10000,16,2\n"
-                             "0,10000,1,51\n"
-                             "10000,20000,1,145\n"
-                             "0,10000,4,1\n"
-                             "0,10000,11,5\n"
-                             "0,10000,12,1\n"
-                             "0,10000,16,2\n";
+    auto testHarness = createTestHarness(3, 2, 4, childThreshold, combinerThreshold);
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedTuples, "BottomUp", "NONE", "IN_MEMORY");
+    EXPECT_EQ(actualOutput.size(), expectedTuples);
 
-    NES_INFO("content={}", content);
-    NES_INFO("expContent={}", expectedContent);
-    ASSERT_EQ(content, expectedContent);
+    TopologyPtr topology = testHarness.getTopology();
+    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
+    NES_DEBUG("NemoIntegrationTest: Executed with topology \n{}", topology->toString());
+    NES_INFO("NemoIntegrationTest: Executed with plan \n{}", queryPlan->toString());
+    EXPECT_EQ(8, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
 }
 
 TEST_F(NemoIntegrationTest, testNemoThreelevels) {
-    uint64_t childThreshold = 0;
-    uint64_t combinerThreshold = 0;
-    uint64_t expectedNoBuffers = 2;
-    auto content = testTopology(*restPort, *rpcCoordinatorPort, 3, 2, 2, childThreshold, combinerThreshold, expectedNoBuffers);
+    int64_t childThreshold = 1;
+    int64_t combinerThreshold = 1;
+    uint64_t expectedTuples = 80;
 
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,102\n"
-                             "10000,20000,1,290\n"
-                             "0,10000,4,2\n"
-                             "0,10000,11,10\n"
-                             "0,10000,12,2\n"
-                             "0,10000,16,4\n"
-                             "0,10000,1,102\n"
-                             "10000,20000,1,290\n"
-                             "0,10000,4,2\n"
-                             "0,10000,11,10\n"
-                             "0,10000,12,2\n"
-                             "0,10000,16,4\n";
+    auto testHarness = createTestHarness(3, 2, 4, childThreshold, combinerThreshold);
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedTuples, "BottomUp", "NONE", "IN_MEMORY");
+    EXPECT_EQ(actualOutput.size(), expectedTuples);
 
-    NES_INFO("content={}", content);
-    NES_INFO("expContent={}", expectedContent);
-    ASSERT_EQ(content, expectedContent);
-}
-
-TEST_F(NemoIntegrationTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) {
-    uint64_t childThreshold = 0;
-    uint64_t combinerThreshold = 0;
-    uint64_t expectedNoBuffers = 2;
-    auto content = testTopology(*restPort, *rpcCoordinatorPort, 4, 2, 1, childThreshold, combinerThreshold, expectedNoBuffers);
-
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,204\n"
-                             "10000,20000,1,580\n"
-                             "0,10000,4,4\n"
-                             "0,10000,11,20\n"
-                             "0,10000,12,4\n"
-                             "0,10000,16,8\n";
-
-    NES_INFO("content={}", content);
-    NES_INFO("expContent={}", expectedContent);
-    ASSERT_EQ(content, expectedContent);
-}
-
-TEST_F(NemoIntegrationTest, testNemoPlacementFourLevelsDenseTopology) {
-    uint64_t childThreshold = 0;
-    uint64_t combinerThreshold = 0;
-    uint64_t expectedNoBuffers = 9;
-    auto content = testTopology(*restPort, *rpcCoordinatorPort, 4, 3, 3, childThreshold, combinerThreshold, expectedNoBuffers);
-
-    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n"
-                             "0,10000,1,153\n"
-                             "10000,20000,1,435\n"
-                             "0,10000,4,3\n"
-                             "0,10000,11,15\n"
-                             "0,10000,12,3\n"
-                             "0,10000,16,6\n";
-
-    NES_INFO("content={}", content);
-    NES_INFO("expContent={}", expectedContent);
-    ASSERT_EQ(content.size(), expectedContent.size());
-    ASSERT_EQ(content, expectedContent);
+    TopologyPtr topology = testHarness.getTopology();
+    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
+    NES_DEBUG("NemoIntegrationTest: Executed with topology \n{}", topology->toString());
+    NES_INFO("NemoIntegrationTest: Executed with plan \n{}", queryPlan->toString());
+    EXPECT_EQ(2, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
 }
 
 }// namespace NES

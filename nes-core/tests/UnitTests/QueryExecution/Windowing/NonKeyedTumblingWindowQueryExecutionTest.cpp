@@ -11,11 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-// clang-format: off
-// clang-format: on
+
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
@@ -32,30 +31,30 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class NonKeyedTumblingWindowQueryExecutionTest
-    : public Testing::TestWithErrorHandling,
+    : public Testing::BaseUnitTest,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("GlobalTumblingWindowQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup GlobalTumblingWindowQueryExecutionTest test class.");
+        NES::Logger::setupLogging("NonKeyedTumblingWindowQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("QueryExecutionTest: Setup NonKeyedTumblingWindowQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryExecutionTest: Tear down GlobalTumblingWindowQueryExecutionTest test case.");
+        NES_DEBUG("QueryExecutionTest: Tear down NonKeyedTumblingWindowQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_DEBUG("QueryExecutionTest: Tear down GlobalTumblingWindowQueryExecutionTest test class.");
+        NES_DEBUG("QueryExecutionTest: Tear down NonKeyedTumblingWindowQueryExecutionTest test class.");
     }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
@@ -72,7 +71,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(10);
 }
 
-TEST_P(NonKeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
+TEST_P(NonKeyedTumblingWindowQueryExecutionTest, testTumblingWindow) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 

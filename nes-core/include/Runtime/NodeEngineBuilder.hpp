@@ -129,6 +129,11 @@ class NodeEngineBuilder {
     NodeEngineBuilder& setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory);
 
     /**
+     * setter used to pass an OpenCL manager to NodeEngineBuilder. Optional.
+     */
+    NodeEngineBuilder& setOpenCLManager(OpenCLManagerPtr openCLManager);
+
+    /**
      * performs safety checks and returns a NodeEngine
      * @return NodeEnginePtr
      */
@@ -138,7 +143,7 @@ class NodeEngineBuilder {
     explicit NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
 
     std::shared_ptr<AbstractQueryStatusListener> nesWorker;
-    uint64_t nodeEngineId;
+    uint64_t nodeEngineId = 0;
     Network::PartitionManagerPtr partitionManager;
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
@@ -150,6 +155,7 @@ class NodeEngineBuilder {
     QueryCompilation::Phases::PhaseFactoryPtr phaseFactory;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Configurations::WorkerConfigurationPtr workerConfiguration;
+    OpenCLManagerPtr openCLManager;
 
     /**
      *  Used during build() to convert the QueryCompilerConfigurations in the WorkerConfigruations to QueryCompilationOptions,

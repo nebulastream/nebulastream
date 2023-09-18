@@ -14,6 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -21,7 +22,6 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -39,7 +39,7 @@
 
 namespace NES {
 
-class ExpressionNodeTest : public Testing::NESBaseTest {
+class ExpressionNodeTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
@@ -47,7 +47,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

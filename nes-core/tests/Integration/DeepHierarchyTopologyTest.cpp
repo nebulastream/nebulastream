@@ -11,11 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/Identifiers.hpp>
-#include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,7 +31,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class DeepHierarchyTopologyTest : public Testing::NESBaseTest {
+class DeepHierarchyTopologyTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DeepTopologyHierarchyTest.log", NES::LogLevel::LOG_DEBUG);
@@ -61,6 +62,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     std::string query = R"(Query::from("test"))";
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("test", testSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test")     //idx=2
                            .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //idx=3
@@ -70,10 +72,10 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 2)
-                          .pushElement<Test>({1, 1}, 3)
-                          .pushElement<Test>({1, 1}, 4)
-                          .pushElement<Test>({1, 1}, 5)
-                          .pushElement<Test>({1, 1}, 6);
+            .pushElement<Test>({1, 1}, 3)
+            .pushElement<Test>({1, 1}, 4)
+            .pushElement<Test>({1, 1}, 5)
+            .pushElement<Test>({1, 1}, 6);
     }
 
     testHarness.validate().setupTopology();
@@ -124,7 +126,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    std::string query = R"(Query::from("test"))";
+    auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test")     //id=2
@@ -136,11 +138,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 2)
-                          .pushElement<Test>({1, 1}, 3)
-                          .pushElement<Test>({1, 1}, 4)
-                          .pushElement<Test>({1, 1}, 5)
-                          .pushElement<Test>({1, 1}, 6)
-                          .pushElement<Test>({1, 1}, 7);
+            .pushElement<Test>({1, 1}, 3)
+            .pushElement<Test>({1, 1}, 4)
+            .pushElement<Test>({1, 1}, 5)
+            .pushElement<Test>({1, 1}, 6)
+            .pushElement<Test>({1, 1}, 7);
     }
 
     testHarness.validate().setupTopology();
@@ -190,7 +192,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
         Schema::create()->addField("key", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    std::string query = R"(Query::from("test"))";
+    auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test")     //2
@@ -201,11 +203,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
 
     for (int i = 0; i < 10; ++i) {
         testHarness
-                          .pushElement<Test>({1, 1}, 2)
-                          // worker with id 3 does not produce data
-                          .pushElement<Test>({1, 1}, 4)
-                          .pushElement<Test>({1, 1}, 5)
-                          .pushElement<Test>({1, 1}, 6);
+            .pushElement<Test>({1, 1}, 2)
+            // worker with id 3 does not produce data
+            .pushElement<Test>({1, 1}, 4)
+            .pushElement<Test>({1, 1}, 5)
+            .pushElement<Test>({1, 1}, 6);
     }
 
     testHarness.validate().setupTopology();
@@ -256,7 +258,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    std::string query = R"(Query::from("test"))";
+    auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
                            .attachWorkerToCoordinator()                           //2
@@ -269,10 +271,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     for (int i = 0; i < 10; ++i) {
         // worker with idx 0 does not produce data
         testHarness.pushElement<Test>({1, 1}, 3)
-                          .pushElement<Test>({1, 1}, 4)
-                          // worker with idx 3 does not produce data
-                          .pushElement<Test>({1, 1}, 6)
-                          .pushElement<Test>({1, 1}, 7);
+            .pushElement<Test>({1, 1}, 4)
+            // worker with idx 3 does not produce data
+            .pushElement<Test>({1, 1}, 6)
+            .pushElement<Test>({1, 1}, 7);
     }
 
     testHarness.validate().setupTopology();
@@ -328,7 +330,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    std::string query = R"(Query::from("test"))";
+    auto query = Query::from("test");
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
@@ -348,9 +350,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     for (int i = 0; i < 10; ++i) {
         // worker with idx 1-7 do not produce data
         testHarness.pushElement<Test>({1, 1}, 8)
-                          .pushElement<Test>({1, 1}, 9)
-                          .pushElement<Test>({1, 1}, 10)
-                          .pushElement<Test>({1, 1}, 11);
+            .pushElement<Test>({1, 1}, 9)
+            .pushElement<Test>({1, 1}, 10)
+            .pushElement<Test>({1, 1}, 11);
     }
 
     testHarness.validate().setupTopology();
@@ -417,9 +419,10 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
 
-    std::string query = R"(Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3")))";
+    auto query = Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("testStream", testSchema)
                                   // Workers
                                   .attachWorkerToCoordinator()  // id=2
@@ -476,7 +479,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
         config->optimizer.distributedWindowChildThreshold.setValue(0);
         config->optimizer.distributedWindowCombinerThreshold.setValue(0);
@@ -500,8 +503,10 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(3);
 
-    std::string query =
-        R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", testSchema)
                                   // Workers
@@ -571,7 +576,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevelNemoPlacement) {
+TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPlacement) {
     uint64_t workerNo = 10;
     std::vector<WorkerConfigurationPtr> workerConfigs;
 
@@ -602,13 +607,15 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevelNemoPlacement) {
     for (uint64_t i = 0; i < workerNo; i++) {
         auto workerConfig = WorkerConfiguration::create();
         workerConfig->queryCompiler.windowingStrategy.setValue(
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL);
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING);
         workerConfigs.emplace_back(workerConfig);
     }
 
     uint64_t i = 0;
-    std::string query =
-        R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", testSchema)
                                   // Workers
@@ -687,8 +694,9 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    std::string query = R"(Query::from("car").unionWith(Query::from("truck")))";
+    auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNautilus()
                                   .addLogicalSource("truck", testSchema)
                                   .addLogicalSource("car", testSchema)
                                   // Workers
@@ -707,9 +715,9 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     for (int i = 0; i < 10; ++i) {
         // worker with idx 0-5 do not produce data
         testHarness.pushElement<Test>({1, 1}, 8)
-                          .pushElement<Test>({1, 1}, 9)
-                          .pushElement<Test>({1, 1}, 10)
-                          .pushElement<Test>({1, 1}, 11);
+            .pushElement<Test>({1, 1}, 9)
+            .pushElement<Test>({1, 1}, 10)
+            .pushElement<Test>({1, 1}, 11);
     }
 
     testHarness.validate().setupTopology();
@@ -773,13 +781,20 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     csvSourceType->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType->setNumberOfBuffersToProduce(3);
 
-    std::string query = R"(Query::from("window")
-        .filter(Attribute("id") < 15)
-        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
-        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
-        .filter(Attribute("id") < 10).window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).apply(Sum(Attribute("value"))))";
+    auto query = Query::from("window")
+                     .filter(Attribute("id") < 15)
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")))
+                     .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")))
+                     .filter(Attribute("id") < 10)
+                     .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)))
+                     .apply(Sum(Attribute("value")));
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
                            .addLogicalSource("window", testSchema)
                            .attachWorkerToCoordinator()                                        //2
                            .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 2)//3
@@ -805,7 +820,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
         bool operator==(Output const& rhs) const { return (start == rhs.start && end == rhs.end && value == rhs.value); }
     };
 
-    std::vector<Output> expectedOutput = {{0, 2000, 24}, {2000, 4000, 96}, {4000, 6000, 80}};
+    std::vector<Output> expectedOutput = {{0, 2000, 16},
+                                          {2000, 4000, 96},
+                                          {4000, 6000, 80},
+                                          {6000, 8000, 112},
+                                          {8000, 10000, 32}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 

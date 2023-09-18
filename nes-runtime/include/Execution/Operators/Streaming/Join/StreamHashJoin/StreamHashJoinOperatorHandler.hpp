@@ -141,10 +141,11 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      * @brief return number of tuples in window
      * @param windowIdentifier
      * @param workerId
-     * @param isLeftSide
+     * @param joinBuildSide
      * @return
      */
-    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId, bool isLeftSide);
+    uint64_t
+    getNumberOfTuplesInWindow(uint64_t windowIdentifier, uint64_t workerId, QueryCompilation::JoinBuildSideType joinBuildSide);
 
     /**
      * @brief method to trigger the finished windows
@@ -152,7 +153,7 @@ class StreamHashJoinOperatorHandler : public StreamJoinOperatorHandler {
      * @param workerCtx
      * @param pipelineCtx
      */
-    void triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+    void triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 

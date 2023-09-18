@@ -84,7 +84,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static NES::QueryPlanPtr addMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
+    static NES::QueryPlanPtr addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
 
     /**
      * @brief: FlatMap java udf according to the java method given in the descriptor.
@@ -92,8 +92,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static NES::QueryPlanPtr addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
-                                               NES::QueryPlanPtr queryPlan);
+    static NES::QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
 
     /**
     * @brief UnionOperator to combine two query plans

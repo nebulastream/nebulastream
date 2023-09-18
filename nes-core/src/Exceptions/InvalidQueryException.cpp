@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include "Exceptions/InvalidQueryException.hpp"
+#include <Exceptions/InvalidQueryException.hpp>
 
 namespace NES {
-InvalidQueryException::InvalidQueryException(const std::string& message) : std::runtime_error(message) {}
+InvalidQueryException::InvalidQueryException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
 }// namespace NES

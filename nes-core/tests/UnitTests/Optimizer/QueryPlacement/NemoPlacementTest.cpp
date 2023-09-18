@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -24,7 +25,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -55,7 +55,7 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class NemoPlacementTest : public Testing::TestWithErrorHandling {
+class NemoPlacementTest : public Testing::BaseUnitTest {
   public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
@@ -73,7 +73,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup NemoPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -229,7 +229,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling {
 };
 
 /* Test query placement with bottom up strategy  */
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyNoMerge) {
+TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyNoMerge) {
     setupTopologyAndSourceCatalog(2, 10, 10);
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.enableNemoPlacement = true;
@@ -260,7 +260,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyNoMerge) {
 }
 
 /* Test query placement with bottom up strategy  */
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyMerge) {
+TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyMerge) {
     setupTopologyAndSourceCatalog(2, 10, 10);
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.enableNemoPlacement = true;
@@ -290,7 +290,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFlatTopologyMerge) {
     }
 }
 
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementThreeLevelsTopology) {
+TEST_F(NemoPlacementTest, testNemoPlacementThreeLevelsTopology) {
     setupTopologyAndSourceCatalog(3, 10, 10);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
@@ -330,7 +330,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementThreeLevelsTopology) {
     }
 }
 
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) {
+TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsSparseTopology) {
     setupTopologyAndSourceCatalog(4, 2, 1);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();
@@ -375,7 +375,7 @@ TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) {
     }
 }
 
-TEST_F(NemoPlacementTest, DISABLED_testNemoPlacementFourLevelsDenseTopology) {
+TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsDenseTopology) {
     setupTopologyAndSourceCatalog(4, 3, 3);
 
     auto optimizerConfig = Configurations::OptimizerConfiguration();

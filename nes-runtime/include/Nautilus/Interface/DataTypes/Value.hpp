@@ -13,7 +13,6 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
-#include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
@@ -23,6 +22,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
+#include <Nautilus/Util/Casting.hpp>
 #include <cstdint>
 #include <memory>
 #include <type_traits>
@@ -41,6 +41,59 @@ concept IsValueType = std::is_base_of<BaseValue, T>::value;
 
 template<class T>
 concept IsNotValueType = !std::is_base_of<BaseValue, T>::value;
+
+template<typename P>
+struct ValueForPrimitive;
+
+template<>
+struct ValueForPrimitive<int8_t> {
+    using type = Int8;
+};
+
+template<>
+struct ValueForPrimitive<int16_t> {
+    using type = Int16;
+};
+
+template<>
+struct ValueForPrimitive<int32_t> {
+    using type = Int32;
+};
+
+template<>
+struct ValueForPrimitive<int64_t> {
+    using type = Int64;
+};
+
+template<>
+struct ValueForPrimitive<uint8_t> {
+    using type = UInt8;
+};
+
+template<>
+struct ValueForPrimitive<uint16_t> {
+    using type = UInt16;
+};
+
+template<>
+struct ValueForPrimitive<uint32_t> {
+    using type = UInt32;
+};
+
+template<>
+struct ValueForPrimitive<uint64_t> {
+    using type = UInt64;
+};
+
+template<>
+struct ValueForPrimitive<float> {
+    using type = Float;
+};
+
+template<>
+struct ValueForPrimitive<double> {
+    using type = Double;
+};
 
 /**
  * @brief The Value class provides the elementary wrapper for any data value that inherits from Any.

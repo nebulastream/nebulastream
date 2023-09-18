@@ -34,7 +34,6 @@ class AvgAggregationFunction : public AggregationFunction {
 
   private:
     PhysicalTypePtr countType;
-
     Nautilus::Value<Nautilus::MemRef> loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref);
 };
 }// namespace NES::Runtime::Execution::Aggregation

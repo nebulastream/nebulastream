@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <NesBaseTest.hpp>
 #include <Spatial/DataTypes/Point.hpp>
 #include <Spatial/DataTypes/Rectangle.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -21,7 +21,7 @@
 
 namespace NES {
 
-class RectangleTest : public Testing::NESBaseTest {
+class RectangleTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RectangleTest.log", NES::LogLevel::LOG_DEBUG);

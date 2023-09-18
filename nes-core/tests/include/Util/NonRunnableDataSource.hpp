@@ -22,15 +22,17 @@ namespace NES::Testing {
 
 class NonRunnableDataSource : public NES::DefaultSource {
   public:
-    explicit NonRunnableDataSource(const SchemaPtr& schema,
-                                   const Runtime::BufferManagerPtr& bufferManager,
-                                   const Runtime::QueryManagerPtr& queryManager,
-                                   uint64_t numbersOfBufferToProduce,
-                                   uint64_t gatheringInterval,
-                                   OperatorId operatorId,
-                                   OriginId originId,
-                                   size_t numSourceLocalBuffers,
-                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+    explicit NonRunnableDataSource(
+        const SchemaPtr& schema,
+        const Runtime::BufferManagerPtr& bufferManager,
+        const Runtime::QueryManagerPtr& queryManager,
+        uint64_t numbersOfBufferToProduce,
+        uint64_t gatheringInterval,
+        OperatorId operatorId,
+        OriginId originId,
+        size_t numSourceLocalBuffers,
+        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+        NES::Runtime::QueryTerminationType terminationType = NES::Runtime::QueryTerminationType::HardStop);
 
     void runningRoutine() override;
 
@@ -46,13 +48,15 @@ class NonRunnableDataSource : public NES::DefaultSource {
     std::promise<bool> canTerminate;
 };
 
-DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
-                                      const Runtime::BufferManagerPtr& bufferManager,
-                                      const Runtime::QueryManagerPtr& queryManager,
-                                      OperatorId operatorId,
-                                      OriginId originId,
-                                      size_t numSourceLocalBuffers,
-                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+DataSourcePtr
+createNonRunnableSource(const SchemaPtr& schema,
+                        const Runtime::BufferManagerPtr& bufferManager,
+                        const Runtime::QueryManagerPtr& queryManager,
+                        OperatorId operatorId,
+                        OriginId originId,
+                        size_t numSourceLocalBuffers,
+                        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                        NES::Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 }// namespace NES::Testing
 
 #endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_

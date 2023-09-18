@@ -13,7 +13,7 @@
 */
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -31,7 +31,7 @@ using namespace NES;
 /*
  * This test checks for the correctness of the pattern queries created by the NESPL Parsing Service.
  */
-class PatternParsingServiceTest : public Testing::TestWithErrorHandling {
+class PatternParsingServiceTest : public Testing::BaseUnitTest {
 
   public:
     /* Will be called before a test is executed. */

@@ -15,7 +15,7 @@
 #include "Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp"
 #include "Operators/LogicalOperators/RenameSourceOperatorNode.hpp"
 #include <API/Query.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -31,7 +31,7 @@
 
 using namespace NES;
 
-class QueryPlanBuilderTest : public Testing::TestWithErrorHandling {
+class QueryPlanBuilderTest : public Testing::BaseUnitTest {
 
   public:
     /* Will be called before a test is executed. */

@@ -48,6 +48,9 @@ using FilterMergeRulePtr = std::shared_ptr<FilterMergeRule>;
 class FilterPushDownRule;
 using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
 
+class FilterSplitUpRule;
+using FilterSplitUpRulePtr = std::shared_ptr<FilterSplitUpRule>;
+
 class MapUDFsToOpenCLOperatorsRule;
 using MapUDFsToOpenCLOperatorsRulePtr = std::shared_ptr<MapUDFsToOpenCLOperatorsRule>;
 
@@ -86,6 +89,7 @@ class QueryRewritePhase {
     BinaryOperatorSortRulePtr binaryOperatorSortRule;
     FilterMergeRulePtr filterMergeRule;
     FilterPushDownRulePtr filterPushDownRule;
+    FilterSplitUpRulePtr filterSplitUpRule;
     RedundancyEliminationRulePtr redundancyEliminationRule;
     MapUDFsToOpenCLOperatorsRulePtr mapUDFsToOpenCLOperatorsRule;
     PredicateReorderingRulePtr predicateReorderingRule;

@@ -14,8 +14,8 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -41,7 +41,7 @@ namespace NES {
 using namespace NES::API;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class AddScanAndEmitPhaseTest : public Testing::NESBaseTest {
+class AddScanAndEmitPhaseTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AddScanAndEmitPhase.log", NES::LogLevel::LOG_DEBUG);

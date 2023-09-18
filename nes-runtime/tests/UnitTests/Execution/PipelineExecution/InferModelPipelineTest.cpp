@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -22,7 +23,6 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -33,7 +33,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class InferModelPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -47,7 +47,7 @@ class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipel
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup InferModelPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

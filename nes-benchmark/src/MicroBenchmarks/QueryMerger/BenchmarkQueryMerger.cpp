@@ -348,7 +348,7 @@ int main(int argc, const char* argv[]) {
                 for (uint64_t i = 1; i <= numOfQueries; i++) {
                     const QueryPlanPtr queryPlan = queryObjects[i - 1];
                     queryPlan->setQueryId(i);
-                    queryService->addQueryRequest(queries[i - 1], queryPlan, "TopDown");
+                    queryService->addQueryRequest(queries[i - 1], queryPlan, Optimizer::PlacementStrategy::TopDown);
                 }
 
                 //Fetch the last query for the query catalog

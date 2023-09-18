@@ -12,11 +12,11 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -49,7 +49,7 @@ namespace NES {
 /**
  * NOTE: this test requires a running kafka instance
  */
-class KafkaSourceTest : public Testing::NESBaseTest {
+class KafkaSourceTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -58,7 +58,7 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         kafkaSourceType = KafkaSourceType::create();
@@ -71,7 +71,7 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     /* Will be called after a test is executed. */
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
         NES_DEBUG("KAFKASOURCETEST::TearDown() Tear down MQTTSourceTest");
     }
 
@@ -136,7 +136,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          "defaultPhysicalStreamName",
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
-    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER(32 bits) ), BROKER(localhost:9092), TOPIC(sourceTest). "
+    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER(32 bits)), BROKER(localhost:9092), TOPIC(sourceTest). "
                            "OFFSETMODE(earliest). BATCHSIZE(1). ";
 
     EXPECT_EQ(kafkaSource->toString(), expected);
@@ -331,8 +331,10 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     NES_INFO("KAFKASOURCETEST: Submit query");
     string query =
         R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" + outputFilePath + R"("));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
@@ -413,8 +415,10 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);

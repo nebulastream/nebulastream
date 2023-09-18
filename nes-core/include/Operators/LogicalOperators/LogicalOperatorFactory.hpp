@@ -217,9 +217,8 @@ class LogicalOperatorFactory {
      * @param id The operator ID.
      * @return A logical operator node which encapsulates the Java UDF.
      */
-    static LogicalUnaryOperatorNodePtr
-    createMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor,
-                                    OperatorId id = Util::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
+                                                                   OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new FlatMapJavaUDFLogicalOperatorNode.
@@ -227,9 +226,8 @@ class LogicalOperatorFactory {
      * @param id The operator ID.
      * @return A logical operator node which encapsulates the Java UDF.
      */
-    static LogicalUnaryOperatorNodePtr
-    createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor,
-                                        OperatorId id = Util::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
+                                                                       OperatorId id = Util::getNextOperatorId());
 
     /**
      * @brief Create a new OpenCL logical operator

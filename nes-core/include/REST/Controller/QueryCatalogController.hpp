@@ -56,14 +56,13 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     QueryCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                           QueryCatalogServicePtr queryCatalogService,
-                           NesCoordinatorWeakPtr coordinator,
-                           GlobalQueryPlanPtr globalQueryPlan,
+                           const QueryCatalogServicePtr& queryCatalogService,
+                           const NesCoordinatorWeakPtr& coordinator,
+                           const GlobalQueryPlanPtr& globalQueryPlan,
                            const oatpp::String& completeRouterPrefix,
-                           ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          queryCatalogService(std::move(queryCatalogService)), coordinator(std::move(coordinator)),
-          globalQueryPlan(std::move(globalQueryPlan)), errorHandler(std::move(errorHandler)) {}
+                           const ErrorHandlerPtr& errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryCatalogService(queryCatalogService),
+          coordinator(coordinator), globalQueryPlan(globalQueryPlan), errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -75,11 +74,11 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     static std::shared_ptr<QueryCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                          QueryCatalogServicePtr queryCatalogService,
-                                                          NesCoordinatorWeakPtr coordinator,
-                                                          GlobalQueryPlanPtr globalQueryPlan,
-                                                          std::string routerPrefixAddition,
-                                                          ErrorHandlerPtr errorHandler) {
+                                                          const QueryCatalogServicePtr& queryCatalogService,
+                                                          const NesCoordinatorWeakPtr& coordinator,
+                                                          const GlobalQueryPlanPtr& globalQueryPlan,
+                                                          const std::string& routerPrefixAddition,
+                                                          const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<QueryCatalogController>(objectMapper,
                                                         queryCatalogService,

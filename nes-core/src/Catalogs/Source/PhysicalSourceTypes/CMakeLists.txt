@@ -28,4 +28,5 @@ add_source_files(nes-core
         StaticDataSourceType.cpp
         TCPSourceType.cpp
         LoRaWANProxySourceType.cpp
+        ArrowSourceType.cpp
 )

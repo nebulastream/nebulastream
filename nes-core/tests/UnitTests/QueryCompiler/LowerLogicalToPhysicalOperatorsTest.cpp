@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
@@ -34,6 +34,7 @@
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -43,8 +44,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
@@ -57,6 +58,7 @@
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Util/PythonUDFDescriptorBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -73,7 +75,7 @@ using namespace std;
 
 namespace NES {
 
-class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
+class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LogLevel::LOG_DEBUG);
@@ -81,7 +83,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
@@ -146,7 +148,11 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
         sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
         auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-        mapJavaUDFOp = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        mapJavaUDFOp = LogicalOperatorFactory::createMapUDFLogicalOperator(javaUDFDescriptor);
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+        auto pythonUDFDescriptor = Catalogs::UDF::PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
+        mapPythonUDFOp = LogicalOperatorFactory::createMapUDFLogicalOperator(pythonUDFDescriptor);
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
     }
 
   protected:
@@ -156,6 +162,9 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
     LogicalOperatorNodePtr sinkOp1, sinkOp2;
     LogicalOperatorNodePtr mapOp, mapJavaUDFOp;
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+    LogicalOperatorNodePtr mapPythonUDFOp;
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
     LogicalOperatorNodePtr projectPp;
     LogicalOperatorNodePtr iterationCEPOp;
     JoinLogicalOperatorNodePtr joinOp1;
@@ -747,10 +756,43 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUDFQuery) {
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapJavaUDFOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapUDFOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }
+
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Map Python Udf -- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Map Python Udf Operator --- Physical Source 1
+ *
+ */
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapPythonUDFQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(mapPythonUDFOp);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+
+    NES_DEBUG("{}", queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG("{}", queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapUDFOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
 
 /**
  * @brief Input Query Plan:

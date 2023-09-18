@@ -30,7 +30,7 @@ std::vector<Runtime::TupleBuffer> SmartGridDataGenerator::createData(size_t numb
 
     auto memoryLayout = getMemoryLayout(bufferSize);
     // read input file
-    std::ifstream file(std::string(TEST_DATA_DIRECTORY) + "/smartgrid/smartgrid-data.txt");
+    std::ifstream file(std::string(BENCHMARK_DATA_DIRECTORY) + "/smartgrid/smartgrid-data.txt");
     std::string line;
     std::vector<std::vector<std::string>> lines;
     while (std::getline(file, line)) {
@@ -71,6 +71,12 @@ SchemaPtr SmartGridDataGenerator::getSchema() {
         ->addField("plug", BasicType::INT16)
         ->addField("household", BasicType::INT16)
         ->addField("house", BasicType::INT16);
+}
+
+std::string SmartGridDataGenerator::toString() {
+    std::ostringstream oss;
+    oss << getName();
+    return oss.str();
 }
 
 }// namespace NES::Benchmark::DataGeneration

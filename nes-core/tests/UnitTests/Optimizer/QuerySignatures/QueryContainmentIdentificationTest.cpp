@@ -14,12 +14,12 @@
 
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -54,7 +54,7 @@ class QueryContainmentTestEntry {
     Optimizer::ContainmentType containmentType;
 };
 
-class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling,
+class QueryContainmentIdentificationTest : public Testing::BaseUnitTest,
                                            public testing::WithParamInterface<std::vector<QueryContainmentTestEntry>> {
 
   public:

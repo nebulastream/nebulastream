@@ -16,6 +16,7 @@
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/Identifiers.hpp>
@@ -24,8 +25,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
+#include <Util/StdInt.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <chrono>
 #include <fstream>
@@ -55,6 +58,49 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
  * @brief this is a util class for the tests
  */
 namespace TestUtils {
+
+/**
+ * @brief Struct for storing all csv file params for tests. It is solely a container for grouping csv files.
+ */
+struct CsvFileParams {
+    CsvFileParams(const string& csvFileLeft, const string& csvFileRight, const string& expectedFile)
+        : inputCsvFiles({csvFileLeft, csvFileRight}), expectedFile(expectedFile) {}
+
+    explicit CsvFileParams(const std::vector<std::string>& inputCsvFiles, const string& expectedFile = "")
+        : inputCsvFiles(inputCsvFiles), expectedFile(expectedFile) {}
+
+    const std::vector<std::string> inputCsvFiles;
+    const std::string expectedFile;
+};
+
+/**
+ * @brief Struct for storing all parameter for the join
+ */
+struct JoinParams {
+    JoinParams(const SchemaPtr& leftSchema,
+               const SchemaPtr& rightSchema,
+               const string& joinFieldNameLeft,
+               const std::string& joinFieldNameRight)
+        : JoinParams({leftSchema, rightSchema}, {joinFieldNameLeft, joinFieldNameRight}) {}
+
+    JoinParams(const std::vector<SchemaPtr>& inputSchemas, const std::vector<std::string>& joinFieldNames)
+        : inputSchemas(inputSchemas), joinFieldNames(joinFieldNames) {
+        NES_ASSERT(inputSchemas.size() >= 2, "JoinParams expect to have at least two input schemas");
+        outputSchema = Runtime::Execution::Util::createJoinSchema(inputSchemas[0], inputSchemas[1], joinFieldNames[0]);
+
+        if (inputSchemas.size() > 2) {
+            auto cnt = 0_u64;
+            for (auto it = inputSchemas.begin() + 2; it != inputSchemas.end(); ++it) {
+                outputSchema = Runtime::Execution::Util::createJoinSchema(outputSchema, *it, joinFieldNames[0]);
+                cnt++;
+            }
+        }
+    }
+
+    std::vector<SchemaPtr> inputSchemas;
+    SchemaPtr outputSchema;
+    const std::vector<std::string> joinFieldNames;
+};
 
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
@@ -239,6 +285,13 @@ template<typename T>
  */
 [[nodiscard]] std::string enableMonitoring(bool prefix = false);
 
+/**
+ * @brief Creates the command line argument if to set monitoring wait time
+ * @param prefix
+ * @return Command line argument
+ */
+[[nodiscard]] std::string monitoringWaitTime(uint64_t monitoringWaitTime);
+
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization();
 
@@ -263,17 +316,23 @@ template<typename T>
 [[nodiscard]] std::string setDistributedWindowCombinerThreshold(uint64_t val);
 
 /**
- * @brief Creates the command line argument if to enable thread local windowing
+ * @brief Creates the command line argument if to enable slicing windowing
  * @param prefix
  * @return Command line argument
  */
-[[nodiscard]] std::string enableThreadLocalWindowing(bool prefix = false);
+[[nodiscard]] std::string enableSlicingWindowing(bool prefix = false);
 
 /**
  * @brief Enables the usage of Nautilus
  * @return Command line argument
  */
-std::string enableNautilus();
+[[nodiscard]] std::string enableNautilusWorker();
+
+/**
+ * @brief Enables the usage of Nautilus at the coordinator
+ * @return Command line argument
+ */
+[[nodiscard]] std::string enableNautilusCoordinator();
 
 /**
  * @brief start a new instance of a nes coordinator with a set of configuration flags
@@ -559,7 +618,7 @@ template<typename T>
  * @param schemaSizeInByte
  * @return True if the buffers contain the same tuples
  */
-bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
+bool checkIfBuffersContainTheSameTuples(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
 
 /**
  * @brief Check if a outputfile is created
@@ -656,7 +715,7 @@ std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileNa
                                                     const Runtime::BufferManagerPtr& bufferManager,
                                                     uint64_t numTuplesPerBuffer = 0,
                                                     const std::string& delimiter = ",");
-                                                    
+
 /**
  * @brief Fills the buffer from a stream
  * @param csvFileName
@@ -679,8 +738,8 @@ std::vector<Runtime::TupleBuffer> fillBufferFromStream(std::istream& istream,
  * @param endPtr
  * @return Vector for the memory [startPtr, endPtr]
  */
-template <typename T>
-inline  std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
+template<typename T>
+inline std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
     return std::vector<T>(startPtr, endPtr);
 }
 
@@ -691,7 +750,7 @@ inline  std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
  * @param numItems
  * @return Vector for the memory [startPtr, startPtr + numItems]
  */
-template <typename T>
+template<typename T>
 inline std::vector<T> createVecFromPointer(T* startPtr, uint64_t numItems) {
     return createVecFromPointer<T>(startPtr, startPtr + numItems);
 }
@@ -703,14 +762,19 @@ inline std::vector<T> createVecFromPointer(T* startPtr, uint64_t numItems) {
  * @param numItems
  * @return Vector
  */
-template <typename T>
+template<typename T>
 inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
     return createVecFromPointer<T>(buffer.getBuffer<T>(), buffer.getBuffer<T>() + buffer.getNumberOfTuples());
 }
 
+/**
+ * @brief Creates a csv source that produces as many buffers as the csv file contains
+ * @param fileName
+ * @return CSVSourceTypePtr
+ */
+CSVSourceTypePtr createSourceConfig(const std::string& fileName);
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
-
 };// namespace TestUtils
 
 class DummyQueryListener : public AbstractQueryStatusListener {
@@ -738,6 +802,16 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
  * @param waypoints a vector of waypoints to be written to the file
  */
 void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints);
+
+/**
+ * This function counts the number of times the search string appears within the
+ * target string. It uses the std::string::find() method to locate occurrences.
+ *
+ * @param searchString The string to search for.
+ * @param targetString The string in which to search for occurrences.
+ * @return The number of occurrences of the search string within the target string.
+ */
+uint64_t countOccurrences(const std::string& searchString, const std::string& targetString);
 
 }// namespace NES
 #endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_

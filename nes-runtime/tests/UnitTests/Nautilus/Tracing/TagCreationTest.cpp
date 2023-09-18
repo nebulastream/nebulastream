@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/Exceptions/TagCreationException.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -23,7 +23,7 @@
 
 namespace NES::Nautilus::Tracing {
 
-class TagCreationTest : public Testing::NESBaseTest {
+class TagCreationTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

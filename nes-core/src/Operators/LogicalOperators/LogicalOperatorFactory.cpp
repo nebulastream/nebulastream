@@ -17,13 +17,13 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -138,15 +138,13 @@ LogicalOperatorFactory::createCEPIterationOperator(const uint64_t minIterations,
 }
 
 LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                                                        OperatorId id) {
-    return std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, id);
+LogicalOperatorFactory::createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id) {
+    return std::make_shared<MapUDFLogicalOperatorNode>(udfDescriptor, id);
 }
 
 LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                                                            OperatorId id) {
-    return std::make_shared<FlatMapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, id);
+LogicalOperatorFactory::createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id) {
+    return std::make_shared<FlatMapUDFLogicalOperatorNode>(udfDescriptor, id);
 }
 
 LogicalUnaryOperatorNodePtr

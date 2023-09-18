@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 
-#include <API/Schema.hpp>
 #include <Catalogs/UDF/UDFDescriptor.hpp>
 #include <memory>
 #include <string>
@@ -122,33 +121,6 @@ class JavaUDFDescriptor : public UDFDescriptor {
     const jni::JavaUDFByteCodeList& getByteCodeList() const { return byteCodeList; }
 
     /**
-     * @brief Return the output schema of the map UDF operation.
-     *
-     * The output schema must correspond to the return type of the UDF method.
-     *
-     * @return A SchemaPtr instance describing the output schema of the UDF method.
-     */
-    const SchemaPtr& getOutputSchema() const { return outputSchema; }
-
-    /**
-     * @brief Return the input schema of the map UDF operation.
-     *
-     * The input schema must correspond to the input type of the UDF method.
-     *
-     * @return A SchemaPtr instance describing the input schema of the UDF method.
-     */
-    const SchemaPtr& getInputSchema() const { return inputSchema; }
-
-    /**
-     * @brief Set the input schema of the map UDF operation.
-     *
-     * The input schema must correspond to the input type of the UDF method.
-     *
-     * @param inputSchema A SchemaPtr instance describing the input schema of the UDF method.
-     */
-    void setInputSchema(const SchemaPtr& inputSchema);
-
-    /**
      * @brief Return the fully-qualified class name of the input type of the UDF method.
      * @return Fully-qualified class name of the input type of the UDF method.
      */
@@ -159,6 +131,12 @@ class JavaUDFDescriptor : public UDFDescriptor {
      * @return Fully-qualified class name of the return type of the UDF method.
      */
     const std::string& getOutputClassName() const { return outputClassName; }
+
+    /**
+     * @brief Generates the infer string signature required for the logical operator
+     * @return the infer string signature stream
+     */
+    std::stringstream generateInferStringSignature() override;
 
     /**
      * Compare to Java UDF descriptors.
@@ -173,8 +151,6 @@ class JavaUDFDescriptor : public UDFDescriptor {
     const std::string className;
     const jni::JavaSerializedInstance serializedInstance;
     const jni::JavaUDFByteCodeList byteCodeList;
-    SchemaPtr inputSchema;
-    const SchemaPtr outputSchema;
     const std::string inputClassName;
     const std::string outputClassName;
 };

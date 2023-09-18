@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -21,7 +22,6 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -31,7 +31,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class SourceCatalogRemoteTest : public Testing::NESBaseTest {
+class SourceCatalogRemoteTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SourceCatalogRemoteTest.log", NES::LogLevel::LOG_DEBUG);
@@ -87,9 +87,8 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                         "\"value\", BasicType::UINT64);";
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
@@ -130,9 +129,8 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                         "\"value\", BasicType::UINT64);";
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
@@ -175,9 +173,8 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                         "\"value\", BasicType::UINT64);";
-    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", schema);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");

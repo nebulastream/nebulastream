@@ -35,6 +35,12 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+class Topology;
+using TopologyPtr = std::shared_ptr<Topology>;
+
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
@@ -56,9 +62,10 @@ class GlobalQueryPlan {
     /**
      * @brief Add query plan to the collection of query plans to be merged
      * @param queryPlan : new query plan to be merged.
-     * @return: true if successful else false
+     * @throws: QueryNotFoundException if the given query plan's id was invalid; GlobalQueryPlanUpdateException if the given
+     * query plan was already added
      */
-    bool addQueryPlan(const QueryPlanPtr& queryPlan);
+    void addQueryPlan(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Create a new shared query plan using the input query plan
@@ -71,6 +78,8 @@ class GlobalQueryPlan {
      * @brief remove the operators belonging to the query with input query Id from the global query plan
      * @param queryId: the id of the query whose operators need to be removed
      * @param requestType: request type for query removal
+     * todo: #3821 create specific exception for this case
+     * @throws RuntimeException: "GlobalQueryPlan: Unable to remove query with id {queryId} from shared query plan with id {sharedQueryId}
      */
     void removeQuery(QueryId queryId, RequestType requestType);
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>//
 
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -35,7 +35,8 @@ namespace NES {
 
 using namespace Configurations;
 
-class UnionDeploymentTest : public Testing::NESBaseTest {
+// Todo: #4069 addresses re-writing this test using the TestHarness
+class UnionDeploymentTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UnionDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
@@ -50,6 +51,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -64,6 +67,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
@@ -76,6 +81,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
+    workerConfig2->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
@@ -94,8 +101,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("UnionDeploymentTest: Submit query");
     string query =
         R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -106,86 +115,67 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "car$id:INTEGER(32 bits),car$value:INTEGER(64 bits)\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
 
     NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): content={}", content);
     NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): expContent={}", expectedContent);
@@ -216,6 +206,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -234,6 +226,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -242,6 +236,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
+    workerConfig2->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
@@ -260,8 +256,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("UnionDeploymentTest: Submit query");
     string query =
         R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::TopDown,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -272,86 +270,67 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "car$id:INTEGER(32 bits),car$value:INTEGER(64 bits)\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
 
     NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content={}", content);
     NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent={}", expectedContent);
@@ -382,6 +361,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -396,6 +377,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
@@ -408,6 +391,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
+    workerConfig2->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
@@ -425,8 +410,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_INFO("UnionDeploymentTest: Submit query");
     string query =
         R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::TopDown,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -437,86 +424,67 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "car$id:INTEGER(32 bits),car$value:INTEGER(64 bits)\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
 
     NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content={}", content);
     NES_INFO("UnionDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent={}", expectedContent);
@@ -547,6 +515,8 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -561,6 +531,8 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("car", "physical_car", defaultSourceType1);
@@ -573,6 +545,8 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
+    workerConfig2->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
     defaultSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", defaultSourceType2);
@@ -591,8 +565,10 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NES_INFO("UnionDeploymentTest: Submit query");
     string query =
         R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::TopDown,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     cout << "queryid=" << queryId << endl;
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -620,6 +596,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -635,6 +613,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
@@ -648,6 +628,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
+    workerConfig2->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
@@ -677,8 +659,10 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\"));";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -773,6 +757,8 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -793,6 +779,8 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -806,6 +794,8 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
     workerConfig2->physicalSources.add(physicalSource2);
+    workerConfig2->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -827,8 +817,10 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\"));";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -893,6 +885,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -909,6 +903,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
@@ -927,6 +923,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
     workerConfig2->physicalSources.add(physicalSource2);
+    workerConfig2->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -949,8 +947,10 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\"));";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

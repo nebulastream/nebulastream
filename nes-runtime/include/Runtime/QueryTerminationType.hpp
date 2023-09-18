@@ -40,10 +40,10 @@ template<>
 struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string> {
     auto format(const NES::Runtime::QueryTerminationType& termination_type, format_context& ctx) -> decltype(ctx.out()) {
         switch (termination_type) {
-            case NES::Runtime::QueryTerminationType::Graceful: return format_to(ctx.out(), "Graceful");
-            case NES::Runtime::QueryTerminationType::HardStop: return format_to(ctx.out(), "HardStop");
-            case NES::Runtime::QueryTerminationType::Failure: return format_to(ctx.out(), "Failure");
-            default: return format_to(ctx.out(), "Invalid");
+            case NES::Runtime::QueryTerminationType::Graceful: return fmt::format_to(ctx.out(), "Graceful");
+            case NES::Runtime::QueryTerminationType::HardStop: return fmt::format_to(ctx.out(), "HardStop");
+            case NES::Runtime::QueryTerminationType::Failure: return fmt::format_to(ctx.out(), "Failure");
+            default: return fmt::format_to(ctx.out(), "Invalid");
         }
     }
 };

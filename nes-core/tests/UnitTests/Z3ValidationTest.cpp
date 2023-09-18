@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -20,7 +20,7 @@
 
 using namespace z3;
 namespace NES {
-class Z3ValidationTest : public Testing::TestWithErrorHandling {
+class Z3ValidationTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Z3ValidationTest.log", NES::LogLevel::LOG_DEBUG);

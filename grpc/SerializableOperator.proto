@@ -165,6 +165,16 @@ message SerializablePhysicalSourceType{
     uint64 waitTime = 2;
   }
 
+  /**
+  The serializable wrapper for the csv source config object
+  */
+  message SerializableArrowSourceType{
+    string filePath = 1;
+    uint32 numberOfBuffersToProduce = 2;
+    uint32 numberOfTuplesToProducePerBuffer = 3;
+    uint32 sourceGatheringInterval = 4;
+  }
+
   google.protobuf.Any specificPhysicalSourceType = 2;
 }
 
@@ -261,6 +271,12 @@ message SerializableOperator{
       uint64 waitTime = 2;
     }
 
+    message SerializableArrowSourceDescriptor {
+      SerializablePhysicalSourceType physicalSourceType = 1;
+      SerializableSchema sourceSchema = 2;
+    }
+
+
     google.protobuf.Any sourceDescriptor = 1;
     uint64 sourceOriginId = 2;
   }
@@ -273,6 +289,7 @@ message SerializableOperator{
       string filePath = 1;
       bool append = 2;
       string sinkFormat = 3;
+      bool addTimestamp = 4;
     }
 
     message SerializableKafkaSinkDescriptor {

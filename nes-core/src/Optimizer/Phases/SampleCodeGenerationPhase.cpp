@@ -12,27 +12,129 @@
     limitations under the License.
 */
 
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Listeners/QueryStatusListener.hpp>
+#include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
+#include <Nodes/Util/DumpContext.hpp>
+#include <Nodes/Util/VizDumpHandler.hpp>
 #include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
+#include <QueryCompiler/Operators/ExecutableOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
+#include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
+#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
+#include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
+#include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <memory>
+
+namespace NES::QueryCompilation {
+
+class SampleCPPCodeGenerator : public NautilusQueryCompiler {
+  public:
+    SampleCPPCodeGenerator(QueryCompilerOptionsPtr const& options,
+                           Phases::PhaseFactoryPtr const& phaseFactory,
+                           bool sourceSharing)
+        : NautilusQueryCompiler(options, phaseFactory, sourceSharing) {}
+
+    QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override {
+        NES_INFO("Compile Query with Nautilus");
+        try {
+            Timer timer("DefaultQueryCompiler");
+            auto queryId = request->getQueryPlan()->getQueryId();
+            auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
+            auto query = std::to_string(queryId) + "-" + std::to_string(subPlanId);
+            // create new context for handling debug output
+            auto dumpContext = DumpContext::create("QueryCompilation-" + query);
+
+            timer.start();
+            NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
+            auto inputPlan = request->getQueryPlan();
+            auto logicalQueryPlan = inputPlan->copy();
+            dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
+            timer.snapshot("LogicalQueryPlan");
+
+            auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
+            dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
+            timer.snapshot("PhysicalQueryPlan");
+
+            auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
+            dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
+            timer.snapshot("AfterPipelinedQueryPlan");
+
+            addScanAndEmitPhase->apply(pipelinedQueryPlan);
+            dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
+            timer.snapshot("AfterAddScanAndEmitPhase");
+
+            // dummy buffer size to create the nautilus operators
+            size_t bufferSize = 1024 * 1024;
+            pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
+            timer.snapshot("AfterToNautilusPlanPhase");
+
+            pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
+            timer.snapshot("AfterNautilusCompilationPhase");
+
+            for (auto& pipe : pipelinedQueryPlan->getPipelines()) {
+                if (pipe->getQueryPlan()->getRootOperators()[0]->instanceOf<QueryCompilation::ExecutableOperator>()) {
+                    auto executableOperator =
+                        pipe->getQueryPlan()->getRootOperators()[0]->as<QueryCompilation::ExecutableOperator>();
+                    NES_DEBUG("executable pipeline id {}", pipe->getPipelineId());
+                    auto stage = executableOperator->getExecutablePipelineStage();
+                    auto cStage = std::dynamic_pointer_cast<Runtime::Execution::CompiledExecutablePipelineStage>(stage);
+                    auto dumpHelper = DumpHelper::create("", false, false);
+                    Timer timer("");
+                    auto ir = cStage->createIR(dumpHelper, timer);
+                    auto lp = Nautilus::Backends::CPP::CPPLoweringProvider();
+                    auto pipelineCPPSourceCode = lp.lower(ir);
+                    auto& operatorsInPipeline = pipe->getOperatorIds();
+                    for (auto& operatorId : operatorsInPipeline) {
+                        auto op = inputPlan->getOperatorWithId(operatorId);
+                        if (op) {
+                            op->addProperty("code", pipelineCPPSourceCode);
+                        }
+                    }
+                }
+            }
+            return nullptr;
+        } catch (const QueryCompilationException& exception) {
+            auto currentException = std::current_exception();
+            return QueryCompilationResult::create(currentException);
+        }
+    }
+};
+};// namespace NES::QueryCompilation
 
 namespace NES::Optimizer {
 
 SampleCodeGenerationPhase::SampleCodeGenerationPhase() {
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-    queryCompiler = QueryCompilation::NautilusQueryCompiler::create(queryCompilationOptions, phaseFactory, false);
+    queryCompiler = std::make_shared<QueryCompilation::SampleCPPCodeGenerator>(queryCompilationOptions, phaseFactory, false);
 }
 
 SampleCodeGenerationPhasePtr SampleCodeGenerationPhase::create() {
     return std::make_shared<SampleCodeGenerationPhase>(SampleCodeGenerationPhase());
 }
 
-QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr&) {
-    //TODO: add logic as part of the issue #3890
-    NES_NOT_IMPLEMENTED();
+QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& plan) {
+    // use query compiler to generate operator code
+    // we append a property to "code" some operators
+    auto request = QueryCompilation::QueryCompilationRequest::create(plan, nullptr);
+    request->enableDump();
+    queryCompiler->compileQuery(request);
+    return plan;
 }
 
 }// namespace NES::Optimizer

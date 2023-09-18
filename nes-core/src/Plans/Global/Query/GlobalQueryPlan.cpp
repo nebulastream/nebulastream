@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
@@ -27,20 +29,19 @@ GlobalQueryPlan::GlobalQueryPlan() = default;
 
 GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan()); }
 
-bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
+void GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     QueryId inputQueryPlanId = queryPlan->getQueryId();
     if (inputQueryPlanId == INVALID_QUERY_ID) {
-        throw Exceptions::RuntimeException("GlobalQueryPlan: Can not add query plan with invalid id.");
+        throw Exceptions::QueryNotFoundException("GlobalQueryPlan: Can not add query plan with invalid id.");
     }
     if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
-        throw Exceptions::RuntimeException("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId)
-                                           + " already present.");
+        throw GlobalQueryPlanUpdateException("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId)
+                                             + " already present.");
     }
     queryPlansToAdd.emplace_back(queryPlan);
-    return true;
 }
 
-void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
+void GlobalQueryPlan::removeQuery(uint64_t queryId, RequestType requestType) {
     NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
 
     if (RequestType::FailQuery == requestType) {
@@ -55,6 +56,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
             SharedQueryId sharedQueryId = queryIdToSharedQueryIdMap[queryId];
             SharedQueryPlanPtr sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryId];
             if (!sharedQueryPlan->removeQuery(queryId)) {
+                //todo: #3821 create specific exception for this case
                 throw Exceptions::RuntimeException("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
                                                    + " from shared query plan with id " + std::to_string(sharedQueryId));
             }

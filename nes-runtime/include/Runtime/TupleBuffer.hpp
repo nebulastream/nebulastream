@@ -97,9 +97,9 @@ class TupleBuffer {
      * @brief Creates a TupleBuffer of length bytes starting at ptr address.
      *
      * @param ptr    resource's address.
-     * @param lenght the size of the allocated memory.
+     * @param length the size of the allocated memory.
      * @param parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed,
-     *               which is the caller's responsability.
+     *               which is the caller's responsibility.
      *
      */
     [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
@@ -107,6 +107,21 @@ class TupleBuffer {
     wrapMemory(uint8_t* ptr,
                size_t length,
                std::function<void(detail::MemorySegment* segment, BufferRecycler* recycler)>&& recycler);
+
+    /**
+     * Wrap an object in a tuple buffer.
+     * The tuple buffer retrieves ownership and frees the object when the buffer is released.
+     * @param ownership to object
+     * @return TupleBuffer
+     */
+    template<class T>
+    [[nodiscard]] static TupleBuffer wrapPtr(std::unique_ptr<T> object) {
+        return wrapMemory((uint8_t*) object.release(),
+                          sizeof(typename std::unique_ptr<T>::pointer),
+                          [](detail::MemorySegment* segment, BufferRecycler*) {
+                              delete (typename std::unique_ptr<T>::pointer)(segment->getPointer());
+                          });
+    }
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] constexpr TupleBuffer(TupleBuffer const& other) noexcept
@@ -292,6 +307,20 @@ class TupleBuffer {
  * @param bufferPointer pointer to the data region of an buffer.
  */
 [[maybe_unused]] bool recycleTupleBuffer(void* bufferPointer);
+
+/**
+ * @brief Allocates an object of T in the tuple buffer.
+ * Set the number of tuples to one.
+ * @tparam T
+ * @param buffer
+ * @return T+
+ */
+template<typename T>
+T* allocateWithin(TupleBuffer& buffer) {
+    auto ptr = new (buffer.getBuffer()) T();
+    buffer.setNumberOfTuples(1);
+    return ptr;
+};
 
 }// namespace NES::Runtime
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_

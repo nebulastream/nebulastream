@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Util/CircularBuffer.hpp>
@@ -20,7 +20,7 @@
 
 namespace NES {
 
-class CircularBufferTest : public Testing::NESBaseTest {
+class CircularBufferTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

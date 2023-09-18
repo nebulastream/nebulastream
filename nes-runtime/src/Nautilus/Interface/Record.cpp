@@ -24,16 +24,17 @@ Record::Record() {}
 Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::move(fields)) {}
 
 Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
-    auto fieldValue = fields.find(fieldIdentifier);
-    if (fieldValue == fields.end()) {
+    auto fieldsMapIterator = fields.find(fieldIdentifier);
+    if (fieldsMapIterator == fields.end()) {
         std::stringstream ss;
         std::for_each(fields.begin(), fields.end(), [&ss](const auto& entry) {
             ss << entry.first;
             ss << ", ";
         });
         throw InterpreterException("Could not find field: fieldIdentifier = " + fieldIdentifier + "; known fields = " + ss.str());
+    } else {
+        return fieldsMapIterator->second;
     }
-    return fieldValue->second;
 }
 
 uint64_t Record::numberOfFields() { return fields.size(); }

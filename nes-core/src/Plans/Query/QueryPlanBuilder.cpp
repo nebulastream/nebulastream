@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Catalogs/UDF/UDFDescriptor.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
@@ -78,18 +78,17 @@ QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, NES::QueryPlanPtr 
     return queryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
-                                                  NES::QueryPlanPtr queryPlan) {
+NES::QueryPlanPtr QueryPlanBuilder::addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add map java udf operator to query plan");
-    auto op = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(descriptor);
+    auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addFlatMapJavaUDF(Catalogs::UDF::JavaUDFDescriptorPtr const& descriptor,
-                                                      NES::QueryPlanPtr queryPlan) {
+NES::QueryPlanPtr QueryPlanBuilder::addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor,
+                                                  NES::QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add flat map java udf operator to query plan");
-    auto op = LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(descriptor);
+    auto op = LogicalOperatorFactory::createFlatMapUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

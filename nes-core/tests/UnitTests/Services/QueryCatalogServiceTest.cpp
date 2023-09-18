@@ -13,11 +13,11 @@
 */
 
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -33,7 +33,7 @@ using namespace Catalogs::Query;
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
 
-class QueryCatalogServiceTest : public Testing::TestWithErrorHandling {
+class QueryCatalogServiceTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 
@@ -45,7 +45,7 @@ class QueryCatalogServiceTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         NES_DEBUG("Setup QueryCatalogServiceTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
@@ -64,7 +64,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQuery) {
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -83,7 +83,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewPattern) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -104,7 +104,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryAndStop) {
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -136,7 +136,7 @@ TEST_F(QueryCatalogServiceTest, testPrintQuery) {
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     QueryCatalogServicePtr queryServiceCatalog = std::make_shared<QueryCatalogService>(queryCatalog);
 
-    auto catalogEntry = queryServiceCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryServiceCatalog->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -153,7 +153,7 @@ TEST_F(QueryCatalogServiceTest, testAddNewQueryWithMultipleSinks) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -182,7 +182,7 @@ TEST_F(QueryCatalogServiceTest, getAllQueriesAfterQueryRegistration) {
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -202,7 +202,7 @@ TEST_F(QueryCatalogServiceTest, getAllRunningQueries) {
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    queryCatalogService->createNewEntry(queryString, queryPlan, Optimizer::PlacementStrategy::BottomUp);
     queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
 
     //Assert

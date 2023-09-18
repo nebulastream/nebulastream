@@ -38,6 +38,10 @@ std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions() { retur
 
 std::string PhysicalProjectOperator::toString() const { return "PhysicalProjectOperator"; }
 
-OperatorNodePtr PhysicalProjectOperator::copy() { return create(id, inputSchema, outputSchema, getExpressions()); }
+OperatorNodePtr PhysicalProjectOperator::copy() {
+    auto result = create(id, inputSchema, outputSchema, getExpressions());
+    result->addAllProperties(properties);
+    return result;
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

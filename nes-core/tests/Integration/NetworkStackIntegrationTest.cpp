@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -21,7 +22,6 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -40,6 +40,7 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -76,7 +77,7 @@ static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 
 namespace Network {
-class NetworkStackIntegrationTest : public Testing::NESBaseTest {
+class NetworkStackIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
@@ -86,9 +87,9 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
     }
 
     void SetUp() {
-        Testing::NESBaseTest::SetUp();
-        dataPort1 = Testing::NESBaseTest::getAvailablePort();
-        dataPort2 = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort1 = Testing::BaseIntegrationTest::getAvailablePort();
+        dataPort2 = Testing::BaseIntegrationTest::getAvailablePort();
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
@@ -96,7 +97,7 @@ class NetworkStackIntegrationTest : public Testing::NESBaseTest {
     void TearDown() {
         dataPort1.reset();
         dataPort2.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     static void TearDownTestCase() { NES_INFO("TearDownTestCase NetworkStackIntegrationTest."); }
@@ -274,6 +275,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::make_shared<DummyQueryListener>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<NES::Runtime::OpenCLManager>(),
                          0,
                          64,
                          64,
@@ -450,6 +452,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::make_shared<DummyQueryListener>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
+                         std::make_shared<NES::Runtime::OpenCLManager>(),
                          0,
                          64,
                          64,
@@ -699,7 +702,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         // create NetworkSink
         auto networkSourceDescriptor1 = std::make_shared<TestUtils::TestSourceDescriptor>(
             schema,
-            [&](OperatorId,
+            [&](SchemaPtr schema,
+                OperatorId,
                 OriginId,
                 const SourceDescriptorPtr&,
                 const Runtime::NodeEnginePtr&,
@@ -736,7 +740,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         // creating query plan
         auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
             schema,
-            [&](OperatorId,
+            [&](SchemaPtr schema,
+                OperatorId,
                 OriginId,
                 const SourceDescriptorPtr&,
                 const Runtime::NodeEnginePtr&,
@@ -985,7 +990,8 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     auto networkSourceDescriptor1 = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,
-        [&](OperatorId,
+        [&](SchemaPtr schema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -1098,7 +1104,8 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,
-        [&](OperatorId,
+        [&](SchemaPtr schema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,

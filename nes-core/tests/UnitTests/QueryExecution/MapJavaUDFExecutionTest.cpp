@@ -14,8 +14,8 @@
 
 #ifdef ENABLE_JNI
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/JNI/JNIUtils.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -32,7 +32,7 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
+class MapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapJavaUDFQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -40,7 +40,7 @@ class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
             dumpMode);
@@ -48,7 +48,7 @@ class MapJavaUDFQueryExecutionTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseUnitTest::TearDown();
         NES_DEBUG("QueryExecutionTest: Tear down MapJavaUDFQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
     }
@@ -144,7 +144,7 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
                                  .setOutputClassName("java.lang.Integer")
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor).mapJavaUDF(javaUDFDescriptor).sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).mapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);

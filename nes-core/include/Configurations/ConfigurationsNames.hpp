@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <string>
-
 #ifndef NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
 #define NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
+#include <cstdint>
+#include <string>
+
 namespace NES::Configurations {
 /**
  * @brief input format enum gives information whether a JSON or CSV was used to transfer data
@@ -45,6 +46,10 @@ const std::string NUMBER_OF_BUFFERS_PER_WORKER_CONFIG = "numberOfBuffersPerWorke
 const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG = "numberOfBuffersInSourceLocalBufferPool";
 const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
 const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
+const std::string MONITORING_WAIT_TIME = "monitoringWaitTime";
+const std::string ENABLE_NEW_REQUEST_EXECUTOR_CONFIG = "enableNewRequestExecutor";
+const std::string REQUEST_EXECUTOR_THREAD_CONFIG = "numOfRequestExecutorThread";
+const std::string STORAGE_HANDLER_TYPE_CONFIG = "storageHandlerType";
 const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 
@@ -139,6 +144,7 @@ const std::string OPC_SOURCE_CONFIG = "OPCSource";
 const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
 const std::string MATERIALIZEDVIEW_SOURCE_CONFIG = "MaterializedViewSource";
 const std::string TCP_SOURCE_CONFIG = "TCPSource";
+const std::string ARROW_SOURCE_CONFIG = "ArrowSource";
 const std::string LORAWAN_SOURCE_CONFIG = "LoRaWANSource";
 
 const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
@@ -192,6 +198,7 @@ const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
 
+//Runtime configuration
 //LoRaWANSourceType configs
 const std::string LORAWAN_NETWORK_STACK_CONFIG = "networkStack";
 const std::string LORAWAN_APP_ID_CONFIG = "appId";

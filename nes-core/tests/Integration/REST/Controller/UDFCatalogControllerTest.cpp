@@ -13,8 +13,8 @@
 */
 
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
@@ -34,7 +34,7 @@ using namespace NES::Catalogs;
 using namespace google::protobuf;
 using namespace oatpp::web::protocol::http;
 
-class UDFCatalogControllerTest : public Testing::NESBaseTest {
+class UDFCatalogControllerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConnectivityControllerTest.log", NES::LogLevel::LOG_DEBUG);

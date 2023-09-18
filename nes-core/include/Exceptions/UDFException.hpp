@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
 
+#include <Exceptions/RequestExecutionException.hpp>
 #include <Exceptions/RuntimeException.hpp>
 
 #include <string>
@@ -24,7 +25,7 @@ namespace NES {
 /**
  * @brief This exception is thrown when an error occurs during UDF processing.
  */
-class UDFException : public Exceptions::RuntimeException {
+class UDFException : public Exceptions::RequestExecutionException {
   public:
     /**
      * @brief Construct a UDF exception from a message and include the current stack trace.

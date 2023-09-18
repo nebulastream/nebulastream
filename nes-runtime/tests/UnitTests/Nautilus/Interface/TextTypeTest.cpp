@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -23,7 +24,7 @@
 #include <memory>
 namespace NES::Nautilus {
 
-class TextTypeTest : public Testing::NESBaseTest {
+class TextTypeTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -33,9 +34,9 @@ class TextTypeTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
+        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
         NES_DEBUG("Setup TextTypeTest test case.")
     }
 
@@ -225,6 +226,23 @@ TEST_F(TextTypeTest, likeTestFalse) {
     auto likeResult = likeTest1->like(likeTest2, caseSensitiveFlag);
     EXPECT_EQ(likeResult, (Boolean) false);
     EXPECT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
+}
+
+TEST_F(TextTypeTest, extractStringValueFromTupleBuffer) {
+    // Create a tupleBuffer with a string that is 10 chars long
+    const char* buf = "1234567890";
+    auto tupleBuffer = bm->getBufferBlocking();
+    *tupleBuffer.getBuffer<uint32_t>() = std::strlen(buf) + 1;
+    std::strncpy(tupleBuffer.getBuffer<char>() + sizeof(uint32_t), buf, std::strlen(buf) + 1);
+    // Create a text value from this string that's only 5 chars long
+    auto textValue = NES::Nautilus::TextValue::create(tupleBuffer, 5_u32);
+    // Call strn_copy to create a null terminated string of the text value.
+    const char* expected = "12345";
+    auto actual = textValue->strn_copy();
+    NES_DEBUG("expected = {}, actual = {}", expected, actual);
+    EXPECT_EQ(strcmp(expected, actual.data()), 0);
+    // call the destructor on the text value to free the underling tuple buffer.
+    textValue->~TextValue();
 }
 
 }// namespace NES::Nautilus

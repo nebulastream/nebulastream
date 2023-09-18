@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -25,7 +26,6 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -54,7 +54,7 @@
 
 namespace NES {
 
-class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling {
+class GlobalQueryPlanUpdatePhaseTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
@@ -71,7 +71,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
@@ -165,8 +165,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
                                                                coordinatorConfig,
                                                                udfCatalog,
                                                                globalExecutionPlan);
-    auto catalogEntry1 =
-        Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryState::OPTIMIZING);
+    auto catalogEntry1 = Catalogs::Query::QueryCatalogEntry(INVALID_QUERY_ID,
+                                                            "",
+                                                            Optimizer::PlacementStrategy::TopDown,
+                                                            q1.getQueryPlan(),
+                                                            QueryState::OPTIMIZING);
     auto request = AddQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
@@ -183,7 +186,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
@@ -222,7 +225,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQ
     const auto* queryString = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
@@ -260,8 +263,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto* queryString2 = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
-    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
-    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     const auto globalQueryPlan = GlobalQueryPlan::create();
@@ -306,7 +309,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     int queryId = 1;
     q1.getQueryPlan()->setQueryId(queryId);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto catalogEntry1 = queryCatalog->createNewEntry("", q1.getQueryPlan(), "topdown");
+    auto catalogEntry1 = queryCatalog->createNewEntry("", q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     //Explicitly fail the query
     queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, "Random reason");
 
@@ -348,8 +351,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto* queryString2 = R"(Query::from("source1").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
-    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
-    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     const auto globalQueryPlan = GlobalQueryPlan::create();
 
@@ -400,7 +403,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
         q1.getQueryPlan()->setQueryId(i);
-        queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
+        queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     }
 
     std::vector<NESRequestPtr> batchOfNesRequests;
@@ -464,7 +467,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleComplexQueryPlan
                       .sink(NullOutputSinkDescriptor::create());
 
         q1.getQueryPlan()->setQueryId(i);
-        queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
+        queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     }
 
     std::vector<NESRequestPtr> batchOfNesRequests;
@@ -549,8 +552,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto* queryString2 = R"(Query::from("example").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("example").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
-    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
-    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     const auto globalQueryPlan = GlobalQueryPlan::create();
@@ -609,8 +612,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUnusedLink) {
     int queryId = 1;
     auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(queryId);
-    const std::string placementStrategy = "TopDown";
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -686,8 +688,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLink) {
     int queryId = 1;
     auto q1 = Query::from("source1").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(queryId);
-    const std::string placementStrategy = "TopDown";
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -781,8 +782,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithFilt
     int queryId = 1;
     auto q1 = Query::from("source1").filter(Attribute("f1") < 1000).sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(queryId);
-    const std::string placementStrategy = "BottomUp";
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -867,8 +867,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithUnio
     int queryId = 1;
     auto q1 = Query::from("source1").unionWith(Query::from("source2")).sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(queryId);
-    const std::string placementStrategy = "TopDown";
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -965,8 +964,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUnusedNodeWithFi
     int queryId = 1;
     auto q1 = Query::from("source1").filter(Attribute("f1") < 1000).sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(queryId);
-    const std::string placementStrategy = "BottomUp";
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -1052,8 +1050,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithFilt
     int queryId = 1;
     auto q1 = Query::from("source1").filter(Attribute("f1") < 1000).sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(queryId);
-    const std::string placementStrategy = "BottomUp";
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -1148,8 +1145,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testNodeRemovalRequestForUsedNodeWithUnio
     int queryId = 1;
     auto q1 = Query::from("source1").unionWith(Query::from("source2")).sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(queryId);
-    const std::string placementStrategy = "BottomUp";
-    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), placementStrategy);
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     auto nesAddQueryRequest = AddQueryRequest::create(q1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");

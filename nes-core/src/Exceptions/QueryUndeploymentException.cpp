@@ -17,7 +17,6 @@
 namespace NES::Exceptions {
 const char* QueryUndeploymentException::what() const noexcept { return RequestExecutionException::what(); }
 QueryUndeploymentException::QueryUndeploymentException(SharedQueryId sharedQueryId, const std::string& message)
-    : RequestExecutionException(message), sharedQueryId(sharedQueryId) {}
+    : RequestExecutionException(sharedQueryId, "QueryUndeploymentException: " + message) {}
 
-SharedQueryId QueryUndeploymentException::getSharedQueryId() { return sharedQueryId; }
 }// namespace NES::Exceptions

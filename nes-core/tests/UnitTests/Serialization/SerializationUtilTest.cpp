@@ -18,13 +18,13 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -85,7 +85,7 @@ using namespace NES;
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class SerializationUtilTest : public Testing::TestWithErrorHandling {
+class SerializationUtilTest : public Testing::BaseUnitTest {
 
   public:
     /* Will be called before any test in this class are executed. */
@@ -506,7 +506,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-        auto javaUDFMap = LogicalOperatorFactory::createMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        auto javaUDFMap = LogicalOperatorFactory::createMapUDFLogicalOperator(javaUDFDescriptor);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));
@@ -514,7 +514,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-        auto javaUDFMap = LogicalOperatorFactory::createFlatMapJavaUDFLogicalOperator(javaUDFDescriptor);
+        auto javaUDFMap = LogicalOperatorFactory::createFlatMapUDFLogicalOperator(javaUDFDescriptor);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));

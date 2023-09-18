@@ -59,12 +59,12 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
      * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "monitoringController")
      */
     MonitoringController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                         MonitoringServicePtr mService,
-                         Runtime::BufferManagerPtr bManager,
-                         ErrorHandlerPtr eHandler,
+                         const MonitoringServicePtr& mService,
+                         const Runtime::BufferManagerPtr& bManager,
+                         const ErrorHandlerPtr& eHandler,
                          const oatpp::String& completeRouterPrefix)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), monitoringService(std::move(mService)),
-          bufferManager(std::move(bManager)), errorHandler(std::move(eHandler)) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), monitoringService(mService),
+          bufferManager(bManager), errorHandler(eHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -76,10 +76,10 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
      * @return MonitoringController
      */
     static std::shared_ptr<MonitoringController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                        MonitoringServicePtr mService,
-                                                        Runtime::BufferManagerPtr bManager,
-                                                        ErrorHandlerPtr errorHandler,
-                                                        std::string routerPrefixAddition) {
+                                                        const MonitoringServicePtr& mService,
+                                                        const Runtime::BufferManagerPtr& bManager,
+                                                        const ErrorHandlerPtr& errorHandler,
+                                                        const std::string& routerPrefixAddition) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<MonitoringController>(objectMapper, mService, bManager, errorHandler, completeRouterPrefix);
     }

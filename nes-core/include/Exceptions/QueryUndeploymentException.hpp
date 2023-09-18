@@ -34,16 +34,7 @@ class QueryUndeploymentException : public RequestExecutionException {
      */
     QueryUndeploymentException(SharedQueryId sharedQueryId, const std::string& message);
 
-    /**
-     * @brief get the shared query id of the query that was to be undeployed, if it is known
-     * @return: the shared query id
-     */
-    SharedQueryId getSharedQueryId();
-
     [[nodiscard]] const char* what() const noexcept override;
-
-  private:
-    SharedQueryId sharedQueryId;
 };
 }// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_

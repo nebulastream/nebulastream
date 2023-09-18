@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
-#include <NesBaseTest.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Core.hpp>
@@ -24,7 +24,7 @@
 
 namespace NES {
 
-class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling {
+class SyntacticQueryValidationTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 
@@ -35,7 +35,7 @@ class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling {
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

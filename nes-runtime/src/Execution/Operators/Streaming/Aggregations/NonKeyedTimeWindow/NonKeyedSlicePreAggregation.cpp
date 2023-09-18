@@ -37,14 +37,14 @@ void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
 void triggerThreadLocalStateProxy(void* op,
                                   void* wctx,
                                   void* pctx,
-                                  uint64_t workerId,
+                                  uint64_t,
                                   uint64_t originId,
                                   uint64_t sequenceNumber,
                                   uint64_t watermarkTs) {
     auto handler = static_cast<NonKeyedSlicePreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->triggerThreadLocalState(*workerContext, *pipelineExecutionContext, workerId, originId, sequenceNumber, watermarkTs);
+    handler->trigger(*workerContext, *pipelineExecutionContext, originId, sequenceNumber, watermarkTs);
 }
 
 void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
@@ -118,20 +118,20 @@ void NonKeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionCont
         aggregationFunction->lift(state.as<MemRef>(), record);
     }
 }
-void NonKeyedSlicePreAggregation::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+void NonKeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) const {
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // After we processed all records in the record buffer we call triggerThreadLocalStateProxy
     // with the current watermark ts to check if we can trigger a window.
     Nautilus::FunctionCall("triggerThreadLocalStateProxy",
                            triggerThreadLocalStateProxy,
                            globalOperatorHandler,
-                           executionCtx.getWorkerContext(),
-                           executionCtx.getPipelineContext(),
-                           executionCtx.getWorkerId(),
-                           executionCtx.getOriginId(),
-                           recordBuffer.getSequenceNr(),
-                           executionCtx.getWatermarkTs());
+                           ctx.getWorkerContext(),
+                           ctx.getPipelineContext(),
+                           ctx.getWorkerId(),
+                           ctx.getOriginId(),
+                           ctx.getSequenceNumber(),
+                           ctx.getWatermarkTs());
 }
 
 }// namespace NES::Runtime::Execution::Operators

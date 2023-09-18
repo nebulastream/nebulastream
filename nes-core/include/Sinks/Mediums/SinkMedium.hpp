@@ -15,9 +15,6 @@
 #ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 #define NES_CORE_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 
-#include <API/Schema.hpp>
-
-#include <Common/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Util/FaultToleranceType.hpp>
@@ -53,10 +50,19 @@ class SinkMedium : public Runtime::Reconfigurable {
                         Runtime::NodeEnginePtr nodeEngine,
                         uint32_t numOfProducers,
                         QueryId queryId,
+                        QuerySubPlanId querySubPlanId);
+
+    /**
+     * @brief public constructor for data sink
+     */
+    explicit SinkMedium(SinkFormatPtr sinkFormat,
+                        Runtime::NodeEnginePtr nodeEngine,
+                        uint32_t numOfProducers,
+                        QueryId queryId,
                         QuerySubPlanId querySubPlanId,
-                        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                        uint64_t numberOfOrigins = 1,
-                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
+                        FaultToleranceType faultToleranceType,
+                        uint64_t numberOfOrigins,
+                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
 
     /**
      * @brief virtual method to setup sink
@@ -75,6 +81,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
+    //Todo: In the scope of #4040 we decide whether writeData() should return an ExecutionResult
     virtual bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
 
     /**
@@ -119,18 +126,6 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @return format as string
      */
     std::string getSinkFormat();
-
-    /**T
-     * @brief method to return if the sink is appended
-     * @return bool indicating append
-     */
-    bool getAppendAsBool() const;
-
-    /**
-     * @brief method to return if the sink is append or overwrite
-     * @return string of mode
-     */
-    std::string getAppendAsString() const;
 
     /**
      * @brief method passes current safe to trim timestamp to coordinator via RPC
@@ -180,9 +175,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     SinkFormatPtr sinkFormat;
     uint32_t bufferCount;
     uint32_t buffersPerEpoch;
-    bool append{
-        false};// TODO think if this is really necessary here.. this looks something a file sink may require but it's not general for all sinks
-    std::atomic_bool schemaWritten{false};// TODO same here
+    bool schemaWritten;
 
     Runtime::NodeEnginePtr nodeEngine;
     /// termination machinery
@@ -194,9 +187,9 @@ class SinkMedium : public Runtime::Reconfigurable {
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
 
-    uint64_t sentBuffer{0};// TODO check thread safety
-    uint64_t sentTuples{0};// TODO check thread safety
-    std::mutex writeMutex; // TODO remove the mutex
+    uint64_t sentBuffer{0};
+    uint64_t sentTuples{0};
+    std::recursive_mutex writeMutex;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

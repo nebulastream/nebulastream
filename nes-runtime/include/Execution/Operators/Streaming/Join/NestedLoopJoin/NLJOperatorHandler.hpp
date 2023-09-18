@@ -20,6 +20,7 @@
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Util/Common.hpp>
 #include <list>
 #include <optional>
 
@@ -70,10 +71,10 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
     /**
      * @brief Retrieves the number of tuples for a stream (left or right) and a window
      * @param windowIdentifier
-     * @param isLeftSide
+     * @param joinBuildSide
      * @return Number of tuples or -1 if no window exists for the window identifier
      */
-    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, bool isLeftSide);
+    uint64_t getNumberOfTuplesInWindow(uint64_t windowIdentifier, QueryCompilation::JoinBuildSideType joinBuildSide);
 
     /**
      * @brief method to trigger the finished windows
@@ -81,7 +82,7 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
      * @param workerCtx
      * @param pipelineCtx
      */
-    void triggerWindows(std::vector<uint64_t> windowIdentifiersToBeTriggered,
+    void triggerWindows(std::vector<uint64_t>& windowIdentifiersToBeTriggered,
                         WorkerContext* workerCtx,
                         PipelineExecutionContext* pipelineCtx) override;
 
@@ -119,9 +120,12 @@ class NLJOperatorHandler : public StreamJoinOperatorHandler {
 
 /**
  * @brief Proxy function for returning the pointer to the correct PagedVector
+ * @param ptrNljWindow
+ * @param workerId
+ * @param joinBuildSide
  * @return void*
  */
-void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, bool isLeftSide);
+void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, uint64_t joinBuildSideInt);
 
 /**
  * @brief Proxy function for returning the start timestamp of this window

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -24,7 +25,6 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -277,6 +277,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     }
 
     void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) { delete buffer->getPointer(); }
+    virtual ~DataSourceProxy() = default;
 
   private:
     FRIEND_TEST(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue);
@@ -508,10 +509,10 @@ class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineSt
     }
 };
 
-class SourceTest : public Testing::NESBaseTest {
+class SourceTest : public Testing::BaseIntegrationTest {
   public:
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(sourceConf);
@@ -573,7 +574,7 @@ class SourceTest : public Testing::NESBaseTest {
     void TearDown() override {
         free(singleMemoryArea);
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferBlocking(); }
@@ -936,6 +937,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     EXPECT_FALSE(mDataSource->running);
     EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
+    mDataSource.reset();
 }
 
 TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
@@ -1679,7 +1681,7 @@ TEST_F(SourceTest, TCPSourcePrint) {
 
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
-        "current_ms:INTEGER(64 bits) ip:INTEGER(32 bits) ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: "
+        "current_ms:INTEGER(64 bits) ip:INTEGER(32 bits)), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: "
         "5000\nsocketDomain: "
         "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
         "\n\nsocketBufferSize: "
@@ -1716,7 +1718,7 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
 
     std::string expected =
         "TCPSOURCE(SCHEMA(user_id:ArrayType page_id:ArrayType campaign_id:ArrayType ad_type:ArrayType event_type:ArrayType "
-        "current_ms:INTEGER(64 bits) ip:INTEGER(32 bits) ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: "
+        "current_ms:INTEGER(64 bits) ip:INTEGER(32 bits)), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: "
         "5000\nsocketDomain: "
         "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
         "\n\nsocketBufferSize: "
@@ -1913,8 +1915,10 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
-    auto queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                 Optimizer::PlacementStrategy::BottomUp,
+                                                                 FaultToleranceType::NONE,
+                                                                 LineageType::IN_MEMORY);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
@@ -2087,7 +2091,8 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
 }
 
-TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanMetric) {
+//TODO: Addressed in issue #4188
+TEST_F(SourceTest, DISABLED_testMonitoringSourceBufferSmallerThanMetric) {
     // create metrics and plan for MonitoringSource
     auto testCollector = std::make_shared<Monitoring::CpuCollector>();
     auto cpuMetrics = testCollector->readMetric()->getValue<Monitoring::CpuMetricsWrapper>();

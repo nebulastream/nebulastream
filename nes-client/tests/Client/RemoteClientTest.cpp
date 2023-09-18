@@ -17,6 +17,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Client/ClientException.hpp>
@@ -25,7 +26,6 @@
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -37,13 +37,13 @@ using namespace std;
 namespace NES {
 using namespace Configurations;
 
-class RemoteClientTest : public Testing::NESBaseTest {
+class RemoteClientTest : public Testing::BaseIntegrationTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("RemoteClientTest.log", NES::LogLevel::LOG_DEBUG); }
     static void TearDownTestCase() { NES_INFO("Tear down RemoteClientTest test class."); }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
 
         auto crdConf = CoordinatorConfiguration::createDefault();
         auto wrkConf = WorkerConfiguration::create();
@@ -75,7 +75,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
         NES_DEBUG("Tear down RemoteClientTest class.");
         wrk->stop(true);
         crd->stopCoordinator(true);
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     bool stopQuery(int64_t queryId) {

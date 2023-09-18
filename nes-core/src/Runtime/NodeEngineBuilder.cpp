@@ -29,6 +29,7 @@
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
@@ -97,6 +98,11 @@ NodeEngineBuilder& NodeEngineBuilder::setJITCompiler(Compiler::JITCompilerPtr ji
 
 NodeEngineBuilder& NodeEngineBuilder::setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory) {
     this->phaseFactory = phaseFactory;
+    return *this;
+}
+
+NodeEngineBuilder& NodeEngineBuilder::setOpenCLManager(NES::Runtime::OpenCLManagerPtr openCLManager) {
+    this->openCLManager = openCLManager;
     return *this;
 }
 
@@ -233,6 +239,10 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             if (entry.getValue()->getPhysicalSourceType()->instanceOf<LoRaWANProxySourceType>())
                 loRaWANProxySourceTypePtr = entry.getValue()->getPhysicalSourceType()->as<LoRaWANProxySourceType>();
         }
+        if (!openCLManager) {
+            NES_DEBUG("Creating default OpenCLManager");
+            openCLManager = std::make_shared<OpenCLManager>();
+        }
         std::shared_ptr<NodeEngine> engine;
         if (loRaWANProxySourceTypePtr) {
             engine = std::make_shared<DecoratedLoRaWANNodeEngine>(
@@ -280,6 +290,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 std::move(stateManager),
                 std::move(nesWorker),
                 std::move(materializedViewManager),
+            std::move(openCLManager),
                 nodeEngineId,
                 workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
                 workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
@@ -287,7 +298,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 workerConfiguration->enableSourceSharing.getValue());
             //        Exceptions::installGlobalErrorListener(engine);
         }
-
         return engine;
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine {}", err.what());
@@ -297,6 +307,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 
 QueryCompilation::QueryCompilerOptionsPtr
 NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration) {
+    auto queryCompilerType = queryCompilerConfiguration.queryCompilerType;
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
 
     // set compilation mode
@@ -308,8 +319,15 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     // set output buffer optimization level
     queryCompilationOptions->setOutputBufferOptimizationLevel(queryCompilerConfiguration.outputBufferOptimizationLevel);
 
-    // sets the windowing strategy
-    queryCompilationOptions->setWindowingStrategy(queryCompilerConfiguration.windowingStrategy);
+    if (queryCompilerType == QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER
+        && queryCompilerConfiguration.windowingStrategy == QueryCompilation::QueryCompilerOptions::WindowingStrategy::LEGACY) {
+        // sets SLICING windowing strategy as the default if nautilus is active.
+        NES_WARNING("The LEGACY window strategy is not supported by Nautilus. Switch to SLICING!")
+        queryCompilationOptions->setWindowingStrategy(QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING);
+    } else {
+        // sets the windowing strategy
+        queryCompilationOptions->setWindowingStrategy(queryCompilerConfiguration.windowingStrategy);
+    }
 
     // sets the query compiler
     queryCompilationOptions->setQueryCompiler(queryCompilerConfiguration.queryCompilerType);

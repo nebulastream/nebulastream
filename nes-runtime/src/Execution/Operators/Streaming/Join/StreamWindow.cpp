@@ -25,6 +25,8 @@ uint64_t StreamWindow::getWindowStart() const { return windowStart; }
 
 uint64_t StreamWindow::getWindowEnd() const { return windowEnd; }
 
+bool StreamWindow::isAlreadyEmitted() const { return windowState == StreamWindow::WindowState::EMITTED_TO_PROBE; }
+
 StreamWindow::StreamWindow(uint64_t windowStart, uint64_t windowEnd)
     : windowState(WindowState::BOTH_SIDES_FILLING), windowStart(windowStart), windowEnd(windowEnd) {}
 
@@ -38,7 +40,7 @@ bool StreamWindow::compareExchangeStrong(StreamWindow::WindowState expectedState
     return windowState.compare_exchange_strong(expectedState, newWindowState);
 }
 
-bool StreamWindow::checkTriggeredDuringTerminate() {
+bool StreamWindow::shouldTriggerDuringTerminate() {
     std::lock_guard lock{triggerTerminationMutex};
     if (windowState == StreamWindow::WindowState::ONCE_SEEN_DURING_TERMINATION) {
         windowState = StreamWindow::WindowState::EMITTED_TO_PROBE;

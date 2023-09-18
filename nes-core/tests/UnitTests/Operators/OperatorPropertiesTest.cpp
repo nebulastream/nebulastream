@@ -13,7 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Core.hpp>
@@ -23,7 +23,7 @@
 
 namespace NES {
 
-class OperatorPropertiesTest : public Testing::NESBaseTest {
+class OperatorPropertiesTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 

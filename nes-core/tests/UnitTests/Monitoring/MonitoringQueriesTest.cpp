@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
@@ -51,7 +51,7 @@ namespace NES {
 
 uint16_t timeout = 15;
 
-class MonitoringQueriesTest : public Testing::NESBaseTest {
+class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
 
@@ -61,7 +61,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
         std::stringstream rpcCoordinatorPortAsString;
         rpcCoordinatorPortAsString << rpcCoordinatorPort;
@@ -77,6 +77,8 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->enableMonitoring = true;
+        coordinatorConfig->worker.queryCompiler.queryCompilerType =
+            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
 
         return std::make_shared<NesCoordinator>(coordinatorConfig);
     }
@@ -87,6 +89,8 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         workerConfig->numberOfSlots = (12);
         workerConfig->enableMonitoring = (true);
         workerConfig->physicalSources.add(phSource);
+        workerConfig->queryCompiler.queryCompilerType =
+            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         return std::make_shared<NesWorker>(std::move(workerConfig));
     }
 
@@ -131,8 +135,10 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
 
         NES_INFO("MonitoringQueriesTest: Submit query");
         auto query = createQueryString("logTestMetricStream", metricCollectorStr);
-        QueryId queryId =
-            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                        Optimizer::PlacementStrategy::BottomUp,
+                                                                        FaultToleranceType::NONE,
+                                                                        LineageType::IN_MEMORY);
 
         GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -162,7 +168,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
 
         auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
 
-        // test disk metrics
+        // test metrics
         for (uint64_t nodeId = 2; nodeId <= workerCnt + 1; nodeId++) {
             Monitoring::StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
             ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),

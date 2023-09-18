@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -25,7 +26,6 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -62,7 +62,7 @@ class NestedLoopJoinMockedPipelineExecutionContext : public Runtime::Execution::
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
 
   public:
     ExecutablePipelineProvider* provider;
@@ -80,7 +80,7 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        BaseUnitTest::SetUp();
         NES_INFO("Setup NestedLoopJoinPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
@@ -143,16 +143,14 @@ class NestedLoopJoinPipelineTest : public Testing::NESBaseTest, public AbstractP
             handlerIndex,
             leftSchema,
             joinFieldNameLeft,
-            timeStampFieldLeft,
-            /*isLeftSide*/ true,
+            QueryCompilation::JoinBuildSideType::Left,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
 
         auto nljBuildRight = std::make_shared<Operators::NLJBuild>(
             handlerIndex,
             rightSchema,
             joinFieldNameRight,
-            timeStampFieldRight,
-            /*isLeftSide*/ false,
+            QueryCompilation::JoinBuildSideType::Right,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight));
 
         auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,

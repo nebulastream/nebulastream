@@ -20,6 +20,7 @@
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
@@ -55,6 +56,7 @@ QueryRewritePhase::QueryRewritePhase(bool elegantAccelerationEnabled, bool apply
     binaryOperatorSortRule = BinaryOperatorSortRule::create();
     filterMergeRule = FilterMergeRule::create();
     filterPushDownRule = FilterPushDownRule::create();
+    filterSplitUpRule = FilterSplitUpRule::create();
     redundancyEliminationRule = RedundancyEliminationRule::create();
     mapUDFsToOpenCLOperatorsRule = MapUDFsToOpenCLOperatorsRule::create();
     predicateReorderingRule = PredicateReorderingRule::create();
@@ -78,16 +80,18 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
         duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
     }
 
-    // Apply rules necessary for enabling query execution when stream alias or union operators are invlved
+    // Apply rules necessary for enabling query execution when stream alias or union operators are involved
     duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
 
+    // Apply rule for filter split up
+    duplicateQueryPlan = filterSplitUpRule->apply(duplicateQueryPlan);
     // Apply rule for filter push down optimization
     duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
-    // Apply rule for filter reordering optimization
-    duplicateQueryPlan = predicateReorderingRule->apply(duplicateQueryPlan);
     // Apply rule for filter merge
-    return filterMergeRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = filterMergeRule->apply(duplicateQueryPlan);
+    // Apply rule for filter reordering optimization
+    return predicateReorderingRule->apply(duplicateQueryPlan);
 }
 
 }// namespace NES::Optimizer

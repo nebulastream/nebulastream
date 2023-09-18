@@ -13,12 +13,12 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -30,7 +30,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class ScanOperatorTest : public Testing::NESBaseTest {
+class ScanOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

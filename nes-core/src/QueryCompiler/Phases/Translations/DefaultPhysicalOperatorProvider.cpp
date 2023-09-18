@@ -13,24 +13,24 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FlatMapJavaUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -54,11 +54,11 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalNestedLoopJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapJavaUDFOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
@@ -166,12 +166,14 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
                                                               logicalSourceOperator->getInputSchema(),
                                                               logicalSourceOperator->getOutputSchema(),
                                                               logicalSourceOperator->getSourceDescriptor());
+        physicalSourceOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSourceOperator);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         auto logicalSinkOperator = operatorNode->as<SinkLogicalOperatorNode>();
         auto physicalSinkOperator = PhysicalOperators::PhysicalSinkOperator::create(logicalSinkOperator->getInputSchema(),
                                                                                     logicalSinkOperator->getOutputSchema(),
                                                                                     logicalSinkOperator->getSinkDescriptor());
+        physicalSinkOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSinkOperator);
         queryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
@@ -179,6 +181,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(filterOperator->getInputSchema(),
                                                                                         filterOperator->getOutputSchema(),
                                                                                         filterOperator->getPredicate());
+        physicalFilterOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalFilterOperator);
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         lowerWindowOperator(queryPlan, operatorNode);
@@ -196,10 +199,10 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         lowerCEPIterationOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<MapJavaUDFLogicalOperatorNode>()) {
-        lowerJavaUDFMapOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<FlatMapJavaUDFLogicalOperatorNode>()) {
-        lowerJavaUDFFlatMapOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<MapUDFLogicalOperatorNode>()) {
+        lowerUDFMapOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
+        lowerUDFFlatMapOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<LimitLogicalOperatorNode>()) {
         auto limitOperator = operatorNode->as<LimitLogicalOperatorNode>();
         auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(limitOperator->getInputSchema(),
@@ -242,6 +245,8 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
     auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(projectOperator->getInputSchema(),
                                                                                       projectOperator->getOutputSchema(),
                                                                                       projectOperator->getExpressions());
+
+    physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
     operatorNode->replace(physicalProjectOperator);
 }
 
@@ -264,24 +269,25 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
     auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(mapOperator->getInputSchema(),
                                                                               mapOperator->getOutputSchema(),
                                                                               mapOperator->getMapExpression());
+    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerJavaUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
-    auto mapJavaUDFOperator = operatorNode->as<MapJavaUDFLogicalOperatorNode>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalMapJavaUDFOperator::create(mapJavaUDFOperator->getInputSchema(),
-                                                                                     mapJavaUDFOperator->getOutputSchema(),
-                                                                                     mapJavaUDFOperator->getJavaUDFDescriptor());
+void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+    auto mapUDFOperator = operatorNode->as<MapUDFLogicalOperatorNode>();
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapUDFOperator::create(mapUDFOperator->getInputSchema(),
+                                                                                 mapUDFOperator->getOutputSchema(),
+                                                                                 mapUDFOperator->getUDFDescriptor());
+    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerJavaUDFFlatMapOperator(const QueryPlanPtr&,
-                                                                  const LogicalOperatorNodePtr& operatorNode) {
-    auto flatMapJavaUDFOperator = operatorNode->as<FlatMapJavaUDFLogicalOperatorNode>();
-    auto physicalMapOperator =
-        PhysicalOperators::PhysicalFlatMapJavaUDFOperator::create(flatMapJavaUDFOperator->getInputSchema(),
-                                                                  flatMapJavaUDFOperator->getOutputSchema(),
-                                                                  flatMapJavaUDFOperator->getJavaUDFDescriptor());
+void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+    auto flatMapUDFOperator = operatorNode->as<FlatMapUDFLogicalOperatorNode>();
+    auto physicalMapOperator = PhysicalOperators::PhysicalFlatMapUDFOperator::create(flatMapUDFOperator->getInputSchema(),
+                                                                                     flatMapUDFOperator->getOutputSchema(),
+                                                                                     flatMapUDFOperator->getUDFDescriptor());
+    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }
 
@@ -626,20 +632,28 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
 
         keyedOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
     } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
-        auto sliceStaging = std::make_shared<Runtime::Execution::Operators::KeyedSliceStaging>();
         keyedOperatorHandlers.sliceMergingOperatorHandler =
-            std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>(sliceStaging);
+            std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
 
         NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-        keyedOperatorHandlers.preAggregationWindowHandler =
-            std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
-                timeBasedWindowType->getSize().getTime(),
-                timeBasedWindowType->getSlide().getTime(),
-                windowOperator->getInputOriginIds(),
-                sliceStaging);
-    }
 
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING) {
+            keyedOperatorHandlers.preAggregationWindowHandler =
+                std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+                    timeBasedWindowType->getSize().getTime(),
+                    timeBasedWindowType->getSlide().getTime(),
+                    windowOperator->getInputOriginIds());
+        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
+            keyedOperatorHandlers.preAggregationWindowHandler =
+                std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
+                    timeBasedWindowType->getSize().getTime(),
+                    timeBasedWindowType->getSlide().getTime(),
+                    windowOperator->getInputOriginIds());
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
+    }
     return keyedOperatorHandlers;
 }
 
@@ -661,20 +675,29 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
 
         globalOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
     } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
-        auto sliceStaging = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceStaging>();
-        globalOperatorHandlers.sliceMergingOperatorHandler =
-            std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>(sliceStaging);
 
-        NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-        globalOperatorHandlers.preAggregationWindowHandler =
-            std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
-                timeBasedWindowType->getSize().getTime(),
-                timeBasedWindowType->getSlide().getTime(),
-                windowOperator->getInputOriginIds(),
-                sliceStaging);
-    }
+        timeBasedWindowType->getTimeBasedSubWindowType();
+        globalOperatorHandlers.sliceMergingOperatorHandler =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
+        NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
 
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING) {
+            globalOperatorHandlers.preAggregationWindowHandler =
+                std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
+                    timeBasedWindowType->getSize().getTime(),
+                    timeBasedWindowType->getSlide().getTime(),
+                    windowOperator->getInputOriginIds());
+        } else if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
+            globalOperatorHandlers.preAggregationWindowHandler =
+                std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
+                    timeBasedWindowType->getSize().getTime(),
+                    timeBasedWindowType->getSlide().getTime(),
+                    windowOperator->getInputOriginIds());
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
+    }
     return globalOperatorHandlers;
 }
 
@@ -688,7 +711,8 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
-    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
+        || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
         // Handle tumbling window
         return PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
                                                                           windowOutputSchema,
@@ -710,7 +734,8 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema,
                                                                          windowOutputSchema,
-                                                                         slidingWindowSinkOperator);
+                                                                         slidingWindowSinkOperator,
+                                                                         windowDefinition);
     }
 }
 
@@ -724,7 +749,8 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(Wind
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
-    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW) {
+    if (windowType == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
+        || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
         // Handle tumbling window
         return PhysicalOperators::PhysicalNonKeyedTumblingWindowSink::create(windowInputSchema,
                                                                              windowOutputSchema,
@@ -747,7 +773,8 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(Wind
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalNonKeyedSlidingWindowSink::create(windowInputSchema,
                                                                             windowOutputSchema,
-                                                                            slidingWindowSinkOperator);
+                                                                            slidingWindowSinkOperator,
+                                                                            windowDefinition);
     }
 }
 
@@ -845,6 +872,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                     PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
                                                                                windowOutputSchema,
                                                                                windowOperatorHandler);
+                thresholdWindowPhysicalOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+
                 operatorNode->replace(thresholdWindowPhysicalOperator);
                 return;
             } else {
@@ -852,7 +881,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                                                 + windowDefinition->getWindowType()->toString());
             }
         }
-        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING
+            || options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::BUCKETING) {
             lowerThreadLocalWindowOperator(plan, operatorNode);
         } else {
             // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
@@ -863,6 +893,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
             auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema,
                                                                                     windowOutputSchema,
                                                                                     windowOperatorHandler);
+            windowSink->addProperty("LogicalOperatorId", operatorNode->getId());
+
             operatorNode->replace(windowSink);
         }
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
@@ -873,22 +905,31 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
         operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
         auto sliceSink =
             PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
         // Translate a slice merging operator in -> SliceMergingOperator -> SliceSinkOperator
         auto physicalSliceMergingOperator =
             PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        physicalSliceMergingOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
+
         auto sliceSink =
             PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
+
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         // Translate a window computation operator in -> PhysicalSliceMergingOperator -> PhysicalWindowSinkOperator
         auto physicalSliceMergingOperator =
             PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        physicalSliceMergingOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
         auto sliceSink =
             PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
+
         operatorNode->replace(sliceSink);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");

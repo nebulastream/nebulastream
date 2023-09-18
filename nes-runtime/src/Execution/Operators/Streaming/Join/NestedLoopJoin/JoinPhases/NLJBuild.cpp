@@ -25,6 +25,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <numeric>
 #include <utility>
 
@@ -53,7 +54,7 @@ void* getNLJWindowRefProxy(void* ptrOpHandler, uint64_t timestamp) {
     return opHandler->getWindowByTimestampOrCreateIt(timestamp).get();
 }
 
-void triggerWindowsProxy(const std::vector<uint64_t>& windowIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
+void triggerWindowsProxy(std::vector<uint64_t>& windowIdentifiersToBeTriggered, void* ptrOpHandler, void* ptrPipelineCtx) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
@@ -73,7 +74,7 @@ void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx) {
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     NES_DEBUG("Triggering all windows for pipelineId {}!", pipelineCtx->getPipelineID());
 
-    const auto windowIdentifiersToBeTriggered = opHandler->triggerAllWindows();
+    auto windowIdentifiersToBeTriggered = opHandler->triggerAllWindows();
     triggerWindowsProxy(windowIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
@@ -91,14 +92,13 @@ void checkWindowsTriggerProxyForNLJBuild(void* ptrOpHandler,
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
 
     auto* opHandler = static_cast<NLJOperatorHandler*>(ptrOpHandler);
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
     //update last seen watermark by this worker
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
-    const auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
+    auto windowIdentifiersToBeTriggered = opHandler->checkWindowsTrigger(minWatermark, sequenceNumber, originId);
     triggerWindowsProxy(windowIdentifiersToBeTriggered, ptrOpHandler, ptrPipelineCtx);
 }
 
@@ -115,7 +115,7 @@ void NLJBuild::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
                                                        getNLJPagedVectorProxy,
                                                        localJoinState->windowReference,
                                                        workerId,
-                                                       Nautilus::Value<Nautilus::Boolean>(isLeftSide));
+                                                       Value<UInt64>(to_underlying(joinBuildSide)));
     localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
     localJoinState->windowStart =
         Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, localJoinState->windowReference);
@@ -165,8 +165,7 @@ void NLJBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
                                                        getNLJPagedVectorProxy,
                                                        windowReference,
                                                        workerId,
-                                                       Nautilus::Value<Nautilus::Boolean>(isLeftSide));
-
+                                                       Value<UInt64>(to_underlying(joinBuildSide)));
     auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, windowReference, pagedVectorRef);
 
@@ -201,12 +200,10 @@ void NLJBuild::terminate(ExecutionContext& ctx) const {
 
 NLJBuild::NLJBuild(uint64_t operatorHandlerIndex,
                    const SchemaPtr& schema,
-                   std::string joinFieldName,
-                   std::string timeStampField,
-                   bool isLeftSide,
+                   const std::string& joinFieldName,
+                   const QueryCompilation::JoinBuildSideType joinBuildSide,
                    TimeFunctionPtr timeFunction)
-    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(std::move(joinFieldName)),
-      timeStampField(std::move(timeStampField)), isLeftSide(isLeftSide), entrySize(schema->getSchemaSizeInBytes()),
-      timeFunction(std::move(timeFunction)) {}
+    : operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), joinBuildSide(joinBuildSide),
+      entrySize(schema->getSchemaSizeInBytes()), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators

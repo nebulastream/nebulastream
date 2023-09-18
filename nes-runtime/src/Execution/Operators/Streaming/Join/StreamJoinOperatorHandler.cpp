@@ -122,7 +122,7 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
                                                      uint64_t sizeOfRecordRight)
     : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSize),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)), joinStrategy(joinStrategy),
-      outputOriginId(outputOriginId), sequenceNumber(0), sizeOfRecordLeft(sizeOfRecordLeft),
+      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(sizeOfRecordLeft),
       sizeOfRecordRight(sizeOfRecordRight) {}
 
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
@@ -168,7 +168,7 @@ std::vector<uint64_t> StreamJoinOperatorHandler::triggerAllWindows() {
         auto windowsLocked = windows.rlock();
         for (auto& window : *windowsLocked) {
 
-            if (window->checkTriggeredDuringTerminate() && window->getNumberOfTuplesLeft() > 0
+            if (window->shouldTriggerDuringTerminate() && window->getNumberOfTuplesLeft() > 0
                 && window->getNumberOfTuplesRight() > 0) {
                 windowIdentifiers.emplace_back(window->getWindowIdentifier());
                 NES_DEBUG("Added window with id {} to the triggerable windows with {} tuples left and {} tuples right...",
@@ -181,16 +181,17 @@ std::vector<uint64_t> StreamJoinOperatorHandler::triggerAllWindows() {
     return windowIdentifiers;
 }
 
-std::vector<uint64_t>
-StreamJoinOperatorHandler::checkWindowsTrigger(uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId) {
-    //The watermark processor handles the minimal watermark across both streams
+std::vector<uint64_t> StreamJoinOperatorHandler::checkWindowsTrigger(const uint64_t watermarkTs,
+                                                                     const uint64_t sequenceNumber,
+                                                                     const OriginId originId) {
+    // The watermark processor handles the minimal watermark across both streams
     uint64_t newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
 
     std::vector<uint64_t> triggerableWindowIdentifiers;
     {
         auto windowsLocked = windows.rlock();
         for (auto& window : *windowsLocked) {
-            if (window->getWindowEnd() > newGlobalWatermark) {
+            if (window->getWindowEnd() > newGlobalWatermark || window->isAlreadyEmitted()) {
                 continue;
             }
 

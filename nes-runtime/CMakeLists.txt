@@ -45,7 +45,6 @@ endif ()
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     message(STATUS "Enable dyncall")
 
-
     # We use the dyncall lib to call arbitrary runtime function.
     # Set the path to the dyncall directory
     set(dyncall_dir "${CMAKE_CURRENT_BINARY_DIR}/lib/dyncall")
@@ -200,7 +199,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
         message(STATUS "Setting path of Java helpers to: ${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
 
         # Install Java deserialization helper.
-        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH})
+        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/stream/nebula/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH}/stream/nebula)
     else()
         # Use Java helpers from test directory when working in CLion.
         target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")

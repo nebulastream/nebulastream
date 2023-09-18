@@ -16,7 +16,12 @@ add_source_files(nes-core
         JsonFormat.cpp
         NesFormat.cpp
         SinkFormat.cpp
-        TextFormat.cpp
 )
+
+if (NES_USE_ARROW)
+    add_source_files(nes-core
+            ArrowFormat.cpp
+            )
+endif ()
 
 add_subdirectory(FormatIterators)

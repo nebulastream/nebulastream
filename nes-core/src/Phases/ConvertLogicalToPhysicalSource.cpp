@@ -14,6 +14,7 @@
 
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
+#include <Operators/LogicalOperators/Sources/ArrowSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -177,6 +178,20 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                numSourceLocalBuffers,
                                sourceDescriptor->getPhysicalSourceName(),
                                successors);
+#endif
+#ifdef ENABLE_ARROW_BUILD
+    } else if (sourceDescriptor->instanceOf<ArrowSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating Arrow file source");
+        const ArrowSourceDescriptorPtr arrowSourceDescriptor = sourceDescriptor->as<ArrowSourceDescriptor>();
+        return createArrowSource(arrowSourceDescriptor->getSchema(),
+                                 bufferManager,
+                                 queryManager,
+                                 arrowSourceDescriptor->getSourceConfig(),
+                                 operatorId,
+                                 originId,
+                                 numSourceLocalBuffers,
+                                 sourceDescriptor->getPhysicalSourceName(),
+                                 successors);
 #endif
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating sense source");

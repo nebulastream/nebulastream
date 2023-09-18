@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/CotExpression.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
@@ -22,7 +22,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class CotExpressionTest : public Testing::NESBaseTest {
+class CotExpressionTest : public Testing::BaseUnitTest {
 
   public:
     /* Will be called before any test in this class are executed. */

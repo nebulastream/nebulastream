@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -24,7 +25,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -35,6 +35,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -62,7 +63,7 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class QueryPlacementTest : public Testing::TestWithErrorHandling {
+class QueryPlacementTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
@@ -79,7 +80,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup QueryPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -203,6 +204,31 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
             }
         }
     }
+}
+
+/* Test query placement with elegant strategy  */
+TEST_F(QueryPlacementTest, testElegantPlacingQueryWithTopDownStrategy) {
+
+    setupTopologyAndSourceCatalog({4, 4, 4});
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ELEGANT_ENERGY);
+
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
+    queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
 }
 
 /* Test query placement with top down strategy  */

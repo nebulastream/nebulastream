@@ -15,23 +15,26 @@
 #define NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 namespace NES {
+namespace RequestProcessor::Experimental {
 enum class ResourceType : uint8_t;
+}
 namespace Exceptions {
 /**
  * @brief This exception is raised, in case a request tries to access a resource via the storage handler without having locked it before.
  */
 class AccessNonLockedResourceException : public RequestExecutionException {
   public:
-    explicit AccessNonLockedResourceException(const std::string& message, ResourceType resourceType);
+    explicit AccessNonLockedResourceException(const std::string& message,
+                                              RequestProcessor::Experimental::ResourceType resourceType);
 
     /**
      * @brief Access the type of the resource which could not be accessed
      * @return the resource type
      */
-    ResourceType getResourceType();
+    RequestProcessor::Experimental::ResourceType getResourceType();
 
   private:
-    ResourceType resourceType;
+    RequestProcessor::Experimental::ResourceType resourceType;
 };
 }// namespace Exceptions
 }// namespace NES

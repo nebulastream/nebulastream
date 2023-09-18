@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <API/Query.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -26,7 +26,7 @@
 #include <nlohmann/json.hpp>
 
 namespace NES {
-class QueryCatalogControllerTest : public Testing::NESBaseTest {
+class QueryCatalogControllerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryCatalogControllerTest.log", NES::LogLevel::LOG_DEBUG);
@@ -76,7 +76,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry("query string", queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry("query string", queryPlan, Optimizer::PlacementStrategy::BottomUp);
     cpr::AsyncResponse future2 =
         cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     future2.wait();
@@ -128,7 +128,7 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     // when making a request for a query with a specific status after having submitted a query
     cpr::AsyncResponse future3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
@@ -180,7 +180,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, Optimizer::PlacementStrategy::BottomUp);
 
     // when sending a request to the status endpoint with 'queryId' supplied and a query with specified id registered
     cpr::AsyncResponse f3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
@@ -250,7 +250,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStati
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, Optimizer::PlacementStrategy::BottomUp);
     coordinator->getGlobalQueryPlan()->createNewSharedQueryPlan(queryPlan);
 
     // when sending a getNumberOfProducedBuffers with 'queryId' specified and a query can be found but no buffers produced yet

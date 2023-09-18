@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,7 +26,7 @@
 
 namespace NES::Nautilus {
 
-class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
+class FunctionCompilationTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

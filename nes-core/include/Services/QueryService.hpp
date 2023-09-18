@@ -15,20 +15,26 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 
-#include <API/Query.hpp>
 #include <Common/Identifiers.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Util/FaultToleranceType.hpp>
+#include <Util/LineageType.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <future>
 
-namespace NES::Optimizer {
+namespace z3 {
+class Context;
+using ContextPtr = std::shared_ptr<context>;
+}// namespace z3
+
+namespace NES {
+namespace Optimizer {
 class SyntacticQueryValidation;
 using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
 
 class SemanticQueryValidation;
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
-}// namespace NES::Optimizer
-
-namespace NES {
+}// namespace Optimizer
 
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
@@ -43,7 +49,6 @@ class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
 namespace Catalogs {
-
 namespace Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -53,8 +58,12 @@ namespace UDF {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
-
 }// namespace Catalogs
+
+namespace RequestProcessor::Experimental {
+class AsyncRequestProcessor;
+using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
+}// namespace RequestProcessor::Experimental
 
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping.
@@ -62,17 +71,20 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 class QueryService {
 
   public:
-    explicit QueryService(QueryCatalogServicePtr queryCatalogService,
-                          RequestQueuePtr queryRequestQueue,
-                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                          QueryParsingServicePtr queryParsingService,
+    explicit QueryService(bool enableNewRequestExecutor,
                           Configurations::OptimizerConfiguration optimizerConfiguration,
-                          Catalogs::UDF::UDFCatalogPtr udfCatalog);
+                          const QueryCatalogServicePtr& queryCatalogService,
+                          const RequestQueuePtr& queryRequestQueue,
+                          const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                          const QueryParsingServicePtr& queryParsingService,
+                          const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                          const NES::RequestProcessor::Experimental::AsyncRequestProcessorPtr& asyncRequestExecutor,
+                          const z3::ContextPtr& z3Context);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : query in string form.
-     * @param placementStrategyName : name of the placement strategy to be used.
+     * @param placementStrategy : name of the placement strategy to be used.
      * @param faultTolerance : fault-tolerance guarantee for the given query.
      * @param lineage : lineage type for the given query.
      * @return queryId : query id of the valid input query.
@@ -80,7 +92,7 @@ class QueryService {
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
     QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
-                                            const std::string& placementStrategyName,
+                                            const Optimizer::PlacementStrategy placementStrategy,
                                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
                                             const LineageType lineage = LineageType::NONE);
 
@@ -88,14 +100,14 @@ class QueryService {
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : queryIdAndCatalogEntryMapping in string format
      * @param queryPlan : Query Plan Pointer Object
-     * @param placementStrategyName : Name of the placement strategy
+     * @param placementStrategy : Name of the placement strategy
      * @param faultTolerance : fault-tolerance guarantee for the given query.
      * @param lineage : lineage type for the given query.
      * @return query id
      */
     QueryId addQueryRequest(const std::string& queryString,
                             const QueryPlanPtr& queryPlan,
-                            const std::string& placementStrategyName,
+                            const Optimizer::PlacementStrategy placementStrategy,
                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
                             const LineageType lineage = LineageType::NONE);
 
@@ -114,10 +126,13 @@ class QueryService {
      * @warning: this method is primarily designed to be called only by the system.
      *
      * @param sharedQueryId : shared query plan id of the shared query plan to be stopped.
+     * @param querySubPlanId: id of the subquery plan that failed
      * @param failureReason : reason for shared query plan failure.
      * @returns: true if successful
      */
-    bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId, const std::string& failureReason);
+    bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
+                                          QuerySubPlanId querySubPlanId,
+                                          const std::string& failureReason);
 
   private:
     /**
@@ -126,11 +141,15 @@ class QueryService {
      */
     void assignOperatorIds(QueryPlanPtr queryPlan);
 
+    bool enableNewRequestExecutor;
+    Configurations::OptimizerConfiguration optimizerConfiguration;
     QueryCatalogServicePtr queryCatalogService;
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
-    Configurations::OptimizerConfiguration optimizerConfiguration;
+    NES::RequestProcessor::Experimental::AsyncRequestProcessorPtr asyncRequestExecutor;
+    z3::ContextPtr z3Context;
+    QueryParsingServicePtr queryParsingService;
 };
 
 };// namespace NES

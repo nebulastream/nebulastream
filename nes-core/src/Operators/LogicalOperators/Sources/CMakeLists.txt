@@ -31,5 +31,6 @@ add_source_files(nes-core
         BenchmarkSourceDescriptor.cpp
         MaterializedViewSourceDescriptor.cpp
         TCPSourceDescriptor.cpp
+        ArrowSourceDescriptor.cpp
         LoRaWANProxySourceDescriptor.cpp
 )

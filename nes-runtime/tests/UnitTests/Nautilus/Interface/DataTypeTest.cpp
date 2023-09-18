@@ -12,19 +12,19 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 namespace NES::Nautilus {
 
-class DataTypeTest : public Testing::NESBaseTest {
+class DataTypeTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

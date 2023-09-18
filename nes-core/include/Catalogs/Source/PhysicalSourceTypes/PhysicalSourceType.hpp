@@ -43,6 +43,8 @@ enum class SourceType : uint8_t {
     STATIC_DATA_SOURCE,
     TCP_SOURCE,
     LORAWAN_SOURCE
+    TCP_SOURCE,
+    ARROW_SOURCE
 };
 
 class PhysicalSourceType;

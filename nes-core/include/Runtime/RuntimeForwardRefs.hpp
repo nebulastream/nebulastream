@@ -71,6 +71,9 @@ class TupleBuffer;
 class HardwareManager;
 using HardwareManagerPtr = std::shared_ptr<HardwareManager>;
 
+class OpenCLManager;
+using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
+
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
@@ -135,6 +138,10 @@ using RowLayoutPtr = std::shared_ptr<RowLayout>;
 }// namespace MemoryLayouts
 
 }// namespace Runtime
+
+namespace Network {
+class NesPartition;
+}
 
 namespace Experimental::MaterializedView {
 class MaterializedViewMananger;

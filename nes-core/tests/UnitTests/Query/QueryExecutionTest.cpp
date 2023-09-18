@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-// clang-format: off
-// clang-format: on
+
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -22,7 +22,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -57,15 +56,11 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
-#ifdef PYTHON_UDF_ENABLED
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PythonUdfExecutablePipelineStage.hpp>
-#endif
 
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class QueryExecutionTest : public Testing::TestWithErrorHandling {
+class QueryExecutionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -73,7 +68,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling {
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         // create test input buffer
         windowSchema = Schema::create()
                            ->addField("test$key", BasicType::INT64)
@@ -112,7 +107,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling {
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::TestWithErrorHandling::TearDown();
+        Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -374,7 +369,8 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -483,7 +479,8 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -571,7 +568,8 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                                     ->addField("probe$value", BasicType::INT64);
     auto sourceDescriptorProbeSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaProbeSide,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -590,7 +588,8 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
         Schema::create()->addField("build$id2", BasicType::INT64)->addField("build$value", BasicType::INT64);
     auto sourceDescriptorBuildSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaBuildSide,
-        [&](OperatorId id,
+        [&](SchemaPtr schemaBuildSide,
+            OperatorId id,
             OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -763,7 +762,8 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                                     ->addField("probe$value", BasicType::INT64);
     auto sourceDescriptorProbeSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaProbeSide,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -782,7 +782,8 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
         Schema::create()->addField("build$id2", BasicType::INT64)->addField("build$value", BasicType::INT64);
     auto sourceDescriptorBuildSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaBuildSide,
-        [&](OperatorId id,
+        [&](SchemaPtr schemaBuildSide,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -896,7 +897,8 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -1008,7 +1010,8 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -1075,7 +1078,8 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -1162,7 +1166,8 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -1247,7 +1252,8 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -1317,7 +1323,8 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -1403,7 +1410,8 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
-        [&](OperatorId,
+        [&](SchemaPtr windowSchema,
+            OperatorId,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
@@ -1549,92 +1557,6 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 }
 
 /**
- * The PythonUdfQuery test and PythonUdfPipelineStage class
- * invoke the Python interpreter and will fail if Python UDF are not enabled
- */
-#ifdef PYTHON_UDF_ENABLED
-
-TEST_F(QueryExecutionTest, PythonUdfQuery) {
-    // creating query plan
-    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
-        testSchema,
-        [&](OperatorId id,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
-            size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createNonRunnableSource(testSchema,
-                                           nodeEngine->getBufferManager(),
-                                           nodeEngine->getQueryManager(),
-                                           id,
-                                           0,
-                                           numSourceLocalBuffers,
-                                           std::move(successors));
-        });
-
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
-    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
-    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
-
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-
-    // add physical operator behind the filter
-    auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
-
-    auto pythonUdfPipelineStage =
-        std::make_shared<NES::QueryCompilation::PhysicalOperators::Experimental::PythonUdfExecutablePipelineStage>(testSchema);
-
-    auto pythonUdfOperator =
-        NES::QueryCompilation::PhysicalOperators::Experimental::PhysicalPythonUdfOperator::create(testSchema,
-                                                                                                  SchemaPtr(),
-                                                                                                  pythonUdfPipelineStage);
-
-    filterOperator->insertBetweenThisAndParentNodes(pythonUdfOperator);
-
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
-    // The plan should have one pipeline
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 2u);
-    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
-    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
-        auto memoryLayout =
-            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
-        fillBuffer(buffer, memoryLayout);
-        plan->setup();
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-        ASSERT_EQ(plan->getPipelines()[1]->execute(buffer, workerContext), ExecutionResult::Ok);
-
-        // This plan should produce one output buffer
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-
-        auto resultBuffer = testSink->get(0);
-        // The output buffer should contain 5 tuple;
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
-
-        auto resultRecordIndexFields =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
-        auto resultRecordValueFields =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, resultBuffer);
-        for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
-            // id
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex + 42);
-            EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
-        }
-    }
-    ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
-
-    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
-}
-#endif
-
-/**
  * @brief This test creates a CASE-WHEN query with three CASE-expressions
  * which return the default value and the second and first when value respectively.
  */
@@ -1643,7 +1565,8 @@ TEST_F(QueryExecutionTest, caseWhenExpressionQuery) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id,
+        [&](SchemaPtr testSchema,
+            OperatorId id,
             OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,

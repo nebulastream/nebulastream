@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -19,7 +20,6 @@
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -33,7 +33,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class ConfigTest : public Testing::NESBaseTest {
+class ConfigTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <NesBaseTest.hpp>
 #include <Spatial/DataTypes/Circle.hpp>
 #include <Spatial/DataTypes/Point.hpp>
 #include <Spatial/DataTypes/Rectangle.hpp>
@@ -22,7 +22,7 @@
 
 namespace NES {
 
-class CircleTest : public Testing::NESBaseTest {
+class CircleTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CircleTest.log", NES::LogLevel::LOG_DEBUG);

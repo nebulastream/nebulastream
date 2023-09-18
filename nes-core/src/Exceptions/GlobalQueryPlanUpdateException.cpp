@@ -15,5 +15,6 @@
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 
 namespace NES {
-GlobalQueryPlanUpdateException::GlobalQueryPlanUpdateException(const std::string& message) : std::runtime_error(message) {}
+GlobalQueryPlanUpdateException::GlobalQueryPlanUpdateException(const std::string& message)
+    : Exceptions::RequestExecutionException(message) {}
 }// namespace NES

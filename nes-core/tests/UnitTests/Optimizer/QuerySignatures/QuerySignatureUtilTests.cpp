@@ -20,10 +20,10 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
 #include <API/Windowing.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -41,7 +41,7 @@
 
 using namespace NES;
 
-class QuerySignatureUtilTests : public Testing::TestWithErrorHandling {
+class QuerySignatureUtilTests : public Testing::BaseUnitTest {
 
   public:
     SchemaPtr schema;
@@ -59,7 +59,7 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling::SetUp();
+        Testing::BaseUnitTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

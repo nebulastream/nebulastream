@@ -22,16 +22,14 @@ add_source_files(nes-core
         PhysicalProjectOperator.cpp
         PhysicalInferModelOperator.cpp
         PhysicalMapOperator.cpp
-        PhysicalMapJavaUDFOperator.cpp
-        PhysicalFlatMapJavaUDFOperator.cpp
+        PhysicalMapUDFOperator.cpp
+        PhysicalFlatMapUDFOperator.cpp
         PhysicalMultiplexOperator.cpp
         PhysicalDemultiplexOperator.cpp
         PhysicalWatermarkAssignmentOperator.cpp
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
         PhysicalExternalOperator.cpp
-        PhysicalPythonUDFOperator.cpp
-        PythonUDFExecutablePipelineStage.cpp
 )
 
 add_subdirectory(Windowing)

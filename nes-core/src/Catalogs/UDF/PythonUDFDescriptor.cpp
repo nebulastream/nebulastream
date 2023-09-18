@@ -14,21 +14,27 @@
 
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Exceptions/UDFException.hpp>
+#include <sstream>
 
 namespace NES::Catalogs::UDF {
 
-PythonUDFDescriptor::PythonUDFDescriptor(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType)
-    : UDFDescriptor(methodName), numberOfArgs(numberOfArgs), returnType(returnType) {
-    if (methodName.empty()) {
-        throw UDFException("The method name of a Python UDF must not be empty");
-    }
-    // Note: For python >= 3.7 there is no limit on the number of arguments
-    if (numberOfArgs < 0 || numberOfArgs > 255) {
-        throw UDFException("The number of arguments of a Python UDF must be between 0 and 255");
-    }
-    if (returnType == nullptr || returnType->isUndefined()) {
-        throw UDFException("A defined return type for a Python UDF must be set");
+PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName,
+                                         const std::string& functionString,
+                                         const SchemaPtr& inputSchema,
+                                         const SchemaPtr& outputSchema)
+    : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString) {
+    if (functionString.empty()) {
+        throw UDFException("Function String of Python UDF must not be empty");
     }
 }
-
+bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
+    return functionString == other.functionString && getMethodName() == other.getMethodName()
+        && getInputSchema()->equals(other.getInputSchema(), true) && getInputSchema()->equals(other.getInputSchema(), true);
+}
+std::stringstream PythonUDFDescriptor::generateInferStringSignature() {
+    auto signatureStream = std::stringstream{};
+    auto& functionName = getMethodName();
+    signatureStream << "PYTHON_UDF(functionName=" + functionName + ", functionString=" + functionString + ")";
+    return signatureStream;
+}
 }// namespace NES::Catalogs::UDF

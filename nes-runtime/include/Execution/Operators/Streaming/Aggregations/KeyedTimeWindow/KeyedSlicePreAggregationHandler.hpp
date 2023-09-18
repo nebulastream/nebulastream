@@ -16,6 +16,9 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
 
 #include <Common/Identifiers.hpp>
+#include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
 
@@ -32,12 +35,7 @@ class State;
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-class KeyedSlicePreAggregationHandler
-    : public Runtime::Execution::OperatorHandler,
-      public ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false> {
-    using inherited0 = ::NES::detail::virtual_enable_shared_from_this<KeyedSlicePreAggregationHandler, false>;
-    using inherited1 = Runtime::Reconfigurable;
-
+class KeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore> {
   public:
     /**
      * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
@@ -45,10 +43,7 @@ class KeyedSlicePreAggregationHandler
      * @param origins the set of origins, which can produce data for the window operator
      * @param weakSliceStagingPtr access to the slice staging.
      */
-    KeyedSlicePreAggregationHandler(uint64_t windowSize,
-                                    uint64_t windowSlide,
-                                    const std::vector<OriginId>& origins,
-                                    std::weak_ptr<KeyedSliceStaging> weakSliceStagingPtr);
+    KeyedSlicePreAggregationHandler(uint64_t windowSize, uint64_t windowSlide, const std::vector<OriginId>& origins);
 
     /**
      * @brief Initializes the thread local state for the window operator
@@ -57,51 +52,7 @@ class KeyedSlicePreAggregationHandler
      */
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               Runtime::StateManagerPtr stateManager,
-               uint32_t localStateVariableId) override;
-
-    /**
-     * @brief Stops the operator handler and triggers all in flight slices.
-     * @param pipelineExecutionContext pipeline execution context
-     */
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
-
-    /**
-     * @brief This method triggers the thread local state and appends all slices,
-     * which end before the current global watermark to the slice staging area.
-     * @param wctx WorkerContext
-     * @param ctx PipelineExecutionContext
-     * @param workerId
-     * @param originId
-     * @param sequenceNumber
-     * @param watermarkTs
-     */
-    void triggerThreadLocalState(Runtime::WorkerContext& wctx,
-                                 Runtime::Execution::PipelineExecutionContext& ctx,
-                                 uint64_t workerId,
-                                 OriginId originId,
-                                 uint64_t sequenceNumber,
-                                 uint64_t watermarkTs);
-
-    /**
-     * @brief Returns the thread local slice store by a specific worker thread id
-     * @param workerId
-     * @return GlobalThreadLocalSliceStore
-     */
-    KeyedThreadLocalSliceStore* getThreadLocalSliceStore(uint64_t workerId);
-
     ~KeyedSlicePreAggregationHandler() override;
-
-    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
-
-  private:
-    uint64_t windowSize;
-    uint64_t windowSlide;
-    std::weak_ptr<KeyedSliceStaging> weakSliceStaging;
-    std::vector<std::unique_ptr<KeyedThreadLocalSliceStore>> threadLocalSliceStores;
-    std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_

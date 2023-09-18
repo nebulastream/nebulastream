@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -34,7 +34,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class SimplePatternTest : public Testing::NESBaseTest {
+class SimplePatternTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coConf;
     static void SetUpTestCase() {
@@ -43,7 +43,7 @@ class SimplePatternTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         coConf = CoordinatorConfiguration::createDefault();
 
         coConf->rpcPort = (*rpcCoordinatorPort);
@@ -100,8 +100,10 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     std::string query = R"(Query::from("QnV").filter(Attribute("velocity") > 100).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(")).selectionPolicy("Single_Output"); )";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -176,8 +178,10 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
                             .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -188,14 +192,19 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
-        "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
-        "UINT64|\n+----------------------------------------------------+\n|1543622280000|1543622880000|3|0|\n|1543622400000|"
-        "1543623000000|3|0|\n|1543622520000|1543623120000|3|0|\n|1543622640000|1543623240000|3|0|\n+-----------------------------"
-        "-----------------------++----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$"
-        "Count:INT32|QnV$timestamp:UINT64|\n+----------------------------------------------------+\n|1543623120000|1543623720000|"
-        "4|0|\n|1543623240000|1543623840000|3|0|\n|1543623360000|1543623960000|3|0|\n|1543623480000|1543624080000|3|0|\n|"
-        "1543624440000|1543625040000|3|0|\n|1543624560000|1543625160000|3|0|\n|1543624680000|1543625280000|3|0|\n|1543624800000|"
-        "1543625400000|3|0|\n+----------------------------------------------------+";
+        "QnV$start:INTEGER(64 bits),QnV$end:INTEGER(64 bits),QnV$Count:INTEGER(32 bits),QnV$timestamp:INTEGER(64 bits)\n"
+        "1543622280000,1543622880000,3,0\n"
+        "1543622400000,1543623000000,3,0\n"
+        "1543622520000,1543623120000,3,0\n"
+        "1543622640000,1543623240000,3,0\n"
+        "1543623120000,1543623720000,4,0\n"
+        "1543623240000,1543623840000,3,0\n"
+        "1543623360000,1543623960000,3,0\n"
+        "1543623480000,1543624080000,3,0\n"
+        "1543624440000,1543625040000,3,0\n"
+        "1543624560000,1543625160000,3,0\n"
+        "1543624680000,1543625280000,3,0\n"
+        "1543624800000,1543625400000,3,0\n";
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -256,8 +265,10 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
                             .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -268,13 +279,14 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
-        "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
-        "UINT64|\n+----------------------------------------------------+\n|1543622280000|1543622880000|5|0|\n|1543622640000|"
-        "1543623240000|5|0|\n|1543623240000|1543623840000|5|0|\n|1543623360000|1543623960000|5|0|\n+-----------------------------"
-        "-----------------------++----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$"
-        "Count:INT32|QnV$timestamp:UINT64|\n+----------------------------------------------------+\n|1543623600000|1543624200000|"
-        "5|0|\n|1543624440000|1543625040000|5|0|\n|1543624560000|1543625160000|5|0|\n+-------------------------------------------"
-        "---------+";
+        "QnV$start:INTEGER(64 bits),QnV$end:INTEGER(64 bits),QnV$Count:INTEGER(32 bits),QnV$timestamp:INTEGER(64 bits)\n"
+        "1543622280000,1543622880000,5,0\n"
+        "1543622640000,1543623240000,5,0\n"
+        "1543623240000,1543623840000,5,0\n"
+        "1543623360000,1543623960000,5,0\n"
+        "1543623600000,1543624200000,5,0\n"
+        "1543624440000,1543625040000,5,0\n"
+        "1543624560000,1543625160000,5,0\n";
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -335,8 +347,10 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
                             .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -347,10 +361,12 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
-        "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
-        "UINT64|\n+----------------------------------------------------+\n|1543622160000|1543622760000|1|0|\n|1543622280000|"
-        "1543622880000|1|0|\n|1543622400000|1543623000000|1|0|\n|1543622520000|1543623120000|1|0|\n|1543622640000|1543623240000|"
-        "1|0|\n+----------------------------------------------------+";
+        "QnV$start:INTEGER(64 bits),QnV$end:INTEGER(64 bits),QnV$Count:INTEGER(32 bits),QnV$timestamp:INTEGER(64 bits)\n"
+        "1543622160000,1543622760000,1,0\n"
+        "1543622280000,1543622880000,1,0\n"
+        "1543622400000,1543623000000,1,0\n"
+        "1543622520000,1543623120000,1,0\n"
+        "1543622640000,1543623240000,1,0\n";
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -411,8 +427,10 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
                             .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -423,13 +441,14 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
-        "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
-        "UINT64|\n+----------------------------------------------------+\n|1543622280000|1543622880000|5|0|\n|1543622640000|"
-        "1543623240000|5|0|\n|1543623240000|1543623840000|5|0|\n|1543623360000|1543623960000|5|0|\n+-----------------------------"
-        "-----------------------++----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$"
-        "Count:INT32|QnV$timestamp:UINT64|\n+----------------------------------------------------+\n|1543623600000|1543624200000|"
-        "5|0|\n|1543624440000|1543625040000|5|0|\n|1543624560000|1543625160000|5|0|\n+-------------------------------------------"
-        "---------+";
+        "QnV$start:INTEGER(64 bits),QnV$end:INTEGER(64 bits),QnV$Count:INTEGER(32 bits),QnV$timestamp:INTEGER(64 bits)\n"
+        "1543622280000,1543622880000,5,0\n"
+        "1543622640000,1543623240000,5,0\n"
+        "1543623240000,1543623840000,5,0\n"
+        "1543623360000,1543623960000,5,0\n"
+        "1543623600000,1543624200000,5,0\n"
+        "1543624440000,1543625040000,5,0\n"
+        "1543624560000,1543625160000,5,0\n";
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
@@ -490,8 +509,10 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
                             .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
+                                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                                    FaultToleranceType::NONE,
+                                                                    LineageType::IN_MEMORY);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -502,14 +523,17 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
-        "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
-        "UINT64|\n+----------------------------------------------------+\n|1543622280000|1543622880000|5|0|\n|1543622400000|"
-        "1543623000000|6|0|\n|1543622520000|1543623120000|6|0|\n|1543622640000|1543623240000|5|0|\n|1543623240000|1543623840000|"
-        "5|0|\n|1543623360000|1543623960000|5|0|\n+----------------------------------------------------++------------------------"
-        "----------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:UINT64|\n+----------------"
-        "------------------------------------+\n|1543623480000|1543624080000|6|0|\n|1543623600000|1543624200000|5|0|\n|"
-        "1543624440000|1543625040000|5|0|\n|1543624560000|1543625160000|5|0|\n+--------------------------------------------------"
-        "--+";
+        "QnV$start:INTEGER(64 bits),QnV$end:INTEGER(64 bits),QnV$Count:INTEGER(32 bits),QnV$timestamp:INTEGER(64 bits)\n"
+        "1543622280000,1543622880000,5,0\n"
+        "1543622400000,1543623000000,6,0\n"
+        "1543622520000,1543623120000,6,0\n"
+        "1543622640000,1543623240000,5,0\n"
+        "1543623240000,1543623840000,5,0\n"
+        "1543623360000,1543623960000,5,0\n"
+        "1543623480000,1543624080000,6,0\n"
+        "1543623600000,1543624200000,5,0\n"
+        "1543624440000,1543625040000,5,0\n"
+        "1543624560000,1543625160000,5,0\n";
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());

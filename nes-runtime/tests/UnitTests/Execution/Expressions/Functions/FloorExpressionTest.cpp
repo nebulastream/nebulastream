@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/FloorExpression.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
 
 namespace NES::Runtime::Execution::Expressions {
 
-class FloorExpressionTest : public Testing::NESBaseTest {
+class FloorExpressionTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

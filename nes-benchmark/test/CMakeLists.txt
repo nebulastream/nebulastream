@@ -17,7 +17,7 @@ endfunction()
 
 message(STATUS "Building benchmarks tests...")
 
-# Copy Test Data --------------------------------------------------------------
+# Copy Test Configs --------------------------------------------------------------
 file(COPY test-configs DESTINATION .)
 add_compile_definitions(TEST_CONFIGS_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test-configs/")
 message(STATUS "Test Data Directory: ${TEST_CONFIGS_DIRECTORY}/test-configs")

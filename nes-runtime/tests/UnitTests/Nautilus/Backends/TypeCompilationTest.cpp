@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -19,7 +20,6 @@
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -29,7 +29,7 @@
 
 namespace NES::Nautilus {
 
-class TypeCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
+class TypeCompilationTest : public Testing::BaseUnitTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

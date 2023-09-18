@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/Functions/AsinExpression.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class AsinExpressionTest : public Testing::NESBaseTest {
+class AsinExpressionTest : public Testing::BaseUnitTest {
 
   public:
     /* Will be called before any test in this class are executed. */

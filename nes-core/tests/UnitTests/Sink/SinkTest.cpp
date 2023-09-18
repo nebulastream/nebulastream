@@ -13,10 +13,10 @@
 */
 
 #include "SerializableOperator.pb.h"
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -25,6 +25,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Common.hpp>
@@ -50,7 +51,7 @@ using namespace std;
  */
 namespace NES {
 using Runtime::TupleBuffer;
-class SinkTest : public Testing::NESBaseTest {
+class SinkTest : public Testing::BaseIntegrationTest {
   public:
     SchemaPtr test_schema;
     std::array<uint32_t, 8> test_data{};
@@ -68,7 +69,7 @@ class SinkTest : public Testing::NESBaseTest {
 
     /* Called before a single test. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         test_schema =
             Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
         write_result = false;
@@ -89,7 +90,7 @@ class SinkTest : public Testing::NESBaseTest {
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         borrowedZmqPort.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
@@ -136,99 +137,6 @@ TEST_F(SinkTest, testCSVFileSink) {
     while (getline(ss, item, ',')) {
         EXPECT_TRUE(bufferContentAfterWrite.find(item) != std::string::npos);
     }
-    buffer.release();
-}
-
-TEST_F(SinkTest, testTextFileSink) {
-    PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-    auto nodeEngine = this->nodeEngine;
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-
-    const DataSinkPtr binSink = createTextFileSink(test_schema, 0, 0, nodeEngine, 1, path_to_csv_file, true);
-    for (uint64_t i = 0; i < 5; ++i) {
-        for (uint64_t j = 0; j < 5; ++j) {
-            buffer.getBuffer<uint64_t>()[j] = j;
-        }
-    }
-    buffer.setNumberOfTuples(25);
-    write_result = binSink->writeData(buffer, wctx);
-    EXPECT_TRUE(write_result);
-
-    // get buffer content as string
-    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
-    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
-    NES_TRACE("Buffer Content= {}", bufferContent);
-
-    ifstream testFile(path_to_csv_file.c_str());
-    EXPECT_TRUE(testFile.good());
-    std::ifstream ifs(path_to_csv_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    //cout << "File Content=" << fileContent << endl;
-    EXPECT_EQ(bufferContent, fileContent);
-    buffer.release();
-}
-
-TEST_F(SinkTest, testNESBinaryFileSink) {
-    PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-    auto nodeEngine = this->nodeEngine;
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr binSink = createBinaryNESFileSink(test_schema, 0, 0, nodeEngine, 1, path_to_bin_file, true);
-    for (uint64_t i = 0; i < 2; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    write_result = binSink->writeData(buffer, wctx);
-
-    EXPECT_TRUE(write_result);
-    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
-    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
-    NES_TRACE("Buffer Content= {}", bufferContent);
-
-    //deserialize schema
-    uint64_t idx = path_to_bin_file.rfind('.');
-    std::string shrinkedPath = path_to_bin_file.substr(0, idx + 1);
-    std::string schemaFile = shrinkedPath + "schema";
-    //cout << "load=" << schemaFile << endl;
-    ifstream testFileSchema(schemaFile.c_str());
-    EXPECT_TRUE(testFileSchema.good());
-    auto serializedSchema = SerializableSchema();
-    serializedSchema.ParsePartialFromIstream(&testFileSchema);
-    SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
-    //test SCHEMA
-    //cout << "deserialized schema=" << ptr->toString() << endl;
-    EXPECT_EQ(ptr->toString(), test_schema->toString());
-
-    auto deszBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    deszBuffer.setNumberOfTuples(4);
-
-    ifstream ifs(path_to_bin_file, ios_base::in | ios_base::binary);
-    if (ifs) {
-        ifs.read(reinterpret_cast<char*>(deszBuffer.getBuffer()), deszBuffer.getBufferSize());
-    } else {
-        FAIL();
-    }
-
-    //cout << "expected=" << endl << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-    //cout << "result=" << endl << Util::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
-
-    //cout << "File path = " << path_to_bin_file << " Content=" << Util::prettyPrintTupleBuffer(deszBuffer, test_schema);
-
-    auto deszRowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, deszBuffer.getBufferSize());
-    auto deszDynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(deszRowLayout, deszBuffer);
-    std::string deszBufferContent = dynamicTupleBuffer.toString(test_schema);
-
-    auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, deszBuffer);
-    std::string bufferContentActual = dynamicTupleBufferActual.toString(test_schema);
-
-    EXPECT_EQ(deszBufferContent, bufferContentActual);
     buffer.release();
 }
 
@@ -309,42 +217,6 @@ TEST_F(SinkTest, testNullOutSink) {
     //cout << "Buffer Content= " << bufferContent << endl;
 }
 
-TEST_F(SinkTest, testTextPrintSink) {
-    PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-    auto nodeEngine = this->nodeEngine;
-
-    std::filebuf fb;
-    fb.open(path_to_osfile_file, std::ios::out);
-    std::ostream os(&fb);
-
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-
-    const DataSinkPtr binSink = createTextPrintSink(test_schema, 0, 0, nodeEngine, 1, os);
-    for (uint64_t i = 0; i < 5; ++i) {
-        for (uint64_t j = 0; j < 5; ++j) {
-            buffer.getBuffer<uint64_t>()[j] = j;
-        }
-    }
-    buffer.setNumberOfTuples(25);
-    write_result = binSink->writeData(buffer, wctx);
-    EXPECT_TRUE(write_result);
-    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
-    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
-    ////cout << "Buffer Content= " << bufferContent << endl;
-
-    ifstream testFile(path_to_osfile_file.c_str());
-    EXPECT_TRUE(testFile.good());
-    std::ifstream ifs(path_to_osfile_file.c_str());
-    std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    EXPECT_EQ(bufferContent, fileContent.substr(0, fileContent.size() - 1));
-    buffer.release();
-    fb.close();
-    buffer.release();
-}
-
 TEST_F(SinkTest, testCSVZMQSink) {
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
@@ -390,120 +262,10 @@ TEST_F(SinkTest, testCSVZMQSink) {
 
         std::string bufferContent = Util::printTupleBufferAsCSV(buffer, test_schema);
         std::string dataStr;
-        dataStr.assign(bufData.getBuffer<char>(), bufData.getNumberOfTuples());
+        dataStr.assign(bufData.getBuffer<char>(), bufferContent.size());
         //cout << "Buffer Content received= " << bufferContent << endl;
         EXPECT_EQ(bufferContent, dataStr);
         receiving_finished = true;
-    });
-
-    // Wait until receiving is complete.
-    zmq_sink->writeData(buffer, wctx);
-    receiving_thread.join();
-    buffer.release();
-}
-
-TEST_F(SinkTest, testTextZMQSink) {
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-    auto nodeEngine = this->nodeEngine;
-
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createTextZmqSink(test_schema, 0, 0, nodeEngine, 1, "localhost", zmqPort);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j * i] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    //cout << "buffer before send=" << Util::prettyPrintTupleBuffer(buffer, test_schema);
-
-    // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema,
-                                      nodeEngine->getBufferManager(),
-                                      nodeEngine->getQueryManager(),
-                                      "localhost",
-                                      zmqPort,
-                                      1,
-                                      0,
-                                      12,
-                                      "defaultPhysicalSourceName",
-                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    //std::cout << zmq_source->toString() << std::endl;
-
-    // Start thread for receiving the data.
-    bool receiving_finished = false;
-    auto receiving_thread = std::thread([&]() {
-        zmq_source->open();
-        auto bufferData = zmq_source->receiveData();
-        TupleBuffer bufData = bufferData.value();
-
-        std::string bufferContent = Util::printTupleBufferAsText(bufData);
-        //cout << "Buffer Content received= " << bufferContent << endl;
-        auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-        auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, buffer);
-        std::string bufferContentActual = dynamicTupleBufferActual.toString(test_schema);
-        EXPECT_EQ(bufferContent, bufferContentActual);
-        receiving_finished = true;
-    });
-
-    // Wait until receiving is complete.
-    zmq_sink->writeData(buffer, wctx);
-    receiving_thread.join();
-    buffer.release();
-}
-
-TEST_F(SinkTest, testBinaryZMQSink) {
-    PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-    auto nodeEngine = this->nodeEngine;
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr zmq_sink = createBinaryZmqSink(test_schema, 0, 0, nodeEngine, 1, "localhost", zmqPort, false);
-    for (uint64_t i = 1; i < 3; ++i) {
-        for (uint64_t j = 0; j < 2; ++j) {
-            buffer.getBuffer<uint64_t>()[j * i] = j;
-        }
-    }
-    buffer.setNumberOfTuples(4);
-    //cout << "buffer before send=" << Util::prettyPrintTupleBuffer(buffer, test_schema);
-
-    // Create ZeroMQ Data Source.
-    auto zmq_source = createZmqSource(test_schema,
-                                      nodeEngine->getBufferManager(),
-                                      nodeEngine->getQueryManager(),
-                                      "localhost",
-                                      zmqPort,
-                                      1,
-                                      0,
-                                      12,
-                                      "defaultPhysicalSourceName",
-                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    //std::cout << zmq_source->toString() << std::endl;
-
-    // Start thread for receiving the data.
-    auto receiving_thread = std::thread([&]() {
-        zmq_source->open();
-        auto schemaData = zmq_source->receiveData();
-        TupleBuffer bufSchema = schemaData.value();
-        auto serializedSchema = SerializableSchema();
-        serializedSchema.ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
-        SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
-        EXPECT_EQ(ptr->toString(), test_schema->toString());
-
-        auto bufferData = zmq_source->receiveData();
-        TupleBuffer bufData = bufferData.value();
-        //cout << "rec buffer tups=" << bufData.getNumberOfTuples()
-        //        << " content=" << Util::prettyPrintTupleBuffer(bufData, test_schema) << endl;
-        //cout << "ref buffer tups=" << buffer.getNumberOfTuples()
-        //        << " content=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-        auto rowLayoutExpected = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-        auto dynamicTupleBufferExpected = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutExpected, buffer);
-        std::string bufferContentExpected = dynamicTupleBufferExpected.toString(test_schema);
-
-        auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-        auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, buffer);
-        std::string bufferContentActual = dynamicTupleBufferActual.toString(test_schema);
-
-        EXPECT_EQ(bufferContentExpected, bufferContentActual);
     });
 
     // Wait until receiving is complete.
@@ -592,7 +354,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     diskCollector.setNodeId(nodeId1);
     Monitoring::MetricPtr diskMetric = diskCollector.readMetric();
     Monitoring::DiskMetrics typedMetric = diskMetric->getValue<Monitoring::DiskMetrics>();
-    ASSERT_EQ(diskMetric->getMetricType(), Monitoring::MetricType::DiskMetric);
+    EXPECT_EQ(diskMetric->getMetricType(), Monitoring::MetricType::DiskMetric);
     auto bufferSize = Monitoring::DiskMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);
@@ -603,7 +365,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     cpuCollector.setNodeId(nodeId2);
     Monitoring::MetricPtr cpuMetric = cpuCollector.readMetric();
     Monitoring::CpuMetricsWrapper typedMetricCpu = cpuMetric->getValue<Monitoring::CpuMetricsWrapper>();
-    ASSERT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
+    EXPECT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
     auto bufferSizeCpu = Monitoring::CpuMetrics::getSchema("")->getSchemaSizeInBytes() * typedMetricCpu.size() + 64;
     auto tupleBufferCpu = nodeEngine->getBufferManager()->getUnpooledBuffer(bufferSizeCpu).value();
     writeToBuffer(typedMetricCpu, tupleBufferCpu, 0);
@@ -628,7 +390,7 @@ TEST_F(SinkTest, testMonitoringSink) {
 
     NES_INFO("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetrics));
     ASSERT_TRUE(storedMetrics->size() == 1);
-    ASSERT_EQ(parsedMetrics, typedMetric);
+    EXPECT_EQ(parsedMetrics, typedMetric);
 
     // test cpu metrics
     Monitoring::StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId2));
@@ -639,7 +401,7 @@ TEST_F(SinkTest, testMonitoringSink) {
 
     NES_INFO("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetricsCpu));
     ASSERT_TRUE(storedMetricsCpu->size() == 1);
-    ASSERT_EQ(parsedMetricsCpu, typedMetricCpu);
+    EXPECT_EQ(parsedMetricsCpu, typedMetricCpu);
 
     tupleBuffer.release();
 }

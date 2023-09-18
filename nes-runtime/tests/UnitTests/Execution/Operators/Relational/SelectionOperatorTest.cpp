@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -25,7 +25,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class SelectionOperatorTest : public Testing::NESBaseTest {
+class SelectionOperatorTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

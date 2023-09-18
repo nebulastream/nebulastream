@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
+#include <API/Query.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -103,6 +104,17 @@ class TestHarness {
      * @return self
      */
     TestHarness& enableNautilus();
+
+    /**
+     * @brief Enables the distributed window optimization
+     */
+    TestHarness& enableDistributedWindowOptimization();
+
+    /**
+     * @brief Enable new request executor
+     * @return self
+     */
+    TestHarness& enableNewRequestExecutor();
 
     /**
      * @brief Sets the join strategy
@@ -282,6 +294,7 @@ class TestHarness {
         remove(filePath.c_str());
 
         //register query
+        auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
         auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultTolerance).value();
         auto lineageMode = magic_enum::enum_cast<LineageType>(lineage).value();
         QueryId queryId = INVALID_QUERY_ID;
@@ -290,13 +303,15 @@ class TestHarness {
             // we can remove this, once we just use Query
             std::string queryString =
                 queryWithoutSinkStr + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-            queryId = queryService->validateAndQueueAddQueryRequest(queryString, std::move(placementStrategyName),
-                                                                    faultToleranceMode, lineageMode);
-        } else if (queryWithoutSink.get() != nullptr){
+            queryId =
+                queryService->validateAndQueueAddQueryRequest(queryString, placementStrategy, faultToleranceMode, lineageMode);
+        } else if (queryWithoutSink.get() != nullptr) {
             auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "NES_FORMAT", "APPEND"));
-            queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(),
-                                                    std::move(placementStrategyName),
-                                                    faultToleranceMode, lineageMode);
+            queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    placementStrategy,
+                                                    faultToleranceMode,
+                                                    lineageMode);
         } else {
             NES_THROW_RUNTIME_ERROR("TestHarness expects that either the query is given as a string or as a query object!");
         }
@@ -372,15 +387,17 @@ class TestHarness {
 
   private:
     std::string getNextPhysicalSourceName();
-
     uint32_t getNextTopologyId();
 
+    const std::chrono::seconds SETUP_TIMEOUT_IN_SEC = std::chrono::seconds(2);
     const std::string queryWithoutSinkStr;
     const QueryPtr queryWithoutSink;
     std::string coordinatorIPAddress;
     uint16_t restPort;
     uint16_t rpcPort;
     bool useNautilus;
+    bool performDistributedWindowOptimization;
+    bool useNewRequestExecutor;
     uint64_t memSrcFrequency;
     uint64_t memSrcNumBuffToProcess;
     uint64_t bufferSize;

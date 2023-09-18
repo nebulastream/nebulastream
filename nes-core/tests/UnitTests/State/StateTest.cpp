@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -22,7 +22,7 @@
 namespace NES {
 using Runtime::StateManager;
 using Runtime::StateVariable;
-class StateTest : public Testing::TestWithErrorHandling {
+class StateTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StateTest.log", NES::LogLevel::LOG_DEBUG);

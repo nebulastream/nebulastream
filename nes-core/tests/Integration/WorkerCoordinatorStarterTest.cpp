@@ -14,11 +14,11 @@
 
 #include <iostream>
 
+#include <BaseIntegrationTest.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -27,7 +27,7 @@ using std::endl;
 #define DEBUG_OUTPUT
 namespace NES {
 
-class WorkerCoordinatorStarterTest : public Testing::NESBaseTest {
+class WorkerCoordinatorStarterTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WorkerCoordinatorStarterTest.log", NES::LogLevel::LOG_DEBUG);

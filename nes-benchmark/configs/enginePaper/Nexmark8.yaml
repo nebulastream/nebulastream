@@ -3,9 +3,9 @@
 benchmarkName: Nexmark8
 outputFile: nexmark8.csv
 
-#numberOfWorkerThreads: 1,2,3,4,5,6,7,8
 #numberOfSources: 1,1,1,1,2,2,2,2
-numberOfWorkerThreads: 1,2,4,8,16
+#numberOfWorkerThreads: 1,2,4,8,16
+numberOfWorkerThreads: 1
 numberOfSources: 8
 
 # engine configuration parameter
@@ -20,15 +20,15 @@ pageSize: 65536
 numberOfPartitions: 16
 preAllocPageCnt: 32
 
-#maxHashTableSize: 34359738368
-maxHashTableSize: 34359738368
+#maxHashTableSize: 34359738368 #32GB
+maxHashTableSize: 4294967296 #4GB
 #for node55
 #maxHashTableSize: 137438953472
-#joinStrategy: HASH_JOIN_LOCAL
+joinStrategy: HASH_JOIN_LOCAL
 #joinStrategy: HASH_JOIN_GLOBAL_LOCKING
 #joinStrategy: HASH_JOIN_GLOBAL_LOCK_FREE
-joinStrategy: NESTED_LOOP_JOIN
-#
+#joinStrategy: NESTED_LOOP_JOIN
+
 logicalSources:
   - name: bit
     type: NEBit

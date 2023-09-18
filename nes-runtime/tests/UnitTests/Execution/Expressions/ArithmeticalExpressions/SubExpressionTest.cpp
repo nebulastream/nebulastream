@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
-#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class SubExpressionTest : public Testing::NESBaseTest {
+class SubExpressionTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

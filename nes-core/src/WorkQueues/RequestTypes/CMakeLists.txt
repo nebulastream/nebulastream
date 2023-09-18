@@ -11,9 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Experimental)
 add_subdirectory(QueryRequests)
 add_subdirectory(TopologyRequests)
-add_source_files(nes-core
-        AbstractRequest.cpp
-        )

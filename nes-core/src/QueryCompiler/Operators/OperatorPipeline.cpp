@@ -103,12 +103,16 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
     }
+    if (newRootOperator->hasProperty("LogicalOperatorId")) {
+        operatorIds.push_back(std::any_cast<uint64_t>(newRootOperator->getProperty("LogicalOperatorId")));
+    }
     this->queryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
 }
 
 uint64_t OperatorPipeline::getPipelineId() const { return id; }
 
 QueryPlanPtr OperatorPipeline::getQueryPlan() { return queryPlan; }
+const std::vector<uint64_t>& OperatorPipeline::getOperatorIds() const { return operatorIds; }
 
 std::string OperatorPipeline::toString() const {
     auto successorsStr = std::accumulate(successorPipelines.begin(),

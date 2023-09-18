@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
@@ -23,7 +23,7 @@
 
 namespace NES {
 
-class TopologyPropertiesTest : public Testing::NESBaseTest {
+class TopologyPropertiesTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 

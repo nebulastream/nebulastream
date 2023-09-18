@@ -12,30 +12,23 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/SinkCreator.hpp>
-#include <cstring>
-#include <gtest/gtest.h>
-#include <string>
-#include <thread>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Sinks/Mediums//KafkaSink.hpp>
-#include <Sources/KafkaSource.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 
-#include <Services/QueryService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/TimeMeasurement.hpp>
-#include <cppkafka/cppkafka.h>
-#include <random>
+
+#include <gtest/gtest.h>
+#include <string>
 
 #ifndef OPERATORID
 #define OPERATORID 1
@@ -52,7 +45,7 @@ namespace NES {
 /**
 * NOTE: this test requires a running kafka instance
 */
-class KafkaSinkTest : public Testing::NESBaseTest {
+class KafkaSinkTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -61,8 +54,8 @@ class KafkaSinkTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-        dataPort = Testing::NESBaseTest::getAvailablePort();
+        Testing::BaseIntegrationTest::SetUp();
+        dataPort = Testing::BaseIntegrationTest::getAvailablePort();
         NES_DEBUG("Setup KafkaSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
@@ -80,7 +73,7 @@ class KafkaSinkTest : public Testing::NESBaseTest {
         dataPort.reset();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("KafkaSinkTest::TearDown() Tear down KafkaSinkTest");
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -113,7 +106,7 @@ class KafkaSinkTest : public Testing::NESBaseTest {
 */
 TEST_F(KafkaSinkTest, KafkaSinkInit) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createCsvKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 }
 
 /**
@@ -121,7 +114,7 @@ TEST_F(KafkaSinkTest, KafkaSinkInit) {
 */
 TEST_F(KafkaSinkTest, KafkaSourcePrint) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createCsvKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 
     std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
 

@@ -21,6 +21,7 @@ on:
       - reopened
     branches:
       - master
+      - 'feature/**'
     paths-ignore:
       - nes-core/include/Version/version.hpp
       - README.md
@@ -86,7 +87,11 @@ jobs:
   #      - name: guard-check
   #        run: |
   #          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
-  
+      - name: docker cleanup
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+        run: |
+          docker rm -f ${{ github.run_id }}_preamble-check
+
   # Deactivate coverage report in #3564
   #  build-x64-linux-code-coverage:
   #    name: "Code Coverage Pipeline"
@@ -158,7 +163,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     name: ${{ matrix.osversion }} ${{ matrix.arch }}
     needs: [ pre-build-checks ]
-    timeout-minutes: 60
+    timeout-minutes: 40
     runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
     strategy:
       fail-fast: false
@@ -239,7 +244,7 @@ jobs:
       matrix:
         arch: [ "ARM64", "X64" ]
     needs: [ pre-build-checks ]
-    timeout-minutes: 60
+    timeout-minutes: 40
     continue-on-error: true
     steps:
       - uses: actions/checkout@v3

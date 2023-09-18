@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Common/Identifiers.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <string>
@@ -28,7 +28,7 @@ namespace NES {
 
 uint16_t timeout = 5;
 
-class E2ECoordinatorMultiQueryTest : public Testing::NESBaseTest {
+class E2ECoordinatorMultiQueryTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LogLevel::LOG_DEBUG);

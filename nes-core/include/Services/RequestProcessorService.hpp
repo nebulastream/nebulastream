@@ -94,9 +94,9 @@ class RequestProcessorService {
                                      const GlobalQueryPlanPtr& globalQueryPlan,
                                      const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                                      const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                     const WorkerRPCClientPtr& workerRpcClient,
-                                     RequestQueuePtr queryRequestQueue,
-                                     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
+                                     const RequestQueuePtr& queryRequestQueue,
+                                     const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration,
+                                     const z3::ContextPtr& z3Context);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
@@ -127,8 +127,8 @@ class RequestProcessorService {
     GlobalQueryPlanPtr globalQueryPlan;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
-    z3::ContextPtr z3Context;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
+    z3::ContextPtr z3Context;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_

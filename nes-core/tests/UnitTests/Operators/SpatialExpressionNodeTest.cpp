@@ -13,8 +13,8 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
@@ -24,7 +24,7 @@
 
 namespace NES {
 
-class SpatialExpressionNodeTest : public Testing::NESBaseTest {
+class SpatialExpressionNodeTest : public Testing::BaseUnitTest {
   protected:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SpatialExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);

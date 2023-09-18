@@ -66,7 +66,9 @@ PhysicalNestedLoopJoinBuildOperator::create(const SchemaPtr& inputSchema,
 std::string PhysicalNestedLoopJoinBuildOperator::toString() const { return "PhysicalNestedLoopJoinBuildOperator"; }
 
 OperatorNodePtr PhysicalNestedLoopJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName, joinFieldName);
+    auto result = create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName, joinFieldName);
+    result->addAllProperties(properties);
+    return result;
 }
 
 JoinBuildSideType PhysicalNestedLoopJoinBuildOperator::getBuildSide() const { return buildSide; }

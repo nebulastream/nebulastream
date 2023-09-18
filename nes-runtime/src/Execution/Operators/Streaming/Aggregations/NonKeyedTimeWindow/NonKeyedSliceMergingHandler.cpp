@@ -14,24 +14,22 @@
 
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler(std::shared_ptr<NonKeyedSliceStaging> globalSliceStaging)
-    : sliceStaging(globalSliceStaging) {}
+NonKeyedSliceMergingHandler::NonKeyedSliceMergingHandler() {}
 
 void NonKeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
-    defaultState = std::make_unique<State>(entrySize);
     defaultState = std::make_unique<State>(entrySize);
 }
 
@@ -39,12 +37,7 @@ void NonKeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionCon
     NES_DEBUG("start NonKeyedSliceMergingHandler");
 }
 
-void NonKeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminationType,
-                                       Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop NonKeyedSliceMergingHandler: {}", queryTerminationType);
-}
-
-GlobalSlicePtr NonKeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
+GlobalSlicePtr NonKeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<NonKeyedSlice>* sliceMergeTask) {
     return std::make_unique<NonKeyedSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice, defaultState);
 }
 
@@ -52,6 +45,8 @@ const State* NonKeyedSliceMergingHandler::getDefaultState() const { return defau
 
 NonKeyedSliceMergingHandler::~NonKeyedSliceMergingHandler() { NES_DEBUG("Destruct NonKeyedSliceMergingHandler"); }
 
-std::weak_ptr<NonKeyedSliceStaging> NonKeyedSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
+void NonKeyedSliceMergingHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
+    NES_DEBUG("stop NonKeyedSliceMergingHandler");
+}
 
 }// namespace NES::Runtime::Execution::Operators

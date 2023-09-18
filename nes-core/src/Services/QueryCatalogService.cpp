@@ -26,9 +26,10 @@
 namespace NES {
 QueryCatalogService::QueryCatalogService(Catalogs::Query::QueryCatalogPtr queryCatalog) : queryCatalog(std::move(queryCatalog)) {}
 
-Catalogs::Query::QueryCatalogEntryPtr QueryCatalogService::createNewEntry(const std::string& queryString,
-                                                                          const QueryPlanPtr& queryPlan,
-                                                                          const std::string& placementStrategyName) {
+Catalogs::Query::QueryCatalogEntryPtr
+QueryCatalogService::createNewEntry(const std::string& queryString,
+                                    const QueryPlanPtr& queryPlan,
+                                    const Optimizer::PlacementStrategy placementStrategyName) {
     std::unique_lock lock(serviceMutex);
     return queryCatalog->createNewEntry(queryString, queryPlan, placementStrategyName);
 }

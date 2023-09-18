@@ -13,21 +13,21 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/MapJavaUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -58,7 +58,7 @@ using namespace NES::Windowing;
 
 namespace NES {
 
-class TypeInferencePhaseTest : public Testing::TestWithErrorHandling {
+class TypeInferencePhaseTest : public Testing::BaseUnitTest {
   public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
     /* Will be called before any test in this class are executed. */
@@ -1508,8 +1508,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode =
-        std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
+    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
 
     auto descriptor = LogicalSourceDescriptor::create("logicalSource");
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
@@ -1549,8 +1548,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode =
-        std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
+    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
 
     auto descriptor1 = LogicalSourceDescriptor::create("logicalSource1");
     auto sourceOperator1 = LogicalOperatorFactory::createSourceOperator(descriptor1);
@@ -1598,15 +1596,13 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute1", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode1 =
-        std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
+    auto mapUdfLogicalOperatorNode1 = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
 
     auto javaUdfDescriptor2 =
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute2", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode2 =
-        std::make_shared<MapJavaUDFLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
+    auto mapUdfLogicalOperatorNode2 = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
 
     auto descriptor1 = LogicalSourceDescriptor::create("logicalSource1");
     auto sourceOperator1 = LogicalOperatorFactory::createSourceOperator(descriptor1);

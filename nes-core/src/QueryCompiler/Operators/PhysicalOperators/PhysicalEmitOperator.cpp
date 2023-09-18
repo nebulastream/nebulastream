@@ -27,6 +27,10 @@ PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, const SchemaPtr&
 
 std::string PhysicalEmitOperator::toString() const { return "PhysicalEmitOperator"; }
 
-OperatorNodePtr PhysicalEmitOperator::copy() { return create(id, inputSchema); }
+OperatorNodePtr PhysicalEmitOperator::copy() {
+    auto result = create(id, inputSchema);
+    result->addAllProperties(properties);
+    return result;
+}
 
 }// namespace NES::QueryCompilation::PhysicalOperators

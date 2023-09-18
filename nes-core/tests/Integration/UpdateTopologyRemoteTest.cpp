@@ -21,12 +21,12 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 
 using namespace std;
 namespace NES {
 
-class UpdateTopologyRemoteTest : public Testing::NESBaseTest {
+class UpdateTopologyRemoteTest : public Testing::BaseIntegrationTest {
   public:
     // set the default numberOfSlots to the number of processor
     const uint16_t processorCount = std::thread::hardware_concurrency();

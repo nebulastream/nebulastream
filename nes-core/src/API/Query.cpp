@@ -308,15 +308,15 @@ Query& Query::limit(const uint64_t limit) {
     return *this;
 }
 
-Query& Query::mapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr descriptor) {
+Query& Query::mapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor) {
     NES_DEBUG("Query: add map java udf operator to query");
-    this->queryPlan = QueryPlanBuilder::addMapJavaUDF(descriptor, this->queryPlan);
+    this->queryPlan = QueryPlanBuilder::addMapUDF(descriptor, this->queryPlan);
     return *this;
 }
 
-Query& Query::flatMapJavaUDF(const Catalogs::UDF::JavaUDFDescriptorPtr descriptor) {
+Query& Query::flatMapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor) {
     NES_DEBUG("Query: add flat map java udf operator to query");
-    this->queryPlan = QueryPlanBuilder::addFlatMapJavaUDF(descriptor, this->queryPlan);
+    this->queryPlan = QueryPlanBuilder::addFlatMapUDF(descriptor, this->queryPlan);
     return *this;
 }
 

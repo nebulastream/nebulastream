@@ -13,7 +13,7 @@
 */
 
 // clang-format: off
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 // clang-format: on
 
@@ -40,7 +40,7 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class MetricCollectorTest : public Testing::NESBaseTest {
+class MetricCollectorTest : public Testing::BaseUnitTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     Monitoring::AbstractSystemResourcesReaderPtr reader;
@@ -53,7 +53,7 @@ class MetricCollectorTest : public Testing::NESBaseTest {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_DEBUG("MetricCollectorTest: Setup MetricCollectorTest test case.");
 
         auto bufferSize = 4096;
@@ -79,7 +79,9 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
 
         Monitoring::NetworkMetricsWrapper parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
-        NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(wrappedMetric), asJson(parsedMetric));
+        NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}",
+                  asJson(wrappedMetric).dump(),
+                  asJson(parsedMetric).dump());
         ASSERT_EQ(wrappedMetric, parsedMetric);
         ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
     } else {
@@ -108,7 +110,9 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
 
         Monitoring::NetworkMetrics parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
-        NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(wrappedMetric), asJson(parsedMetric));
+        NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}",
+                  asJson(wrappedMetric).dump(),
+                  asJson(parsedMetric).dump());
         ASSERT_EQ(totalMetrics, parsedMetric);
         ASSERT_EQ(totalMetrics.nodeId, nodeId);
         ASSERT_EQ(readMetrics.getNodeId(), nodeId);
@@ -134,7 +138,9 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
 
         Monitoring::CpuMetricsWrapper parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
-        NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(wrappedMetric), asJson(parsedMetric));
+        NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}",
+                  asJson(wrappedMetric).dump(),
+                  asJson(parsedMetric).dump());
         ASSERT_EQ(wrappedMetric, parsedMetric);
         ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
     } else {
@@ -163,7 +169,9 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
 
         Monitoring::CpuMetrics parsedMetric{};
         readFromBuffer(parsedMetric, tupleBuffer, 0);
-        NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(wrappedMetric), asJson(parsedMetric));
+        NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}",
+                  asJson(wrappedMetric).dump(),
+                  asJson(parsedMetric).dump());
         ASSERT_EQ(totalMetrics, parsedMetric);
         ASSERT_EQ(totalMetrics.nodeId, nodeId);
         ASSERT_EQ(readMetrics.getNodeId(), nodeId);
@@ -188,7 +196,7 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
 
     Monitoring::MetricPtr parsedMetric = std::make_shared<Monitoring::Metric>(Monitoring::DiskMetrics{});
     readFromBuffer(parsedMetric, tupleBuffer, 0);
-    NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(typedMetric), asJson(parsedMetric));
+    NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(typedMetric).dump(), asJson(parsedMetric).dump());
     ASSERT_EQ(typedMetric, parsedMetric->getValue<Monitoring::DiskMetrics>());
     ASSERT_EQ(parsedMetric->getValue<Monitoring::DiskMetrics>().nodeId, nodeId);
     ASSERT_EQ(typedMetric.nodeId, nodeId);
@@ -210,7 +218,7 @@ TEST_F(MetricCollectorTest, testMemoryCollector) {
 
     Monitoring::MemoryMetrics parsedMetric{};
     readFromBuffer(parsedMetric, tupleBuffer, 0);
-    NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(typedMetric), asJson(parsedMetric));
+    NES_DEBUG("MetricCollectorTest:\nRead metric {}\nParsed metric: {}", asJson(typedMetric).dump(), asJson(parsedMetric).dump());
     ASSERT_EQ(typedMetric, parsedMetric);
 }
 

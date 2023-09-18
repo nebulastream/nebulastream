@@ -23,11 +23,17 @@ class JsonFormat : public SinkFormat {
     JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
 
     /**
+     * @brief Returns the schema of formatted according to the specific SinkFormat represented as string.
+     * @return The formatted schema as string
+     */
+    std::string getFormattedSchema() override;
+
+    /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    std::vector<Runtime::TupleBuffer> getData(Runtime::TupleBuffer& inputBuffer) override;
+    std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
 
     //TODO implement this function with an SinkFormatIterator
     /**
@@ -36,12 +42,6 @@ class JsonFormat : public SinkFormat {
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
     FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
-
-    /**
-    * @brief method to write the schema of the data
-    * @return TupleBuffer containing the schema
-    */
-    std::optional<Runtime::TupleBuffer> getSchema() override;
 
     /**
      * @brief method to return the format as a string

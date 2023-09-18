@@ -14,13 +14,13 @@
 
 #include <iostream>
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -30,7 +30,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class MultiWorkerTest : public Testing::NESBaseTest {
+class MultiWorkerTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MultiWorkerTest.log", NES::LogLevel::LOG_DEBUG);

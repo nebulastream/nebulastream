@@ -20,6 +20,7 @@ add_nes_runtime_test(runtime-keyed-window-pipeline-test "KeyedTimeWindowPipeline
 add_nes_runtime_test(runtime-text-pipeline-test "TextPipelineTest.cpp")
 add_nes_runtime_test(runtime-stream-hash-join-pipeline-test "StreamHashJoinPipelineTest.cpp")
 add_nes_runtime_test(runtime-stream-nested-loop-join-pipeline-test "NestedLoopJoinPipelineTest.cpp")
+add_nes_runtime_test(runtime-map-pythonudf-pipeline-test "MapPythonUDFPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
 add_nes_runtime_test(runtime-batch-join-pipeline-test "BatchJoinPipelineTest.cpp")
 add_nes_runtime_test(runtime-limit-pipeline-test "LimitPipelineTest.cpp")
@@ -30,4 +31,8 @@ endif ()
 
 if (NES_USE_TF)
     add_nes_runtime_test(runtime-infer-model-pipeline-test "InferModelPipelineTest.cpp")
+endif ()
+
+if (NES_USE_ARROW)
+    add_nes_runtime_test(runtime-arrow-scan-pipeline-test "ArrowScanEmitPipelineTest.cpp")
 endif ()

@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -31,7 +32,6 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -44,7 +44,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class KeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
+class KeyedThresholdWindowPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
   public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
@@ -60,7 +60,7 @@ class KeyedThresholdWindowPipelineTest : public Testing::NESBaseTest, public Abs
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup KeyedThresholdWindowPipelineTest test case.");
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();

@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -20,7 +21,6 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -28,7 +28,7 @@
 #include <iostream>
 namespace NES::Experimental {
 
-class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
+class StaticDataSourceIntegrationTest : public Testing::BaseIntegrationTest {
   public:
     struct __attribute__((packed)) record_customer {
         uint64_t C_CUSTKEY;
@@ -78,7 +78,7 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
     SchemaPtr schema_integers_1;
 
     void SetUp() {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         schema_customer = Schema::create()
                               ->addField("C_CUSTKEY", BasicType::UINT64)
                               ->addField("C_NAME", DataTypeFactory::createFixedChar(25 + 1))   // var text

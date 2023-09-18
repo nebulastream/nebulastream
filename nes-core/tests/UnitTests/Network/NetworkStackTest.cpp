@@ -37,8 +37,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <NesBaseTest.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -69,7 +69,7 @@ struct TestStruct {
 };
 
 namespace Network {
-class NetworkStackTest : public Testing::NESBaseTest {
+class NetworkStackTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NetworkStackTest.log", NES::LogLevel::LOG_DEBUG);
@@ -78,14 +78,14 @@ class NetworkStackTest : public Testing::NESBaseTest {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         freeDataPort = getAvailablePort();
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         freeDataPort.reset();
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
     }
 
   protected:

@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -24,7 +25,6 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -32,9 +32,10 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
+
 namespace NES::Runtime::Execution {
 
-class HashJoinOperatorTest : public Testing::NESBaseTest {
+class HashJoinOperatorTest : public Testing::BaseUnitTest {
   public:
     std::shared_ptr<Runtime::BufferManager> bm;
     std::vector<TupleBuffer> emittedBuffers;
@@ -47,7 +48,7 @@ class HashJoinOperatorTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NESBaseTest::SetUp();
+        BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
@@ -55,7 +56,7 @@ class HashJoinOperatorTest : public Testing::NESBaseTest {
     /* Will be called after a test is executed. */
     void TearDown() override {
         NES_INFO("Tear down HashJoinOperatorTest test case.");
-        NESBaseTest::TearDown();
+        BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -77,7 +78,7 @@ struct HashJoinBuildHelper {
     SchemaPtr schema;
     std::string timeStampField;
     HashJoinOperatorTest* hashJoinOperatorTest;
-    bool isLeftSide;
+    QueryCompilation::JoinBuildSideType joinBuildSide;
 
     HashJoinBuildHelper(Operators::StreamHashJoinBuildPtr hashJoinBuild,
                         const std::string& joinFieldName,
@@ -85,11 +86,11 @@ struct HashJoinBuildHelper {
                         SchemaPtr schema,
                         const std::string& timeStampField,
                         HashJoinOperatorTest* hashJoinOperatorTest,
-                        bool isLeftSide)
+                        QueryCompilation::JoinBuildSideType joinBuildSide)
         : pageSize(131072), numPartitions(1), numberOfTuplesToProduce(100), numberOfBuffersPerWorker(128), noWorkerThreads(1),
           totalNumSources(2), joinSizeInByte(1 * 1024 * 1024), windowSize(1000), hashJoinBuild(hashJoinBuild),
           joinFieldName(joinFieldName), bufferManager(bufferManager), schema(schema), timeStampField(timeStampField),
-          hashJoinOperatorTest(hashJoinOperatorTest), isLeftSide(isLeftSide) {}
+          hashJoinOperatorTest(hashJoinOperatorTest), joinBuildSide(joinBuildSide) {}
 };
 
 bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
@@ -147,7 +148,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         auto window = hashJoinOpHandler->getWindowByTimestampOrCreateIt(timeStamp);
         auto hashWindow = static_cast<StreamHashJoinWindow*>(window.get());
 
-        auto hashTable = hashWindow->getHashTable(buildHelper.isLeftSide, workerContext->getId());
+        auto hashTable = hashWindow->getHashTable(buildHelper.joinBuildSide, workerContext->getId());
 
         auto bucket = hashTable->getBucketLinkedList(hashTable->getBucketPos(hash));
 
@@ -293,14 +294,14 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
     auto hashJoinBuildLeft = std::make_shared<Operators::StreamHashJoinBuild>(
         handlerIndex,
-        /*isLeftSide*/ true,
+        QueryCompilation::JoinBuildSideType::Left,
         hashJoinProbeHelper.joinFieldNameLeft,
         hashJoinProbeHelper.timeStampFieldLeft,
         hashJoinProbeHelper.leftSchema,
         std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft));
     auto hashJoinBuildRight = std::make_shared<Operators::StreamHashJoinBuild>(
         handlerIndex,
-        /*isLeftSide*/ false,
+        QueryCompilation::JoinBuildSideType::Right,
         hashJoinProbeHelper.joinFieldNameRight,
         hashJoinProbeHelper.timeStampFieldRight,
         hashJoinProbeHelper.rightSchema,
@@ -370,9 +371,9 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         uint64_t size = leftRecords[i].size();
         recordBufferLeft.setNumRecords(uint64_t(0));
         //for one record in the buffer
-        for (auto u = 0UL; u < leftRecords[i].size(); u++) {
-            hashJoinBuildLeft->execute(executionContext, leftRecords[i][u]);
-            NES_DEBUG("Insert left tuple {}", leftRecords[i][u].toString());
+        for (auto& u : leftRecords[i]) {
+            hashJoinBuildLeft->execute(executionContext, u);
+            NES_DEBUG("Insert left tuple {}", u.toString());
         }
         executionContext.setWatermarkTs(leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft).as<UInt64>());
         executionContext.setCurrentTs(leftRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldLeft).as<UInt64>());
@@ -439,10 +440,10 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                                                                 hashJoinProbeHelper.windowSize);
 
         auto existingNumberOfTuplesInWindowLeft =
-            hashJoinOpHandler->getNumberOfTuplesInWindow(windowIdentifier, 0, /*isLeftSide*/ true);
+            hashJoinOpHandler->getNumberOfTuplesInWindow(windowIdentifier, 0, QueryCompilation::JoinBuildSideType::Left);
 
         auto existingNumberOfTuplesInWindowRight =
-            hashJoinOpHandler->getNumberOfTuplesInWindow(windowIdentifier, 0, /*isLeftSide*/ false);
+            hashJoinOpHandler->getNumberOfTuplesInWindow(windowIdentifier, 0, QueryCompilation::JoinBuildSideType::Right);
 
         if (existingNumberOfTuplesInWindowLeft != expectedNumberOfTuplesInWindowLeft
             || existingNumberOfTuplesInWindowRight != expectedNumberOfTuplesInWindowRight) {
@@ -558,7 +559,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTest) {
 
     const auto joinFieldNameLeft = "f2_left";
     const auto timeStampField = "left$timestamp";
-    const auto isLeftSide = true;
+    const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
     auto handlerIndex = 0;
     auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
@@ -585,7 +586,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestRight) {
 
     const auto joinFieldNameRight = "f2_right";
     const auto timeStampField = "left$timestamp";
-    const auto isLeftSide = false;
+    const auto isLeftSide = QueryCompilation::JoinBuildSideType::Right;
 
     auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
     auto handlerIndex = 0;
@@ -611,7 +612,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
 
     const auto joinFieldNameLeft = "f2_left";
     const auto timeStampField = "left$timestamp";
-    const auto isLeftSide = true;
+    const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
     auto handlerIndex = 0;
     auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
@@ -642,7 +643,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultipleWindows) {
     const auto joinFieldNameLeft = "f2_left";
     const auto timeStampField = "left$timestamp";
     const auto handlerIndex = 0;
-    const auto isLeftSide = true;
+    const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
     auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
 

@@ -108,6 +108,11 @@ uint64_t hashTextValue(uint64_t seed, TextValue* value) {
     return seed ^ hashBytes((void*) value->c_str(), value->length());
 }
 
+HashFunction::HashValue MurMur3HashFunction::calculate(Value<>& value) {
+    auto hash = init();
+    return calculate(hash, value);
+}
+
 HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>& value) {
     if (value->isType<Int8>()) {
         return FunctionCall("hashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>());

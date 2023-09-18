@@ -15,6 +15,7 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_JOINING_GENERATABLEJOINBUILDOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinOperator.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
