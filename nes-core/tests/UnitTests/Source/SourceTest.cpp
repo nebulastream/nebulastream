@@ -248,7 +248,8 @@ class BenchmarkMockSource : public DataSource, public Runtime::BufferRecycler {
     virtual ~BenchmarkMockSource() = default;
 
   private:
-    FRIEND_TEST(SourceTest, testCpuOverhead);
+    FRIEND_TEST(SourceTest, testCpuPerfPerTuple);
+    FRIEND_TEST(SourceTest, testChameleonCpuOverheadPerTuple);
 };
 using BenchmarkMockSourcePtr = std::shared_ptr<BenchmarkMockSource>;
 
@@ -639,6 +640,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
         ASSERT_TRUE(posix_memalign(&tmp, 64, bufferAreaSize) == 0);
         this->singleMemoryArea = static_cast<uint8_t*>(tmp);
         this->sourceAffinity = std::numeric_limits<uint64_t>::max();
+        this->tupleAmount = 10000;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
@@ -707,17 +709,70 @@ class SourceTest : public Testing::BaseIntegrationTest {
     SchemaPtr schema, lambdaSchema, decimalsSchema, sensorValSchema;
     uint8_t* singleMemoryArea;
     uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId,
-        numSourceLocalBuffersDefault, gatheringInterval, queryId, sourceAffinity;
+        numSourceLocalBuffersDefault, gatheringInterval, queryId, sourceAffinity, tupleAmount;
     size_t bufferAreaSize;
     std::shared_ptr<uint8_t> singleBufferMemoryArea;
 };
 
-TEST_F(SourceTest, testCpuOverhead) {
+TEST_F(SourceTest, testCpuPerfPerTuple) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
     auto sink =
-        createNullOutputSink(this->queryId, this->queryId, this->nodeEngine, 1, FaultToleranceType::NONE, 1);
+            createNullOutputSink(this->queryId, this->queryId, this->nodeEngine, 1, FaultToleranceType::NONE, 1);
+    // get mocked pipeline to add to source
+    auto pipeline = this->createExecutablePipeline(executableStage, sink);
+    BenchmarkMockSourcePtr mockedFixedSource = createBenchmarkMockSource(this->sensorValSchema,
+                                                                            this->nodeEngine->getBufferManager(),
+                                                                            this->nodeEngine->getQueryManager(),
+                                                                            this->operatorId,
+                                                                            this->numSourceLocalBuffersDefault,
+                                                                            GatheringMode::INTERVAL_MODE,
+                                                                            {pipeline});
+    mockedFixedSource->numberOfBuffersToProduce = this->tupleAmount;
+    mockedFixedSource->running = true;
+    mockedFixedSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
+    mockedFixedSource->setGatheringInterval(std::chrono::milliseconds{1000});
+    Runtime::TupleBuffer fakeBuffer = mockedFixedSource->getRecyclableBuffer();
+    ON_CALL(*mockedFixedSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
+    ON_CALL(*mockedFixedSource, getType()).WillByDefault(Return(SourceType::ZMQ_SOURCE));
+    ON_CALL(*mockedFixedSource, receiveData()).WillByDefault(Return(fakeBuffer));
+    ON_CALL(*mockedFixedSource, emitWork(_)).WillByDefault(Return());
+    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
+                                                                         this->queryId,
+                                                                         {mockedFixedSource},
+                                                                         {sink},
+                                                                         {pipeline},
+                                                                         this->nodeEngine->getQueryManager(),
+                                                                         this->nodeEngine->getBufferManager());
+    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+
+    EXPECT_CALL(*mockedFixedSource, toString()).Times(::testing::AnyNumber());
+    EXPECT_CALL(*mockedFixedSource, getType()).Times(::testing::AnyNumber());
+    EXPECT_CALL(*mockedFixedSource, emitWork(_)).Times(::testing::AnyNumber());
+    EXPECT_CALL(*mockedFixedSource, receiveData()).Times(::testing::AnyNumber());
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+    mockedFixedSource->runningRoutine();
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto run_duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+    auto avg_run_duration = run_duration / mockedFixedSource->numberOfBuffersToProduce;
+    NES_DEBUG("Total time: {}μs", run_duration.count());
+    NES_DEBUG("Avg. time per tuple: {}μs", avg_run_duration.count());
+
+    EXPECT_FALSE(mockedFixedSource->running);
+    EXPECT_EQ(mockedFixedSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
+    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mockedFixedSource.get()));
+}
+
+TEST_F(SourceTest, testChameleonCpuOverheadPerTuple) {
+    // create executable stage
+    auto executableStage = std::make_shared<MockedExecutablePipeline>();
+    // create sink
+    auto sink =
+            createNullOutputSink(this->queryId, this->queryId, this->nodeEngine, 1, FaultToleranceType::NONE, 1);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     BenchmarkMockSourcePtr mockedAdaptiveSource = createBenchmarkMockSource(this->sensorValSchema,
@@ -727,7 +782,7 @@ TEST_F(SourceTest, testCpuOverhead) {
                                                                             this->numSourceLocalBuffersDefault,
                                                                             GatheringMode::ADAPTIVE_MODE,
                                                                             {pipeline});
-    mockedAdaptiveSource->numberOfBuffersToProduce = 100;
+    mockedAdaptiveSource->numberOfBuffersToProduce = this->tupleAmount;
     mockedAdaptiveSource->running = true;
     mockedAdaptiveSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mockedAdaptiveSource->setGatheringInterval(std::chrono::milliseconds{1000});
@@ -757,6 +812,8 @@ TEST_F(SourceTest, testCpuOverhead) {
     auto end_time = std::chrono::high_resolution_clock::now();
     auto run_duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
     auto avg_run_duration = run_duration / mockedAdaptiveSource->numberOfBuffersToProduce;
+    NES_DEBUG("Total time: {}μs", run_duration.count());
+    NES_DEBUG("Avg. time per tuple: {}μs", avg_run_duration.count());
 
     EXPECT_FALSE(mockedAdaptiveSource->running);
     EXPECT_EQ(mockedAdaptiveSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);

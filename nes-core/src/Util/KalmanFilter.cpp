@@ -194,7 +194,6 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
 }
 
 void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
-    NES_TRACE("KalmanFilter::updateFromTupleBuffer: updating from a whole tuple buffer");
     this->valueVector = Eigen::VectorXd(1); // TODO: remove, only for tests that don't initialize it
     if (!!tupleBuffer) {
         auto numOfTuples = tupleBuffer.getNumberOfTuples();
@@ -203,7 +202,6 @@ void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
             this->valueVector << records[i].value;
             this->update(valueVector);
         }
-        NES_TRACE("KalmanFilter::updateFromTupleBuffer: consumed a whole buffer");
     }
 }
 
