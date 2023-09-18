@@ -153,4 +153,12 @@ const std::string QueryCompilerOptions::VectorizationOptions::getCUDASdkPath() c
     return cudaSdkPath;
 }
 
+void QueryCompilerOptions::VectorizationOptions::setCUDAThreadsPerBlock(uint32_t threadsPerBlock) {
+    QueryCompilerOptions::VectorizationOptions::cudaThreadsPerBlock = threadsPerBlock;
+}
+
+uint32_t QueryCompilerOptions::VectorizationOptions::getCUDAThreadsPerBlock() const {
+    return cudaThreadsPerBlock;
+}
+
 }// namespace NES::QueryCompilation

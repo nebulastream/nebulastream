@@ -27,6 +27,7 @@ public:
         std::string kernelFunctionName;
         std::string wrapperFunctionName;
         uint64_t inputSchemaSize;
+        uint32_t threadsPerBlock;
     };
 
     /**
