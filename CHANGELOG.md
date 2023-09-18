@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.214](https://github.com/nebulastream/nebulastream/tree/v0.5.214) (2023-09-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.213...v0.5.214)
+
+**Implemented enhancements:**
+
+- \[TASK\] Activate NES Benchmark Workflow [\#3473](https://github.com/nebulastream/nebulastream/issues/3473)
+
 ## [v0.5.213](https://github.com/nebulastream/nebulastream/tree/v0.5.213) (2023-09-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.212...v0.5.213)
