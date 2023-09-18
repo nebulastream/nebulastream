@@ -72,6 +72,7 @@ class E2EBenchmarkConfigPerRun {
     Configurations::LongConfigOption stageBufferSize;
     Configurations::BoolConfigOption useCuda;
     Configurations::StringConfigOption cudaSdkPath;
+    Configurations::IntConfigOption cudaThreadsPerBlock;
 };
 }// namespace NES::Benchmark
 

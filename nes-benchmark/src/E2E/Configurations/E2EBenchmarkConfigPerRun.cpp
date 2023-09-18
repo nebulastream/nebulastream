@@ -44,6 +44,11 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     );
     useCuda = ConfigurationOption<bool>::create("useCuda", false, "use CUDA back-end");
     cudaSdkPath = ConfigurationOption<std::string>::create("cudaSdkPath", "/usr/local/cuda", "CUDA SDK path");
+    cudaThreadsPerBlock = ConfigurationOption<uint32_t>::create(
+        "cudaThreadsPerBlock",
+        NES::Runtime::Execution::Experimental::Vectorization::CUDA_THREADS_PER_BLOCK,
+        "Number of CUDA threads per block to use"
+    );
 
     logicalSrcToNoPhysicalSrc = {{"input1", 1}};
 }
@@ -64,7 +69,8 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- vectorize: " << vectorize->getValueAsString() << std::endl
         << "- stageBufferSize: " << stageBufferSize->getValueAsString() << std::endl
         << "- useCuda: " << useCuda->getValueAsString() << std::endl
-        << "- cudaSdkPath: " << cudaSdkPath->getValue() << std::endl;
+        << "- cudaSdkPath: " << cudaSdkPath->getValue() << std::endl
+        << "- cudaThreadsPerBlock: " << cudaThreadsPerBlock->getValueAsString() << std::endl;
 
     std::cout << oss.str() << std::endl;
     return oss.str();
@@ -131,6 +137,12 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     if (yamlConfig["logicalSources"].IsNone()) {
         NES_THROW_RUNTIME_ERROR("logicalSources could not been found in the yaml config file!");
     }
+
+    auto cudaThreadsPerBlockList = Util::splitAndFillIfEmpty<uint32_t>(
+        yamlConfig["cudaThreadsPerBlock"].As<std::string>(),
+        configPerRun.cudaThreadsPerBlock->getDefaultValue()
+    );
+
     allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(yamlConfig);
 
     /* Retrieving the maximum number of experiments to run */
@@ -161,6 +173,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(numberOfPartitions, totalBenchmarkRuns, numberOfPartitions.back());
     Util::padVectorToSize<uint64_t>(maxHashTableSizes, totalBenchmarkRuns, maxHashTableSizes.back());
     Util::padVectorToSize<uint64_t>(stageBufferSizes, totalBenchmarkRuns, stageBufferSizes.back());
+    Util::padVectorToSize<uint32_t>(cudaThreadsPerBlockList, totalBenchmarkRuns, cudaThreadsPerBlockList.back());
     Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
                                                            totalBenchmarkRuns,
                                                            allLogicalSrcToPhysicalSources.back());
@@ -182,6 +195,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         e2EBenchmarkConfigPerRun.stageBufferSize->setValue(stageBufferSizes[i]);
         e2EBenchmarkConfigPerRun.useCuda->setValue(useCuda);
         e2EBenchmarkConfigPerRun.cudaSdkPath->setValue(cudaSdkPath);
+        e2EBenchmarkConfigPerRun.cudaThreadsPerBlock->setValue(cudaThreadsPerBlockList[i]);
         e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
 
         allConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
