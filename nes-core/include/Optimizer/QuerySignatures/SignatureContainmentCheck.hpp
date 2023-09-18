@@ -162,13 +162,6 @@ class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
     ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
-     * @brief Get the name of the field manipulated by the Map operator
-     * @param Operator pointer
-     * @return name of the field
-     */
-    std::string getFieldNameUsedByMapOperator(const NodePtr& node);
-
-    /**
      * @brief creates conditions for checking projection containment:
      * if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
      * else we indicate that the attribute is involved in the projection as attributeStingName == true
