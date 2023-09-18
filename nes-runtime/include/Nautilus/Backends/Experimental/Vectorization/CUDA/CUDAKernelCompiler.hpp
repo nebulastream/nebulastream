@@ -23,11 +23,17 @@ namespace NES::Nautilus::Backends::CUDA {
 
 class CUDAKernelCompiler : public KernelCompiler {
 public:
+    struct Descriptor {
+        std::string kernelFunctionName;
+        std::string wrapperFunctionName;
+        uint64_t inputSchemaSize;
+    };
+
     /**
      * @brief Constructor.
-     * @param kernelWrapperName the name of the kernel wrapper function
+     * @param descriptor the kernel compiler descriptor
      */
-    explicit CUDAKernelCompiler(std::string kernelWrapperName);
+    explicit CUDAKernelCompiler(Descriptor descriptor);
 
 private:
     std::shared_ptr<Nautilus::Tracing::ExecutionTrace> createTrace(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator) override;
@@ -42,8 +48,7 @@ private:
 
     std::shared_ptr<CodeGen::CPP::Function> cudaErrorCheck();
 
-    std::string kernelWrapperName;
-    std::string kernelName;
+    Descriptor descriptor;
 };
 
 } // namespace NES::Nautilus::Backends::CUDA
