@@ -151,8 +151,6 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::cudaErrorCheck() {
 }
 
 std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(const std::shared_ptr<IR::IRGraph>& irGraph) {
-    auto cudaLoweringPlugin = CUDALoweringInterface();
-
     auto codeGen = std::make_unique<CodeGen::CPP::CPPCodeGenerator>();
     codeGen->addInclude("<cstdint>");
     codeGen->addInclude("<iostream>");
@@ -174,8 +172,18 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
     std::vector<std::string> specifiers{"__global__"};
     auto tupleBufferArg = functionBasicBlock->getArguments().at(0);
     auto tupleBufferVar = CUDALoweringInterface::getVariable(tupleBufferArg->getIdentifier());
-    std::vector<std::string> kernelArguments{fmt::format("const TupleBuffer {}", tupleBufferVar)};
-    auto kernelFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "void", descriptor.kernelFunctionName, kernelArguments);
+    std::vector<std::string> kernelArguments{
+        fmt::format("const TupleBuffer {}", tupleBufferVar),
+    };
+    auto kernelFn = std::make_shared<CodeGen::CPP::Function>(
+        specifiers,
+        "void",
+        descriptor.kernelFunctionName,
+        kernelArguments
+    );
+    auto frame = CodeGen::IRLoweringInterface::RegisterFrame();
+    frame.setValue(CUDALoweringInterface::TUPLE_BUFFER_IDENTIFIER, tupleBufferVar);
+    auto cudaLoweringPlugin = CUDALoweringInterface(frame);
     auto kernelFunctionBody = cudaLoweringPlugin.lowerGraph(irGraph);
     kernelFn->addSegment(std::move(kernelFunctionBody));
     codeGen->addFunction(kernelFn);
