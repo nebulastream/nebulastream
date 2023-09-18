@@ -1,13 +1,13 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
-numberOfWorkerThreads: 1
-numberOfBuffersInGlobalBufferManager: 1024
-numberOfBuffersPerPipeline: 128
-numberOfBuffersInSourceLocalBufferPool: 128
+numberOfWorkerThreads: 8
+numberOfBuffersInGlobalBufferManager: 16384
+numberOfBuffersPerPipeline: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 131072
-numberOfPreAllocatedBuffer: 100000
+numberOfPreAllocatedBuffer: 1000
 
 # ~~~ Benchmark parameter for the entire run ~~~
-numberOfBuffersToProduce: 100000
+numberOfBuffersToProduce: 25000000
 logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 3
@@ -16,10 +16,10 @@ numberOfMeasurementsToCollect: 5
 logicalSources:
   - name: ysb
     type: YSB
-    numberOfPhysicalSources: 1
 
 dataProviderMode: ZeroCopy
 outputFile: YSBQuery.csv
 benchmarkName: YSBQuery
+query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(IngestionTime(), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
 #query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(RecordCreationTs()), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
-query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'

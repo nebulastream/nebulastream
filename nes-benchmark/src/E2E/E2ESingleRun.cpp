@@ -157,10 +157,11 @@ void E2ESingleRun::runQuery() {
              configOverAllRuns.startupSleepIntervalInSeconds->getValue());
     std::cout << "Sleeping for " << configOverAllRuns.startupSleepIntervalInSeconds->getValue()
               << " seconds to let the system reach a steady state!" << std::endl;
-    sleep(configOverAllRuns.startupSleepIntervalInSeconds->getValue());
+    std::this_thread::sleep_for(std::chrono::seconds(configOverAllRuns.startupSleepIntervalInSeconds->getValue()));
 
     // For now, we only support one way of collecting the measurements
     NES_INFO("Starting to collect measurements...");
+    std::cout << "Starting to collect measurements..." << std::endl;
     uint64_t found = 0;
     while (found != submittedIds.size()) {
         for (auto id : submittedIds) {

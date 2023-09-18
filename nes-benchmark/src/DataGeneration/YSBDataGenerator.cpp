@@ -13,14 +13,21 @@
 */
 
 #include <API/Schema.hpp>
+#include <DataGeneration/DefaultDataGenerator.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fstream>
+#include <random>
 
 namespace NES::Benchmark::DataGeneration {
+
+using YSBTuple = std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                            uint32_t, uint16_t>;
 
 std::string YSBDataGenerator::getName() { return "YSB"; }
 
@@ -32,25 +39,43 @@ std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBu
 
     auto memoryLayout = getMemoryLayout(bufferSize);
     auto ts = 0UL;
+
+    // using seed to generate a predictable sequence of values for deterministic behavior
+    std::mt19937 generator(GENERATOR_SEED_DEFAULT);
+    std::uniform_int_distribution<uint64_t> uniformIntDistribution(0, 1000);
+
     for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
         auto buffer = allocateBuffer();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++, ts++) {
-            auto campaign_id = rand() % 1000;
-            auto event_type = currentRecord % 3;
-            dynamicBuffer[currentRecord]["user_id"].write<uint64_t>(1);
-            dynamicBuffer[currentRecord]["page_id"].write<uint64_t>(0);
-            dynamicBuffer[currentRecord]["campaign_id"].write<uint64_t>(campaign_id);
-            dynamicBuffer[currentRecord]["ad_type"].write<uint64_t>(0);
-            dynamicBuffer[currentRecord]["event_type"].write<uint64_t>(event_type);
-            dynamicBuffer[currentRecord]["current_ms"].write<uint64_t>(ts);
-            dynamicBuffer[currentRecord]["ip"].write<uint64_t>(0x01020304);
-            dynamicBuffer[currentRecord]["d1"].write<uint64_t>(1);
-            dynamicBuffer[currentRecord]["d2"].write<uint64_t>(1);
-            dynamicBuffer[currentRecord]["d3"].write<uint32_t>(1);
-            dynamicBuffer[currentRecord]["d4"].write<uint16_t>(1);
+
+        if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+            auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
+            auto rowLayoutDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
+            for (uint64_t currentRecord = 0; currentRecord < rowLayoutDynamicBuffer.getCapacity(); ++currentRecord, ++ts) {
+                auto campaign_id = uniformIntDistribution(generator);
+                auto event_type = currentRecord % 3;
+                rowLayoutDynamicBuffer.pushRecordToBuffer(YSBTuple(1, 0, campaign_id, 0, event_type, ts,
+                                                                   0x01020304, 1, 1, 1, 1));
+            }
+            rowLayoutDynamicBuffer.setNumberOfTuples(rowLayoutDynamicBuffer.getCapacity());
+        } else {
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+            for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++, ts++) {
+                auto campaign_id = uniformIntDistribution(generator);
+                auto event_type = currentRecord % 3;
+                dynamicBuffer[currentRecord]["user_id"].write<uint64_t>(1);
+                dynamicBuffer[currentRecord]["page_id"].write<uint64_t>(0);
+                dynamicBuffer[currentRecord]["campaign_id"].write<uint64_t>(campaign_id);
+                dynamicBuffer[currentRecord]["ad_type"].write<uint64_t>(0);
+                dynamicBuffer[currentRecord]["event_type"].write<uint64_t>(event_type);
+                dynamicBuffer[currentRecord]["current_ms"].write<uint64_t>(ts);
+                dynamicBuffer[currentRecord]["ip"].write<uint64_t>(0x01020304);
+                dynamicBuffer[currentRecord]["d1"].write<uint64_t>(1);
+                dynamicBuffer[currentRecord]["d2"].write<uint64_t>(1);
+                dynamicBuffer[currentRecord]["d3"].write<uint32_t>(1);
+                dynamicBuffer[currentRecord]["d4"].write<uint16_t>(1);
+            }
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
         }
-        dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
         createdBuffers.emplace_back(buffer);
     }
     NES_INFO("Created all buffers!");
