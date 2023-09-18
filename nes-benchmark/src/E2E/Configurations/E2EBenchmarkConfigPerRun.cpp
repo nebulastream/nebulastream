@@ -13,6 +13,7 @@
 */
 
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
+#include <Experimental/Vectorization/DefaultQueryCompilerOptions.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/yaml/Yaml.hpp>
 
@@ -36,7 +37,11 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
         "Nautilus back-end"
     );
     vectorize = ConfigurationOption<bool>::create("vectorize", false, "use vectorization");
-    stageBufferSize = ConfigurationOption<uint64_t>::create("stageBufferSize", 4096, "stage buffer size");
+    stageBufferSize = ConfigurationOption<uint64_t>::create(
+        "stageBufferSize",
+        NES::Runtime::Execution::Experimental::Vectorization::STAGE_BUFFER_SIZE,
+        "stage buffer size"
+    );
     useCuda = ConfigurationOption<bool>::create("useCuda", false, "use CUDA back-end");
     cudaSdkPath = ConfigurationOption<std::string>::create("cudaSdkPath", "/usr/local/cuda", "CUDA SDK path");
 
