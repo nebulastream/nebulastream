@@ -1289,14 +1289,11 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
     }
 
     auto vectorizedPipeline = vectorizedPipelineOpt.value();
-
-    auto executionTrace = Nautilus::Backends::KernelCompiler::createTraceFromNautilusOperator(vectorizedPipeline);
-
-    NES_NOT_IMPLEMENTED();
-    // TODO Compile the execution trace to a kernel
-    auto kernelExecutable = nullptr;
-
-    return std::make_shared<Runtime::Execution::Operators::Kernel>(std::move(kernelExecutable), *schemaSizeIt);
+    auto descriptor = Runtime::Execution::Operators::Kernel::Descriptor {
+        .pipeline = vectorizedPipeline,
+        .inputSchemaSize = *schemaSizeIt,
+    };
+    return std::make_shared<Runtime::Execution::Operators::Kernel>(descriptor);
 }
 
 std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>

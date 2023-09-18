@@ -26,18 +26,22 @@ namespace NES::Runtime::Execution::Operators {
  */
 class Kernel : public VectorizableOperator {
 public:
+    struct Descriptor {
+        std::shared_ptr<Operator> pipeline;
+        uint64_t inputSchemaSize;
+    };
+
     /**
      * @brief Constructor.
-     * @param kernelExecutable the kernel executable
-     * @param schemaSize the schema size
+     * @param descriptor the kernel descriptor
      */
-    explicit Kernel(std::unique_ptr<Backends::KernelExecutable> kernelExecutable, uint64_t schemaSize);
+    explicit Kernel(Descriptor descriptor);
 
     void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
 private:
+    Descriptor descriptor;
     std::unique_ptr<Backends::KernelExecutable> kernelExecutable;
-    uint64_t schemaSize;
 };
 
 } // namespace NES::Runtime::Execution::Operators
