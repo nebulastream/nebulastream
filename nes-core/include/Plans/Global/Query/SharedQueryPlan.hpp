@@ -144,7 +144,8 @@ class SharedQueryPlan {
     void addQuery(QueryId queryId,
                   const OperatorNodePtr& containerOperator,
                   const OperatorNodePtr& containedOperator,
-                  const std::vector<LogicalOperatorNodePtr> containedOperatorChain);
+                  const std::vector<LogicalOperatorNodePtr> containedOperatorChain,
+                  const LogicalOperatorNodePtr& newSinkOperator);
 
     /**
      * @brief Remove a Query, the associated exclusive operators, and clear sink and query id vectors

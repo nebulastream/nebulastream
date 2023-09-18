@@ -219,18 +219,24 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                                == ContainmentType::RIGHT_SIG_CONTAINED) {
                         auto containerOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
+                        // get the new sink operation to add to the query plan, new query plans should only have one sink operator
+                        auto newSinkOperator = targetOperator->getAllRootNodes().front()->as<LogicalOperatorNode>();
                         hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(),
                                                       containerOperator,
                                                       targetOperator,
-                                                      containedOperatorChain);
+                                                      containedOperatorChain,
+                                                      newSinkOperator);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentType::LEFT_SIG_CONTAINED) {
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
+                        // get the new sink operation to add to the query plan, new query plans should only have one sink operator
+                        auto newSinkOperator = targetOperator->getAllRootNodes().front()->as<LogicalOperatorNode>();
                         hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(),
                                                       targetOperator,
                                                       containedOperator,
-                                                      containedOperatorChain);
+                                                      containedOperatorChain,
+                                                      newSinkOperator);
                     }
                 }
 
