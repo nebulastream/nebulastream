@@ -31,7 +31,7 @@ namespace NES::Nautilus::Backends::CPP {
 
 class CPPLoweringInterface : public CodeGen::IRLoweringInterface {
 public:
-    CPPLoweringInterface();
+    explicit CPPLoweringInterface(const RegisterFrame& frame = RegisterFrame());
 
     std::unique_ptr<CodeGen::Segment> lowerGraph(const std::shared_ptr<IR::IRGraph>& irGraph);
 
@@ -108,6 +108,8 @@ private:
 
     std::unordered_map<std::string, std::shared_ptr<CodeGen::CodeGenerator>> activeBlocks;
     std::unique_ptr<CodeGen::Segment> functionBody;
+
+    RegisterFrame registerFrame;
 };
 
 } // namespace NES::Nautilus::Backends::CPP

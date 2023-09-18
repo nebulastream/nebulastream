@@ -17,6 +17,12 @@
 
 namespace NES::Nautilus::Backends::CUDA {
 
+CUDALoweringInterface::CUDALoweringInterface(const RegisterFrame& frame)
+    : CPP::CPPLoweringInterface(frame)
+{
+
+}
+
 std::unique_ptr<CodeGen::CodeGenerator> CUDALoweringInterface::lowerProxyCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& operation, RegisterFrame& frame) {
     NES_NOT_IMPLEMENTED();
 }
