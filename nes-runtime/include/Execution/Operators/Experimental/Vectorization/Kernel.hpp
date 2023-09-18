@@ -40,6 +40,7 @@ public:
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
 private:
     Descriptor descriptor;
