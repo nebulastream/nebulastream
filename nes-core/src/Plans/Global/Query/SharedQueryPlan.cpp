@@ -192,8 +192,12 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
 void SharedQueryPlan::addQuery(QueryId queryId,
                                const OperatorNodePtr& containerOperator,
                                const OperatorNodePtr& containedOperator,
-                               const std::vector<LogicalOperatorNodePtr> containedOperatorChain) {
+                               const std::vector<LogicalOperatorNodePtr> containedOperatorChain,
+                               const LogicalOperatorNodePtr& newSinkOperator) {
 
+    // todo: @Ankit: I just realized (18.09. 12:30pm) that there was an error in this code.
+    // todo: I quickly adjusted the code, however, I have to catch my train now, so I'll look into better structuring and such tomorrow.
+    // But please let me know, if it is okay that I created a new addQuery Method for containment cases.
     NES_DEBUG("SharedQueryPlan: Create the new shared query plan utilizing the detected containment relationship of query with "
               "id {}.",
               queryId);
@@ -202,11 +206,6 @@ void SharedQueryPlan::addQuery(QueryId queryId,
     std::set<LogicalOperatorNodePtr> clEntryDownstreamOperators;
 
     NES_TRACE("Query plan before merge: {}", this->queryPlan->toString());
-    // add the container query plan before merge to the clEntryDownstreamOperators
-    for (const auto& rootNode : containerOperator->getAllRootNodes()) {
-        NES_TRACE("Container Root: {}", rootNode->toString());
-        clEntryDownstreamOperators.insert(rootNode->as<LogicalOperatorNode>());
-    }
 
     //Downstream operator and upstreamContainedOperator are equal in case of filter or projection operators
     //But in case of a contained window operation, the downstream operator is the associated watermark operator
@@ -232,7 +231,12 @@ void SharedQueryPlan::addQuery(QueryId queryId,
         NES_WARNING("SharedQueryPlan: Failed to add new parent");
     }
     // the container operator marks the new upstream operators chain
-    clEntryUpstreamOperators.insert(containerOperator->as<LogicalOperatorNode>());
+    //clEntryUpstreamOperators.insert(containerOperator->as<LogicalOperatorNode>());
+
+    for (const auto& rootNode : containerOperator->getAllRootNodes()) {
+        NES_TRACE("Container Root: {}", rootNode->toString());
+        clEntryDownstreamOperators.insert(rootNode->as<LogicalOperatorNode>());
+    }
 
     //Add new hash based signatures to the shared query plan for newly added downstream operators
     for (const auto& newDownstreamOperator : clEntryDownstreamOperators) {
@@ -244,10 +248,8 @@ void SharedQueryPlan::addQuery(QueryId queryId,
         }
     }
 
-    //add the sink operators as root to the set
-    for (const auto& targetSinkOperator : clEntryDownstreamOperators) {
-        sinkOperators.insert(targetSinkOperator);
-    }
+    //add the new sink operator as root to the set
+    sinkOperators.insert(newSinkOperator->as<LogicalOperatorNode>());
 
     //add change log entry indicating the addition
     auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
