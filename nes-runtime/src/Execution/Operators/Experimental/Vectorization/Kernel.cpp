@@ -32,6 +32,10 @@ Kernel::Kernel(Descriptor descriptor)
 
 }
 
+void Kernel::setup(ExecutionContext&) const {
+    // TODO(#4148) Compile the execution trace to a kernel
+}
+
 void Kernel::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto kernelExecutableRef = Value<MemRef>((int8_t*) kernelExecutable.get());
     auto recordBufferRef = recordBuffer.getReference();
