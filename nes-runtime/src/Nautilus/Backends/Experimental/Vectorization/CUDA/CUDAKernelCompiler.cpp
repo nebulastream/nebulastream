@@ -26,6 +26,7 @@
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
 
 namespace NES::Nautilus::Backends::CUDA {
@@ -184,11 +185,16 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
     return std::move(codeGen);
 }
 
-std::unique_ptr<KernelExecutable> CUDAKernelCompiler::createExecutable(std::unique_ptr<CodeGen::CodeGenerator> codeGenerator, const CompilationOptions& options, const DumpHelper& dumpHelper) {
+std::unique_ptr<KernelExecutable> CUDAKernelCompiler::createExecutable(std::unique_ptr<CodeGen::CodeGenerator> codeGenerator, const CompilationOptions& options) {
     auto timer = Timer<>("CUDAKernelCompilation");
     timer.start();
 
     auto code = codeGenerator->toString();
+    auto dumpHelper = DumpHelper::create(
+        options.getIdentifier(),
+        options.isDumpToConsole(),
+        options.isDumpToFile()
+    );
     dumpHelper.dump("code.cu", code);
     timer.snapshot("CodeGeneration");
 

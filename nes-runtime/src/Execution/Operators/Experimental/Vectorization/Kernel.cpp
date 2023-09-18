@@ -17,7 +17,6 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/KernelExecutable.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/CUDA/CUDAKernelCompiler.hpp>
-#include <Util/DumpHelper.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -37,8 +36,7 @@ Kernel::Kernel(Descriptor descriptor)
 void Kernel::setup(ExecutionContext& ctx) const {
     auto cudaKernelCompiler = Nautilus::Backends::CUDA::CUDAKernelCompiler("cudaKernelWrapper");
     auto compileOptions = descriptor.compileOptions;
-    auto dumpHelper = DumpHelper::create(compileOptions.getIdentifier(), compileOptions.isDumpToConsole(), compileOptions.isDumpToFile());
-    auto executable = cudaKernelCompiler.compile(descriptor.pipeline, compileOptions, dumpHelper);
+    auto executable = cudaKernelCompiler.compile(descriptor.pipeline, compileOptions);
     // TODO(#4148) Assign kernel executable
 
     Operator::setup(ctx);

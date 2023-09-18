@@ -18,7 +18,6 @@
 #include <Nautilus/Backends/Experimental/Vectorization/KernelExecutable.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
-#include <Util/DumpHelper.hpp>
 
 namespace NES::Runtime::Execution::Operators {
     class Operator;
@@ -43,7 +42,7 @@ namespace NES::Nautilus::Backends {
  */
 class KernelCompiler {
 public:
-    std::unique_ptr<KernelExecutable> compile(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator, const CompilationOptions& options, const DumpHelper& dumpHelper);
+    std::unique_ptr<KernelExecutable> compile(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator, const CompilationOptions& options);
 
 private:
     virtual std::shared_ptr<Nautilus::Tracing::ExecutionTrace> createTrace(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator) = 0;
@@ -52,7 +51,7 @@ private:
 
     virtual std::unique_ptr<CodeGen::CodeGenerator> createCodeGenerator(const std::shared_ptr<IR::IRGraph>& irGraph) = 0;
 
-    virtual std::unique_ptr<KernelExecutable> createExecutable(std::unique_ptr<CodeGen::CodeGenerator> codeGenerator, const CompilationOptions& options, const DumpHelper& dumpHelper) = 0;
+    virtual std::unique_ptr<KernelExecutable> createExecutable(std::unique_ptr<CodeGen::CodeGenerator> codeGenerator, const CompilationOptions& options) = 0;
 };
 
 } // namespace NES::Nautilus::Backends
