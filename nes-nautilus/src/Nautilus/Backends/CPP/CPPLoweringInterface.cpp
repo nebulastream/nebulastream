@@ -21,23 +21,23 @@
 
 namespace NES::Nautilus::Backends::CPP {
 
-CPPLoweringInterface::CPPLoweringInterface()
+CPPLoweringInterface::CPPLoweringInterface(const RegisterFrame& frame)
     : functionBody(std::make_unique<CodeGen::Segment>())
+    , registerFrame(frame)
 {
 
 }
 
 std::unique_ptr<CodeGen::Segment> CPPLoweringInterface::lowerGraph(const std::shared_ptr<IR::IRGraph>& irGraph) {
     auto functionOperation = irGraph->getRootOperation();
-    RegisterFrame rootFrame;
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
     for (auto i = 0ull; i < functionBasicBlock->getArguments().size(); i++) {
         auto argument = functionBasicBlock->getArguments()[i];
         auto var = getVariable(argument->getIdentifier());
-        rootFrame.setValue(argument->getIdentifier(), var);
+        registerFrame.setValue(argument->getIdentifier(), var);
     }
 
-    auto _ = lowerBasicBlock(functionBasicBlock, rootFrame);
+    auto _ = lowerBasicBlock(functionBasicBlock, registerFrame);
     functionBody->mergeProloguesToTopLevel();
     return std::move(functionBody);
 }

@@ -20,6 +20,9 @@
 namespace NES::Nautilus::Backends::CUDA {
 
 class CUDALoweringInterface : public CPP::CPPLoweringInterface {
+public:
+    explicit CUDALoweringInterface(const RegisterFrame& frame = RegisterFrame());
+
 private:
     std::unique_ptr<CodeGen::CodeGenerator> lowerProxyCall(const std::shared_ptr<IR::Operations::ProxyCallOperation>& operation, RegisterFrame& frame) override;
 };
