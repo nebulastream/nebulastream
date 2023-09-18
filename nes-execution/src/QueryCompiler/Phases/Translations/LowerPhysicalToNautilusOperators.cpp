@@ -1311,10 +1311,12 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
         return std::nullopt;
     }
 
+    auto cudaThreadsPerBlock = options->getVectorizationOptions()->getCUDAThreadsPerBlock();
     auto descriptor = Runtime::Execution::Operators::Kernel::Descriptor {
         .pipeline = vectorizedPipeline,
         .compileOptions = compileOptions,
         .inputSchemaSize = *schemaSizeIt,
+        .threadsPerBlock = cudaThreadsPerBlock,
     };
     return std::make_shared<Runtime::Execution::Operators::Kernel>(descriptor);
 }

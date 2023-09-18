@@ -122,6 +122,7 @@ const std::string VECTORIZATION_STAGE_BUFFER_SIZE = "stageBufferSize";
 // CUDA config names
 const std::string CUDA_ENABLED = "useCuda";
 const std::string CUDA_SDK_PATH = "cudaSdkPath";
+const std::string CUDA_THREADS_PER_BLOCK = "cudaThreadsPerBlock";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";

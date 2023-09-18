@@ -97,8 +97,7 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getCudaKernelWrapper
 
     auto kernelFunctionName = descriptor.kernelFunctionName;
     auto inputSchemaSize = descriptor.inputSchemaSize;
-    // TODO This should be a parameter for performance tuning.
-    auto threadsPerBlock = "32";
+    auto threadsPerBlock = descriptor.threadsPerBlock;
 
     auto getNumberOfTuples = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getNumberOfTuples = (uint64_t(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples)));
     auto getBuffer = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getBuffer = (void*(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer)));

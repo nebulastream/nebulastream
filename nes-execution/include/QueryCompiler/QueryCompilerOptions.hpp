@@ -146,11 +146,23 @@ class QueryCompilerOptions {
         */
         const std::string getCUDASdkPath() const;
 
+        /**
+        * @brief Set the CUDA threads per block
+        * @param  the threads per block
+        */
+        void setCUDAThreadsPerBlock(uint32_t threadsPerBlock);
+
+        /**
+        * @brief Get the number of CUDA threads per block
+        */
+        uint32_t getCUDAThreadsPerBlock() const;
+
     private:
         bool enabled;
         uint64_t stageBufferSize;
         bool cudaEnabled;
         std::string cudaSdkPath;
+        uint32_t cudaThreadsPerBlock;
     };
 
     using VectorizationOptionsPtr = std::shared_ptr<VectorizationOptions>;

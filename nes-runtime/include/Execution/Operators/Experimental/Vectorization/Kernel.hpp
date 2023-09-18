@@ -31,6 +31,7 @@ public:
         std::shared_ptr<Operator> pipeline;
         Nautilus::CompilationOptions compileOptions;
         uint64_t inputSchemaSize;
+        uint32_t threadsPerBlock;
     };
 
     /**

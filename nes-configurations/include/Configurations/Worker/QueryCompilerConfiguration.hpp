@@ -157,6 +157,12 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 
     BoolOption useCUDA = {CUDA_ENABLED, false, "Enable the CUDA back-end of the query compiler"};
 
+    UIntOption cudaThreadsPerBlock = {
+        CUDA_THREADS_PER_BLOCK,
+        NES::Runtime::Execution::Experimental::Vectorization::CUDA_THREADS_PER_BLOCK,
+        "Set the number of CUDA threads to use per block"
+    };
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {
@@ -176,6 +182,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
             &stageBufferSize,
             &useCUDA,
             &cudaSdkPath,
+            &cudaThreadsPerBlock,
         };
     }
 };
