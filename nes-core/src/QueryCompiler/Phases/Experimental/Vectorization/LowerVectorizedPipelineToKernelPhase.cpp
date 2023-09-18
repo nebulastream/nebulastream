@@ -60,9 +60,9 @@ OperatorPipelinePtr LowerVectorizedPipelineToKernelPhase::lower(OperatorPipeline
         if (vectorizedPipeline) {
             auto inputSchema = vectorizedPipeline->getInputSchema();
             auto outputSchema = vectorizedPipeline->getOutputSchema();
-            auto vectorize = PhysicalVectorizeOperator::create(inputSchema, outputSchema);
+            auto vectorize = PhysicalVectorizeOperator::create(inputSchema, inputSchema);
             auto kernel = PhysicalKernelOperator::create(vectorizedPipeline);
-            auto unvectorize = PhysicalUnvectorizeOperator::create(inputSchema, outputSchema);
+            auto unvectorize = PhysicalUnvectorizeOperator::create(outputSchema, outputSchema);
             vectorize->addChild(kernel);
             kernel->addChild(unvectorize);
             NES_DEBUG("Lower {} to {} => {} => {}", vectorizedPipeline->toString(), vectorize->toString(), kernel->toString(), unvectorize->toString());
