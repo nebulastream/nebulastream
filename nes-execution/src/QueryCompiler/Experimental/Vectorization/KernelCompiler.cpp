@@ -23,11 +23,11 @@
 
 namespace NES::Nautilus::Backends {
 
-std::unique_ptr<KernelExecutable> KernelCompiler::compile(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator, const CompilationOptions& options, const DumpHelper& dumpHelper) {
+std::unique_ptr<KernelExecutable> KernelCompiler::compile(const std::shared_ptr<Runtime::Execution::Operators::Operator>& nautilusOperator, const CompilationOptions& options) {
     auto trace = createTrace(nautilusOperator);
     auto ir = createIR(trace);
     auto codeGenerator = createCodeGenerator(ir);
-    return createExecutable(std::move(codeGenerator), options, dumpHelper);
+    return createExecutable(std::move(codeGenerator), options);
 }
 
 } // namespace NES::Nautilus::Backends

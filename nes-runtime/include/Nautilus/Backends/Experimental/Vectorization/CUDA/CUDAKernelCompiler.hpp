@@ -36,7 +36,7 @@ private:
 
     std::unique_ptr<CodeGen::CodeGenerator> createCodeGenerator(const std::shared_ptr<IR::IRGraph>& irGraph) override;
 
-    std::unique_ptr<KernelExecutable> createExecutable(std::unique_ptr<CodeGen::CodeGenerator> codeGenerator, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
+    std::unique_ptr<KernelExecutable> createExecutable(std::unique_ptr<CodeGen::CodeGenerator> codeGenerator, const CompilationOptions& options) override;
 
     std::shared_ptr<CodeGen::CPP::Function> getCudaKernelWrapper(const IR::BasicBlockPtr& functionBasicBlock);
 
