@@ -204,6 +204,42 @@ TEST_F(MapPythonUdfOperatorTest, MathImportWithAliasUDFTest) {
 }
 
 /**
+* @brief Test simple UDF with importing a module with an alias and using it
+* The UDF uses the power function of numpy and computes a numpy array
+*/
+TEST_F(MapPythonUdfOperatorTest, NumpyImportWithAliasUDFTest) {
+    inputSchema = Schema::create()
+                      ->addField("x", BasicType::INT32)
+                      ->addField("y", BasicType::INT32)
+                      ->addField("z", BasicType::INT32);
+    outputSchema = Schema::create()
+                       ->addField("x", BasicType::INT32)
+                       ->addField("y", BasicType::INT32);
+    function = "def np_pow_test(x, y, z):"
+               "\n\ttest_array = np.array([x, y])"
+               "\n\tresult = np.power(test_array, z)"
+               "\n\treturn result[0].item(), result[1].item()\n";
+    functionName = "np_pow_test";
+    modulesToImport["numpy"] = "np";
+
+    int32_t x = 3;
+    int32_t y = 4;
+    int32_t z = 2;
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"x", Value<Int32>(x)},
+                          {"y", Value<Int32>(y)},
+                          {"z", Value<Int32>(z)}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("x"), 9);
+    ASSERT_EQ(record.read("y"), 16);
+}
+
+/**
 * @brief Test simple UDF with loaded java classes as input and output
 * The UDF sets the bool to false, numerics +10 and appends to strings the postfix 'appended'.
 */
