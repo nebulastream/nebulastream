@@ -38,6 +38,7 @@ public:
     explicit Kernel(Descriptor descriptor);
 
     void setup(ExecutionContext& executionCtx) const override;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
 private:
