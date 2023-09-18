@@ -34,7 +34,12 @@ Kernel::Kernel(Descriptor descriptor)
 }
 
 void Kernel::setup(ExecutionContext& ctx) const {
-    auto cudaKernelCompiler = Nautilus::Backends::CUDA::CUDAKernelCompiler("cudaKernelWrapper");
+    auto desc = Nautilus::Backends::CUDA::CUDAKernelCompiler::Descriptor {
+        .kernelFunctionName = "cudaKernel",
+        .wrapperFunctionName = "cudaKernelWrapper",
+        .inputSchemaSize = descriptor.inputSchemaSize,
+    };
+    auto cudaKernelCompiler = Nautilus::Backends::CUDA::CUDAKernelCompiler(desc);
     auto compileOptions = descriptor.compileOptions;
     auto executable = cudaKernelCompiler.compile(descriptor.pipeline, compileOptions);
     // TODO(#4148) Assign kernel executable

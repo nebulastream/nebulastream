@@ -31,9 +31,8 @@
 
 namespace NES::Nautilus::Backends::CUDA {
 
-CUDAKernelCompiler::CUDAKernelCompiler(std::string kernelWrapperName)
-    : kernelWrapperName(std::move(kernelWrapperName))
-    , kernelName("cudaKernel")
+CUDAKernelCompiler::CUDAKernelCompiler(Descriptor descriptor)
+    : descriptor(descriptor)
 {
 
 }
@@ -89,15 +88,15 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getCudaKernelWrapper
         arguments.emplace_back(type + " " + var);
     }
 
-    auto kernelWrapperFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "auto", kernelWrapperName, arguments);
+    auto wrapperFunctionName = descriptor.wrapperFunctionName;
+    auto kernelWrapperFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "auto", wrapperFunctionName, arguments);
     auto kernelWrapperFunctionBody = std::make_shared<CodeGen::Segment>();
 
     auto inputBufferArg = functionBasicBlock->getArguments().at(0);
     auto inputBufferVar = CUDALoweringInterface::getVariable(inputBufferArg->getIdentifier());
 
-    auto schemaSizeArg = functionBasicBlock->getArguments().at(1);
-    auto schemaSizeVar = CUDALoweringInterface::getVariable(schemaSizeArg->getIdentifier());
-
+    auto kernelFunctionName = descriptor.kernelFunctionName;
+    auto inputSchemaSize = descriptor.inputSchemaSize;
     // TODO This should be a parameter for performance tuning.
     auto threadsPerBlock = "32";
 
@@ -124,7 +123,7 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getCudaKernelWrapper
 
         cudaCheck(cudaMemcpy(tuple_buffer, gpu_tuple_buffer.buffer, input_buffer_size, cudaMemcpyDeviceToHost));
         cudaCheck(cudaFree(gpu_tuple_buffer.buffer))
-    )", inputBufferVar, schemaSizeVar, threadsPerBlock, kernelName);
+    )", inputBufferVar, inputSchemaSize, threadsPerBlock, kernelFunctionName);
 
     auto stmt = std::make_shared<CodeGen::CPP::Statement>(code);
 
@@ -177,7 +176,7 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
     auto tupleBufferArg = functionBasicBlock->getArguments().at(0);
     auto tupleBufferVar = CUDALoweringInterface::getVariable(tupleBufferArg->getIdentifier());
     std::vector<std::string> kernelArguments{fmt::format("const TupleBuffer {}", tupleBufferVar)};
-    auto kernelFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "void", kernelName, kernelArguments);
+    auto kernelFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "void", descriptor.kernelFunctionName, kernelArguments);
     auto kernelFunctionBody = cudaLoweringPlugin.lowerGraph(irGraph);
     kernelFn->addSegment(std::move(kernelFunctionBody));
     codeGen->addFunction(kernelFn);
@@ -214,7 +213,7 @@ std::unique_ptr<KernelExecutable> CUDAKernelCompiler::createExecutable(std::uniq
     auto res = compiler->compile(request);
     timer.snapshot("Compilation");
 
-    return std::make_unique<KernelExecutable>(res.getDynamicObject(), kernelWrapperName);
+    return std::make_unique<KernelExecutable>(res.getDynamicObject(), descriptor.wrapperFunctionName);
 }
 
 } // namespace NES::Nautilus::Backends::CUDA
