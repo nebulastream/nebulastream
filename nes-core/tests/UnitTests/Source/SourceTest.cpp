@@ -49,7 +49,6 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/MetricValidator.hpp>
-#include <Util/TestUtils.hpp>
 #include <cstring>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -646,7 +645,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
 
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SourceTest.log", NES::LogLevel::LOG_TRACE);
+        NES::Logger::setupLogging("SourceTest.log", NES::LogLevel::LOG_NONE);
         NES_INFO("Setup SourceTest test class.");
     }
 
@@ -759,8 +758,8 @@ TEST_F(SourceTest, testCpuPerfPerTuple) {
     auto end_time = std::chrono::high_resolution_clock::now();
     auto run_duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
     auto avg_run_duration = run_duration / mockedFixedSource->numberOfBuffersToProduce;
-    NES_DEBUG("Total time: {}μs", run_duration.count());
-    NES_DEBUG("Avg. time per tuple: {}μs", avg_run_duration.count());
+    NES_INFO("Total time: {}μs", run_duration.count());
+    NES_INFO("Avg. time per tuple: {}μs", avg_run_duration.count());
 
     EXPECT_FALSE(mockedFixedSource->running);
     EXPECT_EQ(mockedFixedSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
@@ -812,8 +811,8 @@ TEST_F(SourceTest, testChameleonCpuOverheadPerTuple) {
     auto end_time = std::chrono::high_resolution_clock::now();
     auto run_duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
     auto avg_run_duration = run_duration / mockedAdaptiveSource->numberOfBuffersToProduce;
-    NES_DEBUG("Total time: {}μs", run_duration.count());
-    NES_DEBUG("Avg. time per tuple: {}μs", avg_run_duration.count());
+    NES_INFO("Total time: {}μs", run_duration.count());
+    NES_INFO("Avg. time per tuple: {}μs", avg_run_duration.count());
 
     EXPECT_FALSE(mockedAdaptiveSource->running);
     EXPECT_EQ(mockedAdaptiveSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
