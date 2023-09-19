@@ -42,6 +42,7 @@ KalmanFilter::KalmanFilter(double timeStep,
 void KalmanFilter::init() {
     this->setDefaultValues();
     this->xHat.setZero();
+    this->valueVector = Eigen::VectorXd(1);
     this->valueVector.setZero();
 }
 
@@ -194,14 +195,11 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
 }
 
 void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
-    this->valueVector = Eigen::VectorXd(1); // TODO: remove, only for tests that don't initialize it
-    if (!!tupleBuffer) {
-        auto numOfTuples = tupleBuffer.getNumberOfTuples();
-        auto records = tupleBuffer.getBuffer<Sensors::SingleSensor>();
-        for (uint64_t i = 0; i < numOfTuples; ++i) {
-            this->valueVector << records[i].value;
-            this->update(valueVector);
-        }
+    auto numOfTuples = tupleBuffer.getNumberOfTuples();
+    auto records = tupleBuffer.getBuffer<Sensors::SingleSensor>();
+    for (uint64_t i = 0; i < numOfTuples; ++i) {
+        this->valueVector << records[0].value;
+        this->update(valueVector);
     }
 }
 
