@@ -654,6 +654,7 @@ add_nes_unit_test(user-defined-monitoring-test "UnitTests/Monitoring/UserDefined
 
 # NemoIntegrationTest
 add_nes_integration_test(nemo-integration-test "Integration/NemoIntegrationTest.cpp")
+add_nes_integration_test(additional-baselines-integration-test "Integration/AdditionalBaselinesIntegrationTest.cpp")
 
 ### StaticDataSourceIntegrationTest ###
 #add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
