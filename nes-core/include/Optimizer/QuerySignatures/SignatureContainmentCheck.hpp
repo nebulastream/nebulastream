@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_
 
-#include "ExtractContainedOperatorsUtil.hpp"
+#include <Optimizer/QuerySignatures/ContainmentRelationshipAndOperatorChain.hpp>
 #include <memory>
 #include <z3++.h>
 
@@ -45,15 +45,14 @@ using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 
 class SignatureContainmentCheck;
 using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentCheck>;
-/**
- * @brief enum describing the given containment relationship
- */
-enum class ContainmentType : uint8_t { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, EQUALITY };
+
+class ContainmentRelationshipAndOperatorChain;
+using ContainmentRelationshipAndOperatorChainPtr = std::shared_ptr<ContainmentRelationshipAndOperatorChain>;
 
 /**
  * @brief This is a utility to compare two signatures
  */
-class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
+class SignatureContainmentCheck : public ContainedOperatorsUtil {
 
   public:
     /**
@@ -61,25 +60,25 @@ class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
      * @param context The Z3 context for the SMT solver
      * @return instance of SignatureContainmentUtil
      */
-    static SignatureContainmentUtilPtr create(const z3::ContextPtr& context);
+    static SignatureContainmentUtilPtr create(const z3::ContextPtr& context, bool allowSQPAsContainee);
 
     /**
      * @brief constructor for signatureContainmentUtil
      * @param context The Z3 context for the SMT solver
      */
-    explicit SignatureContainmentCheck(const z3::ContextPtr& context);
+    explicit SignatureContainmentCheck(const z3::ContextPtr& context, bool allowSQPAsContainee);
 
     /**
      * @brief Check containment relationships for the given signatures as follows
      *      First check for WindowContainment
      *      In case of window equality, we continue to check for projection containment
      *      In case of projection equality, we finally check for filter containment
-     * @param leftSignature
-     * @param rightSignature
+     * @param leftOperator the current operator of the left query
+     * @param rightOperator the current operator of the right query
      * @return enum with containment relationships
      */
-    ContainmentType checkContainmentForBottomUpMerging(const QuerySignaturePtr& leftSignature,
-                                                       const QuerySignaturePtr& rightSignature);
+    ContainmentRelationshipAndOperatorChainPtr checkContainmentForBottomUpMerging(const LogicalOperatorNodePtr& leftSignature,
+                                                       const LogicalOperatorNodePtr& rightSignature);
 
     /**
      * @brief Check containment relationships for the given signatures as follows
@@ -94,7 +93,7 @@ class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
      * @return tuple with the containment relationship and a vector of the contained upstream operators. The vector is empty if
      * equivalence or no containment was detected.
      */
-    std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>>
+    ContainmentRelationshipAndOperatorChainPtr
     checkContainmentRelationshipForTopDownMerging(const LogicalOperatorNodePtr& leftOperator, const LogicalOperatorNodePtr& rightOperator);
 
   private:
@@ -113,7 +112,7 @@ class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkProjectionContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkProjectionContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief check for filter containment as follows:
@@ -128,7 +127,7 @@ class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief check for window containment as follows:
@@ -159,7 +158,7 @@ class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief creates conditions for checking projection containment:
@@ -237,6 +236,7 @@ class SignatureContainmentCheck : public ExtractContainedOperatorsUtil {
     z3::ContextPtr context;
     z3::SolverPtr solver;
     uint64_t counter;
+    bool allowSQPAsContainee;
     const uint16_t RESET_SOLVER_THRESHOLD = 20050;
     const uint8_t NUMBER_OF_CONDITIONS_TO_POP_FROM_SOLVER = 2;
 };

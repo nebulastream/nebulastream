@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_EXTRACTCONTAINEDOPERATORSUTIL_HPP
-#define NES_EXTRACTCONTAINEDOPERATORSUTIL_HPP
+#ifndef NES_CONTAINEDOPERATORSUTIL_HPP
+#define NES_CONTAINEDOPERATORSUTIL_HPP
 
 #include <memory>
 #include <z3++.h>
@@ -30,7 +30,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 namespace Optimizer {
 
-class ExtractContainedOperatorsUtil {
+class ContainedOperatorsUtil {
   public:
     /**
      * @brief extracts the contained window operator together with its watermark operator
@@ -52,7 +52,7 @@ class ExtractContainedOperatorsUtil {
      * @param containee the current operator from the contained query
      * @return all filter upstream filter operations from the contained query
      */
-    std::vector<LogicalOperatorNodePtr> createContainedFilterOperators(const LogicalOperatorNodePtr& container,
+    LogicalOperatorNodePtr createContainedFilterOperators(const LogicalOperatorNodePtr& container,
                                                                        const LogicalOperatorNodePtr& containee);
     /**
      * @brief Validate if the map assignment field is used in the filter predicate of the operator
@@ -89,4 +89,4 @@ class ExtractContainedOperatorsUtil {
 }// namespace Optimizer
 }// namespace NES
 
-#endif//NES_EXTRACTCONTAINEDOPERATORSUTIL_HPP
+#endif//NES_CONTAINEDOPERATORSUTIL_HPP

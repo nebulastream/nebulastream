@@ -58,7 +58,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(
       globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
 
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-    queryMergerPhase = QueryMergerPhase::create(z3Context, optimizerConfigurations.queryMergerRule);
+    queryMergerPhase = QueryMergerPhase::create(z3Context, optimizerConfigurations);
     typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
     sampleCodeGenerationPhase = SampleCodeGenerationPhase::create();
     queryRewritePhase = QueryRewritePhase::create(coordinatorConfiguration);

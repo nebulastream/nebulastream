@@ -19,5 +19,6 @@ add_source_files(nes-core
         SignatureEqualityUtil.cpp
         SignatureContainmentCheck.cpp
         QuerySignature.cpp
-        ExtractContainedOperatorsUtil.cpp
+        ContainedOperatorsUtil.cpp
+        ContainmentRelationshipAndOperatorChain.cpp
 )

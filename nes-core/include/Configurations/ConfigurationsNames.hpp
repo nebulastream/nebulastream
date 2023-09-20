@@ -77,6 +77,7 @@ const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOpe
 const std::string ENABLE_QUERY_RECONFIGURATION = "enableQueryReconfiguration";
 const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
 const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
+const std::string ALLOW_SQP_AS_CONTAINEE = "allowSQPAsContainee";
 const std::string PERFORM_ADVANCE_SEMANTIC_VALIDATION = "advanceSemanticValidation";
 const std::string PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION = "performDistributedWindowOptimization";
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributedWindowChildThreshold";
