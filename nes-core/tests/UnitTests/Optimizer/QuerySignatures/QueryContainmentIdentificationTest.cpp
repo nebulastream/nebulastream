@@ -45,13 +45,13 @@ class QueryContainmentTestEntry {
     QueryContainmentTestEntry(const std::string& testType,
                               const std::string& leftQuery,
                               const std::string& rightQuery,
-                              Optimizer::ContainmentType containmentType)
-        : testType(testType), leftQuery(leftQuery), rightQuery(rightQuery), containmentType(containmentType) {}
+                              Optimizer::ContainmentRelationship containmentRelationship)
+        : testType(testType), leftQuery(leftQuery), rightQuery(rightQuery), containmentRelationship(containmentRelationship) {}
 
     std::string testType;
     std::string leftQuery;
     std::string rightQuery;
-    Optimizer::ContainmentType containmentType;
+    Optimizer::ContainmentRelationship containmentRelationship;
 };
 
 class QueryContainmentIdentificationTest : public Testing::BaseUnitTest,
@@ -113,58 +113,58 @@ class QueryContainmentIdentificationTest : public Testing::BaseUnitTest,
                 "TestEquality",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45))"
                 R"(.filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").filter(Attribute("value") < 5).joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") < 5).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Count()).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Count()).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
-            QueryContainmentTestEntry("TestEquality", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("windTurbines$value1"), Attribute("windTurbines$ts"), Attribute("households$value"), Attribute("households$id"), Attribute("households$value1"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
+            QueryContainmentTestEntry("TestEquality", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("windTurbines$value1"), Attribute("windTurbines$ts"), Attribute("households$value"), Attribute("households$id"), Attribute("households$value1"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry("TestEquality",
                                       R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).filter(Attribute("value") > 4).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("windTurbines$id")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).sink(PrintSinkDescriptor::create());)",
                                       R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).filter(Attribute("windTurbines$value") > 4).sink(PrintSinkDescriptor::create());)",
-                                      Optimizer::ContainmentType::EQUALITY),
+                                      Optimizer::ContainmentRelationship::EQUALITY),
             QueryContainmentTestEntry(
                 "TestEquality",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Hours(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).joinWith(Query::from("households").project(Attribute("value3"), Attribute("id"), Attribute("ts").as("start"))).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).map(Attribute("DifferenceProducedConsumedPower") = Attribute("value") - Attribute("value3")).project(Attribute("DifferenceProducedConsumedPower"), Attribute("value"), Attribute("value3")).filter(Attribute("DifferenceProducedConsumedPower") < 100).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Hours(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).joinWith(Query::from("households").project(Attribute("value3"), Attribute("id"), Attribute("ts").as("start"))).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).map(Attribute("DifferenceProducedConsumedPower") = Attribute("value") - Attribute("value3")).project(Attribute("DifferenceProducedConsumedPower"), Attribute("value"), Attribute("value3")).filter(Attribute("DifferenceProducedConsumedPower") < 100).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::EQUALITY),
+                Optimizer::ContainmentRelationship::EQUALITY),
         };
     }
 
@@ -174,125 +174,125 @@ class QueryContainmentIdentificationTest : public Testing::BaseUnitTest,
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").map(Attribute("value") = 40).project(Attribute("value").as("newValue")).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("solarPanels").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").map(Attribute("value") = 40).map(Attribute("value") = Attribute("value") + 10).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").filter(Attribute("value") < 40).window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines"))"
                                            R"(.window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20))).filter(Attribute("value") < 10).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").filter(Attribute("value") < 5).joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))).apply(Min(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
-                                       QueryContainmentTestEntry("TestNoContainment", R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))).apply(Min(Attribute("value"))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).apply(Sum(Attribute("value"))).window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(1000))).apply(Max(Attribute("value"))).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
+                                       QueryContainmentTestEntry("TestNoContainment", R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))).apply(Min(Attribute("value"))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).apply(Sum(Attribute("value"))).window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(1000))).apply(Max(Attribute("value"))).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).apply(Avg(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).apply(Avg(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).apply(Sum(Attribute("value"))).filter(Attribute("value") == 1).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).apply(Sum(Attribute("value"))).filter(Attribute("value") != 1).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").filter(Attribute("value") == 1).unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").filter(Attribute("value") == 5).unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") != 4).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
-                                       QueryContainmentTestEntry("TestNoContainment", R"(Query::from("windTurbines").filter(Attribute("value") != 4).unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
+                                       QueryContainmentTestEntry("TestNoContainment", R"(Query::from("windTurbines").filter(Attribute("value") != 4).unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        //Limit of our algorithm, cannot detect equivalence among these windows
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).joinWith(Query::from("households")).where(Attribute("windTurbines$id")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Hours(1))).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).filter(Attribute("windTurbines$value") > 4).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
-                                       QueryContainmentTestEntry("TestNoContainment", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).project(Attribute("windTurbines$value")).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
+                                       QueryContainmentTestEntry("TestNoContainment", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).project(Attribute("windTurbines$value")).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10000))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).project(Attribute("windTurbines$value")).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(20))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("windTurbines$value") > 4).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        //projection conditions differ too much for containment to be picked up in the complete query
                                        //bottom up approach would detect it, though
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        //another limit of our algorithm. If one query does not have a window, we cannot detect containment
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT),
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                        QueryContainmentTestEntry(
                                            "TestNoContainment",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                                            R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(1000))).byKey(Attribute("id")).apply(Min(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                                           Optimizer::ContainmentType::NO_CONTAINMENT)};
+                                           Optimizer::ContainmentRelationship::NO_CONTAINMENT)};
     }
 
     static auto createFilterContainmentCases() {
@@ -301,37 +301,37 @@ class QueryContainmentIdentificationTest : public Testing::BaseUnitTest,
                 "TestFilterContainment",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
             QueryContainmentTestEntry(
                 "TestFilterContainment",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
             QueryContainmentTestEntry(
                 "TestFilterContainment",
                 R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") < 5).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
             QueryContainmentTestEntry(
                 "TestFilterContainment",
                 R"(Query::from("windTurbines").filter(Attribute("value") < 5).joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
             QueryContainmentTestEntry(
                 "TestFilterContainment",
                 R"(Query::from("windTurbines").filter(Attribute("value") == 5).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") != 4).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
             QueryContainmentTestEntry(
                 "TestFilterContainment",
                 R"(Query::from("windTurbines").filter(Attribute("value") == 5).unionWith(Query::from("solarPanels")).unionWith(Query::from("test")).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").filter(Attribute("value") == 5).unionWith(Query::from("solarPanels")).unionWith(Query::from("test")).filter(Attribute("value") >= 6).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
             QueryContainmentTestEntry(
                 "TestFilterContainment",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") != 4).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                 R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).sink(PrintSinkDescriptor::create());)",
-                Optimizer::ContainmentType::RIGHT_SIG_CONTAINED)};
+                Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED)};
     }
 
     static auto createProjectionContainmentCases() {
@@ -339,52 +339,52 @@ class QueryContainmentIdentificationTest : public Testing::BaseUnitTest,
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").project(Attribute("value")).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                                                          Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").map(Attribute("value") = 10).map(Attribute("id") = 10).map(Attribute("ts") = 10).project(Attribute("value"), Attribute("id")).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").map(Attribute("value") = 10).map(Attribute("id") = 10).map(Attribute("ts") = 10).project(Attribute("value"), Attribute("id"), Attribute("ts")).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                                                          Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").map(Attribute("value") = 40).project(Attribute("value")).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                                                          Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").map(Attribute("value") = 40).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").map(Attribute("value") = 40).project(Attribute("value")).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                                                          Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("households$value"), Attribute("households$id"), Attribute("windTurbines$ts"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                                                          Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).project(Attribute("windTurbines$value")).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                                                          Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("windTurbines$value1"),Attribute("households$value"), Attribute("households$id"), Attribute("households$value1"),Attribute("windTurbines$ts"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                                                          Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").map(Attribute("value") = 5 * Attribute("value")).map(Attribute("value1") = Attribute("value") + 10).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").map(Attribute("id") = 5 * Attribute("value")).map(Attribute("value1") = Attribute("value") + 10).project(Attribute("id1"), Attribute("value1"), Attribute("ts")).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::NO_CONTAINMENT),
+                                                          Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels").map(Attribute("value") = 5 * Attribute("value"))).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("windTurbines$value1"),Attribute("households$value"), Attribute("households$id"), Attribute("households$value1"),Attribute("windTurbines$ts"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::NO_CONTAINMENT),
+                                                          Optimizer::ContainmentRelationship::NO_CONTAINMENT),
                                                       QueryContainmentTestEntry(
                                                           "TestProjectionContainment",
                                                           R"(Query::from("windTurbines").project(Attribute("value").as("newValue"), Attribute("id1"), Attribute("ts")).sink(PrintSinkDescriptor::create());)",
                                                           R"(Query::from("windTurbines").project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts"), Attribute("id")).sink(PrintSinkDescriptor::create());)",
-                                                          Optimizer::ContainmentType::NO_CONTAINMENT)};
+                                                          Optimizer::ContainmentRelationship::NO_CONTAINMENT)};
     }
   static auto createWindowContainmentCases() {
         return std::
@@ -393,48 +393,48 @@ class QueryContainmentIdentificationTest : public Testing::BaseUnitTest,
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                    Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
                 QueryContainmentTestEntry(
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                    Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
                 QueryContainmentTestEntry(
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")), Min(Attribute("value"))->as(Attribute("newValue"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                    Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
                 QueryContainmentTestEntry(
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")), Min(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                    Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
                 QueryContainmentTestEntry(
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")), Min(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                    Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
                 QueryContainmentTestEntry(
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(10000))).apply(Min(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(100))).apply(Min(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                    Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
                 QueryContainmentTestEntry(
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")), Min(Attribute("value1")), Max(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::RIGHT_SIG_CONTAINED),
+                    Optimizer::ContainmentRelationship::RIGHT_SIG_CONTAINED),
                 QueryContainmentTestEntry(
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value")), Min(Attribute("value1")), Max(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
+                    Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
                 QueryContainmentTestEntry(
                     "TestWindowContainment",
                     R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
                     R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value")), Min(Attribute("value1")), Max(Attribute("value2"))).sink(PrintSinkDescriptor::create());)",
-                    Optimizer::ContainmentType::LEFT_SIG_CONTAINED),
-                QueryContainmentTestEntry("TestWindowContainment", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(20))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentType::NO_CONTAINMENT)};
+                    Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED),
+                QueryContainmentTestEntry("TestWindowContainment", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)", R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(20))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)", Optimizer::ContainmentRelationship::NO_CONTAINMENT)};
     }
 };
 
@@ -462,16 +462,16 @@ TEST_P(QueryContainmentIdentificationTest, testContainmentIdentification) {
         signatureInferencePhase->execute(queryPlanNewQuery);
         SinkLogicalOperatorNodePtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
         SinkLogicalOperatorNodePtr sinkOperatorNewQuery = queryPlanSQPQuery->getSinkOperators()[0];
-        auto signatureContainmentUtil = Optimizer::SignatureContainmentCheck::create(context);
+        auto signatureContainmentUtil = Optimizer::SignatureContainmentCheck::create(context, true);
         std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
         auto sqpSink = queryPlanSQPQuery->getSinkOperators()[0];
         auto newSink = queryPlanNewQuery->getSinkOperators()[0];
         //Check if the host and target sink operator signatures have a containment relationship
-        Optimizer::ContainmentType containment =
-            signatureContainmentUtil->checkContainmentForBottomUpMerging(sqpSink->getZ3Signature(), newSink->getZ3Signature());
+        Optimizer::ContainmentRelationship containment =
+            signatureContainmentUtil->checkContainmentForBottomUpMerging(sqpSink, newSink)->containmentRelationship;
         NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: {}", magic_enum::enum_name(containment));
         NES_TRACE("Query pairing number: {}", counter);
-        ASSERT_EQ(containment, containmentCase.containmentType);
+        ASSERT_EQ(containment, containmentCase.containmentRelationship);
         counter++;
     }
 }
