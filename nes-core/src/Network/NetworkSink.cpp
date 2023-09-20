@@ -21,6 +21,7 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/TimeMeasurement.hpp>
 
 namespace NES::Network {
 
@@ -48,7 +49,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), connectAsync(true) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), connectAsync(true), reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
@@ -103,19 +104,27 @@ void NetworkSink::setup() {
     queryManager->addReconfigurationMessage(queryId, querySubPlanId, reconf, true);
 }
 
-void NetworkSink::establishConnection() {
-    NES_DEBUG("NetworkSink: method establishConnection() called {} qep {}", nesPartition.toString(), querySubPlanId);
-    auto reconf = Runtime::ReconfigurationMessage(queryId,
-                                                  querySubPlanId,
-                                                  Runtime::ReconfigurationType::StopBuffering,
-                                                  inherited0::shared_from_this(),
-                                                  std::make_any<uint32_t>(numOfProducers));
-    queryManager->addReconfigurationMessage(queryId, querySubPlanId, reconf, true);
-}
-
 void NetworkSink::shutdown() {
     NES_DEBUG("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), queryId, querySubPlanId);
     networkManager->unregisterSubpartitionProducer(nesPartition);
+}
+
+//todo: rename, make this specific to connection loss and let it call another function for connecting
+void NetworkSink::initiateConnection(Runtime::WorkerContext& workerContext) {
+    std::unique_lock lock(establishConnectionMutex);
+    //check if another thread has already initiated reconnection
+    if (reconnectBuffering)  {
+        NES_INFO("Another thread has already initiated reconnecting");
+        return;
+    }
+
+    //check that no completed reconnect has happened yet
+    auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
+    if (!channel) {
+
+    }
+
+    workerContext.getNetworkChannel(nesPartition.getOperatorId());
 }
 
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
@@ -127,6 +136,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
             if (connectAsync) {
+                //todo: this is being called per thread, to we need to do this differently
+                //todo: move this to the post reconfig callback. and then let the individual threads connect on StopBuffering message
                 auto reconf = Runtime::ReconfigurationMessage(queryId,
                                                               querySubPlanId,
                                                               Runtime::ReconfigurationType::StopBuffering,
@@ -188,8 +199,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
                 break;
             }
-            this->reconnectBuffering = true;//todo: instead of flag set channel to null or result promise
+            this->reconnectBuffering = true;
             //todo: realease old channel? how to check if one exists first?
+
             //todo: set new channel here
 
             //            //todo: this case will only be called if a planned reconnect happens, in case of connection loss, the buffering needs to be triggered elsewhere
@@ -218,6 +230,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             //we retrive the new channel via the future because we cannot pass a non-copyable unique ptr into the reconfing message
             //this is the case because std::any requires the type to be copyable
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), networkChannelFuture.get());
+            connectionEstablishmentTimestamp = getTimestamp();
+
             /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we
             unbuffer*/
 
@@ -291,11 +305,5 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
-
-//void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext) {
-//    auto channelFuture =
-//        networkManager->registerSubpartitionProducerAsync(receiverLocation, nesPartition, bufferManager, waitTime, retryTimes);
-//    workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
-//}
 
 }// namespace NES::Network

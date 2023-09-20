@@ -164,7 +164,6 @@ std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync
                                               waitTime,
                                               retryTimes);
         promise.set_value(std::move(channel));
-        //networkSink->establishConnection();
         queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, true);
     });
     thread.detach();

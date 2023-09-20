@@ -24,6 +24,7 @@
 #include <future>
 
 namespace NES {
+using Timestamp = uint64_t;
 namespace Network {
 
 /**
@@ -125,13 +126,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     Runtime::NodeEnginePtr getNodeEngine();
 
-    void connectToChannelAsync(Runtime::WorkerContext& workerContext);
-
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
-    void establishConnection();
-
   private:
+    void initiateConnection(Runtime::WorkerContext& workerContext);
     uint64_t uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
@@ -145,15 +143,15 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
 
     const bool connectAsync;
+    std::mutex establishConnectionMutex;
+    Timestamp connectionEstablishmentTimestamp;
     std::future<NetworkChannelPtr> networkChannelFuture;
     std::atomic<bool> reconnectBuffering;
     NodeLocation nextReceiverLocation;
     std::optional<NesPartition> nextNesPartition;
 
     //todo: add number of received vdes
-
-
-     };
+};
 
 }// namespace Network
 }// namespace NES
