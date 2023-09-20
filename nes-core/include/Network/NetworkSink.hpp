@@ -43,6 +43,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param nesPartition
     * @param faultToleranceType: fault-tolerance guarantee chosen by a user
     */
+    //todo: add connect async as parameter
     explicit NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
                          QueryId queryId,
@@ -130,6 +131,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
   private:
     void initiateConnection(Runtime::WorkerContext& workerContext);
+    void connectChannelAsync();
     uint64_t uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
@@ -143,8 +145,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
 
     const bool connectAsync;
+    //todo: we probably do not need the mutex
     std::mutex establishConnectionMutex;
-    Timestamp connectionEstablishmentTimestamp;
+    uint32_t channelSeqNo;
     std::future<NetworkChannelPtr> networkChannelFuture;
     std::atomic<bool> reconnectBuffering;
     NodeLocation nextReceiverLocation;

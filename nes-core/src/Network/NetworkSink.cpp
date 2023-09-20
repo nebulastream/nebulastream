@@ -110,7 +110,16 @@ void NetworkSink::shutdown() {
 }
 
 //todo: rename, make this specific to connection loss and let it call another function for connecting
+//todo: maybe we do not need this, if we use the seq nr
 void NetworkSink::initiateConnection(Runtime::WorkerContext& workerContext) {
+    //record the channel seq numer
+    auto oldChannelSeqNo = channelSeqNo;
+
+    //to make sure that another thread has not yet performed the reconnect, we retry
+    //todo: maintain thread safety, we have to change
+
+
+    /*
     std::unique_lock lock(establishConnectionMutex);
     //check if another thread has already initiated reconnection
     if (reconnectBuffering)  {
@@ -125,7 +134,25 @@ void NetworkSink::initiateConnection(Runtime::WorkerContext& workerContext) {
     }
 
     workerContext.getNetworkChannel(nesPartition.getOperatorId());
+     */
 }
+
+void NetworkSink::connectChannelAsync() {
+    auto reconf = Runtime::ReconfigurationMessage(queryId,
+                                                  querySubPlanId,
+                                                  Runtime::ReconfigurationType::StopBuffering,
+                                                  inherited0::shared_from_this(),
+                                                  std::make_any<uint32_t>(numOfProducers));
+    networkChannelFuture = networkManager->registerSubpartitionProducerAsync(receiverLocation,
+                                                                             nesPartition,
+                                                                             bufferManager,
+                                                                             waitTime,
+                                                                             retryTimes,
+                                                                             reconf,
+                                                                             queryManager);
+    reconnectBuffering = true;
+}
+
 
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
@@ -138,19 +165,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             if (connectAsync) {
                 //todo: this is being called per thread, to we need to do this differently
                 //todo: move this to the post reconfig callback. and then let the individual threads connect on StopBuffering message
-                auto reconf = Runtime::ReconfigurationMessage(queryId,
-                                                              querySubPlanId,
-                                                              Runtime::ReconfigurationType::StopBuffering,
-                                                              inherited0::shared_from_this(),
-                                                              std::make_any<uint32_t>(numOfProducers));
-                networkChannelFuture = networkManager->registerSubpartitionProducerAsync(receiverLocation,
-                                                                                         nesPartition,
-                                                                                         bufferManager,
-                                                                                         waitTime,
-                                                                                         retryTimes,
-                                                                                         reconf,
-                                                                                         queryManager);
-                reconnectBuffering = true;
+                connectChannelAsync();
             } else {
                 auto channel = networkManager->registerSubpartitionProducer(receiverLocation,
                                                                             nesPartition,
