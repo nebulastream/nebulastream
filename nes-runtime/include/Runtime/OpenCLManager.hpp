@@ -71,9 +71,8 @@ struct OpenCLDeviceInfo {
     unsigned long globalMemory;
 };
 
-// TODO: Just declare the methods here and define in CPP file?
+// Define helper methods to convert OpenCLDeviceInfo to JSON and back.
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OpenCLDeviceInfo, platformVendor, platformName, deviceName, doubleFPSupport, maxWorkItems, deviceAddressBits, deviceType, deviceExtensions, availableProcessors);
-
 
 /**
  * Data structure to hold the information about the available OpenCL devices in a worker.
