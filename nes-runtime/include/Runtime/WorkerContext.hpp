@@ -130,13 +130,6 @@ class WorkerContext {
     void storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
-     * @brief This stores a network channel for an operator
-     * @param id of the operator that we want to store the output channel
-     * @param channel the output channel
-     */
-    //void storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channel);
-
-    /**
       * @brief This method creates a network storage for a thread
       * @param nesPartitionId partition
       */
@@ -196,13 +189,6 @@ class WorkerContext {
      * @return an output channel
      */
     Network::NetworkChannel* getNetworkChannel(NES::OperatorId ownerId);
-
-    /**
-     * @brief retrieve a registered output channel
-     * @param ownerId id of the operator that we want to store the output channel
-     * @return an output channel
-     */
-    //Network::NetworkChannelPtr getNetworkChannelFuture(NES::OperatorId ownerId);
 
     /**
      * @brief retrieve a registered output channel

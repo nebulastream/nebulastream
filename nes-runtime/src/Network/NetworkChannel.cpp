@@ -187,30 +187,6 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                                         waitTime,
                                                         retryTimes);
 }
-std::future<NetworkChannelPtr> NetworkChannel::createAsync(const std::shared_ptr<zmq::context_t>& zmqContext,
-                                              std::string&& socketAddr,
-                                              NesPartition nesPartition,
-                                              ExchangeProtocol& protocol,
-                                              Runtime::BufferManagerPtr bufferManager,
-                                              int highWaterMark,
-                                              std::chrono::milliseconds waitTime,
-                                              uint8_t retryTimes) {
-    std::promise<NetworkChannelPtr> promise;
-    auto future =  promise.get_future();
-    std::thread thread([zmqContext, socketAddr = std::move(socketAddr), nesPartition, protocol, bufferManager, highWaterMark, waitTime, retryTimes, promise = std::move(promise)]() mutable {
-      auto channel = detail::createNetworkChannel<NetworkChannel>(zmqContext,
-                                                          std::move(socketAddr),
-                                                          nesPartition,
-                                                          protocol,
-                                                          bufferManager,
-                                                          highWaterMark,
-                                                          waitTime,
-                                                          retryTimes);
-      promise.set_value(std::move(channel));
-    });
-    thread.detach();
-    return future;
-}
 
 EventOnlyNetworkChannel::EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
                                                  const ChannelId channelId,

@@ -70,11 +70,6 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
-//void WorkerContext::storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channel) {
-//    NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
-//    dataChannelsFutures[id] = std::move(channel);
-//}
-
 void WorkerContext::createStorage(Network::NesPartition nesPartition) {
     this->storage[nesPartition] = std::make_shared<BufferStorage>();
 }
@@ -144,19 +139,6 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
     auto it = dataChannels.find(ownerId);// note we assume it's always available
     return (*it).second.get();
 }
-
-
-////todo: find better name for this
-//Network::NetworkChannelPtr WorkerContext::getNetworkChannelFuture(NES::OperatorId ownerId) {
-//    NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
-//    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
-//    if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-//        auto future = std::move(it->second);
-//        dataChannelsFutures.erase(it);
-//        return future.get();
-//    }
-//    return nullptr;
-//}
 
 Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving event only channel for operator {} for context {}", ownerId, workerId);

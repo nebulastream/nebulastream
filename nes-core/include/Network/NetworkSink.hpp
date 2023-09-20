@@ -26,12 +26,6 @@
 namespace NES {
 namespace Network {
 
-enum BufferState : uint8_t {
-    NOT_BUFFERING,
-    BUFFERING,
-    UNBUFFERING
-};
-
 /**
  * @brief This represent a sink operator that acts as a connecting API between query processing and network stack.
  */
@@ -152,10 +146,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     const bool connectAsync;
     std::future<NetworkChannelPtr> networkChannelFuture;
-    //todo: replcae with ubffer state
-    std::atomic<BufferState> reconnectBuffering;
+    std::atomic<bool> reconnectBuffering;
     NodeLocation nextReceiverLocation;
-    NesPartition nextNesPartition;
+    std::optional<NesPartition> nextNesPartition;
 
     //todo: add number of received vdes
 
