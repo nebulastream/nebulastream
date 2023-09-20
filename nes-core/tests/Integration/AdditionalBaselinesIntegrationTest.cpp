@@ -131,52 +131,38 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
     };
 };
 
-TEST_F(AdditionalBaselinesIntegrationTest, testThreeLevelsTopologyTopDown) {
+TEST_F(AdditionalBaselinesIntegrationTest, testChainApproach) {
+    // we only need 8 sources
     int64_t childThreshold = 1000;
     int64_t combinerThreshold = 1;
-    uint64_t expectedTuples = 80;
+    uint64_t expectedTuples = 10;
 
-    auto testHarness = createTestHarness(3, 2, 4, childThreshold, combinerThreshold);
+    auto testHarness = createTestHarness(11, 1, 1, childThreshold, combinerThreshold);
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedTuples, "BottomUp", "NONE", "IN_MEMORY");
     EXPECT_EQ(actualOutput.size(), expectedTuples);
 
     TopologyPtr topology = testHarness.getTopology();
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     NES_DEBUG("AdditionalBaselinesIntegrationTest: Executed with topology \n{}", topology->toString());
-    NES_INFO("AdditionalBaselinesIntegrationTest: Executed with plan \n{}", queryPlan->toString());
+    NES_DEBUG("AdditionalBaselinesIntegrationTest: Executed with plan \n{}", queryPlan->toString());
     EXPECT_EQ(1, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
 }
 
-TEST_F(AdditionalBaselinesIntegrationTest, testThreeLevelsTopologyBottomUp) {
-    int64_t childThreshold = 1;
-    int64_t combinerThreshold = 1000;
-    uint64_t expectedTuples = 80;
-
-    auto testHarness = createTestHarness(3, 2, 4, childThreshold, combinerThreshold);
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedTuples, "BottomUp", "NONE", "IN_MEMORY");
-    EXPECT_EQ(actualOutput.size(), expectedTuples);
-
-    TopologyPtr topology = testHarness.getTopology();
-    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
-    NES_DEBUG("AdditionalBaselinesIntegrationTest: Executed with topology \n{}", topology->toString());
-    NES_INFO("AdditionalBaselinesIntegrationTest: Executed with plan \n{}", queryPlan->toString());
-    EXPECT_EQ(8, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
-}
-
-TEST_F(AdditionalBaselinesIntegrationTest, testNemoThreelevels) {
+TEST_F(AdditionalBaselinesIntegrationTest, testMstApproach) {
+    //we only need 8 sources
     int64_t childThreshold = 1;
     int64_t combinerThreshold = 1;
-    uint64_t expectedTuples = 80;
+    uint64_t expectedTuples = 40;
 
-    auto testHarness = createTestHarness(3, 2, 4, childThreshold, combinerThreshold);
+    auto testHarness = createTestHarness(4, 2, 1, childThreshold, combinerThreshold);
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedTuples, "BottomUp", "NONE", "IN_MEMORY");
     EXPECT_EQ(actualOutput.size(), expectedTuples);
 
     TopologyPtr topology = testHarness.getTopology();
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     NES_DEBUG("AdditionalBaselinesIntegrationTest: Executed with topology \n{}", topology->toString());
-    NES_INFO("AdditionalBaselinesIntegrationTest: Executed with plan \n{}", queryPlan->toString());
-    EXPECT_EQ(2, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
+    NES_DEBUG("AdditionalBaselinesIntegrationTest: Executed with plan \n{}", queryPlan->toString());
+    EXPECT_EQ(4, countOccurrences("CENTRALWINDOW", queryPlan->toString()));
 }
 
 }// namespace NES
