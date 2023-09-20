@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -26,19 +25,18 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedTopDownQueryContainmentMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context) {
-    SignatureContainmentUtil = SignatureContainmentCheck::create(std::move(context));
+Z3SignatureBasedTopDownQueryContainmentMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context, bool allowSQPAsContainee) {
+    SignatureContainmentUtil = SignatureContainmentCheck::create(std::move(context), allowSQPAsContainee);
 }
 
 Z3SignatureBasedPartialQueryContainmentMergerRulePtr
-Z3SignatureBasedTopDownQueryContainmentMergerRule::create(z3::ContextPtr context) {
+Z3SignatureBasedTopDownQueryContainmentMergerRule::create(z3::ContextPtr context, bool allowSQPAsContainee) {
     return std::make_shared<Z3SignatureBasedTopDownQueryContainmentMergerRule>(
-        Z3SignatureBasedTopDownQueryContainmentMergerRule(std::move(context)));
+        Z3SignatureBasedTopDownQueryContainmentMergerRule(std::move(context), allowSQPAsContainee));
 }
 
 bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
@@ -59,13 +57,13 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
             globalQueryPlan->getSharedQueryPlansConsumingSourcesAndPlacementStrategy(targetQueryPlan->getSourceConsumed(),
                                                                                      targetQueryPlan->getPlacementStrategy());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
-            std::tuple<ContainmentType, std::vector<LogicalOperatorNodePtr>> relationshipAndOperators;
+            ContainmentRelationshipAndOperatorChainPtr relationshipAndOperators;
 
             //Fetch the host query plan to merge
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
 
             //Initialized the target and host matched pair
-            std::map<OperatorNodePtr, std::tuple<OperatorNodePtr, ContainmentType, std::vector<LogicalOperatorNodePtr>>>
+            std::map<OperatorNodePtr, std::tuple<OperatorNodePtr, ContainmentRelationship, std::vector<LogicalOperatorNodePtr>>>
                 matchedTargetToHostOperatorMap;
             //Initialized the vector containing iterated matched host operator
             std::vector<NodePtr> matchedHostOperators;
@@ -132,10 +130,10 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                                              .count();
                             globalQueryPlan->containmentIdentification += endQR - startQR;
                             globalQueryPlan->callsToContainmentIdentification++;
-                            if (get<0>(relationshipAndOperators) != ContainmentType::NO_CONTAINMENT) {
+                            if (relationshipAndOperators->containmentRelationship != ContainmentRelationship::NO_CONTAINMENT) {
                                 //Add the matched host operator to the map
                                 matchedTargetToHostOperatorMap[targetOperator] =
-                                    std::tuple(hostOperator, get<0>(relationshipAndOperators), get<1>(relationshipAndOperators));
+                                    std::tuple(hostOperator, relationshipAndOperators->containmentRelationship, relationshipAndOperators->containedOperatorChain);
                                 //Mark the host operator as matched
                                 matchedHostOperators.emplace_back(hostOperator);
                                 foundMatch = true;
@@ -171,13 +169,11 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
 
             if (!matchedTargetToHostOperatorMap.empty()) {
                 NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
-                //hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
                 // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
                 // As upstream matched operators are covered by downstream matched operators. We need to retain only the
                 // downstream matched operator containing any upstream matched operator. This will prevent in computation
                 // of inconsistent shared query plans.
-
                 if (matchedTargetToHostOperatorMap.size() > 1) {
                     //Fetch all the matched target operators.
                     std::vector<OperatorNodePtr> matchedTargetOperators;
@@ -208,7 +204,7 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperatorContainmentRelationshipContainedOperatorChain] :
                      matchedTargetToHostOperatorMap) {
-                    if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain) == ContainmentType::EQUALITY) {
+                    if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain) == ContainmentRelationship::EQUALITY) {
                         LogicalOperatorNodePtr hostOperator =
                             get<0>(hostOperatorContainmentRelationshipContainedOperatorChain)->as<LogicalOperatorNode>();
                         matchedOperatorPairs.emplace_back(
@@ -216,7 +212,7 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                         //add matched operators to the host shared query plan
                         hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
-                               == ContainmentType::RIGHT_SIG_CONTAINED) {
+                               == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
                         auto containerOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         // get the new sink operation to add to the query plan, new query plans should only have one sink operator
@@ -227,7 +223,7 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                                                       containedOperatorChain,
                                                       newSinkOperator);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
-                               == ContainmentType::LEFT_SIG_CONTAINED) {
+                               == ContainmentRelationship::LEFT_SIG_CONTAINED) {
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         // get the new sink operation to add to the query plan, new query plans should only have one sink operator

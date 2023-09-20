@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/QueryMerger/DefaultQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRule.hpp>
@@ -29,13 +30,15 @@
 
 namespace NES::Optimizer {
 
-QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule) {
-    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(std::move(context), queryMergerRule));
+QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context,
+                                             const Configurations::OptimizerConfigurationPtr& optimizerConfiguration) {
+    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(std::move(context), optimizerConfiguration));
 }
 
-QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRuleName) {
+QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context,
+                                   const Configurations::OptimizerConfigurationPtr& optimizerConfiguration) {
 
-    switch (queryMergerRuleName) {
+    switch (optimizerConfiguration->queryMergerRule) {
         case QueryMergerRule::SyntaxBasedCompleteQueryMergerRule:
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;
@@ -56,7 +59,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             queryMergerRule = Z3SignatureBasedBottomUpQueryContainmentRule::create(std::move(context));
             break;
         case QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule:
-            queryMergerRule = Z3SignatureBasedTopDownQueryContainmentMergerRule::create(std::move(context));
+            queryMergerRule = Z3SignatureBasedTopDownQueryContainmentMergerRule::create(std::move(context), optimizerConfiguration->allowSQPAsContainee.getValue());
             break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();

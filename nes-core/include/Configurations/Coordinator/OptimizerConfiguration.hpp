@@ -62,6 +62,10 @@ class OptimizerConfiguration : public BaseConfiguration {
                                                               Optimizer::QueryMergerRule::DefaultQueryMergerRule,
                                                               "The rule to be used for performing query merging"};
 
+    BoolOption allowSQPAsContainee = {ALLOW_SQP_AS_CONTAINEE,
+                                      false,
+                                      "Allow SQP as containee in top down containment based query merging."};
+
     /**
      * @brief Indicates the memory layout policy and allows the engine to prefer a row or columnar layout.
      * Depending on the concrete workload different memory layouts can be beneficial. Valid options are:
@@ -135,7 +139,8 @@ class OptimizerConfiguration : public BaseConfiguration {
                 &distributedWindowCombinerThreshold,
                 &performOnlySourceOperatorExpansion,
                 &performAdvanceSemanticValidation,
-                &enableNemoPlacement};
+                &enableNemoPlacement,
+                &allowSQPAsContainee};
     }
 };
 

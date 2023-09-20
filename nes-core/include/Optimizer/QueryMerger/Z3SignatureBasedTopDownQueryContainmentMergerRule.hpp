@@ -86,13 +86,13 @@ using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3S
 class Z3SignatureBasedTopDownQueryContainmentMergerRule final : public BaseQueryMergerRule {
 
   public:
-    static Z3SignatureBasedPartialQueryContainmentMergerRulePtr create(z3::ContextPtr context);
+    static Z3SignatureBasedPartialQueryContainmentMergerRulePtr create(z3::ContextPtr context, bool allowSQPAsContainee);
     ~Z3SignatureBasedTopDownQueryContainmentMergerRule() noexcept final = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
   private:
-    explicit Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context);
+    explicit Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context, bool allowSQPAsContainee);
 
     SignatureContainmentUtilPtr SignatureContainmentUtil;
 

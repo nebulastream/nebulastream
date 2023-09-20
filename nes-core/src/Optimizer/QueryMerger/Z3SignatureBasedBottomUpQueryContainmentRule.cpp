@@ -41,7 +41,8 @@ namespace NES::Optimizer {
 
 Z3SignatureBasedBottomUpQueryContainmentRule::Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context)
     : BaseQueryMergerRule() {
-    signatureContainmentUtil = SignatureContainmentCheck::create(std::move(context));
+    // For the bottom up case, we always allow the SQP as containee
+    signatureContainmentUtil = SignatureContainmentCheck::create(std::move(context), true);
 }
 
 Z3SignatureBasedBottomUpQueryContainmentRulePtr
@@ -82,8 +83,8 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
             auto hostSink = hostQueryPlan->getSinkOperators()[0];
             bool foundMatch = false;
             //Before the bottom up check, we first check the whole query for equality.
-            if (signatureContainmentUtil->checkContainmentForBottomUpMerging(hostSink->getZ3Signature(), targetSink->getZ3Signature())
-                == ContainmentType::EQUALITY) {
+            if (signatureContainmentUtil->checkContainmentForBottomUpMerging(hostSink, targetSink)->containmentRelationship
+                == ContainmentRelationship::EQUALITY) {
                 NES_TRACE("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
                 //                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                 //Get children of target and host sink operators
@@ -115,7 +116,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                         std::vector<LogicalOperatorNodePtr> matchedTargetOperators;
                         matchedTargetOperators.reserve(matchedTargetToHostOperatorMap.size());
                         for (auto& [leftQueryOperators, rightQueryOperatorsAndRelationship] : matchedTargetToHostOperatorMap) {
-                            if (std::get<1>(rightQueryOperatorsAndRelationship) == ContainmentType::EQUALITY) {
+                            if (std::get<1>(rightQueryOperatorsAndRelationship) == ContainmentRelationship::EQUALITY) {
                                 matchedTargetOperators.emplace_back(leftQueryOperators);
                             }
                         }
@@ -139,8 +140,8 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                     for (auto [targetOp, hostOperatorAndRelationship] : matchedTargetToHostOperatorMap) {
                         LogicalOperatorNodePtr targetOperator = targetOp;
                         LogicalOperatorNodePtr hostOperator = std::get<0>(hostOperatorAndRelationship);
-                        ContainmentType containmentType = std::get<1>(hostOperatorAndRelationship);
-                        if (containmentType == ContainmentType::EQUALITY) {
+                        ContainmentRelationship containmentType = std::get<1>(hostOperatorAndRelationship);
+                        if (containmentType == ContainmentRelationship::EQUALITY) {
                             NES_TRACE("Current host sqp {}", hostSharedQueryPlan->getQueryPlan()->toString());
                             NES_TRACE("Output schema equality target {}", targetOperator->getOutputSchema()->toString());
                             NES_TRACE("Output schema equality host {}", hostOperator->getOutputSchema()->toString());
@@ -156,7 +157,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                                 //hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
                                 targetOperator->removeParent(targetParent);
                             }
-                        } else if (std::get<1>(hostOperatorAndRelationship) == ContainmentType::RIGHT_SIG_CONTAINED
+                        } else if (std::get<1>(hostOperatorAndRelationship) == ContainmentRelationship::RIGHT_SIG_CONTAINED
                                    && checkWindowContainmentPossible(hostOperator, targetOperator)) {
                             //if we're adding a window, we first need to obtain the watermark for that window
                             if (targetOperator->instanceOf<WindowOperatorNode>()) {
@@ -185,7 +186,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                             }
                             //hostSharedQueryPlan->addAdditionToChangeLog(std::get<0>(hostOperatorAndRelationship), targetOperator);
                             NES_TRACE("New shared query plan: {}", hostSharedQueryPlan->getQueryPlan()->toString());
-                        } else if (std::get<1>(hostOperatorAndRelationship) == ContainmentType::LEFT_SIG_CONTAINED
+                        } else if (std::get<1>(hostOperatorAndRelationship) == ContainmentRelationship::LEFT_SIG_CONTAINED
                                    && checkWindowContainmentPossible(targetOperator, hostOperator)) {
                             //if we're adding a window, we first need to obtain the watermark for that window
                             if (hostOperator->instanceOf<WindowOperatorNode>()) {
@@ -271,11 +272,11 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossibl
     return true;
 }
 
-std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>>
+std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>>
 Z3SignatureBasedBottomUpQueryContainmentRule::areQueryPlansContained(const QueryPlanPtr& hostQueryPlan,
                                                                      const QueryPlanPtr& targetQueryPlan) {
 
-    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> targetHostOperatorMap;
+    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>> targetHostOperatorMap;
     NES_DEBUG("Check if the target and address query plans are syntactically "
               "contained.");
     auto targetSourceOperators = targetQueryPlan->getSourceOperators();
@@ -302,20 +303,21 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areQueryPlansContained(const Query
     return targetHostOperatorMap;
 }
 
-std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>>
+std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>>
 Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const LogicalOperatorNodePtr& hostOperator,
                                                                     const LogicalOperatorNodePtr& targetOperator) {
 
-    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>> targetHostOperatorMap;
+    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
         NES_DEBUG("Both target and host operators are of sink type.");
         return {};
     }
 
     NES_DEBUG("Compare target {} and host {} operators.", targetOperator->toString(), hostOperator->toString());
-    auto containmentType = signatureContainmentUtil->checkContainmentForBottomUpMerging(hostOperator->getZ3Signature(),
-                                                                                        targetOperator->getZ3Signature());
-    if (containmentType == ContainmentType::EQUALITY) {
+    auto containmentInformation = signatureContainmentUtil->checkContainmentForBottomUpMerging(hostOperator,
+                                                                                        targetOperator);
+    auto containmentType = containmentInformation->containmentRelationship;
+    if (containmentType == ContainmentRelationship::EQUALITY) {
         NES_DEBUG("Check containment relationship for parents of target operator.");
         uint16_t matchCount = 0;
         for (const auto& targetParent : targetOperator->getParents()) {
@@ -336,7 +338,7 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
             targetHostOperatorMap[targetOperator] = {hostOperator, containmentType};
         }
         return targetHostOperatorMap;
-    } else if (containmentType != ContainmentType::NO_CONTAINMENT) {
+    } else if (containmentType != ContainmentRelationship::NO_CONTAINMENT) {
         NES_TRACE("Target and host operators are contained. Host (leftSig): {}, Target (rightSig): {}, ContainmentType: {}",
                   hostOperator->toString(),
                   targetOperator->toString(),
