@@ -171,8 +171,13 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES:
 LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolTLS.get(); }
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
-bool WorkerContext::stopConnectingToNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint64_t timeout) {
-    return false;
+
+Network::NetworkChannelPtr WorkerContext::waitForNetworkChannelFuture(NES::OperatorId ownerId) {
+    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
+    auto future = std::move(it->second);
+    dataChannelsFutures.erase(it);
+    //blocking wait on get
+    return future.get();
 }
 
 }// namespace NES::Runtime
