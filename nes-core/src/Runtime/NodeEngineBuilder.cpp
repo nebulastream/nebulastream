@@ -13,8 +13,6 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
@@ -30,7 +28,6 @@
 #include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Common.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
 
