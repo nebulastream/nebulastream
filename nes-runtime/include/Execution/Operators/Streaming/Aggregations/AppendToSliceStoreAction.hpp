@@ -14,7 +14,6 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_
-#include "Runtime/Execution/OperatorHandler.hpp"
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -31,7 +30,7 @@ template<class Slice>
 class AppendToSliceStoreHandler : public OperatorHandler {
   public:
     AppendToSliceStoreHandler(uint64_t windowSize, uint64_t windowSlide);
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
+    void start(PipelineExecutionContextPtr, uint32_t) override {}
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
     void appendToGlobalSliceStore(std::unique_ptr<Slice> slice);
     void triggerSlidingWindows(Runtime::WorkerContext& wctx,

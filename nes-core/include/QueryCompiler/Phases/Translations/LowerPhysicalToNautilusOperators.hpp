@@ -107,6 +107,11 @@ class LowerPhysicalToNautilusOperators {
     lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeBasedWindowType);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                              const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                              std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerNonKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                       const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                       std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
@@ -116,21 +121,34 @@ class LowerPhysicalToNautilusOperators {
                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerKeyedSlidingWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerNonKeyedPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                         const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerGlobalThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                                 const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                                 std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    lowerKeyedPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerKeyedThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                                const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                                std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                            const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                            std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerNonKeyedWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerKeyedWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                 const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                 std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
@@ -158,7 +176,6 @@ class LowerPhysicalToNautilusOperators {
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 
-  private:
     /**
      * @brief Lowers a hash join slicing build operator
      * @param hashJoinBuildOperator
@@ -167,7 +184,7 @@ class LowerPhysicalToNautilusOperators {
      * @return ExecutableOperatorPtr
      */
     Runtime::Execution::Operators::ExecutableOperatorPtr
-    lowerHJSlicing(std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> hashJoinBuildOperator,
+    lowerHJSlicing(const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& hashJoinBuildOperator,
                    uint64_t operatorHandlerIndex,
                    Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
 
@@ -181,7 +198,7 @@ class LowerPhysicalToNautilusOperators {
      * @return ExecutableOperatorPtr
      */
     Runtime::Execution::Operators::ExecutableOperatorPtr
-    lowerHJBucketing(std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> hashJoinBuildOperator,
+    lowerHJBucketing(const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& hashJoinBuildOperator,
                      uint64_t operatorHandlerIndex,
                      Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
                      uint64_t windowSize,

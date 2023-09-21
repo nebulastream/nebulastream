@@ -78,7 +78,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     // 1. start the qep and handlers, if any
-    if (!qep->setup() || !qep->start(std::move(stateManager))) {
+    if (!qep->setup() || !qep->start()) {
         NES_FATAL_ERROR("AbstractQueryManager: query execution plan could not started");
         return false;
     }

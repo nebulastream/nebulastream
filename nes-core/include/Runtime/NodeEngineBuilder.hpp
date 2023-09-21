@@ -93,13 +93,6 @@ class NodeEngineBuilder {
     NodeEngineBuilder& setQueryManager(QueryManagerPtr queryManager);
 
     /**
-     * setter used to pass a state manager to NodeEngineBuilder. Optional
-     * @param stateManager
-     * @return NodeEngineBuilder&
-     */
-    NodeEngineBuilder& setStateManager(StateManagerPtr stateManager);
-
-    /**
      * setter used to pass a language compiler to NodeEngineBuilder. Optional
      * @param languageCompiler
      * @return NodeEngineBuilder&
@@ -140,7 +133,6 @@ class NodeEngineBuilder {
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;
-    StateManagerPtr stateManager;
     std::shared_ptr<Compiler::LanguageCompiler> languageCompiler;
     Compiler::JITCompilerPtr jitCompiler;
     QueryCompilation::Phases::PhaseFactoryPtr phaseFactory;

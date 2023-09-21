@@ -341,24 +341,6 @@ TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
-TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) {// TODO issue #866
-    //pattern string as received from the NES UI
-    std::string patternString = "PATTERN test:= (A[2+]) FROM default_logical AS A INTO Print :: testSink ";
-    std::shared_ptr<QueryParsingService> patternParsingService;
-    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
-
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
-    queryPlan->appendOperatorAsNewRoot(op1);
-    op1 = LogicalOperatorFactory::createCEPIterationOperator(2, LLONG_MAX);
-    queryPlan->appendOperatorAsNewRoot(op1);
-    op1 = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
-    queryPlan->appendOperatorAsNewRoot(op1);
-
-    //Comparison of the expected and the actual generated query plan
-    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
-}
-
 TEST_F(PatternParsingServiceTest, simplePatternFail) {
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string patternString = "PATTERN test:= ";

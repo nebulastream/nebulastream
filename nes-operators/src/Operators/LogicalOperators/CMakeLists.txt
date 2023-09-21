@@ -29,7 +29,6 @@ add_source_files(nes-operators
         LogicalBatchJoinDefinition.cpp
 )
 
-add_subdirectory(CEP)
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Watermarks)

@@ -37,8 +37,7 @@ class NonKeyedSliceMergingHandler : public OperatorHandler {
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               Runtime::StateManagerPtr stateManager,
-               uint32_t localStateVariableId) override;
+                         uint32_t localStateVariableId) override;
 
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;

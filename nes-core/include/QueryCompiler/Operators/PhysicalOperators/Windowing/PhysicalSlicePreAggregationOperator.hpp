@@ -28,12 +28,11 @@ class PhysicalSlicePreAggregationOperator : public PhysicalWindowOperator, publi
     PhysicalSlicePreAggregationOperator(OperatorId id,
                                         SchemaPtr inputSchema,
                                         SchemaPtr outputSchema,
-                                        Windowing::WindowOperatorHandlerPtr handler);
+                                        Windowing::LogicalWindowDefinitionPtr windowDefinition);
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Windowing::WindowOperatorHandlerPtr& handler);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
+                                      const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
     std::string toString() const override;
     OperatorNodePtr copy() override;
 };

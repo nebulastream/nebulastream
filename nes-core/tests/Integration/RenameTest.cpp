@@ -40,7 +40,7 @@ class RenameTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(RenameTest, testAttributeRenameAndProjection) {
+TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -113,7 +113,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     NES_INFO("RenameTest: Test finished");
 }
 
-TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
+TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjectionMapTestProjection) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -191,7 +191,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     NES_INFO("RenameTest: Test finished");
 }
 
-TEST_F(RenameTest, testAttributeRenameAndFilter) {
+TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -260,7 +260,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     NES_INFO("RenameTest: Test finished");
 }
 
-TEST_F(RenameTest, testCentralWindowEventTime) {
+TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;

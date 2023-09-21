@@ -202,6 +202,8 @@ class LogicalWindowDefinition {
      * @return true if they are equal else false
      */
     bool equal(LogicalWindowDefinitionPtr otherWindowDefinition);
+    const std::vector<OriginId>& getInputOriginIds() const;
+    void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
   private:
     std::vector<WindowAggregationDescriptorPtr> windowAggregation;
@@ -211,6 +213,7 @@ class LogicalWindowDefinition {
     std::vector<FieldAccessExpressionNodePtr> onKey;
     DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges = 0;
+    std::vector<OriginId> inputOriginIds;
     OriginId originId{};
     uint64_t allowedLateness;
 };

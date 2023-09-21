@@ -15,9 +15,7 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace Phases {
+namespace NES::QueryCompilation::Phases {
 
 /**
  * @brief The default phase factory creates a default set of phases.
@@ -29,18 +27,11 @@ class DefaultPhaseFactory : public PhaseFactory {
     LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
     PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
-    LowerPhysicalToGeneratableOperatorsPtr
-    createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) override;
-    CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options,
-                                                     Compiler::JITCompilerPtr jitCompiler) override;
     LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,
                                                                              bool sourceSharing) override;
     BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
-    PredicationOptimizationPhasePtr createPredicationOptimizationPhase(QueryCompilerOptionsPtr options) override;
 };
 
-}// namespace Phases
-}// namespace QueryCompilation
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_

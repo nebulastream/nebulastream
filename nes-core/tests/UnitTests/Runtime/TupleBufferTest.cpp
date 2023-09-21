@@ -15,8 +15,6 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>

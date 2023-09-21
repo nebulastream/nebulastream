@@ -14,23 +14,8 @@ add_nes_integration_test(node-engine-test "Runtime/NodeEngineTest.cpp")
 
 add_nes_unit_test(watermark-manager-test "Runtime/WatermarkManagerTest.cpp")
 
-
-add_nes_unit_test(lock-free-multi-origin-watermark-processor-test "Windowing/Experimental/LockFreeMultiOriginWatermarkProcessorTest.cpp")
-
-
-add_nes_unit_test(keyed-thread-local-slice-store-test "Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStoreTest.cpp")
-
-
-add_nes_unit_test(window-assigner-test "Windowing/Experimental/WindowAssignerTest.cpp")
-
-
-### Code Generation Tests ###
-add_nes_unit_test(code-generation-tests "CodeGenerator/CodeGenerationTest.cpp")
-
-
 ### Translate Physical Operator Tests ###
 add_nes_unit_test(translate-physical-operator-tests "QueryCompiler/LowerLogicalToPhysicalOperatorsTest.cpp")
-
 
 ### AddScanAndEmitPhase Test ###
 add_nes_unit_test(add-scan-and-emit-phase-tests "QueryCompiler/AddScanAndEmitPhaseTest.cpp")
@@ -46,16 +31,6 @@ add_nes_unit_test(data-type-factory-tests "QueryCompiler/DataTypeFactoryTests.cp
 
 ### Pipelining Tests ###
 add_nes_unit_test(pipelining-phase-tests "QueryCompiler/PipeliningPhaseTest.cpp")
-
-
-### Operator Code Generation Tests ###
-add_nes_unit_test(operator-code-generation-tests "CodeGenerator/OperatorCodeGenerationTest.cpp")
-
-
-### Query Compiler Tests ###
-add_nes_unit_test(query-compiler-tests "QueryCompiler/QueryCompilerTest.cpp")
-
-
 
 ### NES Coordinator Test
 add_executable(nes-coordinator-test "Components/NesCoordinatorTest.cpp")
@@ -160,10 +135,6 @@ add_nes_unit_test(row-memory-layout-tests "Runtime/MemoryLayouts/RowMemoryLayout
 ### Row Layout Tests ###
 add_nes_unit_test(columnar-memory-layout-tests "Runtime/MemoryLayouts/ColumnarMemoryLayoutTest.cpp")
 
-
-### Join Handler Tests ###
-add_nes_unit_test(join-handler-tests "JoinHandlerTest.cpp")
-
 ### Dynamic Memory Layout Tests ###
 add_nes_unit_test(dynamic-memory-layout-tests "Runtime/MemoryLayouts/DynamicMemoryLayoutTest.cpp")
 
@@ -177,16 +148,6 @@ add_nes_unit_test(location-service-tests "Services/LocationServiceTest.cpp")
 
 ### LogicalExpressionTest ###
 add_nes_unit_test(logical-expression-test "Query/LogicalExpressionTest.cpp")
-
-
-### QueryExecutionTest ###
-add_nes_unit_test(legacy-query-execution-test "Query/QueryExecutionTest.cpp")
-
-
-### GPUPipelineQueryExecutionTest ###
-if (NES_USE_GPU)
-    add_nes_unit_test(gpu-pipeline-query-execution-test "Query/GPUPipelineQueryExecutionTest.cpp")
-endif (NES_USE_GPU)
 
 ### TupleBufferTest ###
 add_nes_unit_test(tuple-buffer-test "Runtime/TupleBufferTest.cpp")
@@ -280,17 +241,6 @@ add_nes_unit_test(buffer-manager-tests "Runtime/BufferManagerTest.cpp")
 
 ### Buffer Storage Test ###
 add_nes_unit_test(buffer-storage-tests "Runtime/BufferStorageTest.cpp")
-
-
-### AbstractWindowHandler Manager Test ###
-add_nes_unit_test(window-manager-tests "Windowing/WindowManagerTest.cpp")
-
-
-### State Manager Test ###
-add_nes_unit_test(state-manager-tests "State/StateTest.cpp")
-
-
-
 
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)

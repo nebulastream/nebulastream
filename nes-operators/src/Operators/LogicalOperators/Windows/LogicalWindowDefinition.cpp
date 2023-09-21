@@ -140,5 +140,9 @@ bool LogicalWindowDefinition::equal(LogicalWindowDefinitionPtr otherWindowDefini
 
     return this->windowType->equal(otherWindowDefinition->getWindowType());
 }
+const std::vector<OriginId>& LogicalWindowDefinition::getInputOriginIds() const { return inputOriginIds; }
+void LogicalWindowDefinition::setInputOriginIds(const std::vector<OriginId>& inputOriginIds) {
+    LogicalWindowDefinition::inputOriginIds = inputOriginIds;
+}
 
 }// namespace NES::Windowing

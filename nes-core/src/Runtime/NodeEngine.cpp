@@ -24,10 +24,10 @@
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -45,7 +45,6 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
-                       StateManagerPtr&& stateManager,
                        std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
                        OpenCLManagerPtr&& openCLManager,
                        uint64_t nodeEngineId,
@@ -55,7 +54,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        bool sourceSharing)
     : nodeId(INVALID_TOPOLOGY_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
-      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)),
+      partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)),
       openCLManager(std::move(openCLManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
@@ -361,7 +360,6 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     for (auto&& bufferManager : bufferManagers) {
         bufferManager->destroy();
     }
-    stateManager->destroy();
     nesWorker.reset();// break cycle
     return !withError;
 }
@@ -386,8 +384,6 @@ void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const 
         }
     }
 }
-
-StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
 
 uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
 

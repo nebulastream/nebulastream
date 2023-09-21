@@ -64,7 +64,7 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
     void
     trigger(WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, uint64_t sequenceNumber, uint64_t watermarkTs);
 
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t);
+    void start(PipelineExecutionContextPtr, uint32_t);
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
     ~AbstractSlicePreAggregationHandler();
 

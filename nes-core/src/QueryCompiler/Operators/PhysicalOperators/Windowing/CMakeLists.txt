@@ -15,10 +15,7 @@ add_source_files(nes-core
         PhysicalWindowOperator.cpp
         PhysicalSlicePreAggregationOperator.cpp
         PhysicalWindowSinkOperator.cpp
-        PhysicalSliceSinkOperator.cpp
         PhysicalSliceMergingOperator.cpp
 )
 
-add_subdirectory(KeyedTimeWindow)
-add_subdirectory(NonKeyedTimeWindow)
 add_subdirectory(ContentBasedWindow)

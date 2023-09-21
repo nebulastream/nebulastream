@@ -613,7 +613,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
 
     auto queryWithFilterOperator = Query::from("car");
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()

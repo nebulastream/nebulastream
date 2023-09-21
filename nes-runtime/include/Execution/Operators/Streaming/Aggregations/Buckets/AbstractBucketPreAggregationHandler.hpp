@@ -62,7 +62,7 @@ class AbstractBucketPreAggregationHandler : public Runtime::Execution::OperatorH
                               std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices);
     ~AbstractBucketPreAggregationHandler();
 
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t);
+    void start(PipelineExecutionContextPtr, uint32_t);
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
 
   protected:

@@ -41,11 +41,8 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Select fine-grained headers
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Windowing Windowing)
-register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/ QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Execution/ Runtime/Execution/)
-register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/State/ State/)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/QueryCompilerForwardDeclaration.hpp QueryCompiler/QueryCompilerForwardDeclaration.hpp)
-register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/RuntimeForwardRefs.hpp Runtime/RuntimeForwardRefs.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/Experimental/HashMap.hpp Util/Experimental/HashMap.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/Core.hpp Util/Core.hpp)
@@ -56,11 +53,6 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/W
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/folly/ folly)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/spdlog/ spdlog)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/fmt/ fmt)
-register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/glog/ glog)
-register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/boost/ boost)
-register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/gflags/ gflags)
-register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/double-conversion/ double-conversion)
-register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp)
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)

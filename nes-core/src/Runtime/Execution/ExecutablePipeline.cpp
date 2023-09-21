@@ -71,7 +71,7 @@ bool ExecutablePipeline::setup(const QueryManagerPtr&, const BufferManagerPtr&) 
     return executablePipelineStage->setup(*pipelineContext.get()) == 0;
 }
 
-bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
+bool ExecutablePipeline::start() {
     auto expected = PipelineStatus::PipelineCreated;
     uint32_t localStateVariableId = 0;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning)) {
@@ -81,7 +81,7 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
                                                 inherited0::shared_from_this(),
                                                 std::make_any<uint32_t>(activeProducers.load()));
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-            operatorHandler->start(pipelineContext, stateManager, localStateVariableId);
+            operatorHandler->start(pipelineContext, localStateVariableId);
             localStateVariableId++;
         }
         queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, true);

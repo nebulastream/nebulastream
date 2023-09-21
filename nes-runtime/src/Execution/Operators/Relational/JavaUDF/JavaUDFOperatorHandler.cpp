@@ -101,9 +101,7 @@ const SchemaPtr& JavaUDFOperatorHandler::getUdfOutputSchema() const { return udf
 
 jmethodID JavaUDFOperatorHandler::getUDFMethodId() const { return udfMethodId; }
 
-void JavaUDFOperatorHandler::start(NES::Runtime::Execution::PipelineExecutionContextPtr,
-                                   NES::Runtime::StateManagerPtr,
-                                   uint32_t) {}
+void JavaUDFOperatorHandler::start(NES::Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {}
 void JavaUDFOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {}
 JavaUDFOperatorHandler::~JavaUDFOperatorHandler() { jni::freeObject(udfInstance); }
 

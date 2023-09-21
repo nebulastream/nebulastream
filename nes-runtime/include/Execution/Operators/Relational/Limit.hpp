@@ -30,7 +30,7 @@ class LimitOperatorHandler : public Runtime::Execution::OperatorHandler,
      * @brief Creates the operator handler.
      */
     explicit LimitOperatorHandler(const uint64_t limit) : limit(limit){};
-    void start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
+    void start(Runtime::Execution::PipelineExecutionContextPtr,  uint32_t) {
         NES_DEBUG("start LimitOperatorHandler");
     }
 

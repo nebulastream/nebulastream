@@ -59,9 +59,9 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    std::string query = R"(Query::from("test"))";
+    auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("test", testSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test")     //idx=2
                            .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //idx=3
@@ -425,7 +425,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     auto query = Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("testStream", testSchema)
                                   // Workers
                                   .attachWorkerToCoordinator()  // id=2
@@ -706,7 +706,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
 
     auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("truck", testSchema)
                                   .addLogicalSource("car", testSchema)
                                   // Workers
@@ -808,7 +808,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
                      .apply(Sum(Attribute("value")));
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerToCoordinator()                                     //2
                            .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 2)//3

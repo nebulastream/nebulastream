@@ -66,7 +66,7 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::trigger(WorkerCo
                                                                         uint64_t sequenceNumber,
                                                                         uint64_t watermarkTs) {
     // the watermark update is an atomic process and returns the last and the current watermark.
-    NES_TRACE("{} Trigger {}-{}-{}", windowSize, originId, sequenceNumber, watermarkTs);
+    NES_DEBUG("{} Trigger {}-{}-{}", windowSize, originId, sequenceNumber, watermarkTs);
     auto currentWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
 
     if (lastTriggerWatermark == currentWatermark) {
@@ -106,7 +106,7 @@ SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThread
     return threadLocalSliceStores[index].get();
 }
 template<class SliceType, typename SliceStore>
-void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
+void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::start(PipelineExecutionContextPtr, uint32_t) {
     NES_DEBUG("start AbstractSlicePreAggregationHandler");
 }
 

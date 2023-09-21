@@ -13,15 +13,12 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -32,7 +29,6 @@
 #include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Common.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
 
@@ -72,11 +68,6 @@ NodeEngineBuilder& NodeEngineBuilder::setBufferManagers(std::vector<BufferManage
 
 NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManager) {
     this->queryManager = queryManager;
-    return *this;
-}
-
-NodeEngineBuilder& NodeEngineBuilder::setStateManager(StateManagerPtr stateManager) {
-    this->stateManager = stateManager;
     return *this;
 }
 
@@ -134,8 +125,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                NES::collectAndPrintStacktrace());
         }
 
-        auto stateManager = (!this->stateManager) ? std::make_shared<StateManager>(nodeEngineId) : this->stateManager;
-
         QueryManagerPtr queryManager{this->queryManager};
         if (!this->queryManager) {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration->numWorkerThreads.getValue());
@@ -149,7 +138,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                          nodeEngineId,
                                                                          numOfThreads,
                                                                          hardwareManager,
-                                                                         stateManager,
                                                                          numberOfBuffersPerEpoch,
                                                                          workerToCoreMappingVec);
                     break;
@@ -161,7 +149,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                  nodeEngineId,
                                                                  numOfThreads,
                                                                  hardwareManager,
-                                                                 stateManager,
                                                                  numberOfBuffersPerEpoch,
                                                                  workerToCoreMappingVec,
                                                                  workerConfiguration->numberOfQueues.getValue(),
@@ -183,35 +170,14 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating QueryManager",
                                                NES::collectAndPrintStacktrace());
         }
-        if (!stateManager) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating StateManager");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating StateManager",
-                                               NES::collectAndPrintStacktrace());
-        }
 
         auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
-
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
-        queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
-        QueryCompilation::QueryCompilerPtr compiler;
-        if (workerConfiguration->queryCompiler.queryCompilerType == QueryCompilation::QueryCompilerType::DEFAULT_QUERY_COMPILER) {
-            auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
-            auto jitCompiler = (!this->jitCompiler)
-                ? Compiler::JITCompilerBuilder()
-                      .registerLanguageCompiler(cppCompiler)
-                      .setUseCompilationCache(workerConfiguration->queryCompiler.useCompilationCache.getValue())
-                      .build()
-                : this->jitCompiler;
-            compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions,
-                                                                      phaseFactory,
-                                                                      jitCompiler,
-                                                                      workerConfiguration->enableSourceSharing.getValue());
-        } else if (workerConfiguration->queryCompiler.queryCompilerType
-                   == QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER) {
-            compiler = QueryCompilation::NautilusQueryCompiler::create(queryCompilationOptions,
-                                                                       phaseFactory,
-                                                                       workerConfiguration->enableSourceSharing.getValue());
-        }
+
+        auto compiler = QueryCompilation::NautilusQueryCompiler::create(queryCompilationOptions,
+                                                                        phaseFactory,
+                                                                        workerConfiguration->enableSourceSharing.getValue());
+
         if (!compiler) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating compiler");
             throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler",
@@ -241,7 +207,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             },
             std::move(partitionManager),
             std::move(compiler),
-            std::move(stateManager),
             std::move(nesWorker),
             std::move(openCLManager),
             nodeEngineId,
