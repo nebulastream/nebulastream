@@ -102,7 +102,7 @@ TEST_F(SinkTest, testCSVFileSink) {
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, 0, nodeEngine, 1, path_to_csv_file, true);
+    const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, 0, nodeEngine, 1, path_to_csv_file, false);
 
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
@@ -130,7 +130,7 @@ TEST_F(SinkTest, testCSVFileSink) {
     std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     //search for each value
-    string contentWOHeader = fileContent.erase(0, fileContent.find('\n') + 1);
+    string contentWOHeader = fileContent.substr(fileContent.find('\n') + 1);
     NES::Util::findAndReplaceAll(contentWOHeader, "\n", ",");
     stringstream ss(contentWOHeader);
     string item;

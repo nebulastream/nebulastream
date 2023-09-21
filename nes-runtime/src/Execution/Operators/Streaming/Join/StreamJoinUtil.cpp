@@ -17,7 +17,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
-
 #include <fstream>
 
 namespace NES::Runtime::Execution {

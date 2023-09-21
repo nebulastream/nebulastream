@@ -51,7 +51,6 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto* buffer = tbuffer.getBuffer<char>();
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    ss << schema->toString() << std::endl;
     for (uint64_t i = 0; i < numberOfTuples; i++) {
         uint64_t offset = 0;
         for (uint64_t j = 0; j < schema->getSize(); j++) {

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -47,7 +48,7 @@ NLJSlice::NLJSlice(uint64_t windowStart,
 uint64_t NLJSlice::getNumberOfTuplesLeft() {
     uint64_t sum = 0;
     for (auto& pagedVec : leftTuples) {
-        sum += pagedVec->getNumberOfEntries();
+        sum += pagedVec->getTotalNumberOfEntries();
     }
     return sum;
 }
@@ -55,7 +56,7 @@ uint64_t NLJSlice::getNumberOfTuplesLeft() {
 uint64_t NLJSlice::getNumberOfTuplesRight() {
     uint64_t sum = 0;
     for (auto& pagedVec : rightTuples) {
-        sum += pagedVec->getNumberOfEntries();
+        sum += pagedVec->getTotalNumberOfEntries();
     }
     return sum;
 }
@@ -84,7 +85,7 @@ void NLJSlice::combinePagedVectors() {
     // Appending all PagedVectors for the left join side and removing all items except the first one
     if (leftTuples.size() > 1) {
         for (uint64_t i = 1; i < leftTuples.size(); ++i) {
-            leftTuples[0]->appendAllPages(*leftTuples[i]);
+            leftTuples[0]->moveAllPages(*leftTuples[i]);
         }
         leftTuples.erase(leftTuples.begin() + 1, leftTuples.end());
     }
@@ -92,9 +93,9 @@ void NLJSlice::combinePagedVectors() {
     // Appending all PagedVectors for the right join side and removing all items except the first one
     if (rightTuples.size() > 1) {
         for (uint64_t i = 1; i < rightTuples.size(); ++i) {
-            rightTuples[0]->appendAllPages(*rightTuples[i]);
+            rightTuples[0]->moveAllPages(*rightTuples[i]);
         }
         rightTuples.erase(rightTuples.begin() + 1, rightTuples.end());
     }
 }
-}; // namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

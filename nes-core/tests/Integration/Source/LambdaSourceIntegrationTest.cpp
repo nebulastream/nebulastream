@@ -25,6 +25,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 
 using std::string;
@@ -44,22 +45,39 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
+    coordinatorConfig->worker.queryCompiler.compilationStrategy =
+        QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+
+    // TODO this test only passes, if we run it with Hash Join #4224
+    coordinatorConfig->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
+
+
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
 
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    auto input = Schema::create()
+    auto input1 = Schema::create()
                      ->addField(createField("id", BasicType::UINT64))
                      ->addField(createField("value", BasicType::UINT64))
                      ->addField(createField("timestamp", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("input1", input);
-    crd->getSourceCatalogService()->registerLogicalSource("input2", input);
+    auto input2 = Schema::create()
+                     ->addField(createField("id", BasicType::UINT64))
+                     ->addField(createField("value", BasicType::UINT64))
+                     ->addField(createField("timestamp", BasicType::UINT64));
+    crd->getSourceCatalogService()->registerLogicalSource("input1", input1);
+    crd->getSourceCatalogService()->registerLogicalSource("input2", input2);
 
     NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->workerHealthCheckWaitTime = 1;
     wrkConf->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    wrkConf->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
+    wrkConf->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+
+    // TODO this test only passes, if we run it with Hash Join #4224
+    wrkConf->queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {

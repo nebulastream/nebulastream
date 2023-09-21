@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Configurations/details/EnumOptionDetails.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/BenchmarkUtils.hpp>

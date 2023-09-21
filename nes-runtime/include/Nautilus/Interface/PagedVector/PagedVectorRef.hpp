@@ -14,8 +14,11 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
+
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Util/StdInt.hpp>
+
 namespace NES::Nautilus::Interface {
 
 // Forward declaration
@@ -35,10 +38,11 @@ class PagedVectorRef {
     PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize);
 
     /**
-     * @brief Allocates an new entry and returns a reference to it.
+     * @brief Allocates an new entry and returns a reference to it. This method is not thread safe.
+     * @param hash
      * @return Value<MemRef>
      */
-    Value<MemRef> allocateEntry();
+    Value<MemRef> allocateEntry(const Value<UInt64>& hash = 0_u64);
 
     /**
      * @brief Returns the reference to the start of the record at the pos
@@ -48,16 +52,18 @@ class PagedVectorRef {
     Value<MemRef> getEntry(const Value<UInt64>& pos);
 
     /**
-     * @brief Returns the number of entries in the current page.
+     * @brief Returns the currentPos on the current page.
+     * @param fixedPageRef
      * @return Value<UInt64>
      */
-    Value<UInt64> getNumberOfEntries();
+    Value<UInt64> getCurrentPosOnPage(const Value<MemRef>& fixedPageRef);
 
     /**
-     * @brief Modifies the number of entries in the current page.
+     * @brief Modifies the currentPos on the current page.
+     * @param fixedPageRef
      * @param entries
      */
-    void setNumberOfEntries(const Value<>& entries);
+    void setCurrentPosOnPage(const Value<MemRef>& fixedPageRef, const Value<>& entries);
 
     /**
      * @brief Modifies the number of total entries
@@ -70,6 +76,13 @@ class PagedVectorRef {
      * @return Value<UInt64>
      */
     Value<UInt64> getTotalNumberOfEntries();
+
+    /**
+     * @brief Returns a pointer to the data of the FixedPage
+     * @param fixedPagePtr
+     * @return Value<MemRef>
+     */
+    Value<MemRef> getDataPtrOfPage(const Value<MemRef>& fixedPageRef);
 
     /**
      * @brief Returns the maximum number of records per page
@@ -88,7 +101,7 @@ class PagedVectorRef {
      * @param pos
      * @return ListRefIter
      */
-    PagedVectorRefIter at(Value<UInt64> pos);
+    PagedVectorRefIter at(const Value<UInt64>& pos);
 
     /**
      * @brief Returns an iterator that points to the end of this ListRef
@@ -103,8 +116,38 @@ class PagedVectorRef {
      */
     bool operator==(const PagedVectorRef& other) const;
 
-  private:
+    /**
+     * @brief Returns the currentPage.
+     * @return Value<MemRef>
+     */
     Value<MemRef> getCurrentPage();
+
+    /**
+     * @brief Returns the page with given page number.
+     * @return Value<MemRef>
+     */
+    Value<MemRef> getFixedPage(const Value<UInt64>& pageNo);
+
+    /**
+     * @brief Returns the number of pages.
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getNumOfPages();
+
+    /**
+     * @brief Returns the number of the page of the record at pos
+     * @param pos
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getPageNo(const Value<UInt64>& pos);
+
+    /**
+     * @brief Getter for entrySize
+     * @return Value<UInt64>
+     */
+    Value<UInt64> getEntrySize() const;
+
+  private:
     Value<MemRef> pagedVectorRef;
     uint64_t entrySize;
 };
@@ -117,7 +160,7 @@ class PagedVectorRefIter {
      * @brief Constructor
      * @param listRef
      */
-    PagedVectorRefIter(const PagedVectorRef& listRef);
+    PagedVectorRefIter(PagedVectorRef& listRef);
 
     /**
      * @brief Copy constructor
@@ -166,13 +209,21 @@ class PagedVectorRefIter {
 
   private:
     /**
-     * @brief Sets the position with the newValue
-     * @param newValue
+     * @brief increments address and if necessary updates fixedPageRef and pageNo
      */
-    void setPos(Value<UInt64> newValue);
+    void incrementAddress();
 
-    Value<UInt64> pos;
+    /**
+     * @brief Returns the last address on the current fixedPageRef
+     * @return Value<MemRef>
+     */
+    Value<MemRef> getLastAddrOnPage();
+
     PagedVectorRef pagedVectorRef;
+    Value<MemRef> fixedPageRef;
+    Value<UInt64> pageNo;
+    Value<MemRef> lastAddrOnPage;
+    Value<MemRef> addr;
 };
 
 }// namespace NES::Nautilus::Interface

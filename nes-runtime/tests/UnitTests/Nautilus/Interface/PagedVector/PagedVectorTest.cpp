@@ -16,7 +16,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -25,6 +24,7 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <memory>
+
 namespace NES::Nautilus::Interface {
 
 class PagedVectorTest : public Testing::BaseUnitTest {
@@ -59,10 +59,10 @@ class PagedVectorTest : public Testing::BaseUnitTest {
             std::memcpy(entryPtr, &item, entrySize);
         }
 
-        ASSERT_EQ(pagedVector.getNumberOfEntries(), expectedNumberOfEntries);
+        ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), expectedNumberOfEntries);
         ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
 
-        // As we do lazy allocation, we do not create a new page if the last tuple fit on the page
+        // As we do lazy allocation, we do not create a new page if the last tuple fits on the page
         bool lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
         const uint64_t numTuplesLastPage =
             lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
@@ -72,7 +72,7 @@ class PagedVectorTest : public Testing::BaseUnitTest {
     template<typename Item>
     void runRetrieveTest(const PagedVector& pagedVector, const uint64_t entrySize, const std::vector<Item>& allItems) {
         auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
-        ASSERT_EQ(pagedVector.getNumberOfEntries(), allItems.size());
+        ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), allItems.size());
 
         auto itemPos = 0_u64;
         for (auto it : pagedVectorRef) {
@@ -103,10 +103,7 @@ class PagedVectorTest : public Testing::BaseUnitTest {
         if (allItemsAndVectors.size() > 1) {
             for (uint64_t i = 1; i < allPagedVectors.size(); ++i) {
                 auto& otherPagedVec = allPagedVectors[i];
-                firstPagedVec->appendAllPages(*otherPagedVec);
-                EXPECT_EQ(otherPagedVec->getNumberOfPages(), 0);
-                EXPECT_EQ(otherPagedVec->getNumberOfEntries(), 0);
-                EXPECT_EQ(otherPagedVec->getNumberOfEntriesOnCurrentPage(), 0);
+                firstPagedVec->moveAllPages(*otherPagedVec);
             }
 
             allPagedVectors.erase(allPagedVectors.begin() + 1, allPagedVectors.end());
@@ -135,6 +132,40 @@ TEST_F(PagedVectorTest, storeAndRetrieveValues) {
 TEST_F(PagedVectorTest, storeAndRetrieveValuesNonDefaultPageSize) {
     const auto entrySize = sizeof(uint64_t);
     const auto pageSize = (10 * entrySize) + 2;
+    const auto numItems = 12340_u64;
+    std::vector<uint64_t> allItems;
+    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable {
+        return n++;
+    });
+
+    PagedVector pagedVector(std::move(allocator), entrySize, pageSize);
+    runStoreTest<uint64_t>(pagedVector, entrySize, pageSize, allItems, allItems.size());
+    runRetrieveTest<uint64_t>(pagedVector, entrySize, allItems);
+}
+
+TEST_F(PagedVectorTest, storeAndRetrieveValuesOneEntryPerPage) {
+    struct __attribute__((packed)) CustomClass {
+        uint64_t id;
+        int32_t val1;
+        double val2;
+    };
+    const auto entrySize = sizeof(CustomClass);
+    const auto pageSize = (1 * entrySize);
+    const auto numItems = 12340_u64;
+    std::vector<CustomClass> allItems;
+    std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable {
+        n++;
+        return CustomClass(n, n, n / 7);
+    });
+
+    PagedVector pagedVector(std::move(allocator), entrySize, pageSize);
+    runStoreTest<CustomClass>(pagedVector, entrySize, pageSize, allItems, allItems.size());
+    runRetrieveTest<CustomClass>(pagedVector, entrySize, allItems);
+}
+
+TEST_F(PagedVectorTest, storeAndRetrieveValuesTwoEntriesPerPage) {
+    const auto entrySize = sizeof(uint64_t);
+    const auto pageSize = (2 * entrySize);
     const auto numItems = 12340_u64;
     std::vector<uint64_t> allItems;
     std::generate_n(std::back_inserter(allItems), numItems, [n = 0]() mutable {

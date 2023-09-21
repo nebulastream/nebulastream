@@ -11,12 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_INFO("Started StreamJoinOperatorHandler!");
 }
+
 void StreamJoinOperatorHandler::stop(QueryTerminationType , PipelineExecutionContextPtr) {
     NES_INFO("Stopped StreamJoinOperatorHandler!");
 }
@@ -148,7 +150,7 @@ void StreamJoinOperatorHandler::setNumberOfWorkerThreads(uint64_t numberOfWorker
     }
     StreamJoinOperatorHandler::alreadySetup = true;
 
-    NES_DEBUG("HashJoinOperatorHandler::setup was called!");
+    NES_DEBUG("StreamJoinOperatorHandler::setup was called!");
     StreamJoinOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
 }
 

@@ -92,7 +92,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest) {
 
     // Check if the records have been collected in the operator handler state
     auto state = handler->getState();
-    ASSERT_EQ(state->getNumberOfEntries(), NUM_RECORDS);
+    ASSERT_EQ(state->getTotalNumberOfEntries(), NUM_RECORDS);
 
     for (size_t i = 0; i < NUM_RECORDS; i++) {
         auto entry = state->getEntry(i);
@@ -131,7 +131,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest) {
 
     // Check if the records have been collected in the operator handler state
     auto state = handler->getState();
-    ASSERT_EQ(state->getNumberOfEntries(), NUM_RECORDS);
+    ASSERT_EQ(state->getTotalNumberOfEntries(), NUM_RECORDS);
 
     for (size_t i = 0; i < NUM_RECORDS; i++) {
         auto entry = state->getEntry(i);
@@ -168,6 +168,6 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest) {
     }
 
     auto state = handler->getState();
-    ASSERT_EQ(state->getNumberOfEntries(), NUM_RECORDS);
+    ASSERT_EQ(state->getTotalNumberOfEntries(), NUM_RECORDS);
 }
 }// namespace NES::Runtime::Execution::Operators

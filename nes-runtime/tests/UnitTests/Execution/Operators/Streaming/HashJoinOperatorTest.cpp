@@ -148,7 +148,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
         auto hash = ::NES::Util::murmurHash(joinKey);
         auto window = hashJoinOpHandler->getSliceByTimestampOrCreateIt(timeStamp);
-        auto hashWindow = static_cast<HJSlice*>(window.get());
+        auto hashWindow = dynamic_cast<HJSlice*>(window.get());
 
         auto hashTable = hashWindow->getHashTable(buildHelper.joinBuildSide, workerContext->getId());
 
@@ -157,7 +157,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         bool correctlyInserted = false;
         for (auto&& page : bucket->getPages()) {
             for (auto k = 0UL; k < page->size(); ++k) {
-                uint8_t* recordPtr = page.get()->operator[](k);
+                auto* recordPtr = reinterpret_cast<uint8_t*>((*page)[k]);
                 auto bucketBuffer = Util::getBufferFromPointer(recordPtr, buildHelper.schema, buildHelper.bufferManager);
                 auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
 

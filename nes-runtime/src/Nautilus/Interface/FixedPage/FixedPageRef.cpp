@@ -19,13 +19,14 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Nautilus::Interface {
-FixedPageRef::FixedPageRef(const Value<MemRef>& fixedPageRef)
-    : fixedPageRef(fixedPageRef) {}
 
 void addHashToBloomFilterProxy(void* fixedPagePtr, uint64_t hash) {
     auto* fixedPage = (FixedPage*) fixedPagePtr;
     fixedPage->addHashToBloomFilter(hash);
 }
+
+FixedPageRef::FixedPageRef(const Value<MemRef>& fixedPageRef)
+    : fixedPageRef(fixedPageRef) {}
 
 Value<MemRef> FixedPageRef::allocateEntry(const Value<UInt64>& hash) {
     auto currentPos = getCurrentPos();

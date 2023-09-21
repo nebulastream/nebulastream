@@ -53,13 +53,17 @@ uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSid
     NES_ASSERT2_FMT(ptrNLJWindowTriggerTask != nullptr, "ptrNLJWindowTriggerTask should not be null");
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
 
+    uint64_t sliceId;
     if (joinBuildSide == QueryCompilation::JoinBuildSideType::Left) {
-        return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->leftSliceIdentifier;
+        sliceId = static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->leftSliceIdentifier;
     } else if (joinBuildSide == QueryCompilation::JoinBuildSideType::Right) {
-        return static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->rightSliceIdentifier;
+        sliceId = static_cast<EmittedNLJWindowTriggerTask*>(ptrNLJWindowTriggerTask)->rightSliceIdentifier;
     } else {
         NES_NOT_IMPLEMENTED();
     }
+
+    NES_DEBUG("Getting sliceId {} for {}", sliceId, magic_enum::enum_name(joinBuildSide));
+    return sliceId;
 }
 
 void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const  {
@@ -103,8 +107,8 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const  {
 
     Nautilus::Value<UInt64> zeroVal(0_u64);
     for (auto leftRecordMemRef : leftPagedVector) {
+        auto leftRecord = leftMemProvider->read({}, leftRecordMemRef, zeroVal);
         for (auto rightRecordMemRef : rightPagedVector) {
-            auto leftRecord = leftMemProvider->read({}, leftRecordMemRef, zeroVal);
             auto rightRecord = rightMemProvider->read({}, rightRecordMemRef, zeroVal);
             /* This can be later replaced by an interface that returns boolean and gets passed the
              * two Nautilus::Records (left and right) #3691 */

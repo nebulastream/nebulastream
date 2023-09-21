@@ -14,6 +14,7 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
+
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
@@ -36,7 +37,6 @@ using RLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::RLockedPtr
  */
 class StreamJoinOperatorHandler : public virtual OperatorHandler {
   public:
-
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
      * @param inputOrigins
@@ -54,8 +54,6 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
                               uint64_t sizeOfRecordRight);
 
     ~StreamJoinOperatorHandler() override = default;
-
-
 
     void start(PipelineExecutionContextPtr pipelineExecutionContext, StateManagerPtr stateManager, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;

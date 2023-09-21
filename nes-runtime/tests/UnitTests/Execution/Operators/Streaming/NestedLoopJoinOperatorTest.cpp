@@ -41,8 +41,8 @@ namespace NES::Runtime::Execution {
 
 auto constexpr DEFAULT_WINDOW_SIZE = 1000;
 auto constexpr DEFAULT_OP_HANDLER_IDX = 0;
-auto constexpr DEFAULT_LEFT_PAGE_SIZE = 1024;
-auto constexpr DEFAULT_RIGHT_PAGE_SIZE = 256;
+auto constexpr DEFAULT_LEFT_PAGE_SIZE = 48;
+auto constexpr DEFAULT_RIGHT_PAGE_SIZE = 24;
 
 class NLJBuildPiplineExecutionContext : public PipelineExecutionContext {
   public:
@@ -69,10 +69,8 @@ class NLJProbePiplineExecutionContext : public PipelineExecutionContext {
             nullptr,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {
-//                emittedBuffers.emplace_back(std::move(buffer));
             },
             [](TupleBuffer&) {
-//                emittedBuffers.emplace_back(std::move(buffer));
             },
             {nljOperatorHandler}) {}
 };
@@ -208,12 +206,12 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto windowStartPos = windowIdentifier - windowSize;
         auto windowEndPos = windowStartPos + expectedNumberOfTuplesInWindow;
         uint64_t posInWindow = 0;
+        NES_DEBUG("Checking records for window start {} and end {} with expectedNoTuples {}", windowStartPos, windowEndPos, expectedNumberOfTuplesInWindow);
 
         for (auto pos = windowStartPos; pos < windowEndPos; ++pos, ++posInWindow) {
-            auto recordMemRef = *pagedVector.at(pos);
+            auto recordMemRef = *pagedVector.at(posInWindow);
             auto& record = allRecords[pos];
             auto readRecord = memoryProvider->read({}, recordMemRef, zeroVal);
-            NES_TRACE("readRecord {} record{}", readRecord.toString(), record.toString());
 
             for (auto& field : schema->fields) {
                 EXPECT_EQ(readRecord.read(field->getName()), record.read(field->getName()));
@@ -316,7 +314,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
         auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, QueryCompilation::JoinBuildSideType::Left);
         auto allRightRecords = createRandomRecords(numberOfRecordsRight, QueryCompilation::JoinBuildSideType::Right);
-        uint64_t maxTimestamp = 2;
+        uint64_t maxTimestamp = 0;
 
         for (auto& leftRecord : allLeftRecords) {
             maxTimestamp =
@@ -519,6 +517,16 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords) {
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows) {
     auto numberOfRecordsLeft = 2000;
     auto numberOfRecordsRight = 2000;
+    windowSize = 100;
+    nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({0},
+                                                                      1,
+                                                                      windowSize,
+                                                                      windowSize,
+                                                                      leftEntrySize,
+                                                                      rightEntrySize,
+                                                                      leftPageSize,
+                                                                      rightPageSize);
+
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
 }
@@ -531,9 +539,9 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow) {
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
-    auto numberOfRecordsLeft = 200;
-    auto numberOfRecordsRight = 200;
-    windowSize = 10;
+    auto numberOfRecordsLeft = 600;
+    auto numberOfRecordsRight = 600;
+    windowSize = 100;
     nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({0},
                                                                       1,
                                                                       windowSize,

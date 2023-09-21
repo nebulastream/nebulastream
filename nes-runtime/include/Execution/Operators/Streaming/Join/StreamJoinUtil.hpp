@@ -70,7 +70,6 @@ struct SlicesAndState {
     WindowInfoState windowState;
 };
 
-
 namespace Operators {
 struct __attribute__((packed)) JoinPartitionIdSliceIdWindow {
     uint64_t partitionId;
@@ -148,7 +147,6 @@ struct WindowMetaData {
     std::string  windowEndFieldName;
     std::string  windowKeyFieldName;
 };
-
 }// namespace Operators
 
 namespace Util {

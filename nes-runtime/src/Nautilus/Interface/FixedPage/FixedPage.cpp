@@ -19,26 +19,27 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <atomic>
 
 namespace NES::Nautilus::Interface {
 
-FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, double bloomFalsePosRate)
+FixedPage::FixedPage(int8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, double bloomFalsePosRate)
     : sizeOfRecord(sizeOfRecord), data(dataPtr), capacity(pageSize / sizeOfRecord), bloomFalsePosRate(bloomFalsePosRate) {
     NES_ASSERT2_FMT(0 < capacity, "Capacity is zero for pageSize " + std::to_string(pageSize) + " and sizeOfRecord "
-                        + std::to_string(pageSize));
+                        + std::to_string(sizeOfRecord));
 
     bloomFilter = std::make_unique<Runtime::BloomFilter>(capacity, bloomFalsePosRate);
     currentPos = 0;
 }
 
-uint8_t* FixedPage::append(const uint64_t hash) {
+int8_t* FixedPage::append(const uint64_t hash) {
     if (currentPos >= capacity) {
         return nullptr;
     }
     addHashToBloomFilter(hash);
 
-    uint8_t* ptr = &data[currentPos * sizeOfRecord];
+    auto ptr = &data[currentPos * sizeOfRecord];
     currentPos++;
     return ptr;
 }
@@ -54,11 +55,11 @@ std::string FixedPage::getContentAsString(SchemaPtr schema) const {
     std::stringstream ss;
     //for each item in the page
     for (auto i = 0UL; i < currentPos; i++) {
-        ss << "Page entry no=" << i << std::endl;
+        ss << "Page entry no=" << i;
         for (auto u = 0UL; u < schema->getSize(); u++) {
             ss << " field=" << schema->get(u)->getName();
             NES_ASSERT(schema->get(u)->getDataType()->isNumeric(), "This method is only supported for uint64");
-            uint8_t* pointer = &data[i * sizeOfRecord];
+            int8_t* pointer = &data[i * sizeOfRecord];
             auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
             for (auto& field : schema->fields) {
                 if (field->getName() == schema->get(u)->getName()) {
@@ -67,7 +68,7 @@ std::string FixedPage::getContentAsString(SchemaPtr schema) const {
                 auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
                 pointer += fieldType->size();
             }
-            ss << " value=" << (uint64_t) *pointer;
+            ss << " value=" << (uint64_t) *pointer << std::endl;
         }
     }
     return ss.str();
@@ -77,7 +78,7 @@ bool FixedPage::bloomFilterCheck(const uint64_t hash) const {
     return bloomFilter->checkContains(hash);
 }
 
-uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeOfRecord]); }
+int8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeOfRecord]); }
 
 size_t FixedPage::size() const { return currentPos; }
 

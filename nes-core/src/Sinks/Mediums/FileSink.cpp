@@ -18,7 +18,6 @@
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Core.hpp>
 #include <filesystem>
 #include <iostream>
 #include <regex>
@@ -126,7 +125,6 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     } else {
         NES_DEBUG("FileSink::getData: schema already written");
     }
-
 
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
     NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, fBuffer);

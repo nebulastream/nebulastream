@@ -108,7 +108,7 @@ class FixedPageTest : public Testing::BaseUnitTest {
                                     const uint64_t sizeOfRecord,
                                     const std::vector<Item>& allItems,
                                     const uint64_t maxItemsOnPage) {
-        auto dataPtr = reinterpret_cast<uint8_t*>(allocator->allocate(pageSize));
+        auto dataPtr = reinterpret_cast<int8_t*>(allocator->allocate(pageSize));
         FixedPage fixedPage(dataPtr, sizeOfRecord, pageSize);
 
         runStoreTest<Item>(fixedPage, allItems, sizeOfRecord, maxItemsOnPage);
@@ -231,7 +231,7 @@ TEST_F(FixedPageTest, storeAndRetrieveTooManyValuesForOnePageNonDefaultPageSizeA
 TEST_F(FixedPageTest, bloomFilterCheckTest) {
     const auto sizeOfRecord = sizeof(uint64_t);
     const auto pageSize = FixedPage::PAGE_SIZE;
-    auto dataPtr = reinterpret_cast<uint8_t*>(allocator->allocate(pageSize));
+    auto dataPtr = reinterpret_cast<int8_t*>(allocator->allocate(pageSize));
     FixedPage fixedPage(dataPtr, sizeOfRecord, pageSize);
 
     for (uint64_t i = 0; i < (pageSize / sizeOfRecord) ; ++i) {

@@ -16,7 +16,6 @@
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_INTERFACES_JOINOPERATORHANDLERINTERFACEBUCKETING_HPP_
 
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
-
 #include <cstdint>
 #include <vector>
 

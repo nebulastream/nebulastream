@@ -14,6 +14,7 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_HJSLICE_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_HJSLICE_HPP_
+
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLockFree.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLocking.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/LocalHashTable.hpp>
@@ -104,7 +105,6 @@ class HJSlice : public StreamSlice {
      */
     void mergeLocalToGlobalHashTable();
 
-
   protected:
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;
@@ -115,6 +115,7 @@ class HJSlice : public StreamSlice {
     std::mutex mutexMergeLocalToGlobalHashTable;
     QueryCompilation::StreamJoinStrategy joinStrategy;
 };
+
 }// namespace NES::Runtime::Execution
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_HJSLICE_HPP_

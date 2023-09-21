@@ -305,7 +305,7 @@ void kWayMerge(Nautilus::Interface::PagedVector* origin,
     // Initialize the heap with the first element from each page
     for (uint32_t i = 0; i < k; ++i) {
         // We assume here that the pages cannot be empty
-        heap.emplace(origin->getPages()[i], i, 0);
+        heap.emplace((*origin->getPages()[i])[0], i, 0);
     }
 
     auto resultCnt = 0;
@@ -328,11 +328,11 @@ void kWayMerge(Nautilus::Interface::PagedVector* origin,
         // Last page
         if (arrayIndex + 1 == origin->getNumberOfPages()) {
             if (elementIndex + 1 < origin->getNumberOfEntriesOnCurrentPage()) {
-                heap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
+                heap.emplace((*origin->getPages()[arrayIndex])[0] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
             }
         } else {// other pages
             if (elementIndex + 1 < origin->getCapacityPerPage()) {
-                heap.emplace(origin->getPages()[arrayIndex] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
+                heap.emplace((*origin->getPages()[arrayIndex])[0] + (rowWidth * (elementIndex + 1)), arrayIndex, elementIndex + 1);
             }
         }
     }
@@ -343,12 +343,12 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
     auto rowWidth = handler->getStateEntrySize();
 
     for (uint32_t i = 0; i < handler->getState()->getNumberOfPages(); ++i) {
-        auto origPtr = handler->getState()->getPages()[i];
-        auto tempPtr = handler->getTempState()->getPages()[i];
+        auto origPtr = (*handler->getState()->getPages()[i])[0];
         // append page if not existing
         if (handler->getTempState()->getPages().size() <= i) {
-            tempPtr = handler->getTempState()->appendPage();
+            handler->getTempState()->appendPage();
         }
+        auto tempPtr = (*handler->getTempState()->getPages()[i])[0];
 
         auto count = handler->getState()->getCapacityPerPage();
         if (i + 1 == handler->getState()->getNumberOfPages()) {
@@ -375,7 +375,7 @@ void SortProxy(void* op, uint64_t compWidth, uint64_t colOffset) {
 void* getStateProxy(void* op) {
     auto handler = static_cast<BatchSortOperatorHandler*>(op);
     // return here the temp state holding the merged fields
-    handler->getTempState()->setNumberOfEntries(handler->getState()->getNumberOfEntries());
+    handler->getTempState()->setTotalNumberOfEntries(handler->getState()->getTotalNumberOfEntries());
     return handler->getTempState();
 }
 

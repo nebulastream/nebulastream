@@ -30,6 +30,7 @@ using namespace std;
 
 namespace NES::Runtime::Execution {
 
+
 class MultipleJoinsTest : public Testing::BaseIntegrationTest,
                           public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy,
                                                                           QueryCompilation::WindowingStrategy>>{

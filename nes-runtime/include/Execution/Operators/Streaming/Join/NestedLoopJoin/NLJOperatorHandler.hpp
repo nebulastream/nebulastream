@@ -64,7 +64,5 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
  */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, uint64_t joinBuildSideInt);
 
-
-
 }; // namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

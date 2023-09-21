@@ -23,6 +23,13 @@ namespace NES::Nautilus::Interface {
 class FixedPageRefIter;
 
 /**
+ * @brief Proxy function to add hash to bloom filter
+ * @param fixedPagePtr
+ * @param hash
+ */
+void addHashToBloomFilterProxy(void* fixedPagePtr, uint64_t hash);
+
+/**
  * @brief This is a Nautilus wrapper for the FixedPage.
  * It wraps a MemRef to the underling data structure and provides access methods.
  */

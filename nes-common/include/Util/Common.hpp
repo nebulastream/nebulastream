@@ -14,6 +14,7 @@
 
 #ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
 #define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <functional>

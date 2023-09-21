@@ -43,7 +43,7 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
     // 1. calculate the number of total keys to size the hash-map correctly. This assumes a foreign-key join where keys can only exist one time and avoids hash coalitions
     size_t numberOfKeys = 0;
     for (const auto& pagedVector : threadLocalStateStores) {
-        numberOfKeys += pagedVector->getNumberOfEntries();
+        numberOfKeys += pagedVector->getTotalNumberOfEntries();
     }
     // 2. allocate hash map
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
@@ -59,11 +59,11 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
         // currently we assume that page 0 - (n-1) are full and contain capacity entries.
         for (size_t i = 0; i < pages.size() - 1; i++) {
             auto numberOfEntries = pagedVector->getCapacityPerPage();
-            globalMap->insertPage(pages[i], numberOfEntries);
+            globalMap->insertPage((*pages[i])[0], numberOfEntries);
         }
         // insert last page
         auto numberOfEntries = pagedVector->getNumberOfEntriesOnCurrentPage();
-        globalMap->insertPage(pages[pages.size() - 1], numberOfEntries);
+        globalMap->insertPage((*pages[pages.size() - 1])[0], numberOfEntries);
         pagedVector->clear();
     }
     return globalMap.get();

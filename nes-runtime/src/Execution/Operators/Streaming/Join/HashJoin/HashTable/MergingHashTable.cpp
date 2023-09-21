@@ -20,7 +20,6 @@ namespace NES::Runtime::Execution::Operators {
 void MergingHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList) {
     //Note that this function creates a new Fixpage (that only moves ptr) instead of reusing the existing one
 
-
     auto& numItems = bucketNumItems[bucketPos];
     auto& numPages = bucketNumPages[bucketPos];
     auto lockedBucketHeads = bucketHeads[bucketPos].wlock();

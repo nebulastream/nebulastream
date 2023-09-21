@@ -120,7 +120,7 @@ TEST_P(TPCH_Q3, joinPipeline) {
     }
 
     auto joinHandler = pipeline1.ctx->getOperatorHandler<BatchJoinHandler>(0);
-    auto numberOfKeys = joinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+    auto numberOfKeys = joinHandler->getThreadLocalState(wc->getId())->getTotalNumberOfEntries();
     EXPECT_EQ(numberOfKeys, 337);
     auto hm = joinHandler->mergeState();
     EXPECT_EQ(hm->getCurrentSize(), 337);
@@ -129,7 +129,7 @@ TEST_P(TPCH_Q3, joinPipeline) {
         orderCustomersJoinBuildPipeline->execute(chunk, *pipeline2.ctx, *wc);
     }
     auto joinHandler2 = pipeline2.ctx->getOperatorHandler<BatchJoinHandler>(1);
-    auto numberOfKeys2 = joinHandler2->getThreadLocalState(wc->getId())->getNumberOfEntries();
+    auto numberOfKeys2 = joinHandler2->getThreadLocalState(wc->getId())->getTotalNumberOfEntries();
     EXPECT_EQ(numberOfKeys2, 1797);
     auto hm2 = joinHandler2->mergeState();
     EXPECT_EQ(hm2->getCurrentSize(), 1797);

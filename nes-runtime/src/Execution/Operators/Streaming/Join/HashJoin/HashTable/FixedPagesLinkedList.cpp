@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Operators {
 
 uint8_t* FixedPagesLinkedList::appendLocal(const uint64_t hash) {
     //try to insert on current Page
-    uint8_t* retPointer = pages[pos]->append(hash);
+    auto* retPointer = reinterpret_cast<uint8_t*>(pages[pos]->append(hash));
     //check page is full
     if (retPointer == nullptr) {
         pageFullCnt++;
@@ -33,7 +33,7 @@ uint8_t* FixedPagesLinkedList::appendLocal(const uint64_t hash) {
             //we still have an empty page left
             emptyPageStillExistsCnt++;
         }
-        retPointer = pages[pos]->append(hash);
+        retPointer = reinterpret_cast<uint8_t*>(pages[pos]->append(hash));
     }
 
     return retPointer;
@@ -47,7 +47,7 @@ uint8_t* FixedPagesLinkedList::appendConcurrentUsingLocking(const uint64_t hash)
 uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
     size_t oldPos = pos;
     //try to insert on current Page
-    auto retPointer = currentPage.load()->append(hash);
+    auto retPointer = reinterpret_cast<uint8_t*>(currentPage.load()->append(hash));
     if (retPointer != nullptr) {
         return retPointer;
     }

@@ -11,13 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
+
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <API/Schema.hpp>
 #include <Runtime/Allocator/MemoryResource.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>
+
 namespace NES::Nautilus::Interface {
 class PagedVectorRef;
 
@@ -26,7 +30,6 @@ class PagedVectorRef;
  * All data is stored in a list of pages.
  * Entries consume a fixed size, which has to be smaller then the page size.
  * Each page can contain page_size/entry_size entries.
- * TODO check if we should use FixedPage.cpp or introduce specific page class #3968
  */
 class PagedVector {
   public:
@@ -48,9 +51,9 @@ class PagedVector {
 
     /**
      * @brief Returns the set of pages
-     * @return std::vector<int8_t*>
+     * @return reference to std::vector<FixedPage>
      */
-    std::vector<int8_t*> getPages();
+    std::vector<FixedPagePtr>& getPages();
 
     /**
      * @brief Clear the sequential data of pages
@@ -61,13 +64,13 @@ class PagedVector {
      * @brief Return the total number of entries across all pages.
      * @return uint64_t
      */
-    uint64_t getNumberOfEntries() const;
+    uint64_t getTotalNumberOfEntries() const;
 
     /**
      * @brief Sets the number of entries across all pages.
      * @param entries
      */
-    void setNumberOfEntries(uint64_t entries);
+    void setTotalNumberOfEntries(uint64_t entries);
 
     /**
      * @brief Returns the capacity per page
@@ -102,16 +105,30 @@ class PagedVector {
     int8_t* getEntry(uint64_t pos) const;
 
     /**
-     * @brief Combines this PagedVector with another one by adding the other.pages to these pages
+     * @brief Combines this PagedVector with another one by MOVING the other.pages to these pages.
      * @param other: PagedVector that contains pages, which should be added to this one
      */
-    void appendAllPages(PagedVector& other);
+    void moveAllPages(PagedVector& other);
 
     /**
      * @brief Getter for the page size
      * @return uint64_t
      */
     uint64_t getPageSize() const;
+
+    /**
+     * @brief Getter for specific page in pages
+     * @param pageNo
+     * @return pointer to the page
+     */
+    int8_t* getFixedPage(const uint64_t& pageNo);
+
+    /**
+     * @brief Returns the number of the page of the record at pos
+     * @param pos
+     * @return number of the page
+     */
+    uint64_t getPageNo(uint64_t pos) const;
 
     /**
      * @brief Deconstructor
@@ -124,9 +141,8 @@ class PagedVector {
     uint64_t entrySize;
     uint64_t pageSize;
     uint64_t capacityPerPage;
-    std::vector<int8_t*> pages;
-    int8_t* currentPage;
-    uint64_t numberOfEntries;
+    std::vector<FixedPagePtr> pages;
+    FixedPage* currentPage;
     uint64_t totalNumberOfEntries;
 };
 

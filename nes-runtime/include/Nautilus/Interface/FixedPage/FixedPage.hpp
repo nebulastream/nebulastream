@@ -27,6 +27,8 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 namespace NES::Nautilus::Interface {
 class FixedPageRef;
+class PagedVectorRef;
+class PagedVectorRefIter;
 
 class FixedPage;
 using FixedPagePtr = std::shared_ptr<FixedPage>;
@@ -47,7 +49,7 @@ class FixedPage {
      * @param pageSize
      * @param bloomFalsePosRate
      */
-    explicit FixedPage(uint8_t* dataPtr,
+    explicit FixedPage(int8_t* dataPtr,
                        size_t sizeOfRecord,
                        size_t pageSize = PAGE_SIZE,
                        double bloomFalsePosRate = BLOOM_FALSE_POSITIVE_RATE);
@@ -75,14 +77,14 @@ class FixedPage {
      * @param index
      * @return pointer to the record
      */
-    uint8_t* operator[](size_t index) const;
+    int8_t* operator[](size_t index) const;
 
     /**
      * @brief returns a pointer to a memory location on this page where to write the record and checks if there is enough space for another record
      * @param hash
      * @return null pointer if there is no more space left on the page, otherwise the pointer
      */
-    uint8_t* append(const uint64_t hash);
+    int8_t* append(const uint64_t hash);
 
     /**
      * @brief adds the hash to the BloomFilter
@@ -111,6 +113,8 @@ class FixedPage {
 
   private:
     friend FixedPageRef;
+    friend PagedVectorRef;
+    friend PagedVectorRefIter;
 
     /**
      * @brief Swapping lhs FixedPage with rhs FixedPage
@@ -120,7 +124,8 @@ class FixedPage {
     void swap(FixedPage& lhs, FixedPage& rhs) noexcept;
 
     size_t sizeOfRecord;
-    uint8_t* data;
+    int8_t* data;
+    //TODO check whether currentPos needs to be thread safe #4198
     std::atomic<size_t> currentPos;
     size_t capacity;
     std::unique_ptr<Runtime::BloomFilter> bloomFilter;

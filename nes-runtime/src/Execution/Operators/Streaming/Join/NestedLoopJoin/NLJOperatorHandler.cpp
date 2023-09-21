@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -67,14 +68,14 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
                                        const uint64_t sizeOfRecordRight,
                                        const uint64_t pageSizeLeft,
                                        const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide,sizeOfRecordLeft, sizeOfRecordRight),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight),
       pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
 
 void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
     auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
-    NES_DEBUG("nljSlice:\n{}", nljSlice->toString());
+    NES_DEBUG("nljSlice: {}", nljSlice->toString());
     switch (joinBuildSide) {
         case QueryCompilation::JoinBuildSideType::Left: return nljSlice->getPagedVectorRefLeft(workerId);
         case QueryCompilation::JoinBuildSideType::Right: return nljSlice->getPagedVectorRefRight(workerId);

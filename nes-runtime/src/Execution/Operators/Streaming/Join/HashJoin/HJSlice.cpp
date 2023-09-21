@@ -17,7 +17,6 @@
 
 namespace NES::Runtime::Execution {
 
-
 Operators::StreamJoinHashTable* HJSlice::getHashTable(QueryCompilation::JoinBuildSideType joinBuildSide, uint64_t workerId) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE) {

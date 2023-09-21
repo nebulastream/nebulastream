@@ -64,27 +64,27 @@ T* allocHugePages(size_t size) {
 class FixedPagesAllocator {
   public:
     explicit FixedPagesAllocator(size_t totalSize) {
-        head = NES::Runtime::detail::allocHugePages<uint8_t>(totalSize);
+        head = NES::Runtime::detail::allocHugePages<int8_t>(totalSize);
         std::cout << "allocated size of " << totalSize << std::endl;
         overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSize;
         tail.store(reinterpret_cast<uintptr_t>(head));
         this->totalSize = totalSize;
     }
 
-    uint8_t* getNewPage(size_t pageSize) {
+    int8_t* getNewPage(size_t pageSize) {
         auto ptr = tail.fetch_add(pageSize);
         allocCnt++;
         NES_ASSERT2_FMT(ptr < overrunAddress,
                         "Invalid address " << ptr << " < " << overrunAddress << " head=" << reinterpret_cast<uintptr_t>(head)
                                            << " total size=" << totalSize << " allocCnt=" << allocCnt);
 
-        return reinterpret_cast<uint8_t*>(ptr);
+        return reinterpret_cast<int8_t*>(ptr);
     }
 
     virtual ~FixedPagesAllocator() { std::free(head); }
 
   private:
-    uint8_t* head;
+    int8_t* head;
     std::atomic<uint64_t> tail;
     uint64_t overrunAddress;
     uint64_t totalSize;
