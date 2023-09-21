@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
@@ -254,13 +255,12 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
 #ifdef TFDEF
 void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto inferModelOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
-    auto inferModelOperatorHandler = InferModel::InferModelOperatorHandler::create(inferModelOperator->getDeployedModelPath());
     auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
                                                                                             inferModelOperator->getOutputSchema(),
                                                                                             inferModelOperator->getModel(),
                                                                                             inferModelOperator->getInputFields(),
                                                                                             inferModelOperator->getOutputFields(),
-                                                                                            inferModelOperatorHandler);
+                                                                                            nullptr);
     operatorNode->replace(physicalInferModelOperator);
 }
 #endif// TFDEF

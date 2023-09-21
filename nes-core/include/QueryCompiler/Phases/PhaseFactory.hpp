@@ -46,22 +46,6 @@ class PhaseFactory {
     virtual AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) = 0;
 
     /**
-    * @brief Creates lower physical operator to generatable operator phase
-    * @param QueryCompilerOptionsPtr options
-    * @return LowerPhysicalToGeneratableOperatorsPtr
-    */
-    virtual LowerPhysicalToGeneratableOperatorsPtr
-    createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) = 0;
-
-    /**
-    * @brief Creates code generation phase
-    * @param QueryCompilerOptionsPtr options
-    * @return CodeGenerationPhasePtr
-    */
-    virtual CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options,
-                                                             Compiler::JITCompilerPtr jitCompiler) = 0;
-
-    /**
     * @brief Creates lower operator plan to executable query plan phase
     * @param QueryCompilerOptionsPtr options
     * @return LowerToExecutableQueryPlanPhasePtr
@@ -75,13 +59,6 @@ class PhaseFactory {
     * @return BufferOptimizationPhasePtr
     */
     virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) = 0;
-
-    /**
-    * @brief Creates Predication optimization phase
-    * @param QueryCompilerOptionsPtr options
-    * @return PredicationOptimizationPhasePtr
-    */
-    virtual PredicationOptimizationPhasePtr createPredicationOptimizationPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
 }// namespace Phases

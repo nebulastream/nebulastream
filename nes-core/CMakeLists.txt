@@ -41,6 +41,8 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Select fine-grained headers
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Windowing Windowing)
+register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
+register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sinks Operators/LogicalOperators/Sinks)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/ QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Execution/ Runtime/Execution/)
 register_public_header_dir(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/State/ State/)
@@ -60,7 +62,6 @@ register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/glog/ glo
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/boost/ boost)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/gflags/ gflags)
 register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/double-conversion/ double-conversion)
-register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp)
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)

@@ -13,16 +13,12 @@
 
 add_source_files(nes-core
         QueryCompilerOptions.cpp
-        PipelineContext.cpp
-        CompilerTypeFactory.cpp
-        DefaultQueryCompiler.cpp
+        QueryCompiler.cpp
         QueryCompilationRequest.cpp
         QueryCompilationResult.cpp
         NautilusQueryCompiler.cpp
         )
-add_subdirectory(CodeGenerator)
 add_subdirectory(Operators)
 add_subdirectory(Compiler)
-add_subdirectory(GeneratableTypes)
 add_subdirectory(Phases)
 add_subdirectory(Exceptions)
