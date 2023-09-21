@@ -29,6 +29,8 @@
 
 namespace NES::Network {
 
+struct ConnectionThreadInfo;
+
 /**
  * @brief The NetworkManager manages creation and deletion of subpartition producer and consumer.
  */
@@ -142,7 +144,7 @@ class NetworkManager {
      * @param retryTimes times to retry a connection
      * @return a future containing the data network channel
      */
-    std::future<NetworkChannelPtr> registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
+    ConnectionThreadInfo registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
                                                                      const NesPartition& nesPartition,
                                                                      Runtime::BufferManagerPtr bufferManager,
                                                                      std::chrono::milliseconds waitTime,

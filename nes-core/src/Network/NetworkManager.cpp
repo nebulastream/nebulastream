@@ -109,7 +109,7 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                   retryTimes);
 }
 
-std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
+ConnectionThreadInfo NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
                                                                                  const NesPartition& nesPartition,
                                                                                  Runtime::BufferManagerPtr bufferManager,
                                                                                  std::chrono::milliseconds waitTime,
@@ -140,7 +140,7 @@ std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync
         queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, true);
     });
     thread.detach();
-    return future;
+    return {std::move(future), std::move(thread)};
 }
 
 EventOnlyNetworkChannelPtr NetworkManager::registerSubpartitionEventProducer(const NodeLocation& nodeLocation,

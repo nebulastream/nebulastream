@@ -20,11 +20,17 @@
 #include <Network/detail/NetworkDataSender.hpp>
 #include <Network/detail/NetworkEventSender.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <future>
 
 namespace NES {
 namespace Network {
 
 class ExchangeProtocol;
+
+struct ConnectionThreadInfo {
+    std::future<Network::NetworkChannelPtr> future;
+    std::thread thread;
+};
 
 /**
  * @brief This class represent the network channel for data transfer that NES uses to send data among nodes.
