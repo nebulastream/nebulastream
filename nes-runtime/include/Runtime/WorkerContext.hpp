@@ -178,6 +178,8 @@ class WorkerContext {
      */
     bool releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type);
 
+    bool stopConnectingToNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint64_t timeout);
+
     /**
      * @brief This stores a network channel for an operator
      * @param id of the operator that we want to store the output channel

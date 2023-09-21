@@ -171,5 +171,8 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES:
 LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolTLS.get(); }
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
+bool WorkerContext::stopConnectingToNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint64_t timeout) {
+    return false;
+}
 
 }// namespace NES::Runtime
