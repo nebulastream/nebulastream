@@ -22,6 +22,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
 #include <folly/ThreadLocal.h>
+#include <future>
 #include <memory>
 #include <queue>
 #include <unordered_map>
@@ -49,6 +50,8 @@ class WorkerContext {
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
+    /// data channels that have not established a connection yet
+    std::unordered_map<NES::OperatorId, std::future<Network::NetworkChannelPtr>> dataChannelsFutures;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool stored in tls
@@ -127,6 +130,14 @@ class WorkerContext {
      */
     void storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel);
 
+    //todo: rename param
+    /**
+     * @brief This stores a future for network channel creation for an operator
+     * @param id of the operator that we want to store the output channel
+     * @param channel the output channel
+     */
+    void storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channel);
+
     /**
       * @brief This method creates a network storage for a thread
       * @param nesPartitionId partition
@@ -187,6 +198,14 @@ class WorkerContext {
      * @return an output channel
      */
     Network::NetworkChannel* getNetworkChannel(NES::OperatorId ownerId);
+
+
+    /**
+     * @brief retrieve a registered output channel
+     * @param ownerId id of the operator that we want to store the output channel
+     * @return an output channel
+     */
+    Network::NetworkChannelPtr getNetworkChannelFuture(NES::OperatorId ownerId);
 
     /**
      * @brief retrieve a registered output channel
