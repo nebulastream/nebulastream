@@ -14,7 +14,6 @@
 
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
@@ -130,10 +129,6 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOpera
     const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor,
     OperatorId id) {
     return std::make_shared<WatermarkAssignerLogicalOperatorNode>(watermarkStrategyDescriptor, id);
-}
-LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createCEPIterationOperator(const uint64_t minIterations, const uint64_t maxIterations, OperatorId id) {
-    return std::make_shared<IterationLogicalOperatorNode>(minIterations, maxIterations, id);
 }
 
 LogicalUnaryOperatorNodePtr

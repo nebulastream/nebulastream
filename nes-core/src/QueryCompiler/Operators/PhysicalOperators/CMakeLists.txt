@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        InferModelOperatorHandler.cpp
+        PhysicalInferModelOperator.cpp
         PhysicalOperator.cpp
         PhysicalUnaryOperator.cpp
         PhysicalBinaryOperator.cpp
@@ -21,7 +21,6 @@ add_source_files(nes-core
         PhysicalFilterOperator.cpp
         PhysicalLimitOperator.cpp
         PhysicalProjectOperator.cpp
-        PhysicalInferModelOperator.cpp
         PhysicalMapOperator.cpp
         PhysicalMapUDFOperator.cpp
         PhysicalFlatMapUDFOperator.cpp
@@ -35,5 +34,4 @@ add_source_files(nes-core
 
 add_subdirectory(Windowing)
 add_subdirectory(Joining)
-add_subdirectory(CEP)
 

@@ -72,19 +72,6 @@ using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
 
 class TestHarness {
   public:
-    /**
-     * @brief The constructor of TestHarness
-     * @param numWorkers number of worker (each for one physical source) to be used in the test
-     * @param queryWithoutSink query string to test (without the sink operator)
-     * @param restPort port for the rest service
-     * @param rpcPort for for the grpc
-     */
-    explicit TestHarness(std::string queryWithoutSink,
-                         uint16_t restPort,
-                         uint16_t rpcPort,
-                         std::filesystem::path testHarnessResourcePath,
-                         uint64_t memSrcFrequency = 0,
-                         uint64_t memSrcNumBuffToProcess = 1);
 
     /**
      * @brief The constructor of TestHarness
@@ -99,17 +86,6 @@ class TestHarness {
                          std::filesystem::path testHarnessResourcePath,
                          uint64_t memSrcFrequency = 0,
                          uint64_t memSrcNumBuffToProcess = 1);
-
-    /**
-     * @brief Enable using nautilus compiler
-     * @return self
-     */
-    TestHarness& enableNautilus();
-
-    /**
-     * @brief Enables the distributed window optimization
-     */
-    TestHarness& enableDistributedWindowOptimization();
 
     /**
      * @brief Enable new request executor
@@ -399,8 +375,6 @@ class TestHarness {
     std::string coordinatorIPAddress;
     uint16_t restPort;
     uint16_t rpcPort;
-    bool useNautilus;
-    bool performDistributedWindowOptimization;
     bool useNewRequestExecutor;
     uint64_t memSrcFrequency;
     uint64_t memSrcNumBuffToProcess;

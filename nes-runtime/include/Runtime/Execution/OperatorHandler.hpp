@@ -38,7 +38,7 @@ class OperatorHandler : public Reconfigurable {
      * @param stateManager
      */
     virtual void
-    start(PipelineExecutionContextPtr pipelineExecutionContext, StateManagerPtr stateManager, uint32_t localStateVariableId) = 0;
+    start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) = 0;
 
     /**
      * @brief Stops the operator handler.

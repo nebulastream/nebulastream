@@ -155,7 +155,7 @@ TEST_F(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeploymentMi
                                   Attribute("iris2", BasicType::FLOAT32)})
                      .project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()
@@ -212,7 +212,7 @@ TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) 
                                   Attribute("iris2", BasicType::FLOAT32)})
                      .project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()

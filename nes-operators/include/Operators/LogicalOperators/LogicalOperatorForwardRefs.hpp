@@ -34,9 +34,6 @@ namespace NES::Join {
 class LogicalJoinDefinition;
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 
-class JoinOperatorHandler;
-using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
-
 namespace Experimental {
 class LogicalBatchJoinDefinition;
 using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;

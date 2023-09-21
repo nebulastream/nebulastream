@@ -99,7 +99,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
         "0,2000,1,1\n"
-        "0,2000,4,1\n";
+        "0,2000,4,1\n"
+        "2000,4000,1,8\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
@@ -188,7 +189,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
         "0,2000,1,2\n"
-        "0,2000,4,2\n";
+        "0,2000,4,2\n"
+        "2000,4000,1,16\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -274,11 +276,14 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
         "0,10000,1,51\n"
-        "5000,15000,1,95\n"
         "0,10000,4,1\n"
         "0,10000,11,5\n"
         "0,10000,12,1\n"
-        "0,10000,16,2\n";
+        "0,10000,16,2\n"
+        "5000,15000,1,95\n"
+        "10000,20000,1,145\n"
+        "15000,25000,1,126\n"
+        "20000,30000,1,41\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -370,17 +375,15 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,10000,1,32\n"
         "5000,15000,1,102\n"
-        "10000,20000,1,190\n"
-        "0,10000,4,2\n"
-        "5000,15000,4,2\n"
-        "0,10000,11,10\n"
-        "5000,15000,11,10\n"
-        "0,10000,12,2\n"
         "5000,15000,12,2\n"
-        "0,10000,16,4\n"
-        "5000,15000,16,4\n";
+        "5000,15000,4,2\n"
+        "5000,15000,11,10\n"
+        "5000,15000,16,4\n"
+        "10000,20000,1,190\n"
+        "15000,25000,1,290\n"
+        "20000,30000,1,252\n"
+        "25000,35000,1,82\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -459,24 +462,18 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "16000,17000,1,33\n"
-        "15500,16500,1,33\n"
-        "14000,15000,1,29\n"
-        "13500,14500,1,29\n"
-        "12000,13000,1,25\n"
-        "11500,12500,1,25\n"
-        "10000,11000,1,21\n"
-        "9500,10500,1,21\n"
-        "8000,9000,1,17\n"
-        "7500,8500,1,17\n"
-        "6000,7000,1,13\n"
-        "5500,6500,1,13\n"
-        "4000,5000,1,9\n"
-        "3500,4500,1,9\n"
-        "2000,3000,1,11\n"
-        "1500,2500,1,11\n"
         "0,1000,1,1\n"
-        "0,1000,4,1\n";
+        "0,1000,4,1\n"
+        "2000,3000,1,11\n"
+        "4000,5000,1,9\n"
+        "6000,7000,1,13\n"
+        "8000,9000,1,17\n"
+        "10000,11000,1,21\n"
+        "12000,13000,1,25\n"
+        "14000,15000,1,29\n"
+        "16000,17000,1,33\n"
+        "18000,19000,1,37\n"
+        "20000,21000,1,41\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -564,15 +561,17 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
 
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,2000,1,8\n"
-        "0,2000,4,4\n"
+        "0,2000,1,6\n"
+        "0,2000,12,2\n"
+        "0,2000,4,2\n"
         "0,2000,11,4\n"
-        "0,2000,12,4\n"
         "0,2000,16,4\n"
         "2000,4000,1,48\n"
-        "4000,6000,1,40\n"
         "2000,4000,11,16\n"
-        "2000,4000,16,4\n";
+        "2000,4000,16,4\n"
+        "4000,6000,1,40\n"
+        "6000,8000,1,56\n"
+        "8000,10000,1,16\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -656,7 +655,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     string expectedContent = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-                             "0,2000,6\n"
+                             "0,2000,4\n"
                              "2000,4000,24\n"
                              "4000,6000,20\n"
                              "6000,8000,28\n"
@@ -664,7 +663,9 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
                              "10000,12000,44\n"
                              "12000,14000,52\n"
                              "14000,16000,60\n"
-                             "16000,18000,68\n";
+                             "16000,18000,68\n"
+                             "18000,20000,76\n"
+                             "20000,22000,62\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

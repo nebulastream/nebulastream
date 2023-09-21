@@ -40,7 +40,7 @@ class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               Runtime::StateManagerPtr stateManager,
+
                uint32_t localStateVariableId) override;
 
     void stop(Runtime::QueryTerminationType queryTerminationType,

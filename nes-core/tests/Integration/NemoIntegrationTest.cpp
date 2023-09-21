@@ -76,10 +76,8 @@ class NemoIntegrationTest : public Testing::BaseIntegrationTest {
                          .byKey(Attribute("key"))
                          .apply(Sum(Attribute("value")));
 
-        TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                      .enableNautilus()
-                                      .enableDistributedWindowOptimization()
-                                      .addLogicalSource("car", inputSchema);
+        TestHarness testHarness =
+            TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).addLogicalSource("car", inputSchema);
 
         std::vector<uint64_t> nodes;
         std::vector<uint64_t> parents;

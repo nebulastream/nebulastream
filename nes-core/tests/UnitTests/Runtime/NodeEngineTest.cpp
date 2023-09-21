@@ -21,7 +21,7 @@
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -129,13 +129,12 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
 
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<BufferManagerPtr> bufferManager = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
-        auto stateManager = std::make_shared<Runtime::StateManager>(0);
+
         auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(std::make_shared<DummyQueryListener>(),
                                                                            bufferManager,
                                                                            0,
                                                                            1,
                                                                            nullptr,
-                                                                           stateManager,
                                                                            100);
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(0,
@@ -148,7 +147,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        auto queryCompiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+        auto queryCompiler = QueryCompilation::NautilusQueryCompiler::create(compilerOptions, phaseFactory);
 
         auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(physicalSources),
                                                              std::make_shared<HardwareManager>(),
@@ -770,7 +769,6 @@ void assertKiller() {
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
-                         std::make_shared<NES::Runtime::StateManager>(nodeEngineId),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<OpenCLManager>(),
                          nodeEngineId,
@@ -816,7 +814,6 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
-                         std::make_shared<NES::Runtime::StateManager>(nodeEngineId),
                          std::weak_ptr<NesWorker>(),
                          std::make_shared<OpenCLManager>(),
                          nodeEngineId,
@@ -891,8 +888,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
-                         std::make_shared<NES::Runtime::StateManager>(0),
-                         std::weak_ptr<NesWorker>(),
+                                                  std::weak_ptr<NesWorker>(),
                          std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,

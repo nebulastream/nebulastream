@@ -109,7 +109,7 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      */
     void finalize();
 
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
+    void start(PipelineExecutionContextPtr, uint32_t) override {}
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
   private:

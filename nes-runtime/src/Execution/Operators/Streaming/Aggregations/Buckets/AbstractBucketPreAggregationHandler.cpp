@@ -93,7 +93,7 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::dispatchSliceMe
     }
 }
 template<class SliceType, typename SliceStore>
-void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
+void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::start(PipelineExecutionContextPtr, uint32_t) {
     NES_DEBUG("start AbstractBucketPreAggregationHandler");
 }
 template<class SliceType, typename SliceStore>

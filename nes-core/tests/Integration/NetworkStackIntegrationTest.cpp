@@ -29,7 +29,7 @@
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -189,7 +189,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
         std::vector<PhysicalSourceTypePtr> physicalSources{defaultSourceType};
         auto partitionManager = std::make_shared<Network::PartitionManager>();
-        auto stateManager = std::make_shared<Runtime::StateManager>(0);
+
         std::vector<Runtime::BufferManagerPtr> bufferManagers = {
             std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
         auto hwManager = std::make_shared<Runtime::HardwareManager>();
@@ -198,7 +198,6 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                                            0,
                                                                            1,
                                                                            hwManager,
-                                                                           stateManager,
                                                                            100);
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(0,
@@ -207,13 +206,11 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                    Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManagers[0]);
         };
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         options->setNumSourceLocalBuffers(12);
 
-        auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory, jitCompiler);
+        auto compiler = QueryCompilation::NautilusQueryCompiler::create(options, phaseFactory);
 
         return std::make_shared<MockedNodeEngine>(std::move(physicalSources),
                                                   std::move(hwManager),
@@ -270,7 +267,6 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::move(networkManagerCreator),
                          std::move(partitionManager),
                          std::move(queryCompiler),
-                         std::make_shared<NES::Runtime::StateManager>(0),
                          std::make_shared<DummyQueryListener>(),
                          std::make_shared<NES::Runtime::OpenCLManager>(),
                          0,
@@ -445,7 +441,6 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                          std::move(networkManagerCreator),
                          std::move(partitionManager),
                          std::move(queryCompiler),
-                         std::make_shared<NES::Runtime::StateManager>(0),
                          std::make_shared<DummyQueryListener>(),
                          std::make_shared<NES::Runtime::OpenCLManager>(),
                          0,

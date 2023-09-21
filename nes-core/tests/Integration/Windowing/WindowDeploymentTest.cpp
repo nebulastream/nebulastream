@@ -91,7 +91,7 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
     sourceConfig->setNumberOfBuffersToProduce(3);
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                            .validate()
@@ -134,7 +134,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     sourceConfig->setNumberOfBuffersToProduce(1);
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                            .validate()
@@ -187,7 +187,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEv
     sourceConfig2->setNumberOfBuffersToProduce(3);
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithCSVSourceToCoordinator(sourceConfig1)
                            .attachWorkerWithCSVSourceToCoordinator(sourceConfig2)
@@ -226,7 +226,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     sourceConfig->setNumberOfBuffersToProduce(3);
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                            .validate()
@@ -263,7 +263,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     sourceConfig->setNumberOfBuffersToProduce(1);
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                            .validate()
@@ -379,7 +379,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
                                        .apply(Sum(Attribute("value1")));
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -418,7 +418,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
                                        .apply(Sum(Attribute("value1")));
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -460,7 +460,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
                                        .project(Attribute("value2"));
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -617,7 +617,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
                                        .byKey(Attribute("key"))
                                        .apply(Avg(Attribute("value1")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -671,7 +671,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
                                        .apply(Max(Attribute("value")));
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -724,8 +724,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
                                        .byKey(Attribute("key"))
                                        .apply(Max(Attribute("value")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .addLogicalSource("car", carSchema)
-                           .enableNautilus()
+                                  .addLogicalSource("car", carSchema)
+
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -785,7 +785,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     sourceConfig->setSkipHeader(false);
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                            .validate()
@@ -839,7 +839,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
                                        .byKey(Attribute("key"))
                                        .apply(Min(Attribute("value")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -894,7 +894,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
                                        .byKey(Attribute("key"))
                                        .apply(Count());
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -951,7 +951,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregatio
                                        .byKey(Attribute("key"))
                                        .apply(Median(Attribute("value")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1007,7 +1007,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
                                        .byKey(Attribute("key"))
                                        .apply(Count()->as(Attribute("Frequency")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("car", carSchema)
                            .attachWorkerWithMemorySourceToCoordinator("car");
 

@@ -16,23 +16,19 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr
-PhysicalWindowSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler) {
-    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(handler));
-}
-
 PhysicalOperatorPtr PhysicalWindowSinkOperator::create(OperatorId id,
                                                        const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
-                                                       const Windowing::WindowOperatorHandlerPtr& handler) {
-    return std::make_shared<PhysicalWindowSinkOperator>(id, inputSchema, outputSchema, handler);
+                                                       const Windowing::LogicalWindowDefinitionPtr& windowDefinition) {
+    return std::make_shared<PhysicalWindowSinkOperator>(id, inputSchema, outputSchema, windowDefinition);
 }
 
 PhysicalWindowSinkOperator::PhysicalWindowSinkOperator(OperatorId id,
                                                        SchemaPtr inputSchema,
                                                        SchemaPtr outputSchema,
-                                                       Windowing::WindowOperatorHandlerPtr handler)
-    : OperatorNode(id), PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(handler)){};
+                                                       Windowing::LogicalWindowDefinitionPtr windowDefinition)
+    : OperatorNode(id),
+      PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
 
 std::string PhysicalWindowSinkOperator::toString() const {
     std::stringstream out;
@@ -42,6 +38,6 @@ std::string PhysicalWindowSinkOperator::toString() const {
     return out.str();
 }
 
-OperatorNodePtr PhysicalWindowSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
+OperatorNodePtr PhysicalWindowSinkOperator::copy() { return create(id, inputSchema, outputSchema, windowDefinition); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

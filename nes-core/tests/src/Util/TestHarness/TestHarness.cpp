@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -18,6 +19,9 @@
 #include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -26,19 +30,6 @@
 #include <utility>
 namespace NES {
 
-TestHarness::TestHarness(std::string queryWithoutSink,
-                         uint16_t restPort,
-                         uint16_t rpcPort,
-                         std::filesystem::path testHarnessResourcePath,
-                         uint64_t memSrcFrequency,
-                         uint64_t memSrcNumBuffToProcess)
-    : queryWithoutSinkStr(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-      useNautilus(false), performDistributedWindowOptimization(false), useNewRequestExecutor(false),
-      memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
-      topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-      windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
-      testHarnessResourcePath(testHarnessResourcePath) {}
-
 TestHarness::TestHarness(Query queryWithoutSink,
                          uint16_t restPort,
                          uint16_t rpcPort,
@@ -46,26 +37,15 @@ TestHarness::TestHarness(Query queryWithoutSink,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSinkStr(""), queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))),
-      coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort), useNautilus(false),
-      performDistributedWindowOptimization(false), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
-      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
-      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
+      coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort), useNewRequestExecutor(false),
+      memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
+      topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
       windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
       testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema) {
     auto logicalSource = LogicalSource::create(logicalSourceName, schema);
     this->logicalSources.emplace_back(logicalSource);
-    return *this;
-}
-
-TestHarness& TestHarness::enableNautilus() {
-    useNautilus = true;
-    return *this;
-}
-
-TestHarness& TestHarness::enableDistributedWindowOptimization() {
-    performDistributedWindowOptimization = true;
     return *this;
 }
 
@@ -289,15 +269,11 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         coordinatorConfiguration->enableNewRequestExecutor = true;
     }
 
-    if (useNautilus) {
-        coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
-            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-        coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
-        coordinatorConfiguration->optimizer.performDistributedWindowOptimization = performDistributedWindowOptimization;
+    coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode =
+        QueryCompilation::DumpMode::CONSOLE;
+    coordinatorConfiguration->worker.queryCompiler.windowingStrategy = windowingStrategy;
+    coordinatorConfiguration->worker.queryCompiler.joinStrategy = joinStrategy;
 
-        // Only this is currently supported in Nautilus
-        coordinatorConfiguration->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
-    }
     crdConfigFunctor(coordinatorConfiguration);
 
     nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
@@ -311,14 +287,10 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         //Fetch the worker configuration
         auto workerConfiguration = workerConf->getWorkerConfiguration();
-        if (useNautilus) {
-            workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-            workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
 
-            // Only this is currently supported in Nautilus
-            workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
-            workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
-        }
+        workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
+        workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
+        workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
 
         //Set ports at runtime
         workerConfiguration->coordinatorPort = coordinatorRPCPort;

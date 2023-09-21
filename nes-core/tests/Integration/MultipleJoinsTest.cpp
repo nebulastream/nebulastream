@@ -58,7 +58,7 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
                                            const std::vector<ResultRecord>& expectedRecords) {
         EXPECT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                      .enableNautilus()
+
                                       .setJoinStrategy(joinStrategy)
                                       .setWindowingStrategy(windowingStrategy);
 

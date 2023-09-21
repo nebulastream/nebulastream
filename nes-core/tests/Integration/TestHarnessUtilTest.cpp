@@ -55,7 +55,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
 
     auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({40, 40, 40}, 2)
@@ -107,7 +107,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
 
     auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")//2
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3
@@ -174,7 +174,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
 
     auto queryWithFilterOperator = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("car", carSchema)
                                   .addLogicalSource("truck", truckSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -238,7 +238,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
                                        .byKey(Attribute("key"))
                                        .apply(Sum(Attribute("value")));
     TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")//2
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3
@@ -334,7 +334,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
                                      .equalsTo(Attribute("id2"))
                                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
     TestHarness testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithMemorySourceToCoordinator("window1")
@@ -407,7 +407,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
-                                  .enableNautilus()
+
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({40, 40, 40}, 2)
                                   .pushElement<Car>({30, 30, 30}, 2)
@@ -459,7 +459,7 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
     auto queryWithFilterOperator = Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key"));
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
-                                  .enableNautilus()
+
                                   /**
                                     * Expected topology:
                                         PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
@@ -552,7 +552,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
 
     auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 4);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
@@ -605,7 +605,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
 
     auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 4);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)//2
@@ -662,7 +662,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
 
     auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
     TestHarness testHarness =
-        TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).enableNautilus();
+        TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
     EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), Exceptions::RuntimeException);

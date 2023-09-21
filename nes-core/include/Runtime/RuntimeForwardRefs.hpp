@@ -92,9 +92,6 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 class AbstractQueryManager;
 using QueryManagerPtr = std::shared_ptr<AbstractQueryManager>;
 
-class StateManager;
-using StateManagerPtr = std::shared_ptr<StateManager>;
-
 class QueryStatistics;
 using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 

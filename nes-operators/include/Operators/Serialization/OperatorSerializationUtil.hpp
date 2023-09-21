@@ -18,8 +18,6 @@
 #include <Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
-
-#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
@@ -307,22 +305,6 @@ class OperatorSerializationUtil {
      */
     static LogicalUnaryOperatorNodePtr
     deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
-
-    /**
-     * @brief Serializes a CEPIteration operator
-     * @param iterationOperator
-     * @param serializedOperator serialized instance of the operator
-     */
-    static void serializeCEPIterationOperator(const IterationLogicalOperatorNode& iterationOperator,
-                                              SerializableOperator& serializedOperator);
-
-    /**
-     * @brief Deserializes a CEPIteration operator
-     * @param cepIterationDetails
-     * @return IterationLogicalOperatorNodePtr
-     */
-    static LogicalUnaryOperatorNodePtr
-    deserializeCEPIterationOperator(const SerializableOperator_CEPIterationDetails& cepIterationDetails);
 
     /**
      * @brief Serializes a Map or FlatMap Java UDF operator

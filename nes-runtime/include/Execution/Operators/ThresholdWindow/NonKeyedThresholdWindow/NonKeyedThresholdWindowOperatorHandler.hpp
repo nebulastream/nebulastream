@@ -29,7 +29,7 @@ class NonKeyedThresholdWindowOperatorHandler : public OperatorHandler {
     explicit NonKeyedThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
         : AggregationValues(std::move(AggregationValues)) {}
 
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
+    void start(PipelineExecutionContextPtr, uint32_t) override {}
 
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 

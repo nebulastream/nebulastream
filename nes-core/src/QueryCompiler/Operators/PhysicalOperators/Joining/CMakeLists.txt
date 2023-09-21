@@ -14,9 +14,6 @@
 add_subdirectory(Streaming)
 
 add_source_files(nes-core
-        PhysicalBatchJoinOperator.cpp
-        PhysicalBatchJoinBuildOperator.cpp
-        PhysicalBatchJoinProbeOperator.cpp
         PhysicalJoinOperator.cpp
         PhysicalJoinBuildOperator.cpp
         PhysicalJoinSinkOperator.cpp

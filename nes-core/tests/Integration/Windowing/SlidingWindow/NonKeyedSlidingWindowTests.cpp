@@ -165,7 +165,7 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
@@ -194,7 +194,7 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
@@ -222,7 +222,7 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
                      .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
@@ -246,7 +246,7 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
                      .apply(Sum(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
@@ -285,7 +285,7 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
                      .apply(Sum(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
