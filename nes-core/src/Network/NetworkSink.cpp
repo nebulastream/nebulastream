@@ -219,7 +219,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             networkManager->unregisterSubpartitionProducer(nesPartition);
             if (workerContext.checkNetwokChannelFutureExistence(nesPartition.getOperatorId())) {
-                //todo: release future here
+                //wait until channel has either connected or connection times out, so we do not an channel open
+                workerContext.getNetworkChannelFuture(nesPartition.getOperatorId()).get()->close(terminationType);
                 NES_DEBUG("NetworkSink: reconfigure() released channel future on {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
