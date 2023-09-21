@@ -17,6 +17,7 @@
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Runtime/QueryManager.hpp>
 
 namespace NES::Network {
 
@@ -106,6 +107,40 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                   senderHighWatermark,
                                   waitTime,
                                   retryTimes);
+}
+
+std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
+                                                                                 const NesPartition& nesPartition,
+                                                                                 Runtime::BufferManagerPtr bufferManager,
+                                                                                 std::chrono::milliseconds waitTime,
+                                                                                 uint8_t retryTimes, Runtime::ReconfigurationMessage reconfigurationMessage, Runtime::QueryManagerPtr queryManager) {
+    NES_DEBUG("NetworkManager: Asynchronously registering SubpartitionProducer: {}", nesPartition.toString());
+    partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
+
+    std::promise<NetworkChannelPtr> promise;
+    auto future = promise.get_future();
+    std::thread thread([zmqContext = server->getContext(),
+                        nodeLocation,
+                        nesPartition,
+                        protocol = exchangeProtocol,
+                        bufferManager,
+                        highWaterMark = senderHighWatermark,
+                        waitTime,
+                        retryTimes,
+                        promise = std::move(promise), queryManager, reconfigurationMessage]() mutable {
+        auto channel = NetworkChannel::create(zmqContext,
+                                              nodeLocation.createZmqURI(),
+                                              nesPartition,
+                                              protocol,
+                                              std::move(bufferManager),
+                                              highWaterMark,
+                                              waitTime,
+                                              retryTimes);
+        promise.set_value(std::move(channel));
+        queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, true);
+    });
+    thread.detach();
+    return future;
 }
 
 EventOnlyNetworkChannelPtr NetworkManager::registerSubpartitionEventProducer(const NodeLocation& nodeLocation,
