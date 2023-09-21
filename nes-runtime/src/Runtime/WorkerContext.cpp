@@ -172,4 +172,12 @@ LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolT
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
 
+Network::NetworkChannelPtr WorkerContext::waitForNetworkChannelFuture(NES::OperatorId ownerId) {
+    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
+    auto future = std::move(it->second);
+    dataChannelsFutures.erase(it);
+    //blocking wait on get
+    return future.get();
+}
+
 }// namespace NES::Runtime

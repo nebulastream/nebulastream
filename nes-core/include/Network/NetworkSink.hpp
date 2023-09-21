@@ -143,6 +143,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::atomic<bool> reconnectBuffering;
     const bool connectAsync;
     void connectToChannelAsync(Runtime::WorkerContext& workerContext);
+    void unbuffer(Runtime::WorkerContext& workerContext);
 };
 
 }// namespace Network

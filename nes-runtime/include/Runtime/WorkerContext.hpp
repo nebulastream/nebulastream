@@ -206,6 +206,8 @@ class WorkerContext {
      */
     Network::NetworkChannelPtr getNetworkChannelFuture(NES::OperatorId ownerId);
 
+    Network::NetworkChannelPtr waitForNetworkChannelFuture(NES::OperatorId ownerId);
+
     bool checkNetwokChannelFutureExistence(OperatorId ownerId);
 
     /**

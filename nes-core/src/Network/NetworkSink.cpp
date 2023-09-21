@@ -191,23 +191,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 
             //todo: extract to unbuffer function
             NES_INFO("stop buffering data for context {}", workerContext.getId());
-            auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
-            NES_INFO("sending buffered data");
-            while (topBuffer) {
-                /*this will only work if guarantees are not set to at least once,
-                otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
-                if (!topBuffer.value().getBuffer()) {
-                    NES_WARNING("buffer does not exist");
-                    break;
-                }
-                if (!writeData(topBuffer.value(), workerContext)) {
-                    NES_WARNING("could not send all data from buffer");
-                    break;
-                }
-                NES_TRACE("buffer sent");
-                workerContext.removeTopTupleFromStorage(nesPartition);
-                topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
-            }
+            unbuffer(workerContext);
             break;
         }
         default: {
@@ -220,18 +204,28 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             networkManager->unregisterSubpartitionProducer(nesPartition);
             if (workerContext.checkNetwokChannelFutureExistence(nesPartition.getOperatorId())) {
                 //wait until channel has either connected or connection times out, so we do not an channel open
-                workerContext.getNetworkChannelFuture(nesPartition.getOperatorId()).get()->close(terminationType);
+
+                auto channel = workerContext.waitForNetworkChannelFuture(nesPartition.getOperatorId());
+                if (channel) {
+                    workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
+                    unbuffer(workerContext);
+                    //channel->close(terminationType);
+                } else {
+                    //do not release network channel in the next step because none was established
+                    return;
+                }
+
+                //todo: adjust messages
                 NES_DEBUG("NetworkSink: reconfigure() released channel future on {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
 
-            } else {
-                NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),
-                                "Cannot remove network channel " << nesPartition.toString());
-                NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
-                          nesPartition.toString(),
-                          Runtime::NesThread::getId());
             }
+            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),
+                            "Cannot remove network channel " << nesPartition.toString());
+            NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
+                      nesPartition.toString(),
+                      Runtime::NesThread::getId());
         }
     }
 }
@@ -276,5 +270,27 @@ void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext) {
     workerContext.storeNetworkChannelFuture(nesPartition.getOperatorId(), std::move(networkChannelFuture));
     //reconnectBuffering = true;
 }
+
+void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
+    auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
+    NES_INFO("sending buffered data");
+    while (topBuffer) {
+        /*this will only work if guarantees are not set to at least once,
+                otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
+        if (!topBuffer.value().getBuffer()) {
+            NES_WARNING("buffer does not exist");
+            break;
+        }
+        if (!writeData(topBuffer.value(), workerContext)) {
+            NES_WARNING("could not send all data from buffer");
+            break;
+        }
+        NES_TRACE("buffer sent");
+        workerContext.removeTopTupleFromStorage(nesPartition);
+        topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
+    }
+}
+
+
 
 }// namespace NES::Network
