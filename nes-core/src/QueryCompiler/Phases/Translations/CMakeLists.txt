@@ -15,10 +15,7 @@ add_source_files(nes-core
         LowerLogicalToPhysicalOperators.cpp
         PhysicalOperatorProvider.cpp
         DefaultPhysicalOperatorProvider.cpp
-        LowerPhysicalToGeneratableOperators.cpp
         LowerToExecutableQueryPlanPhase.cpp
-        GeneratableOperatorProvider.cpp
-        DefaultGeneratableOperatorProvider.cpp
         DataSinkProvider.cpp
         DefaultDataSourceProvider.cpp
         SourceSharingDataSourceProvider.cpp

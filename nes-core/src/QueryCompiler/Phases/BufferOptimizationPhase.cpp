@@ -15,11 +15,6 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/CEP/GeneratableCEPIterationOperator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperatorPredicated.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -55,7 +50,9 @@ bool BufferOptimizationPhase::isReadOnlyInput(OperatorPipelinePtr pipeline) {
     return false;
 }
 
-OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
+OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr) {
+    NES_NOT_IMPLEMENTED();
+    /*
     if (level == QueryCompilerOptions::OutputBufferOptimizationLevel::NO) {
         NES_DEBUG("BufferOptimizationPhase: No optimization requested or applied.");
         return operatorPipeline;
@@ -160,7 +157,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     // level != NO, but still no optimization can be applied
     NES_DEBUG("BufferOptimizationPhase: Optimization was requested, but no optimization was applied.");
 
-    return operatorPipeline;
+    return operatorPipeline;*/
 }
 
 }// namespace NES::QueryCompilation

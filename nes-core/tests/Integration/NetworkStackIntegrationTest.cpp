@@ -29,7 +29,7 @@
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -209,13 +209,11 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                    Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManagers[0]);
         };
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         options->setNumSourceLocalBuffers(12);
 
-        auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory, jitCompiler);
+        auto compiler = QueryCompilation::NautilusQueryCompiler::create(options, phaseFactory);
 
         return std::make_shared<MockedNodeEngine>(std::move(physicalSources),
                                                   std::move(hwManager),

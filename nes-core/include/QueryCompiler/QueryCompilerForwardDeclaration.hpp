@@ -199,9 +199,6 @@ using BufferOptimizationPhasePtr = std::shared_ptr<BufferOptimizationPhase>;
 class PredicationOptimizationPhase;
 using PredicationOptimizationPhasePtr = std::shared_ptr<PredicationOptimizationPhase>;
 
-class CodeGenerationPhase;
-using CodeGenerationPhasePtr = std::shared_ptr<CodeGenerationPhase>;
-
 class PipeliningPhase;
 using PipeliningPhasePtr = std::shared_ptr<PipeliningPhase>;
 
@@ -220,14 +217,6 @@ using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
 
 }// namespace Phases
 
-namespace GeneratableOperators {
-class GeneratableOperator;
-using GeneratableOperatorPtr = std::shared_ptr<GeneratableOperator>;
-
-class GeneratableWindowAggregation;
-using GeneratableWindowAggregationPtr = std::shared_ptr<GeneratableWindowAggregation>;
-
-}// namespace GeneratableOperators
 
 namespace PhysicalOperators {
 class PhysicalOperator;

@@ -16,7 +16,6 @@
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>

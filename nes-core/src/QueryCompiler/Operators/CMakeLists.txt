@@ -19,6 +19,5 @@ add_source_files(nes-core
         NautilusPipelineOperator.cpp
 )
 
-add_subdirectory(GeneratableOperators)
 add_subdirectory(PhysicalOperators)
 

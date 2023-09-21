@@ -55,7 +55,7 @@ class BufferOptimizationPhase {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
-    QueryCompilerOptions::OutputBufferOptimizationLevel level;
+   [[maybe_unused]] QueryCompilerOptions::OutputBufferOptimizationLevel level;
     /**
      * @brief Indicates if the input of this pipeline is read only.
      * For instance, if the input is shared by a sibling pipeline.

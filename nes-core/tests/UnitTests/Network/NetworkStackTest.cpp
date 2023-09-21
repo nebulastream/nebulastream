@@ -40,7 +40,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>

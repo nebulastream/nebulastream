@@ -19,9 +19,7 @@
 #include <Exceptions/SignalHandling.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
@@ -202,29 +200,12 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         }
 
         auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
-
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
-        queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
-        QueryCompilation::QueryCompilerPtr compiler;
-        if (workerConfiguration->queryCompiler.queryCompilerType
-            == QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
-            auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
-            auto jitCompiler = (!this->jitCompiler)
-                ? Compiler::JITCompilerBuilder()
-                      .registerLanguageCompiler(cppCompiler)
-                      .setUseCompilationCache(workerConfiguration->queryCompiler.useCompilationCache.getValue())
-                      .build()
-                : this->jitCompiler;
-            compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions,
-                                                                      phaseFactory,
-                                                                      jitCompiler,
-                                                                      workerConfiguration->enableSourceSharing.getValue());
-        } else if (workerConfiguration->queryCompiler.queryCompilerType
-                   == QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
-            compiler = QueryCompilation::NautilusQueryCompiler::create(queryCompilationOptions,
-                                                                       phaseFactory,
-                                                                       workerConfiguration->enableSourceSharing.getValue());
-        }
+
+        auto compiler = QueryCompilation::NautilusQueryCompiler::create(queryCompilationOptions,
+                                                                        phaseFactory,
+                                                                        workerConfiguration->enableSourceSharing.getValue());
+
         if (!compiler) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating compiler");
             throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler",

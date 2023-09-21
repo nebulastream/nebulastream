@@ -15,9 +15,7 @@ add_source_files(nes-core
         AddScanAndEmitPhase.cpp
         PhaseFactory.cpp
         DefaultPhaseFactory.cpp
-        CodeGenerationPhase.cpp
         BufferOptimizationPhase.cpp
-        PredicationOptimizationPhase.cpp
         NautilusCompilationPhase.cpp
         )
 

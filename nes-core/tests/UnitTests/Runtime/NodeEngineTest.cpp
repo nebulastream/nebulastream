@@ -21,7 +21,7 @@
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -150,7 +150,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        auto queryCompiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+        auto queryCompiler = QueryCompilation::NautilusQueryCompiler::create(compilerOptions, phaseFactory);
 
         auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(physicalSources),
                                                              std::make_shared<HardwareManager>(),

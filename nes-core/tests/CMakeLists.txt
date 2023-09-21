@@ -61,19 +61,6 @@ add_nes_integration_test(node-engine-test "UnitTests/Runtime/NodeEngineTest.cpp"
 add_nes_unit_test(watermark-manager-test "UnitTests/Runtime/WatermarkManagerTest.cpp")
 
 
-add_nes_unit_test(lock-free-multi-origin-watermark-processor-test "UnitTests/Windowing/Experimental/LockFreeMultiOriginWatermarkProcessorTest.cpp")
-
-
-add_nes_unit_test(keyed-thread-local-slice-store-test "UnitTests/Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStoreTest.cpp")
-
-
-add_nes_unit_test(window-assigner-test "UnitTests/Windowing/Experimental/WindowAssignerTest.cpp")
-
-
-### Code Generation Tests ###
-add_nes_unit_test(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest.cpp")
-
-
 ### Translate Physical Operator Tests ###
 add_nes_unit_test(translate-physical-operator-tests "UnitTests/QueryCompiler/LowerLogicalToPhysicalOperatorsTest.cpp")
 
@@ -92,15 +79,6 @@ add_nes_unit_test(data-type-factory-tests "UnitTests/QueryCompiler/DataTypeFacto
 
 ### Pipelining Tests ###
 add_nes_unit_test(pipelining-phase-tests "UnitTests/QueryCompiler/PipeliningPhaseTest.cpp")
-
-
-### Operator Code Generation Tests ###
-add_nes_unit_test(operator-code-generation-tests "UnitTests/CodeGenerator/OperatorCodeGenerationTest.cpp")
-
-
-### Query Compiler Tests ###
-add_nes_unit_test(query-compiler-tests "UnitTests/QueryCompiler/QueryCompilerTest.cpp")
-
 
 ### NES Topology Tests ###
 add_nes_unit_test(topology-tests "UnitTests/Topology/TopologyTest.cpp")
@@ -159,14 +137,8 @@ add_nes_unit_test(buffer-manager-tests "UnitTests/Runtime/BufferManagerTest.cpp"
 ### Buffer Storage Test ###
 add_nes_unit_test(buffer-storage-tests "UnitTests/Runtime/BufferStorageTest.cpp")
 
-
-### AbstractWindowHandler Manager Test ###
-add_nes_unit_test(window-manager-tests "UnitTests/Windowing/WindowManagerTest.cpp")
-
-
 ### State Manager Test ###
 add_nes_unit_test(state-manager-tests "UnitTests/State/StateTest.cpp")
-
 
 ### ZMQ Data Source Sink Tests ###
 add_nes_unit_test(zmq-tests "UnitTests/Source/ZMQTest.cpp")

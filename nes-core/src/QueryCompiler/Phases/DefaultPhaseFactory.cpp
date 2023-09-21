@@ -11,22 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
-#include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
-#include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
-#include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -61,19 +56,7 @@ AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompi
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
 }
-LowerPhysicalToGeneratableOperatorsPtr
-DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr) {
-    NES_DEBUG("Create default lower pipeline plan phase");
-    auto generatableOperatorProvider = DefaultGeneratableOperatorProvider::create();
-    return LowerPhysicalToGeneratableOperators::create(generatableOperatorProvider);
-}
-CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr options,
-                                                                      Compiler::JITCompilerPtr jitCompiler) {
-    NES_DEBUG("Create default code generation phase");
-    // TODO create a option to choose between different code generators.
-    auto codeGenerator = CCodeGenerator::create();
-    return CodeGenerationPhase::create(codeGenerator, jitCompiler, options->getCompilationStrategy());
-}
+
 LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,
                                                                                               bool sourceSharing) {
     NES_DEBUG("Create lower to executable query plan phase");
@@ -91,8 +74,5 @@ BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(Qu
     NES_DEBUG("Create buffer optimization phase");
     return BufferOptimizationPhase::create(options->getOutputBufferOptimizationLevel());
 }
-PredicationOptimizationPhasePtr DefaultPhaseFactory::createPredicationOptimizationPhase(QueryCompilerOptionsPtr options) {
-    NES_DEBUG("Create predication optimization phase");
-    return PredicationOptimizationPhase::create(options->getFilterProcessingStrategy());
-}
+
 }// namespace NES::QueryCompilation::Phases

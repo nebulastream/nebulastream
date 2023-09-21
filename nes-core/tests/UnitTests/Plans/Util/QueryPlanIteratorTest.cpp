@@ -29,7 +29,6 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>

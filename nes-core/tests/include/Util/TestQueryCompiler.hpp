@@ -15,7 +15,7 @@
 #define NES_TESTS_UTIL_TEST_QUERY_COMPILER_HPP_
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
@@ -33,8 +33,7 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
     QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
     auto phaseProvider = std::make_shared<TestPhaseProvider>();
     auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
+    return QueryCompilation::NautilusQueryCompiler::create(options, phaseProvider);
 }
 
 }// namespace NES::TestUtils
