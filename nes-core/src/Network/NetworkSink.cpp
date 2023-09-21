@@ -218,11 +218,19 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         //todo #3013: make sure buffers are kept if the device is currently buffering
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             networkManager->unregisterSubpartitionProducer(nesPartition);
-            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),
-                            "Cannot remove network channel " << nesPartition.toString());
-            NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
-                      nesPartition.toString(),
-                      Runtime::NesThread::getId());
+            if (workerContext.checkNetwokChannelFutureExistence(nesPartition.getOperatorId())) {
+                //todo: release future here
+                NES_DEBUG("NetworkSink: reconfigure() released channel future on {} Thread {}",
+                          nesPartition.toString(),
+                          Runtime::NesThread::getId());
+
+            } else {
+                NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),
+                                "Cannot remove network channel " << nesPartition.toString());
+                NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
+                          nesPartition.toString(),
+                          Runtime::NesThread::getId());
+            }
         }
     }
 }

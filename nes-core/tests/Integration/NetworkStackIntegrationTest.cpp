@@ -359,8 +359,9 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
             Runtime::NodeEngineBuilder::create(workerConfig2).setQueryStatusListener(std::make_shared<DummyQueryListener>());
         auto sendEngine = nodeEngineBuilder2.build();
 
+        auto connectAsync = true;
         auto networkSink = std::make_shared<
-            NetworkSink>(schema, 0, 0, 0, nodeLocationSource, nesPartition, sendEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES);
+            NetworkSink>(schema, 0, 0, 0, nodeLocationSource, nesPartition, sendEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES, FaultToleranceType::NONE, 0, connectAsync);
         networkSink->preSetup();
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
