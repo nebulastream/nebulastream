@@ -34,7 +34,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType,
-                         uint64_t numberOfOrigins)
+                         uint64_t numberOfOrigins,
+                         bool connectAsync)
     : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
@@ -48,7 +49,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false), connectAsync(connectAsync) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
@@ -66,7 +67,8 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWO
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     //if a mobile node is in the process of reconnecting, do not attempt to send data but buffer it instead
     NES_TRACE("context {} writing data", workerContext.getId());
-    if (reconnectBuffering) {
+    //if (reconnectBuffering) {
+    if (workerContext.checkNetwokChannelFutureExistence(nesPartition.getOperatorId())) {
         NES_TRACE("context {} buffering data", workerContext.getId());
         workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         return true;
@@ -77,6 +79,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         if (success) {
             insertIntoStorageCallback(inputBuffer, workerContext);
+        } else {
+            //todo: initiate reconnect
         }
         return success;
     }
@@ -114,10 +118,14 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
-            auto channel =
-                networkManager->registerSubpartitionProducer(receiverLocation, nesPartition, bufferManager, waitTime, retryTimes);
-            NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
-            workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
+            if (connectAsync) {
+                connectToChannelAsync(workerContext);
+            } else {
+                auto channel =
+                    networkManager->registerSubpartitionProducer(receiverLocation, nesPartition, bufferManager, waitTime, retryTimes);
+                NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
+                workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
+            }
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
             workerContext.createStorage(nesPartition);
             NES_DEBUG("NetworkSink: reconfigure() stored channel on {} Thread {} ref cnt {}",
@@ -170,7 +178,18 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
             /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we
             unbuffer*/
-            reconnectBuffering = false;
+            //reconnectBuffering = false;
+
+            //if the callback was triggered by the channel for another thread becoming ready, we cannot to anything
+            if (!workerContext.checkNetwokChannelFutureExistence(nesPartition.getOperatorId())) {
+                return;
+            }
+
+            //retrieve new channel and replace old channel
+            auto newNetworkChannel = workerContext.getNetworkChannelFuture(nesPartition.getOperatorId());
+            workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(newNetworkChannel));
+
+            //todo: extract to unbuffer function
             NES_INFO("stop buffering data for context {}", workerContext.getId());
             auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
             NES_INFO("sending buffered data");
@@ -232,5 +251,21 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
+
+void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext) {
+    NES_DEBUG("NetworkSink: method connectToChannelAsync() called {} qep {}", nesPartition.toString(), querySubPlanId);
+    auto reconf = Runtime::ReconfigurationMessage(queryId,
+                                                  querySubPlanId,
+                                                  Runtime::ReconfigurationType::StopBuffering,
+                                                  inherited0::shared_from_this(),
+                                                  std::make_any<uint32_t>(numOfProducers));
+    auto networkChannelFuture = networkManager->registerSubpartitionProducerAsync(receiverLocation,
+                                                                             nesPartition,
+                                                                             bufferManager,
+                                                                             waitTime,
+                                                                             retryTimes, reconf, queryManager);
+    workerContext.storeNetworkChannelFuture(nesPartition.getOperatorId(), std::move(networkChannelFuture));
+    //reconnectBuffering = true;
+}
 
 }// namespace NES::Network

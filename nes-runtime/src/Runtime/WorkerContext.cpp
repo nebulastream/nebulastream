@@ -145,6 +145,7 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
     return (*it).second.get();
 }
 
+//todo rename to from future
 Network::NetworkChannelPtr WorkerContext::getNetworkChannelFuture(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
     auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
@@ -154,6 +155,11 @@ Network::NetworkChannelPtr WorkerContext::getNetworkChannelFuture(NES::OperatorI
         return future.get();
     }
     return nullptr;
+}
+
+bool WorkerContext::checkNetwokChannelFutureExistence(NES::OperatorId ownerId) {
+    NES_TRACE("WorkerContext: checking existence of channel future for operator {} for context {}", ownerId, workerId);
+    return dataChannelsFutures.contains(ownerId);
 }
 
 Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId ownerId) {
