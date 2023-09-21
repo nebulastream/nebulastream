@@ -70,6 +70,11 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
+void WorkerContext::storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channel) {
+    NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
+    dataChannelsFutures[id] = std::move(channel);
+}
+
 void WorkerContext::createStorage(Network::NesPartition nesPartition) {
     this->storage[nesPartition] = std::make_shared<BufferStorage>();
 }
@@ -140,6 +145,23 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
     return (*it).second.get();
 }
 
+//todo rename to from future
+Network::NetworkChannelPtr WorkerContext::getNetworkChannelFuture(NES::OperatorId ownerId) {
+    NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
+    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
+    if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        auto future = std::move(it->second);
+        dataChannelsFutures.erase(it);
+        return future.get();
+    }
+    return nullptr;
+}
+
+bool WorkerContext::checkNetwokChannelFutureExistence(NES::OperatorId ownerId) {
+    NES_TRACE("WorkerContext: checking existence of channel future for operator {} for context {}", ownerId, workerId);
+    return dataChannelsFutures.contains(ownerId);
+}
+
 Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving event only channel for operator {} for context {}", ownerId, workerId);
     auto it = reverseEventChannels.find(ownerId);// note we assume it's always available
@@ -149,5 +171,8 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES:
 LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolTLS.get(); }
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
+bool WorkerContext::stopConnectingToNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint64_t timeout) {
+    return false;
+}
 
 }// namespace NES::Runtime

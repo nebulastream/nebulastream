@@ -52,7 +52,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                         uint64_t numberOfOrigins = 0);
+                         uint64_t numberOfOrigins = 0,
+                         bool connectAsync = false);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -138,7 +139,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
+    //todo: remove
     std::atomic<bool> reconnectBuffering;
+    const bool connectAsync;
+    void connectToChannelAsync(Runtime::WorkerContext& workerContext);
 };
 
 }// namespace Network
