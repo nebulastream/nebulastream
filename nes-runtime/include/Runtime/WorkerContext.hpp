@@ -207,6 +207,8 @@ class WorkerContext {
      */
     Network::NetworkChannelPtr getNetworkChannelFuture(NES::OperatorId ownerId);
 
+    bool checkNetwokChannelFutureExistence(OperatorId ownerId);
+
     /**
      * @brief retrieve a registered output channel
      * @param ownerId id of the operator that we want to store the output channel
