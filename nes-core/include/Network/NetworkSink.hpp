@@ -53,7 +53,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                          uint64_t numberOfOrigins = 0,
-                         bool connectAsync = false);
+                         bool connectAsync = true);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -140,7 +140,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
     //todo: remove
-    std::atomic<bool> reconnectBuffering;
     const bool connectAsync;
     void connectToChannelAsync(Runtime::WorkerContext& workerContext);
     void unbuffer(Runtime::WorkerContext& workerContext);

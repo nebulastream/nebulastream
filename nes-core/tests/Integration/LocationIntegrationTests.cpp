@@ -26,6 +26,9 @@
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
@@ -52,7 +55,7 @@ using std::string;
 uint16_t timeout = 5;
 namespace NES::Spatial {
 
-class LocationIntegrationTests : public Testing::BaseIntegrationTest {
+class LocationIntegrationTests : public Testing::BaseIntegrationTest, public testing::WithParamInterface<uint32_t> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationIntegrationTests.log", NES::LogLevel::LOG_DEBUG);
@@ -1035,6 +1038,212 @@ TEST_F(LocationIntegrationTests, testConnectingToClosestNodeNoParentInConfig) {
 }
 #endif
 
+//todo: explicitly set async flag here
+TEST_P(LocationIntegrationTests, testAsyncConnectingWaitForTuples) {
+    size_t numBuffersToProduce = 400;
+    size_t tuplesPerBuffer = 10;
+    NES_INFO(" start coordinator");
+    std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
+    remove(testFile.c_str());
+
+    std::string compareString;
+    std::ostringstream oss;
+    oss << "seq$value:INTEGER(64 bits)" << std::endl;
+    for (size_t i = 1; i <= numBuffersToProduce * tuplesPerBuffer; ++i) {
+        oss << std::to_string(i) << std::endl;
+        compareString = oss.str();
+    }
+
+    NES_INFO("rest port = {}", *restPort);
+
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
+    coordinatorConfig->restPort.setValue(*restPort);
+
+    NES_INFO("start coordinator")
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    ASSERT_NE(port, 0UL);
+    NES_INFO("coordinator started successfully");
+
+    TopologyPtr topology = crd->getTopology();
+    ASSERT_TRUE(waitForNodes(5, 1, topology));
+
+    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
+
+    NES_INFO("start worker 1");
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
+    //todo: make this parametrized
+    wrkConf1->numWorkerThreads.setValue(GetParam());
+
+    auto stype = CSVSourceType::create();
+    stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
+    stype->setNumberOfBuffersToProduce(numBuffersToProduce);
+    stype->setNumberOfTuplesToProducePerBuffer(tuplesPerBuffer);
+    stype->setGatheringInterval(1);
+    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sequenceSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    ASSERT_TRUE(waitForNodes(5, 2, topology));
+
+    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        Optimizer::PlacementStrategy::BottomUp,
+        FaultToleranceType::NONE,
+        LineageType::NONE);
+
+    NES_INFO("Query ID: {}", queryId);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
+
+    auto startTimestamp = std::chrono::system_clock::now();
+    size_t recv_tuples = 0;
+
+    //todo: use lambda source to ensure that we do not use shutdown flushing
+    while (recv_tuples < numBuffersToProduce * tuplesPerBuffer && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
+        std::ifstream inFile(testFile);
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
+        NES_DEBUG("recv after buffering: {}", recv_tuples)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    //ASSERT_EQ(recv_tuples, numBuffersToProduce * tuplesPerBuffer);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareString, testFile));
+
+    int response = remove(testFile.c_str());
+    ASSERT_TRUE(response == 0);
+
+    cout << "stopping worker" << endl;
+    bool retStopWrk = wrk1->stop(false);
+    ASSERT_TRUE(retStopWrk);
+
+    cout << "stopping coordinator" << endl;
+    bool retStopCord = crd->stopCoordinator(false);
+    ASSERT_TRUE(retStopCord);
+}
+
+//todo: explicitly set async flag here
+TEST_P(LocationIntegrationTests, testPlannedReconnect) {
+    size_t numBuffersToProduce = 400;
+    size_t tuplesPerBuffer = 10;
+    NES_INFO(" start coordinator");
+    std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
+    remove(testFile.c_str());
+
+    std::string compareString;
+    std::ostringstream oss;
+    oss << "seq$value:INTEGER(64 bits)" << std::endl;
+    for (size_t i = 1; i <= numBuffersToProduce * tuplesPerBuffer; ++i) {
+        oss << std::to_string(i) << std::endl;
+        compareString = oss.str();
+    }
+
+    NES_INFO("rest port = {}", *restPort);
+
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
+    coordinatorConfig->restPort.setValue(*restPort);
+
+    NES_INFO("start coordinator")
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    ASSERT_NE(port, 0UL);
+    NES_INFO("coordinator started successfully");
+
+    TopologyPtr topology = crd->getTopology();
+    ASSERT_TRUE(waitForNodes(5, 1, topology));
+
+    auto schema = Schema::create()->addField(createField("value", BasicType::UINT64));
+    crd->getSourceCatalog()->addLogicalSource("seq", schema);
+
+    NES_INFO("start worker 1");
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
+    //todo: make this parametrized
+    wrkConf1->numWorkerThreads.setValue(GetParam());
+
+    auto stype = CSVSourceType::create();
+    stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
+    stype->setNumberOfBuffersToProduce(numBuffersToProduce);
+    stype->setNumberOfTuplesToProducePerBuffer(tuplesPerBuffer);
+    stype->setGatheringInterval(1);
+    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+    wrkConf1->physicalSources.add(sequenceSource);
+    auto wrk1DataPort = getAvailablePort();
+    wrkConf1->dataPort = *wrk1DataPort;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    ASSERT_TRUE(waitForNodes(5, 2, topology));
+
+    NES_INFO("start worker 2");
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+    wrkConf2->coordinatorPort.setValue(*rpcCoordinatorPort);
+    //todo: make this parametrized
+    wrkConf2->numWorkerThreads.setValue(GetParam());
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart2);
+    ASSERT_TRUE(waitForNodes(5, 3, topology));
+
+    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        Optimizer::PlacementStrategy::BottomUp,
+        FaultToleranceType::NONE,
+        LineageType::NONE);
+
+    NES_INFO("Query ID: {}", queryId);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
+
+    auto startTimestamp = std::chrono::system_clock::now();
+    size_t recv_tuples = 0;
+
+    //todo: try deploying new source
+    auto subPlanId = 4;
+    auto sinkLocation = NES::Network::NodeLocation(wrk1->getWorkerId(), "localhost", *wrk1DataPort);
+    auto partition = NES::Network::NesPartition(queryId, 1, 1, 1);
+    auto networkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema, partition, sinkLocation, std::chrono::milliseconds(1000), 5);
+    auto queryPlan = QueryPlan::create(queryId, subPlanId);
+    auto sourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, 1);
+    queryPlan->addRootOperator(sourceOperatorNode);
+
+    std::string testFileAfterReconnect = getTestResourceFolder() / "sequence_with_buffering_out_after_reconnect.csv";
+    remove(testFileAfterReconnect.c_str());
+    auto fileSinkDescriptor = FileSinkDescriptor::create(testFileAfterReconnect, "CSV_FORMAT", "APPEND");
+    auto sinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, 2);
+    queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
+
+    //check which calls to make
+    auto success_register = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
+    ASSERT_TRUE(success_register);
+    auto success_start = wrk2->getNodeEngine()->startQuery(queryId);
+    ASSERT_TRUE(success_start);
+
+    //todo: use lambda source to ensure that we do not use shutdown flushing
+    while (recv_tuples < numBuffersToProduce * tuplesPerBuffer && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
+        std::ifstream inFile(testFile);
+        recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
+        NES_DEBUG("recv after buffering: {}", recv_tuples)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    //ASSERT_EQ(recv_tuples, numBuffersToProduce * tuplesPerBuffer);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareString, testFile));
+
+    int response = remove(testFile.c_str());
+    ASSERT_TRUE(response == 0);
+
+    cout << "stopping worker" << endl;
+    bool retStopWrk = wrk1->stop(false);
+    ASSERT_TRUE(retStopWrk);
+
+    cout << "stopping coordinator" << endl;
+    bool retStopCord = crd->stopCoordinator(false);
+    ASSERT_TRUE(retStopCord);
+}
+//todo: adjust this test
 TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
@@ -1417,5 +1626,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
+
+INSTANTIATE_TEST_CASE_P(LocationIntegrationTestsParam, LocationIntegrationTests, ::testing::Values(1, 4));
 #endif
 }// namespace NES::Spatial
