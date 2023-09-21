@@ -220,6 +220,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             networkManager->unregisterSubpartitionProducer(nesPartition);
             if (workerContext.checkNetwokChannelFutureExistence(nesPartition.getOperatorId())) {
                 //todo: release future here
+                workerContext.stopConnectingToNetworkChannel(nesPartition.getOperatorId(), Runtime::QueryTerminationType::Invalid, 1);
                 NES_DEBUG("NetworkSink: reconfigure() released channel future on {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());

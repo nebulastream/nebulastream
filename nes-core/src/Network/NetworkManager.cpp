@@ -139,7 +139,7 @@ ConnectionThreadInfo NetworkManager::registerSubpartitionProducerAsync(const Nod
         promise.set_value(std::move(channel));
         queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, true);
     });
-    thread.detach();
+    //thread.detach();
     return {std::move(future), std::move(thread)};
 }
 

@@ -82,7 +82,7 @@ class NetworkStackIntegrationTest : public Testing::BaseIntegrationTest {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("NetworkStackIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("NetworkStackIntegrationTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("SetUpTestCase NetworkStackIntegrationTest");
     }
 

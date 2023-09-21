@@ -172,10 +172,23 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES:
 LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolTLS.get(); }
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
+
 bool WorkerContext::stopConnectingToNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint64_t timeout) {
-    (void) id;
-    (void) type;
-    (void) timeout;
+    NES_TRACE("WorkerContext: aborting channel connection for operator {} for context {}", id, workerId);
+    auto it = dataChannelFutures.find(id);// note we assume it's always available
+
+    //try joning thread
+    NES_TRACE("WorkerContext: waiting {} seconds for connection thread to finish", timeout);
+    if (it->second.future.wait_for(std::chrono::seconds(timeout)) == std::future_status::ready) {
+        auto future = std::move(it->second.future);
+        future.get()->close(type);
+        it->second.thread.join();
+        dataChannelFutures.erase(it);
+        return true;
+    }
+
+    //if thread did not finish its work within timeout, kill it
+    dataChannelFutures.erase(it);
     return false;
 }
 
