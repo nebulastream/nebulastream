@@ -25,8 +25,6 @@ using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
 namespace Optimizer {
 
-class SignatureContainmentCheck;
-
 class ContainmentRelationshipAndOperatorChain;
 using ContainmentRelationshipAndOperatorChainPtr = std::unique_ptr<ContainmentRelationshipAndOperatorChain>;
 

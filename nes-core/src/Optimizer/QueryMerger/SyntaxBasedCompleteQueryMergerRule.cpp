@@ -75,7 +75,8 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                     }
 
                     //add to the matched pair
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create((*hostSinkOperator), targetSinkOperator));
+                    matchedOperatorPairs.emplace_back(
+                        MatchedOperatorPair::create((*hostSinkOperator), targetSinkOperator, ContainmentRelationship::EQUALITY));
                 }
 
                 //add matched operators to the host shared query plan

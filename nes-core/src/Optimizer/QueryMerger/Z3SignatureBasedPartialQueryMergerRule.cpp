@@ -192,7 +192,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
                     matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator->as<LogicalOperatorNode>(),
-                                                                                  targetOperator->as<LogicalOperatorNode>()));
+                                                                                  targetOperator->as<LogicalOperatorNode>(),
+                                                                                  ContainmentRelationship::EQUALITY));
                 }
 
                 //add matched operators to the host shared query plan

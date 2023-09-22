@@ -29,7 +29,8 @@
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedTopDownQueryContainmentMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context, bool allowSQPAsContainee) {
+Z3SignatureBasedTopDownQueryContainmentMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context,
+                                                                                                     bool allowSQPAsContainee) {
     SignatureContainmentUtil = SignatureContainmentCheck::create(std::move(context), allowSQPAsContainee);
 }
 
@@ -133,7 +134,9 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                             if (relationshipAndOperators->containmentRelationship != ContainmentRelationship::NO_CONTAINMENT) {
                                 //Add the matched host operator to the map
                                 matchedTargetToHostOperatorMap[targetOperator] =
-                                    std::tuple(hostOperator, relationshipAndOperators->containmentRelationship, relationshipAndOperators->containedOperatorChain);
+                                    std::tuple(hostOperator,
+                                               relationshipAndOperators->containmentRelationship,
+                                               relationshipAndOperators->containedOperatorChain);
                                 //Mark the host operator as matched
                                 matchedHostOperators.emplace_back(hostOperator);
                                 foundMatch = true;
@@ -207,32 +210,35 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                     if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain) == ContainmentRelationship::EQUALITY) {
                         LogicalOperatorNodePtr hostOperator =
                             get<0>(hostOperatorContainmentRelationshipContainedOperatorChain)->as<LogicalOperatorNode>();
-                        matchedOperatorPairs.emplace_back(
-                            MatchedOperatorPair::create(hostOperator, targetOperator->as<LogicalOperatorNode>()));
+                        matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator,
+                                                                                      targetOperator->as<LogicalOperatorNode>(),
+                                                                                      ContainmentRelationship::EQUALITY));
                         //add matched operators to the host shared query plan
                         hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
                         auto containerOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
-                        // get the new sink operation to add to the query plan, new query plans should only have one sink operator
-                        auto newSinkOperator = targetOperator->getAllRootNodes().front()->as<LogicalOperatorNode>();
-                        hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(),
-                                                      containerOperator,
-                                                      targetOperator,
-                                                      containedOperatorChain,
-                                                      newSinkOperator);
+                        addContainmentOperatorChain(hostSharedQueryPlan,
+                            containerOperator,
+                            targetOperator,
+                            containedOperatorChain);
+                        matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(containerOperator->as<LogicalOperatorNode>(),
+                                                                                      containedOperatorChain.back()->as<LogicalOperatorNode>(),
+                                                                                      ContainmentRelationship::RIGHT_SIG_CONTAINED));
+                        hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentRelationship::LEFT_SIG_CONTAINED) {
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
-                        // get the new sink operation to add to the query plan, new query plans should only have one sink operator
-                        auto newSinkOperator = targetOperator->getAllRootNodes().front()->as<LogicalOperatorNode>();
-                        hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(),
-                                                      targetOperator,
-                                                      containedOperator,
-                                                      containedOperatorChain,
-                                                      newSinkOperator);
+                        addContainmentOperatorChain(hostSharedQueryPlan,
+                                                    targetOperator,
+                                                    containedOperator,
+                                                    containedOperatorChain);
+                        matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(targetOperator->as<LogicalOperatorNode>(),
+                                                                                      containedOperatorChain.back()->as<LogicalOperatorNode>(),
+                                                                                      ContainmentRelationship::LEFT_SIG_CONTAINED));
+                        hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
                     }
                 }
 
@@ -252,5 +258,34 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
     //Remove all empty shared query metadata
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
+}
+
+void Z3SignatureBasedTopDownQueryContainmentMergerRule::addContainmentOperatorChain(
+    SharedQueryPlanPtr& containerQueryPlan,
+    const OperatorNodePtr& containerOperator,
+    const OperatorNodePtr& containedOperator,
+    const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const {
+
+    auto downstreamOperator = containedOperatorChain.front();
+    auto upstreamContainedOperator = containedOperatorChain.back();
+    NES_TRACE("ContainerQueryPlan: {}", containerQueryPlan->getQueryPlan()->toString());
+    NES_TRACE("ContainerOperator: {}", containerOperator->toString());
+    NES_TRACE("DownstreamOperator: {}", downstreamOperator->toString());
+    NES_TRACE("ContainedOperator: {}", containedOperator->toString());
+    NES_TRACE("upstreamContainedOperator: {}", upstreamContainedOperator->toString());
+    NES_TRACE("downstreamOperator children size: {}", downstreamOperator->getChildren().size());
+    auto parents = containedOperator->getParents();
+    for (const auto& parent : parents) {
+        parent->removeChild(containedOperator);
+        NES_TRACE("Parent: {}", parent->toString());
+        downstreamOperator->addParent(parent);
+    }
+    //add the contained operator chain to the host operator
+    bool addedNewParent = containerOperator->addParent(upstreamContainedOperator);
+    NES_TRACE("Children upstreamContainedOperator size: {}", upstreamContainedOperator->getChildren().size());
+    NES_TRACE("Children upstreamContainedOperator: {}", upstreamContainedOperator->getChildren()[0]->toString());
+    if (!addedNewParent) {
+        NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
+    }
 }
 }// namespace NES::Optimizer

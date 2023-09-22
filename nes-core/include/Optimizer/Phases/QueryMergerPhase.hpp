@@ -53,7 +53,7 @@ using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 class QueryMergerPhase {
 
   public:
-    static QueryMergerPhasePtr create(z3::ContextPtr context, const Configurations::OptimizerConfigurationPtr& optimizerConfiguration);
+    static QueryMergerPhasePtr create(z3::ContextPtr context, const Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
      * @brief execute method to apply different query merger rules on the global query plan.
@@ -63,7 +63,7 @@ class QueryMergerPhase {
     bool execute(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
-    explicit QueryMergerPhase(z3::ContextPtr context, const Configurations::OptimizerConfigurationPtr& optimizerConfiguration);
+    explicit QueryMergerPhase(z3::ContextPtr context, const Configurations::OptimizerConfiguration optimizerConfiguration);
     BaseQueryMergerRulePtr queryMergerRule;
 };
 }// namespace NES::Optimizer

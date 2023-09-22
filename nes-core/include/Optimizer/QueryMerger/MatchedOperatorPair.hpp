@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <Optimizer/QuerySignatures/ContainmentRelationshipAndOperatorChain.hpp>
 #include <memory>
+#include <vector>
 
 namespace NES {
 
@@ -25,18 +27,24 @@ class MatchedOperatorPair;
 using MatchedOperatorPairPtr = std::unique_ptr<MatchedOperatorPair>;
 
 /**
-* @brief this class stores a pair of matched operators. One from the host shared query plan and one from the target shared query plan.
+ * @brief this class stores a pair of matched operators. One from the host shared query plan and one from the target shared query plan.
+ * Addionally, it stores the containment relationship between the two operators.
 */
 class MatchedOperatorPair {
 
   public:
-    static MatchedOperatorPairPtr create(LogicalOperatorNodePtr hostOperator, LogicalOperatorNodePtr targetOperator);
+    static MatchedOperatorPairPtr create(LogicalOperatorNodePtr hostOperator,
+                                         LogicalOperatorNodePtr targetOperator,
+                                         Optimizer::ContainmentRelationship containmentRelationship);
 
     LogicalOperatorNodePtr hostOperator;
     LogicalOperatorNodePtr targetOperator;
+    Optimizer::ContainmentRelationship containmentRelationship;
 
   private:
-    explicit MatchedOperatorPair(LogicalOperatorNodePtr hostOperator, LogicalOperatorNodePtr targetOperator);
+    explicit MatchedOperatorPair(LogicalOperatorNodePtr hostOperator,
+                                 LogicalOperatorNodePtr targetOperator,
+                                 Optimizer::ContainmentRelationship containmentRelationship);
 };
 }// namespace Optimizer
 }// namespace NES

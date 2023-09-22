@@ -38,21 +38,21 @@ class ContainedOperatorsUtil {
      * @param containedWindowIndex index of the contained window operator
      * @return contained window operator and its watermark operator
      */
-    std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
+    static std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
                                                                       const LogicalOperatorNodePtr& containerOperator);
     /**
      * @brief extracts the contained projection operator, i.e. extracts the most downstream projection operator from the contained upstream operator chain
      * @param containedOperator operator that we identified as contained
      * @return contained projection operator
      */
-    LogicalOperatorNodePtr createContainedProjectionOperator(const LogicalOperatorNodePtr& containedOperator);
+    static LogicalOperatorNodePtr createContainedProjectionOperator(const LogicalOperatorNodePtr& containedOperator);
     /**
      * @brief extracts all upstream filter operators from the contained operator chain
      * @param container the current operator from the container query
      * @param containee the current operator from the contained query
      * @return all filter upstream filter operations from the contained query
      */
-    LogicalOperatorNodePtr createContainedFilterOperators(const LogicalOperatorNodePtr& container,
+    static LogicalOperatorNodePtr createContainedFilterOperators(const LogicalOperatorNodePtr& container,
                                                                        const LogicalOperatorNodePtr& containee);
     /**
      * @brief Validate if the map assignment field is used in the filter predicate of the operator
@@ -60,7 +60,7 @@ class ContainedOperatorsUtil {
      * @param fieldName :  name of the field to be checked
      * @return true if field use in the filter predicate else false
      */
-    bool isMapTransformationAppliedToPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
+    static bool isMapTransformationAppliedToPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
                                                const std::vector<std::string>& fieldNames,
                                                const SchemaPtr& containerOutputSchema);
     /**
@@ -71,7 +71,7 @@ class ContainedOperatorsUtil {
      * @param extractedContainedOperator the most upstream operator from the extracted contained operator chain
      * @return true, if the container chain has only one parent relationship, false otherwise
      */
-    bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator,
+    static bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator,
                                                      const LogicalOperatorNodePtr& extractedContainedOperator);
     /**
      * @brief checks if we can safely extract the contained operator chain from the container operator chain, i.e.
@@ -81,7 +81,7 @@ class ContainedOperatorsUtil {
      * @param extractedContainedOperator the most upstream operator from the extracted contained operator chain
      * @return true, if the container chain has only one parent relationship, false otherwise
      */
-    bool checkDownstreamOperatorChainForSingleParentAndMapOperator(const LogicalOperatorNodePtr& containedOperator,
+    static bool checkDownstreamOperatorChainForSingleParentAndMapOperator(const LogicalOperatorNodePtr& containedOperator,
                                                                    const LogicalOperatorNodePtr& extractedContainedOperator,
                                                                    std::vector<std::string>& mapAttributeNames);
 };

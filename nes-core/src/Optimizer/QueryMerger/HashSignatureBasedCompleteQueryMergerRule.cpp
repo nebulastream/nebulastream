@@ -83,7 +83,8 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
                 for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
                     //add to the matched pair
                     matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator->as<LogicalOperatorNode>(),
-                                                                                  targetSinkOperator->as<LogicalOperatorNode>()));
+                                                                                  targetSinkOperator->as<LogicalOperatorNode>(),
+                                                                                  ContainmentRelationship::EQUALITY));
                 }
 
                 //add matched operators to the host shared query plan
