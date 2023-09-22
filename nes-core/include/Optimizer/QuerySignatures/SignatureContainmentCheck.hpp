@@ -46,13 +46,10 @@ using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 class SignatureContainmentCheck;
 using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentCheck>;
 
-class ContainmentRelationshipAndOperatorChain;
-using ContainmentRelationshipAndOperatorChainPtr = std::shared_ptr<ContainmentRelationshipAndOperatorChain>;
-
 /**
  * @brief This is a utility to compare two signatures
  */
-class SignatureContainmentCheck : public ContainedOperatorsUtil {
+class SignatureContainmentCheck {
 
   public:
     /**

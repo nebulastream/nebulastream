@@ -69,7 +69,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param hostQueryPlan : host query plan
      * @return Map containing matching pair of target and host operators
      */
-    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>>
+    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>>
     areQueryPlansContained(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan);
 
     /**
@@ -78,7 +78,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param hostOperator : the host operator to compare with
      * @return bool true if equal else false
      */
-    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentType>>
+    std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>>
     areOperatorsContained(const LogicalOperatorNodePtr& targetOperator, const LogicalOperatorNodePtr& hostOperator);
 
     /**

@@ -24,7 +24,7 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
 class MatchedOperatorPair;
 using MatchedOperatorPairPtr = std::shared_ptr<MatchedOperatorPair>;
-}
+}// namespace NES
 
 namespace NES::Optimizer {
 
@@ -94,8 +94,26 @@ class Z3SignatureBasedTopDownQueryContainmentMergerRule final : public BaseQuery
   private:
     explicit Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context, bool allowSQPAsContainee);
 
-    SignatureContainmentUtilPtr SignatureContainmentUtil;
+    /**
+     * @brief adds a query to a shared query plan in case a containment relationship was detected
+     * in particular, it adds the containment operator chain to the correct container operator
+     * * 1. filter operations: All upstream filter operators from the contained query will be extracted and added to the equivalent
+     * container's upstream operator chain
+     * 2. projection operations: We extract all upstream projection operators and add the most downstream projection operator to the
+     * container's upstream operator chain
+     * 3. window operations: We extract all upstream window operators, identify the contained window operator, and add it to the container's
+     * upstream operator chain
+     * @param queryId : id of the input query
+     * @param containerQueryPlan the containers query plan to add the contained operator chain to
+     * @param containerOperator the current container operator
+     * @param containedOperatorChain vector with all extracted operators from the contained query
+     */
+    void addContainmentOperatorChain(SharedQueryPlanPtr& containerQueryPlan,
+                                     const OperatorNodePtr& containerOperator,
+                                     const OperatorNodePtr& containedOperator,
+                                     const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const;
 
+        SignatureContainmentUtilPtr SignatureContainmentUtil;
 };
 }// namespace NES::Optimizer
 

@@ -31,14 +31,14 @@
 namespace NES::Optimizer {
 
 QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context,
-                                             const Configurations::OptimizerConfigurationPtr& optimizerConfiguration) {
+                                             const Configurations::OptimizerConfiguration optimizerConfiguration) {
     return std::make_shared<QueryMergerPhase>(QueryMergerPhase(std::move(context), optimizerConfiguration));
 }
 
 QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context,
-                                   const Configurations::OptimizerConfigurationPtr& optimizerConfiguration) {
+                                   const Configurations::OptimizerConfiguration optimizerConfiguration) {
 
-    switch (optimizerConfiguration->queryMergerRule) {
+    switch (optimizerConfiguration.queryMergerRule) {
         case QueryMergerRule::SyntaxBasedCompleteQueryMergerRule:
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;
@@ -59,7 +59,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context,
             queryMergerRule = Z3SignatureBasedBottomUpQueryContainmentRule::create(std::move(context));
             break;
         case QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule:
-            queryMergerRule = Z3SignatureBasedTopDownQueryContainmentMergerRule::create(std::move(context), optimizerConfiguration->allowSQPAsContainee.getValue());
+            queryMergerRule = Z3SignatureBasedTopDownQueryContainmentMergerRule::create(std::move(context), optimizerConfiguration.allowSQPAsContainee.getValue());
             break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
