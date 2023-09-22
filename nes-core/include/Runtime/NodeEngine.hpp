@@ -332,6 +332,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
+    bool reconfigureNetworkSink(uint64_t newNodeId,
+                                const std::string& newHostname,
+                                uint32_t newPort,
+                                QuerySubPlanId querySubPlanId,
+                                uint64_t uniqueNetworkSinkDescriptorId,
+                                Network::NesPartition newPartition);
   public:
     /**
      * @brief Create a node engine and gather node information
