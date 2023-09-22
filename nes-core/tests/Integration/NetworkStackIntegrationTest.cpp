@@ -351,6 +351,10 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
             Runtime::NodeEngineBuilder::create(workerConfig2).setQueryStatusListener(std::make_shared<DummyQueryListener>());
         auto sendEngine = nodeEngineBuilder2.build();
 
+        //when async connecting is used, the sink will not finish the normal connecting process
+        //this is because the sending threads do not mimic the behaviour of the actual worker thread pool so far that
+        //the the threads which write the data receive the reconfiguration messages. The test passes because the sinks
+        //shutdown sequence makes a connection attempt in order to flush the data, not because it connects normally
         auto connectAsync = GetParam();
         auto networkSink = std::make_shared<
             NetworkSink>(schema, 0, 0, 0, nodeLocationSource, nesPartition, sendEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES, FaultToleranceType::NONE, 0, connectAsync);

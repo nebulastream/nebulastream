@@ -46,9 +46,6 @@ if (CODE_COVERAGE)
 endif ()
 
 
-### Query Redeployment Integration Test
-add_nes_integration_test(query-redeployment-integration-tests "Integration/QueryRedeploymentTest.cpp")
-
 add_subdirectory(UnitTests/QueryExecution)
 add_subdirectory(E2e)
 add_subdirectory(Integration)
