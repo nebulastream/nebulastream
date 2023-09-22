@@ -78,10 +78,10 @@ class NesPartition {
     }
 
   private:
-    const QueryId queryId;
-    const OperatorId operatorId;
-    const PartitionId partitionId;
-    const SubpartitionId subpartitionId;
+    QueryId queryId;
+    OperatorId operatorId;
+    PartitionId partitionId;
+    SubpartitionId subpartitionId;
 };
 }// namespace NES::Network
 namespace std {

@@ -61,6 +61,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
+    std::unordered_map<uint64_t, BufferStoragePtr> reconnectBufferStorage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -134,9 +135,9 @@ class WorkerContext {
     /**
      * @brief This stores a future for network channel creation for an operator
      * @param id of the operator that we want to store the output channel
-     * @param channel the output channel
+     * @param channelFuture a future containing the output channel
      */
-    void storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channel);
+    void storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channelFuture);
 
     /**
       * @brief This method creates a network storage for a thread
@@ -200,10 +201,11 @@ class WorkerContext {
     Network::NetworkChannel* getNetworkChannel(NES::OperatorId ownerId);
 
     /**
-     * @brief retrieve a registered output channel
+     * @brief retrieves a newly established output channel or nullptr if the connection could not yet be established
      * @param ownerId id of the operator that we want to store the output channel
      * @return an output channel
      */
+     //todo: rename
     Network::NetworkChannelPtr getNetworkChannelFuture(NES::OperatorId ownerId);
 
     Network::NetworkChannelPtr waitForNetworkChannelFuture(NES::OperatorId ownerId);
@@ -216,6 +218,10 @@ class WorkerContext {
      * @return an output channel
      */
     Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(NES::OperatorId ownerId);
+    void createReconnectBufferStorage(uint64_t sinkId);
+    void insertIntoReconnectBufferStorage(uint64_t sinkId, NES::Runtime::TupleBuffer buffer);
+    std::optional<TupleBuffer> getTopTupleFromReconnectBufferStorage(uint64_t sinkId);
+    void removeTopTupleFromReconnectBufferStorage(uint64_t sinkId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime

@@ -70,13 +70,17 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
-void WorkerContext::storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channel) {
+void WorkerContext::storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
-    dataChannelsFutures[id] = std::move(channel);
+    dataChannelsFutures[id] = std::move(channelFuture);
 }
 
 void WorkerContext::createStorage(Network::NesPartition nesPartition) {
     this->storage[nesPartition] = std::make_shared<BufferStorage>();
+}
+
+void WorkerContext::createReconnectBufferStorage(uint64_t sinkId) {
+    this->reconnectBufferStorage[sinkId] = std::make_shared<BufferStorage>();
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
@@ -85,6 +89,15 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::R
         this->storage[nesPartition]->insertBuffer(buffer);
     } else {
         NES_WARNING("No buffer storage found for partition {}, buffer was dropped", nesPartition);
+    }
+}
+
+void WorkerContext::insertIntoReconnectBufferStorage(uint64_t sinkId, NES::Runtime::TupleBuffer buffer) {
+    auto iteratorPartitionId = this->reconnectBufferStorage.find(sinkId);
+    if (iteratorPartitionId != this->reconnectBufferStorage.end()) {
+        this->reconnectBufferStorage[sinkId]->insertBuffer(std::move(buffer));
+    } else {
+        NES_WARNING("No buffer storage found for partition {}, buffer was dropped", sinkId);
     }
 }
 
@@ -103,10 +116,25 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(N
     return {};
 }
 
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromReconnectBufferStorage(uint64_t sinkId) {
+    auto iteratorPartitionId = this->reconnectBufferStorage.find(sinkId);
+    if (iteratorPartitionId != this->reconnectBufferStorage.end()) {
+        return this->reconnectBufferStorage[sinkId]->getTopElementFromQueue();
+    }
+    return {};
+}
+
 void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) {
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
         this->storage[nesPartition]->removeTopElementFromQueue();
+    }
+}
+
+void WorkerContext::removeTopTupleFromReconnectBufferStorage(uint64_t sinkId) {
+    auto iteratorPartitionId = this->reconnectBufferStorage.find(sinkId);
+    if (iteratorPartitionId != this->reconnectBufferStorage.end()) {
+        this->reconnectBufferStorage[sinkId]->removeTopElementFromQueue();
     }
 }
 

@@ -346,6 +346,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void updatePhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
 
+    bool reconfigureNetworkSink(uint64_t newNodeId,
+                                const std::string& newHostname,
+                                uint32_t newPort,
+                                QuerySubPlanId querySubPlanId,
+                                uint64_t uniqueNetworkSinkDescriptorId,
+                                Network::NesPartition newPartition);
   public:
     /**
      * @brief Create a node engine and gather node information

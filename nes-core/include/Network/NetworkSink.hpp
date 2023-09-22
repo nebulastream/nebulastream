@@ -127,22 +127,23 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
+    void connectToChannelAsync(Runtime::WorkerContext& workerContext, NodeLocation newNodeLocation, NesPartition newNesPartition);
+
+    void unbuffer(Runtime::WorkerContext& workerContext);
+
   private:
     uint64_t uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
-    const NodeLocation receiverLocation;
+    NodeLocation receiverLocation;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
-    //todo: remove
     const bool connectAsync;
-    void connectToChannelAsync(Runtime::WorkerContext& workerContext);
-    void unbuffer(Runtime::WorkerContext& workerContext);
 };
 
 }// namespace Network

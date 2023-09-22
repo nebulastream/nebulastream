@@ -585,6 +585,7 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
     }
 }
 
+//todo: add functions to buffer only on a single qep
 bool NodeEngine::bufferAllData() {
     NES_DEBUG("NodeEngine of Node  {}  received request to buffer all outgoing data", nodeId);
     std::unique_lock lock(engineMutex);
@@ -658,6 +659,48 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
             //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, newNodeLocation);
             //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
             NES_NOT_IMPLEMENTED();
+            return true;
+        }
+        //query sub plan did not have network sink with specified id
+        NES_DEBUG("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
+                  querySubPlanId,
+                  uniqueNetworkSinkDescriptorId);
+        return false;
+    }
+}
+
+bool NodeEngine::reconfigureNetworkSink(uint64_t newNodeId,
+                                        const std::string& newHostname,
+                                        uint32_t newPort,
+                                        QuerySubPlanId querySubPlanId,
+                                        uint64_t uniqueNetworkSinkDescriptorId,
+                                        Network::NesPartition newPartition) {
+
+    NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
+    Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
+    std::unique_lock lock(engineMutex);
+    if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
+        NES_DEBUG("Deployed QEP with ID:  {}  not found", querySubPlanId);
+        return false;
+    } else {
+        auto qep = deployedQEPs.at(querySubPlanId);
+        auto networkSinks = qep->getSinks();
+        //make sure that query sub plan has network sink with specified id
+        auto it =
+            std::find_if(networkSinks.begin(), networkSinks.end(), [uniqueNetworkSinkDescriptorId](const DataSinkPtr& dataSink) {
+              Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
+              return networkSink && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
+            });
+        if (it != networkSinks.end()) {
+            auto networkSink = *it;
+            NES_DEBUG("Starting to buffer on Network Sink{}", uniqueNetworkSinkDescriptorId);
+            std::pair<Network::NodeLocation, Network::NesPartition> userData = {newNodeLocation, newPartition};
+            ReconfigurationMessage message = ReconfigurationMessage(qep->getQueryId(),
+                                                                    querySubPlanId,
+                                                                    Runtime::ReconfigurationType::StartBuffering,
+                                                                    networkSink,
+                                                                    userData);
+            queryManager->addReconfigurationMessage(qep->getQueryId(), querySubPlanId, message, true);
             return true;
         }
         //query sub plan did not have network sink with specified id
