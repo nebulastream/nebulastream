@@ -246,7 +246,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         std::shared_ptr<NodeEngine> engine;
         if (loRaWANProxySourceTypePtr) {
             engine = std::make_shared<DecoratedLoRaWANNodeEngine>(
-                physicalSources,
+                std::move(physicalSources),
                 std::move(hardwareManager),
                 std::move(bufferManagers),
                 std::move(queryManager),
@@ -262,6 +262,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 std::move(partitionManager),
                 std::move(compiler),
                 std::move(stateManager),
+                std::move(openCLManager),
                 std::move(nesWorker),
                 std::move(materializedViewManager),
                 nodeEngineId,
@@ -272,7 +273,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 std::move(loRaWANProxySourceTypePtr));
         } else {
             engine = std::make_shared<NodeEngine>(
-                physicalSources,
+                std::move(physicalSources),
                 std::move(hardwareManager),
                 std::move(bufferManagers),
                 std::move(queryManager),
@@ -290,7 +291,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 std::move(stateManager),
                 std::move(nesWorker),
                 std::move(materializedViewManager),
-            std::move(openCLManager),
+                std::move(openCLManager),
                 nodeEngineId,
                 workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
                 workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),

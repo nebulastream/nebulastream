@@ -12,24 +12,23 @@ namespace NES::Runtime {
 
 class DecoratedLoRaWANNodeEngine : public NodeEngine {
   public:
-    explicit DecoratedLoRaWANNodeEngine(
-        std::vector<PhysicalSourcePtr> physicalSources,
-        HardwareManagerPtr&& hardwareManager,
-        std::vector<BufferManagerPtr>&& bufferManagers,
-        QueryManagerPtr&& queryManager,
-        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
-        Network::PartitionManagerPtr&& partitionManager,
-        QueryCompilation::QueryCompilerPtr&& queryCompiler,
-        StateManagerPtr&& stateManager,
-        std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
-        NES::Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
-        uint64_t nodeEngineId,
-        uint64_t numberOfBuffersInGlobalBufferManager,
-        uint64_t numberOfBuffersInSourceLocalBufferPool,
-        uint64_t numberOfBuffersPerWorker,
-        bool sourceSharing,
-        LoRaWANProxySourceTypePtr source);
-
+    explicit DecoratedLoRaWANNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+                               HardwareManagerPtr&& hardwareManager,
+                               std::vector<BufferManagerPtr>&& bufferManagers,
+                               QueryManagerPtr&& queryManager,
+                               std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
+                               Network::PartitionManagerPtr&& partitionManager,
+                               QueryCompilation::QueryCompilerPtr&& queryCompiler,
+                               StateManagerPtr&& stateManager,
+                               OpenCLManagerPtr openClManager,
+                               std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
+                               Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
+                               uint64_t nodeEngineId,
+                               uint64_t numberOfBuffersInGlobalBufferManager,
+                               uint64_t numberOfBuffersInSourceLocalBufferPool,
+                               uint64_t numberOfBuffersPerWorker,
+                               bool sourceSharing,
+                               LoRaWANProxySourceTypePtr proxysource);
     /**
      * @brief registers a query
      * This means any internal call from the parent class will refer to the parent method. not the child.
