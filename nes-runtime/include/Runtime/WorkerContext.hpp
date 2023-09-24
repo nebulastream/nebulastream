@@ -51,7 +51,8 @@ class WorkerContext {
     /// data channels that send data downstream
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::future<Network::NetworkChannelPtr>> dataChannelsFutures;
+    std::unordered_map<NES::OperatorId, std::future<Network::NetworkChannelPtr>> dataChannelFutures;
+    //todo: #4229 allow aborting connection process instead of waiting for timeouts before shutdown
     /// futures for data channels to which no connection could be established. keep them until timeout, to avoid leaking ports after shutdown
     std::unordered_map<NES::OperatorId, std::vector<std::future<Network::NetworkChannelPtr>>> abortedConnectionAttempts;
     /// event only channels that send events upstream
@@ -63,7 +64,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
-    std::unordered_map<uint64_t, BufferStoragePtr> reconnectBufferStorage;
+    std::unordered_map<uint64_t, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -133,11 +134,10 @@ class WorkerContext {
      */
     void storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel);
 
-    //todo: rename param
     /**
      * @brief This stores a future for network channel creation for an operator
      * @param id of the operator that we want to store the output channel
-     * @param channelFuture a future containing the output channel
+     * @param channelFuture a future waiting for the output channel to be connected
      */
     void storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channelFuture);
 
@@ -203,16 +203,28 @@ class WorkerContext {
     Network::NetworkChannel* getNetworkChannel(NES::OperatorId ownerId);
 
     /**
-     * @brief retrieves a newly established output channel or nullptr if the connection could not yet be established
-     * @param ownerId id of the operator that we want to store the output channel
-     * @return an output channel
+     * @brief retrieves an asynchronously established output channel.
+     * @param ownerId id of the operator which will use the network channel
+     * @return an optional containing a network channel ptr:
+     * - nullopt if the operation has not yet completed
+     * - optional containing nullptr if the conneciton timed out
+     * - optional containing valid ptr if connection succeeded
      */
-     //todo: rename
-    std::optional<Network::NetworkChannelPtr> getNetworkChannelFuture(NES::OperatorId ownerId);
+    std::optional<Network::NetworkChannelPtr> getAsyncConnectionResult(NES::OperatorId ownerId);
 
-    Network::NetworkChannelPtr waitForNetworkChannelFuture(NES::OperatorId ownerId);
+    /**
+     * @brief blocks until async connection of a network channel has succeeded or timed out
+     * @param ownerId id of the operator which will use the network channel
+     * @return a pointer to the network channel or nullptr if the connection timed out
+     */
+    Network::NetworkChannelPtr waitForAsyncConnection(NES::OperatorId ownerId);
 
-    bool checkNetwokChannelFutureExistence(OperatorId ownerId);
+    /**
+     * @brief check if an async connection that was started by the operator with the specified id is currently in progress
+     * @param ownerId id of the operator which will use the network channel
+     * @return true if a connection is currently being established
+     */
+    bool isAsyncConnectionInProgress(OperatorId ownerId);
 
     /**
      * @brief retrieve a registered output channel
@@ -220,15 +232,34 @@ class WorkerContext {
      * @return an output channel
      */
     Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(NES::OperatorId ownerId);
-    void createReconnectBufferStorage(uint64_t sinkId);
+
+    /**
+     * @brief insert a tuple buffer into the reconnect buffer storage
+     * @param sinkId the id of the buffering sink
+     * @param buffer the data to be buffered
+     */
     void insertIntoReconnectBufferStorage(uint64_t sinkId, NES::Runtime::TupleBuffer buffer);
-    std::optional<TupleBuffer> getTopTupleFromReconnectBufferStorage(uint64_t sinkId);
-    void removeTopTupleFromReconnectBufferStorage(uint64_t sinkId);
-    std::future<Network::NetworkChannelPtr> extractNetworkChannelFuture(OperatorId ownerId);
+
+    /**
+     * @brief retrieve and delete a tuple buffer from the tuple buffer storage
+     * @param sinkId the id of the buffering sink
+     * @return the buffer that was removed from the storage
+     */
+    std::optional<TupleBuffer> removeBufferFromReconnectBufferStorage(uint64_t sinkId);
+
+    //todo #4229: adapt this function when aborting of network channel creation has been implemented
+    /**
+     * @brief stop waiting for the current async connection process triggered by this thread to complete. Instead move it to a
+     * list of threads to wait for completion before shutting down the sync
+     * @param ownerId the id of the operator that started the connection process
+     */
+    void abortConnectionProcess(OperatorId ownerId);
 
     //todo #4229: remove this function when aborting of network channel creation has been implemented
-    void abortConnectionProcess(OperatorId ownerId);
-    //todo #4229: remove this function when aborting of network channel creation has been implemented
+    /**
+     * @brief wait for all aborted connections to time out
+     * @param ownerId the id of the operator that started the connection process
+     */
     void waitForAbortedConnections(OperatorId ownerId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;

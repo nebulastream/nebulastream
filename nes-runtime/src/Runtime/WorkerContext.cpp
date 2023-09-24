@@ -72,15 +72,11 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
 
 void WorkerContext::storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
-    dataChannelsFutures[id] = std::move(channelFuture);
+    dataChannelFutures[id] = std::move(channelFuture);
 }
 
 void WorkerContext::createStorage(Network::NesPartition nesPartition) {
     this->storage[nesPartition] = std::make_shared<BufferStorage>();
-}
-
-void WorkerContext::createReconnectBufferStorage(uint64_t sinkId) {
-    this->reconnectBufferStorage[sinkId] = std::make_shared<BufferStorage>();
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
@@ -93,12 +89,7 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::R
 }
 
 void WorkerContext::insertIntoReconnectBufferStorage(uint64_t sinkId, NES::Runtime::TupleBuffer buffer) {
-    auto iteratorPartitionId = this->reconnectBufferStorage.find(sinkId);
-    if (iteratorPartitionId != this->reconnectBufferStorage.end()) {
-        this->reconnectBufferStorage[sinkId]->insertBuffer(std::move(buffer));
-    } else {
-        NES_WARNING("No buffer storage found for partition {}, buffer was dropped", sinkId);
-    }
+    reconnectBufferStorage[sinkId].push(std::move(buffer));
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
@@ -116,10 +107,15 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(N
     return {};
 }
 
-std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromReconnectBufferStorage(uint64_t sinkId) {
-    auto iteratorPartitionId = this->reconnectBufferStorage.find(sinkId);
-    if (iteratorPartitionId != this->reconnectBufferStorage.end()) {
-        return this->reconnectBufferStorage[sinkId]->getTopElementFromQueue();
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::removeBufferFromReconnectBufferStorage(uint64_t sinkId) {
+    auto it = reconnectBufferStorage.find(sinkId);
+    if (it != reconnectBufferStorage.end() && !it->second.empty()) {
+        auto buffer = it->second.front();
+        it->second.pop();
+        if (it->second.empty()) {
+            reconnectBufferStorage.erase(it);
+        }
+        return buffer;
     }
     return {};
 }
@@ -128,13 +124,6 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
         this->storage[nesPartition]->removeTopElementFromQueue();
-    }
-}
-
-void WorkerContext::removeTopTupleFromReconnectBufferStorage(uint64_t sinkId) {
-    auto iteratorPartitionId = this->reconnectBufferStorage.find(sinkId);
-    if (iteratorPartitionId != this->reconnectBufferStorage.end()) {
-        this->reconnectBufferStorage[sinkId]->removeTopElementFromQueue();
     }
 }
 
@@ -173,22 +162,21 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
     return (*it).second.get();
 }
 
-//todo rename to from future
-std::optional<Network::NetworkChannelPtr> WorkerContext::getNetworkChannelFuture(NES::OperatorId ownerId) {
+std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
-    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
+    auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
     if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         auto future = std::move(it->second);
-        dataChannelsFutures.erase(it);
+        dataChannelFutures.erase(it);
         return future.get();
     }
     //if the operation has not completed yet, return a nullopt
     return std::nullopt;
 }
 
-bool WorkerContext::checkNetwokChannelFutureExistence(NES::OperatorId ownerId) {
+bool WorkerContext::isAsyncConnectionInProgress(OperatorId ownerId) {
     NES_TRACE("WorkerContext: checking existence of channel future for operator {} for context {}", ownerId, workerId);
-    return dataChannelsFutures.contains(ownerId);
+    return dataChannelFutures.contains(ownerId);
 }
 
 Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(NES::OperatorId ownerId) {
@@ -201,27 +189,19 @@ LocalBufferPool* WorkerContext::getBufferProviderTLS() { return localBufferPoolT
 
 LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; }
 
-Network::NetworkChannelPtr WorkerContext::waitForNetworkChannelFuture(NES::OperatorId ownerId) {
-    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
+Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId ownerId) {
+    auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
     auto future = std::move(it->second);
-    dataChannelsFutures.erase(it);
+    dataChannelFutures.erase(it);
     //blocking wait on get
     return future.get();
 }
 
-//todo: we probably do not need this one
-std::future<Network::NetworkChannelPtr> WorkerContext::extractNetworkChannelFuture(NES::OperatorId ownerId) {
-    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
-    auto future = std::move(it->second);
-    dataChannelsFutures.erase(it);
-    return future;
-}
-
 void WorkerContext::abortConnectionProcess(NES::OperatorId ownerId) {
-    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
+    auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
     auto& oldFutures = abortedConnectionAttempts[ownerId];
     oldFutures.push_back(std::move(it->second));
-    dataChannelsFutures.erase(it);
+    dataChannelFutures.erase(it);
 
     //garbage collect old future
     auto futuresIterator = oldFutures.begin();
@@ -235,10 +215,12 @@ void WorkerContext::abortConnectionProcess(NES::OperatorId ownerId) {
 }
 
 void WorkerContext::waitForAbortedConnections(NES::OperatorId ownerId) {
-    auto& oldFutures = abortedConnectionAttempts[ownerId];
-    NES_DEBUG("Waiting for aborted connection attempts to complete");
-    for (auto& future : oldFutures) {
-        future.get();
+    if (abortedConnectionAttempts.contains(ownerId)) {
+        auto& oldFutures = abortedConnectionAttempts[ownerId];
+        NES_DEBUG("Waiting for aborted connection attempts to complete");
+        for (auto& future : oldFutures) {
+            future.get();
+        }
     }
 }
 }// namespace NES::Runtime

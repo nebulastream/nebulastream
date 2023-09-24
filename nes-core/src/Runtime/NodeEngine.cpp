@@ -588,7 +588,7 @@ bool NodeEngine::bufferAllData() {
                 NES_DEBUG("Starting to buffer on Network Sink{}", networkSink->getUniqueNetworkSinkDescriptorId());
                 ReconfigurationMessage message = ReconfigurationMessage(qepPtr->getQueryId(),
                                                                         qepId,
-                                                                        Runtime::ReconfigurationType::StartBuffering,
+                                                                        Runtime::ReconfigurationType::ConnectToNewNetworkSource,
                                                                         networkSink);
                 queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);
             } else {
@@ -612,7 +612,7 @@ bool NodeEngine::stopBufferingAllData() {
             //whenever we encounter a network sink, send a reconfig message telling it to stop buffering
             if (networkSink) {
                 ReconfigurationMessage message =
-                    ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::ReconfigurationType::StopBuffering, networkSink);
+                    ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::ReconfigurationType::ConnectionEstablished, networkSink);
                 queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);
             }
         }
@@ -685,7 +685,7 @@ bool NodeEngine::reconfigureNetworkSink(uint64_t newNodeId,
             std::pair<Network::NodeLocation, Network::NesPartition> userData = {newNodeLocation, newPartition};
             ReconfigurationMessage message = ReconfigurationMessage(qep->getQueryId(),
                                                                     querySubPlanId,
-                                                                    Runtime::ReconfigurationType::StartBuffering,
+                                                                    Runtime::ReconfigurationType::ConnectToNewNetworkSource,
                                                                     networkSink,
                                                                     userData);
             queryManager->addReconfigurationMessage(qep->getQueryId(), querySubPlanId, message, true);
@@ -719,5 +719,9 @@ bool NodeEngine::getConnectSinksAsync() {
 
 void NodeEngine::setConnectSinksAsync(bool value) {
     connectSinksAsync = value;
+}
+
+uint64_t NodeEngine::getUniqueSinkDescriptor() {
+    return nextFreeNetworkSinkId++;
 }
 }// namespace NES::Runtime

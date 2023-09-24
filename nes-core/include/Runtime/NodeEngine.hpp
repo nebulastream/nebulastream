@@ -332,6 +332,17 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     const OpenCLManagerPtr getOpenCLManager() const;
 
+    /**
+     * @brief reconfigure the network sink to point to a new source. Buffer all tuples that are received while the new connection
+     * is being established
+     * @param newNodeId the id of the node hosting the new source
+     * @param newHostname the hostname of the node hosting the new source
+     * @param newPort the data port of the node hosting the new source
+     * @param querySubPlanId the id of the subplan containing the sink to be reconfigured
+     * @param uniqueNetworkSinkDescriptorId the unique id of the network sink to be reconfigured
+     * @param newPartition the partition of the new source
+     * @return true on success, false if sink was not found
+     */
     bool reconfigureNetworkSink(uint64_t newNodeId,
                                 const std::string& newHostname,
                                 uint32_t newPort,
@@ -339,9 +350,29 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                 uint64_t uniqueNetworkSinkDescriptorId,
                                 Network::NesPartition newPartition);
 
+    /**
+     * @brief retrieve the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish
+     * network channels
+     * @return the value of the connectSinkAsync flag
+     */
     bool getConnectSinksAsync();
 
+    /**
+     * @brief set the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish
+     * network channels
+     */
     void setConnectSinksAsync(bool value);
+
+    /* todo #4230: this is a workaround because the id set in the sink descriptors on the coordinator side does not reach the
+     * constructor of the sink. So instead of using the default value received from the descriptors, we now obtain an id from the
+     * node engine. This function can be removed, once the proper values are set via the sink descriptor
+     */
+    /**
+     * @brief obtain a new unique descriptor to assign to a network sink on construction
+     * @return a unique id
+     */
+    uint64_t getUniqueSinkDescriptor();
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -385,6 +416,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     bool connectSinksAsync;
+    std::atomic<uint64_t> nextFreeNetworkSinkId;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
