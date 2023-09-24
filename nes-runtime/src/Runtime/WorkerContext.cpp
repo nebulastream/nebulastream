@@ -174,7 +174,7 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
 }
 
 //todo rename to from future
-Network::NetworkChannelPtr WorkerContext::getNetworkChannelFuture(NES::OperatorId ownerId) {
+std::optional<Network::NetworkChannelPtr> WorkerContext::getNetworkChannelFuture(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
     auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
     if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
@@ -182,7 +182,8 @@ Network::NetworkChannelPtr WorkerContext::getNetworkChannelFuture(NES::OperatorI
         dataChannelsFutures.erase(it);
         return future.get();
     }
-    return nullptr;
+    //if the operation has not completed yet, return a nullopt
+    return std::nullopt;
 }
 
 bool WorkerContext::checkNetwokChannelFutureExistence(NES::OperatorId ownerId) {
@@ -208,4 +209,36 @@ Network::NetworkChannelPtr WorkerContext::waitForNetworkChannelFuture(NES::Opera
     return future.get();
 }
 
+//todo: we probably do not need this one
+std::future<Network::NetworkChannelPtr> WorkerContext::extractNetworkChannelFuture(NES::OperatorId ownerId) {
+    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
+    auto future = std::move(it->second);
+    dataChannelsFutures.erase(it);
+    return future;
+}
+
+void WorkerContext::abortConnectionProcess(NES::OperatorId ownerId) {
+    auto it = dataChannelsFutures.find(ownerId);// note we assume it's always available
+    auto& oldFutures = abortedConnectionAttempts[ownerId];
+    oldFutures.push_back(std::move(it->second));
+    dataChannelsFutures.erase(it);
+
+    //garbage collect old future
+    auto futuresIterator = oldFutures.begin();
+    while (futuresIterator != oldFutures.end()) {
+        if (futuresIterator->wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            futuresIterator = oldFutures.erase(futuresIterator);
+        } else {
+            ++futuresIterator;
+        }
+    }
+}
+
+void WorkerContext::waitForAbortedConnections(NES::OperatorId ownerId) {
+    auto& oldFutures = abortedConnectionAttempts[ownerId];
+    NES_DEBUG("Waiting for aborted connection attempts to complete");
+    for (auto& future : oldFutures) {
+        future.get();
+    }
+}
 }// namespace NES::Runtime
