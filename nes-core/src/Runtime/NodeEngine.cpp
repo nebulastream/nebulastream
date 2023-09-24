@@ -57,7 +57,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
       partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)), openCLManager(std::move(openCLManager)),
       nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
-      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing), connectSinksAsync(true) {
 
     NES_TRACE("Runtime() id={}", nodeEngineId);
     // here shared_from_this() does not work because of the machinery behind make_shared
@@ -574,7 +574,6 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
     }
 }
 
-//todo: add functions to buffer only on a single qep
 bool NodeEngine::bufferAllData() {
     NES_DEBUG("NodeEngine of Node  {}  received request to buffer all outgoing data", nodeId);
     std::unique_lock lock(engineMutex);
@@ -714,4 +713,11 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
 
+bool NodeEngine::getConnectSinksAsync() {
+    return connectSinksAsync;
+}
+
+void NodeEngine::setConnectSinksAsync(bool value) {
+    connectSinksAsync = value;
+}
 }// namespace NES::Runtime
