@@ -124,11 +124,23 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     Runtime::NodeEnginePtr getNodeEngine();
 
-    friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
-
+    /**
+     * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
+     * a connection pass the the new channel into the future and pass a reconfiguration message to the sink to signal that the
+     * connection has completed
+     * @param workerContext the worker context to store the future in
+     * @param newNodeLocation the location of the node to which the connection is to be established
+     * @param newNesPartition the partition of the source to which the connection is to be established
+     */
     void connectToChannelAsync(Runtime::WorkerContext& workerContext, NodeLocation newNodeLocation, NesPartition newNesPartition);
 
+    /**
+     * @brief write all data from the reconnect buffer to the currently active network channel
+     * @param workerContext the context where buffers and channel are stored
+     */
     void unbuffer(Runtime::WorkerContext& workerContext);
+
+    friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
     uint64_t uniqueNetworkSinkDescriptorId;
