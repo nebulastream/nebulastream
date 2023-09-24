@@ -119,6 +119,8 @@ std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync
 
     std::promise<NetworkChannelPtr> promise;
     auto future = promise.get_future();
+
+    //start thread
     std::thread thread([zmqContext = server->getContext(),
                         nodeLocation,
                         nesPartition,
@@ -136,7 +138,9 @@ std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync
                                               highWaterMark,
                                               waitTime,
                                               retryTimes);
+        //pass channel back to calling thread via promise
         promise.set_value(std::move(channel));
+        //notify the sink about successful connection via reconfiguration message
         queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, true);
     });
     thread.detach();

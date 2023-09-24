@@ -31,10 +31,10 @@ enum class ReconfigurationType : uint8_t {
     FailEndOfStream,
     /// use PropagateEpoch to pass epoch barrier to all network sinks
     PropagateEpoch,
-    /// start buffering the data
-    StartBuffering,
-    /// stop buffering data
-    StopBuffering
+    /// start the process of connecting to a new network source
+    ConnectToNewNetworkSource,
+    /// indicate successful establishment of a network connection
+    ConnectionEstablished
 };
 }
 
