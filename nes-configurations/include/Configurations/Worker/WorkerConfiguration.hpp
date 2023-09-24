@@ -271,6 +271,11 @@ class WorkerConfiguration : public BaseConfiguration {
 
     BoolOption isJavaUDFSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Java UDF execution supported by the worker"};
 
+    /**
+     * @brief Let network sinks use a separate thread to establish a connection
+     */
+    BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC, true, "Let network sinks use a separate thread to establish a connection"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&workerId,
