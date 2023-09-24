@@ -106,6 +106,7 @@ const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
 const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
+const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
 
 // CUDA config names
 const std::string CUDA_SDK_PATH = "cudaSdkPath";

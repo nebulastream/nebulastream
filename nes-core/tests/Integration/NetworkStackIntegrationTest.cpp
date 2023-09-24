@@ -364,8 +364,9 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
         //the the threads which write the data receive the reconfiguration messages. The test passes because the sinks
         //shutdown sequence makes a connection attempt in order to flush the data, not because it connects normally
         auto connectAsync = GetParam();
+        sendEngine->setConnectSinksAsync(connectAsync);
         auto networkSink = std::make_shared<
-            NetworkSink>(schema, 0, 0, 0, nodeLocationSource, nesPartition, sendEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES, FaultToleranceType::NONE, 0, connectAsync);
+            NetworkSink>(schema, 0, 0, 0, nodeLocationSource, nesPartition, sendEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES, FaultToleranceType::NONE, 0);
         networkSink->preSetup();
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {

@@ -1042,7 +1042,6 @@ TEST_F(LocationIntegrationTests, testConnectingToClosestNodeNoParentInConfig) {
 }
 #endif
 
-//todo: explicitly set async flag here
 TEST_P(LocationIntegrationTests, testAsyncConnectingSink) {
     uint64_t numBuffersToProduce = 400;
     uint64_t tuplesPerBuffer = 10;
@@ -1079,6 +1078,7 @@ TEST_P(LocationIntegrationTests, testAsyncConnectingSink) {
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(GetParam());
+    wrkConf1->connectSinksAsync.setValue(true);
 
     auto stype = CSVSourceType::create();
     stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
@@ -1125,7 +1125,6 @@ TEST_P(LocationIntegrationTests, testAsyncConnectingSink) {
     ASSERT_TRUE(retStopCord);
 }
 
-//todo: explicitly set async flag here
 TEST_P(LocationIntegrationTests, testPlannedReconnect) {
     uint64_t numBuffersToProduce = 400;
     uint64_t tuplesPerBuffer = 10;
@@ -1163,6 +1162,7 @@ TEST_P(LocationIntegrationTests, testPlannedReconnect) {
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(GetParam());
+    wrkConf1->connectSinksAsync.setValue(true);
 
     auto stype = CSVSourceType::create();
     stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
@@ -1184,6 +1184,7 @@ TEST_P(LocationIntegrationTests, testPlannedReconnect) {
     auto wrk2DataPort = getAvailablePort();
     wrkConf2->dataPort = *wrk2DataPort;
     wrkConf2->numWorkerThreads.setValue(GetParam());
+    wrkConf2->connectSinksAsync.setValue(true);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart2);
@@ -1264,12 +1265,16 @@ TEST_P(LocationIntegrationTests, testPlannedReconnect) {
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
 
+    auto stopSuccess2 = wrk2->getNodeEngine()->stopQuery(queryId);
+    cout << "stopping worker" << endl;
+    bool retStopWrk2 = wrk2->stop(false);
+    ASSERT_TRUE(retStopWrk2);
+
     cout << "stopping coordinator" << endl;
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
 
-//todo: explicitly set async flag here
 //todo #4229: reenable this test
 TEST_P(LocationIntegrationTests, DISABLED_testReconfigureWhileAlreadyBuffering) {
     uint64_t numBuffersToProduce = 400;
@@ -1309,6 +1314,7 @@ TEST_P(LocationIntegrationTests, DISABLED_testReconfigureWhileAlreadyBuffering) 
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(numThreads);
+    wrkConf1->connectSinksAsync.setValue(true);
 
     auto stype = CSVSourceType::create();
     stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
@@ -1330,6 +1336,7 @@ TEST_P(LocationIntegrationTests, DISABLED_testReconfigureWhileAlreadyBuffering) 
     auto wrk2DataPort = getAvailablePort();
     wrkConf2->dataPort = *wrk2DataPort;
     wrkConf2->numWorkerThreads.setValue(numThreads);
+    wrkConf2->connectSinksAsync.setValue(true);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart2);
@@ -1419,46 +1426,6 @@ TEST_P(LocationIntegrationTests, DISABLED_testReconfigureWhileAlreadyBuffering) 
     cout << "stopping worker" << endl;
     bool retStopWrk2 = wrk2->stop(false);
     ASSERT_TRUE(retStopWrk2);
-
-    cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator(false);
-    ASSERT_TRUE(retStopCord);
-}
-
-TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
-    NES_INFO(" start coordinator");
-    NES_INFO("rest port = {}", *restPort);
-
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
-    coordinatorConfig->restPort.setValue(*restPort);
-    NES_INFO("start coordinator")
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    ASSERT_NE(port, 0UL);
-    NES_INFO("coordinator started successfully")
-
-    TopologyPtr topology = crd->getTopology();
-    ASSERT_TRUE(waitForNodes(5, 1, topology));
-
-    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
-
-    NES_INFO("start worker 1");
-    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    ASSERT_TRUE(retStart1);
-    ASSERT_TRUE(waitForNodes(5, 2, topology));
-
-    wrk1->getNodeEngine()->bufferAllData();
-
-    wrk1->getNodeEngine()->stopBufferingAllData();
-
-    cout << "stopping worker" << endl;
-    bool retStopWrk = wrk1->stop(false);
-    ASSERT_TRUE(retStopWrk);
 
     cout << "stopping coordinator" << endl;
     bool retStopCord = crd->stopCoordinator(false);

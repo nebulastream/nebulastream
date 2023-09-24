@@ -352,6 +352,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                 QuerySubPlanId querySubPlanId,
                                 uint64_t uniqueNetworkSinkDescriptorId,
                                 Network::NesPartition newPartition);
+
+    bool getConnectSinksAsync();
+
+    void setConnectSinksAsync(bool value);
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -398,6 +402,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+    bool connectSinksAsync;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
