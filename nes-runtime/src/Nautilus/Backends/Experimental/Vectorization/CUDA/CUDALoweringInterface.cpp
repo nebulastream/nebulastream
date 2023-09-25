@@ -48,6 +48,13 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDALoweringInterface::lowerProxyCall(co
         auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = NES__CUDA__TupleBuffer__getNumberOfTuples({})", var, tupleBufferVar));
         code->add(stmt);
         return std::move(code);
+    } else if (operation->getFunctionSymbol() == "setAsValidInMetadata") {
+        auto tidVar = getVariable(operation->getInputArguments().at(0)->getIdentifier());
+        auto code = std::make_unique<CodeGen::Segment>();
+        auto tupleBufferVar = frame.getValue(TUPLE_BUFFER_IDENTIFIER);
+        auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("NES__CUDA__setAsValidInMetadata({}, {})", tupleBufferVar, tidVar));
+        code->add(stmt);
+        return std::move(code);
     }
     NES_NOT_IMPLEMENTED();
 }

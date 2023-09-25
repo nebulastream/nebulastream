@@ -94,29 +94,50 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getCudaKernelWrapper
     auto getNumberOfTuples = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getNumberOfTuples = (uint64_t(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples)));
     kernelWrapperFunctionBody->addToProlog(getNumberOfTuples);
 
+    auto setNumberOfTuples = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__setNumberOfTuples = (void(*)(void*,uint64_t)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples)));
+    kernelWrapperFunctionBody->addToProlog(setNumberOfTuples);
+
     auto getBuffer = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getBuffer = (void*(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer)));
     kernelWrapperFunctionBody->addToProlog(getBuffer);
 
     auto code = fmt::format(R"(
         auto number_of_tuples = NES__Runtime__TupleBuffer__getNumberOfTuples({0});
         auto buffer = NES__Runtime__TupleBuffer__getBuffer({0});
-        auto tuple_buffer = reinterpret_cast<uint8_t*>(buffer);
-
-        auto gpu_tuple_buffer = TupleBuffer{{ tuple_buffer, number_of_tuples }};
+        auto host_buffer = reinterpret_cast<uint8_t*>(buffer);
         auto input_buffer_size = number_of_tuples * {1};
-
-        cudaCheck(cudaMalloc(&gpu_tuple_buffer.buffer, input_buffer_size));
-
-        cudaCheck(cudaMemcpy(gpu_tuple_buffer.buffer, tuple_buffer, input_buffer_size, cudaMemcpyHostToDevice));
+        uint8_t* gpu_buffer;
+        cudaCheck(cudaMalloc(&gpu_buffer, input_buffer_size));
+        cudaCheck(cudaMemcpy(gpu_buffer, host_buffer, input_buffer_size, cudaMemcpyHostToDevice));
+        TupleMetadata* gpu_metadata;
+        auto metadata_size = number_of_tuples * sizeof(TupleMetadata);
+        cudaCheck(cudaMalloc(&gpu_metadata, metadata_size));
+        auto host_tuple_buffer = TupleBuffer{{ tuple_buffer, number_of_tuples, gpu_metadata }};
 
         auto threads_per_block = {2};
         auto blocks_per_grid = (number_of_tuples + threads_per_block - 1) / threads_per_block;
         std::cout << "Number of tuples, threads per block, blocks per grid: " << number_of_tuples << ", " << threads_per_block << ", " << blocks_per_grid << std::endl;
 
-        {3}<<<blocks_per_grid, threads_per_block>>>(gpu_tuple_buffer);
+        {3}<<<blocks_per_grid, threads_per_block>>>(host_tuple_buffer);
 
-        cudaCheck(cudaMemcpy(tuple_buffer, gpu_tuple_buffer.buffer, input_buffer_size, cudaMemcpyDeviceToHost));
-        cudaCheck(cudaFree(gpu_tuple_buffer.buffer))
+        cudaCheck(cudaMemcpy(host_buffer, gpu_buffer, input_buffer_size, cudaMemcpyDeviceToHost));
+
+        auto host_metadata = (TupleMetadata*)malloc(metadata_size);
+        cudaCheck(cudaMemcpy(host_metadata, gpu_metadata, metadata_size, cudaMemcpyDeviceToHost));
+        uint64_t new_number_of_tuples = 0;
+        for (int i = 0; i < number_of_tuples; i++) {{
+            auto metadata = host_metadata[i];
+            if (metadata.valid == 1) {{
+                auto dst = host_buffer + (tuple_size * new_number_of_tuples);
+                auto src = host_buffer + (tuple_size * i);
+                memcpy(dst, src, tuple_size);
+                new_number_of_tuples++;
+            }}
+        }}
+
+        NES__Runtime__TupleBuffer__setNumberOfTuples({0}, new_number_of_tuples);
+
+        cudaCheck(cudaFree(gpu_metadata));
+        cudaCheck(cudaFree(gpu_buffer))
     )", inputBufferVar, inputSchemaSize, threadsPerBlock, kernelFunctionName);
 
     auto stmt = std::make_shared<CodeGen::CPP::Statement>(code);
@@ -164,14 +185,36 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getNumberOfTuples() 
     return fn;
 }
 
+std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::setAsValidInMetadata() {
+    std::vector<std::string> specifiers{"__device__"};
+    std::vector<std::string> arguments{
+        "const TupleBuffer tupleBuffer",
+        "const uint64_t tid",
+    };
+    auto fn = std::make_shared<CodeGen::CPP::Function>(specifiers, "void", "NES__CUDA__setAsValidInMetadata", arguments);
+    auto functionBody = std::make_shared<CodeGen::Segment>();
+    auto code = R"(
+        tupleBuffer.metadata[tid].valid = 1;
+    )";
+    auto stmt = std::make_shared<CodeGen::CPP::Statement>(code);
+    functionBody->add(stmt);
+    fn->addSegment(functionBody);
+    return fn;
+}
+
 std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(const std::shared_ptr<IR::IRGraph>& irGraph) {
     auto codeGen = std::make_unique<CodeGen::CPP::CPPCodeGenerator>();
     codeGen->addInclude("<cstdint>");
     codeGen->addInclude("<iostream>");
 
+    auto metadata = std::make_shared<CodeGen::CPP::Struct>("TupleMetadata");
+    metadata->addField("uint8_t", "valid");
+    codeGen->addStruct(metadata);
+
     auto gpuTupleBuffer = std::make_shared<CodeGen::CPP::Struct>("TupleBuffer");
     gpuTupleBuffer->addField("uint8_t*", "buffer");
     gpuTupleBuffer->addField("uint64_t", "numberOfTuples");
+    gpuTupleBuffer->addField("TupleMetadata*", "metadata");
     codeGen->addStruct(gpuTupleBuffer);
 
     auto cudaErrorCheckFn = cudaErrorCheck();
@@ -183,6 +226,9 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
 
     auto numberOfTuplesFn = getNumberOfTuples();
     codeGen->addFunction(numberOfTuplesFn);
+
+    auto setAsValidInMetadataFn = setAsValidInMetadata();
+    codeGen->addFunction(setAsValidInMetadataFn);
 
     auto functionOperation = irGraph->getRootOperation();
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();

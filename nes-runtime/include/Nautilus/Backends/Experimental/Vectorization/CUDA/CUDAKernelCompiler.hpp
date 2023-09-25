@@ -53,6 +53,8 @@ private:
 
     std::shared_ptr<CodeGen::CPP::Function> getNumberOfTuples();
 
+    std::shared_ptr<CodeGen::CPP::Function> setAsValidInMetadata();
+
     Descriptor descriptor;
 };
 
