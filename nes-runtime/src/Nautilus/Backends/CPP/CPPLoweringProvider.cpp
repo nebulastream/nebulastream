@@ -13,6 +13,8 @@
 */
 
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
+#include <Nautilus/Backends/CPP/CPPLoweringInterface.hpp>
+#include <Nautilus/CodeGen/CPP/CPPCodeGenerator.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
@@ -76,42 +78,28 @@ std::string CPPLoweringProvider::LoweringContext::getType(const IR::Types::Stamp
 }
 
 std::stringstream CPPLoweringProvider::LoweringContext::process() {
+    auto cppLoweringPlugin = CPPLoweringInterface();
+
+    auto codeGen = CodeGen::CPP::CPPCodeGenerator();
+    codeGen.addInclude("<cstdint>");
 
     auto functionOperation = ir->getRootOperation();
-    RegisterFrame rootFrame;
     std::vector<std::string> arguments;
     auto functionBasicBlock = functionOperation->getFunctionBasicBlock();
     for (auto i = 0ull; i < functionBasicBlock->getArguments().size(); i++) {
         auto argument = functionBasicBlock->getArguments()[i];
         auto var = getVariable(argument->getIdentifier());
-        rootFrame.setValue(argument->getIdentifier(), var);
         arguments.emplace_back(getType(argument->getStamp()) + " " + var);
     }
-    this->process(functionBasicBlock, rootFrame);
+
+    std::vector<std::string> specifiers{"extern \"C\""};
+    auto functionBody = cppLoweringPlugin.lowerGraph(ir);
+    auto executeFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "auto", "execute", arguments);
+    executeFn->addSegment(std::move(functionBody));
+    codeGen.addFunction(executeFn);
 
     std::stringstream pipelineCode;
-    pipelineCode << "\n";
-    pipelineCode << "#include <cstdint>";
-    pipelineCode << "\n";
-    pipelineCode << "extern \"C\" auto execute(";
-    for (size_t i = 0; i < arguments.size(); i++) {
-        if (i != 0) {
-            pipelineCode << ",";
-        }
-        pipelineCode << arguments[i] << " ";
-    }
-    pipelineCode << "){\n";
-    pipelineCode << "//variable declarations\n";
-    pipelineCode << blockArguments.str();
-    pipelineCode << "//function definitions\n";
-    pipelineCode << functions.str();
-    pipelineCode << "//basic blocks\n";
-    for (auto& block : blocks) {
-        pipelineCode << block.str();
-        pipelineCode << "\n";
-    }
-    pipelineCode << "}\n";
-
+    pipelineCode << codeGen.toString();
     return pipelineCode;
 }
 
