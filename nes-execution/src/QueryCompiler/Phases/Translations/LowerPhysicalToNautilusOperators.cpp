@@ -1018,6 +1018,12 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
                        auto physicalFinalType = physicalTypeFactory.getPhysicalType(agg->getFinalAggregateStamp());
 
                        auto aggregationInputExpression = expressionProvider->lowerExpression(agg->on());
+                       std::string aggregationInputFieldIdentifier;
+                       if (auto fieldAccessExpression = agg->on()->as_if<FieldAccessExpressionNode>()) {
+                           aggregationInputFieldIdentifier = fieldAccessExpression->getFieldName();
+                       } else {
+                           NES_THROW_RUNTIME_ERROR("Currently complex expression in on fields are not supported");
+                       }
                        std::string aggregationResultFieldIdentifier;
                        if (auto fieldAccessExpression = agg->as()->as_if<FieldAccessExpressionNode>()) {
                            aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
@@ -1057,6 +1063,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
                                    physicalInputType,
                                    physicalFinalType,
                                    aggregationInputExpression,
+                                   aggregationInputFieldIdentifier,
                                    aggregationResultFieldIdentifier);
                            }
                        };

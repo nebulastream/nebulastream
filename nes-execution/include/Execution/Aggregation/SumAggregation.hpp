@@ -24,6 +24,7 @@ class SumAggregationFunction : public AggregationFunction {
     SumAggregationFunction(const PhysicalTypePtr& inputType,
                            const PhysicalTypePtr& resultType,
                            const Expressions::ExpressionPtr& inputExpression,
+                           const Nautilus::Record::RecordFieldIdentifier& inputFieldIdentifier,
                            const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
     void lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) override;
