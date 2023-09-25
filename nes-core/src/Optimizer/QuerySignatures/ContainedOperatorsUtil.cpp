@@ -43,7 +43,7 @@ namespace NES::Optimizer {
 std::vector<LogicalOperatorNodePtr>
 ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
                                                             const LogicalOperatorNodePtr& containerOperator) {
-    NES_INFO("Contained operator: {}", containedOperator->toString());
+    NES_TRACE("Contained operator: {}", containedOperator->toString());
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     auto containedWindowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
     //obtain the most downstream window operator from the container query plan
@@ -60,7 +60,7 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
                 ->asTimeBasedWindowType(
                     containerWindowOperators->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getWindowType());
     }
-    NES_INFO("Contained operator: {}", containedOperator->toString());
+    NES_TRACE("Contained operator: {}", containedOperator->toString());
     if (containerTimeBasedWindow == nullptr) {
         return {};
     }
@@ -209,7 +209,7 @@ bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(FilterLogical
         NES_TRACE("Iterate and find the predicate with FieldAccessExpression Node");
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
             const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-            NES_INFO("Is field {} still in container output schema {}? {}",
+            NES_TRACE("Is field {} still in container output schema {}? {}",
                      accessExpressionNode->getFieldName(),
                      containerOutputSchema->toString(),
                      containerOutputSchema->contains(accessExpressionNode->getFieldName()));
@@ -219,14 +219,14 @@ bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(FilterLogical
             NES_TRACE("Check if the input field name is same as the FieldAccessExpression field name");
             return (std::find(fieldNames.begin(), fieldNames.end(), accessExpressionNode->getFieldName()) == fieldNames.end());
         }
-        NES_INFO("New filter predicate: {}", filterPredicate->toString());
+        NES_TRACE("New filter predicate: {}", filterPredicate->toString());
     }
     return true;
 }
 bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
     const LogicalOperatorNodePtr& containedOperator,
     const LogicalOperatorNodePtr& extractedContainedOperator) {
-    NES_INFO("Extracted contained operator: {}", extractedContainedOperator->toString());
+    NES_TRACE("Extracted contained operator: {}", extractedContainedOperator->toString());
     for (const auto& source : containedOperator->getAllLeafNodes()) {
         NodePtr parent = source;
         bool foundExtracted = false;

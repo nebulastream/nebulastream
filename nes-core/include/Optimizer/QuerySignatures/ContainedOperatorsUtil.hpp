@@ -76,10 +76,13 @@ class ContainedOperatorsUtil {
     /**
      * @brief checks if we can safely extract the contained operator chain from the container operator chain, i.e.
      * if the container chain has multiple parent relationships, we end up with wrong query results if we extract the contained chain
-     * therefore this method returns true, if the container chain has only one parent relationship, false otherwise
+     * additionally, we cannot extract filter operations if a map transformation was applied to the filter's predicate
+     * therefore this method returns true, if the container chain has only one parent relationship and no map function transforms
+     * any upstream attribute with a filter predicate, false otherwise
      * @param containedOperator the operator for which we identified a containment relationship
      * @param extractedContainedOperator the most upstream operator from the extracted contained operator chain
-     * @return true, if the container chain has only one parent relationship, false otherwise
+     * @return true, if the container chain has only one parent relationship and no map function transforms any of the filter's
+     * predicates, false otherwise
      */
     static bool checkDownstreamOperatorChainForSingleParentAndMapOperator(const LogicalOperatorNodePtr& containedOperator,
                                                                    const LogicalOperatorNodePtr& extractedContainedOperator,
