@@ -32,6 +32,7 @@
 #include <Execution/Operators/Experimental/Vectorization/Unvectorize.hpp>
 #include <Execution/Operators/Experimental/Vectorization/Vectorize.hpp>
 #include <Execution/Operators/Experimental/Vectorization/VectorizedMap.hpp>
+#include <Execution/Operators/Experimental/Vectorization/VectorizedSelection.hpp>
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
@@ -80,6 +81,7 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalKernelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalUnvectorizeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
@@ -1171,6 +1173,21 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
             auto loweredOperator = lowerMap(physicalMapOperator);
             auto mapOperator = std::dynamic_pointer_cast<Runtime::Execution::Operators::Map>(loweredOperator);
             auto vectorizedMapOperator = std::make_shared<Runtime::Execution::Operators::VectorizedMap>(mapOperator, std::move(memoryProvider));
+            operators.push_back(vectorizedMapOperator);
+        } else if (node->as_if<PhysicalOperators::Experimental::PhysicalVectorizedFilterOperator>()) {
+            auto physicalVectorizedFilterOperator = node->as<PhysicalOperators::Experimental::PhysicalVectorizedFilterOperator>();
+
+            auto inputSchema = physicalVectorizedFilterOperator->getInputSchema();
+            NES_ASSERT(inputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+            auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(inputSchema, bufferSize);
+            auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+
+            auto physicalFilterOperator = physicalVectorizedFilterOperator->getPhysicalFilterOperator();
+            auto expression = expressionProvider->lowerExpression(physicalFilterOperator->getPredicate());
+            auto vectorizedMapOperator = std::make_shared<Runtime::Execution::Operators::VectorizedSelection>(
+                expression,
+                std::move(memoryProvider)
+            );
             operators.push_back(vectorizedMapOperator);
         }
     }
