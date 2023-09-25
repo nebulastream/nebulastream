@@ -39,6 +39,7 @@ const CompilerFlags CUDAPlatform::getCompilerFlags() const {
         "-ldl",
         "-lrt",
         "-lpthread",
+        "-Xclang -fcuda-allow-variadic-functions",
     };
 
     CompilerFlags flags;

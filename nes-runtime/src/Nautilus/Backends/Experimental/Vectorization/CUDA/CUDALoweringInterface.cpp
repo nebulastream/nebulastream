@@ -48,6 +48,44 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDALoweringInterface::lowerProxyCall(co
         auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = NES__CUDA__TupleBuffer__getNumberOfTuples({})", var, tupleBufferVar));
         code->add(stmt);
         return std::move(code);
+    }  else if (operation->getFunctionSymbol() == "NES__Runtime__TupleBuffer__getCreationTimestampInMS") {
+        auto code = std::make_unique<CodeGen::Segment>();
+        auto identifier = operation->getIdentifier();
+        auto var = getVariable(identifier);
+        auto type = getType(operation->getStamp());
+        frame.setValue(identifier, var);
+        auto decl = std::make_shared<CodeGen::CPP::Statement>(type + " " + var);
+        code->addToProlog(decl);
+        auto tupleBufferVar = frame.getValue(TUPLE_BUFFER_IDENTIFIER);
+        auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = NES__CUDA__TupleBuffer_getCreationTimestampInMS({})", var, tupleBufferVar));
+        code->add(stmt);
+        return std::move(code);
+    } else if (operation->getFunctionSymbol() == "sum") {
+        auto code = std::make_unique<CodeGen::Segment>();
+        auto identifier = operation->getIdentifier();
+        auto var = getVariable(identifier);
+        auto type = getType(operation->getStamp());
+        frame.setValue(identifier, var);
+        auto decl = std::make_shared<CodeGen::CPP::Statement>(type + " " + var);
+        code->addToProlog(decl);
+        auto tupleBufferVar = frame.getValue(TUPLE_BUFFER_IDENTIFIER);
+        auto tidVar = getVariable(operation->getInputArguments().at(1)->getIdentifier());
+        auto offsetVar = getVariable(operation->getInputArguments().at(2)->getIdentifier());
+        auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = NES__CUDA__sum<uint64_t, 32, 1>({}, {}, {})", var, tupleBufferVar, tidVar, offsetVar));
+        code->add(stmt);
+        return std::move(code);
+    } else if (operation->getFunctionSymbol() == "getSliceStore") {
+        auto code = std::make_unique<CodeGen::Segment>();
+        auto identifier = operation->getIdentifier();
+        auto var = getVariable(identifier);
+        auto type = getType(operation->getStamp());
+        frame.setValue(identifier, var);
+        auto decl = std::make_shared<CodeGen::CPP::Statement>(type + " " + var);
+        code->addToProlog(decl);
+        auto sliceStoreVar = frame.getValue(SLICE_STORE_IDENTIFIER);
+        auto stmt = std::make_shared<CodeGen::CPP::Statement>(fmt::format("{} = NES__CUDA__getSliceStore({})", var, sliceStoreVar));
+        code->add(stmt);
+        return std::move(code);
     } else if (operation->getFunctionSymbol() == "setAsValidInMetadata") {
         auto tidVar = getVariable(operation->getInputArguments().at(0)->getIdentifier());
         auto code = std::make_unique<CodeGen::Segment>();

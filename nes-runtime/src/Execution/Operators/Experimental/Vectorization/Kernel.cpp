@@ -52,6 +52,9 @@ void Kernel::setup(ExecutionContext& ctx) const {
         .wrapperFunctionName = "cudaKernelWrapper",
         .inputSchemaSize = descriptor.inputSchemaSize,
         .threadsPerBlock = descriptor.threadsPerBlock,
+        .sharedMemorySize = descriptor.threadsPerBlock * sizeof(uint64_t),
+        .numberOfSlices = 1,
+        .sliceSize = sizeof(uint64_t),
     };
     auto cudaKernelCompiler = Nautilus::Backends::CUDA::CUDAKernelCompiler(desc);
     auto compileOptions = descriptor.compileOptions;
