@@ -13,7 +13,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -33,7 +33,7 @@ const std::string APP_ID = "0102030405060708";
 const std::string TOPIC = "application/" + APP_ID + "/device/" + DEVICE_ID + "/event/up";
 
 namespace NES {
-class LoRaWANProxySourceMQTTTest : public Testing::NESBaseTest {
+class LoRaWANProxySourceMQTTTest : public Testing::BaseIntegrationTest {
   public:
     mqtt::client client{ADDRESS, PRODUCER_CLIENT_ID};
 
@@ -53,13 +53,13 @@ class LoRaWANProxySourceMQTTTest : public Testing::NESBaseTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        Testing::NESBaseTest::SetUpTestCase();
+        Testing::BaseIntegrationTest::SetUpTestCase();
         NES::Logger::setupLogging("LoRaWANProxySourceMQTTTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("LORAWANPROXYSOURCEMQTTTEST::SetUpTestCase()");
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("LORAWANPROXYSOURCEMQTTTEST::SetUp() LoRaWANProxySource MQTT test cases set up.");
         client.connect();
         ASSERT_TRUE(client.is_connected()) << "client setup failed";
@@ -75,7 +75,7 @@ class LoRaWANProxySourceMQTTTest : public Testing::NESBaseTest {
     }
 
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
         client.disconnect();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("LORAWANPROXYSOURCEMQTTTEST::TearDown() Tear down LoRaWANProxySourceMQTTTest");
@@ -83,7 +83,7 @@ class LoRaWANProxySourceMQTTTest : public Testing::NESBaseTest {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        Testing::NESBaseTest::TearDownTestCase();
+        Testing::BaseIntegrationTest::TearDownTestCase();
         NES_DEBUG("LORAWANPROXYSOURCEMQTTTEST::TearDownTestCases() Tear down LoRaWANProxySourceMQTTTest test class.");
     }
 
@@ -130,7 +130,7 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceRecieveData) {
 };
 
 TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceConfig) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create(0,nullptr);
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->numWorkerThreads = 4;
     wrkConf->logLevel = LogLevel::LOG_TRACE;
@@ -171,7 +171,7 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
         R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "TEXT_FORMAT", "APPEND"));)";
     string query2 = R"(Query::from("stream").filter(Attribute("value") < 3).sink(PrintSinkDescriptor::create());)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::TopDown, FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(5);
@@ -179,7 +179,7 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
     NES_INFO("\n\n --------- CONTENT --------- \n\n");
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_INFO(content);
+    NES_INFO("%s",content);
 
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));

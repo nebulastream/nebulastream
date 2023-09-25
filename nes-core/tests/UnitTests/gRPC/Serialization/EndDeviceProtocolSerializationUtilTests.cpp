@@ -21,7 +21,7 @@ limitations under the License.
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <EndDeviceProtocol.pb.h>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -59,7 +59,7 @@ limitations under the License.
 
 namespace NES {
 using namespace EndDeviceProtocol;
-class EndDeviceProtocolSerializationUtilTests : public Testing::NESBaseTest {
+class EndDeviceProtocolSerializationUtilTests : public Testing::BaseIntegrationTest {
     //friend class EndDeviceProtocolSerializationUtil;
 
   public:
