@@ -19,8 +19,9 @@ namespace NES::Runtime::Execution::Aggregation {
 SumAggregationFunction::SumAggregationFunction(const PhysicalTypePtr& inputType,
                                                const PhysicalTypePtr& resultType,
                                                const Expressions::ExpressionPtr& inputExpression,
+                                               const Nautilus::Record::RecordFieldIdentifier& inputFieldIdentifier,
                                                const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
-    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
+    : AggregationFunction(inputType, resultType, inputExpression, inputFieldIdentifier, resultFieldIdentifier) {}
 
 void SumAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) {
     // load memref
