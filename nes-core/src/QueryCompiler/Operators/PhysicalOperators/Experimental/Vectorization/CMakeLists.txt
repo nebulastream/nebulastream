@@ -17,6 +17,7 @@ add_source_files(
     PhysicalUnvectorizeOperator.cpp
     PhysicalVectorizedFilterOperator.cpp
     PhysicalVectorizedMapOperator.cpp
+    PhysicalVectorizedNonKeyedPreAggregationOperator.cpp
     PhysicalVectorizedPipelineOperator.cpp
     PhysicalVectorizeOperator.cpp
 )
