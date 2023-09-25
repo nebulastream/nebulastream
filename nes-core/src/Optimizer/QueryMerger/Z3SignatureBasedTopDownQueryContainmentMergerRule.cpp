@@ -204,6 +204,8 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                 std::vector<MatchedOperatorPairPtr> matchedOperatorPairs;
                 matchedOperatorPairs.reserve(matchedTargetToHostOperatorMap.size());
 
+                NES_TRACE("Size of matchedTargetToHostOperatorMap: {}", std::to_string(matchedTargetToHostOperatorMap.size()));
+
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperatorContainmentRelationshipContainedOperatorChain] :
                      matchedTargetToHostOperatorMap) {
@@ -213,8 +215,6 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                         matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator,
                                                                                       targetOperator->as<LogicalOperatorNode>(),
                                                                                       ContainmentRelationship::EQUALITY));
-                        //add matched operators to the host shared query plan
-                        hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
                         auto containerOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
@@ -226,7 +226,6 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                         matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(containerOperator->as<LogicalOperatorNode>(),
                                                                                       containedOperatorChain.back()->as<LogicalOperatorNode>(),
                                                                                       ContainmentRelationship::RIGHT_SIG_CONTAINED));
-                        hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentRelationship::LEFT_SIG_CONTAINED) {
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
@@ -238,9 +237,10 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                         matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(targetOperator->as<LogicalOperatorNode>(),
                                                                                       containedOperatorChain.back()->as<LogicalOperatorNode>(),
                                                                                       ContainmentRelationship::LEFT_SIG_CONTAINED));
-                        hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
                     }
                 }
+
+                hostSharedQueryPlan->addQuery(targetQueryPlan->getQueryId(), matchedOperatorPairs);
 
                 //Update the shared query metadata
                 globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);

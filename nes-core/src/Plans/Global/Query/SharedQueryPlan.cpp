@@ -216,6 +216,7 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
 
     //add the new sink operators as root to the query plan
     for (const auto& targetSinkOperator : sinkOperators) {
+        NES_TRACE("New sink operators: {}", targetSinkOperator->toString());
         queryPlan->addRootOperator(targetSinkOperator);
     }
 

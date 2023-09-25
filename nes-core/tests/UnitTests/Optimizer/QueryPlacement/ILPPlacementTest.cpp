@@ -655,10 +655,10 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
 
+    coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule;
+
     //Merge queries together
-    auto queryMergerPhase =
-        Optimizer::QueryMergerPhase::create(this->z3Context,
-                                            NES::Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+    auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, coordinatorConfiguration->optimizer);
     queryMergerPhase->execute(globalQueryPlan);
 
     //Fetch the share query plan to place
@@ -853,10 +853,10 @@ TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStra
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
 
+    coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule;
+
     //Merge queries together
-    auto queryMergerPhase =
-        Optimizer::QueryMergerPhase::create(this->z3Context,
-                                            NES::Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+    auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, coordinatorConfiguration->optimizer);
     queryMergerPhase->execute(globalQueryPlan);
 
     //Fetch the share query plan to place
@@ -1062,10 +1062,10 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMultipleSinkSharedQueryPlanWithILPS
     globalQueryPlan->addQueryPlan(queryPlan2);
     globalQueryPlan->addQueryPlan(queryPlan3);
 
+    coordinatorConfiguration->optimizer.queryMergerRule = Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule;
+
     //Merge queries together
-    auto queryMergerPhase =
-        Optimizer::QueryMergerPhase::create(this->z3Context,
-                                            NES::Optimizer::QueryMergerRule::HashSignatureBasedPartialQueryMergerRule);
+    auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, coordinatorConfiguration->optimizer);
     queryMergerPhase->execute(globalQueryPlan);
 
     //Fetch the share query plan to place

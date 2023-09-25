@@ -76,6 +76,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
     copy->setRightInputSchema(rightInputSchema);
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
+    copy->setOutputSchema(outputSchema);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }
@@ -85,7 +86,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
 bool UnionLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<UnionLogicalOperatorNode>()) {
         auto rhsUnion = rhs->as<UnionLogicalOperatorNode>();
-        return leftInputSchema->equals(rhsUnion->getRightInputSchema()) && outputSchema->equals(rhsUnion->getOutputSchema());
+        return leftInputSchema->equals(rhsUnion->getLeftInputSchema()) && outputSchema->equals(rhsUnion->getOutputSchema());
     }
     return false;
 }

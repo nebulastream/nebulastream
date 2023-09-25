@@ -34,7 +34,7 @@ using ContainmentRelationshipAndOperatorChainPtr = std::unique_ptr<ContainmentRe
 enum class ContainmentRelationship : uint8_t { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, EQUALITY };
 
 /**
-* @brief this class stores a pair of matched operators. One from the host shared query plan and one from the target shared query plan.
+* @brief this class stores the containment relationship and any extracted operator chains for TD-CQM and BU-CQM
 */
 class ContainmentRelationshipAndOperatorChain {
 
