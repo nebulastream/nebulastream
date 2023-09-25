@@ -178,10 +178,10 @@ std::unique_ptr<CodeGen::CodeGenerator> CUDAKernelCompiler::createCodeGenerator(
     codeGen->addFunction(cudaErrorCheckFn);
     codeGen->addMacro("cudaCheck(err) do { cudaErrorCheck((err), __FILE__, __LINE__); } while (false)");
 
-    auto bufferFn = std::dynamic_pointer_cast<CodeGen::CPP::Function>(getBuffer());
+    auto bufferFn = getBuffer();
     codeGen->addFunction(bufferFn);
 
-    auto numberOfTuplesFn = std::dynamic_pointer_cast<CodeGen::CPP::Function>(getNumberOfTuples());
+    auto numberOfTuplesFn = getNumberOfTuples();
     codeGen->addFunction(numberOfTuplesFn);
 
     auto functionOperation = irGraph->getRootOperation();
