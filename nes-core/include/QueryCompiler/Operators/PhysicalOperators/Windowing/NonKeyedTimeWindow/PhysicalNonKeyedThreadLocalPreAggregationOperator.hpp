@@ -54,7 +54,6 @@ class PhysicalNonKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOp
   private:
     WindowHandlerType windowHandler;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
-    SchemaPtr inputSchema;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators
