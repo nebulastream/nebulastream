@@ -48,15 +48,11 @@ std::shared_ptr<Nautilus::Tracing::ExecutionTrace> CUDAKernelCompiler::createTra
     memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 2, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
     auto recordBuffer = Runtime::Execution::RecordBuffer(memRef);
 
-    auto schemaSize = Nautilus::Value<Nautilus::UInt64>((uint64_t)0);
-    schemaSize.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 3, NES::Nautilus::IR::Types::StampFactory::createUInt64Stamp());
-
     auto vectorizedOperator = std::dynamic_pointer_cast<Runtime::Execution::Operators::VectorizableOperator>(nautilusOperator);
 
     auto trace = Nautilus::Tracing::traceFunction([&]() {
         auto traceContext = Nautilus::Tracing::TraceContext::get();
         traceContext->addTraceArgument(recordBuffer.getReference().ref);
-        traceContext->addTraceArgument(schemaSize.ref);
         auto ctx = Runtime::Execution::ExecutionContext(workerContextRef, pipelineExecutionContextRef);
         vectorizedOperator->execute(ctx, recordBuffer);
     });
@@ -80,27 +76,26 @@ std::shared_ptr<IR::IRGraph> CUDAKernelCompiler::createIR(const std::shared_ptr<
 
 std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getCudaKernelWrapper(const IR::BasicBlockPtr& functionBasicBlock) {
     std::vector<std::string> specifiers{"extern \"C\""};
-    std::vector<std::string> arguments;
-    for (auto i = 0ull; i < functionBasicBlock->getArguments().size(); i++) {
-        auto argument = functionBasicBlock->getArguments()[i];
-        auto var = CUDALoweringInterface::getVariable(argument->getIdentifier());
-        auto type = CUDALoweringInterface::getType(argument->getStamp());
-        arguments.emplace_back(type + " " + var);
-    }
+    auto inputBufferArg = functionBasicBlock->getArguments().at(0);
+    auto inputBufferType = CUDALoweringInterface::getType(inputBufferArg->getStamp());
+    auto inputBufferVar = CUDALoweringInterface::getVariable(inputBufferArg->getIdentifier());
+    std::vector<std::string> arguments{
+        inputBufferType + " " + inputBufferVar,
+    };
 
     auto wrapperFunctionName = descriptor.wrapperFunctionName;
     auto kernelWrapperFn = std::make_shared<CodeGen::CPP::Function>(specifiers, "auto", wrapperFunctionName, arguments);
     auto kernelWrapperFunctionBody = std::make_shared<CodeGen::Segment>();
-
-    auto inputBufferArg = functionBasicBlock->getArguments().at(0);
-    auto inputBufferVar = CUDALoweringInterface::getVariable(inputBufferArg->getIdentifier());
 
     auto kernelFunctionName = descriptor.kernelFunctionName;
     auto inputSchemaSize = descriptor.inputSchemaSize;
     auto threadsPerBlock = descriptor.threadsPerBlock;
 
     auto getNumberOfTuples = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getNumberOfTuples = (uint64_t(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples)));
+    kernelWrapperFunctionBody->addToProlog(getNumberOfTuples);
+
     auto getBuffer = std::make_shared<CodeGen::CPP::Statement>(fmt::format("auto NES__Runtime__TupleBuffer__getBuffer = (void*(*)(void*)) {}", fmt::ptr(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer)));
+    kernelWrapperFunctionBody->addToProlog(getBuffer);
 
     auto code = fmt::format(R"(
         auto number_of_tuples = NES__Runtime__TupleBuffer__getNumberOfTuples({0});
@@ -125,9 +120,6 @@ std::shared_ptr<CodeGen::CPP::Function> CUDAKernelCompiler::getCudaKernelWrapper
     )", inputBufferVar, inputSchemaSize, threadsPerBlock, kernelFunctionName);
 
     auto stmt = std::make_shared<CodeGen::CPP::Statement>(code);
-
-    kernelWrapperFunctionBody->addToProlog(getNumberOfTuples);
-    kernelWrapperFunctionBody->addToProlog(getBuffer);
     kernelWrapperFunctionBody->add(stmt);
     kernelWrapperFn->addSegment(kernelWrapperFunctionBody);
     return kernelWrapperFn;
