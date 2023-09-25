@@ -182,7 +182,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(emit);
         return emit;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFilterOperator>()) {
-        auto filter = lowerFilter(pipeline, operatorNode);
+        auto filter = lowerFilter(operatorNode);
         parentOperator->setChild(filter);
         return filter;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>()) {
@@ -860,8 +860,7 @@ LowerPhysicalToNautilusOperators::lowerEmit(Runtime::Execution::PhysicalOperator
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerFilter(Runtime::Execution::PhysicalOperatorPipeline&,
-                                              const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
+LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
     auto filterOperator = operatorPtr->as<PhysicalOperators::PhysicalFilterOperator>();
     auto expression = expressionProvider->lowerExpression(filterOperator->getPredicate());
     return std::make_shared<Runtime::Execution::Operators::Selection>(expression);

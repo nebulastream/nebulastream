@@ -90,8 +90,7 @@ class LowerPhysicalToNautilusOperators {
               size_t bufferSize);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+    lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerLimit(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
