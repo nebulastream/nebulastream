@@ -11,7 +11,7 @@
 // *
 
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
-#include <NesBaseTest.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
 //#include <boost/process/spawn.hpp>
@@ -26,7 +26,7 @@ constexpr int NUMSOURCELOCALBUFFERS = 12;
 
 namespace NES {
 
-class LoRaWANProxySourceTest : public Testing::NESBaseTest {
+class LoRaWANProxySourceTest : public Testing::BaseIntegrationTest {
   public:
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     Runtime::BufferManagerPtr bufferManager;
@@ -36,6 +36,11 @@ class LoRaWANProxySourceTest : public Testing::NESBaseTest {
     std::map<std::string, std::string> sourceConfig{
         {Configurations::LORAWAN_NETWORK_STACK_CONFIG, "ChirpStack"},
         {Configurations::URL_CONFIG, "tcp://localhost:1883"},
+        {Configurations::LORAWAN_CA_PATH, "notneeded"},
+        {Configurations::LORAWAN_CERT_PATH, "alsonotneeded"},
+        {Configurations::LORAWAN_KEY_PATH, "includingthis"},
+        {Configurations::LORAWAN_DEVICE_EUIS, "yaba daba doo"},
+        {Configurations::LORAWAN_SENSOR_FIELDS, "hehe"},
         {Configurations::USER_NAME_CONFIG, "hellothere"},
         {Configurations::PASSWORD_CONFIG, "General Grevious"},
         {Configurations::LORAWAN_APP_ID_CONFIG, "testing"},
@@ -44,12 +49,13 @@ class LoRaWANProxySourceTest : public Testing::NESBaseTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
+        Testing::BaseIntegrationTest::SetUpTestCase();
         NES::Logger::setupLogging("LoRaWANProxySourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("LORAWANPROXYSOURCETEST::SetUpTestCase()");
     }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("LORAWANPROXYSOURCETEST::SetUp() LoRaWANProxySource test cases set up.");
         schema = Schema::create()->addField("var", BasicType::UINT32);
         loRaWANProxySourceType = LoRaWANProxySourceType::create(sourceConfig);
@@ -63,7 +69,7 @@ class LoRaWANProxySourceTest : public Testing::NESBaseTest {
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        Testing::BaseIntegrationTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("LORAWANPROXYSOURCETEST::TearDown() Tear down LoRaWANProxySourceTest");
     }
@@ -99,13 +105,16 @@ TEST_F(LoRaWANProxySourceTest, LoRaWANProxySourceInitCorrectValues) {
                                          ORIGINID,
                                          NUMSOURCELOCALBUFFERS,
                                          {});
-    auto expected = "LoRaWANProxySource(SCHEMA(var:INTEGER ), CONFIG(LoRaWANProxySourceType =>  {\n"
-                    "networkStack: ChirpStack\n"
+    auto expected = "LoRaWANProxySource(SCHEMA(var:INTEGER(32 bits)), CONFIG(LoRaWANProxySourceType =>  "
+                    "{\nnetworkStack: ChirpStack\n"
                     "url: tcp://localhost:1883\n"
                     "userName: hellothere\n"
                     "password: General Grevious\n"
                     "appId: testing\n"
-                    "})).";
+                    "CAPath: notneeded\n"
+                    "certPath: alsonotneeded\n"
+                    "keyPath: includingthis\n"
+                    "sensorFields: [ hehe, ]})).";
     EXPECT_EQ(expected, init->toString());
 }
 
