@@ -134,4 +134,16 @@ void NonKeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) co
                            ctx.getWatermarkTs());
 }
 
+uint64_t NonKeyedSlicePreAggregation::getOperatorHandlerIndex() {
+    return operatorHandlerIndex;
+}
+
+TimeFunction* NonKeyedSlicePreAggregation::getTimeFunction() {
+    return timeFunction.get();
+}
+
+const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& NonKeyedSlicePreAggregation::getAggregationFunctions() {
+    return aggregationFunctions;
+}
+
 }// namespace NES::Runtime::Execution::Operators
