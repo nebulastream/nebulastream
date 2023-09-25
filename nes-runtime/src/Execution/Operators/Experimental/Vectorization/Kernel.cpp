@@ -54,9 +54,9 @@ void Kernel::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 }
 
 void Kernel::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    Operator::close(ctx, recordBuffer);
     auto pipeline = descriptor.pipeline;
     pipeline->close(ctx, recordBuffer);
+    Operator::close(ctx, recordBuffer);
 }
 
 } // namespace NES::Runtime::Execution::Operators
