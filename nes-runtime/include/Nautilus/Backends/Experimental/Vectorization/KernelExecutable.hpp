@@ -25,7 +25,9 @@ namespace NES::Nautilus::Backends {
 // Kernel Signature:
 // - void function
 // - first parameter: void* for tuple buffer
-using KernelInvocable = Executable::Invocable<void, void*>;
+// - second parameter: void* for handler
+// - third parameter: uint64_t for worker id
+using KernelInvocable = Executable::Invocable<void, void*, void*, uint64_t>;
 
 /**
  * @brief Implements the kernel executable.

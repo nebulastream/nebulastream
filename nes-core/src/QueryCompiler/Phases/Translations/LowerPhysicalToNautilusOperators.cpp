@@ -32,6 +32,7 @@
 #include <Execution/Operators/Experimental/Vectorization/Unvectorize.hpp>
 #include <Execution/Operators/Experimental/Vectorization/Vectorize.hpp>
 #include <Execution/Operators/Experimental/Vectorization/VectorizedMap.hpp>
+#include <Execution/Operators/Experimental/Vectorization/VectorizedNonKeyedPreAggregation.hpp>
 #include <Execution/Operators/Experimental/Vectorization/VectorizedSelection.hpp>
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
@@ -83,6 +84,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalUnvectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizedNonKeyedPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Experimental/Vectorization/PhysicalVectorizeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalHashJoinProbeOperator.hpp>
@@ -496,7 +498,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(unvectorize);
         return unvectorize;
     } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalKernelOperator>()) {
-        auto kernelOpt = lowerKernel(operatorNode, bufferSize);
+        auto kernelOpt = lowerKernel(operatorNode, bufferSize, operatorHandlers);
         if (!kernelOpt) {
             NES_THROW_RUNTIME_ERROR("Failed to create a Kernel operator");
             return nullptr;
@@ -1155,11 +1157,16 @@ LowerPhysicalToNautilusOperators::lowerInferModelOperator(const PhysicalOperator
 #endif
 
 std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
-LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize) {
+LowerPhysicalToNautilusOperators::lowerKernel(
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    size_t bufferSize,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers
+) {
     auto physicalKernel = physicalOperator->as<PhysicalOperators::Experimental::PhysicalKernelOperator>();
 
     auto physicalVectorizedPipeline = physicalKernel->getVectorizedPipeline();
     auto nodes = physicalVectorizedPipeline->getPipelineOperators();
+    std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler> handler;
     std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>> operators;
     for (const auto& node : nodes) {
         if (node->as_if<PhysicalOperators::Experimental::PhysicalVectorizedMapOperator>()) {
@@ -1196,6 +1203,43 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
                 std::move(memoryProvider)
             );
             operators.push_back(vectorizedMapOperator);
+        } else if (node->as_if<PhysicalOperators::Experimental::PhysicalVectorizedNonKeyedPreAggregationOperator>()) {
+            auto physicalVectorizedOperator = node->as<PhysicalOperators::Experimental::PhysicalVectorizedNonKeyedPreAggregationOperator>();
+
+            NES_ASSERT(options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::SLICING, "Currently only slicing-based windowing is supported");
+
+            auto inputSchema = physicalVectorizedOperator->getInputSchema();
+            NES_ASSERT(inputSchema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+            auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(inputSchema, bufferSize);
+            auto memoryProvider = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+
+            auto physicalNonKeyedPreAggregationOperator = physicalVectorizedOperator->getPhysicalNonKeyedPreAggregationOperator();
+            auto windowDefinition = physicalNonKeyedPreAggregationOperator->getWindowDefinition();
+            auto windowType = windowDefinition->getWindowType();
+            NES_ASSERT(windowType->isTimeBasedWindowType(), "Currently only time-based windows are supported");
+            auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType);
+            auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic()->getType();
+            NES_ASSERT(timeCharacteristic == Windowing::TimeCharacteristic::Type::IngestionTime, "Currently only ingestion time is supported");
+            auto aggregations = physicalNonKeyedPreAggregationOperator->getWindowDefinition()->getWindowAggregation();
+            auto aggregationFunctions = lowerAggregations(aggregations);
+            auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+            auto timeFunction = lowerTimeFunction(timeWindow);
+
+            handler = std::get<std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>>(
+                physicalNonKeyedPreAggregationOperator->getWindowHandler()
+            );
+            operatorHandlers.emplace_back(handler);
+            auto slicePreAggregation = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(
+                operatorHandlers.size() - 1,
+                std::move(timeFunction),
+                aggregationFunctions
+            );
+
+            auto vectorizedOperator = std::make_shared<Runtime::Execution::Operators::VectorizedNonKeyedPreAggregation>(
+                slicePreAggregation,
+                std::move(memoryProvider)
+            );
+            operators.push_back(vectorizedOperator);
         }
     }
 
@@ -1243,6 +1287,7 @@ LowerPhysicalToNautilusOperators::lowerKernel(const PhysicalOperators::PhysicalO
         .compileOptions = compileOptions,
         .inputSchemaSize = *schemaSizeIt,
         .threadsPerBlock = cudaThreadsPerBlock,
+        .handler = handler,
     };
     return std::make_shared<Runtime::Execution::Operators::Kernel>(descriptor);
 }

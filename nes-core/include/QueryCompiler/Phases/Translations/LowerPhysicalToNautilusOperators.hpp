@@ -156,7 +156,7 @@ class LowerPhysicalToNautilusOperators {
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 
     std::optional<std::shared_ptr<Runtime::Execution::Operators::Kernel>>
-    lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
+    lowerKernel(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize, std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::optional<std::shared_ptr<Runtime::Execution::Operators::Operator>>
     buildNautilusOperatorPipeline(const std::vector<std::shared_ptr<Runtime::Execution::Operators::Operator>>& operators);

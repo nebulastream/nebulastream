@@ -21,6 +21,8 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+class NonKeyedSlicePreAggregationHandler;
+
 /**
  * @brief The Kernel operator is a Nautilus operator that upon calling its `execute` method executes a kernel function.
  * The kernel function is compiled into a shared library object and exposed by a wrapper function.
@@ -32,6 +34,7 @@ public:
         Nautilus::CompilationOptions compileOptions;
         uint64_t inputSchemaSize;
         uint32_t threadsPerBlock;
+        std::shared_ptr<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler> handler;
     };
 
     /**

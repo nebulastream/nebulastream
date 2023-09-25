@@ -14,16 +14,29 @@
 
 #include <Execution/Operators/Experimental/Vectorization/Kernel.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/KernelExecutable.hpp>
 #include <Nautilus/Backends/Experimental/Vectorization/CUDA/CUDAKernelCompiler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-void invokeKernel(void* kernelExecutable, void* recordBuffer) {
+class LocalKernelState : public Operators::OperatorState {
+public:
+    explicit LocalKernelState(const Value<MemRef>& handler)
+        : handler(handler)
+    {
+
+    };
+
+    const Value<MemRef> handler;
+};
+
+void invokeKernel(void* kernelExecutable, void* recordBuffer, void* handler, uint64_t workerId) {
     auto executable = static_cast<Backends::KernelExecutable*>(kernelExecutable);
     auto kernelWrapper = executable->getKernelWrapperFunction();
-    kernelWrapper(recordBuffer);
+    kernelWrapper(recordBuffer, handler, workerId);
 }
 
 Kernel::Kernel(Descriptor descriptor)
@@ -53,12 +66,18 @@ void Kernel::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     Operator::open(ctx, recordBuffer);
     auto pipeline = descriptor.pipeline;
     pipeline->open(ctx, recordBuffer);
+
+    auto handler = Value<MemRef>((int8_t*)descriptor.handler.get());
+    auto kernelState = std::make_unique<LocalKernelState>(handler);
+    ctx.setLocalOperatorState(this, std::move(kernelState));
 }
 
 void Kernel::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto kernelExecutableRef = Value<MemRef>((int8_t*) kernelExecutable.get());
     auto recordBufferRef = recordBuffer.getReference();
-    Nautilus::FunctionCall("invokeKernel", invokeKernel, kernelExecutableRef, recordBufferRef);
+    auto kernelState = static_cast<LocalKernelState*>(ctx.getLocalState(this));
+    auto workerId = ctx.getWorkerId();
+    Nautilus::FunctionCall("invokeKernel", invokeKernel, kernelExecutableRef, recordBufferRef, kernelState->handler, workerId);
     auto vectorizedChild = std::dynamic_pointer_cast<const VectorizableOperator>(child);
     vectorizedChild->execute(ctx, recordBuffer);
 }

@@ -18,5 +18,6 @@ add_source_files(
     VectorizableOperator.cpp
     Vectorize.cpp
     VectorizedMap.cpp
+    VectorizedNonKeyedPreAggregation.cpp
     VectorizedSelection.cpp
 )
