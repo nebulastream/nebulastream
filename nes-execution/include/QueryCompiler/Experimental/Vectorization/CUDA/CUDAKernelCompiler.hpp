@@ -28,6 +28,9 @@ public:
         std::string wrapperFunctionName;
         uint64_t inputSchemaSize;
         uint32_t threadsPerBlock;
+        uint64_t sharedMemorySize;
+        uint64_t numberOfSlices;
+        uint64_t sliceSize;
     };
 
     /**
@@ -52,6 +55,12 @@ private:
     std::shared_ptr<CodeGen::CPP::Function> getBuffer();
 
     std::shared_ptr<CodeGen::CPP::Function> getNumberOfTuples();
+
+    std::shared_ptr<CodeGen::CPP::Function> getCreationTs();
+
+    std::shared_ptr<CodeGen::CPP::Function> getSliceStore();
+
+    std::shared_ptr<CodeGen::CPP::Function> sum();
 
     std::shared_ptr<CodeGen::CPP::Function> setAsValidInMetadata();
 
