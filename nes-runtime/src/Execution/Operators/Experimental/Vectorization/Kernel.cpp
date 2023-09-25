@@ -32,8 +32,11 @@ Kernel::Kernel(Descriptor descriptor)
 
 }
 
-void Kernel::setup(ExecutionContext&) const {
+void Kernel::setup(ExecutionContext& ctx) const {
     // TODO(#4148) Compile the execution trace to a kernel
+    Operator::setup(ctx);
+    auto pipeline = descriptor.pipeline;
+    pipeline->setup(ctx);
 }
 
 void Kernel::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
