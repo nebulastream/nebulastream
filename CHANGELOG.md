@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.215](https://github.com/nebulastream/nebulastream/tree/v0.5.215) (2023-09-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.214...v0.5.215)
+
+### Bug Fixes 🐛
+
+- \[BUG\] ILPStrategy fails with a window operator [\#3460](https://github.com/nebulastream/nebulastream/issues/3460)
+
+#### Documentation 
+
+- \[Feature\] Identify a tool to create road maps and timelines for NES [\#3291](https://github.com/nebulastream/nebulastream/issues/3291)
+
 ## [v0.5.214](https://github.com/nebulastream/nebulastream/tree/v0.5.214) (2023-09-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.213...v0.5.214)
