@@ -30,6 +30,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -41,8 +43,6 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -326,7 +326,11 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query plan
-    Query query = Query::from("car").window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car")
+                      .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(1)))
+                      .byKey(Attribute("id"))
+                      .apply(Sum(Attribute("value")))
+                      .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
@@ -359,8 +363,7 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        }
-        else if (executionNode->getId() == 2){
+        } else if (executionNode->getId() == 2) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1U);
             auto querySubPlan = querySubPlans[0U];
@@ -369,10 +372,13 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             // assertion for window and watermark operator being placed after source
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        }
-        else if (executionNode->getId() == 3) {
+            EXPECT_TRUE(
+                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]
+                            ->getChildren()[0]
+                            ->getChildren()[0]
+                            ->instanceOf<SourceLogicalOperatorNode>());
+        } else if (executionNode->getId() == 3) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1U);
             auto querySubPlan = querySubPlans[0U];
@@ -397,7 +403,11 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topologyForILP, typeInferencePhase, coordinatorConfiguration);
 
     //Prepare query plan
-    Query query = Query::from("car").window(SlidingWindow::of(EventTime(Attribute("id")), Seconds(1), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car")
+                      .window(SlidingWindow::of(EventTime(Attribute("id")), Seconds(1), Milliseconds(100)))
+                      .byKey(Attribute("id"))
+                      .apply(Sum(Attribute("value")))
+                      .sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {
@@ -430,8 +440,7 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        }
-        else if (executionNode->getId() == 2){
+        } else if (executionNode->getId() == 2) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1U);
             auto querySubPlan = querySubPlans[0U];
@@ -440,10 +449,13 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             // assertion for window and watermark operator being placed after source
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<WindowOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        }
-        else if (executionNode->getId() == 3) {
+            EXPECT_TRUE(
+                actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]
+                            ->getChildren()[0]
+                            ->getChildren()[0]
+                            ->instanceOf<SourceLogicalOperatorNode>());
+        } else if (executionNode->getId() == 3) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1U);
             auto querySubPlan = querySubPlans[0U];

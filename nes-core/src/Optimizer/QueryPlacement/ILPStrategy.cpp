@@ -289,8 +289,8 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
         auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
         OperatorId operatorID = operatorNode->getId();
         // we only need to store the possibilities of the node before the one we look at, so we have to erase "old" data (we keep the values of the last iteration though)
-        if (i>1){ // if i == 0 noting to erase, if i == 1 we only have one "set" of values (which we still need)
-            P_IJ_stored.erase(P_IJ_stored.begin(), P_IJ_stored.begin()+topologyNodePath.size());
+        if (i > 1) {// if i == 0 noting to erase, if i == 1 we only have one "set" of values (which we still need)
+            P_IJ_stored.erase(P_IJ_stored.begin(), P_IJ_stored.begin() + topologyNodePath.size());
             NES_DEBUG("Deleting old placement constraints");
         }
         if (operatorMap.find(operatorID) != operatorMap.end()) {
@@ -321,23 +321,23 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
             std::string variableID = std::to_string(operatorID) + KEY_SEPARATOR + std::to_string(topologyID);
             auto P_IJ = z3Context->int_const(variableID.c_str());
             if ((i == 0 && j == 0) || (i == operatorNodePath.size() - 1 && j == topologyNodePath.size() - 1)) {
-                opt.add(P_IJ == 1); // Fix the placement of source and sink
+                opt.add(P_IJ == 1);// Fix the placement of source and sink
                 P_IJ_stored.emplace_back(P_IJ);
-            } else if (i == 0 && j != 0){
+            } else if (i == 0 && j != 0) {
                 opt.add(P_IJ == 0);
                 P_IJ_stored.emplace_back(P_IJ);
-            }
-            else {
+            } else {
                 // The binary decision on whether to place or not, hence we constrain it to be either 0 or 1
                 // Adding a z3 expression as an additional constraint to store the placement possibilities' conditions while maintaining the correct order of operator nodes.
-                z3::expr check_previous_expression = (P_IJ_stored[0] == 1); // possible use of first topology node as constraint to ensure right order
+                z3::expr check_previous_expression =
+                    (P_IJ_stored[0] == 1);// possible use of first topology node as constraint to ensure right order
                 // Iterating over all positions of topologyNodePath up to the current one (j) and adding them to the storing variable
-                for (uint64_t k = 1; k<=j; ++k) {
+                for (uint64_t k = 1; k <= j; ++k) {
                     check_previous_expression = check_previous_expression || (P_IJ_stored[k] == 1);
                 }
                 // Either P_IJ is 0 and the operator node is not be placed at current topology position (first condition)
                 // or operator node is 1 and then placed at current topology node but only if the previous operator node is set at the same or a previous topology node (second condition)
-                opt.add(P_IJ==0 || (P_IJ==1 && check_previous_expression));
+                opt.add(P_IJ == 0 || (P_IJ == 1 && check_previous_expression));
                 // Add the current state of P_IJ to the vector that is storing all possible operator node placements
                 P_IJ_stored.emplace_back(P_IJ);
             }
