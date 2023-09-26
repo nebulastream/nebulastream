@@ -34,5 +34,7 @@ endfunction()
 
 add_nes_benchmarks(nautilus-tracing-benchmark "Nautilus/BenchmarkTracing.cpp")
 add_executable(tpch-benchmark "TPCH/TPCHBenchmark.cpp")
+add_executable(python-udf-micro-benchmark "PythonUDF/PythonMicroBenchmark.cpp")
 target_link_libraries(tpch-benchmark PUBLIC tpch-dbgen nes-runtime-benchmark)
+target_link_libraries(python-udf-micro-benchmark PUBLIC nes-runtime-benchmark)
 
