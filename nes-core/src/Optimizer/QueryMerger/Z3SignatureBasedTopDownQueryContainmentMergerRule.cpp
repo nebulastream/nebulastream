@@ -129,8 +129,6 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                             auto endQR = std::chrono::duration_cast<std::chrono::microseconds>(
                                              std::chrono::system_clock::now().time_since_epoch())
                                              .count();
-                            globalQueryPlan->containmentIdentification += endQR - startQR;
-                            globalQueryPlan->callsToContainmentIdentification++;
                             if (relationshipAndOperators->containmentRelationship != ContainmentRelationship::NO_CONTAINMENT) {
                                 //Add the matched host operator to the map
                                 matchedTargetToHostOperatorMap[targetOperator] =
