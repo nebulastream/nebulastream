@@ -231,16 +231,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel));
                     unbuffer(workerContext);
                 } else {
-                    //wait for the threads of aborted connection attempts to time out
-                    workerContext.waitForAbortedConnections(getUniqueNetworkSinkDescriptorId());
-
                     //do not release network channel in the next step because none was established
                     return;
                 }
             }
-            //wait for the threads of aborted connection attempts to time out
-            workerContext.waitForAbortedConnections(getUniqueNetworkSinkDescriptorId());
-
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType),
                             "Cannot remove network channel " << nesPartition.toString());
             NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",

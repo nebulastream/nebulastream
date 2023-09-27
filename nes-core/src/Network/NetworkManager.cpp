@@ -109,7 +109,7 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                   retryTimes);
 }
 
-std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
+std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
                                                                                  const NesPartition& nesPartition,
                                                                                  Runtime::BufferManagerPtr bufferManager,
                                                                                  std::chrono::milliseconds waitTime,
@@ -120,6 +120,9 @@ std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync
     std::promise<NetworkChannelPtr> promise;
     auto future = promise.get_future();
 
+    std::promise<bool> abortConnectionPromise;
+    auto abortConnectionFuture = abortConnectionPromise.get_future();
+
     //start thread
     std::thread thread([zmqContext = server->getContext(),
                         nodeLocation,
@@ -129,7 +132,8 @@ std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync
                         highWaterMark = senderHighWatermark,
                         waitTime,
                         retryTimes,
-                        promise = std::move(promise), queryManager, reconfigurationMessage]() mutable {
+                        promise = std::move(promise), queryManager, reconfigurationMessage, abortConnectionFuture = std::move(abortConnectionFuture)]() mutable {
+        auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
         auto channel = NetworkChannel::create(zmqContext,
                                               nodeLocation.createZmqURI(),
                                               nesPartition,
@@ -137,14 +141,14 @@ std::future<NetworkChannelPtr> NetworkManager::registerSubpartitionProducerAsync
                                               std::move(bufferManager),
                                               highWaterMark,
                                               waitTime,
-                                              retryTimes);
+                                              retryTimes, std::move(future_optional));
         //pass channel back to calling thread via promise
         promise.set_value(std::move(channel));
         //notify the sink about successful connection via reconfiguration message
-        queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, true);
+      queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, false);
     });
     thread.detach();
-    return future;
+    return {std::move(future), std::move(abortConnectionPromise)};
 }
 
 EventOnlyNetworkChannelPtr NetworkManager::registerSubpartitionEventProducer(const NodeLocation& nodeLocation,

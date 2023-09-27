@@ -51,10 +51,7 @@ class WorkerContext {
     /// data channels that send data downstream
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::future<Network::NetworkChannelPtr>> dataChannelFutures;
-    //todo: #4229 allow aborting connection process instead of waiting for timeouts before shutdown
-    /// futures for data channels to which no connection could be established. keep them until timeout, to avoid leaking ports after shutdown
-    std::unordered_map<NES::OperatorId, std::vector<std::future<Network::NetworkChannelPtr>>> abortedConnectionAttempts;
+    std::unordered_map<NES::OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>> dataChannelFutures;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool stored in tls
@@ -135,11 +132,13 @@ class WorkerContext {
     void storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
-     * @brief This stores a future for network channel creation for an operator
+     * @brief This stores a future for network channel creation and a promise which can be used to abort the creation
      * @param id of the operator that we want to store the output channel
-     * @param channelFuture a future waiting for the output channel to be connected
+     * @param channelFuture a pair of a future waiting for the output channel to be connected and a promise to be used if the connection
+     * process is to be aborted
      */
-    void storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channelFuture);
+    void storeNetworkChannelFuture(NES::OperatorId id,
+                                   std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture);
 
     /**
       * @brief This method creates a network storage for a thread
@@ -249,18 +248,10 @@ class WorkerContext {
 
     //todo #4229: adapt this function when aborting of network channel creation has been implemented
     /**
-     * @brief stop waiting for the current async connection process triggered by this thread to complete. Instead move it to a
-     * list of threads to wait for completion before shutting down the sync
+     * @brief stop a connection process which is currently in progress
      * @param ownerId the id of the operator that started the connection process
      */
     void abortConnectionProcess(OperatorId ownerId);
-
-    //todo #4229: remove this function when aborting of network channel creation has been implemented
-    /**
-     * @brief wait for all aborted connections to time out
-     * @param ownerId the id of the operator that started the connection process
-     */
-    void waitForAbortedConnections(OperatorId ownerId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime
