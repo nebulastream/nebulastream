@@ -62,9 +62,13 @@ class OptimizerConfiguration : public BaseConfiguration {
                                                               Optimizer::QueryMergerRule::DefaultQueryMergerRule,
                                                               "The rule to be used for performing query merging"};
 
+    /**
+     * @brief allow TD-CQM to identify if a newly arrived query contains an already running SQP
+     * if set to true, TD-CQM is slower but more accurate
+     */
     BoolOption allowSQPAsContainee = {ALLOW_SQP_AS_CONTAINEE,
                                       false,
-                                      "Allow SQP as containee in top down containment based query merging."};
+                                      "Allow SQP as containee in top down containment based query merging (TD-CQM)."};
 
     /**
      * @brief Indicates the memory layout policy and allows the engine to prefer a row or columnar layout.

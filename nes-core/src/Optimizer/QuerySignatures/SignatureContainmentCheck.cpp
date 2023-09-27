@@ -115,6 +115,10 @@ SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const L
         // In case of window equality, we continue to check for projection containment
         // In case of projection equality, we finally check for filter containment
         // If we detect a containment relationship at any point in the algorithm, we stop and extract the contained upstream operators
+        // Additionally, if we detect a containment relationship, we also check that the other relationships allow the containment relationship
+        // i.e.: 1. Window containment requires equal filters and either equal projections or a containment relationship in the same direction
+        // 2. Projection containment also checks for equal filters (window containment check already returned equality)
+        // 3. Before we can detect a filter containment relationship, we need to know that the window and projection containment checks returned equality
         containmentRelationship = checkWindowContainment(leftOperator->getZ3Signature(), rightOperator->getZ3Signature());
         NES_TRACE("Check window containment returned: {}", magic_enum::enum_name(containmentRelationship));
         if (containmentRelationship == ContainmentRelationship::EQUALITY) {
@@ -126,11 +130,15 @@ SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const L
                 NES_TRACE("Check filter containment returned: {}", magic_enum::enum_name(containmentRelationship));
                 if (containmentRelationship == ContainmentRelationship::EQUALITY) {
                     return ContainmentRelationshipAndOperatorChain::create(ContainmentRelationship::EQUALITY, {});
+                // Create the contained operator chain, i.e., extract all filter operators from the containee (if possible, more details on that inside ContainedOperatorUtil),
+                // and concatenate the filter predicates so that we return one filter operator with all contained filter operations
                 } else if (containmentRelationship == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
                     containedOperator = ContainedOperatorsUtil::createContainedFilterOperators(leftOperator, rightOperator);
                 } else if (containmentRelationship == ContainmentRelationship::LEFT_SIG_CONTAINED) {
                     containedOperator = ContainedOperatorsUtil::createContainedFilterOperators(rightOperator, leftOperator);
                 }
+            // Create the contained operator chain, i.e., extract the most downstream projection operator from the containee
+            // (if possible, more details on that inside ContainedOperatorUtil)
             } else if (containmentRelationship == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
                 containedOperator = ContainedOperatorsUtil::createContainedProjectionOperator(rightOperator);
             } else if (containmentRelationship == ContainmentRelationship::LEFT_SIG_CONTAINED) {
@@ -139,6 +147,7 @@ SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const L
             if (containedOperator) {
                 containmentOperators.push_back(containedOperator);
             }
+        // Create the contained operator chain, i.e., extract the most downstream windwo operator and its associated watermark assigner from the containee
         } else if (containmentRelationship == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
             containmentOperators = ContainedOperatorsUtil::createContainedWindowOperator(rightOperator, leftOperator);
         } else if (containmentRelationship == ContainmentRelationship::LEFT_SIG_CONTAINED) {
@@ -208,7 +217,7 @@ ContainmentRelationship SignatureContainmentCheck::checkWindowContainment(const 
         //0 indicates that there are no window operations in the queries
         return ContainmentRelationship::EQUALITY;
     }
-    // obtain the number of window operations. Use the number of window operations from the signature that has less window operations
+    // if the number of window operations is not the same, we cannot detect containment relationships for these queries
     if (rightSignature->getWindowsExpressions().size() != leftSignature->getWindowsExpressions().size()) {
         return ContainmentRelationship::NO_CONTAINMENT;
     }
@@ -225,13 +234,13 @@ ContainmentRelationship SignatureContainmentCheck::checkWindowContainment(const 
         NES_TRACE("Starting with right window: {}", rightWindow.at("z3-window-expressions")->to_string());
         // checks if the window ids are equal, operator sharing can only happen for equal window ids
         // the window id consists of the involved window-keys, and the time stamp attribute
-        //extract the z3-window-expressions
+        // extract the z3-window-expressions
         z3::expr_vector leftQueryWindowConditions(*context);
         z3::expr_vector rightQueryWindowConditions(*context);
         leftQueryWindowConditions.push_back(to_expr(*context, *leftWindow.at("z3-window-expressions")));
         rightQueryWindowConditions.push_back(to_expr(*context, *rightWindow.at("z3-window-expressions")));
         NES_TRACE("Created window FOL.");
-        //checks if the number of aggregates is equal, for equal number of aggregates we
+        // checks if the number of aggregates is equal, for equal number of aggregates we
         // 1. check for complete equality
         // 2. check if a containment relationship exists,
         // e.g. z3 checks leftWindow-size <= rightWindow-size && leftWindow-slide <= rightWindow-slide

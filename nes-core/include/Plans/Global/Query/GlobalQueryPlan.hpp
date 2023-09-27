@@ -57,18 +57,6 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
  */
 class GlobalQueryPlan {
   public:
-
-    long typeInferencePhase1 = 0;
-    long queryRewritePhaseTime = 0;
-    long typeInferencePhase2 = 0;
-    long signatureInferencePhase1 = 0;
-    long topologySpecificRewritePhase = 0;
-    long typeInferencePhase3 = 0;
-    long globalQueryPlanAddition = 0;
-    long mergerExecutionPhase = 0;
-    long containmentIdentification = 0;
-    long callsToContainmentIdentification = 0;
-
     static GlobalQueryPlanPtr create();
 
     /**

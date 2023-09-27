@@ -288,13 +288,6 @@ void DataSource::close() {
 
 void DataSource::runningRoutine() {
     try {
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
-        std::string markerFile = "/tmp/start.source";
-
-        while (!std::filesystem::exists(markerFile)) {
-            NES_DEBUG("Waiting for the signal");
-            std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-        }
         if (gatheringMode == GatheringMode::INTERVAL_MODE) {
             runningRoutineWithGatheringInterval();
         } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
