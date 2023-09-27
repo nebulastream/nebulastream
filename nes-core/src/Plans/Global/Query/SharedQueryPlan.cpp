@@ -98,12 +98,12 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
                         hostUpstreamOperator->addParent(targetOperatorCopy);
                         //add the host upstream operator to the change log entry
                         clEntryUpstreamOperators.insert(hostUpstreamOperator->as<LogicalOperatorNode>());
-                        //add the new sink operators as root to the set
-                        sinkOperators.insert(hostUpstreamOperator->as<LogicalOperatorNode>());
                     }
 
                     //set target operator as the downstream operator in the change log
                     clEntryDownstreamOperators.insert(targetOperatorCopy);
+                    //add the new sink operators as root to the set
+                    sinkOperators.insert(targetOperatorCopy->as<LogicalOperatorNode>());
 
                     //If host operator is of sink type then connect the downstream operators of target operator to the upstream of the host operator.
                 } else if (hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
@@ -222,6 +222,8 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
 
     //Add sink list for the newly inserted query
     queryIdToSinkOperatorMap[queryId] = sinkOperators;
+
+    NES_TRACE("Size of queryIdToSinkOperatorMap: {}", queryIdToSinkOperatorMap.size());
 
     //add the query id
     queryIds.emplace_back(queryId);
