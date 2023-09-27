@@ -70,7 +70,8 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
-void WorkerContext::storeNetworkChannelFuture(NES::OperatorId id, std::future<Network::NetworkChannelPtr>&& channelFuture) {
+void WorkerContext::storeNetworkChannelFuture(NES::OperatorId id,
+    std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
     dataChannelFutures[id] = std::move(channelFuture);
 }
@@ -165,10 +166,11 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
 std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResult(NES::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator {} for context {}", ownerId, workerId);
     auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
-    if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        auto future = std::move(it->second);
+    auto& [futureReference, promiseReference] = it->second;
+    if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        auto channel = it->second.first.get();
         dataChannelFutures.erase(it);
-        return future.get();
+        return channel;
     }
     //if the operation has not completed yet, return a nullopt
     return std::nullopt;
@@ -191,36 +193,16 @@ LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; 
 
 Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId ownerId) {
     auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
-    auto future = std::move(it->second);
-    dataChannelFutures.erase(it);
     //blocking wait on get
-    return future.get();
+    auto channel = it->second.first.get();
+    dataChannelFutures.erase(it);
+    return channel;
 }
 
 void WorkerContext::abortConnectionProcess(NES::OperatorId ownerId) {
     auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
-    auto& oldFutures = abortedConnectionAttempts[ownerId];
-    oldFutures.push_back(std::move(it->second));
+    auto& promise = it->second.second;
+    promise.set_value(true);
     dataChannelFutures.erase(it);
-
-    //garbage collect old future
-    auto futuresIterator = oldFutures.begin();
-    while (futuresIterator != oldFutures.end()) {
-        if (futuresIterator->wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            futuresIterator = oldFutures.erase(futuresIterator);
-        } else {
-            ++futuresIterator;
-        }
-    }
-}
-
-void WorkerContext::waitForAbortedConnections(NES::OperatorId ownerId) {
-    if (abortedConnectionAttempts.contains(ownerId)) {
-        auto& oldFutures = abortedConnectionAttempts[ownerId];
-        NES_DEBUG("Waiting for aborted connection attempts to complete");
-        for (auto& future : oldFutures) {
-            future.get();
-        }
-    }
 }
 }// namespace NES::Runtime
