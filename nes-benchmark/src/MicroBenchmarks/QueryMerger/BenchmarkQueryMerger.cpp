@@ -401,13 +401,7 @@ int main(int argc, const char* argv[]) {
                                 << noOfPhysicalSources[configNum] << "," << numOfQueries << ","
                                 << globalQueryPlan->getAllSharedQueryPlans().size() << "," << totalOperators << ","
                                 << mergedOperators << "," << efficiency << "," << NES_VERSION << "," << expRun << "," << startTime
-                                << "," << endTime << "," << endTime - startTime << "," << gqp->typeInferencePhase1 / numOfQueries
-                                << "," << gqp->queryRewritePhaseTime / numOfQueries << ","
-                                << gqp->typeInferencePhase2 / numOfQueries << "," << gqp->signatureInferencePhase1 / numOfQueries
-                                << "," << gqp->topologySpecificRewritePhase / numOfQueries << ","
-                                << gqp->typeInferencePhase3 / numOfQueries << "," << gqp->globalQueryPlanAddition / numOfQueries
-                                << "," << gqp->mergerExecutionPhase / numOfQueries << "," << gqp->containmentIdentification << ","
-                                << gqp->callsToContainmentIdentification << std::endl;
+                                << "," << endTime << "," << endTime - startTime << std::endl;
                 std::cout << "Finished Run " << expRun << "/" << noOfMeasurementsToCollect << std::endl;
                 //Stop NES coordinator
                 auto coordinatorSopped = coordinator->stopCoordinator(true);
