@@ -16,6 +16,7 @@
 #include <Network/NetworkMessage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NesThread.hpp>
+#include <future>
 
 namespace NES::Network {
 /// 60s as linger time: http://api.zeromq.org/2-1:zmq-setsockopt
@@ -31,7 +32,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         Runtime::BufferManagerPtr bufferManager,
                                         int highWaterMark,
                                         std::chrono::milliseconds waitTime,
-                                        uint8_t retryTimes) {
+                                        uint8_t retryTimes, std::optional<std::future<bool>> abortConnection = std::nullopt) {
     // TODO create issue to make the network channel allocation async
     // TODO currently, we stall the worker threads
     // TODO as a result, this kills performance of running queryIdAndCatalogEntryMapping if we submit a new query
@@ -65,6 +66,11 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::EventOnlyChannel
                                                                    : Network::Messages::ChannelType::DataChannel;
         while (i < retryTimes) {
+            //if the thread creater reqeusted to abort, retur nnullptr
+            if (abortConnection.has_value() && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                NES_DEBUG("Aborting network channel connection process on caller request");
+                return nullptr;
+            }
 
             sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId, mode);
 
@@ -175,7 +181,7 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                          Runtime::BufferManagerPtr bufferManager,
                                          int highWaterMark,
                                          std::chrono::milliseconds waitTime,
-                                         uint8_t retryTimes) {
+                                         uint8_t retryTimes, std::optional<std::future<bool>> abortConnection) {
     return detail::createNetworkChannel<NetworkChannel>(zmqContext,
                                                         std::move(socketAddr),
                                                         nesPartition,
@@ -183,7 +189,7 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                                         bufferManager,
                                                         highWaterMark,
                                                         waitTime,
-                                                        retryTimes);
+                                                        retryTimes, std::move(abortConnection));
 }
 
 EventOnlyNetworkChannel::EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,

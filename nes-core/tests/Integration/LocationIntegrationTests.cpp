@@ -1451,7 +1451,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 
 //todo: explicitly set async flag here
 //todo #4229: reenable this test
-TEST_P(LocationIntegrationTests, DISABLED_testReconfigureWhileAlreadyBuffering) {
+TEST_P(LocationIntegrationTests, testReconfigureWhileAlreadyBuffering) {
     uint64_t numBuffersToProduce = 400;
     uint64_t tuplesPerBuffer = 10;
     uint64_t numThreads = GetParam();

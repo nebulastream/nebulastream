@@ -214,9 +214,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
         //todo #3013: make sure buffers are kept if the device is currently buffering
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
-            networkManager->unregisterSubpartitionProducer(nesPartition);
-
-
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
                 //wait until channel has either connected or connection times out, so we do not an channel open
                 NES_DEBUG("NetworkSink: reconfigure() waiting for channel to connect in order to unbuffer before shutdown. "
@@ -229,23 +226,18 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                               nesPartition.toString(),
                               Runtime::NesThread::getId());
                     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(channel));
-                    unbuffer(workerContext);
                 } else {
-                    //wait for the threads of aborted connection attempts to time out
-                    workerContext.waitForAbortedConnections(getUniqueNetworkSinkDescriptorId());
-
                     //do not release network channel in the next step because none was established
                     return;
                 }
             }
-            //wait for the threads of aborted connection attempts to time out
-            workerContext.waitForAbortedConnections(getUniqueNetworkSinkDescriptorId());
-
-            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType),
-                            "Cannot remove network channel " << nesPartition.toString());
-            NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
-                      nesPartition.toString(),
-                      Runtime::NesThread::getId());
+            unbuffer(workerContext);
+                networkManager->unregisterSubpartitionProducer(nesPartition);
+                NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType),
+                                "Cannot remove network channel " << nesPartition.toString());
+                NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
+                          nesPartition.toString(),
+                          Runtime::NesThread::getId());
         }
     }
 }
