@@ -1026,7 +1026,7 @@ TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingCon
         globalQueryPlan->addQueryPlan(queryPlanNewQuery);
 
         //execute
-        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedBottomUpQueryContainmentRule::create(context);
+        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedBottomUpQueryContainmentRule::create(context, true);
         signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
         //assert
