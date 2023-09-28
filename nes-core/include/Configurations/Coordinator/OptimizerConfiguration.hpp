@@ -63,12 +63,15 @@ class OptimizerConfiguration : public BaseConfiguration {
                                                               "The rule to be used for performing query merging"};
 
     /**
-     * @brief allow TD-CQM to identify if a newly arrived query contains an already running SQP
-     * if set to true, TD-CQM is slower but more accurate
+     * @brief allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP
+     * if set to true, the containment identification is slower but more accurate
+     * also, if the containment identification detects that a newly arrived query contains the already running one
+     * this entails un-deployment and re-deployment of the already running SQP
      */
-    BoolOption allowSQPAsContainee = {ALLOW_SQP_AS_CONTAINEE,
-                                      false,
-                                      "Allow SQP as containee in top down containment based query merging (TD-CQM)."};
+    BoolOption allowExhaustiveContainmentCheck = {
+        ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK,
+        false,
+        "Allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP."};
 
     /**
      * @brief Indicates the memory layout policy and allows the engine to prefer a row or columnar layout.
@@ -144,7 +147,7 @@ class OptimizerConfiguration : public BaseConfiguration {
                 &performOnlySourceOperatorExpansion,
                 &performAdvanceSemanticValidation,
                 &enableNemoPlacement,
-                &allowSQPAsContainee};
+                &allowExhaustiveContainmentCheck};
     }
 };
 

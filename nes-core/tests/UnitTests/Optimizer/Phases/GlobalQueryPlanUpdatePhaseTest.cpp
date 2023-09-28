@@ -65,7 +65,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::BaseUnitTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("GlobalQueryPlanUpdatePhaseTest.log", NES::LogLevel::LOG_TRACE);
+        NES::Logger::setupLogging("GlobalQueryPlanUpdatePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GlobalQueryPlanUpdatePhaseTest test case.");
     }
 

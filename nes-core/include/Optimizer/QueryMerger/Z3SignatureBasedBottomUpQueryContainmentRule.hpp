@@ -26,13 +26,51 @@ using ContextPtr = std::shared_ptr<context>;
 namespace NES::Optimizer {
 
 class SignatureContainmentCheck;
-using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentCheck>;
+using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
 
 class Z3SignatureBasedBottomUpQueryContainmentRule;
 using Z3SignatureBasedBottomUpQueryContainmentRulePtr = std::shared_ptr<Z3SignatureBasedBottomUpQueryContainmentRule>;
 
 /**
- * @brief Z3SignatureBasedCompleteQueryMergerRule currently identifies containment relationships between the global query plan and newly registered queries
+ * @brief Z3SignatureBasedBottomUpQueryContainmentMergerRule utilizes containment relationships for the merging process.
+ * It identifies equivalent subqueries and passes on the correct operators for merging.
+ * Further, it identifies containment relationships among subqueries and passes on the correct operators for merging.
+ * After running this rule only a single representative operator chain should exists in the Global Query Plan for the common
+ * upstream operator chain.
+ * Effectively this rule will prune the global query plan to remove duplicate and contained operators.
+ *
+ * Example:
+ * Given a Global Query Plan with two Global Query Node chains as follow:
+ *                                                         GQPRoot
+ *                                                         /     \
+ *                                                       /        \
+ *                                                     /           \
+ *                                         GQN1({Sink1},{Q1})  GQN5({Sink2},{Q2})
+ *                                                |                 |
+ *                                        GQN2({Map1},{Q1})    GQN7({Filter1},{Q2})
+ *                                                |                 |
+ *                                     GQN3({Filter2},{Q1})    GQN6({Map1},{Q2})
+ *                                                |                 |
+ *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
+ *
+ *
+ * where Filter1 contains Filter2.
+ * After running the Z3SignatureBasedBottomUpQueryContainmentMergerRule, the resulting Global Query Plan will look as follow:
+ *
+*                                                         GQPRoot
+*                                                         /     \
+*                                                       /        \
+*                                                     /           \
+*                                         GQN1({Sink1},{Q1})  GQN5({Sink2},{Q2})
+*                                                |                 |
+*                                        GQN2({Map1},{Q1})    GQN7({Filter1},{Q2})
+*                                                |                 |
+*                                     GQN3({Filter2},{Q1})    GQN6({Map1},{Q2})
+*                                                |                 |
+ *                                            GQN4({Source(Car)},{Q1,Q2})
+ *
+ * Additionally information: As it traverses the query plan in a bottom up fashion an exits as soon as it identified a containment relationship
+ * other than equivalent, the algorithm is not very good at identifying sharing abilities
  */
 class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMergerRule {
 
@@ -42,7 +80,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param context The Z3 context for the SMT solver
      * @return an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      */
-    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context);
+    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief checks for containment between the globalQueryPlan and the currently newly added query
@@ -61,7 +99,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @brief explicit constructor
      * @param context The Z3 context for the SMT solver
      */
-    explicit Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context);
+    explicit Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief identify if the query plans are equal or not
@@ -89,7 +127,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      */
     bool checkWindowContainmentPossible(const LogicalOperatorNodePtr& container, const LogicalOperatorNodePtr& containee) const;
 
-    SignatureContainmentUtilPtr signatureContainmentUtil;
+    SignatureContainmentCheckPtr signatureContainmentUtil;
 };
 }// namespace NES::Optimizer
 

@@ -29,13 +29,13 @@ using MatchedOperatorPairPtr = std::shared_ptr<MatchedOperatorPair>;
 namespace NES::Optimizer {
 
 class SignatureContainmentCheck;
-using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentCheck>;
+using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
 
-class Z3SignatureBasedTopDownQueryContainmentMergerRule;
-using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3SignatureBasedTopDownQueryContainmentMergerRule>;
+class Z3SignatureBasedTreeBasedQueryContainmentMergerRule;
+using Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr = std::shared_ptr<Z3SignatureBasedTreeBasedQueryContainmentMergerRule>;
 
 /**
- * @brief Z3SignatureBasedTopDownQueryContainmentMergerRule utilizes containment relationships for the merging process.
+ * @brief Z3SignatureBasedTreeBasedQueryContainmentMergerRule utilizes containment relationships for the merging process.
  * It identifies equivalent subqueries and passes on the correct operators for merging.
  * Further, it identifies containment relationships among subqueries and passes on the correct operators for merging.
  * After running this rule only a single representative operator chain should exists in the Global Query Plan for the common
@@ -69,7 +69,7 @@ using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3S
  *                                                       |         |
  *                                                 GQN7({Filter1},{Q2})
  *                                                           |
- *                                                  GQN6({Map1},{Q2})
+ *                                                  GQN6({Map1},{Q1,Q2})
  *                                                           |
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
@@ -83,16 +83,16 @@ using Z3SignatureBasedPartialQueryContainmentMergerRulePtr = std::shared_ptr<Z3S
  * 3. window operations: We extract all upstream window operators, identify the contained window operator, and add it to the container's
  * upstream operator chain
  */
-class Z3SignatureBasedTopDownQueryContainmentMergerRule final : public BaseQueryMergerRule {
+class Z3SignatureBasedTreeBasedQueryContainmentMergerRule final : public BaseQueryMergerRule {
 
   public:
-    static Z3SignatureBasedPartialQueryContainmentMergerRulePtr create(z3::ContextPtr context, bool allowSQPAsContainee);
-    ~Z3SignatureBasedTopDownQueryContainmentMergerRule() noexcept final = default;
+    static Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr create(z3::ContextPtr context, bool allowExhaustiveContainmentCheck);
+    ~Z3SignatureBasedTreeBasedQueryContainmentMergerRule() noexcept final = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
   private:
-    explicit Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context, bool allowSQPAsContainee);
+    explicit Z3SignatureBasedTreeBasedQueryContainmentMergerRule(z3::ContextPtr context, bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief adds a query to a shared query plan in case a containment relationship was detected
@@ -113,7 +113,7 @@ class Z3SignatureBasedTopDownQueryContainmentMergerRule final : public BaseQuery
                                      const OperatorNodePtr& containedOperator,
                                      const std::vector<LogicalOperatorNodePtr> containedOperatorChain) const;
 
-        SignatureContainmentUtilPtr SignatureContainmentUtil;
+    SignatureContainmentCheckPtr SignatureContainmentUtil;
 };
 }// namespace NES::Optimizer
 

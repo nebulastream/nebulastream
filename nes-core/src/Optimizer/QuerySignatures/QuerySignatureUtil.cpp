@@ -320,7 +320,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::Conte
 
             //Perform replacement
             updatedMapExpr = std::make_shared<z3::expr>(updatedMapExpr->substitute(from, to));
-            NES_TRACE("Map: updatedMapExpr: {}", updatedMapExpr->to_string());
         }
         schemaFieldToExprMap[fieldName] = updatedMapExpr;
         updatedSchemaFieldToExprMaps.emplace_back(schemaFieldToExprMap);

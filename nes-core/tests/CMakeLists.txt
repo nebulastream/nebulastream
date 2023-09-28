@@ -436,10 +436,10 @@ add_nes_unit_test(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/
 add_nes_unit_test(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
 
 ### Z3 Signature Based Equal Query Merger Rule Test ###
-add_nes_unit_test(z3-signature-based-query-containment-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRuleTest.cpp")
+add_nes_unit_test(z3-signature-based-bottom-up-query-containment-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRuleTest.cpp")
 
 ### Z3 Signature Based Equal Query Merger Rule Test ###
-add_nes_unit_test(z3-signature-based-top-down-query-containment-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedTopDownQueryContainmentMergerRuleTest.cpp")
+add_nes_unit_test(z3-signature-based-tree-based-query-containment-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest.cpp")
 
 ### Z3 Signature Based Equal Query Merger Rule Test ###
 add_nes_unit_test(query-containment-identification-test "UnitTests/Optimizer/QuerySignatures/QueryContainmentIdentificationTest.cpp")

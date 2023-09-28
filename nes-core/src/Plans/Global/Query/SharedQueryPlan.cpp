@@ -193,7 +193,9 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
                 sinkOperators.insert(hostOperator->getAllRootNodes().front()->as<LogicalOperatorNode>());
                 break;
             // In case of no containment, do nothing
-            case Optimizer::ContainmentRelationship::NO_CONTAINMENT: break;
+            case Optimizer::ContainmentRelationship::NO_CONTAINMENT:
+                NES_WARNING("NO_CONTAINMENT relationship was passed to SharedQueryPlan::addQuery(). This should not happen. Please check the code.");
+                break;
         }
 
         //Add new hash based signatures to the shared query plan for newly added downstream operators
