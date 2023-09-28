@@ -169,10 +169,7 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
                 clEntryUpstreamOperators.insert(hostOperator);
                 for (const auto& newRootOperator : targetOperator->getAllRootNodes()) {
                     clEntryDownstreamOperators.insert(newRootOperator->as<LogicalOperatorNode>());
-                }
-                //add the new sink operators as root to the set
-                for (const auto& targetSinkOperator : targetOperator->getAllRootNodes()) {
-                    sinkOperators.insert(targetSinkOperator->as<LogicalOperatorNode>());
+                    sinkOperators.insert(newRootOperator->as<LogicalOperatorNode>());
                 }
                 break;
             case Optimizer::ContainmentRelationship::LEFT_SIG_CONTAINED:
