@@ -68,6 +68,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         while (i < retryTimes) {
             //if the thread creater reqeusted to abort, retur nnullptr
             if (abortConnection.has_value() && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                NES_DEBUG("Aborting network channel connection process on caller request");
                 return nullptr;
             }
 

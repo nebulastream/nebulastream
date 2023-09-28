@@ -168,9 +168,9 @@ std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResul
     auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
     auto& [futureReference, promiseReference] = it->second;
     if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        auto future = std::move(futureReference);
+        auto channel = it->second.first.get();
         dataChannelFutures.erase(it);
-        return future.get();
+        return channel;
     }
     //if the operation has not completed yet, return a nullopt
     return std::nullopt;
@@ -193,10 +193,10 @@ LocalBufferPoolPtr WorkerContext::getBufferProvider() { return localBufferPool; 
 
 Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId ownerId) {
     auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
-    auto future = std::move(it->second.first);
-    dataChannelFutures.erase(it);
     //blocking wait on get
-    return future.get();
+    auto channel = it->second.first.get();
+    dataChannelFutures.erase(it);
+    return channel;
 }
 
 void WorkerContext::abortConnectionProcess(NES::OperatorId ownerId) {
