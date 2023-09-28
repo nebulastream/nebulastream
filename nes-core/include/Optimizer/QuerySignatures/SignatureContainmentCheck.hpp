@@ -44,7 +44,7 @@ class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 
 class SignatureContainmentCheck;
-using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentCheck>;
+using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
 
 /**
  * @brief This is a utility to compare two signatures
@@ -55,15 +55,21 @@ class SignatureContainmentCheck {
     /**
      * @brief creates an instance of the SignatureContainmentUtil
      * @param context The Z3 context for the SMT solver
+     * @param allowExhaustiveContainmentCheck if true, we allow exhaustive containment checks that can result in the whole
+     * SQP needing re-deployment, if it's false, we only check if a new query is contained by the SQP resulting in a faster
+     * containment check but we might miss some valuable optimization opportunities
      * @return instance of SignatureContainmentUtil
      */
-    static SignatureContainmentUtilPtr create(const z3::ContextPtr& context, bool allowSQPAsContainee);
+    static SignatureContainmentCheckPtr create(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief constructor for signatureContainmentUtil
+     * @param allowExhaustiveContainmentCheck if true, we allow exhaustive containment checks that can result in the whole
+     * SQP needing re-deployment, if it's false, we only check if a new query is contained by the SQP resulting in a faster
+     * containment check but we might miss some valuable optimization opportunities
      * @param context The Z3 context for the SMT solver
      */
-    explicit SignatureContainmentCheck(const z3::ContextPtr& context, bool allowSQPAsContainee);
+    explicit SignatureContainmentCheck(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief Check containment relationships for the given signatures as follows
@@ -101,7 +107,7 @@ class SignatureContainmentCheck {
      *        if (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
      *            true: return Equality
      *      true: return Right sig contained
-     * else if (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
+     * else if allowExhaustiveContainmentCheck && (rightFOL && !leftFOL == unsat, aka rightFOL ⊆ leftFOL)
      *      && filters are equal
      *      true: return Left sig contained
      * else: No_Containment
@@ -117,7 +123,7 @@ class SignatureContainmentCheck {
      *      true: check if left sig ⊆ right sig
      *          true: return EQUALITY
      *          false: return RIGHT_SIG_CONTAINED
-     *      false: check if left sig ⊆ right sig
+     *      false: check if allowExhaustiveContainmentCheck && left sig ⊆ right sig
      *          true: return LEFT_SIG_CONTAINED
      *      false: return NO_CONTAINMENT
      * @param leftSignature
@@ -138,7 +144,8 @@ class SignatureContainmentCheck {
      *                      && equal projections
      *                         true: RIGHT_SIG_CONTAINED
      *                         false: NO_CONTAINMENT
-     *              false: check if left sig ⊆ right sig
+     *              false: check if allowExhaustiveContainmentCheck
+     *                  && left sig ⊆ right sig
      *                  && check if window containment possible
 *                       && equal projections
      *                      true: LEFT_SIG_CONTAINED
@@ -147,7 +154,7 @@ class SignatureContainmentCheck {
      *              true: check if left sig ⊆ right sig
      *                  true: RIGHT_SIG_CONTAINED
      *                  false: NO_CONTAINMENT
-     *              false: check if right sig ⊆ left sig
+     *              false: check if allowExhaustiveContainmentCheck && right sig ⊆ left sig
      *                  true: LEFT_SIG_CONTAINED
      *                  false: NO_CONTAINMENT
      *       if containmentRelationship != EQUALITY: break loop
@@ -233,7 +240,7 @@ class SignatureContainmentCheck {
     z3::ContextPtr context;
     z3::SolverPtr solver;
     uint64_t counter;
-    bool allowSQPAsContainee;
+    bool allowExhaustiveContainmentCheck;
     const uint16_t RESET_SOLVER_THRESHOLD = 20050;
     const uint8_t NUMBER_OF_CONDITIONS_TO_POP_FROM_SOLVER = 2;
 };

@@ -36,7 +36,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedTopDownQueryContainmentMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedTreeBasedQueryContainmentMergerRule.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -204,7 +204,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testMultipleEqualF
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -309,7 +309,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testPartialEqualit
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -414,7 +414,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourceOpe
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -509,7 +509,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testContainedFilte
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -632,7 +632,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourcesDi
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -763,7 +763,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourcesWi
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -885,7 +885,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testDifferentNumbe
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -1006,7 +1006,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testSameNumberOfWi
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -1133,7 +1133,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEquivalentUnio
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -1273,7 +1273,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testProjectionCont
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTopDownQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();

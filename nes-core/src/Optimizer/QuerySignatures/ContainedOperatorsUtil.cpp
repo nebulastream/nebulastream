@@ -42,7 +42,7 @@ namespace NES::Optimizer {
 
 std::vector<LogicalOperatorNodePtr>
 ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
-                                                            const LogicalOperatorNodePtr& containerOperator) {
+                                                      const LogicalOperatorNodePtr& containerOperator) {
     NES_TRACE("Contained operator: {}", containedOperator->toString());
     std::vector<LogicalOperatorNodePtr> containmentOperators = {};
     auto containedWindowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
@@ -124,7 +124,7 @@ ContainedOperatorsUtil::createContainedProjectionOperator(const LogicalOperatorN
 }
 
 LogicalOperatorNodePtr ContainedOperatorsUtil::createContainedFilterOperators(const LogicalOperatorNodePtr& container,
-                                                             const LogicalOperatorNodePtr& containee) {
+                                                                              const LogicalOperatorNodePtr& containee) {
     NES_DEBUG("Check if filter containment is possible for container {}, containee {}.",
               container->toString(),
               containee->toString());
@@ -195,9 +195,10 @@ LogicalOperatorNodePtr ContainedOperatorsUtil::createContainedFilterOperators(co
         return nullptr;
     }
 }
+
 bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
-                                                                         const std::vector<std::string>& fieldNames,
-                                                                         const SchemaPtr& containerOutputSchema) {
+                                                                   const std::vector<std::string>& fieldNames,
+                                                                   const SchemaPtr& containerOutputSchema) {
 
     NES_DEBUG("Create an iterator for traversing the filter {} predicates {}, and check output schema {}",
               filterOperator->toString(),
@@ -205,14 +206,17 @@ bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(FilterLogical
               containerOutputSchema->toString());
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
+    //traverse the filter predicate
     for (auto itr = depthFirstNodeIterator.begin(); itr != DepthFirstNodeIterator::end(); ++itr) {
         NES_TRACE("Iterate and find the predicate with FieldAccessExpression Node");
+        //if the current node is a FieldAccessExpressionNode, check if the field name is still in the container output schema
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
             const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
             NES_TRACE("Is field {} still in container output schema {}? {}",
-                     accessExpressionNode->getFieldName(),
-                     containerOutputSchema->toString(),
-                     containerOutputSchema->contains(accessExpressionNode->getFieldName()));
+                      accessExpressionNode->getFieldName(),
+                      containerOutputSchema->toString(),
+                      containerOutputSchema->contains(accessExpressionNode->getFieldName()));
+            //return false if the containerOutputSchema does not contain the field anymore
             if (!containerOutputSchema->contains(accessExpressionNode->getFieldName())) {
                 return false;
             }
@@ -223,6 +227,7 @@ bool ContainedOperatorsUtil::isMapTransformationAppliedToPredicate(FilterLogical
     }
     return true;
 }
+
 bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
     const LogicalOperatorNodePtr& containedOperator,
     const LogicalOperatorNodePtr& extractedContainedOperator) {
@@ -230,19 +235,21 @@ bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
     for (const auto& source : containedOperator->getAllLeafNodes()) {
         NodePtr parent = source;
         bool foundExtracted = false;
+        //check if the extracted contained operator has only one parent operator
         while (!parent->equal(containedOperator)) {
             if (parent->equal(extractedContainedOperator)) {
                 foundExtracted = true;
             }
+            //return false if the operator has multiple parents
             if (parent->getParents().size() != 1) {
                 return false;
             } else {
                 parent = parent->getParents()[0];
             }
+            //if we found the extracted contained operator we make sure that none of its parents are unions or windows
+            //we cannot pull up from under a union or a window operator
             if (foundExtracted) {
-                if (parent->instanceOf<UnionLogicalOperatorNode>()
-                    || (extractedContainedOperator->instanceOf<ProjectionLogicalOperatorNode>()
-                        && parent->instanceOf<WindowLogicalOperatorNode>())) {
+                if (parent->instanceOf<UnionLogicalOperatorNode>() || parent->instanceOf<WindowLogicalOperatorNode>()) {
                     return false;
                 }
             }
@@ -250,11 +257,13 @@ bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
     }
     return true;
 }
+
 bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParentAndMapOperator(
     const LogicalOperatorNodePtr& containedOperator,
     const LogicalOperatorNodePtr& extractedContainedOperator,
     std::vector<std::string>& mapAttributeNames) {
     NES_DEBUG("extractedContainedOperator parents size: {}", extractedContainedOperator->getParents().size());
+    //return false if the extracted contained operator has multiple parents
     if (extractedContainedOperator->hasMultipleParents()) {
         return false;
     }
@@ -273,10 +282,12 @@ bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParentAndMapOp
                     return false;
                 }
             }
-            //we don't pull up filter operators from under union operators
+            //we cannot guarantee correct results if the operator has multiple parents when merging
+            //therefore, we don't allow that
             if (parent->getParents().size() != 1) {
                 return false;
             } else {
+                //if there is only one parent, we check if the current operator is a map operator and add its field name to the mapAttributeNames vector
                 if (foundExtracted) {
                     if (parent->instanceOf<MapLogicalOperatorNode>()) {
                         auto mapOperator = parent->as<MapLogicalOperatorNode>();

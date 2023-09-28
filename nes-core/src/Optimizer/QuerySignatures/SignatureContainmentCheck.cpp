@@ -31,14 +31,15 @@
 
 namespace NES::Optimizer {
 
-SignatureContainmentUtilPtr SignatureContainmentCheck::create(const z3::ContextPtr& context, bool allowSQPAsContainee) {
-    return std::make_shared<SignatureContainmentCheck>(context, allowSQPAsContainee);
+SignatureContainmentCheckPtr SignatureContainmentCheck::create(const z3::ContextPtr& context,
+                                                               bool allowExhaustiveContainmentCheck) {
+    return std::make_shared<SignatureContainmentCheck>(context, allowExhaustiveContainmentCheck);
 }
 
-SignatureContainmentCheck::SignatureContainmentCheck(const z3::ContextPtr& context, bool allowSQPAsContainee) {
+SignatureContainmentCheck::SignatureContainmentCheck(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck) {
     this->context = context;
     this->solver = std::make_unique<z3::solver>(*this->context);
-    this->allowSQPAsContainee = allowSQPAsContainee;
+    this->allowExhaustiveContainmentCheck = allowExhaustiveContainmentCheck;
 }
 
 ContainmentRelationshipAndOperatorChainPtr
@@ -130,15 +131,15 @@ SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const L
                 NES_TRACE("Check filter containment returned: {}", magic_enum::enum_name(containmentRelationship));
                 if (containmentRelationship == ContainmentRelationship::EQUALITY) {
                     return ContainmentRelationshipAndOperatorChain::create(ContainmentRelationship::EQUALITY, {});
-                // Create the contained operator chain, i.e., extract all filter operators from the containee (if possible, more details on that inside ContainedOperatorUtil),
-                // and concatenate the filter predicates so that we return one filter operator with all contained filter operations
+                    // Create the contained operator chain, i.e., extract all filter operators from the containee (if possible, more details on that inside ContainedOperatorUtil),
+                    // and concatenate the filter predicates so that we return one filter operator with all contained filter operations
                 } else if (containmentRelationship == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
                     containedOperator = ContainedOperatorsUtil::createContainedFilterOperators(leftOperator, rightOperator);
                 } else if (containmentRelationship == ContainmentRelationship::LEFT_SIG_CONTAINED) {
                     containedOperator = ContainedOperatorsUtil::createContainedFilterOperators(rightOperator, leftOperator);
                 }
-            // Create the contained operator chain, i.e., extract the most downstream projection operator from the containee
-            // (if possible, more details on that inside ContainedOperatorUtil)
+                // Create the contained operator chain, i.e., extract the most downstream projection operator from the containee
+                // (if possible, more details on that inside ContainedOperatorUtil)
             } else if (containmentRelationship == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
                 containedOperator = ContainedOperatorsUtil::createContainedProjectionOperator(rightOperator);
             } else if (containmentRelationship == ContainmentRelationship::LEFT_SIG_CONTAINED) {
@@ -147,7 +148,7 @@ SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const L
             if (containedOperator) {
                 containmentOperators.push_back(containedOperator);
             }
-        // Create the contained operator chain, i.e., extract the most downstream windwo operator and its associated watermark assigner from the containee
+            // Create the contained operator chain, i.e., extract the most downstream windwo operator and its associated watermark assigner from the containee
         } else if (containmentRelationship == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
             containmentOperators = ContainedOperatorsUtil::createContainedWindowOperator(rightOperator, leftOperator);
         } else if (containmentRelationship == ContainmentRelationship::LEFT_SIG_CONTAINED) {
@@ -202,7 +203,8 @@ ContainmentRelationship SignatureContainmentCheck::checkProjectionContainment(co
         } else if (checkFilterContainment(leftSignature, rightSignature) == ContainmentRelationship::EQUALITY) {
             return ContainmentRelationship::RIGHT_SIG_CONTAINED;
         }
-    } else if (allowSQPAsContainee && checkContainmentConditionsUnsatisfied(leftQueryProjectionFOL, rightQueryProjectionFOL)
+    } else if (allowExhaustiveContainmentCheck
+               && checkContainmentConditionsUnsatisfied(leftQueryProjectionFOL, rightQueryProjectionFOL)
                && checkForEqualTransformations(leftSignature, rightSignature)
                && checkFilterContainment(leftSignature, rightSignature) == ContainmentRelationship::EQUALITY) {
         return ContainmentRelationship::LEFT_SIG_CONTAINED;
@@ -269,7 +271,7 @@ ContainmentRelationship SignatureContainmentCheck::checkWindowContainment(const 
                 // checkWindowContainmentPossible makes sure that filters are equal and no operations are included that cannot
                 // be contained, i.e. Joins, Avg, and Median windows cannot share operations unless they are equal
                 // additionally, we also check for projection equality
-            } else if (allowSQPAsContainee && i + 1 == rightSignature->getWindowsExpressions().size()
+            } else if (allowExhaustiveContainmentCheck && i + 1 == rightSignature->getWindowsExpressions().size()
                        && checkContainmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)
                        && checkWindowContainmentPossible(rightWindow, leftWindow, leftSignature, rightSignature)
                        && (checkProjectionContainment(leftSignature, rightSignature) == ContainmentRelationship::EQUALITY)) {
@@ -288,7 +290,8 @@ ContainmentRelationship SignatureContainmentCheck::checkWindowContainment(const 
             // checkWindowContainmentPossible makes sure that filters are equal and no operations are included that cannot
             // be contained, i.e. Joins, Avg, and Median windows cannot share operations unless they are equal
             // then check if the left window is contained
-            if (allowSQPAsContainee && checkWindowContainmentPossible(rightWindow, leftWindow, leftSignature, rightSignature)
+            if (allowExhaustiveContainmentCheck
+                && checkWindowContainmentPossible(rightWindow, leftWindow, leftSignature, rightSignature)
                 && checkContainmentConditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions)) {
                 NES_TRACE("Left window contained.");
                 containmentRelationship = ContainmentRelationship::LEFT_SIG_CONTAINED;
@@ -351,7 +354,7 @@ ContainmentRelationship SignatureContainmentCheck::checkFilterContainment(const 
         }
         NES_TRACE("left sig contains right sig for filters.");
         return ContainmentRelationship::RIGHT_SIG_CONTAINED;
-    } else if (allowSQPAsContainee
+    } else if (allowExhaustiveContainmentCheck
                && checkContainmentConditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
         NES_TRACE("right sig contains left sig for filters.");
         return ContainmentRelationship::LEFT_SIG_CONTAINED;
@@ -389,18 +392,21 @@ bool SignatureContainmentCheck::checkForEqualTransformations(const QuerySignatur
                                                              const QuerySignaturePtr& rightSignature) {
     auto schemaFieldToExprMaps = leftSignature->getSchemaFieldToExprMaps();
     auto otherSchemaFieldToExprMaps = rightSignature->getSchemaFieldToExprMaps();
-    auto columns = leftSignature->getColumns();
     auto otherColumns = rightSignature->getColumns();
-    auto containedAttributes = columns;
+    auto containedAttributes = leftSignature->getColumns();
+    //Extract the smaller attribute list, we only want to know it the transformations are equal for the smaller list
     if (containedAttributes.size() > otherColumns.size()) {
         containedAttributes = otherColumns;
     }
+    //iterate over all entries in the vector schemaFieldToExprMaps
     for (auto schemaFieldToExprMap : schemaFieldToExprMaps) {
         bool schemaMatched = false;
+        //iterate over all entries in the other schemaFieldToExprMaps vector
         for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin(); otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
              otherSchemaMapItr++) {
             z3::expr_vector colChecks(*context);
             for (uint64_t index = 0; index < containedAttributes.size(); index++) {
+                //extract the transformations for the given attributes for both queries from the schemaFieldToExprMaps
                 auto colExpr = schemaFieldToExprMap[containedAttributes[index]];
                 auto otherColExpr = (*otherSchemaMapItr)[containedAttributes[index]];
                 auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
@@ -410,9 +416,11 @@ bool SignatureContainmentCheck::checkForEqualTransformations(const QuerySignatur
                 colChecks.push_back(equivalenceCheck);
             }
 
+            //conjunct the transformations and then negate the expression
             solver->push();
             solver->add(!z3::mk_and(colChecks).simplify());
             NES_TRACE("Content of equivalence solver: {}", solver->to_smt2());
+            //check if the transformations are equal
             schemaMatched = solver->check() == z3::unsat;
             solver->pop();
             counter++;
@@ -442,8 +450,7 @@ bool SignatureContainmentCheck::checkContainmentConditionsUnsatisfied(z3::expr_v
     solver->add(!mk_and(negatedCondition).simplify());
     solver->push();
     solver->add(mk_and(condition).simplify());
-    NES_TRACE("Check unsat: {}", solver->check());
-    NES_TRACE("Content of solver: {}", solver->to_smt2());
+    NES_TRACE("Check unsat: {}; Content of solver: {}", solver->check(), solver->to_smt2());
     bool conditionUnsatisfied = false;
     if (solver->check() == z3::unsat) {
         conditionUnsatisfied = true;
@@ -459,8 +466,7 @@ bool SignatureContainmentCheck::checkContainmentConditionsUnsatisfied(z3::expr_v
 bool SignatureContainmentCheck::checkAttributeOrder(const QuerySignaturePtr& leftSignature,
                                                     const QuerySignaturePtr& rightSignature) const {
     for (size_t j = 0; j < rightSignature->getColumns().size(); ++j) {
-        NES_TRACE("Containment order check for {}", rightSignature->getColumns()[j]);
-        NES_TRACE(" and {}", leftSignature->getColumns()[j]);
+        NES_TRACE("Containment order check for {} and {}", rightSignature->getColumns()[j], leftSignature->getColumns()[j]);
         if (leftSignature->getColumns()[j] != rightSignature->getColumns()[j]) {
             return false;
         }
@@ -491,8 +497,10 @@ bool SignatureContainmentCheck::checkWindowContainmentPossible(const std::map<st
                                                                const QuerySignaturePtr& rightSignature) {
     const auto& median = Windowing::WindowAggregationDescriptor::Type::Median;
     const auto& avg = Windowing::WindowAggregationDescriptor::Type::Avg;
-    NES_TRACE("Current window-id: {}", containerWindow.at("window-id")->to_string());
-    NES_TRACE("Current window-id != JoinWindow: {}", containerWindow.at("window-id")->to_string() != "\"JoinWindow\"");
+    NES_TRACE("Current window-id: {}, Current window-id != JoinWindow: {}",
+              containerWindow.at("window-id")->to_string(),
+              containerWindow.at("window-id")->to_string() != "\"JoinWindow\"");
+
     //first, check that the window is not a join window and that it does not contain a median or avg aggregation function
     bool windowContainmentPossible = containerWindow.at("window-id")->to_string() != "\"JoinWindow\""
         && containedWindow.at("window-id")->to_string() != "\"JoinWindow\""
@@ -504,6 +512,7 @@ bool SignatureContainmentCheck::checkWindowContainmentPossible(const std::map<st
                      containerWindow.at("aggregate-types")->to_string().end(),
                      magic_enum::enum_integer(avg))
             != containerWindow.at("aggregate-types")->to_string().end();
+
     NES_TRACE("Window containment possible after aggregation and join test: {}", windowContainmentPossible);
     if (windowContainmentPossible) {
         //if first check successful, check that the contained window size and slide are multiples of the container window size and slide
@@ -513,6 +522,7 @@ bool SignatureContainmentCheck::checkWindowContainmentPossible(const std::map<st
             && containedWindow.at("window-time-slide")->get_numeral_int()
                     % containerWindow.at("window-time-slide")->get_numeral_int()
                 == 0;
+
         NES_TRACE("Window containment possible after modulo check: {}", windowContainmentPossible);
         if (windowContainmentPossible) {
             //if that is the chase, check that the contained window either has the same slide as the container window or that the slide and size of both windows are equal
@@ -522,13 +532,13 @@ bool SignatureContainmentCheck::checkWindowContainmentPossible(const std::map<st
                         == containerWindow.at("window-time-size")->get_numeral_int()
                     && containedWindow.at("window-time-slide")->get_numeral_int()
                         == containedWindow.at("window-time-size")->get_numeral_int());
-            NES_TRACE("Window containment possible after slide check: {}",
-                      containedWindow.at("window-time-slide")->to_string()
-                          == containerWindow.at("window-time-slide")->to_string());
+
             NES_TRACE(
-                "Window containment possible after slide and size check: {}",
+                "Window containment possible after slide check: {}; Window containment possible after slide and size check: {}",
+                containedWindow.at("window-time-slide")->to_string() == containerWindow.at("window-time-slide")->to_string(),
                 (containerWindow.at("window-time-slide")->to_string() == containerWindow.at("window-time-size")->to_string()
                  && containedWindow.at("window-time-slide")->to_string() == containedWindow.at("window-time-size")->to_string()));
+
             if (windowContainmentPossible) {
                 //if all other checks passed, check for filter equality
                 windowContainmentPossible =
@@ -544,8 +554,9 @@ bool SignatureContainmentCheck::checkFilterContainmentPossible(const QuerySignat
                                                                const QuerySignaturePtr& containee) {
     if (container->getSchemaFieldToExprMaps().size() > 1) {
         for (const auto& [containerSourceName, containerConditions] : container->getUnionExpressions()) {
-            NES_TRACE("Container source name: {}", containerSourceName);
-            NES_TRACE("Container conditions: {}", containerConditions->to_string());
+            NES_TRACE("Container source name: {}; Container conditions: {}",
+                      containerSourceName,
+                      containerConditions->to_string());
             // Check if the key exists in map2
             auto containeeUnionExpressions = containee->getUnionExpressions().find(containerSourceName);
             if (containeeUnionExpressions == containee->getUnionExpressions().end()) {

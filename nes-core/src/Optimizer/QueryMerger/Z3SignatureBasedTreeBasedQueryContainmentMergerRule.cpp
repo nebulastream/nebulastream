@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedTopDownQueryContainmentMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedTreeBasedQueryContainmentMergerRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -29,18 +29,19 @@
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedTopDownQueryContainmentMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule(z3::ContextPtr context,
-                                                                                                     bool allowSQPAsContainee) {
-    SignatureContainmentUtil = SignatureContainmentCheck::create(std::move(context), allowSQPAsContainee);
+Z3SignatureBasedTreeBasedQueryContainmentMergerRule::Z3SignatureBasedTreeBasedQueryContainmentMergerRule(
+    z3::ContextPtr context,
+    bool allowExhaustiveContainmentCheck) {
+    SignatureContainmentUtil = SignatureContainmentCheck::create(std::move(context), allowExhaustiveContainmentCheck);
 }
 
-Z3SignatureBasedPartialQueryContainmentMergerRulePtr
-Z3SignatureBasedTopDownQueryContainmentMergerRule::create(z3::ContextPtr context, bool allowSQPAsContainee) {
-    return std::make_shared<Z3SignatureBasedTopDownQueryContainmentMergerRule>(
-        Z3SignatureBasedTopDownQueryContainmentMergerRule(std::move(context), allowSQPAsContainee));
+Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr
+Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(z3::ContextPtr context, bool allowExhaustiveContainmentCheck) {
+    return std::make_shared<Z3SignatureBasedTreeBasedQueryContainmentMergerRule>(
+        Z3SignatureBasedTreeBasedQueryContainmentMergerRule(std::move(context), allowExhaustiveContainmentCheck));
 }
 
-bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool Z3SignatureBasedTreeBasedQueryContainmentMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("Applying Z3SignatureBasedPartialQueryContainmentMergerRule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
@@ -120,15 +121,9 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                             }
 
                             //Match the target and host operator signatures to see if a match is present
-                            auto startQR = std::chrono::duration_cast<std::chrono::microseconds>(
-                                               std::chrono::system_clock::now().time_since_epoch())
-                                               .count();
                             relationshipAndOperators =
                                 SignatureContainmentUtil->checkContainmentRelationshipForTopDownMerging(hostOperator,
                                                                                                         targetOperator);
-                            auto endQR = std::chrono::duration_cast<std::chrono::microseconds>(
-                                             std::chrono::system_clock::now().time_since_epoch())
-                                             .count();
                             if (relationshipAndOperators->containmentRelationship != ContainmentRelationship::NO_CONTAINMENT) {
                                 //Add the matched host operator to the map
                                 matchedTargetToHostOperatorMap[targetOperator] =
@@ -207,34 +202,45 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperatorContainmentRelationshipContainedOperatorChain] :
                      matchedTargetToHostOperatorMap) {
+                    //In case of equivalence detection, just add the matched operator pair to the list with the correct containment
+                    //relationship
                     if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain) == ContainmentRelationship::EQUALITY) {
                         LogicalOperatorNodePtr hostOperator =
                             get<0>(hostOperatorContainmentRelationshipContainedOperatorChain)->as<LogicalOperatorNode>();
                         matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator,
                                                                                       targetOperator->as<LogicalOperatorNode>(),
                                                                                       ContainmentRelationship::EQUALITY));
+                        //In case the host contains the target, we first need to prepare the query plan and then add the matched operators
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentRelationship::RIGHT_SIG_CONTAINED) {
                         auto containerOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
+                        //prepare the new query plan with the correct containment relationship, i.e., add the containedOperatorChain to
+                        //the containerOperator and set the targetOperator's parents as parents of the containedOperatorChain
                         addContainmentOperatorChain(hostSharedQueryPlan,
-                            containerOperator,
-                            targetOperator,
-                            containedOperatorChain);
-                        matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(containerOperator->as<LogicalOperatorNode>(),
-                                                                                      containedOperatorChain.back()->as<LogicalOperatorNode>(),
-                                                                                      ContainmentRelationship::RIGHT_SIG_CONTAINED));
+                                                    containerOperator,
+                                                    targetOperator,
+                                                    containedOperatorChain);
+                        matchedOperatorPairs.emplace_back(
+                            MatchedOperatorPair::create(containerOperator->as<LogicalOperatorNode>(),
+                                                        containedOperatorChain.back()->as<LogicalOperatorNode>(),
+                                                        ContainmentRelationship::RIGHT_SIG_CONTAINED));
+                        //In case the target contains the host, we first need to prepare the query plan and then add the matched operators
+                        //if allowExhaustiveContainmentCheck is not explicitly set to true, this case will not be reached
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
                                == ContainmentRelationship::LEFT_SIG_CONTAINED) {
                         auto containedOperatorChain = get<2>(hostOperatorContainmentRelationshipContainedOperatorChain);
                         auto containedOperator = get<0>(hostOperatorContainmentRelationshipContainedOperatorChain);
+                        //prepare the new query plan with the correct containment relationship, i.e., add the containedOperatorChain to
+                        //the targetOperator and set the containedOperator's parents as parents of the containedOperatorChain
                         addContainmentOperatorChain(hostSharedQueryPlan,
                                                     targetOperator,
                                                     containedOperator,
                                                     containedOperatorChain);
-                        matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(targetOperator->as<LogicalOperatorNode>(),
-                                                                                      containedOperatorChain.back()->as<LogicalOperatorNode>(),
-                                                                                      ContainmentRelationship::LEFT_SIG_CONTAINED));
+                        matchedOperatorPairs.emplace_back(
+                            MatchedOperatorPair::create(targetOperator->as<LogicalOperatorNode>(),
+                                                        containedOperatorChain.back()->as<LogicalOperatorNode>(),
+                                                        ContainmentRelationship::LEFT_SIG_CONTAINED));
                     }
                 }
 
@@ -258,7 +264,7 @@ bool Z3SignatureBasedTopDownQueryContainmentMergerRule::apply(GlobalQueryPlanPtr
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
-void Z3SignatureBasedTopDownQueryContainmentMergerRule::addContainmentOperatorChain(
+void Z3SignatureBasedTreeBasedQueryContainmentMergerRule::addContainmentOperatorChain(
     SharedQueryPlanPtr& containerQueryPlan,
     const OperatorNodePtr& containerOperator,
     const OperatorNodePtr& containedOperator,
@@ -266,22 +272,28 @@ void Z3SignatureBasedTopDownQueryContainmentMergerRule::addContainmentOperatorCh
 
     auto downstreamOperator = containedOperatorChain.front();
     auto upstreamContainedOperator = containedOperatorChain.back();
-    NES_TRACE("ContainerQueryPlan: {}", containerQueryPlan->getQueryPlan()->toString());
-    NES_TRACE("ContainerOperator: {}", containerOperator->toString());
-    NES_TRACE("DownstreamOperator: {}", downstreamOperator->toString());
-    NES_TRACE("ContainedOperator: {}", containedOperator->toString());
-    NES_TRACE("upstreamContainedOperator: {}", upstreamContainedOperator->toString());
-    NES_TRACE("downstreamOperator children size: {}", downstreamOperator->getChildren().size());
+    NES_TRACE("ContainerQueryPlan: {}; ContainerOperator: {}; DownstreamOperator: {}; ContainedOperator: {}; "
+              "UpstreamContainedOperator: {}; DownstreamOperator's children size: {}",
+              containerQueryPlan->getQueryPlan()->toString(),
+              containerOperator->toString(),
+              downstreamOperator->toString(),
+              containedOperator->toString(),
+              upstreamContainedOperator->toString(),
+              downstreamOperator->getChildren().size());
+    //extract the parents of the containedOperator
     auto parents = containedOperator->getParents();
     for (const auto& parent : parents) {
+        //for each parent from the containedOperator, remove all children and add the downstreamOperator
+        // from the contained operator chain as a child
         parent->removeChild(containedOperator);
         NES_TRACE("Parent: {}", parent->toString());
         downstreamOperator->addParent(parent);
     }
     //add the contained operator chain to the host operator
     bool addedNewParent = containerOperator->addParent(upstreamContainedOperator);
-    NES_TRACE("Children upstreamContainedOperator size: {}", upstreamContainedOperator->getChildren().size());
-    NES_TRACE("Children upstreamContainedOperator: {}", upstreamContainedOperator->getChildren()[0]->toString());
+    NES_TRACE("Children upstreamContainedOperator size: {}; Children upstreamContainedOperator: {}",
+              upstreamContainedOperator->getChildren().size(),
+              upstreamContainedOperator->getChildren()[0]->toString());
     if (!addedNewParent) {
         NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
     }
