@@ -198,7 +198,7 @@ void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
     auto numOfTuples = tupleBuffer.getNumberOfTuples();
     auto records = tupleBuffer.getBuffer<Sensors::SingleSensor>();
     for (uint64_t i = 0; i < numOfTuples; ++i) {
-        this->valueVector << records[0].value;
+        this->valueVector << records[i].value;
         this->update(valueVector);
     }
 }

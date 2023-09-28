@@ -527,6 +527,85 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     ASSERT_TRUE(retStopCord);
 }
 
+TEST_F(ContinuousSourceTest, testTimestampChameleonSource) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    std::string testSchema = "Schema::create()->addField(createField(\"id\", BasicType::UINT64))->"
+                             "addField(createField(\"value\", BasicType::FLOAT64))->"
+                             "addField(createField(\"payload\", BasicType::UINT64))->"
+                             "addField(createField(\"timestamp\", BasicType::UINT64));";
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    std::string testCSV = "1,2,3,1695902043651\n"
+                          "1,2,4,1695902043651\n"
+                          "4,3,6,1695902043651";
+    std::string testCSVFileName = "testCSV.csv";
+    std::ofstream outCsv(testCSVFileName);
+    outCsv << testCSV;
+    outCsv.close();
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("testCSV.csv");
+    csvSourceType1->setGatheringInterval(4000);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(1);
+    csvSourceType1->setGatheringMode(NES::GatheringMode::ADAPTIVE_MODE);
+    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", csvSourceType1);
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
+
+    std::string outputFilePath = getTestResourceFolder() / "testTimestampCsvSink.out";
+    remove(outputFilePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    //register query
+    auto query = Query::from("testStream").filter(Attribute("id") < 10).sink(FileSinkDescriptor::create(outputFilePath, true));
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    ASSERT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    NES_INFO("ContinuousSourceTest: content=\n{}", content);
+    EXPECT_EQ(countOccurrences("\n", content), 4);
+    EXPECT_EQ(countOccurrences(",", content), 4 * 4);
+
+    bool retStopWrk = wrk1->stop(false);
+    ASSERT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    ASSERT_TRUE(retStopCord);
+}
+
 TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
