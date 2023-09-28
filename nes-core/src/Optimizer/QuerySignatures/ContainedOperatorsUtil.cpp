@@ -249,7 +249,9 @@ bool ContainedOperatorsUtil::checkDownstreamOperatorChainForSingleParent(
             //if we found the extracted contained operator we make sure that none of its parents are unions or windows
             //we cannot pull up from under a union or a window operator
             if (foundExtracted) {
-                if (parent->instanceOf<UnionLogicalOperatorNode>() || parent->instanceOf<WindowLogicalOperatorNode>()) {
+                if (parent->instanceOf<UnionLogicalOperatorNode>()
+                    || (extractedContainedOperator->instanceOf<ProjectionLogicalOperatorNode>()
+                        && parent->instanceOf<WindowLogicalOperatorNode>())) {
                     return false;
                 }
             }
