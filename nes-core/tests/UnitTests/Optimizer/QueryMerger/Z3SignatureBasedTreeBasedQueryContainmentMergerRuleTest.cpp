@@ -51,7 +51,7 @@
 
 using namespace NES;
 
-class Z3SignatureBasedTopDownQueryContainmentMergerRuleTest : public Testing::BaseUnitTest {
+class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::BaseUnitTest {
 
   public:
     SchemaPtr schema;
@@ -143,7 +143,7 @@ class Z3SignatureBasedTopDownQueryContainmentMergerRuleTest : public Testing::Ba
 /**
  * @brief Test that TD-CQM correctly identifies the equivalent filter and map operations here and merges them.
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testMultipleEqualFilters) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testMultipleEqualFilters) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -261,7 +261,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testMultipleEqualF
  * Source -> Map1 -> Map2 -> Sink
  *              \-> Sink
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testPartialEqualityWithMaps) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testPartialEqualityWithMaps) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -356,7 +356,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testPartialEqualit
  * Source -> Filter1 -> Window1 -> Sink
  *     \-> Window2 -> Sink
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourceOperationsDistinctQueries) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourceOperationsDistinctQueries) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -452,7 +452,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourceOpe
     EXPECT_TRUE(query1SrcOperator->equal((*itrSecondSink)));
 }
 
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testContainedFilterOperation) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testContainedFilterOperation) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -560,7 +560,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testContainedFilte
  * Source1 -> (Source2) -> Join1 -> Filter -> Sink
  *                 \-> Join2 -> Sink
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourcesDifferentJoins) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourcesDifferentJoins) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -691,7 +691,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourcesDi
  * Source1 -> (Source2) -> Join -> Filter -> Sink
  *                          \-> Sink
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourcesWithEqualJoinsAndFilterContainment) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourcesWithEqualJoinsAndFilterContainment) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -822,7 +822,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEqualSourcesWi
  * Source -> Window1 -> Window2 -> Sink
  *                \-> Sink
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testDifferentNumberOfWindows) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testDifferentNumberOfWindows) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -937,7 +937,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testDifferentNumbe
  * Source -> Window1 ->Window2 -> Sink
  *                  \-> Window3 -> Window4 -> Sink
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testSameNumberOfWindowsTwoContainmentRelationships) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testSameNumberOfWindowsTwoContainmentRelationships) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -1066,7 +1066,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testSameNumberOfWi
  * Source1 -> (Source2) -> Union1 -> Window1 -> Sink
  *                              \-> Window2 -> Sink
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEquivalentUnionDifferentWindows) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEquivalentUnionDifferentWindows) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -1189,7 +1189,7 @@ TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testEquivalentUnio
  * Source1 -> (Source2) -> Union1 -> Filter1 -> Project1 -> Join1 -> (Source3) -> Sink1
  *                                                              \-> Project2 -> Sink
  */
-TEST_F(Z3SignatureBasedTopDownQueryContainmentMergerRuleTest, testProjectionContainment) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testProjectionContainment) {
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
