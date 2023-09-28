@@ -69,6 +69,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         timer.start();
         NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
         auto logicalQueryPlan = request->getQueryPlan();
+        //Todo: get number of vdes here
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");
 
