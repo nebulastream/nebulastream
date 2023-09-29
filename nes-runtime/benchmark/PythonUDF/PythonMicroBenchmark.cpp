@@ -13,10 +13,18 @@
 */
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
+#include <Execution/Expressions/WriteFieldExpression.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#include <Execution/Operators/Relational/Map.hpp>
+#include <Execution/Operators/Relational/Project.hpp>
+#include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -72,14 +80,17 @@ class MicroBenchmarkRunner {
      * @param memoryLayout memory layout
      * @return
      */
-    auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
-        auto mapOperator = std::make_shared<Operators::MapPythonUDF>(0, schema, schema);
+    auto initPipelineOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, auto bufferManager) {
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
+
+        auto mapOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema);
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
         scanOperator->setChild(mapOperator);
 
-        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto outputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize());
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
         auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
         mapOperator->setChild(emitOperator);
 
@@ -101,7 +112,7 @@ class MicroBenchmarkRunner {
         auto buffer = bufferManager->getBufferBlocking();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
         for (uint64_t i = 0; i < 10; i++) {
-            dynamicBuffer[i][variableName].write((T) i);
+            dynamicBuffer[i][variableName].write((T) (i % 10_s64));
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
         return buffer;
@@ -117,8 +128,11 @@ class MicroBenchmarkRunner {
      * @param testDataPath path to the test data containing the udf jar
      * @return operator handler
      */
-    auto initMapHandler(std::string function, std::string functionName, SchemaPtr schema) {
-        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, schema, schema);
+    auto initMapHandler(std::string function,
+                        std::string functionName,
+                        SchemaPtr inputSchema,
+                        SchemaPtr outputSchema) {
+        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
     }
 
     virtual ~MicroBenchmarkRunner() = default;
@@ -136,34 +150,42 @@ class MicroBenchmarkRunner {
     //std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
 };
 
-class SimpleFilterQueryNumerical : public MicroBenchmarkRunner {
+class SimpleFilterQueryNumericalNES : public MicroBenchmarkRunner {
   public:
-    SimpleFilterQueryNumerical(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleFilterQueryNumericalNES(std::string compiler) : MicroBenchmarkRunner(compiler){};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
-        std::string function = "def filter_numerical(x):"
-                               "\n\tif x > 10:"
-                               "\n\t\treturn x\n";
-        std::string functionName = "filter_numerical";
-        auto variableName = "x";
-        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(variableName, BasicType::INT32);
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("x", BasicType::INT64);
+        // schema->addField("f2", BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
         compileTimeTimer.start();
-        auto pipeline = initPipelineOperator(schema, memoryLayout);
-        // auto dummyBuffer = NES::Runtime::TupleBuffer();
-        auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto valueLeft = std::make_shared<Expressions::ConstantInt64ValueExpression>(10);
+        auto valueRight = std::make_shared<Expressions::ReadFieldExpression>("x");
+        auto equalsExpression = std::make_shared<Expressions::GreaterThanExpression>(valueRight, valueLeft);
+        auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto buffer = initInputBuffer<int64_t>("x", bm, memoryLayout);
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, schema);
-        auto pipelineContext = MockedPipelineExecutionContext({handler});
+        auto pipelineContext = MockedPipelineExecutionContext();
+
         executablePipeline->setup(pipelineContext);
-
         compileTimeTimer.snapshot("setup");
-
         compileTimeTimer.pause();
+
         executionTimeTimer.start();
         executablePipeline->execute(buffer, pipelineContext, *wc);
-
         executionTimeTimer.snapshot("execute");
         executionTimeTimer.pause();
 
@@ -171,35 +193,169 @@ class SimpleFilterQueryNumerical : public MicroBenchmarkRunner {
     }
 };
 
-class SimpleMapQuery : public MicroBenchmarkRunner {
+class SimpleMapQueryNES : public MicroBenchmarkRunner {
   public:
-    SimpleMapQuery(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleMapQueryNES(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        schema->addField("x", BasicType::INT64);
+        // schema->addField("f2", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+        compileTimeTimer.start();
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto valueLeft = std::make_shared<Expressions::ConstantInt64ValueExpression>(10);
+        auto valueRight = std::make_shared<Expressions::ReadFieldExpression>("x");
+        auto addExpression = std::make_shared<Expressions::GreaterThanExpression>(valueRight, valueLeft);
+        auto writeFieldExpression = std::make_shared<Expressions::WriteFieldExpression>("x", addExpression);
+        auto mapOperator = std::make_shared<Operators::Map>(writeFieldExpression);
+        scanOperator->setChild(mapOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        mapOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto buffer = initInputBuffer<int64_t>("x", bm, memoryLayout);
+        auto executablePipeline = provider->create(pipeline, options);
+        auto pipelineContext = MockedPipelineExecutionContext();
+
+        executablePipeline->setup(pipelineContext);
+        compileTimeTimer.snapshot("setup");
+        compileTimeTimer.pause();
+
+        executionTimeTimer.start();
+        executablePipeline->execute(buffer, pipelineContext, *wc);
+        executionTimeTimer.snapshot("execute");
+        executionTimeTimer.pause();
+
+        executablePipeline->stop(pipelineContext);
+    }
+};
+
+class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
+  public:
+    SimpleProjectionQueryNES(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
+        auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField("x", BasicType::INT64)
+                          ->addField("y", BasicType::INT64)
+                          ->addField("z", BasicType::INT64);
+        auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                               ->addField("x", BasicType::INT32);
+        auto inputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
+        auto outputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
+
+
+        compileTimeTimer.start();
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto valueLeft = std::make_shared<Expressions::ConstantInt64ValueExpression>(10);
+        auto valueRight = std::make_shared<Expressions::ReadFieldExpression>("x");
+        auto addExpression = std::make_shared<Expressions::AddExpression>(valueRight, valueLeft);
+        std::vector<Record::RecordFieldIdentifier> inputFields{"x", "y", "z"};
+        std::vector<Record::RecordFieldIdentifier> outputFields{"x"};
+        auto projectOperator = std::make_shared<Operators::Project>(inputFields, outputFields);
+        scanOperator->setChild(projectOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        projectOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        /*
+        auto buffer = bm->getBufferBlocking();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (int64_t i = 0; i < 100; i++) {
+            dynamicBuffer[i]["x"].write(i % 10_s64);
+            dynamicBuffer[i]["y"].write(+1_s64);
+            dynamicBuffer[i]["z"].write(+1_s64);
+            dynamicBuffer.setNumberOfTuples(i + 1);
+        }*/
+
+        auto buffer = NES::Runtime::TupleBuffer();
+        auto executablePipeline = provider->create(pipeline, options);
+        auto pipelineContext = MockedPipelineExecutionContext();
+
+        executablePipeline->setup(pipelineContext);
+        compileTimeTimer.snapshot("setup");
+        compileTimeTimer.pause();
+
+        executionTimeTimer.start();
+        executablePipeline->execute(buffer, pipelineContext, *wc);
+        executionTimeTimer.snapshot("execute");
+        executionTimeTimer.pause();
+
+        executablePipeline->stop(pipelineContext);
+    }
+};
+
+class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
+  public:
+    SimpleFilterQueryNumericalUDF(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
+        std::string function = "def filter_numerical(x):"
+                               "\n\treturn x > 10\n";
+        std::string functionName = "filter_numerical";
+        auto variableName = "x";
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField(variableName, BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+        compileTimeTimer.start();
+        auto pipeline = initPipelineOperator(schema, schema, bm);
+        // auto dummyBuffer = NES::Runtime::TupleBuffer();
+        auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
+        auto executablePipeline = provider->create(pipeline, options);
+        auto handler = initMapHandler(function, functionName, schema, schema);
+        auto pipelineContext = MockedPipelineExecutionContext({handler});
+        executablePipeline->setup(pipelineContext);
+        compileTimeTimer.snapshot("setup");
+        compileTimeTimer.pause();
+
+        executionTimeTimer.start();
+        executablePipeline->execute(buffer, pipelineContext, *wc);
+        executionTimeTimer.snapshot("execute");
+        executionTimeTimer.pause();
+
+        executablePipeline->stop(pipelineContext);
+    }
+};
+
+class SimpleMapQueryUDF : public MicroBenchmarkRunner {
+  public:
+    SimpleMapQueryUDF(std::string compiler) : MicroBenchmarkRunner(compiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         std::string function = "def simple_map(x):"
-                               "\n\ty = x + 10.0"
+                               "\n\ty = x + 10"
                                "\n\treturn y\n";
         std::string functionName = "simple_map";
         auto variableName = "x";
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(variableName, BasicType::FLOAT64);
+                          ->addField(variableName, BasicType::INT64);
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
         compileTimeTimer.start();
-        auto pipeline = initPipelineOperator(schema, memoryLayout);
+        auto pipeline = initPipelineOperator(schema, schema, bm);
         // auto dummyBuffer = NES::Runtime::TupleBuffer(); // from the TPCHBenchmark
-        auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
+        auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, schema);
+        auto handler = initMapHandler(function, functionName, schema, schema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
-
         compileTimeTimer.snapshot("setup");
-
         compileTimeTimer.pause();
+
         executionTimeTimer.start();
         executablePipeline->execute(buffer, pipelineContext, *wc);
-
         executionTimeTimer.snapshot("execute");
         executionTimeTimer.pause();
 
@@ -207,35 +363,36 @@ class SimpleMapQuery : public MicroBenchmarkRunner {
     }
 };
 
-class SimpleProjectionQuery : public MicroBenchmarkRunner {
+class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
   public:
-    SimpleProjectionQuery(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleProjectionQueryUDF(std::string compiler) : MicroBenchmarkRunner(compiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         std::string function = "def simple_projection(x, y, z):"
                                "\n\treturn x\n";
         std::string functionName = "simple_projection";
-        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField("x", BasicType::INT32)
-                          ->addField("y", BasicType::INT32)
-                          ->addField("z", BasicType::INT32);
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+        auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField("x", BasicType::INT64)
+                          ->addField("y", BasicType::INT64)
+                          ->addField("z", BasicType::INT64);
+        auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("x", BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
 
         compileTimeTimer.start();
-        auto pipeline = initPipelineOperator(schema, memoryLayout);
+        auto pipeline = initPipelineOperator(inputSchema, outputSchema, bm);
         auto buffer = NES::Runtime::TupleBuffer(); // dummy buffer copied from TPCHBenchmark
-        // auto buffer = initInputBuffer<int_32t>(variableName, bm, memoryLayout);
+        //auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
+
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, schema);
+        auto handler = initMapHandler(function, functionName, inputSchema, outputSchema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
-
         compileTimeTimer.snapshot("setup");
-
         compileTimeTimer.pause();
+
         executionTimeTimer.start();
         executablePipeline->execute(buffer, pipelineContext, *wc);
-
         executionTimeTimer.snapshot("execute");
         executionTimeTimer.pause();
 
@@ -247,7 +404,29 @@ class SimpleProjectionQuery : public MicroBenchmarkRunner {
 
 int main(int, char**) {
     std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
+    /*for (const auto& c : compilers) {
+        NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c).run();
+    }*/
+
+    /*for (const auto& c : compilers) {
+        NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c).run();
+    }*/
+
+    /*
     for (const auto& c : compilers) {
-        NES::Runtime::Execution::SimpleFilterQueryNumerical(c).run();
+        NES::Runtime::Execution::SimpleMapQueryUDF(c).run();
+    }*/
+    /*
+    for (const auto& c : compilers) {
+        NES::Runtime::Execution::SimpleMapQueryNES(c).run();
+    }*/
+    // TODO fix projection queries...
+    /*
+    for (const auto& c : compilers) {
+        NES::Runtime::Execution::SimpleProjectionQueryUDF(c).run();
+    }*/
+
+    for (const auto& c : compilers) {
+        NES::Runtime::Execution::SimpleProjectionQueryNES(c).run();
     }
 }
