@@ -23,7 +23,11 @@ void PythonUDFOperatorHandler::initPython() {
     this->moduleName = this->functionName + "Module";
     // initialize python interpreter
     Py_Initialize();
-    PyObject* pythonCode = Py_CompileString(this->function.c_str(), "", Py_file_input);
+    // apparently we only need to add this decorator
+    std::string testNumbaExec = "from numba import jit"
+                                "\n"
+                                "@jit(nopython=True)\n" + this->function;
+    PyObject* pythonCode = Py_CompileString(testNumbaExec.c_str(), "", Py_file_input);
     if (pythonCode == NULL) {
         if (PyErr_Occurred()) {
             PyErr_Print();
