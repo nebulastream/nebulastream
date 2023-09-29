@@ -111,205 +111,204 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
     void TearDown() override { NES_DEBUG("Tear down Z3SignatureBasedBottomUpQueryContainmentRuleTest test case."); }
 
     static auto createEqualityCases() {
-        return std::
-            vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>{
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
-                    "SINK(7: {PrintSinkDescriptor()})\n"
-                    "  FILTER(6)\n"
-                    "    FILTER(5)\n"
-                    "      FILTER(4)\n"
-                    "        FILTER(3)\n"
-                    "          MAP(2)\n"
-                    "            SOURCE(1,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "SINK(14: {PrintSinkDescriptor()})\n"
-                    "  FILTER(6)\n"
-                    "    FILTER(5)\n"
-                    "      FILTER(4)\n"
-                    "        FILTER(3)\n"
-                    "          MAP(2)\n"
-                    "            SOURCE(1,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
-                    "SINK(21: {PrintSinkDescriptor()})\n"
-                    "  FILTER(20)\n"
-                    "    FILTER(19)\n"
-                    "      FILTER(18)\n"
-                    "        FILTER(17)\n"
-                    "          MAP(16)\n"
-                    "            SOURCE(15,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "SINK(28: {PrintSinkDescriptor()})\n"
-                    "  FILTER(20)\n"
-                    "    FILTER(19)\n"
-                    "      FILTER(18)\n"
-                    "        FILTER(17)\n"
-                    "          MAP(16)\n"
-                    "            SOURCE(15,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
-                    "SINK(32: {PrintSinkDescriptor()})\n"
-                    "  WINDOW AGGREGATION(OP-31, Sum;)\n"
-                    "    WATERMARKASSIGNER(30)\n"
-                    "      SOURCE(29,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "SINK(36: {PrintSinkDescriptor()})\n"
-                    "  WINDOW AGGREGATION(OP-31, Sum;)\n"
-                    "    WATERMARKASSIGNER(30)\n"
-                    "      SOURCE(29,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                    "SINK(42: {PrintSinkDescriptor()})\n"
-                    "  Join(41)\n"
-                    "    WATERMARKASSIGNER(39)\n"
-                    "      SOURCE(37,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "    WATERMARKASSIGNER(40)\n"
-                    "      SOURCE(38,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                    "SINK(48: {PrintSinkDescriptor()})\n"
-                    "  Join(41)\n"
-                    "    WATERMARKASSIGNER(39)\n"
-                    "      SOURCE(37,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "    WATERMARKASSIGNER(40)\n"
-                    "      SOURCE(38,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").filter(Attribute("value") < 5).joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") < 5).sink(PrintSinkDescriptor::create());)",
-                    "SINK(55: {PrintSinkDescriptor()})\n  Join(54)\n    WATERMARKASSIGNER(52)\n      FILTER(50)\n        "
-                    "SOURCE(49,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n    WATERMARKASSIGNER(53)\n      "
-                    "SOURCE(51,solarPanels,LogicalSourceDescriptor(solarPanels, ))\nSINK(62: {PrintSinkDescriptor()})\n  "
-                    "Join(54)\n    WATERMARKASSIGNER(52)\n      FILTER(50)\n        "
-                    "SOURCE(49,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n    WATERMARKASSIGNER(53)\n      "
-                    "SOURCE(51,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                    "SINK(68: {PrintSinkDescriptor()})\n"
-                    "  Join(67)\n"
-                    "    WATERMARKASSIGNER(65)\n"
-                    "      SOURCE(63,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "    WATERMARKASSIGNER(66)\n"
-                    "      SOURCE(64,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                    "SINK(74: {PrintSinkDescriptor()})\n"
-                    "  Join(67)\n"
-                    "    WATERMARKASSIGNER(65)\n"
-                    "      SOURCE(63,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "    WATERMARKASSIGNER(66)\n"
-                    "      SOURCE(64,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
-                    "SINK(78: {PrintSinkDescriptor()})\n"
-                    "  WINDOW AGGREGATION(OP-77, Sum;)\n"
-                    "    WATERMARKASSIGNER(76)\n"
-                    "      SOURCE(75,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "SINK(82: {PrintSinkDescriptor()})\n"
-                    "  WINDOW AGGREGATION(OP-77, Sum;)\n"
-                    "    WATERMARKASSIGNER(76)\n"
-                    "      SOURCE(75,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Count()).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Count()).sink(PrintSinkDescriptor::create());)",
-                    "SINK(86: {PrintSinkDescriptor()})\n"
-                    "  WINDOW AGGREGATION(OP-85, Count;)\n"
-                    "    WATERMARKASSIGNER(84)\n"
-                    "      SOURCE(83,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "SINK(90: {PrintSinkDescriptor()})\n"
-                    "  WINDOW AGGREGATION(OP-85, Count;)\n"
-                    "    WATERMARKASSIGNER(84)\n"
-                    "      SOURCE(83,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).sink(PrintSinkDescriptor::create());)",
-                    "SINK(94: {PrintSinkDescriptor()})\n"
-                    "  unionWith(93)\n"
-                    "    SOURCE(91,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "    SOURCE(92,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                    "SINK(98: {PrintSinkDescriptor()})\n"
-                    "  unionWith(93)\n"
-                    "    SOURCE(91,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "    SOURCE(92,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry("TestEquality",
-                                                                      R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
-                                                                      R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("windTurbines$value1"), Attribute("windTurbines$ts"), Attribute("households$value"), Attribute("households$id"), Attribute("households$value1"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)",
-                                                                      "SINK(109: {PrintSinkDescriptor()})\n"
-                                                                      "  Join(108)\n"
-                                                                      "    WATERMARKASSIGNER(106)\n"
-                                                                      "      PROJECTION(103, schema=windTurbines$value:INTEGER "
-                                                                      "windTurbines$id1:INTEGER windTurbines$value1:INTEGER "
-                                                                      "windTurbines$ts:INTEGER )\n"
-                                                                      "        FILTER(102)\n"
-                                                                      "          unionWith(101)\n"
-                                                                      "            "
-                                                                      "SOURCE(99,windTurbines,LogicalSourceDescriptor("
-                                                                      "windTurbines, ))\n"
-                                                                      "            "
-                                                                      "SOURCE(100,solarPanels,LogicalSourceDescriptor("
-                                                                      "solarPanels, ))\n"
-                                                                      "    WATERMARKASSIGNER(107)\n"
-                                                                      "      PROJECTION(105, schema=households$value:INTEGER "
-                                                                      "households$id:INTEGER households$value1:(Float) "
-                                                                      "households$ts:INTEGER )\n"
-                                                                      "        "
-                                                                      "SOURCE(104,households,LogicalSourceDescriptor(households, "
-                                                                      "))\n"
-                                                                      "SINK(119: {PrintSinkDescriptor()})\n"
-                                                                      "  Join(108)\n"
-                                                                      "    WATERMARKASSIGNER(106)\n"
-                                                                      "      PROJECTION(103, schema=windTurbines$value:INTEGER "
-                                                                      "windTurbines$id1:INTEGER windTurbines$value1:INTEGER "
-                                                                      "windTurbines$ts:INTEGER )\n"
-                                                                      "        FILTER(102)\n"
-                                                                      "          unionWith(101)\n"
-                                                                      "            "
-                                                                      "SOURCE(99,windTurbines,LogicalSourceDescriptor("
-                                                                      "windTurbines, ))\n"
-                                                                      "            "
-                                                                      "SOURCE(100,solarPanels,LogicalSourceDescriptor("
-                                                                      "solarPanels, ))\n"
-                                                                      "    WATERMARKASSIGNER(107)\n"
-                                                                      "      PROJECTION(105, schema=households$value:INTEGER "
-                                                                      "households$id:INTEGER households$value1:(Float) "
-                                                                      "households$ts:INTEGER )\n"
-                                                                      "        "
-                                                                      "SOURCE(104,households,LogicalSourceDescriptor(households, "
-                                                                      "))\n"),
-                Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
-                    "TestEquality",
-                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).filter(Attribute("value") > 4).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("windTurbines$id")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).sink(PrintSinkDescriptor::create());)",
-                    R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).filter(Attribute("windTurbines$value") > 4).sink(PrintSinkDescriptor::create());)",
-                    "SINK(130: {PrintSinkDescriptor()})\n"
-                    "  Join(129)\n"
-                    "    FILTER(125)\n"
-                    "      WINDOW AGGREGATION(OP-124, Sum;)\n"
-                    "        WATERMARKASSIGNER(123)\n"
-                    "          unionWith(122)\n"
-                    "            SOURCE(120,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "            SOURCE(121,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                    "    WINDOW AGGREGATION(OP-128, Sum;)\n"
-                    "      WATERMARKASSIGNER(127)\n"
-                    "        SOURCE(126,households,LogicalSourceDescriptor(households, ))\n"
-                    "SINK(141: {PrintSinkDescriptor()})\n"
-                    "  Join(129)\n"
-                    "    FILTER(125)\n"
-                    "      WINDOW AGGREGATION(OP-124, Sum;)\n"
-                    "        WATERMARKASSIGNER(123)\n"
-                    "          unionWith(122)\n"
-                    "            SOURCE(120,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
-                    "            SOURCE(121,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
-                    "    WINDOW AGGREGATION(OP-128, Sum;)\n"
-                    "      WATERMARKASSIGNER(127)\n"
-                    "        SOURCE(126,households,LogicalSourceDescriptor(households, ))\n")};
+        return std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>{
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
+                "SINK(7: {PrintSinkDescriptor()})\n"
+                "  FILTER(6)\n"
+                "    FILTER(5)\n"
+                "      FILTER(4)\n"
+                "        FILTER(3)\n"
+                "          MAP(2)\n"
+                "            SOURCE(1,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "SINK(14: {PrintSinkDescriptor()})\n"
+                "  FILTER(6)\n"
+                "    FILTER(5)\n"
+                "      FILTER(4)\n"
+                "        FILTER(3)\n"
+                "          MAP(2)\n"
+                "            SOURCE(1,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").map(Attribute("value") = 40).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());)",
+                "SINK(21: {PrintSinkDescriptor()})\n"
+                "  FILTER(20)\n"
+                "    FILTER(19)\n"
+                "      FILTER(18)\n"
+                "        FILTER(17)\n"
+                "          MAP(16)\n"
+                "            SOURCE(15,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "SINK(28: {PrintSinkDescriptor()})\n"
+                "  FILTER(20)\n"
+                "    FILTER(19)\n"
+                "      FILTER(18)\n"
+                "        FILTER(17)\n"
+                "          MAP(16)\n"
+                "            SOURCE(15,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10))).apply(Sum(Attribute("value1"))).sink(PrintSinkDescriptor::create());)",
+                "SINK(32: {PrintSinkDescriptor()})\n"
+                "  WINDOW AGGREGATION(OP-31, Sum;)\n"
+                "    WATERMARKASSIGNER(30)\n"
+                "      SOURCE(29,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "SINK(36: {PrintSinkDescriptor()})\n"
+                "  WINDOW AGGREGATION(OP-31, Sum;)\n"
+                "    WATERMARKASSIGNER(30)\n"
+                "      SOURCE(29,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
+                "SINK(42: {PrintSinkDescriptor()})\n"
+                "  Join(41)\n"
+                "    WATERMARKASSIGNER(39)\n"
+                "      SOURCE(37,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "    WATERMARKASSIGNER(40)\n"
+                "      SOURCE(38,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "SINK(48: {PrintSinkDescriptor()})\n"
+                "  Join(41)\n"
+                "    WATERMARKASSIGNER(39)\n"
+                "      SOURCE(37,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "    WATERMARKASSIGNER(40)\n"
+                "      SOURCE(38,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").filter(Attribute("value") < 5).joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") < 5).sink(PrintSinkDescriptor::create());)",
+                "SINK(55: {PrintSinkDescriptor()})\n  Join(54)\n    WATERMARKASSIGNER(52)\n      FILTER(50)\n        "
+                "SOURCE(49,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n    WATERMARKASSIGNER(53)\n      "
+                "SOURCE(51,solarPanels,LogicalSourceDescriptor(solarPanels, ))\nSINK(62: {PrintSinkDescriptor()})\n  "
+                "Join(54)\n    WATERMARKASSIGNER(52)\n      FILTER(50)\n        "
+                "SOURCE(49,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n    WATERMARKASSIGNER(53)\n      "
+                "SOURCE(51,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").joinWith(Query::from("solarPanels")).where(Attribute("id1")).equalsTo(Attribute("id")).window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
+                "SINK(68: {PrintSinkDescriptor()})\n"
+                "  Join(67)\n"
+                "    WATERMARKASSIGNER(65)\n"
+                "      SOURCE(63,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "    WATERMARKASSIGNER(66)\n"
+                "      SOURCE(64,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "SINK(74: {PrintSinkDescriptor()})\n"
+                "  Join(67)\n"
+                "    WATERMARKASSIGNER(65)\n"
+                "      SOURCE(63,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "    WATERMARKASSIGNER(66)\n"
+                "      SOURCE(64,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000))).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());)",
+                "SINK(78: {PrintSinkDescriptor()})\n"
+                "  WINDOW AGGREGATION(OP-77, Sum;)\n"
+                "    WATERMARKASSIGNER(76)\n"
+                "      SOURCE(75,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "SINK(82: {PrintSinkDescriptor()})\n"
+                "  WINDOW AGGREGATION(OP-77, Sum;)\n"
+                "    WATERMARKASSIGNER(76)\n"
+                "      SOURCE(75,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Count()).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).apply(Count()).sink(PrintSinkDescriptor::create());)",
+                "SINK(86: {PrintSinkDescriptor()})\n"
+                "  WINDOW AGGREGATION(OP-85, Count;)\n"
+                "    WATERMARKASSIGNER(84)\n"
+                "      SOURCE(83,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "SINK(90: {PrintSinkDescriptor()})\n"
+                "  WINDOW AGGREGATION(OP-85, Count;)\n"
+                "    WATERMARKASSIGNER(84)\n"
+                "      SOURCE(83,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).sink(PrintSinkDescriptor::create());)",
+                "SINK(94: {PrintSinkDescriptor()})\n"
+                "  unionWith(93)\n"
+                "    SOURCE(91,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "    SOURCE(92,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "SINK(98: {PrintSinkDescriptor()})\n"
+                "  unionWith(93)\n"
+                "    SOURCE(91,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "    SOURCE(92,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry("TestEquality",
+                                                                  R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).filter(Attribute("value") > 4).project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts")).joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts"))).where(Attribute("windTurbines$id1")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).sink(PrintSinkDescriptor::create());)",
+                                                                  R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).joinWith(Query::from("households")).where(Attribute("id1")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).filter(Attribute("value") > 4).project(Attribute("windTurbines$value"), Attribute("windTurbines$id1"), Attribute("windTurbines$value1"), Attribute("windTurbines$ts"), Attribute("households$value"), Attribute("households$id"), Attribute("households$value1"), Attribute("households$ts")).sink(PrintSinkDescriptor::create());)",
+                                                                  "SINK(109: {PrintSinkDescriptor()})\n"
+                                                                  "  Join(108)\n"
+                                                                  "    WATERMARKASSIGNER(106)\n"
+                                                                  "      PROJECTION(103, schema=windTurbines$value:INTEGER "
+                                                                  "windTurbines$id1:INTEGER windTurbines$value1:INTEGER "
+                                                                  "windTurbines$ts:INTEGER )\n"
+                                                                  "        FILTER(102)\n"
+                                                                  "          unionWith(101)\n"
+                                                                  "            "
+                                                                  "SOURCE(99,windTurbines,LogicalSourceDescriptor("
+                                                                  "windTurbines, ))\n"
+                                                                  "            "
+                                                                  "SOURCE(100,solarPanels,LogicalSourceDescriptor("
+                                                                  "solarPanels, ))\n"
+                                                                  "    WATERMARKASSIGNER(107)\n"
+                                                                  "      PROJECTION(105, schema=households$value:INTEGER "
+                                                                  "households$id:INTEGER households$value1:(Float) "
+                                                                  "households$ts:INTEGER )\n"
+                                                                  "        "
+                                                                  "SOURCE(104,households,LogicalSourceDescriptor(households, "
+                                                                  "))\n"
+                                                                  "SINK(119: {PrintSinkDescriptor()})\n"
+                                                                  "  Join(108)\n"
+                                                                  "    WATERMARKASSIGNER(106)\n"
+                                                                  "      PROJECTION(103, schema=windTurbines$value:INTEGER "
+                                                                  "windTurbines$id1:INTEGER windTurbines$value1:INTEGER "
+                                                                  "windTurbines$ts:INTEGER )\n"
+                                                                  "        FILTER(102)\n"
+                                                                  "          unionWith(101)\n"
+                                                                  "            "
+                                                                  "SOURCE(99,windTurbines,LogicalSourceDescriptor("
+                                                                  "windTurbines, ))\n"
+                                                                  "            "
+                                                                  "SOURCE(100,solarPanels,LogicalSourceDescriptor("
+                                                                  "solarPanels, ))\n"
+                                                                  "    WATERMARKASSIGNER(107)\n"
+                                                                  "      PROJECTION(105, schema=households$value:INTEGER "
+                                                                  "households$id:INTEGER households$value1:(Float) "
+                                                                  "households$ts:INTEGER )\n"
+                                                                  "        "
+                                                                  "SOURCE(104,households,LogicalSourceDescriptor(households, "
+                                                                  "))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestEquality",
+                R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).filter(Attribute("value") > 4).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("windTurbines$id")).equalsTo(Attribute("households$id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).sink(PrintSinkDescriptor::create());)",
+                R"(Query::from("windTurbines").unionWith(Query::from("solarPanels")).window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).joinWith(Query::from("households").window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value")))).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1))).filter(Attribute("windTurbines$value") > 4).sink(PrintSinkDescriptor::create());)",
+                "SINK(130: {PrintSinkDescriptor()})\n"
+                "  Join(129)\n"
+                "    FILTER(125)\n"
+                "      WINDOW AGGREGATION(OP-124, Sum;)\n"
+                "        WATERMARKASSIGNER(123)\n"
+                "          unionWith(122)\n"
+                "            SOURCE(120,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "            SOURCE(121,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "    WINDOW AGGREGATION(OP-128, Sum;)\n"
+                "      WATERMARKASSIGNER(127)\n"
+                "        SOURCE(126,households,LogicalSourceDescriptor(households, ))\n"
+                "SINK(141: {PrintSinkDescriptor()})\n"
+                "  Join(129)\n"
+                "    FILTER(125)\n"
+                "      WINDOW AGGREGATION(OP-124, Sum;)\n"
+                "        WATERMARKASSIGNER(123)\n"
+                "          unionWith(122)\n"
+                "            SOURCE(120,windTurbines,LogicalSourceDescriptor(windTurbines, ))\n"
+                "            SOURCE(121,solarPanels,LogicalSourceDescriptor(solarPanels, ))\n"
+                "    WINDOW AGGREGATION(OP-128, Sum;)\n"
+                "      WATERMARKASSIGNER(127)\n"
+                "        SOURCE(126,households,LogicalSourceDescriptor(households, ))\n")};
     }
     static auto createMixedContainmentCases() {
         return std::

@@ -39,13 +39,15 @@ enum class ContainmentRelationship : uint8_t { NO_CONTAINMENT, LEFT_SIG_CONTAINE
 class ContainmentRelationshipAndOperatorChain {
 
   public:
-    static ContainmentRelationshipAndOperatorChainPtr create(ContainmentRelationship containmentRelationship, std::vector<LogicalOperatorNodePtr> containedOperatorChain);
+    static ContainmentRelationshipAndOperatorChainPtr create(ContainmentRelationship containmentRelationship,
+                                                             std::vector<LogicalOperatorNodePtr> containedOperatorChain);
 
     ContainmentRelationship containmentRelationship;
     std::vector<LogicalOperatorNodePtr> containedOperatorChain;
 
   private:
-    explicit ContainmentRelationshipAndOperatorChain(ContainmentRelationship containmentRelationship, std::vector<LogicalOperatorNodePtr> containedOperatorChain);
+    explicit ContainmentRelationshipAndOperatorChain(ContainmentRelationship containmentRelationship,
+                                                     std::vector<LogicalOperatorNodePtr> containedOperatorChain);
 };
 }// namespace Optimizer
 }// namespace NES

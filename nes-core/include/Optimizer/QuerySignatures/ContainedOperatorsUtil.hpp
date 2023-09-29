@@ -39,7 +39,7 @@ class ContainedOperatorsUtil {
      * @return contained window operator and its watermark operator
      */
     static std::vector<LogicalOperatorNodePtr> createContainedWindowOperator(const LogicalOperatorNodePtr& containedOperator,
-                                                                      const LogicalOperatorNodePtr& containerOperator);
+                                                                             const LogicalOperatorNodePtr& containerOperator);
     /**
      * @brief extracts the contained projection operator, i.e. extracts the most downstream projection operator from the contained upstream operator chain
      * @param containedOperator operator that we identified as contained
@@ -53,7 +53,7 @@ class ContainedOperatorsUtil {
      * @return all filter upstream filter operations from the contained query
      */
     static LogicalOperatorNodePtr createContainedFilterOperators(const LogicalOperatorNodePtr& container,
-                                                                       const LogicalOperatorNodePtr& containee);
+                                                                 const LogicalOperatorNodePtr& containee);
     /**
      * @brief Validate if the map assignment field is used in the filter predicate of the operator
      * @param filterOperator : filter operator whose predicate need to be checked
@@ -61,8 +61,8 @@ class ContainedOperatorsUtil {
      * @return true if field use in the filter predicate else false
      */
     static bool isMapTransformationAppliedToPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
-                                               const std::vector<std::string>& fieldNames,
-                                               const SchemaPtr& containerOutputSchema);
+                                                      const std::vector<std::string>& fieldNames,
+                                                      const SchemaPtr& containerOutputSchema);
     /**
      * @brief checks if we can safely extract the contained operator chain from the container operator chain, i.e.
      * if the container chain has multiple parent relationships, we end up with wrong query results if we extract the contained chain
@@ -72,7 +72,7 @@ class ContainedOperatorsUtil {
      * @return true, if the container chain has only one parent relationship, false otherwise
      */
     static bool checkDownstreamOperatorChainForSingleParent(const LogicalOperatorNodePtr& containedOperator,
-                                                     const LogicalOperatorNodePtr& extractedContainedOperator);
+                                                            const LogicalOperatorNodePtr& extractedContainedOperator);
     /**
      * @brief checks if we can safely extract the contained operator chain from the container operator chain, i.e.
      * if the container chain has multiple parent relationships, we end up with wrong query results if we extract the contained chain
@@ -84,9 +84,10 @@ class ContainedOperatorsUtil {
      * @return true, if the container chain has only one parent relationship and no map function transforms any of the filter's
      * predicates, false otherwise
      */
-    static bool checkDownstreamOperatorChainForSingleParentAndMapOperator(const LogicalOperatorNodePtr& containedOperator,
-                                                                   const LogicalOperatorNodePtr& extractedContainedOperator,
-                                                                   std::vector<std::string>& mapAttributeNames);
+    static bool
+    checkDownstreamOperatorChainForSingleParentAndMapOperator(const LogicalOperatorNodePtr& containedOperator,
+                                                              const LogicalOperatorNodePtr& extractedContainedOperator,
+                                                              std::vector<std::string>& mapAttributeNames);
 };
 
 }// namespace Optimizer

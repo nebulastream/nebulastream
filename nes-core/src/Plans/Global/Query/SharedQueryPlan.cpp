@@ -191,7 +191,8 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
                 break;
             // In case of no containment, do nothing
             case Optimizer::ContainmentRelationship::NO_CONTAINMENT:
-                NES_WARNING("NO_CONTAINMENT relationship was passed to SharedQueryPlan::addQuery(). This should not happen. Please check the code.");
+                NES_WARNING("NO_CONTAINMENT relationship was passed to SharedQueryPlan::addQuery(). This should not happen. "
+                            "Please check the code.");
                 break;
         }
 

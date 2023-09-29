@@ -20,7 +20,8 @@ namespace NES::Optimizer {
 MatchedOperatorPairPtr MatchedOperatorPair::create(LogicalOperatorNodePtr hostOperator,
                                                    LogicalOperatorNodePtr targetOperator,
                                                    Optimizer::ContainmentRelationship containmentRelationship) {
-    return std::make_unique<MatchedOperatorPair>(MatchedOperatorPair(std::move(hostOperator), std::move(targetOperator), std::move(containmentRelationship)));
+    return std::make_unique<MatchedOperatorPair>(
+        MatchedOperatorPair(std::move(hostOperator), std::move(targetOperator), std::move(containmentRelationship)));
 }
 
 MatchedOperatorPair::MatchedOperatorPair(LogicalOperatorNodePtr hostOperator,

@@ -80,7 +80,8 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      * @param context The Z3 context for the SMT solver
      * @return an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      */
-    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck);
+    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context,
+                                                                  bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief checks for containment between the globalQueryPlan and the currently newly added query

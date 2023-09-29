@@ -232,8 +232,8 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryException: {}", ex.what());
             } catch (std::exception& ex) {
                 NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the "
-                                 "queryIdAndCatalogEntryMapping: {}",
-                                 ex.what());
+                                "queryIdAndCatalogEntryMapping: {}",
+                                ex.what());
                 shutDown();
             }
         }
