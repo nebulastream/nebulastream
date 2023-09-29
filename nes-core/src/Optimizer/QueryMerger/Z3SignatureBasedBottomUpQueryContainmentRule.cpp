@@ -39,7 +39,8 @@
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedBottomUpQueryContainmentRule::Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck)
+Z3SignatureBasedBottomUpQueryContainmentRule::Z3SignatureBasedBottomUpQueryContainmentRule(const z3::ContextPtr& context,
+                                                                                           bool allowExhaustiveContainmentCheck)
     : BaseQueryMergerRule() {
     // For the bottom up case, we always allow the SQP as containee and therefore pass true as the second parameter
     signatureContainmentUtil = SignatureContainmentCheck::create(std::move(context), allowExhaustiveContainmentCheck);

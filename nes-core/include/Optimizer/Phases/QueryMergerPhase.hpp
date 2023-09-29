@@ -27,7 +27,7 @@ using ContextPtr = std::shared_ptr<context>;
 namespace NES::Configurations {
 class OptimizerConfiguration;
 using OptimizerConfigurationPtr = std::shared_ptr<OptimizerConfiguration>;
-}// namespace Configurations
+}// namespace NES::Configurations
 
 namespace NES::Optimizer {
 
@@ -53,7 +53,8 @@ using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 class QueryMergerPhase {
 
   public:
-    static QueryMergerPhasePtr create(z3::ContextPtr context, const Configurations::OptimizerConfiguration optimizerConfiguration);
+    static QueryMergerPhasePtr create(z3::ContextPtr context,
+                                      const Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
      * @brief execute method to apply different query merger rules on the global query plan.

@@ -176,9 +176,8 @@ bool JoinLogicalOperatorNode::equal(NodePtr const& rhs) const {
             && joinDefinition->getLeftJoinKey()->equal(rhsJoin->joinDefinition->getLeftJoinKey())
             && joinDefinition->getRightJoinKey()->equal(rhsJoin->joinDefinition->getRightJoinKey())
             && joinDefinition->getOutputSchema()->equals(rhsJoin->joinDefinition->getOutputSchema())
-            && joinDefinition->getRightSourceType()->equals(
-                rhsJoin->joinDefinition->getRightSourceType())
-                && joinDefinition->getLeftSourceType()->equals(rhsJoin->joinDefinition->getLeftSourceType());
+            && joinDefinition->getRightSourceType()->equals(rhsJoin->joinDefinition->getRightSourceType())
+            && joinDefinition->getLeftSourceType()->equals(rhsJoin->joinDefinition->getLeftSourceType());
     }
     return false;
 }

@@ -81,7 +81,7 @@ class SignatureContainmentCheck {
      * @return enum with containment relationships
      */
     ContainmentRelationshipAndOperatorChainPtr checkContainmentForBottomUpMerging(const LogicalOperatorNodePtr& leftSignature,
-                                                       const LogicalOperatorNodePtr& rightSignature);
+                                                                                  const LogicalOperatorNodePtr& rightSignature);
 
     /**
      * @brief Check containment relationships for the given signatures as follows
@@ -97,7 +97,8 @@ class SignatureContainmentCheck {
      * equivalence or no containment was detected.
      */
     ContainmentRelationshipAndOperatorChainPtr
-    checkContainmentRelationshipForTopDownMerging(const LogicalOperatorNodePtr& leftOperator, const LogicalOperatorNodePtr& rightOperator);
+    checkContainmentRelationshipForTopDownMerging(const LogicalOperatorNodePtr& leftOperator,
+                                                  const LogicalOperatorNodePtr& rightOperator);
 
   private:
     /**
@@ -115,7 +116,8 @@ class SignatureContainmentCheck {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentRelationship checkProjectionContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkProjectionContainment(const QuerySignaturePtr& leftSignature,
+                                                       const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief check for filter containment as follows:
@@ -130,7 +132,8 @@ class SignatureContainmentCheck {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentRelationship checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkFilterContainment(const QuerySignaturePtr& leftSignature,
+                                                   const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief check for window containment as follows:
@@ -162,7 +165,8 @@ class SignatureContainmentCheck {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentRelationship checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkWindowContainment(const QuerySignaturePtr& leftSignature,
+                                                   const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief creates conditions for checking projection containment:

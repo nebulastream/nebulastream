@@ -52,7 +52,8 @@ bool WindowLogicalOperatorNode::equal(NodePtr const& rhs) const {
         auto rhsWindow = rhs->as<WindowLogicalOperatorNode>();
         return windowDefinition->equal(rhsWindow->windowDefinition);
     }
-    return false; }
+    return false;
+}
 
 OperatorNodePtr WindowLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id)->as<WindowLogicalOperatorNode>();

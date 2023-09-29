@@ -116,7 +116,9 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                             }
 
                             //Match the target and host operator signatures to see if a match is present
-                            NES_INFO("Check eq for target: {}, and host: {}", targetOperator->toString(), hostOperator->toString());
+                            NES_INFO("Check eq for target: {}, and host: {}",
+                                     targetOperator->toString(),
+                                     hostOperator->toString());
                             if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(),
                                                                      hostOperator->getZ3Signature())) {
                                 //Add the matched host operator to the map

@@ -32,7 +32,8 @@ class SignatureContainmentCheck;
 using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
 
 class Z3SignatureBasedTreeBasedQueryContainmentMergerRule;
-using Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr = std::shared_ptr<Z3SignatureBasedTreeBasedQueryContainmentMergerRule>;
+using Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr =
+    std::shared_ptr<Z3SignatureBasedTreeBasedQueryContainmentMergerRule>;
 
 /**
  * @brief Z3SignatureBasedTreeBasedQueryContainmentMergerRule utilizes containment relationships for the merging process.
@@ -86,7 +87,8 @@ using Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr = std::shared_ptr<Z
 class Z3SignatureBasedTreeBasedQueryContainmentMergerRule final : public BaseQueryMergerRule {
 
   public:
-    static Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr create(z3::ContextPtr context, bool allowExhaustiveContainmentCheck);
+    static Z3SignatureBasedTreeBasedQueryContainmentMergerRulePtr create(z3::ContextPtr context,
+                                                                         bool allowExhaustiveContainmentCheck);
     ~Z3SignatureBasedTreeBasedQueryContainmentMergerRule() noexcept final = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
