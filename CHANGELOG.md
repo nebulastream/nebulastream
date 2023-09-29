@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.5.216](https://github.com/nebulastream/nebulastream/tree/v0.5.216) (2023-09-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.215...v0.5.216)
+
+**Implemented enhancements:**
+
+- \[TASK\] Concurrency for StatManager [\#3863](https://github.com/nebulastream/nebulastream/issues/3863)
+- \[FEATURE\] Add Synopses to NebulaStream [\#3862](https://github.com/nebulastream/nebulastream/issues/3862)
+- \[FEATURE\] Top-Down query containment based merging algorithm [\#3823](https://github.com/nebulastream/nebulastream/issues/3823)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add thrust library headers to Utils and add necessary data stuctures for median operator [\#3110](https://github.com/nebulastream/nebulastream/issues/3110)
+
 ## [v0.5.215](https://github.com/nebulastream/nebulastream/tree/v0.5.215) (2023-09-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.214...v0.5.215)
