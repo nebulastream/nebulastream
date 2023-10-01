@@ -145,6 +145,52 @@ class MQTTSourceType : public PhysicalSourceType {
      */
     void setInputFormat(Configurations::InputFormat inputFormatValue);
 
+    /**
+     * @brief gets a ConfigurationOption object with sourceGatheringInterval
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getGatheringInterval() const;
+
+    /**
+     * @brief set the value for sourceGatheringInterval with the appropriate data format
+     */
+    void setGatheringInterval(uint32_t sourceGatheringIntervalValue);
+
+    /**
+     * @brief Get gathering mode
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode>> getGatheringMode() const;
+
+    /**
+     * @brief Set gathering mode
+     */
+    void setGatheringMode(std::string inputGatheringMode);
+
+    /**
+     * @brief Sets the gathering mode given as GatheringMode
+     * @param inputGatheringMode
+     */
+    void setGatheringMode(GatheringMode inputGatheringMode);
+
+    /**
+     * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
+
+    /**
+     * @brief set the value for numberOfBuffersToProduce with the appropriate data format
+     */
+    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+
+    /**
+     * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
+
+    /**
+     * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
+     */
+    void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
+
   private:
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
@@ -171,6 +217,10 @@ class MQTTSourceType : public PhysicalSourceType {
     Configurations::BoolConfigOption cleanSession;
     Configurations::FloatConfigOption flushIntervalMS;
     Configurations::InputFormatConfigOption inputFormat;
+    Configurations::IntConfigOption sourceGatheringInterval;
+    Configurations::GatheringModeConfigOption gatheringMode;
+    Configurations::IntConfigOption numberOfBuffersToProduce;
+    Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_

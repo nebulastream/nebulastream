@@ -64,6 +64,23 @@ MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMa
     if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
         inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
     }
+    if (sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG) != sourceConfigMap.end()) {
+        sourceGatheringInterval->setValue(
+            std::stoi(sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG)->second));
+    }
+    if (sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG) != sourceConfigMap.end()) {
+        gatheringMode->setValue(
+            magic_enum::enum_cast<GatheringMode>(sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG)->second)
+                .value());
+    }
+    if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
+        numberOfBuffersToProduce->setValue(
+            std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
+    }
+    if (sourceConfigMap.find(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != sourceConfigMap.end()) {
+        numberOfTuplesToProducePerBuffer->setValue(
+            std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
+    }
 }
 
 MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
@@ -109,6 +126,25 @@ MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
         && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
         inputFormat->setInputFormatEnum(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
     }
+    if (!yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<std::string>() != "\n") {
+        sourceGatheringInterval->setValue(yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<uint32_t>());
+    }
+    if (!yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>() != "\n") {
+        gatheringMode->setValue(
+            magic_enum::enum_cast<GatheringMode>(yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>())
+                .value());
+    }
+    if (!yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>() != "\n") {
+        numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<uint32_t>());
+    }
+    if (!yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>() != "\n") {
+        numberOfTuplesToProducePerBuffer->setValue(
+            yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<uint32_t>());
+    }
 }
 
 MQTTSourceType::MQTTSourceType()
@@ -142,7 +178,22 @@ MQTTSourceType::MQTTSourceType()
                                                                          "tupleBuffer flush interval in milliseconds")),
       inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(Configurations::INPUT_FORMAT_CONFIG,
                                                                                            Configurations::InputFormat::JSON,
-                                                                                           "input data format")) {
+                                                                                           "input data format")),
+      sourceGatheringInterval(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
+                                                                0,
+                                                                "Gathering interval of the source.")),
+      gatheringMode(Configurations::ConfigurationOption<GatheringMode>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
+                                                                               GatheringMode::INTERVAL_MODE,
+                                                                               "Gathering mode of the source.")),
+      numberOfBuffersToProduce(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
+                                                                0,
+                                                                "Number of buffers to produce.")),
+      numberOfTuplesToProducePerBuffer(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+                                                                0,
+                                                                "Number of tuples to produce per buffer.")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -157,6 +208,11 @@ std::string MQTTSourceType::toString() {
     ss << Configurations::CLEAN_SESSION_CONFIG + ":" + cleanSession->toStringNameCurrentValue();
     ss << Configurations::FLUSH_INTERVAL_MS_CONFIG + ":" + flushIntervalMS->toStringNameCurrentValue();
     ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValueEnum();
+    ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG + ":" + sourceGatheringInterval->toStringNameCurrentValue();
+    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG + ":" + std::string(magic_enum::enum_name(gatheringMode->getValue()));
+    ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
+    ss << Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + ":"
+            + numberOfTuplesToProducePerBuffer->toStringNameCurrentValue();
     ss << "\n}";
     return ss.str();
 }
@@ -172,7 +228,11 @@ bool MQTTSourceType::equal(const PhysicalSourceTypePtr& other) {
         && topic->getValue() == otherSourceConfig->topic->getValue() && qos->getValue() == otherSourceConfig->qos->getValue()
         && cleanSession->getValue() == otherSourceConfig->cleanSession->getValue()
         && flushIntervalMS->getValue() == otherSourceConfig->flushIntervalMS->getValue()
-        && inputFormat->getValue() == otherSourceConfig->inputFormat->getValue();
+        && inputFormat->getValue() == otherSourceConfig->inputFormat->getValue()
+        && sourceGatheringInterval->getValue() == otherSourceConfig->sourceGatheringInterval->getValue()
+        && gatheringMode->getValue() == otherSourceConfig->gatheringMode->getValue()
+        && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue()
+        && numberOfTuplesToProducePerBuffer->getValue() == otherSourceConfig->numberOfTuplesToProducePerBuffer->getValue();
 }
 
 Configurations::StringConfigOption MQTTSourceType::getUrl() const { return url; }
@@ -190,6 +250,16 @@ Configurations::BoolConfigOption MQTTSourceType::getCleanSession() const { retur
 Configurations::FloatConfigOption MQTTSourceType::getFlushIntervalMS() const { return flushIntervalMS; }
 
 Configurations::InputFormatConfigOption MQTTSourceType::getInputFormat() const { return inputFormat; }
+
+Configurations::IntConfigOption MQTTSourceType::getGatheringInterval() const { return sourceGatheringInterval; }
+
+Configurations::GatheringModeConfigOption MQTTSourceType::getGatheringMode() const { return gatheringMode; }
+
+Configurations::IntConfigOption MQTTSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+
+Configurations::IntConfigOption MQTTSourceType::getNumberOfTuplesToProducePerBuffer() const {
+    return numberOfTuplesToProducePerBuffer;
+}
 
 void MQTTSourceType::setUrl(std::string urlValue) { url->setValue(std::move(urlValue)); }
 
@@ -213,6 +283,24 @@ void MQTTSourceType::setInputFormat(Configurations::InputFormat inputFormatValue
     inputFormat->setValue(std::move(inputFormatValue));
 }
 
+void MQTTSourceType::setGatheringInterval(uint32_t sourceGatheringIntervalValue) {
+    sourceGatheringInterval->setValue(sourceGatheringIntervalValue);
+}
+
+void MQTTSourceType::setGatheringMode(std::string inputGatheringMode) {
+    MQTTSourceType::setGatheringMode(magic_enum::enum_cast<GatheringMode>(inputGatheringMode).value());
+}
+
+void MQTTSourceType::setGatheringMode(GatheringMode inputGatheringMode) { gatheringMode->setValue(inputGatheringMode); }
+
+void MQTTSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduceValue) {
+    numberOfBuffersToProduce->setValue(numberOfBuffersToProduceValue);
+}
+
+void MQTTSourceType::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBufferValue) {
+    numberOfTuplesToProducePerBuffer->setValue(numberOfTuplesToProducePerBufferValue);
+}
+
 void MQTTSourceType::reset() {
     setUrl(url->getDefaultValue());
     setClientId(clientId->getDefaultValue());
@@ -222,6 +310,9 @@ void MQTTSourceType::reset() {
     setCleanSession(cleanSession->getDefaultValue());
     setFlushIntervalMS(flushIntervalMS->getDefaultValue());
     setInputFormat(inputFormat->getDefaultValue());
+    setGatheringInterval(sourceGatheringInterval->getDefaultValue());
+    setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
+    setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
 }
 
 }// namespace NES
