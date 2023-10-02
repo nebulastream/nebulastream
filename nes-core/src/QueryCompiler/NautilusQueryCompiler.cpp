@@ -66,12 +66,25 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
 
         timer.start();
         NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
+
+        //todo: extract to function
         auto logicalQueryPlan = request->getQueryPlan();
-        //Todo: get number of vdes here
-        auto expectedVersionDrainEvents = logicalQueryPlan->getSourceOperators().size();
-        (void) expectedVersionDrainEvents;
         auto sinks = logicalQueryPlan->getSinkOperators();
-        (void) sinks;
+        auto sinkDescriptor = sinks.front()->getSinkDescriptor();
+        if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
+            auto expectedVersionDrainEvents = logicalQueryPlan->getSourceOperators().size();
+            auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
+            auto updatedSinkDescriptor = Network::NetworkSinkDescriptor::create(networkSinkDescriptor->getNodeLocation(),
+                                                                                networkSinkDescriptor->getNesPartition(),
+                                                                                networkSinkDescriptor->getWaitTime(),
+                                                                                networkSinkDescriptor->getRetryTimes(),
+                                                                                networkSinkDescriptor->getFaultToleranceType(),
+                                                                                networkSinkDescriptor->getNumberOfOrigins(),
+                                                                                networkSinkDescriptor->getUniqueNetworkSinkDescriptorId(),
+                                                                                expectedVersionDrainEvents);
+            sinks.front()->setSinkDescriptor(sinkDescriptor);
+        }
+
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");
 

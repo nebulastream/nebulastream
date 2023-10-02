@@ -34,7 +34,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType,
-                         uint64_t numberOfOrigins)
+                         uint64_t numberOfOrigins,
+                         uint16_t expectedVersionDrainEvents)
     : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
@@ -48,7 +49,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), expectedVersionDrainEvents(expectedVersionDrainEvents) {
     //todo: #4230 use the uniqueNetworkSinkDescriptorId parameter to set the id instead of obtaining a value from the node engine
     (void) uniqueNetworkSinkDescriptorId;
     NES_ASSERT(this->networkManager, "Invalid network manager");
