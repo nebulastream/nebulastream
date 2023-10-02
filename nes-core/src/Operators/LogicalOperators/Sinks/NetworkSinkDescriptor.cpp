@@ -23,9 +23,9 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              uint32_t retryTimes,
                                              FaultToleranceType faultToleranceType,
                                              uint64_t uniqueNetworkSinkDescriptorId,
-                                             uint64_t numberOfOrigins)
+                                             uint64_t numberOfOrigins, uint16_t expectedVersionDrainEvents)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId) {}
+      waitTime(waitTime), retryTimes(retryTimes), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), expectedVersionDrainEvents(expectedVersionDrainEvents) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
@@ -33,14 +33,15 @@ SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 uint32_t retryTimes,
                                                 FaultToleranceType faultToleranceType,
                                                 uint64_t numberOfOrigins,
-                                                uint64_t uniqueNetworkSinkOperatorId) {
+                                                uint64_t uniqueNetworkSinkOperatorId,
+                                                uint16_t expectedVersionDrainEvents) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
                                                                          nesPartition,
                                                                          waitTime,
                                                                          retryTimes,
                                                                          faultToleranceType,
                                                                          numberOfOrigins,
-                                                                         uniqueNetworkSinkOperatorId));
+                                                                         uniqueNetworkSinkOperatorId, expectedVersionDrainEvents));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -71,5 +72,6 @@ FaultToleranceType NetworkSinkDescriptor::getFaultToleranceType() const { return
 void NetworkSinkDescriptor::setFaultToleranceType(FaultToleranceType faultToleranceType) {
     NetworkSinkDescriptor::faultToleranceType = faultToleranceType;
 }
+uint16_t NetworkSinkDescriptor::getNumberOfExpectedVersionDrainEvents() { return expectedVersionDrainEvents; }
 
 }// namespace NES::Network
