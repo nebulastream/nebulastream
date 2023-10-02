@@ -34,7 +34,9 @@ enum class ReconfigurationType : uint8_t {
     /// start the process of connecting to a new network source
     ConnectToNewNetworkSource,
     /// indicate successful establishment of a network connection
-    ConnectionEstablished
+    ConnectionEstablished,
+    /// indicates that the old version of a query has been drained, and can be reconfigured or stopped depending on the situation
+    DrainVersion
 };
 }
 

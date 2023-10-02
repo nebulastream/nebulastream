@@ -49,7 +49,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), expectedVersionDrainEvents(expectedVersionDrainEvents) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), expectedVersionDrainEvents(expectedVersionDrainEvents), receivedVersionDrainEvents(0), pendingReconfiguration(std::nullopt) {
     //todo: #4230 use the uniqueNetworkSinkDescriptorId parameter to set the id instead of obtaining a value from the node engine
     (void) uniqueNetworkSinkDescriptorId;
     NES_ASSERT(this->networkManager, "Invalid network manager");
@@ -148,6 +148,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
+            break;
+        }
+        case Runtime::ReconfigurationType::DrainVersion: {
+            NES_DEBUG("NetworkSink: Thread {} received version drain message", Runtime::NesThread::getId());
             break;
         }
         case Runtime::ReconfigurationType::PropagateEpoch: {
@@ -252,6 +256,25 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
         auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
         receiverLocation = newReceiverLocation;
         nesPartition = newPartition;
+    }
+    if (task.getType() == Runtime::ReconfigurationType::DrainVersion) {
+        //todo: check first if a reconfig is pending
+        if (pendingReconfiguration.has_value()) {
+            auto currentCount = ++receivedVersionDrainEvents;
+            NES_DEBUG("NetworkSink: postReconfigurationCallback() received {} of {} expected version drain events", currentCount, expectedVersionDrainEvents);
+            if (currentCount >= expectedVersionDrainEvents) {
+                auto userData = pendingReconfiguration.value();
+                Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
+                                                                                          querySubPlanId,
+                                                                                          Runtime::ReconfigurationType::ConnectToNewNetworkSource,
+                                                                                          inherited0::shared_from_this(),
+                                                                                          userData);
+                queryManager->addReconfigurationMessage(nesPartition.getQueryId(), querySubPlanId, message, true);
+
+            }
+        } else {
+            NES_DEBUG("NetworkSink: postReconfigurationCallback() ignoring version drain event because no reconfiguration is pending");
+        }
     }
 }
 
