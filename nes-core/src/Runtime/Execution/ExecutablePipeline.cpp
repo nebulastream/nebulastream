@@ -263,6 +263,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
 
                 // do not change the order here
                 // first, stop and drain handlers, if necessary
+                //todo: here we need to drain without stopping for vde
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->stop(terminationType, pipelineContext);
                 }

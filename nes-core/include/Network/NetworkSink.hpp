@@ -156,6 +156,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
     [[maybe_unused]] uint16_t expectedVersionDrainEvents;
+    std::atomic<uint16_t> receivedVersionDrainEvents;
+    std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
 };
 
 }// namespace Network
