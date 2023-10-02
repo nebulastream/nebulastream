@@ -15,10 +15,11 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 //TODO: to remove later
-#include <Util/TimeMeasurement.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/TimeMeasurement.hpp>
 
 namespace NES {
 
@@ -161,6 +162,21 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
             compareString = oss.str();
         }
 
+        //todo: make this wait when a certain number has been reached
+        std::atomic<uint64_t> valueCount = 0;
+        auto lambdaSourceFunction = [&valueCount](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+          struct Record {
+              uint64_t value;
+          };
+          auto* records = buffer.getBuffer<Record>();
+          for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+              records[u].value = valueCount;
+              ++valueCount;
+          }
+        };
+        auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction), numBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
+        auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
+
         NES_INFO("rest port = {}", *restPort);
 
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
@@ -190,8 +206,10 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
         stype->setNumberOfBuffersToProduce(numBuffersToProduce);
         stype->setNumberOfTuplesToProducePerBuffer(tuplesPerBuffer);
         stype->setGatheringInterval(1);
-        auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
-        wrkConf1->physicalSources.add(sequenceSource);
+        //auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
+        //wrkConf1->physicalSources.add(sequenceSource);
+        wrkConf1->physicalSources.add(physicalSource);
+
         auto wrk1DataPort = getAvailablePort();
         wrkConf1->dataPort = *wrk1DataPort;
         NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
