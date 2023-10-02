@@ -703,6 +703,9 @@ add_test(NAME nes-coordinator-test COMMAND nes-coordinator-test)
 
 ### Location Integration Test ###
 add_nes_integration_test(location-integration-tests "Integration/LocationIntegrationTests.cpp")
+
+### Query Redeployment Integration Test ###
+add_nes_integration_test(query-redeployment-integration-tests "Integration/QueryRedeploymentIntegrationTest.cpp")
 target_link_libraries(location-integration-tests nes-core-test-util)
 
 add_subdirectory(UnitTests/QueryExecution)
