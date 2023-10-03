@@ -63,6 +63,10 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
     std::chrono::duration<int64_t, std::milli> defaultTimeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
 };
 
+    /**
+     * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
+     * network channel to become available
+     */
     TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
         uint64_t numBuffersToProduce = 400;
         uint64_t tuplesPerBuffer = 10;
@@ -148,33 +152,53 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
     }
 
     TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnect) {
-        uint64_t numBuffersToProduce = 400;
-        uint64_t tuplesPerBuffer = 10;
+        const uint64_t numBuffersToProduceBeforeReconnect = 40;
+        //todo: add amount that should definitely be buffered
+        const uint64_t numBuffersToProduceAfterReconnect = 40;
+        //todo: how do these get set?
+        const uint64_t tuplesPerBuffer = 512;
         NES_INFO(" start coordinator");
         std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
         remove(testFile.c_str());
 
-        std::string compareString;
+        std::string compareStringBefore;
         std::ostringstream oss;
         oss << "seq$value:INTEGER(64 bits)" << std::endl;
-        for (uint64_t i = 1; i <= numBuffersToProduce * tuplesPerBuffer; ++i) {
+        for (uint64_t i = 0; i < numBuffersToProduceBeforeReconnect * tuplesPerBuffer; ++i) {
             oss << std::to_string(i) << std::endl;
-            compareString = oss.str();
+            compareStringBefore = oss.str();
         }
 
-        //todo: make this wait when a certain number has been reached
-        std::atomic<uint64_t> valueCount = 0;
-        auto lambdaSourceFunction = [&valueCount](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        std::string compareStringAfter;
+        std::ostringstream ossAfter;
+        //there is no logical source info in the second sink
+        ossAfter << "value:INTEGER(64 bits)" << std::endl;
+        for (uint64_t i = numBuffersToProduceBeforeReconnect * tuplesPerBuffer; i < (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect) * tuplesPerBuffer; ++i) {
+            ossAfter << std::to_string(i) << std::endl;
+            compareStringAfter = ossAfter.str();
+        }
+
+        std::atomic<uint64_t> bufferCount = 0;
+        std::atomic<bool> waitForReconnect = false;
+        std::atomic<bool> waitForFinalCount = false; //todo: do we need this one?
+        auto lambdaSourceFunction = [&bufferCount, &waitForReconnect, &waitForFinalCount](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
           struct Record {
               uint64_t value;
           };
+          auto currentCount = ++bufferCount;
+          if (currentCount > numBuffersToProduceBeforeReconnect) {
+              waitForReconnect.wait(false);
+          }
+          if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect) {
+              waitForFinalCount.wait(false);
+          }
+          auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
           auto* records = buffer.getBuffer<Record>();
           for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-              records[u].value = valueCount;
-              ++valueCount;
+              records[u].value = valCount + u;
           }
         };
-        auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction), numBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
+        auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction), numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect, 10, GatheringMode::INTERVAL_MODE);
         auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
 
         NES_INFO("rest port = {}", *restPort);
@@ -201,13 +225,6 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
         wrkConf1->numWorkerThreads.setValue(GetParam());
         wrkConf1->connectSinksAsync.setValue(true);
 
-        auto stype = CSVSourceType::create();
-        stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
-        stype->setNumberOfBuffersToProduce(numBuffersToProduce);
-        stype->setNumberOfTuplesToProducePerBuffer(tuplesPerBuffer);
-        stype->setGatheringInterval(1);
-        //auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
-        //wrkConf1->physicalSources.add(sequenceSource);
         wrkConf1->physicalSources.add(physicalSource);
 
         auto wrk1DataPort = getAvailablePort();
@@ -273,6 +290,9 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
         queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
         queryPlan->getSinkOperators().front()->inferSchema(context);
 
+        //todo: reactiveate
+        ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
+
         //deploy and start new query
         auto success_register = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
         ASSERT_TRUE(success_register);
@@ -287,24 +307,32 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
                                                       uniqueNetworkSinkDescriptorId,
                                                       partition);
 
-        while (recv_tuples + recv_tuples_after_reconnect < numBuffersToProduce * tuplesPerBuffer
-               && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
-            std::ifstream inFile(testFile);
-            std::ifstream inFileAfterReconnect(testFileAfterReconnect);
-            recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
-            recv_tuples_after_reconnect =
-                std::count(std::istreambuf_iterator<char>(inFileAfterReconnect), std::istreambuf_iterator<char>(), '\n');
-            NES_DEBUG("recv after buffering: {} + {} = {}",
-                      recv_tuples,
-                      recv_tuples_after_reconnect,
-                      recv_tuples + recv_tuples_after_reconnect)
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+        waitForReconnect = true;
+        waitForReconnect.notify_all();
 
-        //the tuples written to the initial file sink added to the ones written to the file sink of wrk2 should together equal the
-        //total amount of tuples produced
-        //subtract 2 from the values because each output file includes a header line which is also counted
-        EXPECT_EQ(recv_tuples + recv_tuples_after_reconnect - 2, numBuffersToProduce * tuplesPerBuffer);
+        ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFileAfterReconnect));
+        waitForFinalCount = true;
+        waitForFinalCount.notify_all();
+
+//        while (recv_tuples + recv_tuples_after_reconnect < numBuffersToProduce * tuplesPerBuffer
+//               && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
+//            std::ifstream inFile(testFile);
+//            std::ifstream inFileAfterReconnect(testFileAfterReconnect);
+//            recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
+//            recv_tuples_after_reconnect =
+//                std::count(std::istreambuf_iterator<char>(inFileAfterReconnect), std::istreambuf_iterator<char>(), '\n');
+//            NES_DEBUG("recv after buffering: {} + {} = {}",
+//                      recv_tuples,
+//                      recv_tuples_after_reconnect,
+//                      recv_tuples + recv_tuples_after_reconnect)
+//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        }
+//
+//        //the tuples written to the initial file sink added to the ones written to the file sink of wrk2 should together equal the
+//        //total amount of tuples produced
+//        //subtract 2 from the values because each output file includes a header line which is also counted
+//        EXPECT_EQ(recv_tuples + recv_tuples_after_reconnect - 2, numBuffersToProduce * tuplesPerBuffer);
+//        wait1 = false;
 
         int response = remove(testFile.c_str());
         ASSERT_TRUE(response == 0);
