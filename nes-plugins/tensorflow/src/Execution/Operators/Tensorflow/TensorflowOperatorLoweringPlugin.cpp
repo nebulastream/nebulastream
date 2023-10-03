@@ -27,6 +27,7 @@ namespace NES::Runtime::Execution::Operators {
 class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperatorLoweringPlugin {
   public:
     TensorflowOperatorLoweringPlugin() { NES_INFO("Load TensorflowOperatorLoweringPlugin"); }
+
     std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
     lower(const QueryCompilation::PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) override {
@@ -36,6 +37,11 @@ class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperat
         NES_INFO("Lower infer model operator to Tensorflow operator");
         auto inferModelOperator = physicalOperator->as<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>();
         auto model = inferModelOperator->getModel();
+
+        // Only accept Tensorflow Lite Models (.tflite file suffix)
+        if (!model.ends_with(".tflite")) {
+            return {};
+        }
 
         //Fetch the name of input fields
         std::vector<std::string> inputFields;

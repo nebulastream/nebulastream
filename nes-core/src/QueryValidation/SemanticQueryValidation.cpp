@@ -215,7 +215,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
                 auto field = inputField->as<FieldAccessExpressionNode>();
                 if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
                     throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for "
-                                                "tensorflow model not supported: "
+                                                "infer model not supported: "
                                                 + field->getStamp()->toString());
                 }
                 if (!commonStamp) {
@@ -228,7 +228,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
         NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp->toString());
         if (commonStamp->isUndefined()) {
             throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types "
-                                        "cannot be mixed as input to the tensorflow model.");
+                                        "cannot be mixed as input to infer model.");
         }
 #else
         throw InvalidQueryException("SemanticQueryValidation: this binary does not support infer model operator. Use "
