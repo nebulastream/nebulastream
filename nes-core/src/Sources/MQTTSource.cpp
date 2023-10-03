@@ -69,7 +69,11 @@ MQTTSource::MQTTSource(SchemaPtr schema,
       qualityOfService(MQTTSourceDescriptor::ServiceQualities(sourceConfig->getQos()->getValue())),
       cleanSession(sourceConfig->getCleanSession()->getValue()),
       bufferFlushIntervalMs(sourceConfig->getFlushIntervalMS()->getValue()),
-      readTimeoutInMs(sourceConfig->getFlushIntervalMS()->getValue() > 0 ? sourceConfig->getFlushIntervalMS()->getValue() : 100) {
+      readTimeoutInMs(sourceConfig->getFlushIntervalMS()->getValue() > 0 ? sourceConfig->getFlushIntervalMS()->getValue() : 100),
+      numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()) {
+
+    numberOfBuffersToProduce = sourceConfig->getNumberOfBuffersToProduce()->getValue();
+    gatheringInterval = std::chrono::milliseconds(sourceConfig->getGatheringInterval()->getValue());
 
     if (cleanSession) {
         uint32_t randomizeClientId = random();
@@ -152,7 +156,11 @@ std::string MQTTSource::toString() const {
 bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
-    tuplesThisPass = tupleBuffer.getCapacity();
+    if (numberOfTuplesToProducePerBuffer > 0) {
+        tuplesThisPass = numberOfTuplesToProducePerBuffer;
+    } else {
+        tuplesThisPass = tupleBuffer.getCapacity();
+    }
     NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
 
     uint64_t tupleCount = 0;
@@ -218,6 +226,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
             flushIntervalPassed = true;
         }
     }//end of while
+    NES_DEBUG("MQTTSource::fillBuffer: emitting buffer, tplCnt={}, flushIntervalPassed={}!", tupleCount, flushIntervalPassed);
     tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;

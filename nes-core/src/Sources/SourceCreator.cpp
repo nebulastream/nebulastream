@@ -459,7 +459,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         operatorId,
                                         originId,
                                         numSourceLocalBuffers,
-                                        GatheringMode::INTERVAL_MODE,
+                                        mqttSourceType->getGatheringMode()->getValue(),
                                         physicalSourceName,
                                         successors);
 }

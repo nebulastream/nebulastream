@@ -628,29 +628,23 @@ TEST_F(ContinuousSourceTest, testMQTTLatencyChameleonSource) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-    std::string testCSV = "1,2,3,1695902043651\n"
-                          "1,2,4,1695902043651\n"
-                          "4,3,6,1695902043651";
-    std::string testCSVFileName = "testCSV.csv";
-    std::ofstream outCsv(testCSVFileName);
-    outCsv << testCSV;
-    outCsv.close();
-    auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath("testCSV.csv");
-    csvSourceType1->setGatheringInterval(4000);
-    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
-    csvSourceType1->setNumberOfBuffersToProduce(1);
-    csvSourceType1->setGatheringMode(NES::GatheringMode::ADAPTIVE_MODE);
 
-    // TODO: adapt this to use mqtt instead of current csv
     auto mqttSourceType1 = MQTTSourceType::create();
     mqttSourceType1->setGatheringInterval(4000);
     mqttSourceType1->setGatheringMode(NES::GatheringMode::ADAPTIVE_MODE);
     mqttSourceType1->setNumberOfBuffersToProduce(1);
-    mqttSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    mqttSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    mqttSourceType1->setUrl("localhost:1883");
+    mqttSourceType1->setClientId("test-client");
+    mqttSourceType1->setUserName("testUser");
+    mqttSourceType1->setTopic("benchmark");
+    mqttSourceType1->setQos(0);
+    mqttSourceType1->setCleanSession(true);
+    mqttSourceType1->setFlushIntervalMS(0);
+    mqttSourceType1->setInputFormat(NES::InputFormat::CSV);
+    auto physicalMQTTSource = PhysicalSource::create("testStream", "test_stream", mqttSourceType1);
+    workerConfig1->physicalSources.add(physicalMQTTSource);
 
-    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", csvSourceType1);
-    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -683,8 +677,8 @@ TEST_F(ContinuousSourceTest, testMQTTLatencyChameleonSource) {
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("ContinuousSourceTest: content=\n{}", content);
-    EXPECT_EQ(countOccurrences("\n", content), 4);
-    EXPECT_EQ(countOccurrences(",", content), 4 * 4);
+    EXPECT_EQ(countOccurrences("\n", content), mqttSourceType1->getNumberOfTuplesToProducePerBuffer()->getValue() + 1);
+    EXPECT_EQ(countOccurrences(",", content), (mqttSourceType1->getNumberOfTuplesToProducePerBuffer()->getValue() + 1) * 4);
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);

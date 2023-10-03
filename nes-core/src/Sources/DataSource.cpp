@@ -480,18 +480,34 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
+    NES_DEBUG("DataSource {}: Running Data Source of type={} interval={}",
+              operatorId,
+              magic_enum::enum_name(getType()),
+              gatheringInterval.count());
+
+    if (numberOfBuffersToProduce == 0) {
+        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+                  "the source is empty");
+    } else {
+        NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
+    }
+
     this->kFilter->setGatheringInterval(this->gatheringInterval);
     this->kFilter->setGatheringIntervalRange(std::chrono::milliseconds{8000});
 
     open();
     uint64_t numberOfBuffersProduced = 0;
     while (running) {
+        NES_DEBUG("DataSource: running");
         //check if already produced enough buffer
         if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce) {
+            NES_DEBUG("DataSource: receiving data...");
             auto optBuf = receiveData();// note that receiveData might block
+            NES_DEBUG("DataSource: received data");
             if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
                 break;
             }
+            NES_DEBUG("DataSource: checking buffer...");
 
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
@@ -531,6 +547,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
         }
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
+            NES_DEBUG("DataSource {} sleeping on interval {}", operatorId, gatheringInterval.count());
             std::this_thread::sleep_for(gatheringInterval);
         }
     }
