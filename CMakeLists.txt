@@ -62,6 +62,7 @@ option(NES_USE_OPENCL "Build with OpenCL support" OFF)
 # Plugins
 option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
 option(NES_BUILD_PLUGIN_TENSORFLOW "Build Tensorflow Plugin support" OFF)
+option(NES_BUILD_PLUGIN_ONNX "Build ONNX Plugin support" OFF)
 
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)

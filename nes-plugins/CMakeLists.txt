@@ -15,3 +15,7 @@ endif ()
 if (NES_BUILD_PLUGIN_TENSORFLOW)
     add_subdirectory(tensorflow)
 endif ()
+
+if (NES_BUILD_PLUGIN_ONNX)
+    add_subdirectory(onnx)
+endif ()
