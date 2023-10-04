@@ -303,6 +303,8 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
+        //queryService->getRequestProcessor()->stop();
+
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
         rpcServer->Wait();
