@@ -24,6 +24,11 @@ class SumAggregationFunction : public AggregationFunction {
     SumAggregationFunction(const PhysicalTypePtr& inputType,
                            const PhysicalTypePtr& resultType,
                            const Expressions::ExpressionPtr& inputExpression,
+                           const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
+
+    SumAggregationFunction(const PhysicalTypePtr& inputType,
+                           const PhysicalTypePtr& resultType,
+                           const Expressions::ExpressionPtr& inputExpression,
                            const Nautilus::Record::RecordFieldIdentifier& inputFieldIdentifier,
                            const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
