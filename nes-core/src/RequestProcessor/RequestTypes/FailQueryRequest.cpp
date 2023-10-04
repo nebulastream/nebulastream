@@ -50,7 +50,7 @@ void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, cons
     //todo #3727: perform error handling
 }
 
-void FailQueryRequest::postExecution(const StorageHandlerPtr& storageHandler) { storageHandler->releaseResources(queryId); }
+void FailQueryRequest::postExecution(const StorageHandlerPtr& storageHandler) { storageHandler->releaseResources(requestId); }
 
 std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandle) {
     globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);

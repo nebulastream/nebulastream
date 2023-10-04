@@ -62,6 +62,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
         udfCatalog = storageHandler->getUDFCatalogHandle(requestId);
         sourceCatalog = storageHandler->getSourceCatalogHandle(requestId);
+        coordinatorConfiguration = storageHandler->getCoordinatorConfiguration(requestId);
         NES_TRACE("Locks acquired. Create Phases");
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         queryPlacementPhase =
@@ -93,10 +94,11 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
             throw Exceptions::QueryNotFoundException("Could not find a a valid shared query plan for query with id "
                                                      + std::to_string(queryId) + " in the global query plan");
         }
-        //undeploy SQP
-        queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
         //remove single query from global query plan
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
+        //undeploy SQP
+        //todo: status must not be DEPLOYED here
+        queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
         if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
@@ -114,12 +116,16 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                               + std::to_string(sharedQueryId));
             }
 
+
             //Perform deployment of re-placed shared query plan
             queryDeploymentPhase->execute(sharedQueryPlan);
 
             //Update the shared query plan as deployed
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
         }
+
+        //Remove all query plans that are either stopped or failed
+        globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
 
         //todo: #3742 FIXME: This is a work-around for an edge case. To reproduce this:
         // 1. The query merging feature is enabled.
@@ -137,7 +143,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
     return failureRequests;
 }
 
-void StopQueryRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) { NES_TRACE("Release locks."); }
+void StopQueryRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) { storageHandler->releaseResources(requestId); }
 
 std::string StopQueryRequest::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 

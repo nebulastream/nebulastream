@@ -78,7 +78,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Indicates if new request execution module is to be used
      */
-    BoolOption enableNewRequestExecutor = {ENABLE_NEW_REQUEST_EXECUTOR_CONFIG, false, "Enable New Request Executor"};
+    BoolOption enableNewRequestExecutor = {ENABLE_NEW_REQUEST_EXECUTOR_CONFIG, true, "Enable New Request Executor"};
 
     /**
      * @brief Indicates the number of request executor threads

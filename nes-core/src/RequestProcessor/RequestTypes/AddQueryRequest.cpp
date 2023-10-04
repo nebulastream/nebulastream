@@ -174,7 +174,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& exception,
                                          [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
-void AddQueryRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
+void AddQueryRequest::postExecution(const StorageHandlerPtr& storageHandler) { storageHandler->releaseResources(requestId); }
 
 std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
     try {

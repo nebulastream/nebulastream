@@ -60,12 +60,15 @@ RequestId AsyncRequestProcessor::runAsync(AbstractRequestPtr request) {
         NES_WARNING("Cannot execute request, Async request executor is not running");
         return INVALID_REQUEST_ID;
     }
-    std::unique_lock lock(workMutex);
-    auto requestId = nextFreeRequestId;
-    request->setId(requestId);
-    nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
-    asyncRequestQueue.emplace_back(std::move(request));
-    cv.notify_all();
+    RequestId requestId;
+    {
+        std::unique_lock lock(workMutex);
+        requestId = nextFreeRequestId;
+        request->setId(requestId);
+        nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
+        asyncRequestQueue.emplace_back(std::move(request));
+        cv.notify_all();
+    }
     return requestId;
 }
 
