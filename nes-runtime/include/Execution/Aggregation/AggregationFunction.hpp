@@ -31,6 +31,12 @@ class AggregationFunction {
                         Expressions::ExpressionPtr inputExpression,
                         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
+    AggregationFunction(PhysicalTypePtr inputType,
+                        PhysicalTypePtr resultType,
+                        Expressions::ExpressionPtr inputExpression,
+                        Expressions::ExpressionPtr inputTsExpression,
+                        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+
     /**
      * @brief lift adds the incoming value to the existing aggregation value
      * @param memref existing aggregation value
@@ -69,6 +75,7 @@ class AggregationFunction {
     const PhysicalTypePtr inputType;
     const PhysicalTypePtr resultType;
     const Expressions::ExpressionPtr inputExpression;
+    const Expressions::ExpressionPtr inputTsExpression;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 
     /**

@@ -111,6 +111,45 @@ TEST_F(AggregationFunctionTest, countAggregation) {
 /**
  * Tests the lift, combine, lower and reset functions of the Average Aggregation
  */
+TEST_F(AggregationFunctionTest, AvgAggregationWithEventTs) {
+    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readTsFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("evt_timestamp");
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    PhysicalTypePtr doubleType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
+    auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType, readFieldExpression, readTsFieldExpression, "result");
+    auto avgValue = Aggregation::AvgAggregationValue<int64_t>();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
+
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>(2_s64);
+    auto incomingTs = Nautilus::Value<Nautilus::Int64>(123456_s64);
+
+    // test lift
+    auto inputRecord = Record({{"value", incomingValue}, {"evt_timestamp", incomingTs}});
+    avgAgg.lift(memref, inputRecord);
+    EXPECT_EQ(avgValue.count, 1);
+    EXPECT_EQ(avgValue.sum, 2);
+
+    // test combine
+    avgAgg.combine(memref, memref);
+    EXPECT_EQ(avgValue.count, 2);
+    EXPECT_EQ(avgValue.sum, 4);
+
+    // test lower
+    auto result = Record();
+    avgAgg.lower(memref, result);
+
+    EXPECT_EQ(result.read("result"), 2);
+
+    // test reset
+    avgAgg.reset(memref);
+    EXPECT_EQ(avgValue.count, 0);
+    EXPECT_EQ(avgValue.sum, 0);
+}
+
+/**
+ * Tests the lift, combine, lower and reset functions of the Average Aggregation
+ */
 TEST_F(AggregationFunctionTest, AvgAggregation) {
     auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();

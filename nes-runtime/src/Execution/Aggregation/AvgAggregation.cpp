@@ -15,6 +15,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {
@@ -30,7 +31,35 @@ AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
     countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 }
 
+AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
+                                               const PhysicalTypePtr& resultType,
+                                               const Expressions::ExpressionPtr& inputExpression,
+                                               const Expressions::ExpressionPtr& inputTsExpression,
+                                               const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
+        : AggregationFunction(inputType, resultType, inputExpression, inputTsExpression, resultFieldIdentifier) {
+    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+
+    // assuming that the count is always of Int64
+    countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+}
+
+template<class T>
+T max(T first, T second) {
+    return first > second ? first : second;
+}
+
+template<class T>
+Nautilus::Value<> callMaxTyped(Nautilus::Value<> leftValue, Nautilus::Value<> rightValue) {
+    return FunctionCall<>("max", max<typename T::RawType>, leftValue.as<T>(), rightValue.as<T>());
+}
+
 Nautilus::Value<Nautilus::MemRef> AvgAggregationFunction::loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref) {
+    const static int64_t sizeOfCountInBytes = 8L;// the sum is stored after the count, and the count is of type uint64
+    const static int64_t sizeOfTsInBytes = 8L;// the sum is stored after the count, and the count is of type uint64
+    return (memref + sizeOfCountInBytes + sizeOfTsInBytes).as<Nautilus::MemRef>();
+}
+
+Nautilus::Value<Nautilus::MemRef> AvgAggregationFunction::loadTsMemRef(const Nautilus::Value<Nautilus::MemRef>& memref) {
     const static int64_t sizeOfCountInBytes = 8L;// the sum is stored after the count, and the count is of type uint64
     return (memref + sizeOfCountInBytes).as<Nautilus::MemRef>();
 }
@@ -42,6 +71,11 @@ void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nauti
     auto oldSumMemref = loadSumMemRef(state);
     auto oldSum = AggregationFunction::loadFromMemref(oldSumMemref, inputType);
 
+    auto oldTsMemRef = loadTsMemRef(state);
+    auto oldTs = AggregationFunction::loadFromMemref(oldTsMemRef, inputType);
+    auto inputTsValue = inputTsExpression->execute(record);
+    auto newTs = callMaxTyped<Nautilus::UInt64>(oldTs, inputTsValue);
+
     // add the values
     auto value = inputExpression->execute(record);
     auto newSum = oldSum + value;
@@ -49,6 +83,7 @@ void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nauti
     // put updated values back to the memref
     state.store(newCount);
     oldSumMemref.store(newSum);
+    oldTsMemRef.store(newTs);
 }
 
 void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {

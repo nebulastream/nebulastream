@@ -141,6 +141,7 @@ void NonKeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) con
                                           }));
 
                 // crucial to release the handler here before we execute the rest of the pipeline
+
                 child->execute(ctx, resultRecord);
             } else {
                 // if the minCount is not reached, we still need to close the window, reset counter and release the lock if the handler

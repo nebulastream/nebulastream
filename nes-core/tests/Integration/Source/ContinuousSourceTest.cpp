@@ -657,7 +657,14 @@ TEST_F(ContinuousSourceTest, testMQTTLatencyChameleonSource) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    auto query = Query::from("testStream").filter(Attribute("id") < 10).sink(FileSinkDescriptor::create(outputFilePath, true));
+//    auto query = Query::from("testStream").filter(Attribute("id") < 10).sink(FileSinkDescriptor::create(outputFilePath, true));
+
+    auto query = Query::from("testStream")
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
+            .byKey(Attribute("id"))
+            .apply(Avg(Attribute("value")))
+            .sink(FileSinkDescriptor::create(outputFilePath, true));
+
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp,

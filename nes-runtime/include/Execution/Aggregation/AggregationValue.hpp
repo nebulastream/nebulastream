@@ -32,6 +32,7 @@ struct AggregationValue {};
 template<typename T>
 struct AvgAggregationValue : AggregationValue {
     uint64_t count = 0;
+    uint64_t ts = 0;
     T sum = 0;
 };
 

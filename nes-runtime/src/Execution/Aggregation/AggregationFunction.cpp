@@ -25,6 +25,14 @@ AggregationFunction::AggregationFunction(PhysicalTypePtr inputType,
     : inputType(std::move(inputType)), resultType(std::move(resultType)), inputExpression(std::move(inputExpression)),
       resultFieldIdentifier(std::move(resultFieldIdentifier)) {}
 
+AggregationFunction::AggregationFunction(PhysicalTypePtr inputType,
+                                         PhysicalTypePtr resultType,
+                                         Expressions::ExpressionPtr inputExpression,
+                                         Expressions::ExpressionPtr inputTsExpression,
+                                         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+        : inputType(std::move(inputType)), resultType(std::move(resultType)), inputExpression(std::move(inputExpression)),
+        inputTsExpression(std::move(inputTsExpression)), resultFieldIdentifier(std::move(resultFieldIdentifier)) {}
+
 Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref,
                                                       const PhysicalTypePtr& physicalType) {
     if (physicalType->isBasicType()) {
