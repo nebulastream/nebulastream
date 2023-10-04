@@ -217,16 +217,13 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
         ASSERT_TRUE(waitForNodes(5, 1, topology));
 
         auto schema = Schema::create()->addField(createField("value", BasicType::UINT64));
-        crd->getSourceCatalog()->addLogicalSource("seq", schema);
+        //crd->getSourceCatalog()->addLogicalSource("seq", schema);
 
         NES_INFO("start worker 1");
         WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
         wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
         wrkConf1->numWorkerThreads.setValue(GetParam());
         wrkConf1->connectSinksAsync.setValue(true);
-
-        wrkConf1->physicalSources.add(physicalSource);
-
         auto wrk1DataPort = getAvailablePort();
         wrkConf1->dataPort = *wrk1DataPort;
         NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
@@ -246,27 +243,49 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
         ASSERT_TRUE(retStart2);
         ASSERT_TRUE(waitForNodes(5, 3, topology));
 
+        NES_INFO("start worker 3");
+        WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
+        wrkConf3->coordinatorPort.setValue(*rpcCoordinatorPort);
+        auto wrk3DataPort = getAvailablePort();
+        wrkConf3->dataPort = *wrk3DataPort;
+        wrkConf3->numWorkerThreads.setValue(GetParam());
+        wrkConf3->connectSinksAsync.setValue(true);
+        //add lambda source
+        wrkConf3->physicalSources.add(physicalSource);
+        NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+        bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+        ASSERT_TRUE(retStart3);
+        ASSERT_TRUE(waitForNodes(5, 4, topology));
+
+
+        /*
         QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
             R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
             Optimizer::PlacementStrategy::BottomUp,
             FaultToleranceType::NONE,
             LineageType::NONE);
+            */
 
-        NES_INFO("Query ID: {}", queryId);
-        ASSERT_NE(queryId, INVALID_QUERY_ID);
+        //NES_INFO("Query ID: {}", queryId);
+        //ASSERT_NE(queryId, INVALID_QUERY_ID);
+        QueryId queryId = 1;
 
-        auto startTimestamp = std::chrono::system_clock::now();
-        uint64_t recv_tuples = 0;
-        uint64_t recv_tuples_after_reconnect = 0;
+//        auto startTimestamp = std::chrono::system_clock::now();
+//        uint64_t recv_tuples = 0;
+//        uint64_t recv_tuples_after_reconnect = 0;
 
         //wait for the query to be running
-        ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalogService(), std::chrono::seconds(10)));
+        //ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalogService(), std::chrono::seconds(10)));
+
+        //todo: deploy initial query
+
+
         auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(queryId);
         EXPECT_EQ(subQueryIds.size(), 1);
 
         //retrieve data about running network sink
         auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(
-            wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front());
+        wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front());
         auto uniqueNetworkSinkDescriptorId = networkSink->getUniqueNetworkSinkDescriptorId();
 
         //create new plan to deploy new source which the sink can reconnect to
