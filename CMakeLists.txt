@@ -54,7 +54,6 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_USE_CCACHE "USE CCACHE" OFF)
-option(NES_ENABLE_APPROXIMATE_STREAM_PROCESSING OFF)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
@@ -717,11 +716,6 @@ add_subdirectory(nes-runtime)
 add_subdirectory(nes-core)
 # Add target for client
 add_subdirectory(nes-client)
-
-if (NES_ENABLE_APPROXIMATE_STREAM_PROCESSING)
-# Add target for approximate stream processing
-add_subdirectory(nes-asp)
-endif(NES_ENABLE_APPROXIMATE_STREAM_PROCESSING)
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
