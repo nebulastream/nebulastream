@@ -82,7 +82,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
                                                                                 networkSinkDescriptor->getNumberOfOrigins(),
                                                                                 networkSinkDescriptor->getUniqueNetworkSinkDescriptorId(),
                                                                                 expectedVersionDrainEvents);
-            sinks.front()->setSinkDescriptor(sinkDescriptor);
+            sinks.front()->setSinkDescriptor(updatedSinkDescriptor);
         }
 
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);

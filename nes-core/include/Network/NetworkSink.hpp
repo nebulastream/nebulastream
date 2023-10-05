@@ -141,6 +141,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     void unbuffer(Runtime::WorkerContext& workerContext);
 
+    void addPendingReconfiguration(NodeLocation newTargetNodeLocation, NesPartition newTargetSourcePartition);
+
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:

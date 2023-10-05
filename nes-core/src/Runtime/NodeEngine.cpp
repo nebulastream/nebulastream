@@ -657,13 +657,13 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
     }
 }
 
+//todo: do we still need this direct reconfigure function if most of the functionality moved to sink?
 bool NodeEngine::reconfigureNetworkSink(uint64_t newNodeId,
                                         const std::string& newHostname,
                                         uint32_t newPort,
                                         QuerySubPlanId querySubPlanId,
                                         uint64_t uniqueNetworkSinkDescriptorId,
                                         Network::NesPartition newPartition) {
-
     NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
