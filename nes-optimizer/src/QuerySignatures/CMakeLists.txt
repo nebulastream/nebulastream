@@ -11,19 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        BasePlacementStrategy.cpp
-        BottomUpStrategy.cpp
-        TopDownStrategy.cpp
-        MlHeuristicStrategy.cpp
-        ManualPlacementStrategy.cpp
-        IFCOPStrategy.cpp
-		ILPStrategy.cpp
-        PlacementStrategyFactory.cpp
-        ElegantPlacementStrategy.cpp
-#        LowLatencyStrategy.cpp
-#        HighAvailabilityStrategy.cpp
-#        HighThroughputStrategy.cpp
-#        MinimumResourceConsumptionStrategy.cpp
-#        MinimumEnergyConsumptionStrategy.cpp
+add_source_files(nes-optimizer
+        ExpressionToZ3ExprUtil.cpp
+        QuerySignatureUtil.cpp
+        DataTypeToZ3ExprUtil.cpp
+        Z3ExprAndFieldMap.cpp
+        SignatureEqualityUtil.cpp
+        SignatureContainmentCheck.cpp
+        QuerySignature.cpp
+        ContainedOperatorsUtil.cpp
+        ContainmentRelationshipAndOperatorChain.cpp
 )
