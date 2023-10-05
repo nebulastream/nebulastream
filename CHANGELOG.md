@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.5.217](https://github.com/nebulastream/nebulastream/tree/v0.5.217) (2023-10-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.216...v0.5.217)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move nes-asp to feature branch [\#4241](https://github.com/nebulastream/nebulastream/issues/4241)
+- \[TASK\] Write Iterator and Nautilus Interface for FixedPage [\#4067](https://github.com/nebulastream/nebulastream/issues/4067)
+- \[TASK\] Extract MultiThreaded Join Tests into own MultithreadedJoinTest [\#4012](https://github.com/nebulastream/nebulastream/issues/4012)
+
 ## [v0.5.216](https://github.com/nebulastream/nebulastream/tree/v0.5.216) (2023-09-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.215...v0.5.216)
