@@ -11,19 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        AttributeSortRule.cpp
-        BinaryOperatorSortRule.cpp
-        DistributedJoinRule.cpp
-        DistributedWindowRule.cpp
-        FilterMergeRule.cpp
-        FilterPushDownRule.cpp
-        FilterSplitUpRule.cpp
-        LogicalSourceExpansionRule.cpp
-        MapUDFsToOpenCLOperatorsRule.cpp
-        NemoWindowPinningRule.cpp
-        PredicateReorderingRule.cpp
-        ProjectBeforeUnionOperatorRule.cpp
-        RedundancyEliminationRule.cpp
-        RenameSourceToProjectOperatorRule.cpp
+add_source_files(nes-optimizer
+        BasePlacementStrategy.cpp
+        BottomUpStrategy.cpp
+        TopDownStrategy.cpp
+        MlHeuristicStrategy.cpp
+        ManualPlacementStrategy.cpp
+        IFCOPStrategy.cpp
+		ILPStrategy.cpp
+        PlacementStrategyFactory.cpp
+        ElegantPlacementStrategy.cpp
+#        LowLatencyStrategy.cpp
+#        HighAvailabilityStrategy.cpp
+#        HighThroughputStrategy.cpp
+#        MinimumResourceConsumptionStrategy.cpp
+#        MinimumEnergyConsumptionStrategy.cpp
 )

@@ -11,14 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        ExpressionToZ3ExprUtil.cpp
-        QuerySignatureUtil.cpp
-        DataTypeToZ3ExprUtil.cpp
-        Z3ExprAndFieldMap.cpp
-        SignatureEqualityUtil.cpp
-        SignatureContainmentCheck.cpp
-        QuerySignature.cpp
-        ContainedOperatorsUtil.cpp
-        ContainmentRelationshipAndOperatorChain.cpp
+add_source_files(nes-optimizer
+        SemanticQueryValidation.cpp
+        SyntacticQueryValidation.cpp
 )

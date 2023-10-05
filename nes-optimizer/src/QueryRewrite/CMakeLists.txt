@@ -1,5 +1,4 @@
 
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,19 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        SignatureInferencePhase.cpp
-        TopologySpecificQueryRewritePhase.cpp
-        QueryMergerPhase.cpp
-        QueryPlacementRefinementPhase.cpp
-        GlobalQueryPlanUpdatePhase.cpp
-        TypeInferencePhase.cpp
-        QueryPlacementPhase.cpp
-        QueryRewritePhase.cpp
-        MemoryLayoutSelectionPhase.cpp
-        OriginIdInferencePhase.cpp
-        TypeInferencePhaseContext.cpp
-        SampleCodeGenerationPhase.cpp
-        QueryDeploymentPhase.cpp
-        QueryUndeploymentPhase.cpp
+add_source_files(nes-optimizer
+        AttributeSortRule.cpp
+        BinaryOperatorSortRule.cpp
+        DistributedJoinRule.cpp
+        DistributedWindowRule.cpp
+        FilterMergeRule.cpp
+        FilterPushDownRule.cpp
+        FilterSplitUpRule.cpp
+        LogicalSourceExpansionRule.cpp
+        MapUDFsToOpenCLOperatorsRule.cpp
+        NemoWindowPinningRule.cpp
+        PredicateReorderingRule.cpp
+        ProjectBeforeUnionOperatorRule.cpp
+        RedundancyEliminationRule.cpp
+        RenameSourceToProjectOperatorRule.cpp
 )
