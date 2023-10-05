@@ -40,6 +40,7 @@ class AvgAggregationFunction : public AggregationFunction {
 
   private:
     PhysicalTypePtr countType;
+    PhysicalTypePtr tsType;
     Nautilus::Value<Nautilus::MemRef> loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref);
     Nautilus::Value<Nautilus::MemRef> loadTsMemRef(const Nautilus::Value<Nautilus::MemRef>& memref);
 };

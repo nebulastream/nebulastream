@@ -29,6 +29,8 @@ AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
 
     // assuming that the count is always of Int64
     countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    // assuming that the count is always of Int64
+    tsType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 }
 
 AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
@@ -41,6 +43,8 @@ AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
 
     // assuming that the count is always of Int64
     countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    // assuming that the count is always of Int64
+    tsType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 }
 
 template<class T>
@@ -72,7 +76,7 @@ void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nauti
     auto oldSum = AggregationFunction::loadFromMemref(oldSumMemref, inputType);
 
     auto oldTsMemRef = loadTsMemRef(state);
-    auto oldTs = AggregationFunction::loadFromMemref(oldTsMemRef, inputType);
+    auto oldTs = AggregationFunction::loadFromMemref(oldTsMemRef, tsType);
     auto inputTsValue = inputTsExpression->execute(record);
     auto newTs = callMaxTyped<Nautilus::UInt64>(oldTs, inputTsValue);
 
@@ -100,11 +104,11 @@ void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, N
 
     // load tsref1
     auto oldTsMemRefLeft = loadTsMemRef(state1);
-    auto oldTsLeft = AggregationFunction::loadFromMemref(oldTsMemRefLeft, inputType);
+    auto oldTsLeft = AggregationFunction::loadFromMemref(oldTsMemRefLeft, tsType);
 
     // load tsref2
     auto oldTsMemRefRight = loadTsMemRef(state2);
-    auto oldTsRight = AggregationFunction::loadFromMemref(oldTsMemRefRight, inputType);
+    auto oldTsRight = AggregationFunction::loadFromMemref(oldTsMemRefRight, tsType);
 
     // add the values
     auto tmpSum = sumLeft + sumRight;
@@ -125,7 +129,7 @@ void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nau
     auto sumMemref = loadSumMemRef(memref);
     auto sum = AggregationFunction::loadFromMemref(sumMemref, inputType);
     auto tsMemRef = loadTsMemRef(memref);
-    auto tsVal = AggregationFunction::loadFromMemref(tsMemRef, inputType);
+    auto tsVal = AggregationFunction::loadFromMemref(tsMemRef, tsType);
     // calc the average
     // TODO #3602: If inputType is an integer then the result is also an integer
     // (specifically UINT64 because that is the count type).
