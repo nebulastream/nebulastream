@@ -258,11 +258,10 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
         nesPartition = newPartition;
     }
     if (task.getType() == Runtime::ReconfigurationType::DrainVersion) {
-        //todo: check first if a reconfig is pending
         if (pendingReconfiguration.has_value()) {
             auto currentCount = ++receivedVersionDrainEvents;
             NES_DEBUG("NetworkSink: postReconfigurationCallback() received {} of {} expected version drain events", currentCount, expectedVersionDrainEvents);
-            if (currentCount >= expectedVersionDrainEvents) {
+            if (currentCount == expectedVersionDrainEvents) {
                 auto userData = pendingReconfiguration.value();
                 Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
                                                                                           querySubPlanId,
@@ -270,7 +269,10 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
                                                                                           inherited0::shared_from_this(),
                                                                                           userData);
                 queryManager->addReconfigurationMessage(nesPartition.getQueryId(), querySubPlanId, message, true);
-
+                pendingReconfiguration = std::nullopt;
+                receivedVersionDrainEvents = 0;
+            } else if (currentCount > expectedVersionDrainEvents) {
+                NES_THROW_RUNTIME_ERROR("Number of received version drain events is higher than the expected maximum");
             }
         } else {
             NES_DEBUG("NetworkSink: postReconfigurationCallback() ignoring version drain event because no reconfiguration is pending");
@@ -343,5 +345,8 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
         NES_TRACE("buffer sent");
         topBuffer = workerContext.removeBufferFromReconnectBufferStorage(getUniqueNetworkSinkDescriptorId());
     }
+}
+void NetworkSink::addPendingReconfiguration(NodeLocation newTargetNodeLocation, NesPartition newTargetSourcePartition) {
+    pendingReconfiguration = {newTargetNodeLocation, newTargetSourcePartition};
 }
 }// namespace NES::Network
