@@ -24,8 +24,8 @@
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterEqualsExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
@@ -59,56 +59,26 @@ class TPCH_Query5 {
     static PipelinePlan getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
                                         Runtime::BufferManagerPtr) {
         PipelinePlan plan;
-//        auto joinHandler = createPipeline1(plan, tables);
-//        auto joinHandler2 = createPipeline2(plan, tables, joinHandler);
-//        createPipeline3(plan, tables, joinHandler2);
-        createP2(plan, tables);
+        auto orderJoinHandler = createOrderPipeline(plan, tables);
+        auto custJoinHandler = createCustPipeline(plan, tables, orderJoinHandler);
+        auto lineItemJoinHandler = createLineItemPipeline(plan, tables, custJoinHandler);
+        auto suppJoinHandler = createSupplierPipeline(plan, tables, lineItemJoinHandler);
+        auto nationJoinHandler = createNationPipeline(plan, tables, suppJoinHandler);
+        createRegionPipeline(plan, tables, nationJoinHandler);
+
         return plan;
     }
 
+    // Order Pipeline: Scan->Selection(date)->JoinBuild
     static Runtime::Execution::OperatorHandlerPtr
-    createP1(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
-        auto& customers = tables[TPCHTable::Customer];
+    createOrderPipeline(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
 
-        auto customersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(customers->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"c_custkey",
-                                                                                 "c_nationkey"};
-        auto orderScan = std::make_shared<Operators::Scan>(std::move(customersMemoryProviderPtr), ordersProjection);
-
-        // Join Probe with orders
-        std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("c_custkey")};
-        std::vector<Record::RecordFieldIdentifier> joinProbeResults = {"o_orderkey",
-                                                                       "c_nationkey"};
-
-        auto customersJoinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
-                                                                   ordersProbeKeys,
-                                                                   std::vector<PhysicalTypePtr>{integerType},
-                                                                   std::vector<Record::RecordFieldIdentifier>(),
-                                                                   std::vector<PhysicalTypePtr>(),
-                                                                   std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-        orderScan->setChild(customersJoinProbe);
-        // create order_customersJoinBuild pipeline
-        auto orderCustomersJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
-        orderCustomersJoinBuild->setRootOperator(orderScan);
-        auto joinHandler2 = std::make_shared<Operators::BatchJoinHandler>();
-        std::vector<Execution::OperatorHandlerPtr> handlers = {joinHandler2};
-        auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(handlers);
-        plan.appendPipeline(orderCustomersJoinBuild, pipeline2Context);
-        return joinHandler2;
-    }
-
-    static Runtime::Execution::OperatorHandlerPtr
-    createP2(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
+        /*
+         * 1. Scan
+         */
         auto& orders = tables[TPCHTable::Orders];
-        auto physicalTypeFactory = DefaultPhysicalTypeFactory();
-
-        PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
-        PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
-        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
-
         auto ordersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(orders->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"o_orderdate",
@@ -118,9 +88,8 @@ class TPCH_Query5 {
         auto orderScan = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
 
         /*
-        *   o_orderdate >= date '1994-01-01'
-        *   and o_orderdate < date '1995-01-01'
-        */
+         * 2. Selection: o_orderdate >= date '1994-01-01' and o_orderdate < date '1995-01-01'
+         */
         auto const_1994_01_01 = std::make_shared<ConstantInt32ValueExpression>(19940101);
         auto const_1995_01_01 = std::make_shared<ConstantInt32ValueExpression>(19950101);
         auto readOrderDate = std::make_shared<ReadFieldExpression>("o_orderdate");
@@ -132,7 +101,9 @@ class TPCH_Query5 {
         auto orderDateSelection = std::make_shared<Selection>(andExpression);
         orderScan->setChild(orderDateSelection);
 
-        // build ht for first join
+        /*
+         * 3. JoinBuild
+         */
         auto readO_custkey = std::make_shared<ReadFieldExpression>("o_custkey");
         auto joinOp = std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
                                                                   std::vector<Expressions::ExpressionPtr>{readO_custkey},
@@ -151,135 +122,289 @@ class TPCH_Query5 {
         return joinHandler[0];
     }
 
-    static Runtime::Execution::OperatorHandlerPtr
-    createP3(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
-        auto& lineItems = tables[TPCHTable::LineItem];
+    // Customer Pipeline: Scan->JoinProbe(with order)->JoinBuild
+    static std::shared_ptr<BatchJoinHandler>
+    createCustPipeline(PipelinePlan& plan,
+                       std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                       const Runtime::Execution::OperatorHandlerPtr& orderJoinHandler) {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
 
+        /*
+         * 1. Scan
+         */
+        auto& customers = tables[TPCHTable::Customer];
+        auto customersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(customers->getLayout()));
+        std::vector<Nautilus::Record::RecordFieldIdentifier> customersProjection = {"c_custkey", "c_nationkey"};
+        auto customerScan = std::make_shared<Operators::Scan>(std::move(customersMemoryProviderPtr), customersProjection);
+
+        /*
+         * 2. Join Probe with orders
+         */
+        std::vector<ExpressionPtr> custProbeKeys = {std::make_shared<ReadFieldExpression>("c_custkey")};
+        auto customersJoinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+                                                                   custProbeKeys,
+                                                                   std::vector<PhysicalTypePtr>{integerType},
+                                                                   std::vector<Record::RecordFieldIdentifier>(),
+                                                                   std::vector<PhysicalTypePtr>(),
+                                                                   std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        customerScan->setChild(customersJoinProbe);
+
+        /*
+         * 3. Build hash table with o_orderkey as key
+         */
+        auto readO_orderkey = std::make_shared<ReadFieldExpression>("o_orderkey");
+        auto orderKeyJoinBuild =
+            std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
+                                                        std::vector<Expressions::ExpressionPtr>{readO_orderkey},
+                                                        std::vector<PhysicalTypePtr>{integerType},
+                                                        std::vector<Expressions::ExpressionPtr>(),
+                                                        std::vector<PhysicalTypePtr>(),
+                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        customersJoinProbe->setChild(orderKeyJoinBuild);
+
+        // Create the customer pipeline
+        auto orderCustomersJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
+        orderCustomersJoinBuild->setRootOperator(customerScan);
+        auto orderCustJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
+        std::vector<Execution::OperatorHandlerPtr> handlers = {orderJoinHandler, orderCustJoinHandler};
+        auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(handlers);
+        plan.appendPipeline(orderCustomersJoinBuild, pipeline2Context);
+        return orderCustJoinHandler;
+    }
+
+    // LineItem Pipeline: Scan->JoinProbe(with order-customer)->JoinBuild
+    static std::shared_ptr<BatchJoinHandler>
+    createLineItemPipeline(PipelinePlan& plan,
+                           std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                           const Runtime::Execution::OperatorHandlerPtr& orderCustJoinHandler) {
+        auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+        PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+
+        /*
+         * 1. Scan
+         */
+        auto& lineItems = tables[TPCHTable::LineItem];
         auto lineItemsMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineItems->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"l_suppkey",
-                                                                                 "l_orderkey"};
-        auto lineItemScan = std::make_shared<Operators::Scan>(std::move(lineItemsMemoryProviderPtr), ordersProjection);
+        std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemsProjection = {"l_suppkey", "l_orderkey"};
+        auto lineItemScan = std::make_shared<Operators::Scan>(std::move(lineItemsMemoryProviderPtr), lineItemsProjection);
 
-        // build hash table for lineItem
-        auto readL_orderkey = std::make_shared<ReadFieldExpression>("l_orderkey");
-        auto joinBuildOp = std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
-                                                                  std::vector<Expressions::ExpressionPtr>{readL_orderkey},
-                                                                  std::vector<PhysicalTypePtr>{integerType},
-                                                                  std::vector<Expressions::ExpressionPtr>(),
-                                                                  std::vector<PhysicalTypePtr>(),
-                                                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-        lineItemScan->setChild(joinBuildOp);
+        /*
+         * 2. JoinProbe (with order-customer)
+         */
+        std::vector<ExpressionPtr> lineItemOrderKey = {std::make_shared<ReadFieldExpression>("l_orderkey")};
+        auto customersJoinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+                                                                   lineItemOrderKey,
+                                                                   std::vector<PhysicalTypePtr>{integerType},
+                                                                   std::vector<Record::RecordFieldIdentifier>(),
+                                                                   std::vector<PhysicalTypePtr>(),
+                                                                   std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        lineItemScan->setChild(customersJoinProbe);
 
-        // create orderJoinBuildPipeline pipeline
-        auto lineItemJoinBuildPipeline = std::make_shared<PhysicalOperatorPipeline>();
-        lineItemJoinBuildPipeline->setRootOperator(lineItemScan);
-        std::vector<Runtime::Execution::OperatorHandlerPtr> joinHandler = {std::make_shared<Operators::BatchJoinHandler>()};
-        auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(joinHandler);
-        plan.appendPipeline(lineItemJoinBuildPipeline, pipeline1Context);
-        return joinHandler[0];
+        /*
+         * 3. Build hash table with o_orderkey as key
+         */
+        auto readL_suppkey = std::make_shared<ReadFieldExpression>("l_suppkey");
+        auto lineItemSuppKeyJoinBuild =
+            std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
+                                                        std::vector<Expressions::ExpressionPtr>{readL_suppkey},
+                                                        std::vector<PhysicalTypePtr>{integerType},
+                                                        std::vector<Expressions::ExpressionPtr>(),
+                                                        std::vector<PhysicalTypePtr>(),
+                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        customersJoinProbe->setChild(lineItemSuppKeyJoinBuild);
+
+        // Create the lineitem pipeline
+        auto orderCustomersJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
+        orderCustomersJoinBuild->setRootOperator(lineItemScan);
+        auto orderCustLitemJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
+        std::vector<Execution::OperatorHandlerPtr> handlers = {orderCustJoinHandler, orderCustLitemJoinHandler};
+        auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(handlers);
+        plan.appendPipeline(orderCustomersJoinBuild, pipeline2Context);
+        return orderCustLitemJoinHandler;
     }
 
-    static Runtime::Execution::OperatorHandlerPtr
-    createP4(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
-        auto& suppliers = tables[TPCHTable::Supplier];
+    // Supplier Pipeline: Scan->JoinProbe(with order-customer-lineitem)->JoinBuild
+    static std::shared_ptr<BatchJoinHandler>
+    createSupplierPipeline(PipelinePlan& plan,
+                           std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                           const Runtime::Execution::OperatorHandlerPtr& orderCustLitemJoinHandler) {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
-
+        /*
+         * 1. Scan
+         */
+        auto& suppliers = tables[TPCHTable::Supplier];
         auto suppliersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(suppliers->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"s_nationkey",
-                                                                                 "s_suppkey"};
-        auto suppliersScan = std::make_shared<Operators::Scan>(std::move(suppliersMemoryProviderPtr), ordersProjection);
+        std::vector<Nautilus::Record::RecordFieldIdentifier> suppliersProjection = {"s_nationkey", "s_suppkey"};
+        auto suppliersScan = std::make_shared<Operators::Scan>(std::move(suppliersMemoryProviderPtr), suppliersProjection);
 
-        // build hash table for suppliers
-        auto readS_suppkey = std::make_shared<ReadFieldExpression>("s_suppkey");
-        auto joinBuildOp = std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
-                                                                       std::vector<Expressions::ExpressionPtr>{readS_suppkey},
-                                                                       std::vector<PhysicalTypePtr>{integerType},
-                                                                       std::vector<Expressions::ExpressionPtr>(),
-                                                                       std::vector<PhysicalTypePtr>(),
-                                                                       std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-        suppliersScan->setChild(joinBuildOp);
+        /*
+         * 2. JoinProbe (with order-customer-lineitem)
+         */
+        std::vector<ExpressionPtr> supplierSuppKey = {std::make_shared<ReadFieldExpression>("s_suppkey")};
+        auto customersJoinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+                                                                   supplierSuppKey,
+                                                                   std::vector<PhysicalTypePtr>{integerType},
+                                                                   std::vector<Record::RecordFieldIdentifier>(),
+                                                                   std::vector<PhysicalTypePtr>(),
+                                                                   std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        suppliersScan->setChild(customersJoinProbe);
 
-        // create orderJoinBuildPipeline pipeline
-        auto lineItemJoinBuildPipeline = std::make_shared<PhysicalOperatorPipeline>();
-        lineItemJoinBuildPipeline->setRootOperator(suppliersScan);
-        std::vector<Runtime::Execution::OperatorHandlerPtr> joinHandler = {std::make_shared<Operators::BatchJoinHandler>()};
-        auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(joinHandler);
-        plan.appendPipeline(lineItemJoinBuildPipeline, pipeline1Context);
-        return joinHandler[0];
+        /*
+         * 3. Build hash table with s_nationkey as key
+         */
+        auto readS_nationkey = std::make_shared<ReadFieldExpression>("s_nationkey");
+        auto lineItemSuppKeyJoinBuild =
+            std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
+                                                        std::vector<Expressions::ExpressionPtr>{readS_nationkey},
+                                                        std::vector<PhysicalTypePtr>{integerType},
+                                                        std::vector<Expressions::ExpressionPtr>(),
+                                                        std::vector<PhysicalTypePtr>(),
+                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        customersJoinProbe->setChild(lineItemSuppKeyJoinBuild);
+
+        // Create the supplier pipeline
+        auto orderCustomersJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
+        orderCustomersJoinBuild->setRootOperator(suppliersScan);
+        auto orderCustLitemSuppJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
+        std::vector<Execution::OperatorHandlerPtr> handlers = {orderCustLitemJoinHandler, orderCustLitemSuppJoinHandler};
+        auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(handlers);
+        plan.appendPipeline(orderCustomersJoinBuild, pipeline2Context);
+        return orderCustLitemSuppJoinHandler;
     }
 
-    static Runtime::Execution::OperatorHandlerPtr
-        createP5(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
-        auto& nations = tables[TPCHTable::Nation];
+    // Nation Pipeline: Scan->JoinProbe(with order-customer-lineitem-supplier)->JoinBuild
+    static std::shared_ptr<BatchJoinHandler>
+    createNationPipeline(PipelinePlan& plan,
+                         std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                         const Runtime::Execution::OperatorHandlerPtr& orderCustLitemSuppJoinHandler) {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
 
+        /*
+         * 1. Scan
+         */
+        auto& nations = tables[TPCHTable::Nation];
         auto nationsMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(nations->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"n_nationkey",
-                                                                                 "n_regionkey"};
-        auto nationsScan = std::make_shared<Operators::Scan>(std::move(nationsMemoryProviderPtr), ordersProjection);
+        std::vector<Nautilus::Record::RecordFieldIdentifier> nationProjection = {"n_nationkey", "n_regionkey"};
+        auto nationsScan = std::make_shared<Operators::Scan>(std::move(nationsMemoryProviderPtr), nationProjection);
 
-        // build hash table for suppliers
+        /*
+         * 2. JoinProbe (with order-customer-lineitem-supplier)
+         */
+        std::vector<ExpressionPtr> nationNationKey = {std::make_shared<ReadFieldExpression>("n_nationkey")};
+        auto joinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+                                                                   nationNationKey,
+                                                                   std::vector<PhysicalTypePtr>{integerType},
+                                                                   std::vector<Record::RecordFieldIdentifier>(),
+                                                                   std::vector<PhysicalTypePtr>(),
+                                                                   std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        nationsScan->setChild(joinProbe);
+
+        /*
+         * 3. Build hash table with n_nationkey as key
+         */
         auto readN_nationkey = std::make_shared<ReadFieldExpression>("n_nationkey");
-        auto joinBuildOp = std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
-                                                                       std::vector<Expressions::ExpressionPtr>{readN_nationkey},
-                                                                       std::vector<PhysicalTypePtr>{integerType},
-                                                                       std::vector<Expressions::ExpressionPtr>(),
-                                                                       std::vector<PhysicalTypePtr>(),
-                                                                       std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-        nationsScan->setChild(joinBuildOp);
+        auto lineItemSuppKeyJoinBuild =
+            std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
+                                                        std::vector<Expressions::ExpressionPtr>{readN_nationkey},
+                                                        std::vector<PhysicalTypePtr>{integerType},
+                                                        std::vector<Expressions::ExpressionPtr>(),
+                                                        std::vector<PhysicalTypePtr>(),
+                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        joinProbe->setChild(lineItemSuppKeyJoinBuild);
 
-        // create orderJoinBuildPipeline pipeline
-        auto lineItemJoinBuildPipeline = std::make_shared<PhysicalOperatorPipeline>();
-        lineItemJoinBuildPipeline->setRootOperator(nationsScan);
-        std::vector<Runtime::Execution::OperatorHandlerPtr> joinHandler = {std::make_shared<Operators::BatchJoinHandler>()};
-        auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(joinHandler);
-        plan.appendPipeline(lineItemJoinBuildPipeline, pipeline1Context);
-        return joinHandler[0];
+        // Create the supplier pipeline
+        auto orderCustLItemSuppNatJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
+        orderCustLItemSuppNatJoinBuild->setRootOperator(nationsScan);
+        auto orderCustLitemSuppNatJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
+        std::vector<Execution::OperatorHandlerPtr> handlers = {orderCustLitemSuppJoinHandler, orderCustLitemSuppNatJoinHandler};
+        auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(handlers);
+        plan.appendPipeline(orderCustLItemSuppNatJoinBuild, pipeline2Context);
+        return orderCustLitemSuppNatJoinHandler;
     }
 
-    static Runtime::Execution::OperatorHandlerPtr
-    createP6(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
-        auto& regions = tables[TPCHTable::Region];
+    // Region Pipeline: Scan->Selection->JoinProbe(with order-customer-lineitem-supplier-nation)->JoinBuild
+    static void createRegionPipeline(PipelinePlan& plan,
+                         std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                         const Runtime::Execution::OperatorHandlerPtr& orderCustLitemSuppNatJoinHandler) {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
 
+        /*
+         * 1. Scan
+         */
+        auto& regions = tables[TPCHTable::Region];
         auto regionsMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(regions->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"r_regionkey",
-                                                                                 "r_name"};
-        auto nationsScan = std::make_shared<Operators::Scan>(std::move(regionsMemoryProviderPtr), ordersProjection);
+        std::vector<Nautilus::Record::RecordFieldIdentifier> regionsProjection = {"r_regionkey", "r_name"};
+        auto regionsScan = std::make_shared<Operators::Scan>(std::move(regionsMemoryProviderPtr), regionsProjection);
 
-        // Selection r_name = 'ASIA' (currently modeled as 1)
+        /*
+         * 2. Selection: r_name = 'ASIA' (currently modeled as 1)
+         */
         auto asia = std::make_shared<ConstantInt32ValueExpression>(1);
         auto readR_name = std::make_shared<ReadFieldExpression>("r_name");
         auto equalsExpression = std::make_shared<EqualsExpression>(readR_name, asia);
         auto selection = std::make_shared<Selection>(equalsExpression);
-        nationsScan->setChild(selection);
+        regionsScan->setChild(selection);
 
-        // build hash table for suppliers
-        auto readR_regionkey = std::make_shared<ReadFieldExpression>("r_regionkey");
-        auto joinBuildOp = std::make_shared<Operators::BatchJoinBuild>(0 /*handler index*/,
-                                                                       std::vector<Expressions::ExpressionPtr>{readR_regionkey},
-                                                                       std::vector<PhysicalTypePtr>{integerType},
-                                                                       std::vector<Expressions::ExpressionPtr>(),
-                                                                       std::vector<PhysicalTypePtr>(),
-                                                                       std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-        nationsScan->setChild(joinBuildOp);
+        /*
+         * 3. JoinProbe (with order-customer-lineitem-supplier-nation)
+         */
+        std::vector<ExpressionPtr> regionRegionKey = {std::make_shared<ReadFieldExpression>("r_regionkey")};
+        auto joinProbe = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+                                                          regionRegionKey,
+                                                          std::vector<PhysicalTypePtr>{integerType},
+                                                          std::vector<Record::RecordFieldIdentifier>(),
+                                                          std::vector<PhysicalTypePtr>(),
+                                                          std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        selection->setChild(joinProbe);
 
-        // create orderJoinBuildPipeline pipeline
-        auto lineItemJoinBuildPipeline = std::make_shared<PhysicalOperatorPipeline>();
-        lineItemJoinBuildPipeline->setRootOperator(nationsScan);
-        std::vector<Runtime::Execution::OperatorHandlerPtr> joinHandler = {std::make_shared<Operators::BatchJoinHandler>()};
-        auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(joinHandler);
-        plan.appendPipeline(lineItemJoinBuildPipeline, pipeline1Context);
-        return joinHandler[0];
+        /*
+         * 4. Aggregate
+         */
+        //  sum(l_extendedprice * (1 - l_discount)) as revenue,
+        auto l_orderkey = std::make_shared<ReadFieldExpression>("l_orderkey");
+        std::vector<ExpressionPtr> lineitemProbeKeys = {l_orderkey};
+
+        auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
+        auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
+        auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
+        auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
+        auto revenueExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
+        auto sumRevenue =
+            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueExpression, "sum_revenue");
+        auto readO_orderdate = std::make_shared<ReadFieldExpression>("o_orderdate");
+        std::vector<Expressions::ExpressionPtr> keyFields = {l_orderkey,
+                                                             readO_orderdate,
+                                                             std::make_shared<ReadFieldExpression>("o_shippriority")};
+        std::vector<Expressions::ExpressionPtr> aggregationExpressions = {revenueExpression};
+        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumRevenue};
+
+        PhysicalTypePtr smallType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
+
+
+        auto aggregation = std::make_shared<Operators::BatchKeyedAggregation>(
+            1 /*handler index*/,
+            keyFields,
+            std::vector<PhysicalTypePtr>{integerType, integerType, integerType},
+            aggregationFunctions,
+            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+
+        // create lineitems_ordersJoinBuild pipeline
+        auto lineitems_ordersJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
+        lineitems_ordersJoinBuild->setRootOperator(regionsScan);
+        auto aggHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
+        std::vector<Execution::OperatorHandlerPtr> handlers2 = {orderCustLitemSuppNatJoinHandler, aggHandler};
+        auto pipeline3Context = std::make_shared<MockedPipelineExecutionContext>(handlers2);
+        plan.appendPipeline(lineitems_ordersJoinBuild, pipeline3Context);
     }
 };
 
