@@ -129,22 +129,35 @@ TEST_F(AggregationFunctionTest, AvgAggregationWithEventTs) {
     avgAgg.lift(memref, inputRecord);
     EXPECT_EQ(avgValue.count, 1);
     EXPECT_EQ(avgValue.sum, 2);
+    EXPECT_EQ(avgValue.ts, 123456);
+
+    // do you even lift a second time?
+    auto secondIncomingValue = Nautilus::Value<Nautilus::Int64>(2_s64);
+    auto secondIncomingTs = Nautilus::Value<Nautilus::Int64>(223456_s64);
+    auto secondInputRecord = Record({{"value", secondIncomingValue}, {"evt_timestamp", secondIncomingTs}});
+    avgAgg.lift(memref, secondInputRecord);
+    EXPECT_EQ(avgValue.count, 2);
+    EXPECT_EQ(avgValue.sum, 4);
+    EXPECT_EQ(avgValue.ts, 223456);
 
     // test combine
     avgAgg.combine(memref, memref);
-    EXPECT_EQ(avgValue.count, 2);
-    EXPECT_EQ(avgValue.sum, 4);
+    EXPECT_EQ(avgValue.count, 4);
+    EXPECT_EQ(avgValue.sum, 8);
+    EXPECT_EQ(avgValue.ts, 223456);
 
     // test lower
     auto result = Record();
     avgAgg.lower(memref, result);
 
     EXPECT_EQ(result.read("result"), 2);
+    EXPECT_EQ(result.read("evt_timestamp"), 223456);
 
     // test reset
     avgAgg.reset(memref);
     EXPECT_EQ(avgValue.count, 0);
     EXPECT_EQ(avgValue.sum, 0);
+    EXPECT_EQ(avgValue.ts, 0);
 }
 
 /**

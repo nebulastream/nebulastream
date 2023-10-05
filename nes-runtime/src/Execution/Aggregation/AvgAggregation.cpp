@@ -98,12 +98,25 @@ void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, N
     auto sumRightMemref = loadSumMemRef(state2);
     auto sumRight = AggregationFunction::loadFromMemref(sumRightMemref, inputType);
 
+    // load tsref1
+    auto oldTsMemRefLeft = loadTsMemRef(state1);
+    auto oldTsLeft = AggregationFunction::loadFromMemref(oldTsMemRefLeft, inputType);
+
+    // load tsref2
+    auto oldTsMemRefRight = loadTsMemRef(state2);
+    auto oldTsRight = AggregationFunction::loadFromMemref(oldTsMemRefRight, inputType);
+
     // add the values
     auto tmpSum = sumLeft + sumRight;
     auto tmpCount = countLeft + countRight;
+
+    // find max ts
+    auto newTs = callMaxTyped<Nautilus::UInt64>(oldTsLeft, oldTsRight);
+
     // put updated values back to the memref
     state1.store(tmpCount);
     sumLeftMemref.store(tmpSum);
+    oldTsMemRefLeft.store(newTs);
 }
 
 void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord) {
@@ -111,6 +124,8 @@ void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nau
     auto count = AggregationFunction::loadFromMemref(memref, countType);
     auto sumMemref = loadSumMemRef(memref);
     auto sum = AggregationFunction::loadFromMemref(sumMemref, inputType);
+    auto tsMemRef = loadTsMemRef(memref);
+    auto tsVal = AggregationFunction::loadFromMemref(tsMemRef, inputType);
     // calc the average
     // TODO #3602: If inputType is an integer then the result is also an integer
     // (specifically UINT64 because that is the count type).
@@ -120,17 +135,21 @@ void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nau
 
     // write the average
     resultRecord.write(resultFieldIdentifier, finalVal);
+    // write timestamp
+    resultRecord.write("evt_timestamp", tsVal);
 }
 
 void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto zero = createConstValue(0L, inputType);
     auto sumMemref = loadSumMemRef(memref);
+    auto tsMemRef = loadTsMemRef(memref);
 
     memref.store(zero);
     sumMemref.store(zero);
+    tsMemRef.store(zero);
 }
 uint64_t AvgAggregationFunction::getSize() {
-    return inputType->size() + 8L;// the count is always uint64, hence always 8bytes
+    return inputType->size() + 8L + 8L;// the count is always uint64, hence always 8bytes
 }
 
 }// namespace NES::Runtime::Execution::Aggregation
