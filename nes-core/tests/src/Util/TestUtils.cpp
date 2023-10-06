@@ -140,10 +140,8 @@ namespace TestUtils {
     return "--optimizer.distributedWindowCombinerThreshold=" + std::to_string(val);
 }
 
-[[nodiscard]] std::string enableThreadLocalWindowing(bool prefix) {
-    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG,
-                        std::string{"THREAD_LOCAL"},
-                        prefix);
+[[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
+    return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"SLICING"}, prefix);
 }
 
 [[nodiscard]] std::string enableNautilusWorker() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
@@ -867,17 +865,13 @@ std::vector<PhysicalTypePtr> TestUtils::getPhysicalTypes(const SchemaPtr& schema
     return retVector;
 }
 
-uint64_t countOccurrences(const std::string& searchString, const std::string& targetString) {
-    uint64_t count = 0;
-    uint64_t start_idx = 0;
+uint64_t countOccurrences(const std::string& subString, const std::string& mainString) {
+    int count = 0;
+    size_t pos = mainString.find(subString, 0);
 
-    while (true) {
-        uint64_t index = targetString.find(searchString, start_idx);
-        if (index == std::string::npos) {
-            break;
-        }
+    while (pos != std::string::npos) {
         count++;
-        start_idx = index + searchString.length();
+        pos = mainString.find(subString, pos + 1);
     }
 
     return count;

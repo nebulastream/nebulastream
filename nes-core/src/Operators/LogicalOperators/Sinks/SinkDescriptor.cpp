@@ -15,14 +15,20 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES {
+SinkDescriptor::SinkDescriptor() : SinkDescriptor(FaultToleranceType::NONE, 1) {}
 
 SinkDescriptor::SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins)
-    : faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {}
+    : SinkDescriptor(faultToleranceType, numberOfOrigins, false) {}
+
+SinkDescriptor::SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins, bool addTimestamp)
+    : faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins), addTimestamp(addTimestamp) {}
 
 FaultToleranceType SinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 void SinkDescriptor::setFaultToleranceType(FaultToleranceType faultTolerance) { faultToleranceType = faultTolerance; }
 
 uint64_t SinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
+
+bool SinkDescriptor::getAddTimestamp() const { return addTimestamp; }
 
 }// namespace NES

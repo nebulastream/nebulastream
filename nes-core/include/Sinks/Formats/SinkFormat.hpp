@@ -32,14 +32,29 @@ class SinkFormat {
      * @param append
      */
     SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+
+    /**
+     * @brief constructor for a sink format
+     * @param schema the schema
+     * @param append flag to append or not
+     * @param addTimestamp flag to add a timestamp in getFormattedBuffer
+     */
+    SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp);
+
     virtual ~SinkFormat() noexcept = default;
 
     /**
-    * @brief method to write a TupleBuffer
-    * @param a tuple buffers pointer
-    * @return vector of Tuple buffer containing the content of the tuplebuffer
+     * @brief Returns the schema of formatted according to the specific SinkFormat represented as string.
+     * @return The formatted schema as string
      */
-    virtual std::vector<Runtime::TupleBuffer> getData(Runtime::TupleBuffer& inputBuffer) = 0;
+    virtual std::string getFormattedSchema() = 0;
+
+    /**
+    * @brief method to format a TupleBuffer
+    * @param a tuple buffers pointer
+    * @return formatted content of TupleBuffer
+     */
+    virtual std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) = 0;
 
     /**
     * @brief depending on the SinkFormat type, returns an iterator that can be used to retrieve tuples from the TupleBuffer
@@ -47,12 +62,6 @@ class SinkFormat {
     * @return TupleBuffer iterator
      */
     virtual FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) = 0;
-
-    /**
-    * @brief method to write the schema of the data
-    * @return TupleBuffer containing the schema
-    */
-    virtual std::optional<Runtime::TupleBuffer> getSchema() = 0;
 
     /**
      * @brief method to return the format as a string
@@ -68,9 +77,13 @@ class SinkFormat {
     Runtime::BufferManagerPtr getBufferManager();
     void setBufferManager(Runtime::BufferManagerPtr bufferManager);
 
+    bool getAddTimestamp();
+    void setAddTimestamp(bool addTimestamp);
+
   protected:
     SchemaPtr schema;
     Runtime::BufferManagerPtr bufferManager;
+    bool addTimestamp;
 };
 
 using SinkFormatPtr = std::shared_ptr<SinkFormat>;

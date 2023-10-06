@@ -31,11 +31,17 @@ class ArrowFormat : public SinkFormat {
     virtual ~ArrowFormat() noexcept = default;
 
     /**
-    * @brief method to write a TupleBuffer
-    * @param a reference to input TupleBuffer
-    * @return vector of Tuple buffer containing the content of the tuple buffer
+     * @brief Returns the schema of formatted according to the specific SinkFormat represented as string.
+     * @return The formatted schema as string
      */
-    std::vector<Runtime::TupleBuffer> getData(Runtime::TupleBuffer& inputBuffer) override;
+    std::string getFormattedSchema() override;
+
+    /**
+    * @brief method to format a TupleBuffer
+    * @param a reference to input TupleBuffer
+    * @return Formatted content of tuple buffer
+     */
+    std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
 
     /**
     * @brief method to write a TupleBuffer
@@ -43,12 +49,6 @@ class ArrowFormat : public SinkFormat {
     * @return vector of Tuple buffer containing the content of the tuple buffer
      */
     FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
-
-    /**
-    * @brief method to write the schema of the data
-    * @return TupleBuffer containing the schema
-    */
-    std::optional<Runtime::TupleBuffer> getSchema() override;
 
     /**
     * @brief method to get the schema from the arrow format

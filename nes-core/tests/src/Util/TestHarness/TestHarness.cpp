@@ -269,7 +269,7 @@ PhysicalSourcePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorke
         memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
     }
 
-    NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
+    NES_ASSERT2_FMT(bufferSize >= schema->getSchemaSizeInBytes() * currentSourceNumOfRecords,
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                         << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
     auto memorySourceType =
@@ -302,7 +302,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         // Only this is currently supported in Nautilus
         coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
     }
     crdConfigFunctor(coordinatorConfiguration);
 
@@ -324,7 +324,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
             // Only this is currently supported in Nautilus
             workerConfiguration->queryCompiler.windowingStrategy =
-                QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+                QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
             workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
         }
 

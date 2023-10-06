@@ -18,82 +18,48 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
-#include <cstring>
 #include <iostream>
+#include <regex>
 #include <utility>
+
 namespace NES {
 
 CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
 
-std::optional<Runtime::TupleBuffer> CsvFormat::getSchema() {
-    auto buf = this->bufferManager->getBufferBlocking();
-    std::stringstream ss;
-    uint64_t numberOfFields = schema->fields.size();
-    for (uint64_t i = 0; i < numberOfFields; i++) {
-        ss << schema->fields[i]->toString();
-        if (i < numberOfFields - 1) {
-            ss << ',';
-        }
+CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp)
+    : SinkFormat(std::move(schema), std::move(bufferManager), addTimestamp) {}
+
+std::string CsvFormat::getFormattedSchema() {
+    std::string out = Util::toCSVString(schema);
+    if (addTimestamp) {
+        out = Util::trim(out);
+        out.append(",timestamp\n");
     }
-    ss << std::endl;
-    ss.seekg(0, std::ios::end);
-    if (std::streamoff const tg = ss.tellg(); tg > 0 && static_cast<uint64_t>(tg) > buf.getBufferSize()) {
-        NES_THROW_RUNTIME_ERROR("Schema buffer is too large");
-    }
-    std::string schemaString = ss.str();
-    std::memcpy(buf.getBuffer(), schemaString.c_str(), ss.tellg());
-    buf.setNumberOfTuples(ss.tellg());
-    return buf;
+    return out;
 }
 
-std::vector<Runtime::TupleBuffer> CsvFormat::getData(Runtime::TupleBuffer& inputBuffer) {
-    std::vector<Runtime::TupleBuffer> buffers;
-
-    if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("CsvFormat::getData: write watermark-only buffer");
-        return buffers;
-    }
-    std::string bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
-    uint64_t contentSize = bufferContent.length();
-    if (inputBuffer.getBufferSize() < contentSize) {
-        NES_DEBUG("CsvFormat::getData: content is larger than one buffer");
-        uint64_t numberOfBuffers = std::ceil(double(contentSize) / double(inputBuffer.getBufferSize()));
-        for (uint64_t i = 0; i < numberOfBuffers - 1; i++) {
-            auto buf = this->bufferManager->getBufferBlocking();
-            std::string contentWithSingleBufferSize = bufferContent.substr(0, buf.getBufferSize());
-            bufferContent = bufferContent.substr(buf.getBufferSize(), bufferContent.length() - buf.getBufferSize());
-            NES_TRACE("CsvFormat::getData: add following content to buffer ={}"
-                      "\nRemaining content for next buffer ={}",
-                      contentWithSingleBufferSize,
-                      bufferContent);
-            NES_ASSERT(contentWithSingleBufferSize.size() == buf.getBufferSize(),
-                       "CsvFormat: Content size is not equal to buffer size and will waste space in a buffer.");
-            std::copy(contentWithSingleBufferSize.begin(), contentWithSingleBufferSize.end(), buf.getBuffer());
-            buf.setNumberOfTuples(contentWithSingleBufferSize.size());
-            buffers.emplace_back(std::move(buf));
-        }
-        auto buf = this->bufferManager->getBufferBlocking();
-        NES_ASSERT(bufferContent.size() <= buf.getBufferSize(), "CsvFormat: Remaining is too big and wont fit.");
-        std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
-        buf.setNumberOfTuples(bufferContent.size());
-        buffers.push_back(buf);
-        NES_DEBUG("CsvFormat::getData: successfully copied buffer= {}", numberOfBuffers);
+std::string CsvFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
+    std::string bufferContent;
+    if (addTimestamp) {
+        auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
+        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
+        std::string repReg = "," + std::to_string(timestamp) + "\n";
+        bufferContent = std::regex_replace(bufferContent, std::regex(R"(\n)"), repReg);
+        schema->addField("timestamp", BasicType::UINT64);
     } else {
-        NES_TRACE("CsvFormat::getData: content fits in one buffer = {}", bufferContent);
-        auto buf = this->bufferManager->getBufferBlocking();
-        std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
-        buf.setNumberOfTuples(contentSize);
-        buffers.emplace_back(std::move(buf));
+        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
     }
-    return buffers;
+    return bufferContent;
 }
 
 std::string CsvFormat::toString() { return "CSV_FORMAT"; }
 
 FormatTypes CsvFormat::getSinkFormat() { return FormatTypes::CSV_FORMAT; }
 
-FormatIterator CsvFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+FormatIterator CsvFormat::getTupleIterator(Runtime::TupleBuffer& inputBuffer) {
+    return FormatIterator(schema, inputBuffer, FormatTypes::CSV_FORMAT);
+}
 
 }// namespace NES

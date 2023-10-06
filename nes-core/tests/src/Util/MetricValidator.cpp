@@ -245,7 +245,7 @@ bool MetricValidator::isValidAll(Monitoring::AbstractSystemResourcesReaderPtr re
         NES_ERROR("MetricValidator: Missing field disk");
         check = false;
     } else {
-        if (!(json[std::string(magic_enum::enum_name(Monitoring::MetricType::DiskMetric))].size() == 6U)) {
+        if (json[std::string(magic_enum::enum_name(Monitoring::MetricType::DiskMetric))].size() != 7U) {
             NES_ERROR("MetricValidator: Values for disk missing");
             check = false;
         }
@@ -304,7 +304,7 @@ bool MetricValidator::isValidAllStorage(Monitoring::AbstractSystemResourcesReade
         NES_ERROR("MetricValidator: Missing field disk");
         check = false;
     } else {
-        if (!(json["DiskMetric"][0]["value"].size() == 6U)) {
+        if (json["DiskMetric"][0]["value"].size() != 7U) {
             NES_ERROR("MetricValidator: Values for disk missing");
             check = false;
         }

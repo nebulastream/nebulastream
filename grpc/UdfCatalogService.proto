@@ -14,19 +14,19 @@
 
 syntax = "proto3";
 
-import "JavaUdfDescriptorMessage.proto";
+import "UDFDescriptorMessage.proto";
 
 package NES;
 
 option java_package = "stream.nebula.protobuf";
 option java_multiple_files = true;
 
-message RegisterJavaUdfRequest {
-  string udf_name = 1;
-  JavaUdfDescriptorMessage java_udf_descriptor = 2;
+message RegisterUDFRequest {
+  string udfName = 1;
+  UDFDescriptorMessage udfDescriptor = 2;
 }
 
-message GetJavaUdfDescriptorResponse {
+message GetUDFDescriptorResponse {
   bool found = 1;
-  optional JavaUdfDescriptorMessage java_udf_descriptor = 2;
+  optional UDFDescriptorMessage udfDescriptor = 2;
 }

@@ -95,9 +95,17 @@ class FileSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  protected:
-    std::string filePath;
-    std::ofstream outputFile;
+    /**
+     * @brief method to return if the sink is appended
+     * @return bool indicating append
+     */
+    bool getAppend() const;
+
+    /**
+     * @brief method to return if the sink is append or overwrite
+     * @return string of mode
+     */
+    std::string getAppendAsString() const;
 
   private:
     /**
@@ -106,6 +114,11 @@ class FileSink : public SinkMedium {
      * @return bool indicating if the write was complete
      */
     bool writeDataToFile(Runtime::TupleBuffer& inputBuffer);
+
+  protected:
+    std::string filePath;
+    std::ofstream outputFile;
+    bool append{false};
 
 #ifdef ENABLE_ARROW_BUILD
     /**

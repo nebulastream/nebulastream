@@ -13,7 +13,6 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
-#include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
@@ -23,6 +22,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
+#include <Nautilus/Util/Casting.hpp>
 #include <cstdint>
 #include <memory>
 #include <type_traits>

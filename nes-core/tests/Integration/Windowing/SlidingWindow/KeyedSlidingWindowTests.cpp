@@ -50,8 +50,7 @@ class KeyedSlidingWindowTests : public Testing::BaseIntegrationTest, public ::te
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+        workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
         workerConfiguration->queryCompiler.compilationStrategy =
             QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     }

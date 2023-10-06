@@ -27,12 +27,13 @@
 namespace NES::Monitoring {
 
 CpuMetrics::CpuMetrics()
-    : nodeId(0), coreNum(0), user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), steal(0), guest(0),
-      guestnice(0) {}
+    : nodeId(0), timestamp(0), coreNum(0), user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), steal(0),
+      guest(0), guestnice(0) {}
 
 SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
+                           ->addField(prefix + "timestamp", BasicType::UINT64)
                            ->addField(prefix + "coreNum", BasicType::UINT64)
                            ->addField(prefix + "user", BasicType::UINT64)
                            ->addField(prefix + "nice", BasicType::UINT64)
@@ -58,6 +59,7 @@ void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) c
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<uint64_t>(timestamp);
     buffer[tupleIndex][cnt++].write<uint64_t>(coreNum);
     buffer[tupleIndex][cnt++].write<uint64_t>(user);
     buffer[tupleIndex][cnt++].write<uint64_t>(nice);
@@ -79,6 +81,7 @@ void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
 
     int cnt = 0;
     nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    timestamp = buffer[tupleIndex][cnt++].read<uint64_t>();
     coreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
     user = buffer[tupleIndex][cnt++].read<uint64_t>();
     nice = buffer[tupleIndex][cnt++].read<uint64_t>();
@@ -93,16 +96,17 @@ void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
 }
 
 std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
-    os << "nodeId: " << values.nodeId << "coreNum: " << values.coreNum << "user: " << values.user << " nice: " << values.nice
-       << " system: " << values.system << " idle: " << values.idle << " iowait: " << values.iowait << " irq: " << values.irq
-       << " softirq: " << values.softirq << " steal: " << values.steal << " guest: " << values.guest
-       << " guestnice: " << values.guestnice;
+    os << "nodeId: " << values.nodeId << "timestamp:" << values.timestamp << "coreNum: " << values.coreNum
+       << "user: " << values.user << " nice: " << values.nice << " system: " << values.system << " idle: " << values.idle
+       << " iowait: " << values.iowait << " irq: " << values.irq << " softirq: " << values.softirq << " steal: " << values.steal
+       << " guest: " << values.guest << " guestnice: " << values.guestnice;
     return os;
 }
 
 nlohmann::json CpuMetrics::toJson() const {
     nlohmann::json metricsJson{};
     metricsJson["NODE_ID"] = nodeId;
+    metricsJson["TIMESTAMP"] = timestamp;
     metricsJson["CORE_NUM"] = coreNum;
     metricsJson["USER"] = user;
     metricsJson["NICE"] = nice;
@@ -119,9 +123,9 @@ nlohmann::json CpuMetrics::toJson() const {
 }
 
 bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
-    return nodeId == rhs.nodeId && coreNum == rhs.coreNum && user == rhs.user && nice == rhs.nice && system == rhs.system
-        && idle == rhs.idle && iowait == rhs.iowait && irq == rhs.irq && softirq == rhs.softirq && steal == rhs.steal
-        && guest == rhs.guest && guestnice == rhs.guestnice;
+    return nodeId == rhs.nodeId && timestamp == rhs.timestamp && coreNum == rhs.coreNum && user == rhs.user && nice == rhs.nice
+        && system == rhs.system && idle == rhs.idle && iowait == rhs.iowait && irq == rhs.irq && softirq == rhs.softirq
+        && steal == rhs.steal && guest == rhs.guest && guestnice == rhs.guestnice;
 }
 
 bool CpuMetrics::operator!=(const CpuMetrics& rhs) const { return !(rhs == *this); }

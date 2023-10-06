@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <utility>
 
@@ -108,59 +109,39 @@ std::string FileSink::getFilePath() const { return filePath; }
 
 bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
-    NES_TRACE("FileSink: getSchema medium {} format {} and mode {}",
-              toString(),
-              sinkFormat->toString(),
-              this->getAppendAsString());
+    NES_DEBUG("FileSink: getSchema medium {} format {} mode {}", toString(), sinkFormat->toString(), this->getAppendAsString());
 
     if (!inputBuffer) {
         NES_ERROR("FileSink::writeDataToFile input buffer invalid");
         return false;
     }
-    if (!schemaWritten) {
-        NES_TRACE("FileSink::getData: write schema");
-        auto schemaBuffer = sinkFormat->getSchema();
-        if (schemaBuffer) {
-            std::ofstream outputFile;
-            if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
-                uint64_t idx = filePath.rfind('.');
-                std::string shrinkedPath = filePath.substr(0, idx + 1);
-                std::string schemaFile = shrinkedPath + "schema";
-                NES_TRACE("FileSink::writeDataToFile: schema is ={} to file={}",
-                          sinkFormat->getSchemaPtr()->toString(),
-                          schemaFile);
-                outputFile.open(schemaFile, std::ofstream::binary | std::ofstream::trunc);
-            } else {
-                outputFile.open(filePath, std::ofstream::binary | std::ofstream::trunc);
-            }
 
-            outputFile.write((char*) schemaBuffer->getBuffer(), schemaBuffer->getNumberOfTuples());
-            outputFile.close();
-
-            schemaWritten = true;
-            NES_TRACE("FileSink::writeDataToFile: schema written");
-        } else {
-            NES_TRACE("FileSink::writeDataToFile: no schema written");
-        }
+    if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
+        auto schemaStr = sinkFormat->getFormattedSchema();
+        outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
+        schemaWritten = true;
+    } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
+        NES_DEBUG("FileSink::getData: writing schema skipped, not supported for NES_FORMAT");
     } else {
-        NES_TRACE("FileSink::getData: schema already written");
+        NES_DEBUG("FileSink::getData: schema already written");
     }
 
-    NES_TRACE("FileSink::getData: write data to file= {}", filePath);
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
-
-    for (auto& buffer : dataBuffers) {
-        NES_TRACE("FileSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
-        if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
-            outputFile.write((char*) buffer.getBuffer(),
-                             buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-        } else {
-            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
-        }
-    }
+    auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
+    NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, fBuffer);
+    outputFile.write(fBuffer.c_str(), fBuffer.size());
     outputFile.flush();
     updateWatermarkCallback(inputBuffer);
+
     return true;
+}
+
+bool FileSink::getAppend() const { return append; }
+
+std::string FileSink::getAppendAsString() const {
+    if (append) {
+        return "APPEND";
+    }
+    return "OVERWRITE";
 }
 
 #ifdef ENABLE_ARROW_BUILD

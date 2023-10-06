@@ -349,8 +349,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
-    // TODO #3980 enable once string works
-    // schema->addField("stringVariable", BasicType::TEXT);
+    schema->addField("stringVariable", BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
@@ -371,13 +370,12 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         dynamicBuffer[i]["floatVariable"].write((float) i);
         dynamicBuffer[i]["doubleVariable"].write((double) i);
         dynamicBuffer[i]["booleanVariable"].write(true);
-        // dynamicBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
+        dynamicBuffer[i]["stringVariable"].write(strIndex);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    // TODO #3980 once string works add string here as argument
-    std::string function = "def complex_test(byte_var, short_var, int_var, long_var, float_var, double_var, boolean_var):"
+    std::string function = "def complex_test(byte_var, short_var, int_var, long_var, float_var, double_var, boolean_var, string_var):"
                            "\n\tbyte_var = byte_var + 10"
                            "\n\tshort_var = short_var + 10"
                            "\n\tint_var = int_var + 10"
@@ -385,7 +383,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
                            "\n\tfloat_var = float_var + 10.0"
                            "\n\tdouble_var = double_var + 10.0"
                            "\n\tboolean_var = False"
-                           "\n\treturn byte_var, short_var, int_var, long_var, float_var, double_var, False\n";
+                           "\n\tstring_var = \"Appended String: \" + string_var"
+                           "\n\treturn byte_var, short_var, int_var, long_var, float_var, double_var, False, string_var\n";
     std::string functionName = "complex_test";
     std::map<std::string, std::string> modulesToImport;
     auto handler = initMapHandler(function, functionName, modulesToImport, schema);
@@ -408,12 +407,11 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
-        // TODO #3980 enable this once string works
-        // auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
-        // auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
-        // auto textValue = varLengthBuffer.getBuffer<TextValue>();
-        // auto size = textValue->length();
-        // EXPECT_EQ(std::string(textValue->c_str(), size), "Appended String:X");
+        auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
+        auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
+        auto textValue = varLengthBuffer.getBuffer<TextValue>();
+        auto size = textValue->length();
+        EXPECT_EQ(std::string(textValue->c_str(), size), "Appended String: X");
     }
 }
 

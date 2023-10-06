@@ -149,12 +149,18 @@ bool Schema::hasEqualTypes(const SchemaPtr& otherSchema) {
     return true;
 }
 
-std::string Schema::toString() const {
+std::string Schema::toString(const std::string& prefix, const std::string& sep, const std::string& suffix) const {
     std::stringstream ss;
+    uint64_t i = 1;
+    ss << prefix;
     for (const auto& f : fields) {
-        ss << f->toString() << " ";
+        if (i == fields.size()) {
+            ss << f->toString() << suffix;
+        } else {
+            ss << f->toString() << sep;
+        }
+        i++;
     }
-
     return ss.str();
 }
 

@@ -13,29 +13,22 @@
 */
 #ifdef ENABLE_KAFKA_BUILD
 #include <BaseIntegrationTest.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/SinkCreator.hpp>
-#include <cstring>
-#include <gtest/gtest.h>
-#include <string>
-#include <thread>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Sinks/Mediums//KafkaSink.hpp>
-#include <Sources/KafkaSource.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 
-#include <Services/QueryService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/TimeMeasurement.hpp>
-#include <cppkafka/cppkafka.h>
-#include <random>
+
+#include <gtest/gtest.h>
+#include <string>
 
 #ifndef OPERATORID
 #define OPERATORID 1
@@ -113,7 +106,7 @@ class KafkaSinkTest : public Testing::BaseIntegrationTest {
 */
 TEST_F(KafkaSinkTest, KafkaSinkInit) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createCsvKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 }
 
 /**
@@ -121,7 +114,7 @@ TEST_F(KafkaSinkTest, KafkaSinkInit) {
 */
 TEST_F(KafkaSinkTest, KafkaSourcePrint) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createCsvKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
 
     std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
 

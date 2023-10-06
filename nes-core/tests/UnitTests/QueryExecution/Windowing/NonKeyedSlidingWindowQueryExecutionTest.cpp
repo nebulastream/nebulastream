@@ -108,8 +108,8 @@ TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
 
 INSTANTIATE_TEST_CASE_P(testNonKeyedSlidingWindow,
                         NonKeyedSlidingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL,
-                                          QueryCompilation::QueryCompilerOptions::WindowingStrategy::BUCKET),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING,
+                                          QueryCompilation::QueryCompilerOptions::WindowingStrategy::BUCKETING),
                         [](const testing::TestParamInfo<NonKeyedSlidingWindowQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

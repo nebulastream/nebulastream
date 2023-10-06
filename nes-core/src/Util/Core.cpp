@@ -80,9 +80,7 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
                     auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
                     std::string deserialized(begin, begin + sizeOfTextField);
                     str = std::move(deserialized);
-                }
-
-                else {
+                } else {
                     NES_WARNING("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
                                 "variable-length TEXT field. Returning an empty string.")
                 }
@@ -212,4 +210,14 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema) {
     }
     return retVector;
 }
+
+std::string Util::trim(const std::string& str) {
+    size_t start = str.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) {
+        return "";
+    }
+    size_t end = str.find_last_not_of(" \t\n\r");
+    return str.substr(start, end - start + 1);
+}
+
 }// namespace NES

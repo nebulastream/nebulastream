@@ -71,6 +71,7 @@
 #include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
+#include <Util/PythonUDFDescriptorBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -518,6 +519,14 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUDFMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUDFMap->equal(deserializedOperator));
+    }
+
+    {
+        auto pythonUDFDescriptor = NES::Catalogs::UDF::PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
+        auto pythonUDFMap = LogicalOperatorFactory::createMapUDFLogicalOperator(pythonUDFDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(pythonUDFMap);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(pythonUDFMap->equal(deserializedOperator));
     }
 
     {

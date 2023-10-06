@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Nodes/Expressions/BinaryExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
@@ -81,9 +82,11 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
     if (curOperator->instanceOf<ProjectionLogicalOperatorNode>()) {
         pushBelowProjection(filterOperator, curOperator);
     } else if (curOperator->instanceOf<MapLogicalOperatorNode>()) {
-        pushFilterBelowMap(filterOperator, curOperator, parOperator);
+        auto mapOperator = curOperator->as<MapLogicalOperatorNode>();
+        pushFilterBelowMap(filterOperator, mapOperator);
     } else if (curOperator->instanceOf<JoinLogicalOperatorNode>()) {
-        pushFilterBelowJoin(filterOperator, curOperator, parOperator);
+        auto joinOperator = curOperator->as<JoinLogicalOperatorNode>();
+        pushFilterBelowJoin(filterOperator, joinOperator, parOperator);
     } else if (curOperator->instanceOf<UnionLogicalOperatorNode>()) {
         pushFilterBelowUnion(filterOperator, curOperator);
     } else if (curOperator->instanceOf<WindowLogicalOperatorNode>()) {
@@ -98,7 +101,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 }
 
 void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filterOperator,
-                                             NES::NodePtr joinOperator,
+                                             JoinLogicalOperatorNodePtr joinOperator,
                                              NES::NodePtr parentOperator) {
     // we might be able to push the filter to both branches of the join, and we check this first.
     bool pushed = pushFilterBelowJoinSpecialCase(filterOperator, joinOperator);
@@ -143,11 +146,11 @@ void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filter
     }
 }
 
-bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator, NodePtr joinOperator) {
-    JoinLogicalOperatorNodePtr curOperatorAsJoin = joinOperator->as<JoinLogicalOperatorNode>();
+bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNodePtr filterOperator,
+                                                        JoinLogicalOperatorNodePtr joinOperator) {
 
     std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
-    Join::LogicalJoinDefinitionPtr joinDefinition = curOperatorAsJoin->getJoinDefinition();
+    Join::LogicalJoinDefinitionPtr joinDefinition = joinOperator->getJoinDefinition();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
 
     if (joinDefinition->getLeftJoinKey()->getFieldName() == predicateFields[0]) {
@@ -165,9 +168,9 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the right side field name to the predicate field");
 
-        pushDownFilter(filterOperator, curOperatorAsJoin->getLeftOperators()[0], joinOperator);
+        pushDownFilter(filterOperator, joinOperator->getLeftOperators()[0], joinOperator);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed original filter to one branch");
-        pushDownFilter(copyOfFilter, curOperatorAsJoin->getRightOperators()[0], joinOperator);
+        pushDownFilter(copyOfFilter, joinOperator->getRightOperators()[0], joinOperator);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
         return true;
     } else if (joinDefinition->getRightJoinKey()->getFieldName() == predicateFields[0]) {
@@ -183,30 +186,19 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
 
-        pushDownFilter(filterOperator, curOperatorAsJoin->getRightOperators()[0], joinOperator);
+        pushDownFilter(filterOperator, joinOperator->getRightOperators()[0], joinOperator);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed original filter to one branch");
-        pushDownFilter(copyOfFilter, curOperatorAsJoin->getLeftOperators()[0], joinOperator);
+        pushDownFilter(copyOfFilter, joinOperator->getLeftOperators()[0], joinOperator);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Pushed copy of the filter to other branch");
         return true;
     }
     return false;
 }
 
-void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator,
-                                            NodePtr mapOperator,
-                                            NodePtr parOperator) {
-    std::string mapFieldName = getFieldNameUsedByMapOperator(mapOperator);
-    bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
-    if (!predicateFieldManipulated) {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Map operator does not manipulate the same field that the filter uses, "
-                  "so we are able to push the filter below this operator.");
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Pushing filter below map operator...");
-        pushDownFilter(filterOperator, mapOperator->getChildren()[0], mapOperator);
-    } else {
-        NES_DEBUG("FilterPushDownRule.pushFilterBelowMap: Filter cant be pushed below map operator, "
-                  "inserting filter into new position...");
-        insertFilterIntoNewPosition(filterOperator, mapOperator, parOperator);
-    }
+void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterOperator, MapLogicalOperatorNodePtr mapOperator) {
+    std::string assignmentFieldName = getAssignmentFieldFromMapOperator(mapOperator);
+    substituteFilterAttributeWithMapTransformation(filterOperator, mapOperator, assignmentFieldName);
+    pushDownFilter(filterOperator, mapOperator->getChildren()[0], mapOperator);
 }
 
 void FilterPushDownRule::pushFilterBelowUnion(FilterLogicalOperatorNodePtr filterOperator, NodePtr unionOperator) {
@@ -354,21 +346,31 @@ void FilterPushDownRule::renameFilterAttributesByExpressionNodes(const FilterLog
     filterOperator->setPredicate(predicateCopy);
 }
 
-bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const& filterOperator,
-                                                      const std::string& fieldName) {
-    std::vector<FieldAccessExpressionNodePtr> filterAttributeNames = getFilterAccessExpressions(filterOperator->getPredicate());
-    return std::any_of(filterAttributeNames.begin(),
-                       filterAttributeNames.end(),
-                       [&](const FieldAccessExpressionNodePtr& filterAttributeName) {
-                           return filterAttributeName->getFieldName() == fieldName;
-                       });
-}
-
-std::string FilterPushDownRule::getFieldNameUsedByMapOperator(const NodePtr& node) {
+std::string FilterPushDownRule::getAssignmentFieldFromMapOperator(const NodePtr& node) {
     NES_TRACE("FilterPushDownRule: Find the field name used in map operator");
     MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
     const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
     const FieldAccessExpressionNodePtr field = mapExpression->getField();
     return field->getFieldName();
+}
+
+void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(const FilterLogicalOperatorNodePtr& filterOperator,
+                                                                        const MapLogicalOperatorNodePtr& mapOperator,
+                                                                        const std::string& fieldName) {
+    NES_TRACE("Substitute filter predicate's field access expression with map transformation.");
+    NES_TRACE("Current map transformation: {}", mapOperator->getMapExpression()->toString());
+    const FieldAssignmentExpressionNodePtr mapExpression = mapOperator->getMapExpression();
+    const ExpressionNodePtr mapTransformation = mapExpression->getAssignment();
+    std::vector<FieldAccessExpressionNodePtr> filterAccessExpressions =
+        getFilterAccessExpressions(filterOperator->getPredicate());
+    // iterate over all filter access expressions
+    // replace the filter predicate's field access expression with map transformation
+    // if the field name of the field access expression is the same as the field name used in map transformation
+    for (auto& filterAccessExpression : filterAccessExpressions) {
+        if (filterAccessExpression->getFieldName() == fieldName) {
+            filterAccessExpression->replace(mapTransformation->copy());
+        }
+    }
+    NES_TRACE("New filter predicate: {}", filterOperator->getPredicate()->toString());
 }
 }// namespace NES::Optimizer
