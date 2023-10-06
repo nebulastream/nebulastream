@@ -685,6 +685,8 @@ add_subdirectory(nes-data-types)
 add_subdirectory(nes-compiler)
 # Add target for the runtime
 add_subdirectory(nes-runtime)
+# Add target for operators
+add_subdirectory(nes-operators)
 # Add target for optimizer
 add_subdirectory(nes-optimizer)
 # Add target for core, which contains the nes lib

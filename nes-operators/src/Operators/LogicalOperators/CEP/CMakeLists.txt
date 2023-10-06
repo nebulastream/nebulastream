@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Arity)
-add_source_files(nes-core
-        OriginIdAssignmentOperator.cpp
-        )
+add_source_files(nes-operators
+        IterationLogicalOperatorNode.cpp
+)
