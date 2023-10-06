@@ -11,16 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        FileSinkDescriptor.cpp
-        SinkLogicalOperatorNode.cpp
-        KafkaSinkDescriptor.cpp
-        ZmqSinkDescriptor.cpp
-        PrintSinkDescriptor.cpp
-        MonitoringSinkDescriptor.cpp
-        NetworkSinkDescriptor.cpp
-        OPCSinkDescriptor.cpp
-        MQTTSinkDescriptor.cpp
-        NullOutputSinkDescriptor.cpp
-        SinkDescriptor.cpp
-        )
+add_source_files(nes-operators
+        BinaryOperatorNode.cpp
+        UnaryOperatorNode.cpp
+        ExchangeOperatorNode.cpp
+)
