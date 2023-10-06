@@ -11,9 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        UDFCatalog.cpp
-        JavaUDFDescriptor.cpp
-        PythonUDFDescriptor.cpp
-        UDFDescriptor.cpp
-)
+add_source_files(nes-datastore
+        QueryCatalog.cpp
+        QueryCatalogEntry.cpp
+        QuerySubPlanMetaData.cpp
+        )

@@ -11,8 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        PlanIdGenerator.cpp
-        PlanJsonGenerator.cpp
-        QueryPlanIterator.cpp
-)
+add_source_files(nes-datastore
+        TopologyTimeline.cpp
+        TopologyChangeLog.cpp
+        TopologyDelta.cpp
+        Edge.cpp
+        )
