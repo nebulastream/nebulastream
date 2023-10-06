@@ -41,6 +41,7 @@ message PythonUDFDescriptorMessage {
   string function_string = 2;
   SerializableSchema inputSchema = 3;
   SerializableSchema outputSchema = 4;
+  map<string, string> modules_to_import = 5;
 }
 
 message UDFDescriptorMessage {

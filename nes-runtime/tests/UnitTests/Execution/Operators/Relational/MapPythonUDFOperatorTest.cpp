@@ -240,7 +240,8 @@ TEST_F(MapPythonUdfOperatorTest, NumpyImportWithAliasUDFTest) {
     ASSERT_EQ(record.read("x"), 9);
     ASSERT_EQ(record.read("y"), 16);
 }
-  
+
+/*
 * @brief Test simple UDF with string objects as input and output
 * The UDF sets incoming tuples to false.
 */
@@ -253,7 +254,7 @@ TEST_F(MapPythonUdfOperatorTest, StringUDFTest) {
     functionName = "string_test";
 
     auto initialValue = "old_value";
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
 
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();

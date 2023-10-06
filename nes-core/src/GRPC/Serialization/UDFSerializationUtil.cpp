@@ -49,6 +49,8 @@ void UDFSerializationUtil::serializeUDFDescriptor(const Catalogs::UDF::UDFDescri
         // Serialize UDF name and the string of the python function
         pythonUDFDescriptorMessage.set_udf_method_name(pythonUDFDescriptor->getMethodName());
         pythonUDFDescriptorMessage.set_function_string(pythonUDFDescriptor->getFunctionString());
+        auto modulesToImport = pythonUDFDescriptorMessage.mutable_modules_to_import();
+        modulesToImport->insert(pythonUDFDescriptor->getModulesToImport().begin(), pythonUDFDescriptor->getModulesToImport().end());
         // Serialize the input and output schema.
         SchemaSerializationUtil::serializeSchema(pythonUDFDescriptor->getInputSchema(), pythonUDFDescriptorMessage.mutable_inputschema());
         SchemaSerializationUtil::serializeSchema(pythonUDFDescriptor->getOutputSchema(), pythonUDFDescriptorMessage.mutable_outputschema());
@@ -91,9 +93,12 @@ UDFSerializationUtil::deserializeUDFDescriptor(const UDFDescriptorMessage& udfDe
         // Deserialize the input and output schema.
         auto inputSchema = SchemaSerializationUtil::deserializeSchema(pythonUdfDescriptorMessage.inputschema());
         auto outputSchema = SchemaSerializationUtil::deserializeSchema(pythonUdfDescriptorMessage.outputschema());
+        const std::map<std::string, std::string> modulesToImport(pythonUdfDescriptorMessage.modules_to_import().begin(),
+                                                           pythonUdfDescriptorMessage.modules_to_import().end());
         // Create Python UDF Descriptor
         return Catalogs::UDF::PythonUDFDescriptor::create(pythonUdfDescriptorMessage.udf_method_name(),
                                                           pythonUdfDescriptorMessage.function_string(),
+                                                          modulesToImport,
                                                           inputSchema,
                                                           outputSchema);
     } else {
