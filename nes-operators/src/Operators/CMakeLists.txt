@@ -17,3 +17,4 @@ add_source_files(nes-operators
 
 add_subdirectory(LogicalOperators)
 add_subdirectory(AbstractOperators)
+add_subdirectory(Expressions)

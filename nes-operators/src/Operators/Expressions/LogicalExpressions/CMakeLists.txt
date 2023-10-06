@@ -11,19 +11,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        ExpressionNode.cpp
-        ConstantValueExpressionNode.cpp
-        FieldAccessExpressionNode.cpp
-        BinaryExpressionNode.cpp
-        UnaryExpressionNode.cpp
-        FieldAssignmentExpressionNode.cpp
-        FieldRenameExpressionNode.cpp
-        WhenExpressionNode.cpp
-        CaseExpressionNode.cpp
+add_source_files(nes-operators
+        LogicalBinaryExpressionNode.cpp
+        LessEqualsExpressionNode.cpp
+        LessExpressionNode.cpp
+        GreaterExpressionNode.cpp
+        GreaterEqualsExpressionNode.cpp
+        EqualsExpressionNode.cpp
+        AndExpressionNode.cpp
+        OrExpressionNode.cpp
+        LogicalUnaryExpressionNode.cpp
+        NegateExpressionNode.cpp
 )
-add_subdirectory(LogicalExpressions)
-add_subdirectory(ArithmeticalExpressions)
-add_subdirectory(GeographyExpressions)
-add_subdirectory(UDFCallExpressions)
-add_subdirectory(Functions)
+

@@ -15,3 +15,4 @@
 add_subdirectory(Configurations)
 add_subdirectory(Exceptions)
 add_subdirectory(Util)
+add_subdirectory(Nodes)

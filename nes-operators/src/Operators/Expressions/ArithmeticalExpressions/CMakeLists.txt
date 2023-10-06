@@ -11,11 +11,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        DumpHandler.cpp
-        ConsoleDumpHandler.cpp
-        VizDumpHandler.cpp
-        DumpContext.cpp
+add_source_files(nes-operators
+        ArithmeticalUnaryExpressionNode.cpp
+        ArithmeticalBinaryExpressionNode.cpp
+        AbsExpressionNode.cpp
+        AddExpressionNode.cpp
+        CeilExpressionNode.cpp
+        DivExpressionNode.cpp
+        ExpExpressionNode.cpp
+        FloorExpressionNode.cpp
+        ModExpressionNode.cpp
+        MulExpressionNode.cpp
+        PowExpressionNode.cpp
+        RoundExpressionNode.cpp
+        SqrtExpressionNode.cpp
+        SubExpressionNode.cpp
 )
 
-add_subdirectory(Iterators)
