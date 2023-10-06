@@ -11,7 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        QueryPlan.cpp
-        QueryPlanBuilder.cpp
+add_source_files(nes-datastore
+        UDFCatalog.cpp
+        JavaUDFDescriptor.cpp
+        PythonUDFDescriptor.cpp
+        UDFDescriptor.cpp
 )

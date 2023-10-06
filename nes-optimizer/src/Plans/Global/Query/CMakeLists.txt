@@ -11,10 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(QueryPlacement)
-add_subdirectory(QueryRewrite)
-add_subdirectory(QueryMerger)
-add_subdirectory(QueryValidation)
-add_subdirectory(QuerySignatures)
-add_subdirectory(Phases)
-add_subdirectory(Plans)
+add_source_files(nes-optimizer
+        GlobalQueryPlan.cpp
+        SharedQueryPlan.cpp
+)

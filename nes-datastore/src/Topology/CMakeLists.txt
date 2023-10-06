@@ -11,11 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        SourceCatalog.cpp
-        SourceCatalogEntry.cpp
-        LogicalSource.cpp
-        PhysicalSource.cpp
+add_source_files(nes-datastore
+        TopologyNode.cpp
+        Topology.cpp
 )
-
-add_subdirectory(PhysicalSourceTypes)
+add_subdirectory(Prediction)
