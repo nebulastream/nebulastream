@@ -49,7 +49,7 @@ using namespace Configurations;
 class ContinuousSourceTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("ContinuousSourceTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("ContinuousSourceTest.log", NES::LogLevel::LOG_NONE);
         NES_INFO("Setup ContinuousSourceTest test class.");
     }
 };
@@ -632,7 +632,7 @@ TEST_F(ContinuousSourceTest, testMQTTLatencyChameleonSource) {
     auto mqttSourceType1 = MQTTSourceType::create();
     mqttSourceType1->setGatheringInterval(4000);
     mqttSourceType1->setGatheringMode(NES::GatheringMode::ADAPTIVE_MODE);
-    mqttSourceType1->setNumberOfBuffersToProduce(20);
+    mqttSourceType1->setNumberOfBuffersToProduce(10000);
     mqttSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     mqttSourceType1->setUrl("localhost:1883");
     mqttSourceType1->setClientId("test-client");
@@ -674,7 +674,7 @@ TEST_F(ContinuousSourceTest, testMQTTLatencyChameleonSource) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService, std::chrono::seconds(600)));
 
     std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());

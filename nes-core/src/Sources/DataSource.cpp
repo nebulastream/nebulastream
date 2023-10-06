@@ -466,7 +466,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
 
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
-            std::this_thread::sleep_for(gatheringInterval);
+//            std::this_thread::sleep_for(gatheringInterval);
         }
     }
     NES_DEBUG("DataSource {} call close", operatorId);
@@ -498,16 +498,12 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     open();
     uint64_t numberOfBuffersProduced = 0;
     while (running) {
-        NES_TRACE("DataSource: running");
         //check if already produced enough buffer
         if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce) {
-            NES_TRACE("DataSource: receiving data...");
             auto optBuf = receiveData();// note that receiveData might block
-            NES_TRACE("DataSource: received data");
             if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
                 break;
             }
-            NES_TRACE("DataSource: checking buffer...");
 
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
@@ -548,13 +544,11 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
             NES_TRACE("DataSource {} sleeping on interval {}", operatorId, gatheringInterval.count());
-            std::this_thread::sleep_for(gatheringInterval);
+//            std::this_thread::sleep_for(gatheringInterval);
         }
     }
 
-    NES_TRACE("DataSource {} call close", operatorId);
     close();
-    NES_TRACE("DataSource {} end running", operatorId);
 }
 
 bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) {

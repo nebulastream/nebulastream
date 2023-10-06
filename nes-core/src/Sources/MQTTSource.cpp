@@ -105,11 +105,11 @@ MQTTSource::MQTTSource(SchemaPtr schema,
             break;
     }
 
-    NES_DEBUG("MQTTSource::MQTTSource: Init MQTTSource to {} with client id: {}.", serverAddress, clientId);
+    NES_TRACE("MQTTSource::MQTTSource: Init MQTTSource to {} with client id: {}.", serverAddress, clientId);
 }
 
 MQTTSource::~MQTTSource() {
-    NES_DEBUG("MQTTSource::~MQTTSource()");
+    NES_TRACE("MQTTSource::~MQTTSource()");
     bool success = disconnect();
     if (success) {
         NES_DEBUG("MQTTSource::~MQTTSource: Destroy MQTT Source");
@@ -121,7 +121,7 @@ MQTTSource::~MQTTSource() {
 }
 
 std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
-    NES_DEBUG("MQTTSource: receiveData ");
+    NES_TRACE("MQTTSource: receiveData ");
     auto buffer = allocateBuffer();
     if (connect()) {
         if (!fillBuffer(buffer)) {
