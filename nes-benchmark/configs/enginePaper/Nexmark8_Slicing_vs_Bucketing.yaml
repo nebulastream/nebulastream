@@ -28,10 +28,10 @@ maxHashTableSize: 6442450944 #6GB
 #maxHashTableSize: 1073741824 #1GB
 #for node55
 #maxHashTableSize: 137438953472
-windowingStrategy: SLICING,BUCKETING
-joinStrategy: HASH_JOIN_LOCAL,HASH_JOIN_LOCAL
-#windowingStrategy: BUCKETING
-#joinStrategy: HASH_JOIN_LOCAL
+#windowingStrategy: SLICING,BUCKETING
+#joinStrategy: HASH_JOIN_LOCAL,HASH_JOIN_LOCAL
+windowingStrategy: BUCKETING
+joinStrategy: HASH_JOIN_LOCAL
 
 
 logicalSources:
@@ -49,7 +49,7 @@ dataProvider: Internal
 dataProviderMode: ZeroCopy
 
 # 1 Slice as Hours(12),Hours(12)
-#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Hours(12))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Hours(12))).sink(NullOutputSinkDescriptor::create());'
 
 # 2 Slices as Hours(12),Hours(6)
 #query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Hours(6))).sink(NullOutputSinkDescriptor::create());'
@@ -70,7 +70,7 @@ dataProviderMode: ZeroCopy
 #query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Minutes(18))).sink(NullOutputSinkDescriptor::create());'
 
 ## 80 Slices as Hours(12),Hours(9)
-query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Minutes(9))).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("bit").joinWith(Query::from("auction")).where(Attribute("auctionId")).equalsTo(Attribute("id")).window(SlidingWindow::of(IngestionTime(),Hours(12),Minutes(9))).sink(NullOutputSinkDescriptor::create());'
 
 
 

@@ -188,14 +188,14 @@ class Query3Runner : public BenchmarkRunner {
             aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
         }
         auto joinHandler = pipeline1.ctx->getOperatorHandler<BatchJoinHandler>(0);
-        auto numberOfKeys = joinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+        auto numberOfKeys = joinHandler->getThreadLocalState(wc->getId())->getTotalNumberOfEntries();
         joinHandler->mergeState();
 
         for (auto& chunk : orders->getChunks()) {
             orderCustomersJoinBuildPipeline->execute(chunk, *pipeline2.ctx, *wc);
         }
         auto joinHandler2 = pipeline2.ctx->getOperatorHandler<BatchJoinHandler>(1);
-        auto numberOfKeys2 = joinHandler2->getThreadLocalState(wc->getId())->getNumberOfEntries();
+        auto numberOfKeys2 = joinHandler2->getThreadLocalState(wc->getId())->getTotalNumberOfEntries();
         joinHandler2->mergeState();
 
         for (auto& chunk : lineitems->getChunks()) {
