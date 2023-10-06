@@ -837,7 +837,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithFilt
     auto changelogEntry = changelogs[0].second;
 
     //Check downstream operators of updated change log entry
-    auto expectedDownstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getRootOperators();
+    auto expectedDownstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->downstreamOperators.size(), 1);
     EXPECT_EQ(expectedDownstreamOperators.size(), 1);
     EXPECT_EQ((*changelogEntry->downstreamOperators.begin())->getId(), expectedDownstreamOperators[0]->getId());
@@ -846,7 +846,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, testLinkRemovalRequestForUsedLinkWithFilt
     }
 
     //Check upstream operators of updated change log entry
-    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<FilterLogicalOperatorNode>();
+    auto expectedUpstreamOperators = updatedSharedQueryPlans[0]->getQueryPlan()->getOperatorByType<SourceLogicalOperatorNode>();
     EXPECT_EQ(changelogEntry->upstreamOperators.size(), 1);
     EXPECT_EQ(expectedUpstreamOperators.size(), 1);
     EXPECT_EQ((*changelogEntry->upstreamOperators.begin())->getId(), expectedUpstreamOperators[0]->getId());

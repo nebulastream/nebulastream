@@ -184,6 +184,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
         throw Exceptions::RuntimeException("BottomUpStrategy: No node available for further placement of operators");
     }
 
+    candidateTopologyNode->reduceResources(1);
     logicalOperator->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
 
     auto isOperatorAPinnedDownStreamOperator =
