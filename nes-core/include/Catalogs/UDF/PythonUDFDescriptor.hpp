@@ -50,7 +50,7 @@ class PythonUDFDescriptor : public UDFDescriptor {
 
     /**
      * @brief Return the map containing modules that we need to import
-     * @return Fully-qualified class name of the class implementing the UDF.
+     * @return returns map where key is the library name and value library alias name
      */
     const std::map<std::string, std::string>& getModulesToImport() const { return modulesToImport; }
 
