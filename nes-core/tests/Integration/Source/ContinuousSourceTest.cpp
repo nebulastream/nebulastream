@@ -52,6 +52,8 @@ class ContinuousSourceTest : public Testing::BaseIntegrationTest {
         NES::Logger::setupLogging("ContinuousSourceTest.log", NES::LogLevel::LOG_NONE);
         NES_INFO("Setup ContinuousSourceTest test class.");
     }
+
+  int latencyBenchBuffers{10000};
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
@@ -632,7 +634,7 @@ TEST_F(ContinuousSourceTest, testMQTTLatencyChameleonSource) {
     auto mqttSourceType1 = MQTTSourceType::create();
     mqttSourceType1->setGatheringInterval(4000);
     mqttSourceType1->setGatheringMode(NES::GatheringMode::ADAPTIVE_MODE);
-    mqttSourceType1->setNumberOfBuffersToProduce(10000);
+    mqttSourceType1->setNumberOfBuffersToProduce(this->latencyBenchBuffers);
     mqttSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     mqttSourceType1->setUrl("localhost:1883");
     mqttSourceType1->setClientId("test-client");
@@ -650,7 +652,7 @@ TEST_F(ContinuousSourceTest, testMQTTLatencyChameleonSource) {
     ASSERT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    std::string outputFilePath = "testChameleonMQTTLatency.out";
+    std::string outputFilePath = "testChameleonMQTTLatency-adaptive.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -680,9 +682,86 @@ TEST_F(ContinuousSourceTest, testMQTTLatencyChameleonSource) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    NES_INFO("ContinuousSourceTest: content=\n{}", content);
-//    EXPECT_EQ(countOccurrences("\n", content), mqttSourceType1->getNumberOfTuplesToProducePerBuffer()->getValue() + 1);
-//    EXPECT_EQ(countOccurrences(",", content), (mqttSourceType1->getNumberOfTuplesToProducePerBuffer()->getValue() + 1) * 4);
+    bool retStopWrk = wrk1->stop(false);
+    ASSERT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    ASSERT_TRUE(retStopCord);
+}
+
+TEST_F(ContinuousSourceTest, testMQTTLatencyIntervalSource) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    std::string testSchema = "Schema::create()->addField(createField(\"id\", BasicType::UINT64))->"
+                             "addField(createField(\"value\", BasicType::FLOAT64))->"
+                             "addField(createField(\"payload\", BasicType::UINT64))->"
+                             "addField(createField(\"evt_timestamp\", BasicType::UINT64));";
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+
+    auto mqttSourceType1 = MQTTSourceType::create();
+    mqttSourceType1->setGatheringInterval(4000);
+    mqttSourceType1->setGatheringMode(NES::GatheringMode::INTERVAL_MODE);
+    mqttSourceType1->setNumberOfBuffersToProduce(this->latencyBenchBuffers);
+    mqttSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    mqttSourceType1->setUrl("localhost:1883");
+    mqttSourceType1->setClientId("test-client");
+    mqttSourceType1->setUserName("testUser");
+    mqttSourceType1->setTopic("benchmark");
+    mqttSourceType1->setQos(0);
+    mqttSourceType1->setCleanSession(true);
+    mqttSourceType1->setFlushIntervalMS(0);
+    mqttSourceType1->setInputFormat(NES::InputFormat::CSV);
+    auto physicalMQTTSource = PhysicalSource::create("testStream", "test_stream", mqttSourceType1);
+    workerConfig1->physicalSources.add(physicalMQTTSource);
+
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
+
+    std::string outputFilePath = "testChameleonMQTTLatency-fixed.out";
+    remove(outputFilePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    auto evtTimeQuery = Query::from("testStream")
+                            .window(TumblingWindow::of(EventTime(Attribute("evt_timestamp")), Seconds(1)))
+                            .byKey(Attribute("id"))
+                            .apply(Max(Attribute("evt_timestamp")))
+                            .sink(FileSinkDescriptor::create(outputFilePath, true));
+
+    QueryId queryId = queryService->addQueryRequest(evtTimeQuery.getQueryPlan()->toString(),
+                                                    evtTimeQuery.getQueryPlan(),
+                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService, std::chrono::seconds(600)));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    ASSERT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);
