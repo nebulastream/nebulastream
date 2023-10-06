@@ -161,7 +161,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
     } else {
         tuplesThisPass = tupleBuffer.getCapacity();
     }
-    NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
+    NES_TRACE("MQTTSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
 
     uint64_t tupleCount = 0;
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
@@ -189,7 +189,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                         NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
-                    NES_DEBUG("MQTTSource::fillBuffer: Tuples processed for current buffer: {} / {}", tupleCount, tuplesThisPass);
+                    NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: {} / {}", tupleCount, tuplesThisPass);
                     tupleCount++;
                 } else if (!client->is_connected()) {// message is a nullptr. Check if still connected to broker.
                     NES_WARNING("MQTTSource::fillBuffer: Not connected anymore!");
@@ -222,11 +222,10 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= bufferFlushIntervalMs)) {
-            NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_TRACE("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }//end of while
-    NES_DEBUG("MQTTSource::fillBuffer: emitting buffer, tplCnt={}, flushIntervalPassed={}!", tupleCount, flushIntervalPassed);
     tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
