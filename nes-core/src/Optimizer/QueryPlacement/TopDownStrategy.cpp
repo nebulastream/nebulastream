@@ -187,6 +187,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
         }
 
         //Pin the operator to the candidate node and mark as placed
+        candidateTopologyNode->reduceResources(1);
         logicalOperator->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
 
     } else {
