@@ -11,10 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        GeographyFieldsAccessExpressionNode.cpp
-        STWithinExpressionNode.cpp
-        STDWithinExpressionNode.cpp
-        STKnnExpressionNode.cpp
-        )
-add_subdirectory(ShapeExpressions)
+add_source_files(nes-common
+        DumpHandler.cpp
+        ConsoleDumpHandler.cpp
+        VizDumpHandler.cpp
+        DumpContext.cpp
+)
+
+add_subdirectory(Iterators)

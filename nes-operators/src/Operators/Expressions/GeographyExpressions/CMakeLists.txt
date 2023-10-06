@@ -11,8 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        BreadthFirstNodeIterator.cpp
-        DepthFirstNodeIterator.cpp
-)
-
+add_source_files(nes-operators
+        GeographyFieldsAccessExpressionNode.cpp
+        STWithinExpressionNode.cpp
+        STDWithinExpressionNode.cpp
+        STKnnExpressionNode.cpp
+        )
+add_subdirectory(ShapeExpressions)

@@ -16,4 +16,37 @@ add_source_files(nes-common
         SignalHandling.cpp
         RuntimeException.cpp
         NotImplementedException.cpp
+        ExecutionPlanRollbackException.cpp
+        RequestTypeNotHandledException.cpp
+        GlobalQueryPlanUpdateException.cpp
+        InvalidArgumentException.cpp
+        TaskExecutionException.cpp
+        InvalidFieldException.cpp
+        InvalidQueryException.cpp
+        InvalidQueryStateException.cpp
+        InvalidOperatorStateException.cpp
+        QueryDeploymentException.cpp
+        QueryPlacementException.cpp
+        QueryNotFoundException.cpp
+        QueryUndeploymentException.cpp
+        TypeInferenceException.cpp
+        UDFException.cpp
+        SignatureComputationException.cpp
+        WindowProcessingException.cpp
+        CoordinatesOutOfRangeException.cpp
+        InvalidCoordinateFormatException.cpp
+        MapEntryNotFoundException.cpp
+        LocationProviderException.cpp
+        ExecutionNodeNotFoundException.cpp
+        RPCException.cpp
+        RPCQueryUndeploymentException.cpp
+        SharedQueryPlanNotFoundException.cpp
+        RequestExecutionException.cpp
+        ResourceLockingException.cpp
+        StorageHandlerAcquireResourcesException.cpp
+        AccessNonLockedResourceException.cpp
+        PhysicalSourceNotFoundException.cpp
+        BlockingOperatorException.cpp
+        InvalidLogicalOperatorNodeException.cpp
+        LogicalSourceNotFoundException.cpp
 )

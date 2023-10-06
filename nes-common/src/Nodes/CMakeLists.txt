@@ -11,10 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        ShapeExpressionNode.cpp
-        CircleExpressionNode.cpp
-        PointExpressionNode.cpp
-        PolygonExpressionNode.cpp
-        RectangleExpressionNode.cpp
-        )
+add_source_files(nes-common
+        Node.cpp
+)
+add_subdirectory(Util)
