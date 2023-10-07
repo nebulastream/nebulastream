@@ -12,10 +12,16 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        OperatorNode.cpp
+        CsvFormat.cpp
+        JsonFormat.cpp
+        NesFormat.cpp
+        SinkFormat.cpp
 )
 
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)
+if (NES_USE_ARROW)
+    add_source_files(nes-operators
+            ArrowFormat.cpp
+            )
+endif ()
+
+add_subdirectory(FormatIterators)

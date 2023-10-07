@@ -15,19 +15,19 @@
 # Set Sources and Headers
 # Include dirs
 add_subdirectory(src)
-get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
+get_source(nes-configurations NES_CONFIGURATIONS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-optimizer SHARED ${NES_OPTIMIZER_SOURCE_FILES})
-target_link_libraries(nes-optimizer PUBLIC nes-common nes-operators nes-catalogs nes-configurations nes-data-types)
+add_library(nes-configurations SHARED ${NES_CONFIGURATIONS_SOURCE_FILES})
+target_link_libraries(nes-configurations PUBLIC nes-common)
 
-target_include_directories(nes-optimizer PUBLIC
+target_include_directories(nes-configurations PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-optimizer REUSE_FROM nes-common)
+    target_precompile_headers(nes-configurations REUSE_FROM nes-common)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
-    target_compile_options(nes-optimizer PUBLIC "-fPIC")
+    target_compile_options(nes-configurations PUBLIC "-fPIC")
 endif ()
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -38,7 +38,7 @@ else ()
 endif ()
 
 #Add the nes common and headers to cpack
-install(TARGETS nes-optimizer
+install(TARGETS nes-configurations
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)

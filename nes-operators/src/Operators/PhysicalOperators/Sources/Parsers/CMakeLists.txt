@@ -12,10 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        OperatorNode.cpp
+        Parser.cpp
+        JSONParser.cpp
+        CSVParser.cpp
 )
-
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)

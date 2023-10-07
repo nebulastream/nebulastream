@@ -1,3 +1,4 @@
+# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-operators
-        OperatorNode.cpp
-)
+# Google Testing Framework ----------------------------------------------------
+include(ExternalProject)
 
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
+

@@ -12,10 +12,31 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        OperatorNode.cpp
+        DataSource.cpp
+        GeneratorSource.cpp
+        BinarySource.cpp
+        ZmqSource.cpp
+        CSVSource.cpp
+        SourceCreator.cpp
+        DefaultSource.cpp
+        SenseSource.cpp
+        MonitoringSource.cpp
+        MemorySource.cpp
+        StaticDataSource.cpp
+        LambdaSource.cpp
+        BenchmarkSource.cpp
+        TCPSource.cpp
+        KafkaSource.cpp
 )
+add_subdirectory(Parsers)
 
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)
+if(NES_USE_OPC)
+    add_source_files(nes-core
+            OPCSource.cpp
+    )
+endif()
+if(NES_USE_MQTT)
+    add_source_files(nes-core
+            MQTTSource.cpp
+    )
+endif()

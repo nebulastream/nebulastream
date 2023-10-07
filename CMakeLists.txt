@@ -685,8 +685,10 @@ add_subdirectory(nes-data-types)
 add_subdirectory(nes-compiler)
 # Add target for the runtime
 add_subdirectory(nes-runtime)
-# Add target for datastore
-add_subdirectory(nes-datastore)
+# Add target for catalogs
+add_subdirectory(nes-catalogs)
+# Add target for configurations
+add_subdirectory(nes-configurations)
 # Add target for operators
 add_subdirectory(nes-operators)
 # Add target for optimizer

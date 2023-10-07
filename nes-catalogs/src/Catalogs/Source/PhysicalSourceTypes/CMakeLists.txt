@@ -11,11 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-operators
-        OperatorNode.cpp
+add_source_files(nes-catalogs
+        PhysicalSourceType.cpp
+        MemorySourceType.cpp
+        LambdaSourceType.cpp
+        BenchmarkSourceType.cpp
+        CSVSourceType.cpp
+        BinarySourceType.cpp
+        DefaultSourceType.cpp
+        KafkaSourceType.cpp
+        MonitoringSourceType.cpp
+        MQTTSourceType.cpp
+        OPCSourceType.cpp
+        SenseSourceType.cpp
+        StaticDataSourceType.cpp
+        TCPSourceType.cpp
 )
-
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)

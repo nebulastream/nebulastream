@@ -12,10 +12,9 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        OperatorNode.cpp
+        SinkCreator.cpp
 )
 
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)
+add_subdirectory(Mediums)
+add_subdirectory(Formats)
+

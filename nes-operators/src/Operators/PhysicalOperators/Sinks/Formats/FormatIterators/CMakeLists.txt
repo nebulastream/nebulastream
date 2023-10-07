@@ -12,10 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        OperatorNode.cpp
+        FormatIterator.cpp
+        Iterator.cpp
 )
-
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)
