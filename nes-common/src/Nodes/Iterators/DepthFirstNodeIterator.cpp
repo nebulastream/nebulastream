@@ -13,9 +13,10 @@
 */
 
 #include <Nodes/Node.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
+
 namespace NES {
 
 DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start) : start(std::move(start)){};

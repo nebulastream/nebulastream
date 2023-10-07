@@ -12,6 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-common
-        Node.cpp
+        DumpHandler.cpp
+        ConsoleDumpHandler.cpp
+        VizDumpHandler.cpp
+        DumpContext.cpp
 )
-add_subdirectory(Iterators)
