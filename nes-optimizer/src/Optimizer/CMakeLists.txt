@@ -11,11 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-operators
-        OperatorNode.cpp
-)
-
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)
+add_subdirectory(Phases)
+add_subdirectory(QueryMerger)
+add_subdirectory(QueryPlacement)
+add_subdirectory(QueryRewrite)
+add_subdirectory(QuerySignatures)
+add_subdirectory(QueryValidation)

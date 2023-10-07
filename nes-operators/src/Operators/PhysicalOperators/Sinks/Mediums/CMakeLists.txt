@@ -12,10 +12,24 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        OperatorNode.cpp
+        FileSink.cpp
+        ZmqSink.cpp
+        SinkMedium.cpp
+        PrintSink.cpp
+        NullOutputSink.cpp
+        MonitoringSink.cpp
+        KafkaSink.cpp
 )
 
-add_subdirectory(LogicalOperators)
-add_subdirectory(AbstractOperators)
-add_subdirectory(Expressions)
-add_subdirectory(PhysicalOperators)
+
+if (NES_USE_OPC)
+    add_source_files(nes-core
+        OPCSink.cpp
+    )
+endif ()
+
+if (NES_USE_MQTT)
+    add_source_files(nes-core
+            MQTTSink.cpp
+    )
+endif ()

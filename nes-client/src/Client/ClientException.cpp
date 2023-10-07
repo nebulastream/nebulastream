@@ -13,6 +13,7 @@
 */
 #include <Client/ClientException.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Client {
 
 ClientException::ClientException(const std::string& message) : RuntimeException(message, NES::collectAndPrintStacktrace()) {
