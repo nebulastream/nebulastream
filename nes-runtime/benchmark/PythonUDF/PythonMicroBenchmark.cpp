@@ -42,8 +42,8 @@ namespace NES::Runtime::Execution {
 
 class MicroBenchmarkRunner {
   public:
-    MicroBenchmarkRunner(std::string compiler)
-        : compiler(compiler) {
+    MicroBenchmarkRunner(std::string compiler, std::string pythonCompiler)
+        : compiler(compiler), pythonCompiler(pythonCompiler) {
 
         NES::Logger::setupLogging("MicroBenchmarkRunner.log", NES::LogLevel::LOG_DEBUG);
         provider = ExecutablePipelineProviderRegistry::getPlugin(compiler).get();
@@ -130,9 +130,10 @@ class MicroBenchmarkRunner {
      */
     auto initMapHandler(std::string function,
                         std::string functionName,
+                        std::string pythonCompiler,
                         SchemaPtr inputSchema,
                         SchemaPtr outputSchema) {
-        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, inputSchema, outputSchema);
+        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, pythonCompiler, inputSchema, outputSchema);
     }
 
     virtual ~MicroBenchmarkRunner() = default;
@@ -142,6 +143,7 @@ class MicroBenchmarkRunner {
     uint64_t iterations = 10;
     //TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F1;
     std::string compiler;
+    std::string pythonCompiler;
     ExecutablePipelineProvider* provider;
     Nautilus::CompilationOptions options;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -152,7 +154,7 @@ class MicroBenchmarkRunner {
 
 class SimpleFilterQueryNumericalNES : public MicroBenchmarkRunner {
   public:
-    SimpleFilterQueryNumericalNES(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleFilterQueryNumericalNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         schema->addField("x", BasicType::INT64);
@@ -195,7 +197,7 @@ class SimpleFilterQueryNumericalNES : public MicroBenchmarkRunner {
 
 class SimpleMapQueryNES : public MicroBenchmarkRunner {
   public:
-    SimpleMapQueryNES(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleMapQueryNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         schema->addField("x", BasicType::INT64);
@@ -239,7 +241,7 @@ class SimpleMapQueryNES : public MicroBenchmarkRunner {
 
 class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
   public:
-    SimpleProjectionQueryNES(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleProjectionQueryNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("x", BasicType::INT64)
@@ -299,7 +301,7 @@ class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
 
 class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
   public:
-    SimpleFilterQueryNumericalUDF(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleFilterQueryNumericalUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         std::string function = "def filter_numerical(x):"
                                "\n\treturn x > 10\n";
@@ -314,7 +316,7 @@ class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
         // auto dummyBuffer = NES::Runtime::TupleBuffer();
         auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, schema, schema);
+        auto handler = initMapHandler(function, functionName, pythonCompiler, schema, schema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
         compileTimeTimer.snapshot("setup");
@@ -331,7 +333,7 @@ class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
 
 class SimpleMapQueryUDF : public MicroBenchmarkRunner {
   public:
-    SimpleMapQueryUDF(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleMapQueryUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         std::string function = "def simple_map(x):"
@@ -348,7 +350,7 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
         // auto dummyBuffer = NES::Runtime::TupleBuffer(); // from the TPCHBenchmark
         auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, schema, schema);
+        auto handler = initMapHandler(function, functionName, pythonCompiler, schema, schema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
         compileTimeTimer.snapshot("setup");
@@ -365,7 +367,7 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
 
 class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
   public:
-    SimpleProjectionQueryUDF(std::string compiler) : MicroBenchmarkRunner(compiler){};
+    SimpleProjectionQueryUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         std::string function = "def simple_projection(x, y, z):"
@@ -385,7 +387,46 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
         //auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
 
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, inputSchema, outputSchema);
+        auto handler = initMapHandler(function, functionName, pythonCompiler, inputSchema, outputSchema);
+        auto pipelineContext = MockedPipelineExecutionContext({handler});
+        executablePipeline->setup(pipelineContext);
+        compileTimeTimer.snapshot("setup");
+        compileTimeTimer.pause();
+
+        executionTimeTimer.start();
+        executablePipeline->execute(buffer, pipelineContext, *wc);
+        executionTimeTimer.snapshot("execute");
+        executionTimeTimer.pause();
+
+        executablePipeline->stop(pipelineContext);
+    }
+};
+
+class NumbaExampleUDF : public MicroBenchmarkRunner {
+    // using a modified example of the 5 minutes guide to check whether numba is working
+    // https://numba.pydata.org/numba-doc/latest/user/5minguide.html
+  public:
+    NumbaExampleUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
+
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
+        std::string function = "def go_fast(x):"
+                               "\n\ta = np.arange(100).reshape(10, 10)"
+                               "\n\ttrace = 0.0"
+                               "\n\tfor i in range(a.shape[0]):"
+                               "\n\t\ttrace += np.tanh(a[i, i])"
+                               "\n\treturn x + trace + a";
+        std::string functionName = "go_fast";
+        auto variableName = "x";
+        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField(variableName, BasicType::INT64);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+        compileTimeTimer.start();
+        auto pipeline = initPipelineOperator(schema, schema, bm);
+        // auto dummyBuffer = NES::Runtime::TupleBuffer(); // from the TPCHBenchmark
+        auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
+        auto executablePipeline = provider->create(pipeline, options);
+        auto handler = initMapHandler(function, functionName, pythonCompiler, schema, schema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
         compileTimeTimer.snapshot("setup");
@@ -404,29 +445,16 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
 
 int main(int, char**) {
     std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
-    /*for (const auto& c : compilers) {
-        NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c).run();
-    }*/
-
-    /*for (const auto& c : compilers) {
-        NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c).run();
-    }*/
-
-    /*
+    std::vector<std::string> pythonCompilers = {"default", "numba"};
     for (const auto& c : compilers) {
-        NES::Runtime::Execution::SimpleMapQueryUDF(c).run();
-    }*/
-    /*
-    for (const auto& c : compilers) {
-        NES::Runtime::Execution::SimpleMapQueryNES(c).run();
-    }*/
-    // TODO fix projection queries...
-    /*
-    for (const auto& c : compilers) {
-        NES::Runtime::Execution::SimpleProjectionQueryUDF(c).run();
-    }*/
-
-    for (const auto& c : compilers) {
-        NES::Runtime::Execution::SimpleProjectionQueryNES(c).run();
+        for (const auto& pythonCompiler : pythonCompilers) {
+            NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
+            // NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
+            // NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
+            // NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
+            // TODO fix projection queries...
+            // NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
+            // NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();
+        }
     }
 }
