@@ -29,14 +29,16 @@ class PythonUDFDescriptor : public UDFDescriptor {
   public:
     PythonUDFDescriptor(const std::string& functionName,
                         const std::string& functionString,
+                        const std::string& pythonCompiler,
                         const SchemaPtr& inputSchema,
                         const SchemaPtr& outputSchema);
 
     static PythonUDFDescriptorPtr create(const std::string& functionName,
                                          const std::string& functionString,
+                                         const std::string& pythonCompiler,
                                          const SchemaPtr inputSchema,
                                          const SchemaPtr outputSchema) {
-        return std::make_shared<PythonUDFDescriptor>(functionName, functionString, inputSchema, outputSchema);
+        return std::make_shared<PythonUDFDescriptor>(functionName, functionString, pythonCompiler, inputSchema, outputSchema);
     }
 
     /**
@@ -45,6 +47,11 @@ class PythonUDFDescriptor : public UDFDescriptor {
      */
     const std::string& getFunctionString() const { return functionString; }
 
+    /**
+     * @brief Return the fully-qualified class name of the class implementing the UDF.
+     * @return Fully-qualified class name of the class implementing the UDF.
+     */
+    const std::string& getPythonCompiler() const { return pythonCompiler; }
     /**
      * @brief Generates the infer string signature required for the logical operator
      * @return the infer string signature stream
@@ -62,6 +69,7 @@ class PythonUDFDescriptor : public UDFDescriptor {
 
   private:
     const std::string functionString;
+    const std::string& pythonCompiler;
 };
 }// namespace NES::Catalogs::UDF
 #endif// NES_CORE_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_

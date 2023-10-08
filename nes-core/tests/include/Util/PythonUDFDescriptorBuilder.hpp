@@ -57,6 +57,13 @@ class PythonUDFDescriptorBuilder {
     PythonUDFDescriptorBuilder& setFunctionString(const std::string& newFunctionString);
 
     /**
+     * Set the python compiler of the Python UDF descriptor.
+     * @param newFunctionName name of the Python compiler.
+     * @return The PythonUDFDescriptorBuilder instance.
+     */
+    PythonUDFDescriptorBuilder& setPythonCompiler(const std::string& pythonCompiler);
+
+    /**
      * Set the input schema of the Python UDF descriptor.
      * @param newInputSchema The input schema of the Python UDF descriptor.
      * @return The PythonUDFDescriptorBuilder instance.
@@ -79,6 +86,7 @@ class PythonUDFDescriptorBuilder {
   private:
     std::string functionName;
     std::string functionString;
+    std::string pythonCompiler;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
 };

@@ -23,14 +23,32 @@ void PythonUDFOperatorHandler::initPython() {
     this->moduleName = this->functionName + "Module";
     // initialize python interpreter
     Py_Initialize();
+
+    //choose python compiler, default is the CPython compiler
+    if (this->pythonCompiler == "numba") {
+        std::string numbaImport = "from numba import jit"
+                                  "\n"
+                                  "@jit(nopython=True)\n";
+        PyObject* compiledNumbaImport = Py_CompileString(numbaImport.c_str(), "", Py_file_input);
+        if (compiledNumbaImport == NULL) {
+            if (PyErr_Occurred()) {
+                PyErr_Print();
+                PyErr_Clear();
+                NES_THROW_RUNTIME_ERROR("Could not compile numba import.");
+            }
+        }
+    }
+
+    // compile function string
     PyObject* pythonCode = Py_CompileString(this->function.c_str(), "", Py_file_input);
     if (pythonCode == NULL) {
         if (PyErr_Occurred()) {
             PyErr_Print();
             PyErr_Clear();
-            NES_THROW_RUNTIME_ERROR("Could not compile String.");
+            NES_THROW_RUNTIME_ERROR("Could not compile function string.");
         }
     }
+
     // add python code into our module
     this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), pythonCode);
     if (this->pythonModule == NULL) {
