@@ -71,7 +71,7 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
      * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
      * network channel to become available
      */
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testAsyncConnectingSink) {
+TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     uint64_t numBuffersToProduce = 400;
     uint64_t tuplesPerBuffer = 10;
     NES_INFO(" start coordinator");
@@ -156,7 +156,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testAsyncConnectingSink) {
 }
 
 //todo: remove because redundant?
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnect) {
+TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnect) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     const uint64_t numBuffersToProduceAfterReconnect = 40;
@@ -403,8 +403,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnect) {
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
     wrk1->getNodeEngine()->reconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
                                                   "localhost",
-        //*wrk2DataPort,
-        //*crdWorkerDataPort,
                                                   *wrk3DataPort,
                                                   subQueryIds.front(),
                                                   uniqueNetworkSinkDescriptorId,
@@ -448,6 +446,12 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnect) {
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
     waitForFinalCount = true;
     waitForFinalCount.notify_all();
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
+    //worker 2 did not receive any soft stop, because the node reconnected
+    ASSERT_TRUE(wrk2->getNodeEngine()->stopQuery(sharedQueryId));
+    //worker at coordinator expects double number of threads to send soft stop because source reconfig is not implemented yet
+    ASSERT_TRUE(crd->getNesWorker()->getNodeEngine()->stopQuery(sharedQueryId));
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
@@ -771,7 +775,14 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     waitForFinalCount = true;
     waitForFinalCount.notify_all();
 
-    //send the last tuples, after which the lambda source
+    //send the last tuples, after which the lambda source shuts down
+
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
+    //worker 2 did not receive any soft stop, because the node reconnected
+    ASSERT_TRUE(wrk2->getNodeEngine()->stopQuery(sharedQueryId));
+    //worker at coordinator expects double number of threads to send soft stop because source reconfig is not implemented yet
+    ASSERT_TRUE(crd->getNesWorker()->getNodeEngine()->stopQuery(sharedQueryId));
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
@@ -797,7 +808,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
 }
 
 //todo: reenable after implementing handling of eos
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering) {
+TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     //const uint64_t numBuffersToProduceAfterReconnect = 40;
@@ -1082,8 +1093,14 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     auto success_start_wrk3 = wrk3->getNodeEngine()->startQuery(sharedQueryId);
     ASSERT_TRUE(success_start_wrk3);
 
-    //check that all tuples arrived
+    //check that all tuples arrived and that query terminated successfully
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
+    //worker 2 did not receive any soft stop, because the node reconnected
+    ASSERT_TRUE(wrk2->getNodeEngine()->stopQuery(sharedQueryId));
+    //worker at coordinator expects double number of threads to send soft stop because source reconfig is not implemented yet
+    ASSERT_TRUE(crd->getNesWorker()->getNodeEngine()->stopQuery(sharedQueryId));
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
@@ -1109,7 +1126,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
 }
 
 //todo rewrite this test like the other ones with lambda source and without deployment by coordinator and then reenable
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuffering) {
+TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     uint64_t numBuffersToProduce = 400;
     uint64_t tuplesPerBuffer = 10;
     uint64_t numThreads = GetParam();

@@ -149,8 +149,8 @@ class EndOfStreamMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::EndOfStream;
 
-    explicit EndOfStreamMessage(ChannelId channelId, ChannelType channelType, Runtime::QueryTerminationType terminationType)
-        : ExchangeMessage(channelId), channelType(channelType), terminationType(terminationType) {}
+    explicit EndOfStreamMessage(ChannelId channelId, ChannelType channelType, Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads)
+        : ExchangeMessage(channelId), channelType(channelType), terminationType(terminationType), numSendingThreads(numSendingThreads) {}
 
     [[nodiscard]] Runtime::QueryTerminationType getQueryTerminationType() const { return terminationType; }
 
@@ -158,9 +158,12 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] bool isEventChannel() const { return channelType == ChannelType::EventOnlyChannel; }
 
+    [[nodiscard]] uint16_t getNumberOfSendingThreads() const { return numSendingThreads; }
+
   private:
     ChannelType channelType;
     Runtime::QueryTerminationType terminationType;
+    uint16_t numSendingThreads;
 };
 
 /**

@@ -279,6 +279,45 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
 }
 
 /**
+     * @brief Check if the query is been stopped successfully within the timeout.
+     * @param queryId: Id of the query to be stopped
+     * @param queryCatalogService: the catalog containig the queries in the system
+     * @return true if successful
+     */
+[[nodiscard]] bool
+checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono::seconds timeout) {
+    auto timeoutInSec = std::chrono::seconds(timeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        NES_TRACE("checkStoppedOrTimeout: check query status for {}", queryId);
+        if (worker->getNodeEngine()->getQueryStatus(queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+            //if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::STOPPED) {
+            NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", queryId);
+            return true;
+        }
+        /*
+        NES_DEBUG("checkStoppedOrTimeout: status not reached for {} as status is={}",
+                  queryId,
+                  queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+                  */
+        std::string status;
+        switch (worker->getNodeEngine()->getQueryStatus(queryId)) {
+            case Runtime::Execution::ExecutableQueryPlanStatus::Created: status = "created"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Deployed: status = "deployed"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Running: status = "running"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Finished: status = "finished"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Stopped: status = "stopped"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::ErrorState: status = "error"; break;
+            case Runtime::Execution::ExecutableQueryPlanStatus::Invalid: status = "invalid"; break;
+        }
+        NES_DEBUG("checkStoppedOrTimeout: status not reached for {} at worker {}. Current state =  {}", queryId, worker->getWorkerId(), status);
+        std::this_thread::sleep_for(sleepDuration);
+    }
+    NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
+    return false;
+}
+
+/**
      * @brief Check if the query has failed within the timeout.
      * @param queryId: Id of the query to be stopped
      * @param queryCatalogService: the catalog containig the queries in the system

@@ -31,11 +31,13 @@ PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& 
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; }
+void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; totalConnections++; }
 
 void PartitionManager::PartitionConsumerEntry::unpin() { partitionCounter--; }
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
+
+uint64_t PartitionManager::PartitionConsumerEntry::getTotalConnections() const { return totalConnections; }
 
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
     : receiverLocation(std::move(senderLocation)) {
@@ -44,7 +46,7 @@ PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& 
 
 uint64_t PartitionManager::PartitionProducerEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionProducerEntry::pin() { partitionCounter++; }
+void PartitionManager::PartitionProducerEntry::pin() { partitionCounter++;}
 
 void PartitionManager::PartitionProducerEntry::unpin() { partitionCounter--; }
 
@@ -108,6 +110,14 @@ std::optional<uint64_t> PartitionManager::getSubpartitionConsumerCounter(NesPart
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
         return it->second.count();
+    }
+    return std::nullopt;
+}
+
+std::optional<uint64_t> PartitionManager::getSubpartitionConsumerTotalConnections(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
+        return it->second.getTotalConnections();
     }
     return std::nullopt;
 }

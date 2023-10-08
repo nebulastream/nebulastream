@@ -98,6 +98,8 @@ class PartitionManager {
          */
         [[nodiscard]] uint64_t count() const;
 
+        [[nodiscard]] uint64_t getTotalConnections() const;
+
         /**
          * @brief increment ref cnt by 1
          */
@@ -115,6 +117,7 @@ class PartitionManager {
 
       private:
         uint64_t partitionCounter{1};
+        uint64_t totalConnections{1};
         NodeLocation senderLocation;
         DataEmitterPtr consumer{nullptr};
     };
@@ -154,6 +157,8 @@ class PartitionManager {
      * @throw  std::out_of_range  If no such data is present.
      */
     std::optional<uint64_t> getSubpartitionConsumerCounter(NesPartition partition);
+
+    std::optional<uint64_t> getSubpartitionConsumerTotalConnections(NesPartition partition);
 
     /**
      * @brief checks if a partition is registered

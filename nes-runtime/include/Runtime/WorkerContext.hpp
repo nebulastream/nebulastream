@@ -52,6 +52,7 @@ class WorkerContext {
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
     std::unordered_map<NES::OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>> dataChannelFutures;
+    //std::unordered_set<uint64_t> drainedSinks;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool stored in tls
@@ -178,7 +179,7 @@ class WorkerContext {
      * @param id of the operator that we want to store the output channel
      * @param type the termination type
      */
-    bool releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type);
+    bool releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType type, uint16_t sendingThreadCount);
 
     /**
      * @brief This stores a network channel for an operator
@@ -252,6 +253,8 @@ class WorkerContext {
      * @param ownerId the id of the operator that started the connection process
      */
     void abortConnectionProcess(OperatorId ownerId);
+
+    bool doesNetworkChannelExist(uint64_t sinkId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime
