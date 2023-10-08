@@ -30,9 +30,10 @@ class PythonUDFOperatorHandler : public OperatorHandler {
   public:
     explicit PythonUDFOperatorHandler(const std::string& function,
                                       const std::string& functionName,
+                                      const std::string& pythonCompiler,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema)
-        : function(function), functionName(functionName), inputSchema(inputSchema), outputSchema(outputSchema) {}
+        : function(function), functionName(functionName), pythonCompiler(pythonCompiler), inputSchema(inputSchema), outputSchema(outputSchema) {}
 
     /**
      * @brief This method returns the udf as a string
@@ -63,6 +64,12 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      * @return module name as string
      */
     std::string getModuleName() const { return this->moduleName; }
+
+    /**
+     * @brief Getter function for the python compiler
+     * @return name of the compiler as string
+     */
+    std::string getPythonCompiler() const { return this->pythonCompiler; }
 
     /**
      * @brief Getter function for the arguments that go into the python udf function
@@ -115,6 +122,7 @@ class PythonUDFOperatorHandler : public OperatorHandler {
   private:
     const std::string function;
     const std::string functionName;
+    const std::string pythonCompiler;
     const SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
     std::string moduleName;

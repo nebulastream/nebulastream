@@ -20,9 +20,10 @@ namespace NES::Catalogs::UDF {
 
 PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName,
                                          const std::string& functionString,
+                                         const std::string& pythonCompiler,
                                          const SchemaPtr& inputSchema,
                                          const SchemaPtr& outputSchema)
-    : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString) {
+    : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString), pythonCompiler(pythonCompiler) {
     if (functionString.empty()) {
         throw UDFException("Function String of Python UDF must not be empty");
     }
@@ -34,7 +35,7 @@ bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
 std::stringstream PythonUDFDescriptor::generateInferStringSignature() {
     auto signatureStream = std::stringstream{};
     auto& functionName = getMethodName();
-    signatureStream << "PYTHON_UDF(functionName=" + functionName + ", functionString=" + functionString + ")";
+    signatureStream << "PYTHON_UDF(functionName=" + functionName + ", functionString=" + functionString + ", pythonCompiler=" + pythonCompiler + ")";
     return signatureStream;
 }
 }// namespace NES::Catalogs::UDF

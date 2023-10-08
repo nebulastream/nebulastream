@@ -16,7 +16,7 @@
 
 namespace NES::Catalogs::UDF {
 PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::build() {
-    return PythonUDFDescriptor::create(functionName, functionString, inputSchema, outputSchema);
+    return PythonUDFDescriptor::create(functionName, functionString, pythonCompiler, inputSchema, outputSchema);
 }
 
 PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionName(const std::string& newFunctionName) {
@@ -26,6 +26,11 @@ PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionName(const st
 
 PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionString(const std::string& newFunctionString) {
     this->functionString = newFunctionString;
+    return *this;
+}
+
+PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setPythonCompiler(const std::string& newPythonCompiler) {
+    this->pythonCompiler = newPythonCompiler;
     return *this;
 }
 
@@ -42,11 +47,13 @@ PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setOutputSchema(const Sc
 PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor() {
     std::string functionName = "udf_function";
     std::string functionString = "def udf_function(x):\n\ty = x + 10\n\treturn y\n";
+    std::string pythonCompiler = "default"; // default compiler
     SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
     SchemaPtr outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createUInt64());
     return PythonUDFDescriptorBuilder{}
         .setFunctionName(functionName)
         .setFunctionString(functionString)
+        .setPythonCompiler(pythonCompiler)
         .setInputSchema(inputSchema)
         .setOutputSchema(outputSchema)
         .build();
