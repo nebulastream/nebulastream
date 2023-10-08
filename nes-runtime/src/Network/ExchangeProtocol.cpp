@@ -114,7 +114,10 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         NES_ASSERT2_FMT(!endOfStreamMessage.isEventChannel(),
                         "Received EOS for data channel on event channel for consumer "
                             << endOfStreamMessage.getChannelId().toString());
-        if (partitionManager->unregisterSubpartitionConsumer(endOfStreamMessage.getChannelId().getNesPartition())) {
+        auto partition = endOfStreamMessage.getChannelId().getNesPartition();
+        //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
+        auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads() + 1;
+        if (partitionManager->unregisterSubpartitionConsumer(partition) && partitionManager->getSubpartitionConsumerTotalConnections(partition) == expectedTotalConnectionsInPartitionManager) {
             partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
                 ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
             protocolListener->onEndOfStream(endOfStreamMessage);

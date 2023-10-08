@@ -120,7 +120,22 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
             if (nodeEngine->getConnectSinksAsync()) {
-                connectToChannelAsync(workerContext, receiverLocation, nesPartition);
+                //connectToChannelAsync(workerContext, receiverLocation, nesPartition);
+                //todo: extract this to a function and rename the old one to REconnect
+                auto reconf = Runtime::ReconfigurationMessage(queryId,
+                                                              querySubPlanId,
+                                                              Runtime::ReconfigurationType::ConnectionEstablished,
+                                                              inherited0::shared_from_this(),
+                                                              std::make_any<uint32_t>(numOfProducers));
+
+                auto networkChannelFuture = networkManager->registerSubpartitionProducerAsync(receiverLocation,
+                                                                                              nesPartition,
+                                                                                              bufferManager,
+                                                                                              waitTime,
+                                                                                              retryTimes,
+                                                                                              reconf,
+                                                                                              queryManager);
+                workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
             } else {
                 auto channel = networkManager->registerSubpartitionProducer(receiverLocation,
                                                                             nesPartition,
@@ -188,6 +203,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
 
             //retrieve new channel
+            //todo: what happens in the nullptr case?
             auto newNetworkChannelFuture = workerContext.getAsyncConnectionResult(getUniqueNetworkSinkDescriptorId());
 
             //if the connection process did not finish yet, the reconfiguration was triggered by another thread.
@@ -238,7 +254,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
             unbuffer(workerContext);
                 networkManager->unregisterSubpartitionProducer(nesPartition);
-                NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType),
+                NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType, queryManager->getNumberOfWorkerThreads()),
                                 "Cannot remove network channel " << nesPartition.toString());
                 NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
                           nesPartition.toString(),
@@ -254,6 +270,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
     //update info about receiving network source to new target
     if (task.getType() == Runtime::ReconfigurationType::ConnectToNewNetworkSource) {
         auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
+        networkManager->unregisterSubpartitionProducer(nesPartition);
         receiverLocation = newReceiverLocation;
         nesPartition = newPartition;
     }
@@ -308,9 +325,7 @@ void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext,
               querySubPlanId,
               Runtime::NesThread::getId());
 
-    if (networkManager->isPartitionProducerRegistered(nesPartition) != PartitionRegistrationStatus::NotFound) {
-        networkManager->unregisterSubpartitionProducer(nesPartition);
-    }
+    networkManager->unregisterSubpartitionProducer(nesPartition);
 
     auto reconf = Runtime::ReconfigurationMessage(queryId,
                                                   querySubPlanId,
@@ -326,7 +341,7 @@ void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext,
                                                                                   reconf,
                                                                                   queryManager);
     //todo: #4227 use QueryTerminationType::Redeployment
-    workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), Runtime::QueryTerminationType::HardStop);
+    workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), Runtime::QueryTerminationType::HardStop, queryManager->getNumberOfWorkerThreads());
     workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
 }
 

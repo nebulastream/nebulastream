@@ -58,7 +58,7 @@ class BaseNetworkChannel {
      * @param isEventOnly whether the channel is for events only
      * @param terminationType the type of termination, e.g., graceful
      */
-    void close(bool isEventOnly, Runtime::QueryTerminationType terminationType);
+    void close(bool isEventOnly, Runtime::QueryTerminationType terminationType, uint16_t numSendingThreads = 0);
 
   protected:
     const std::string socketAddr;
