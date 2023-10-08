@@ -99,6 +99,7 @@ UDFSerializationUtil::deserializeUDFDescriptor(const UDFDescriptorMessage& udfDe
         return Catalogs::UDF::PythonUDFDescriptor::create(pythonUdfDescriptorMessage.udf_method_name(),
                                                           pythonUdfDescriptorMessage.function_string(),
                                                           modulesToImport,
+                                                          "default",
                                                           inputSchema,
                                                           outputSchema);
     } else {

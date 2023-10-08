@@ -130,10 +130,11 @@ class MicroBenchmarkRunner {
      */
     auto initMapHandler(std::string function,
                         std::string functionName,
+                        std::map<std::string, std::string> modulesToImport,
                         std::string pythonCompiler,
                         SchemaPtr inputSchema,
                         SchemaPtr outputSchema) {
-        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, pythonCompiler, inputSchema, outputSchema);
+        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
     }
 
     virtual ~MicroBenchmarkRunner() = default;
@@ -303,6 +304,7 @@ class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
   public:
     SimpleFilterQueryNumericalUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
+        std::map<std::string, std::string> modulesToImport;
         std::string function = "def filter_numerical(x):"
                                "\n\treturn x > 10\n";
         std::string functionName = "filter_numerical";
@@ -316,7 +318,7 @@ class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
         // auto dummyBuffer = NES::Runtime::TupleBuffer();
         auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, pythonCompiler, schema, schema);
+        auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, schema, schema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
         compileTimeTimer.snapshot("setup");
@@ -336,6 +338,7 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
     SimpleMapQueryUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
+        std::map<std::string, std::string> modulesToImport;
         std::string function = "def simple_map(x):"
                                "\n\ty = x + 10"
                                "\n\treturn y\n";
@@ -350,7 +353,7 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
         // auto dummyBuffer = NES::Runtime::TupleBuffer(); // from the TPCHBenchmark
         auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, pythonCompiler, schema, schema);
+        auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, schema, schema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
         compileTimeTimer.snapshot("setup");
@@ -370,6 +373,7 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
     SimpleProjectionQueryUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
+        std::map<std::string, std::string> modulesToImport;
         std::string function = "def simple_projection(x, y, z):"
                                "\n\treturn x\n";
         std::string functionName = "simple_projection";
@@ -387,7 +391,7 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
         //auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
 
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, pythonCompiler, inputSchema, outputSchema);
+        auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
         compileTimeTimer.snapshot("setup");
@@ -409,12 +413,14 @@ class NumbaExampleUDF : public MicroBenchmarkRunner {
     NumbaExampleUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
+        std::map<std::string, std::string> modulesToImport;
+        modulesToImport.insert({"numpy", "np"});
         std::string function = "def go_fast(x):"
                                "\n\ta = np.arange(100).reshape(10, 10)"
                                "\n\ttrace = 0.0"
                                "\n\tfor i in range(a.shape[0]):"
                                "\n\t\ttrace += np.tanh(a[i, i])"
-                               "\n\treturn x + trace + a";
+                               "\n\treturn 1"; // cannot return numpy array atm
         std::string functionName = "go_fast";
         auto variableName = "x";
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -426,7 +432,7 @@ class NumbaExampleUDF : public MicroBenchmarkRunner {
         // auto dummyBuffer = NES::Runtime::TupleBuffer(); // from the TPCHBenchmark
         auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
         auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, pythonCompiler, schema, schema);
+        auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, schema, schema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
         executablePipeline->setup(pipelineContext);
         compileTimeTimer.snapshot("setup");
@@ -444,17 +450,18 @@ class NumbaExampleUDF : public MicroBenchmarkRunner {
 }// namespace NES::Runtime::Execution
 
 int main(int, char**) {
-    std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
-    std::vector<std::string> pythonCompilers = {"default", "numba"};
+    std::vector<std::string> compilers = {"PipelineCompiler"};
+    std::vector<std::string> pythonCompilers = {"numba"};
     for (const auto& c : compilers) {
         for (const auto& pythonCompiler : pythonCompilers) {
-            NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
+            //NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
             // TODO fix projection queries...
             // NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();
+            NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
         }
     }
 }

@@ -168,7 +168,7 @@ TEST_F(MapPythonUdfOperatorTest, MathImportUDFTest) {
 
     int32_t x = 3;
     int32_t y = 2;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -193,7 +193,7 @@ TEST_F(MapPythonUdfOperatorTest, MathImportWithAliasUDFTest) {
 
     int32_t x = 3;
     int32_t y = 2;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -227,7 +227,7 @@ TEST_F(MapPythonUdfOperatorTest, NumpyImportWithAliasUDFTest) {
     int32_t x = 3;
     int32_t y = 4;
     int32_t z = 2;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -255,7 +255,7 @@ TEST_F(MapPythonUdfOperatorTest, StringUDFTest) {
     functionName = "string_test";
 
     auto initialValue = "old_value";
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
 
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
