@@ -24,6 +24,32 @@ void PythonUDFOperatorHandler::initPython() {
     // initialize python interpreter
     Py_Initialize();
 
+    if (!this->modulesToImport.empty()) {
+        // import modules
+        std::map<std::string, std::string>::const_iterator it = this->modulesToImport.begin();
+
+        while (it != this->modulesToImport.end()){
+            std::string importCode = "import " + it->first; // creates the "import module_name" string
+            if (it->second != "") {
+                importCode += " as " + it->second; // adds "as alias_module_name"
+            }
+            importCode += "\n"; // new line bc we are going to add the function string right after this
+            PyObject *pyImportCode = Py_CompileString(importCode.c_str(), "", Py_file_input);
+            // add import of libraries to module
+            this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), pyImportCode);
+            if (this->pythonModule == NULL) {
+                if (PyErr_Occurred()) {
+                    PyErr_Print();
+                    PyErr_Clear();
+                }
+                NES_THROW_RUNTIME_ERROR("Cannot add import " << importCode << " to module " << this->moduleName);
+            }
+            ++it;
+        }
+    }
+
+    // compile python code
+
     //choose python compiler, default is the CPython compiler
     if (this->pythonCompiler == "numba") {
         std::string numbaImport = "from numba import jit"

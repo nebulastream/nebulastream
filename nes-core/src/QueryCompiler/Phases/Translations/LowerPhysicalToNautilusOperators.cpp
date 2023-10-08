@@ -230,9 +230,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             const auto pythonUDFDescriptor = udfDescriptor->as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
             const auto functionString = pythonUDFDescriptor->getFunctionString();
             const auto pythonCompiler = pythonUDFDescriptor->getPythonCompiler();
+            const auto modulesToImport = pythonUDFDescriptor->getModulesToImport();
 
             const auto handler = std::make_shared<Runtime::Execution::Operators::PythonUDFOperatorHandler>(functionString,
                                                                                                            methodName,
+                                                                                                           modulesToImport,
                                                                                                            pythonCompiler,
                                                                                                            udfInputSchema,
                                                                                                            udfOutputSchema);

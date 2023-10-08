@@ -78,6 +78,7 @@ TEST_F(MapPythonUDFQueryExecutionTest, MapPythonUdf) {
     auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
+    const std::map<std::string, std::string> modulesToImport;
 
     auto functionName = "integer_test";
     auto functionString = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
@@ -85,6 +86,7 @@ TEST_F(MapPythonUDFQueryExecutionTest, MapPythonUdf) {
     auto pythonUDFDescriptor = Catalogs::UDF::PythonUDFDescriptorBuilder{}
                                    .setFunctionName(functionName)
                                    .setFunctionString(functionString)
+                                   .setModulesToImport(modulesToImport)
                                    .setOutputSchema(outputSchema)
                                    .build();
 

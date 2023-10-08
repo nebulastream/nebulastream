@@ -109,9 +109,8 @@ auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLa
  * @param testDataPath path to the test data containing the udf jar
  * @return operator handler
  */
-auto initMapHandler(std::string function, std::string functionName, SchemaPtr schema) {
-    // use default compiler here
-    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, "default", schema, schema);
+auto initMapHandler(std::string function, std::string functionName, std::map<std::string, std::string> modulesToImport, SchemaPtr schema) {
+    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, "default", schema, schema);
 }
 
 /**
@@ -147,7 +146,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
 
     std::string function = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "integer_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -170,7 +170,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def short_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "short_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -193,7 +194,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def byte_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "byte_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -216,7 +218,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def long_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "long_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -239,7 +242,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def double_test(x):\n\ty = x + 10.0\n\treturn y\n";
     std::string functionName = "double_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -267,7 +271,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def boolean_test(x):\n\tx = False\n\treturn x\n";
     std::string functionName = "boolean_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -310,7 +315,8 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def string_test(x):\n\tx = x+\"X\"\n\treturn x\n";
     std::string functionName = "string_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -343,8 +349,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
-    // TODO #3980 enable once string works
-    // schema->addField("stringVariable", BasicType::TEXT);
+    schema->addField("stringVariable", BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
@@ -365,13 +370,12 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         dynamicBuffer[i]["floatVariable"].write((float) i);
         dynamicBuffer[i]["doubleVariable"].write((double) i);
         dynamicBuffer[i]["booleanVariable"].write(true);
-        // dynamicBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
+        dynamicBuffer[i]["stringVariable"].write(strIndex);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    // TODO #3980 once string works add string here as argument
-    std::string function = "def complex_test(byte_var, short_var, int_var, long_var, float_var, double_var, boolean_var):"
+    std::string function = "def complex_test(byte_var, short_var, int_var, long_var, float_var, double_var, boolean_var, string_var):"
                            "\n\tbyte_var = byte_var + 10"
                            "\n\tshort_var = short_var + 10"
                            "\n\tint_var = int_var + 10"
@@ -379,9 +383,11 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
                            "\n\tfloat_var = float_var + 10.0"
                            "\n\tdouble_var = double_var + 10.0"
                            "\n\tboolean_var = False"
-                           "\n\treturn byte_var, short_var, int_var, long_var, float_var, double_var, False\n";
+                           "\n\tstring_var = \"Appended String: \" + string_var"
+                           "\n\treturn byte_var, short_var, int_var, long_var, float_var, double_var, False, string_var\n";
     std::string functionName = "complex_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    std::map<std::string, std::string> modulesToImport;
+    auto handler = initMapHandler(function, functionName, modulesToImport, schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -401,12 +407,11 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
-        // TODO #3980 enable this once string works
-        // auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
-        // auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
-        // auto textValue = varLengthBuffer.getBuffer<TextValue>();
-        // auto size = textValue->length();
-        // EXPECT_EQ(std::string(textValue->c_str(), size), "Appended String:X");
+        auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
+        auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
+        auto textValue = varLengthBuffer.getBuffer<TextValue>();
+        auto size = textValue->length();
+        EXPECT_EQ(std::string(textValue->c_str(), size), "Appended String: X");
     }
 }
 

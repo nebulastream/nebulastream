@@ -16,7 +16,7 @@ syntax = "proto3";
 import "google/protobuf/any.proto";
 import "SerializableExpression.proto";
 import "SerializableSchema.proto";
-import "JavaUdfDescriptorMessage.proto";
+import "UDFDescriptorMessage.proto";
 package NES;
 
 option java_package = "stream.nebula.protobuf";
@@ -584,26 +584,26 @@ message SerializableOperator{
   }
 
   /**
-    Information to serialize a Map operator with a Java UDF.
+    Information to serialize a Map operator with a UDF.
    */
-  message MapJavaUdfDetails {
-      JavaUdfDescriptorMessage javaUdfDescriptor = 1;
+  message MapUDFDetails {
+      UDFDescriptorMessage udfDescriptor = 1;
   }
 
     /**
-      Information to serialize a Open CL operator with a Java UDF.
+      Information to serialize a Open CL operator with a UDF.
      */
     message OpenCLOperatorDetails {
-        JavaUdfDescriptorMessage javaUdfDescriptor = 1;
+      UDFDescriptorMessage udfDescriptor = 1;
         string deviceId = 2;
         string openCLCode = 3;
     }
 
   /**
-    Information to serialize a FlatMap operator with a Java UDF.
+    Information to serialize a FlatMap operator with a UDF.
    */
-  message FlatMapJavaUdfDetails {
-    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
+  message FlatMapUDFDetails {
+    UDFDescriptorMessage udfDescriptor = 1;
   }
 
   /**

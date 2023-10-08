@@ -20,6 +20,7 @@
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
+#include <Util/PythonUDFDescriptorBuilder.hpp>
 
 namespace NES {
 
@@ -29,10 +30,10 @@ namespace NES {
 class ProtobufMessageFactory {
   public:
     /**
-     * @brief Construct a RegisterJavaUdfRequest protobuf message.
+     * @brief Construct a RegisterUDFRequest protobuf message.
      * @see UDFCatalog::registerJavaUdf
      */
-    static RegisterJavaUdfRequest createRegisterJavaUdfRequest(const std::string& udfName,
+    static RegisterUDFRequest createRegisterJavaUdfRequest(const std::string& udfName,
                                                                const std::string& udfClassName,
                                                                const std::string& methodName,
                                                                const jni::JavaSerializedInstance& serializedInstance,
@@ -40,29 +41,58 @@ class ProtobufMessageFactory {
                                                                const SchemaPtr& outputSchema,
                                                                const std::string& inputClassName,
                                                                const std::string& outputClassName) {
-        auto request = RegisterJavaUdfRequest{};
+        auto request = RegisterUDFRequest{};
         // Set udfName
-        request.set_udf_name(udfName);
-        auto* udfDescriptor = request.mutable_java_udf_descriptor();
+        request.set_udfname(udfName);
+        auto* udfDescriptor = request.mutable_udfdescriptor();
+
         // Set udfClassName, methodName, and serializedInstance
-        udfDescriptor->set_udf_class_name(udfClassName);
-        udfDescriptor->set_udf_method_name(methodName);
-        udfDescriptor->set_serialized_instance(serializedInstance.data(), serializedInstance.size());
+        auto javaUDFDescriptor = JavaUdfDescriptorMessage{};
+        javaUDFDescriptor.set_udf_class_name(udfClassName);
+        javaUDFDescriptor.set_udf_method_name(methodName);
+        javaUDFDescriptor.set_serialized_instance(serializedInstance.data(), serializedInstance.size());
         // Set byteCodeList
         for (const auto& [className, byteCode] : byteCodeList) {
-            auto* javaClass = udfDescriptor->add_classes();
+            auto* javaClass = javaUDFDescriptor.add_classes();
             javaClass->set_class_name(className);
             javaClass->set_byte_code(std::string{byteCode.begin(), byteCode.end()});
         }
         // Set outputSchema
-        SchemaSerializationUtil::serializeSchema(outputSchema, udfDescriptor->mutable_outputschema());
+        SchemaSerializationUtil::serializeSchema(outputSchema, javaUDFDescriptor.mutable_outputschema());
         // Set input and output types
-        udfDescriptor->set_input_class_name(inputClassName);
-        udfDescriptor->set_output_class_name(outputClassName);
+        javaUDFDescriptor.set_input_class_name(inputClassName);
+        javaUDFDescriptor.set_output_class_name(outputClassName);
+
+        udfDescriptor->mutable_descriptormessage()->PackFrom(javaUDFDescriptor);
         return request;
     }
 
-    static RegisterJavaUdfRequest createDefaultRegisterJavaUdfRequest() {
+  public:
+    /**
+     * @brief Construct a RegisterJavaUdfRequest protobuf message.
+     * @see UDFCatalog::registerJavaUdf
+     */
+    static RegisterUDFRequest createRegisterPythonUdfRequest(const std::string& udfName,
+                                                             const std::string& functionName,
+                                                             const std::string& functionString,
+                                                             const SchemaPtr& outputSchema) {
+        auto request = RegisterUDFRequest{};
+        // Set udfName
+        request.set_udfname(udfName);
+        auto* udfDescriptor = request.mutable_udfdescriptor();
+
+        // Set udfClassName, methodName, and serializedInstance
+        auto pythonDescriptor = PythonUDFDescriptorMessage{};
+        pythonDescriptor.set_udf_method_name(functionName);
+        pythonDescriptor.set_function_string(functionString);
+        // Set outputSchema
+        SchemaSerializationUtil::serializeSchema(outputSchema, pythonDescriptor.mutable_outputschema());
+
+        udfDescriptor->mutable_descriptormessage()->PackFrom(pythonDescriptor);
+        return request;
+    }
+
+    static RegisterUDFRequest createDefaultRegisterJavaUdfRequest() {
         auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
         return createRegisterJavaUdfRequest("my_udf",
                                             javaUdfDescriptor->getClassName(),
@@ -72,6 +102,14 @@ class ProtobufMessageFactory {
                                             javaUdfDescriptor->getOutputSchema(),
                                             javaUdfDescriptor->getInputClassName(),
                                             javaUdfDescriptor->getOutputClassName());
+    }
+
+    static RegisterUDFRequest createDefaultRegisterPythonUdfRequest() {
+        auto pythonDescriptor = Catalogs::UDF::PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
+        return createRegisterPythonUdfRequest("my_udf",
+                                              pythonDescriptor->getMethodName(),
+                                              pythonDescriptor->getFunctionString(),
+                                              pythonDescriptor->getOutputSchema());
     }
 };
 
