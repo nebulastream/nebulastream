@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.219](https://github.com/nebulastream/nebulastream/tree/v0.5.219) (2023-10-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.218...v0.5.219)
+
+**Implemented enhancements:**
+
+- \[TASK\] add\_test vs gtest\_add\_tests vs gtest\_discover\_tests [\#4109](https://github.com/nebulastream/nebulastream/issues/4109)
+
 ## [v0.5.218](https://github.com/nebulastream/nebulastream/tree/v0.5.218) (2023-10-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.217...v0.5.218)
