@@ -295,6 +295,8 @@ void DataSource::runningRoutine() {
             runningRoutineWithIngestionRate();
         } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
             runningRoutineAdaptiveGatheringInterval();
+        } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE_OVERSAMPLER) {
+            runningRoutineAdaptiveGatheringIntervalOversampler();
         }
         completedPromise.set_value(true);
     } catch (std::exception const& exception) {
@@ -533,6 +535,81 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 this->gatheringInterval = this->kFilter->getNewGatheringInterval();
 
                  emitWorkFromSource(buf);
+                ++numberOfBuffersProduced;
+            } else {
+                NES_ERROR("DataSource {}: stopping cause of invalid buffer", operatorId);
+                running = false;
+            }
+        } else {
+            running = false;
+        }
+        // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
+        if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
+            NES_TRACE("DataSource {} sleeping on interval {}", operatorId, gatheringInterval.count());
+//            std::this_thread::sleep_for(gatheringInterval);
+        }
+    }
+
+    close();
+}
+
+void DataSource::runningRoutineAdaptiveGatheringIntervalOversampler() {
+    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
+    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    setThreadName(thName.c_str());
+
+    NES_TRACE("DataSource {}: Running Data Source of type={} interval={}",
+              operatorId,
+              magic_enum::enum_name(getType()),
+              gatheringInterval.count());
+
+    if (numberOfBuffersToProduce == 0) {
+        NES_TRACE("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+                  "the source is empty");
+    } else {
+        NES_TRACE("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
+    }
+
+    this->kFilter->setGatheringInterval(this->gatheringInterval);
+    this->kFilter->setGatheringIntervalRange(std::chrono::milliseconds{8000});
+
+    open();
+    uint64_t numberOfBuffersProduced = 0;
+    while (running) {
+        //check if already produced enough buffer
+        if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce) {
+            auto optBuf = receiveData();// note that receiveData might block
+            if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
+                break;
+            }
+
+            //this checks we received a valid output buffer
+            if (optBuf.has_value()) {
+                auto& buf = optBuf.value();
+                auto numOfTuples = buf.getNumberOfTuples();
+                auto records = buf.getBuffer<Sensors::SingleSensor>();
+                double currentIntervalInSeconds = this->gatheringInterval.count() / 1000.;
+                for (uint64_t i = 0; i < numOfTuples; ++i) {
+                    this->lastValuesBuf.emplace(records[i].value);
+                    this->lastIntervalBuf.emplace(currentIntervalInSeconds);
+                }
+
+                // use a vector, find mean interval at the same time
+                double totalIntervalInseconds = 0;
+                for (uint64_t idx=0; idx < this->lastValuesBuf.size(); ++idx) {
+                    totalIntervalInseconds += this->lastIntervalBuf.at(idx);
+                }
+                totalIntervalInseconds /= this->lastValuesBuf.size();
+                double skewedIntervalInseconds = (totalIntervalInseconds + currentIntervalInSeconds) / 2.;
+
+                std::tuple<bool, double> res = NES::Util::computeNyquistAndEnergy(this->lastValuesBuf.toVector(), skewedIntervalInseconds);
+                if (std::get<0>(res)) { // nyq rate is smaller than current skewed median interval
+                    this->kFilter->setSlowestInterval(std::move(std::chrono::milliseconds(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(std::get<1>(res))))));
+                }
+
+                this->kFilter->getNewGatheringInterval();
+
+                emitWorkFromSource(buf);
                 ++numberOfBuffersProduced;
             } else {
                 NES_ERROR("DataSource {}: stopping cause of invalid buffer", operatorId);

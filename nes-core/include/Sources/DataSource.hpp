@@ -338,6 +338,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     virtual void runningRoutineAdaptiveGatheringInterval();
 
     /**
+    * @brief running routine with an adaptive rate (defaults to KF)
+    */
+    virtual void runningRoutineAdaptiveGatheringIntervalOversampler();
+
+    /**
      * @brief the KF associated with a source.
      * We use default values for initialization.
      */

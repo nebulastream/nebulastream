@@ -19,7 +19,7 @@
 
 namespace NES {
 
-enum class GatheringMode : uint8_t { INTERVAL_MODE = 0, INGESTION_RATE_MODE = 1, ADAPTIVE_MODE = 2 };
+enum class GatheringMode : uint8_t { INTERVAL_MODE = 0, INGESTION_RATE_MODE = 1, ADAPTIVE_MODE = 2, ADAPTIVE_MODE_OVERSAMPLER = 3 };
 
 inline const char* GatheringModeString(GatheringMode v)
 {
@@ -27,6 +27,7 @@ inline const char* GatheringModeString(GatheringMode v)
     {
         case GatheringMode::INGESTION_RATE_MODE: return "Ingestion";
         case GatheringMode::ADAPTIVE_MODE: return "Adaptive";
+        case GatheringMode::ADAPTIVE_MODE_OVERSAMPLER: return "AdaptiveOversampler";
         default: return "Interval";
     }
 }
