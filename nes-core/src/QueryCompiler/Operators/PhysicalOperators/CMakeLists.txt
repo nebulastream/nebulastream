@@ -35,5 +35,4 @@ add_source_files(nes-core
 
 add_subdirectory(Windowing)
 add_subdirectory(Joining)
-add_subdirectory(CEP)
 

@@ -14,5 +14,4 @@
 add_subdirectory(Watermark)
 add_subdirectory(Runtime)
 add_subdirectory(WindowPolicies)
-add_subdirectory(WindowHandler)
-add_subdirectory(Experimental)
+add_subdirectory(WindowTypes)

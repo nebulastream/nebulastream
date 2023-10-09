@@ -14,12 +14,9 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <memory>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalKeyedGlobalSliceStoreAppendOperator::PhysicalKeyedGlobalSliceStoreAppendOperator(
     OperatorId id,
@@ -47,6 +44,4 @@ OperatorNodePtr PhysicalKeyedGlobalSliceStoreAppendOperator::copy() {
     return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);
 }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

@@ -205,12 +205,6 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     */
     void lowerJoinOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
-    /**
-    * @brief Lowers a batch join operator
-    * @param queryPlan current plan
-    * @param operatorNode current operator
-    */
-    void lowerBatchJoinOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a join build operator
@@ -226,12 +220,6 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
                                                           SchemaPtr outputSchema,
                                                           std::vector<OperatorNodePtr> children);
 
-    /**
-    * @brief Lowers a cep iteration operator
-    * @param queryPlan current plan
-    * @param operatorNode current operator
-    */
-    void lowerCEPIterationOperator(const QueryPlanPtr queryPlan, const LogicalOperatorNodePtr operatorNode);
 
   private:
     /**
@@ -264,11 +252,6 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     std::shared_ptr<Node> replaceOperatorNodeTimeBasedNonKeyedWindow(WindowOperatorProperties& windowOperatorProperties,
                                                                      const LogicalOperatorNodePtr& operatorNode);
 
-    /**
-     * @brief Lowers a join operator for the old default query compiler
-     * @param operatorNode
-     */
-    void lowerOldDefaultQueryCompilerJoin(const LogicalOperatorNodePtr& operatorNode);
 
     /**
      * @brief Lowers a join operator for the nautilus query compiler

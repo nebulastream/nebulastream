@@ -19,8 +19,6 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Windowing/WindowHandler/BatchJoinHandler.hpp>
-#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 

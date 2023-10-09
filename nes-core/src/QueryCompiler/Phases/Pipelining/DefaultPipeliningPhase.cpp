@@ -24,7 +24,6 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -113,20 +112,11 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(const PipelineQueryP
     }
 }
 
-void DefaultPipeliningPhase::registerPipelineWithOperatorHandlers(const OperatorPipelinePtr& currentPipeline,
-                                                                  const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
+void DefaultPipeliningPhase::registerPipelineWithOperatorHandlers(const OperatorPipelinePtr&,
+                                                                  const PhysicalOperators::PhysicalOperatorPtr&) {
     // this function can also be used to register with other types of operator handlers
     // and may be called from other functions than the current processPipelineBreakerOperator().
 
-    if (currentOperator->instanceOf<PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>()) {
-        auto probeOperator = currentOperator->as<PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>();
-        uint64_t probePipelineID = currentPipeline->getPipelineId();
-        probeOperator->getBatchJoinHandler()->setProbePipelineID(probePipelineID);
-    } else if (currentOperator->instanceOf<PhysicalOperators::PhysicalBatchJoinBuildOperator>()) {
-        auto buildOperator = currentOperator->as<PhysicalOperators::PhysicalBatchJoinBuildOperator>();
-        uint64_t buildPipelineID = currentPipeline->getPipelineId();
-        buildOperator->getBatchJoinHandler()->setBuildPipelineID(buildPipelineID);
-    }
 }
 
 void DefaultPipeliningPhase::processFusibleOperator(const PipelineQueryPlanPtr& pipelinePlan,

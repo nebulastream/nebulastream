@@ -92,18 +92,13 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/Experimental/GlobalSliceStore.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceMergingOperatorHandler.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedGlobalSliceStoreAppendOperatorHandler.hpp>
-#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceMergingOperatorHandler.hpp>
-#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
-#include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
-#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -199,8 +194,6 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
 #endif// TFDEF
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         lowerProjectOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
-        lowerCEPIterationOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<MapUDFLogicalOperatorNode>()) {
         lowerUDFMapOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
@@ -222,8 +215,6 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const QueryPlanPtr& qu
         lowerUnionOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         lowerJoinOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>()) {
-        lowerBatchJoinOperator(queryPlan, operatorNode);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -292,16 +283,6 @@ void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const QueryPlanPtr
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanPtr, const LogicalOperatorNodePtr operatorNode) {
-    auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
-    auto physicalCEpIterationOperator =
-        PhysicalOperators::PhysicalIterationCEPOperator::create(iterationOperator->getInputSchema(),
-                                                                iterationOperator->getOutputSchema(),
-                                                                iterationOperator->getMinIterations(),
-                                                                iterationOperator->getMaxIterations());
-    operatorNode->replace(physicalCEpIterationOperator);
-}
-
 OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
                                                                            SchemaPtr outputSchema,
                                                                            std::vector<OperatorNodePtr> children) {
@@ -323,9 +304,7 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
 }
 
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
-    if (options->getQueryCompiler() == QueryCompilerType::DEFAULT_QUERY_COMPILER) {
-        lowerOldDefaultQueryCompilerJoin(operatorNode);
-    } else if (options->getQueryCompiler() == QueryCompilerType::NAUTILUS_QUERY_COMPILER) {
+    if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
         lowerNautilusJoin(operatorNode);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -516,32 +495,6 @@ DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<
     }
 }
 
-void DefaultPhysicalOperatorProvider::lowerOldDefaultQueryCompilerJoin(const LogicalOperatorNodePtr& operatorNode) {
-    // create join operator handler, to establish a common Runtime object for build and prob.
-    auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-    auto joinOperatorHandler =
-        Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
-
-    auto createJoinBuildOperator =
-        [&](const SchemaPtr& inputSchema, const std::vector<OperatorNodePtr>& inputOperators, JoinBuildSideType buildSideType) {
-            auto joinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(inputSchema,
-                                                                                          joinOperator->getOutputSchema(),
-                                                                                          joinOperatorHandler,
-                                                                                          buildSideType);
-            auto inputOperator = getJoinBuildInputOperator(joinOperator, inputSchema, inputOperators);
-            inputOperator->insertBetweenThisAndParentNodes(joinBuildOperator);
-        };
-
-    // Calling above lambda function for left and right side
-    createJoinBuildOperator(joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators(), JoinBuildSideType::Left);
-    createJoinBuildOperator(joinOperator->getRightInputSchema(), joinOperator->getRightOperators(), JoinBuildSideType::Right);
-
-    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
-                                                                        joinOperator->getRightInputSchema(),
-                                                                        joinOperator->getOutputSchema(),
-                                                                        joinOperatorHandler);
-    operatorNode->replace(joinSink);
-}
 
 OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
     const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
@@ -561,48 +514,6 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
     return children[0];
 }
 
-void DefaultPhysicalOperatorProvider::lowerBatchJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
-    //  logical operator plan:
-    //    childsLeft  ___ bjLogical ___ parent
-    //                  /
-    //    childsRight _/
-
-    auto batchJoinOperator = operatorNode->as<Experimental::BatchJoinLogicalOperatorNode>();
-    // create batch join operator handler, to establish a common Runtime object for build and probw.
-    auto batchJoinOperatorHandler =
-        Join::Experimental::BatchJoinOperatorHandler::create(batchJoinOperator->getBatchJoinDefinition(),
-                                                             batchJoinOperator->getOutputSchema());
-
-    auto leftInputOperator = getBatchJoinChildInputOperator(batchJoinOperator,
-                                                            batchJoinOperator->getLeftInputSchema(),
-                                                            batchJoinOperator->getLeftOperators());
-    auto batchJoinBuildOperator =
-        PhysicalOperators::PhysicalBatchJoinBuildOperator::create(batchJoinOperator->getLeftInputSchema(),
-                                                                  batchJoinOperator->getOutputSchema(),
-                                                                  batchJoinOperatorHandler);
-    leftInputOperator->insertBetweenThisAndParentNodes(batchJoinBuildOperator);
-
-    //  now:
-    //    childsLeft __ bjPhysicalBuild __ bjLogical ___ parent
-    //                                   /
-    //    childsRight __________________/
-
-    auto rightInputOperator =//    called to demultiplex, if there are multiple right childs. this var is not used further.
-        getBatchJoinChildInputOperator(batchJoinOperator,
-                                       batchJoinOperator->getRightInputSchema(),
-                                       batchJoinOperator->getRightOperators());
-    auto batchJoinProbeOperator = PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator::create(
-        batchJoinOperator->getRightInputSchema(),// right = probe side!
-        batchJoinOperator->getOutputSchema(),
-        batchJoinOperatorHandler);
-    operatorNode->replace(batchJoinProbeOperator);
-
-    //  final:
-    //    childsLeft __ bjPhysicalBuild __ bjPhysicalProbe ___ parent
-    //                                   /
-    //    childsRight __________________/
-}
-
 void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const QueryPlanPtr&,
                                                                        const LogicalOperatorNodePtr& operatorNode) {
     auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
@@ -620,40 +531,28 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
     auto& windowOperator = windowOperatorProperties.windowOperator;
     auto& windowDefinition = windowOperatorProperties.windowDefinition;
     KeyedOperatorHandlers keyedOperatorHandlers;
+    keyedOperatorHandlers.sliceMergingOperatorHandler =
+        std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
 
-    if (options->getQueryCompiler() == QueryCompilerType::DEFAULT_QUERY_COMPILER) {
-        auto smOperatorHandler = std::make_shared<Windowing::Experimental::KeyedSliceMergingOperatorHandler>(windowDefinition);
+    NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
+    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
 
+    if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
         keyedOperatorHandlers.preAggregationWindowHandler =
-            std::make_shared<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandler>(
-                windowDefinition,
-                windowOperator->getInputOriginIds(),
-                smOperatorHandler->getSliceStagingPtr());
-
-        keyedOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
-    } else if (options->getQueryCompiler() == QueryCompilerType::NAUTILUS_QUERY_COMPILER) {
-        keyedOperatorHandlers.sliceMergingOperatorHandler =
-            std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
-
-        NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-
-        if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
-            keyedOperatorHandlers.preAggregationWindowHandler =
-                std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
-                    timeBasedWindowType->getSize().getTime(),
-                    timeBasedWindowType->getSlide().getTime(),
-                    windowOperator->getInputOriginIds());
-        } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
-            keyedOperatorHandlers.preAggregationWindowHandler =
-                std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
-                    timeBasedWindowType->getSize().getTime(),
-                    timeBasedWindowType->getSlide().getTime(),
-                    windowOperator->getInputOriginIds());
-        } else {
-            NES_NOT_IMPLEMENTED();
-        }
+            std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+                timeBasedWindowType->getSize().getTime(),
+                timeBasedWindowType->getSlide().getTime(),
+                windowOperator->getInputOriginIds());
+    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
+        keyedOperatorHandlers.preAggregationWindowHandler =
+            std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
+                timeBasedWindowType->getSize().getTime(),
+                timeBasedWindowType->getSlide().getTime(),
+                windowOperator->getInputOriginIds());
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
+
     return keyedOperatorHandlers;
 }
 
@@ -663,41 +562,28 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
     auto& windowOperator = windowOperatorProperties.windowOperator;
     auto& windowDefinition = windowOperatorProperties.windowDefinition;
     GlobalOperatorHandlers globalOperatorHandlers;
+    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+    timeBasedWindowType->getTimeBasedSubWindowType();
+    globalOperatorHandlers.sliceMergingOperatorHandler =
+        std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
+    NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
 
-    if (options->getQueryCompiler() == QueryCompilerType::DEFAULT_QUERY_COMPILER) {
-        auto smOperatorHandler = std::make_shared<Windowing::Experimental::NonKeyedSliceMergingOperatorHandler>(windowDefinition);
-
+    if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
         globalOperatorHandlers.preAggregationWindowHandler =
-            std::make_shared<Windowing::Experimental::NonKeyedThreadLocalPreAggregationOperatorHandler>(
-                windowDefinition,
-                windowOperator->getInputOriginIds(),
-                smOperatorHandler->getSliceStagingPtr());
-
-        globalOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
-    } else if (options->getQueryCompiler() == QueryCompilerType::NAUTILUS_QUERY_COMPILER) {
-
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-        timeBasedWindowType->getTimeBasedSubWindowType();
-        globalOperatorHandlers.sliceMergingOperatorHandler =
-            std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
-        NES_ASSERT2_FMT(windowDefinition->getWindowType()->isTimeBasedWindowType(), "window type is not time based");
-
-        if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
-            globalOperatorHandlers.preAggregationWindowHandler =
-                std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
-                    timeBasedWindowType->getSize().getTime(),
-                    timeBasedWindowType->getSlide().getTime(),
-                    windowOperator->getInputOriginIds());
-        } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
-            globalOperatorHandlers.preAggregationWindowHandler =
-                std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
-                    timeBasedWindowType->getSize().getTime(),
-                    timeBasedWindowType->getSlide().getTime(),
-                    windowOperator->getInputOriginIds());
-        } else {
-            NES_NOT_IMPLEMENTED();
-        }
+            std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
+                timeBasedWindowType->getSize().getTime(),
+                timeBasedWindowType->getSlide().getTime(),
+                windowOperator->getInputOriginIds());
+    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
+        globalOperatorHandlers.preAggregationWindowHandler =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
+                timeBasedWindowType->getSize().getTime(),
+                timeBasedWindowType->getSlide().getTime(),
+                windowOperator->getInputOriginIds());
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
+
     return globalOperatorHandlers;
 }
 
@@ -719,22 +605,16 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
                                                                           windowDefinition);
     } else {
         // Handle sliding window
-        auto globalSliceStore =
-            std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::KeyedSlice>>();
-        auto globalSliceStoreAppendOperator =
-            std::make_shared<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
-                                                                                                  globalSliceStore);
+
         auto globalSliceStoreAppend =
             PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,
                                                                                    windowOutputSchema,
-                                                                                   globalSliceStoreAppendOperator);
-        auto slidingWindowSinkOperator =
-            std::make_shared<Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandler>(windowDefinition, globalSliceStore);
+                                                                                   nullptr);
 
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema,
                                                                          windowOutputSchema,
-                                                                         slidingWindowSinkOperator,
+                                                                         nullptr,
                                                                          windowDefinition);
     }
 }
@@ -757,23 +637,18 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(Wind
                                                                              windowDefinition);
     } else {
         // Handle sliding window
-        auto globalSliceStore =
-            std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::NonKeyedSlice>>();
-        auto globalSliceStoreAppendOperator =
-            std::make_shared<Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
-                                                                                                     globalSliceStore);
+        //auto globalSliceStore =
+         //   std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::NonKeyedSlice>>();
+
         auto globalSliceStoreAppend =
             PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator::create(windowInputSchema,
                                                                                       windowOutputSchema,
-                                                                                      globalSliceStoreAppendOperator);
-        auto slidingWindowSinkOperator =
-            std::make_shared<Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandler>(windowDefinition,
-                                                                                                globalSliceStore);
+                                                                                      nullptr);
 
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalNonKeyedSlidingWindowSink::create(windowInputSchema,
                                                                             windowOutputSchema,
-                                                                            slidingWindowSinkOperator,
+                                                                            nullptr,
                                                                             windowDefinition);
     }
 }

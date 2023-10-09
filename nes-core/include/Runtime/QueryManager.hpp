@@ -32,7 +32,6 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
-#include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
