@@ -65,12 +65,14 @@ std::string E2EBenchmarkConfigPerRun::toString() {
         << "- preAllocPageCnt: " << preAllocPageCnt->getValueAsString() << std::endl
         << "- numberOfPartitions: " << numberOfPartitions->getValueAsString() << std::endl
         << "- maxHashTableSize: " << maxHashTableSize->getValueAsString() << std::endl
-        << "- nautilusBackend: " << magic_enum::enum_name(nautilusBackend->getValue()) << std::endl
-        << "- vectorize: " << vectorize->getValueAsString() << std::endl
-        << "- stageBufferSize: " << stageBufferSize->getValueAsString() << std::endl
-        << "- useCuda: " << useCuda->getValueAsString() << std::endl
-        << "- cudaSdkPath: " << cudaSdkPath->getValue() << std::endl
-        << "- cudaThreadsPerBlock: " << cudaThreadsPerBlock->getValueAsString() << std::endl;
+        << "- nautilusBackend: " << magic_enum::enum_name(nautilusBackend->getValue()) << std::endl;
+    if (vectorize->getValue()) {
+        oss << "- vectorize: " << vectorize->getValueAsString() << std::endl
+            << "- stageBufferSize: " << stageBufferSize->getValueAsString() << std::endl
+            << "- useCuda: " << useCuda->getValueAsString() << std::endl
+            << "- cudaSdkPath: " << cudaSdkPath->getValue() << std::endl
+            << "- cudaThreadsPerBlock: " << cudaThreadsPerBlock->getValueAsString() << std::endl;
+    }
 
     std::cout << oss.str() << std::endl;
     return oss.str();
