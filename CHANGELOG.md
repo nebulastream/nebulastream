@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.5.218](https://github.com/nebulastream/nebulastream/tree/v0.5.218) (2023-10-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.217...v0.5.218)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix bug with TopDown and BottomUp Startegy  [\#4247](https://github.com/nebulastream/nebulastream/issues/4247)
+
+### Query Optimizer 🔧
+
+- Restructure request processing by query optimizer [\#1738](https://github.com/nebulastream/nebulastream/issues/1738)
+- Handle properly exceptions thrown at different phases in optimizer [\#1585](https://github.com/nebulastream/nebulastream/issues/1585)
+
 ## [v0.5.217](https://github.com/nebulastream/nebulastream/tree/v0.5.217) (2023-10-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.216...v0.5.217)
