@@ -159,6 +159,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, maxHashTableSizes.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, stageBufferSizes.size());
+    totalBenchmarkRuns = std::max(totalBenchmarkRuns, cudaThreadsPerBlockList.size());
 
     /* Padding all vectors to the desired size */
     Util::padVectorToSize<uint32_t>(numWorkerOfThreads, totalBenchmarkRuns, numWorkerOfThreads.back());

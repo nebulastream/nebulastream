@@ -73,6 +73,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.stageBufferSize = configPerRun.stageBufferSize->getValue();
     coordinatorConf->worker.queryCompiler.useCUDA = configPerRun.useCuda->getValue();
     coordinatorConf->worker.queryCompiler.cudaSdkPath = configPerRun.cudaSdkPath->getValue();
+    coordinatorConf->worker.queryCompiler.cudaThreadsPerBlock = configPerRun.cudaThreadsPerBlock->getValue();
 
     if (configOverAllRuns.joinStrategy->getValue() == "HASH_JOIN_LOCAL") {
         coordinatorConf->worker.queryCompiler.joinStrategy = QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL;
