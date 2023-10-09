@@ -104,9 +104,9 @@ void VectorizedNonKeyedPreAggregation::execute(ExecutionContext& ctx, RecordBuff
             if (threadId == 0) {
                 auto sliceStore = FunctionCall("getSliceStore", getSliceStore);
                 sliceStore.store(aggregate);
-                auto record = memoryProvider->read(projections, bufferAddress, recordIndex);
                 // TODO Timestamp for ingestion time is set in ctx in open() method which happens after kernel compilation.
                 // auto timeFunction = nonKeyedSlicePreAggregationOperator->getTimeFunction();
+                // auto record = memoryProvider->read(projections, bufferAddress, recordIndex);
                 // auto timestampValue = timeFunction->getTs(ctx, record);
                 auto sliceStoreTs = (sliceStore + aggregationFunction->getSize()).as<MemRef>();
                 sliceStoreTs.store(creationTs);
