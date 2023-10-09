@@ -13,7 +13,7 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>

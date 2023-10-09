@@ -14,8 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALUNARYEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALUNARYEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
-#include <Nodes/Expressions/UnaryExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
+#include <Operators/Expressions/UnaryExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node represents a logical unary expression.

@@ -14,7 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
 

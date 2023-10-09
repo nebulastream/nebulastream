@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node represents an ADD expression.

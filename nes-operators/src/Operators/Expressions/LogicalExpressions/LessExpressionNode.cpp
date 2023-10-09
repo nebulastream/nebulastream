@@ -13,7 +13,7 @@
 */
 
 #include <Common/DataTypes/DataType.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 LessExpressionNode::LessExpressionNode(LessExpressionNode* other) : LogicalBinaryExpressionNode(other) {}

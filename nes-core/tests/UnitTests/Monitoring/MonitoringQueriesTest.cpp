@@ -36,7 +36,7 @@
 #include <Util/TestUtils.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Services/MonitoringService.hpp>

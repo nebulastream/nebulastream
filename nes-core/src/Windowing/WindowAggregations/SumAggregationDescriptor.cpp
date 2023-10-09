@@ -14,8 +14,8 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <utility>

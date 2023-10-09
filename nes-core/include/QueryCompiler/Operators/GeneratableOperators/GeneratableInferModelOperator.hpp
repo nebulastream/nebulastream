@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEINFERMODELOPERATOR_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEINFERMODELOPERATOR_HPP_
 
-#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 

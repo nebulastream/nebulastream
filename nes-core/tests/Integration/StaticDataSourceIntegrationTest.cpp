@@ -14,7 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>

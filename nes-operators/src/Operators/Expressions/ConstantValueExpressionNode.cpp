@@ -13,7 +13,7 @@
 */
 
 #include <Common/ValueTypes/ValueType.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 
 namespace NES {
 ConstantValueExpressionNode::ConstantValueExpressionNode(ValueTypePtr const& constantValue)

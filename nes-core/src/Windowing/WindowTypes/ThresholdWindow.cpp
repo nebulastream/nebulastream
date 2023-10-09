@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <sstream>
 

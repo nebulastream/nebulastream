@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 #include <API/QueryAPI.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/TupleBuffer.hpp>

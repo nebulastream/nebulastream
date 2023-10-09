@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
 
 namespace NES {
 

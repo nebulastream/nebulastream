@@ -13,8 +13,8 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>

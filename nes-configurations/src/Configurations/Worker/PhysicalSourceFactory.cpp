@@ -13,14 +13,15 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/BinarySourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/OPCSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/BinarySourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/OPCSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactoryPlugin.hpp>

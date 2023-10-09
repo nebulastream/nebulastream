@@ -14,7 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
 

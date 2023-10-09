@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>

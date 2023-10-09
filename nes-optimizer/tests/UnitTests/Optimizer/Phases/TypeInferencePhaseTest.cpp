@@ -20,8 +20,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>

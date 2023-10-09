@@ -13,7 +13,7 @@
 */
 
 #include <Common/DataTypes/DataType.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <sstream>
 #include <utility>
 namespace NES {

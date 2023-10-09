@@ -15,8 +15,8 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>

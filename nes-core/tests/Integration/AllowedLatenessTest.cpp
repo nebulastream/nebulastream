@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>

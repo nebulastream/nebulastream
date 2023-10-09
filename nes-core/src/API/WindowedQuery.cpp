@@ -14,8 +14,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>

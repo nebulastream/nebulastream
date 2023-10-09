@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTEROPERATORPREDICATED_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTEROPERATORPREDICATED_HPP_
 
-#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 

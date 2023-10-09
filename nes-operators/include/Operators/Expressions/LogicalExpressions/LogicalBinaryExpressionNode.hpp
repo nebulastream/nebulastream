@@ -14,8 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/BinaryExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
+#include <Operators/Expressions/BinaryExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node represents a logical binary expression.

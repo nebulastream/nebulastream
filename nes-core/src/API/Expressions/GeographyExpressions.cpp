@@ -15,17 +15,17 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/GeographyExpressions.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 

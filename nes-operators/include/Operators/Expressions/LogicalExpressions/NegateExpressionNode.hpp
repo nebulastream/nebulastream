@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
 namespace NES {
 
 /**

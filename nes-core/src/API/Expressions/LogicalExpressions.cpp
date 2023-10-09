@@ -13,14 +13,14 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
-#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <utility>
 
 namespace NES {

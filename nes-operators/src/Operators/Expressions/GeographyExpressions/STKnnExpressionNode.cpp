@@ -15,9 +15,9 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 STKnnExpressionNode::STKnnExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()), GeographyExpressionNode() {}

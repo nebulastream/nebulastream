@@ -12,3 +12,4 @@
 # limitations under the License.
 
 add_subdirectory(Operators)
+add_subdirectory(Plans)

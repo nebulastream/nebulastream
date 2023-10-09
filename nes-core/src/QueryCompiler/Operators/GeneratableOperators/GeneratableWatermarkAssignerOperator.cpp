@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
 #include <Util/Core.hpp>

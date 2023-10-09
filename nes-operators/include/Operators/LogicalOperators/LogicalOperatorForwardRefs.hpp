@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFORWARDREFS_HPP_
 
-#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <memory>

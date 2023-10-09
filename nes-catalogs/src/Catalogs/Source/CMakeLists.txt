@@ -16,6 +16,5 @@ add_source_files(nes-catalogs
         SourceCatalogEntry.cpp
         LogicalSource.cpp
         PhysicalSource.cpp
+        SourceCatalogService.cpp
 )
-
-add_subdirectory(PhysicalSourceTypes)

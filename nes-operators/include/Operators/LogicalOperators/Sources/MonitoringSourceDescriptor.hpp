@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_
 
-#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <chrono>

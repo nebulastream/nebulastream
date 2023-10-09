@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/UnaryExpressionNode.hpp>
+#include <Operators/Expressions/UnaryExpressionNode.hpp>
 #include <utility>
 
 namespace NES {

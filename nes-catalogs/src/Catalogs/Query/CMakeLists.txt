@@ -15,4 +15,5 @@ add_source_files(nes-catalogs
         QueryCatalog.cpp
         QueryCatalogEntry.cpp
         QuerySubPlanMetaData.cpp
+        QueryCatalogService.cpp
         )

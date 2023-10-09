@@ -14,7 +14,7 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>

@@ -21,7 +21,7 @@
 #include <Sinks/SinkCreator.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 
 #include <Util/Logger/Logger.hpp>

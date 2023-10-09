@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <sstream>
 
 namespace NES {

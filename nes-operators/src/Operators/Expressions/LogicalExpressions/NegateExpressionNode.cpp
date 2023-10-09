@@ -13,7 +13,7 @@
 */
 
 #include <Common/DataTypes/DataType.hpp>
-#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 

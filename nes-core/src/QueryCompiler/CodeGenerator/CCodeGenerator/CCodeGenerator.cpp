@@ -22,8 +22,8 @@
 #include <Compiler/DynamicObject.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>

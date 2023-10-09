@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Node.hpp>
 #include <sstream>
 

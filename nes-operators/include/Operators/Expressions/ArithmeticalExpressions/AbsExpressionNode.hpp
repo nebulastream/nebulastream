@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ABSEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ABSEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node represents an ABS (absolut value) expression.

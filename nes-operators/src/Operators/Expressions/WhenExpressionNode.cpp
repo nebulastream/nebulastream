@@ -13,7 +13,7 @@
 */
 
 #include <Common/DataTypes/DataType.hpp>
-#include <Nodes/Expressions/WhenExpressionNode.hpp>
+#include <Operators/Expressions/WhenExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

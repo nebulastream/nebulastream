@@ -16,7 +16,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>

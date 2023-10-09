@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_REDUNDANCYELIMINATIONRULE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_REDUNDANCYELIMINATIONRULE_HPP_
 
-#include <Nodes/Expressions/BinaryExpressionNode.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/BinaryExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES {

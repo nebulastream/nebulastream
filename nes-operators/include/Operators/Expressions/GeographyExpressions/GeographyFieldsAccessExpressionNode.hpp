@@ -15,9 +15,9 @@
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_GEOGRAPHYFIELDSACCESSEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_GEOGRAPHYFIELDSACCESSEXPRESSIONNODE_HPP_
 
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 
 namespace NES {
 

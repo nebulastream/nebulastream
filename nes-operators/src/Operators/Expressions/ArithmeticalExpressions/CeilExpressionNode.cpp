@@ -14,7 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 

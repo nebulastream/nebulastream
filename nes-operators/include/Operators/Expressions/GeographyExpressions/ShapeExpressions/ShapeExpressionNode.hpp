@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_SHAPEEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_SHAPEEXPRESSIONS_SHAPEEXPRESSIONNODE_HPP_
 
-#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <Nodes/Node.hpp>
 #include <memory>
 
