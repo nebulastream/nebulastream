@@ -671,8 +671,6 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-# code cov
-
 add_custom_target(build_all_plugins)
 
 # Add target for common lib, which contains a minimal set

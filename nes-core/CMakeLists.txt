@@ -63,14 +63,6 @@ install(TARGETS nes-grpc
 get_source(nes-core NES_CORE_SOURCE_FILES)
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 
-
-#add_custom_command(
-#        TARGET nes
-#        POST_BUILD        # This ensures the command is executed after building target z
-#        COMMAND ${CMAKE_COMMAND} --build . --target build_all_plugins --config $<CONFIGURATION>
-#        COMMENT "Building all_plugins"
-#)
-
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

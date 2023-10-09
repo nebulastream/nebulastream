@@ -142,9 +142,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
+    // load all plugins from the default folder.
     pluginLoader.loadDefaultPlugins();
-
-   // pluginLoader.loadPlugin("libnes-tensorflow.so");
 
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring={}", workerConfig->enableMonitoring.getValue());
