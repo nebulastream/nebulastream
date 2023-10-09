@@ -67,7 +67,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
 SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    NES_TRACE("context {} writing data", workerContext.getId());
+    NES_TRACE("context {} writing data at sink {} on node {}", workerContext.getId(), getUniqueNetworkSinkDescriptorId(), nodeEngine->getNodeId());
     //if async establishing of connection is in process, do not attempt to send data but buffer it instead
     if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
         NES_TRACE("context {} buffering data", workerContext.getId());
@@ -253,12 +253,15 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 }
             }
             unbuffer(workerContext);
-                networkManager->unregisterSubpartitionProducer(nesPartition);
-                NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType, queryManager->getNumberOfWorkerThreads()),
-                                "Cannot remove network channel " << nesPartition.toString());
-                NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
-                          nesPartition.toString(),
-                          Runtime::NesThread::getId());
+            networkManager->unregisterSubpartitionProducer(nesPartition);
+            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType, queryManager->getNumberOfWorkerThreads()),
+                            "Cannot remove network channel " << nesPartition.toString());
+            /* store a nullptr in place of the released channel, in case another write happens, that will prevent crashing and
+            allow throwing an error instead */
+            workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
+            NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
+                      nesPartition.toString(),
+                      Runtime::NesThread::getId());
         }
     }
 }
@@ -341,8 +344,8 @@ void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext,
                                                                                   reconf,
                                                                                   queryManager);
     //todo: #4227 use QueryTerminationType::Redeployment
-    workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), Runtime::QueryTerminationType::HardStop, queryManager->getNumberOfWorkerThreads());
     workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
+    workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), Runtime::QueryTerminationType::HardStop, queryManager->getNumberOfWorkerThreads());
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {

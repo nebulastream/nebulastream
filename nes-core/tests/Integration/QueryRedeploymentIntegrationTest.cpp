@@ -1050,8 +1050,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
     wrk1->getNodeEngine()->reconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
                                                   "localhost",
-        //*wrk2DataPort,
-        //*crdWorkerDataPort,
                                                   *wrk3DataPort,
                                                   subQueryIds.front(),//todo: reenable actual id
                                                   uniqueNetworkSinkDescriptorId,

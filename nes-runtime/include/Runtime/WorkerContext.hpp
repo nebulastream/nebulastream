@@ -52,7 +52,6 @@ class WorkerContext {
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
     std::unordered_map<NES::OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>> dataChannelFutures;
-    //std::unordered_set<uint64_t> drainedSinks;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool stored in tls
@@ -247,14 +246,18 @@ class WorkerContext {
      */
     std::optional<TupleBuffer> removeBufferFromReconnectBufferStorage(uint64_t sinkId);
 
-    //todo #4229: adapt this function when aborting of network channel creation has been implemented
     /**
      * @brief stop a connection process which is currently in progress
      * @param ownerId the id of the operator that started the connection process
      */
     void abortConnectionProcess(OperatorId ownerId);
 
-    bool doesNetworkChannelExist(uint64_t sinkId);
+    /**
+     * @brief check if a network channel exists for the sink in question
+     * @param sinkId
+     * @return
+     */
+    [[maybe_unused]] bool doesNetworkChannelExist(uint64_t sinkId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime
