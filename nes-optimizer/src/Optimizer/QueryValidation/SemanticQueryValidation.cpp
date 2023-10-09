@@ -18,7 +18,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>

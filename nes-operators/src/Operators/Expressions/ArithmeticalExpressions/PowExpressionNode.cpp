@@ -14,7 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES {

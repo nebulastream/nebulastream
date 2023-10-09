@@ -14,8 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_FIELDASSIGNMENTEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_FIELDASSIGNMENTEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/BinaryExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/BinaryExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
 
 class FieldAssignmentExpressionNode;

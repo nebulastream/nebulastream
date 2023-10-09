@@ -12,6 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-catalogs
+        TopologyManagerService.cpp
         TopologyNode.cpp
         Topology.cpp
 )

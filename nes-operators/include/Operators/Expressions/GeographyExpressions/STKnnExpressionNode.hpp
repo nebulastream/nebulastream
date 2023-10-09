@@ -15,10 +15,10 @@
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STKNNEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STKNNEXPRESSIONNODE_HPP_
 
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 
 namespace NES {
 

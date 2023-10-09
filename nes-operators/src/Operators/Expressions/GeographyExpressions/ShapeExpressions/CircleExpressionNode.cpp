@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
+#include <Operators/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {

@@ -25,6 +25,4 @@ add_source_files(nes-optimizer
         OriginIdInferencePhase.cpp
         TypeInferencePhaseContext.cpp
         SampleCodeGenerationPhase.cpp
-        QueryDeploymentPhase.cpp
-        QueryUndeploymentPhase.cpp
 )

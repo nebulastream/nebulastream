@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES {
 
 /**

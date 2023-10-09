@@ -14,8 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
 
 /**

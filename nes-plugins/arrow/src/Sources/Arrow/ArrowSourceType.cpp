@@ -12,7 +12,11 @@
     limitations under the License.
 */
 
+<<<<<<<< HEAD:nes-plugins/arrow/src/Sources/Arrow/ArrowSourceType.cpp
 #include <Sources/Arrow/ArrowSourceType.hpp>
+========
+#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
+>>>>>>>> 845406f58c (#4246: refactored code to make optimizer phases compile):nes-configurations/src/Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.cpp
 #include <Util/Logger/Logger.hpp>
 #include <string>
 #include <utility>

@@ -15,19 +15,20 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
+#include <Operators/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <utility>
+
 namespace NES {
 
 // calls of binary operators with two ExpressionNodes

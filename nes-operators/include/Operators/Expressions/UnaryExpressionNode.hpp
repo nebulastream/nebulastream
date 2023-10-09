@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
 namespace NES {
 /**
  * @brief A unary expression is used to represent expressions with one child.

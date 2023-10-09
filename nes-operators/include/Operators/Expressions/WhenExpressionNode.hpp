@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/BinaryExpressionNode.hpp>
+#include <Operators/Expressions/BinaryExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node represents an When expression.

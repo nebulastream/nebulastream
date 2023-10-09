@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELLOGICALOPERATORNODE_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELLOGICALOPERATORNODE_HPP_
 
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 

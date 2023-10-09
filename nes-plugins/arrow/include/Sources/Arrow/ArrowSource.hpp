@@ -15,6 +15,13 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_ARROWSOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_ARROWSOURCE_HPP_
 
+<<<<<<<< HEAD:nes-plugins/arrow/include/Sources/Arrow/ArrowSource.hpp
+========
+#ifdef ENABLE_ARROW_BUILD
+
+#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
+#include <Operators/LogicalOperators/Sources/ArrowSourceDescriptor.hpp>
+>>>>>>>> 845406f58c (#4246: refactored code to make optimizer phases compile):nes-core/include/Sources/ArrowSource.hpp
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/Arrow/ArrowSourceDescriptor.hpp>
 #include <Sources/Arrow/ArrowSourceType.hpp>

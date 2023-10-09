@@ -15,7 +15,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <utility>
 

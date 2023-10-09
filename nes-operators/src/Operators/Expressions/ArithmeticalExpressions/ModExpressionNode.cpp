@@ -16,7 +16,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <sstream>
 namespace NES {
 

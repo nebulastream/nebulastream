@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
 namespace NES {
 
 /**

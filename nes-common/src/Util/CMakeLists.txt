@@ -20,6 +20,7 @@ add_source_files(nes-common
         DumpHelper.cpp
         Common.cpp
         PluginLoader.cpp
+        SpatialUtils.cpp
 )
 add_subdirectory(yaml)
 add_subdirectory(Logger)

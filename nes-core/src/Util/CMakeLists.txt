@@ -16,7 +16,6 @@ add_source_files(nes-core
         TimeMeasurement.cpp
         BufferSequenceNumber.cpp
         KalmanFilter.cpp
-        SpatialUtils.cpp
         )
 if (NES_USE_MQTT)
     add_source_files(nes-core

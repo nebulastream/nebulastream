@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <Common/DataTypes/DataType.hpp>
-#include <Nodes/Expressions/CaseExpressionNode.hpp>
-#include <Nodes/Expressions/WhenExpressionNode.hpp>
+#include <Operators/Expressions/CaseExpressionNode.hpp>
+#include <Operators/Expressions/WhenExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES {

@@ -12,4 +12,3 @@
 # limitations under the License.
 
 add_subdirectory(Optimizer)
-add_subdirectory(Plans)

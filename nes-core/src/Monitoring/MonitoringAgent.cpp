@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Components/NesWorker.hpp>
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/BinaryExpressionNode.hpp>
+#include <Operators/Expressions/BinaryExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

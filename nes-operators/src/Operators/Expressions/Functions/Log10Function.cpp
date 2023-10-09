@@ -13,7 +13,7 @@
 */
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
 
 namespace NES {
 

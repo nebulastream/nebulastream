@@ -16,7 +16,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
+#include <Operators/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <cmath>

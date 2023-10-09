@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <API/Expressions/Expressions.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
+#include <Operators/Expressions/ConstantValueExpressionNode.hpp>
+#include <Operators/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

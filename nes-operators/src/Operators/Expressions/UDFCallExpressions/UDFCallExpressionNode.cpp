@@ -16,8 +16,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Exceptions/UDFException.hpp>
-#include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
+#include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <sstream>
 #include <utility>
