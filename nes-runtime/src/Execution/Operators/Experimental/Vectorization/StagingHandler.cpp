@@ -52,6 +52,10 @@ bool StagingHandler::full() const {
 }
 
 TupleBuffer* StagingHandler::getTupleBuffer() const {
+    if (currentWritePosition == 0) {
+        auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        tupleBuffer->setCreationTimestampInMS(ts);
+    }
     return tupleBuffer.get();
 }
 
