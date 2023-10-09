@@ -99,7 +99,7 @@ PhysicalSourceTypePtr
 PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
                                                 const std::map<std::string, std::string>& commandLineParams) {
 
-    // check a plugin is registered to handle this source type
+    // check if a plugin is registered to handle this source type
     for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins()) {
         if (auto type = plugin->createPhysicalSourceType(sourceType, commandLineParams)) {
             return type;

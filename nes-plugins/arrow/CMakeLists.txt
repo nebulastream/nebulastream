@@ -53,7 +53,6 @@ target_link_libraries(nes-arrow PUBLIC nes ${ARROW_LIBRARIES} )
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
-    # add_subdirectory(tests)
     add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/tests/testData/")
 
     ### ArrowSourceIntegrationTest ###

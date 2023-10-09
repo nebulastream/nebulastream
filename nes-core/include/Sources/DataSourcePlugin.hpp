@@ -23,8 +23,8 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 
 /**
- * @brief DataSource interface to register a new physical data sink plugin.
- * Implementations of this plugin must implement createDataSink that translates a sink descriptor to a DataSourcePtr.
+ * @brief DataSource interface to register a new physical data source plugin.
+ * Implementations of this plugin must implement createDatasource that translates a source descriptor to a DataSourcePtr.
  */
 class DataSourcePlugin {
   public:

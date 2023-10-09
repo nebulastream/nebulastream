@@ -14,11 +14,10 @@ message(STATUS "Enable Tensorflow Plugin")
 
 find_package(tensorflow-lite-c REQUIRED)
 
+add_subdirectory(src)
+get_source(nes-tensorflow NES_COMPILER_SOURCE_FILES)
 add_library(nes-tensorflow SHARED
-        src/Execution/Operators/Tensorflow/TensorflowInferenceOperatorHandler.cpp
-        src/Execution/Operators/Tensorflow/TensorflowInferenceOperator.cpp
-        src/Execution/Operators/Tensorflow/TensorflowAdapter.cpp
-        src/Execution/Operators/Tensorflow/TensorflowOperatorLoweringPlugin.cpp
+        ${NES_COMPILER_SOURCE_FILES}
 )
 target_link_libraries(nes-tensorflow PRIVATE nes tensorflowlite_c::tensorflowlite_c)
 add_dependencies(build_all_plugins nes-tensorflow)

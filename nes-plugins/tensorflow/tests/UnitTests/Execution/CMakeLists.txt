@@ -12,6 +12,6 @@
 # limitations under the License.
 
 add_nes_runtime_test(runtime-tensorflow-inference-pipeline-test "TensorflowPipelineTest.cpp")
-target_link_libraries(runtime-tensorflow-inference-pipeline-test PUBLIC nes-tensorflow)
+target_link_libraries(runtime-tensorflow-inference-pipeline-test nes-tensorflow)
 add_nes_runtime_test(runtime-tensorflow-inference-operator-test "TensorflowOperatorTest.cpp")
-target_link_libraries(runtime-tensorflow-inference-operator-test PUBLIC nes-tensorflow)
+target_link_libraries(runtime-tensorflow-inference-operator-test nes-tensorflow)

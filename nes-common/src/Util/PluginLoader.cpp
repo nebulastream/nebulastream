@@ -47,7 +47,7 @@ void PluginLoader::loadPlugin(const std::string_view& path) {
     NES_INFO("Load Plugin {}", path);
     void* plugin = dlopen(path.data(), RTLD_NOW | RTLD_GLOBAL);
     if (!plugin) {
-        NES_FATAL_ERROR("Error during plugin loaded: {}", dlerror());
+        NES_FATAL_ERROR("Error when loading plugin: {}", dlerror());
     }
     loadedPlugins.emplace_back(plugin);
 }
@@ -57,7 +57,7 @@ LoadedPlugin::LoadedPlugin(void* handle) : handle(handle) {}
 LoadedPlugin::~LoadedPlugin() {
     NES_DEBUG("~LoadedPlugin()");
     if (dlclose(handle) == 0) {
-        NES_FATAL_ERROR("Error during plugin un-loaded: {}", dlerror());
+        NES_FATAL_ERROR("Error when unloading plugin: {}", dlerror());
     }
 }
 

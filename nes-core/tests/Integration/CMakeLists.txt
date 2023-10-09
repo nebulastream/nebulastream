@@ -112,20 +112,8 @@ add_nes_integration_test(complex-sequence-test "ComplexSequenceTest.cpp")
 ### unionDeploymentTest ###
 add_nes_integration_test(union-deployment-test "UnionDeploymentTest.cpp")
 
-
-if (NES_USE_TF)
-    ### InferModelDeploymentTest ###
-    add_nes_integration_test(infer-model-deployment-test "Operators/InferModelDeploymentTest.cpp")
-endif ()
-
-if (NES_USE_ARROW)
-    ### ArrowSourceIntegrationTest ###
-    add_nes_integration_test(arrow-source-integration-test "Source/ArrowSourceIntegrationTest.cpp")
-endif ()
-
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
 add_nes_integration_test(deep-hierarchy-test "DeepHierarchyTopologyTest.cpp")
-
 
 ### WorkerCoordinatorStarter Tests ###
 add_nes_integration_test(worker-coordinator-starter-tests "WorkerCoordinatorStarterTest.cpp")
