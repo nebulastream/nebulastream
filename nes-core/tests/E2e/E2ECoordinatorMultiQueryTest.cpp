@@ -238,16 +238,17 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::logicalSourceName("QnV"),
-                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                          TestUtils::sourceGatheringInterval(1000),
-                                          TestUtils::physicalSourceName("test_stream")});
+    auto worker =
+        TestUtils::startWorker({TestUtils::rpcPort(0),
+                                TestUtils::dataPort(0),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                TestUtils::logicalSourceName("QnV"),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
+                                TestUtils::numberOfBuffersToProduce(1),
+                                TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::physicalSourceName("test_stream")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
