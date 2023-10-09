@@ -56,47 +56,50 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
-                                           TestUtils::physicalSourceName("test_stream1"),
-                                           TestUtils::logicalSourceName("QnV"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker1 =
+        TestUtils::startWorker({TestUtils::rpcPort(0),
+                                TestUtils::dataPort(0),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
+                                TestUtils::physicalSourceName("test_stream1"),
+                                TestUtils::logicalSourceName("QnV"),
+                                TestUtils::numberOfBuffersToProduce(1),
+                                TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::parentId(2),
-                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
-                                           TestUtils::physicalSourceName("test_stream2"),
-                                           TestUtils::logicalSourceName("QnV"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1),
-                                           TestUtils::enableDebug()});
+    auto worker2 =
+        TestUtils::startWorker({TestUtils::rpcPort(0),
+                                TestUtils::dataPort(0),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                TestUtils::parentId(2),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
+                                TestUtils::physicalSourceName("test_stream2"),
+                                TestUtils::logicalSourceName("QnV"),
+                                TestUtils::numberOfBuffersToProduce(1),
+                                TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1),
+                                TestUtils::enableDebug()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 10000, 2));
 
-    auto worker3 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::parentId(3),
-                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
-                                           TestUtils::physicalSourceName("test_stream2"),
-                                           TestUtils::logicalSourceName("QnV"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1),
-                                           TestUtils::enableDebug()});
+    auto worker3 =
+        TestUtils::startWorker({TestUtils::rpcPort(0),
+                                TestUtils::dataPort(0),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                TestUtils::parentId(3),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
+                                TestUtils::physicalSourceName("test_stream2"),
+                                TestUtils::logicalSourceName("QnV"),
+                                TestUtils::numberOfBuffersToProduce(1),
+                                TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1),
+                                TestUtils::enableDebug()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 10000, 3));
 
     auto topology = TestUtils::getTopology(*restPort);
@@ -125,29 +128,31 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
-                                           TestUtils::physicalSourceName("test_stream1"),
-                                           TestUtils::logicalSourceName("QnV"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker1 =
+        TestUtils::startWorker({TestUtils::rpcPort(0),
+                                TestUtils::dataPort(0),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
+                                TestUtils::physicalSourceName("test_stream1"),
+                                TestUtils::logicalSourceName("QnV"),
+                                TestUtils::numberOfBuffersToProduce(1),
+                                TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1)});
 
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
-                                           TestUtils::physicalSourceName("test_stream2"),
-                                           TestUtils::logicalSourceName("QnV"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker2 =
+        TestUtils::startWorker({TestUtils::rpcPort(0),
+                                TestUtils::dataPort(0),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
+                                TestUtils::physicalSourceName("test_stream2"),
+                                TestUtils::logicalSourceName("QnV"),
+                                TestUtils::numberOfBuffersToProduce(1),
+                                TestUtils::numberOfTuplesToProducePerBuffer(0),
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
@@ -206,31 +211,31 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker1 =
-        TestUtils::startWorker({TestUtils::rpcPort(0),
-                                TestUtils::dataPort(0),
-                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv"),
-                                TestUtils::physicalSourceName("test_stream1"),
-                                TestUtils::logicalSourceName("QnV"),
-                                TestUtils::numberOfBuffersToProduce(1),
-                                TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                TestUtils::sourceGatheringInterval(1000),
-                                TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker1 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv"),
+         TestUtils::physicalSourceName("test_stream1"),
+         TestUtils::logicalSourceName("QnV"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::numberOfTuplesToProducePerBuffer(0),
+         TestUtils::sourceGatheringInterval(1000),
+         TestUtils::workerHealthCheckWaitTime(1)});
 
-    auto worker2 =
-        TestUtils::startWorker({TestUtils::rpcPort(0),
-                                TestUtils::dataPort(0),
-                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv"),
-                                TestUtils::physicalSourceName("test_stream2"),
-                                TestUtils::logicalSourceName("QnV"),
-                                TestUtils::numberOfBuffersToProduce(1),
-                                TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                TestUtils::sourceGatheringInterval(1000),
-                                TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker2 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv"),
+         TestUtils::physicalSourceName("test_stream2"),
+         TestUtils::logicalSourceName("QnV"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::numberOfTuplesToProducePerBuffer(0),
+         TestUtils::sourceGatheringInterval(1000),
+         TestUtils::workerHealthCheckWaitTime(1)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
@@ -305,29 +310,31 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
-                                           TestUtils::physicalSourceName("test_stream_1"),
-                                           TestUtils::logicalSourceName("window"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker1 =
+        TestUtils::startWorker({TestUtils::rpcPort(0),
+                                TestUtils::dataPort(0),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
+                                TestUtils::physicalSourceName("test_stream_1"),
+                                TestUtils::logicalSourceName("window"),
+                                TestUtils::numberOfBuffersToProduce(1),
+                                TestUtils::numberOfTuplesToProducePerBuffer(28),
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1)});
 
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                           TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
-                                           TestUtils::physicalSourceName("test_stream_2"),
-                                           TestUtils::logicalSourceName("window"),
-                                           TestUtils::numberOfBuffersToProduce(1),
-                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker2 =
+        TestUtils::startWorker({TestUtils::rpcPort(0),
+                                TestUtils::dataPort(0),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                TestUtils::sourceType(SourceType::CSV_SOURCE),
+                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
+                                TestUtils::physicalSourceName("test_stream_2"),
+                                TestUtils::logicalSourceName("window"),
+                                TestUtils::numberOfBuffersToProduce(1),
+                                TestUtils::numberOfTuplesToProducePerBuffer(28),
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 

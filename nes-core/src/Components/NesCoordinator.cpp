@@ -234,7 +234,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         auto result = restServer->start();//this call is blocking
-        if(!result){
+        if (!result) {
             NES_THROW_RUNTIME_ERROR("Error while staring rest server!");
         }
     }));
