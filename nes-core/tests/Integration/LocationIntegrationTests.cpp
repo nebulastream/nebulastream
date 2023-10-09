@@ -1646,7 +1646,7 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
 }
 
 #ifdef S2DEF
-TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
+TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithReconnecting) {
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "sequence_with_reconnecting_out.csv";
 

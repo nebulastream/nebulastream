@@ -169,6 +169,7 @@ std::optional<Network::NetworkChannelPtr> WorkerContext::getAsyncConnectionResul
     auto& [futureReference, promiseReference] = it->second;
     if (futureReference.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         auto channel = it->second.first.get();
+        it->second.second.set_value(true);
         dataChannelFutures.erase(it);
         return channel;
     }
@@ -195,6 +196,7 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId
     auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
     //blocking wait on get
     auto channel = it->second.first.get();
+    it->second.second.set_value(true);
     dataChannelFutures.erase(it);
     return channel;
 }
@@ -202,18 +204,18 @@ Network::NetworkChannelPtr WorkerContext::waitForAsyncConnection(NES::OperatorId
 void WorkerContext::abortConnectionProcess(NES::OperatorId ownerId) {
     auto it = dataChannelFutures.find(ownerId);// note we assume it's always available
     auto& promise = it->second.second;
+    //signal connection process to stop
     promise.set_value(true);
+    //wait for the future to be set so we can make sure that channel is closed in case it has already been created
+    auto& future = it->second.first;
+    auto channel = future.get();
+    if (channel) {
+        channel->close(QueryTerminationType::Failure);
+    }
     dataChannelFutures.erase(it);
 }
 
 bool WorkerContext::doesNetworkChannelExist(uint64_t sinkId) {
     return dataChannels.contains(sinkId);
 }
-
-
-/*
-bool WorkerContext::isSinkDrained(uint64_t sinkId) {
-    return drainedSinks.contains(sinkId);
-}
- */
 }// namespace NES::Runtime
