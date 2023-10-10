@@ -131,6 +131,9 @@ void PythonUDFOperatorHandler::finalize() {
     Py_DecRef(this->pythonVariable);
     Py_DecRef(this->pythonModule);
     Py_DecRef(this->pythonArguments);
+    Py_DecRef(this->pythonFunction);
+    Py_DecRef(this->globals);
+    Py_DecRef(this->locals);
 
     if (Py_IsInitialized()) {
         if (Py_FinalizeEx() == -1) {

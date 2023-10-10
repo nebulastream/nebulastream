@@ -64,8 +64,8 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
  * @param memoryLayout memory layout
  * @return
  */
-auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
-    auto mapOperator = std::make_shared<Operators::MapPythonUDF>(0, schema, schema);
+auto initPipelineOperator(SchemaPtr schema, auto memoryLayout, std::string compiler) {
+    auto mapOperator = std::make_shared<Operators::MapPythonUDF>(0, schema, schema, compiler);
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -109,9 +109,9 @@ auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLa
  * @param testDataPath path to the test data containing the udf jar
  * @return operator handler
  */
-auto initMapHandler(std::string function, std::string functionName, SchemaPtr schema) {
+auto initMapHandler(std::string function, std::string functionName, std::string compiler, SchemaPtr schema) {
     // use default compiler here
-    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, "", schema, schema);
+    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, compiler, schema, schema);
 }
 
 /**
@@ -138,16 +138,17 @@ void checkBufferResult(std::string variableName, auto pipelineContext, auto memo
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
     auto variableName = "intVariable";
+    auto compiler = "numba";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT32);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipeline = initPipelineOperator(schema, memoryLayout);
+    auto pipeline = initPipelineOperator(schema, memoryLayout, compiler);
     auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
 
     std::string function = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "integer_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    auto handler = initMapHandler(function, functionName, compiler, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -162,15 +163,16 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap) {
     auto variableName = "shortVariable";
+    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT16);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipeline = initPipelineOperator(schema, memoryLayout);
+    auto pipeline = initPipelineOperator(schema, memoryLayout, compiler);
     auto buffer = initInputBuffer<int16_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def short_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "short_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    auto handler = initMapHandler(function, functionName, compiler, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -185,15 +187,16 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap) {
     auto variableName = "byteVariable";
+    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT8);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipeline = initPipelineOperator(schema, memoryLayout);
+    auto pipeline = initPipelineOperator(schema, memoryLayout, compiler);
     auto buffer = initInputBuffer<int8_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def byte_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "byte_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    auto handler = initMapHandler(function, functionName, compiler, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -208,15 +211,16 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap) {
     auto variableName = "longVariable";
+    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipeline = initPipelineOperator(schema, memoryLayout);
+    auto pipeline = initPipelineOperator(schema, memoryLayout, compiler);
     auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def long_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "long_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    auto handler = initMapHandler(function, functionName, compiler, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -231,15 +235,16 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
     auto variableName = "DoubleVariable";
+    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::FLOAT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipeline = initPipelineOperator(schema, memoryLayout);
+    auto pipeline = initPipelineOperator(schema, memoryLayout, compiler);
     auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def double_test(x):\n\ty = x + 10.0\n\treturn y\n";
     std::string functionName = "double_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    auto handler = initMapHandler(function, functionName, compiler, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -254,10 +259,11 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto variableName = "BooleanVariable";
+    auto compiler = "numba";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::BOOLEAN);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipeline = initPipelineOperator(schema, memoryLayout);
+    auto pipeline = initPipelineOperator(schema, memoryLayout, compiler);
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
@@ -267,7 +273,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def boolean_test(x):\n\tx = False\n\treturn x\n";
     std::string functionName = "boolean_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    auto handler = initMapHandler(function, functionName, compiler, schema);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -290,10 +296,11 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto variableName = "stringVariable";
+    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipeline = initPipelineOperator(schema, memoryLayout);
+    auto pipeline = initPipelineOperator(schema, memoryLayout, compiler);
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
@@ -310,7 +317,7 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def string_test(x):\n\tx = x+\"X\"\n\treturn x\n";
     std::string functionName = "string_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    auto handler = initMapHandler(function, functionName, compiler, schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -335,6 +342,7 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
  * @brief Test a pipeline containing a scan, a python map with multiple types, and a emit operator
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
+    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("byteVariable", BasicType::INT8);
     schema->addField("shortVariable", BasicType::INT16);
@@ -347,7 +355,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     // schema->addField("stringVariable", BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipeline = initPipelineOperator(schema, memoryLayout);
+    auto pipeline = initPipelineOperator(schema, memoryLayout, compiler);
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
@@ -381,7 +389,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
                            "\n\tboolean_var = False"
                            "\n\treturn byte_var, short_var, int_var, long_var, float_var, double_var, False\n";
     std::string functionName = "complex_test";
-    auto handler = initMapHandler(function, functionName, schema);
+    auto handler = initMapHandler(function, functionName, compiler, schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

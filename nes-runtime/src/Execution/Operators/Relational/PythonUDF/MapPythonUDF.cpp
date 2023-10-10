@@ -350,11 +350,11 @@ void finalizePython(void* state) {
 bool useNumba(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    bool result = false;
     if (handler->getPythonCompiler() == "numba") {
-        return true;
-    } else {
-        return false;
+        result = true;
     }
+    return result;
 }
 
 /**
@@ -366,13 +366,12 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     FunctionCall("createPythonEnvironment", createPythonEnvironment, handler);
-
-    if (FunctionCall("useNumba", useNumba, handler)) {
+    //auto numbaActivated = FunctionCall("useNumba", useNumba, handler);
+    if (pythonCompiler == "numba") {
         // add Parameters
         for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
             auto field = inputSchema->fields[i];
             auto fieldName = field->getName();
-
             if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
                 FunctionCall("createBooleanNumba", createBooleanNumba, handler, record.read(fieldName).as<Boolean>());
             } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
