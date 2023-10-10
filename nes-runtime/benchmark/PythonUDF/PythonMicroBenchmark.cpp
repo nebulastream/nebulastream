@@ -83,7 +83,7 @@ class MicroBenchmarkRunner {
     auto initPipelineOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, auto bufferManager) {
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
 
-        auto mapOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema);
+        auto mapOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -454,14 +454,14 @@ int main(int, char**) {
     std::vector<std::string> pythonCompilers = {"numba"};
     for (const auto& c : compilers) {
         for (const auto& pythonCompiler : pythonCompilers) {
-            //NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
+            NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
             // TODO fix projection queries...
             // NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();
-            NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
+            // NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
         }
     }
 }
