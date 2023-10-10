@@ -29,8 +29,8 @@ namespace NES::Runtime::Execution::Operators {
  */
 class MapPythonUDF : public ExecutableOperator {
   public:
-    MapPythonUDF(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema)
-        : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema){};
+    MapPythonUDF(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string pythonCompiler)
+        : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema), pythonCompiler(pythonCompiler){};
     void execute(ExecutionContext& ctx, Record& record) const override;
     void terminate(ExecutionContext& ctx) const override;
 
@@ -40,6 +40,7 @@ class MapPythonUDF : public ExecutableOperator {
     // These needs to be the same Schemas as used in the operator handler.
     // We need them here to support some functionality during for-loops in execute where we cannot access the handler.
     const SchemaPtr inputSchema, outputSchema;
+    const std::string pythonCompiler;
 };
 
 }// namespace NES::Runtime::Execution::Operators

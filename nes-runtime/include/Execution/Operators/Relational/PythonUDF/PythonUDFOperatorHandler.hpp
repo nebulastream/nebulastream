@@ -19,6 +19,12 @@
 #include <Python.h>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <map>
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Nautilus/Util/Dyncall.hpp>
 #include <mutex>
 #include <utility>
 
@@ -108,6 +114,16 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      */
     PyObject* getPythonModule() const { return this->pythonModule; }
 
+    PyObject* getPythonLocals() const { return this->locals; }
+
+    PyObject* getPythonGlobals() const { return this->globals; }
+
+    std::string getNumbaDataType(AttributeFieldPtr& fieldDataType);
+
+    std::string getNumbaSignature();
+
+    Backends::BC::Dyncall& getDynCall() const { return this->dyncall; }
+
     /**
      * @brief Initializes the python udf in a module
      */
@@ -133,6 +149,9 @@ class PythonUDFOperatorHandler : public OperatorHandler {
     PyObject* pythonFunction; // python function object
     PyObject* pythonModule;   // python module object
     PyObject* pythonVariable; // temp python variable for setting arguments
+    PyObject* locals; // python local variables
+    PyObject* globals; // python global variables
+    Backends::BC::Dyncall& dyncall = Backends::BC::Dyncall::getVM();
 };
 
 }// namespace NES::Runtime::Execution::Operators

@@ -56,7 +56,7 @@ TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest) {
     functionName = "integer_test";
 
     int32_t initialValue = 42;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, "numba", inputSchema, outputSchema);
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
