@@ -24,6 +24,7 @@
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/RequestType.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -43,7 +44,15 @@ FailQueryRequestPtr FailQueryRequest::create(NES::QueryId queryId, NES::QuerySub
 
 void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) {}
 
-std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, const StorageHandlerPtr&) { return {}; }
+std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, const StorageHandlerPtr&) {
+    //make sure the promise is set before returning in case a the caller is waiting on it
+    try {
+        responsePromise.set_value(std::make_shared<FailQueryResponse>(INVALID_QUERY_ID));
+    } catch (std::exception& e) {
+        NES_INFO("Promise value was already set");
+    }
+    return {};
+}
 
 void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) {
 

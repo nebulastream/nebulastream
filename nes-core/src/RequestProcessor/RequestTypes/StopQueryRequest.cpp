@@ -213,6 +213,12 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionExcep
             NES_ERROR("StopQueryRequest: Final failure to rollback. No retries left. Error: {}", e.what());
         }
     }
+    //make sure the promise is set before returning in case a the caller is waiting on it
+    try {
+        responsePromise.set_value(std::make_shared<StopQueryResponse>(false));
+    } catch (std::exception& e) {
+        NES_INFO("Promise value was already set");
+    }
     return failRequest;
 }
 }// namespace NES::RequestProcessor::Experimental

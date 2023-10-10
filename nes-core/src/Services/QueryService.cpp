@@ -204,10 +204,5 @@ void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {
         visitingOp->setId(getNextOperatorId());
     }
 }
-/*
-NES::RequestProcessor::Experimental::AsyncRequestProcessorPtr QueryService::getRequestProcessor() {
-    return asyncRequestExecutor;
-}
- */
 
 }// namespace NES

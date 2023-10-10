@@ -137,9 +137,6 @@ class QueryService {
                                           QuerySubPlanId querySubPlanId,
                                           const std::string& failureReason);
 
-    //NES::RequestProcessor::Experimental::AsyncRequestProcessorPtr getRequestProcessor();
-
-
   private:
     /**
      * Assign unique operator ids to the incoming query plan from a client.

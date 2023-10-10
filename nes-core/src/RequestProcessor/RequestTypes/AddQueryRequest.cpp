@@ -168,6 +168,12 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] Reque
             NES_ERROR("StopQueryRequest: Final failure to rollback. No retries left. Error: {}", exception.what());
         }
     }
+    //make sure the promise is set before returning in case a the caller is waiting on it
+    try {
+        responsePromise.set_value(std::make_shared<AddQueryResponse>(INVALID_QUERY_ID));
+    } catch (std::exception& e) {
+        NES_INFO("Promise value was already set");
+    }
     return {};
 }
 
@@ -339,7 +345,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
 
         //23. Update the shared query plan as deployed
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
-    } catch (RequestExecutionException exception) {
+    } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(exception, storageHandler);
     }
