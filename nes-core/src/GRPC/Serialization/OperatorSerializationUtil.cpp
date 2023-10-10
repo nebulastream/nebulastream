@@ -91,10 +91,6 @@
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 
-#include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Util/FaultToleranceType.hpp>
-
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
