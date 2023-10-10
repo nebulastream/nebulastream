@@ -80,6 +80,7 @@ class StopQueryRequest;
 using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
 
 struct StopQueryResponse : public AbstractRequestResponse {
+    explicit StopQueryResponse(bool success) : success(success) {};
     bool success;
 };
 
