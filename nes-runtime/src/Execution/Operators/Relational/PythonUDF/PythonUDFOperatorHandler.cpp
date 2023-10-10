@@ -19,44 +19,111 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+std::string PythonUDFOperatorHandler::getNumbaDataType(AttributeFieldPtr& fieldDataType) {
+    // https://numba.pydata.org/numba-doc/latest/reference/types.html
+    // it looks like there are no for strings?
+    if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+        return "boolean";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createInt8())) {
+        return "int8";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+        return "int16";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createInt32())) {
+        return "int32";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+        return "int64";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createFloat())) {
+        return "float32";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+        return "float64";
+    } else {
+        return "";
+    }
+}
+
+std::string PythonUDFOperatorHandler::getNumbaSignature(){
+    // needs to look like this in the end: "float64(float64, float64)"
+    // or "Tuple((float64, float64))(float64, float64)"
+    std::string numbaInputSignatureString = "(";
+    for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
+        auto field = inputSchema->fields[i];
+        numbaInputSignatureString += this->getNumbaDataType(field) + ", ";
+    }
+    // remove last two characters, a whitespace and a comma
+    numbaInputSignatureString.erase(numbaInputSignatureString.length()-2);
+    numbaInputSignatureString += ")";
+
+    // the output has to look sth like this:
+    // multiple return variables Tuple((float64, float64))
+    // one return variable float64
+    std::string numbaOutputSignatureString = "";
+    if (outputSchema->fields.size() == 1) {
+        auto field = outputSchema->fields[0];
+        numbaOutputSignatureString += this->getNumbaDataType(field);
+    } else {
+        numbaOutputSignatureString += "Tuple((";
+        for (int i = 0; i < (int) outputSchema->fields.size(); i++) {
+            auto field = outputSchema->fields[i];
+            if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+                numbaOutputSignatureString += this->getNumbaDataType(field) + ", ";
+            }
+        }
+        numbaOutputSignatureString.erase(numbaOutputSignatureString.length()-2);
+        numbaOutputSignatureString += "))";
+    }
+    return numbaOutputSignatureString + numbaInputSignatureString;
+}
+
 void PythonUDFOperatorHandler::initPython() {
     this->moduleName = this->functionName + "Module";
     // initialize python interpreter
     Py_Initialize();
-
+    std::string pythonCode = "";
     //choose python compiler, default is the CPython compiler
-    if (this->pythonCompiler == "numba") {
-        std::string numbaImport = "from numba import jit"
-                                  "\n"
-                                  "@jit(nopython=True)\n";
-        PyObject* compiledNumbaImport = Py_CompileString(numbaImport.c_str(), "", Py_file_input);
-        if (compiledNumbaImport == NULL) {
+    if (this->pythonCompiler == "numba"){
+        dyncall.reset();
+        // init globals and locals to be able to access the variables later when calling the function
+        // they have to be a pyDict
+        globals = PyDict_New();
+        locals = PyDict_New();
+        // should look like this
+        // import numba
+        //
+        // @numba.cfunc(numbaSignature, nopython=True),
+        // udf_function
+        //
+        // udf_function_address = udf_function.address
+        std::string numbaSignature = this->getNumbaSignature();
+        pythonCode += "import numba"
+                      "\n"
+                      "@numba.cfunc(\"" + numbaSignature + "\", nopython=True)\n" +
+                      this->function +
+                      "\n" +
+                      this->functionName + "_address = " + this->functionName + ".address";
+        PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
+    } else {
+        // default, just using the CPython compiler
+        pythonCode += this->function;
+
+        // compile function string
+        PyObject* compiledPythonCode = Py_CompileString(pythonCode.c_str(), "", Py_file_input);
+        if (compiledPythonCode == NULL) {
             if (PyErr_Occurred()) {
                 PyErr_Print();
                 PyErr_Clear();
-                NES_THROW_RUNTIME_ERROR("Could not compile numba import.");
+                NES_THROW_RUNTIME_ERROR("Could not compile function string.");
             }
         }
-    }
 
-    // compile function string
-    PyObject* pythonCode = Py_CompileString(this->function.c_str(), "", Py_file_input);
-    if (pythonCode == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-            NES_THROW_RUNTIME_ERROR("Could not compile function string.");
+        // add python code into our module
+        this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), compiledPythonCode);
+        if (this->pythonModule == NULL) {
+            if (PyErr_Occurred()) {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+            NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
         }
-    }
-
-    // add python code into our module
-    this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), pythonCode);
-    if (this->pythonModule == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-        NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
     }
 }
 

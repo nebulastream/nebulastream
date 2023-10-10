@@ -111,7 +111,7 @@ auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLa
  */
 auto initMapHandler(std::string function, std::string functionName, SchemaPtr schema) {
     // use default compiler here
-    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, "default", schema, schema);
+    return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, "", schema, schema);
 }
 
 /**
