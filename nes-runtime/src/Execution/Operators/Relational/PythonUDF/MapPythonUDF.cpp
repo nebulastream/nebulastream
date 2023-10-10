@@ -504,7 +504,7 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
  */
 void MapPythonUDF::terminate(ExecutionContext& ctx) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    FunctionCall<>("finalizePython", finalizePython, handler);
+    //FunctionCall<>("finalizePython", finalizePython, handler);
 }
 }// namespace NES::Runtime::Execution::Operators
 #endif//NAUTILUS_PYTHON_UDF_ENABLED

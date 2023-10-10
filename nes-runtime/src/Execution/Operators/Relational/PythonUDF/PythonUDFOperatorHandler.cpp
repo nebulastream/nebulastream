@@ -100,11 +100,26 @@ void PythonUDFOperatorHandler::initPython() {
                       this->function +
                       "\n" +
                       this->functionName + "_address = " + this->functionName + ".address";
-        PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
+        /*pythonCode += "from numba.pycc import CC\n"
+                      "\n"
+                      "cc = CC('"+ this->moduleName +"')\n"
+                      "# Uncomment the following line to print out the compilation steps\n"
+                      "cc.verbose = True\n"
+                      "\n"
+                      "@cc.export('"+ this->functionName+"', '" + numbaSignature + "')\n"
+                      + this->function +
+                      "\n"
+                      "if __name__ == \"__main__\":\n"
+                      "    cc.compile()";*/
+        //PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
+        //auto addressVariableName = this->functionName + "_address";
+        //auto addressAsStringPyObject = PyDict_GetItemString(locals, addressVariableName.c_str());
+        //uintptr_t functionAddress = PyLong_AsUnsignedLongLong(addressAsStringPyObject);
+        //std::cout << "HANDLER function address (0x" << std::hex << functionAddress << std::endl << std::flush;
     } else {
         // default, just using the CPython compiler
         pythonCode += this->function;
-
+    }
         // compile function string
         PyObject* compiledPythonCode = Py_CompileString(pythonCode.c_str(), "", Py_file_input);
         if (compiledPythonCode == NULL) {
@@ -124,7 +139,6 @@ void PythonUDFOperatorHandler::initPython() {
             }
             NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
         }
-    }
 }
 
 void PythonUDFOperatorHandler::finalize() {
