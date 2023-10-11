@@ -38,11 +38,6 @@ add_nes_unit_test(data-type-factory-tests "QueryCompiler/DataTypeFactoryTests.cp
 ### Pipelining Tests ###
 add_nes_unit_test(pipelining-phase-tests "QueryCompiler/PipeliningPhaseTest.cpp")
 
-
-### Operator Code Generation Tests ###
-add_nes_unit_test(operator-code-generation-tests "CodeGenerator/OperatorCodeGenerationTest.cpp")
-
-
 ### NES Coordinator Test
 add_executable(nes-coordinator-test "Components/NesCoordinatorTest.cpp")
 target_link_libraries(nes-coordinator-test nes-core-test-util)
