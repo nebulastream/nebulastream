@@ -28,8 +28,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
  */
 class PhysicalKeyedSliceMergingOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
-    using WindowHandlerType = std::variant<Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr,
-                                           std::shared_ptr<Runtime::Execution::Operators::KeyedSliceMergingHandler>>;
+    using WindowHandlerType = std::variant<std::shared_ptr<Runtime::Execution::Operators::KeyedSliceMergingHandler>>;
     PhysicalKeyedSliceMergingOperator(OperatorId id,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,

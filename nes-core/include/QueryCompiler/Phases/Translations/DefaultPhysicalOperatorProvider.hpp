@@ -215,12 +215,6 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
                                               SchemaPtr schema,
                                               std::vector<OperatorNodePtr> children);
 
-    // todo might need super class of join and batch join, this function is a duplicate of above
-    static OperatorNodePtr getBatchJoinChildInputOperator(const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
-                                                          SchemaPtr outputSchema,
-                                                          std::vector<OperatorNodePtr> children);
-
-
   private:
     /**
      * @brief creates preAggregationWindowHandler and sliceMergingOperatorHandler for keyed windows depending on the query compiler

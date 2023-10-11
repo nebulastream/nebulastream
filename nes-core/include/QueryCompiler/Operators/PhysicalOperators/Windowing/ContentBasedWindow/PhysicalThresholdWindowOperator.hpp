@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_CONTENTBASEDWINDOW_PHYSICALTHRESHOLDWINDOWOPERATOR_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_CONTENTBASEDWINDOW_PHYSICALTHRESHOLDWINDOWOPERATOR_HPP_
 
+#include "QueryCompiler/QueryCompilerForwardDeclaration.hpp"
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
@@ -36,19 +37,20 @@ class PhysicalThresholdWindowOperator : public PhysicalUnaryOperator {
     PhysicalThresholdWindowOperator(OperatorId id,
                                     SchemaPtr inputSchema,
                                     SchemaPtr outputSchema,
-                                    Windowing::WindowOperatorHandlerPtr operatorHandler);
+                                    Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    static std::shared_ptr<PhysicalThresholdWindowOperator>
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr operatorHandler);
+    static std::shared_ptr<PhysicalThresholdWindowOperator> create(SchemaPtr inputSchema,
+                                                                   SchemaPtr outputSchema,
+                                                                   Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    Windowing::WindowOperatorHandlerPtr getOperatorHandler();
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
     std::string toString() const override;
 
     OperatorNodePtr copy() override;
 
   private:
-    Windowing::WindowOperatorHandlerPtr operatorHandler;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

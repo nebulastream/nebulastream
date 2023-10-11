@@ -28,20 +28,13 @@ class PhysicalNonKeyedWindowSliceStoreAppendOperator : public PhysicalUnaryOpera
     PhysicalNonKeyedWindowSliceStoreAppendOperator(
         OperatorId id,
         SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr windowHandler);
+        SchemaPtr outputSchema);
 
     static std::shared_ptr<PhysicalNonKeyedWindowSliceStoreAppendOperator>
     create(SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr windowHandler);
+           SchemaPtr outputSchemar);
     std::string toString() const override;
     OperatorNodePtr copy() override;
-
-    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr getWindowHandler() { return windowHandler; }
-
-  private:
-    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr windowHandler;
 };
 
 }// namespace PhysicalOperators

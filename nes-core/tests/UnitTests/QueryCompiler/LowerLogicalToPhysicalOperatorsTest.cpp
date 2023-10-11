@@ -47,9 +47,6 @@
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -105,7 +102,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
         projectPp = LogicalOperatorFactory::createProjectionOperator({});
-        iterationCEPOp = LogicalOperatorFactory::createCEPIterationOperator(2, 6);
         {
             Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
             auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
@@ -166,7 +162,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
     LogicalOperatorNodePtr mapPythonUDFOp;
 #endif// NAUTILUS_PYTHON_UDF_ENABLED
     LogicalOperatorNodePtr projectPp;
-    LogicalOperatorNodePtr iterationCEPOp;
     JoinLogicalOperatorNodePtr joinOp1;
     QueryCompilation::QueryCompilerOptionsPtr options;
 };
@@ -456,10 +451,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleBatchJoinQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>());
-    ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalBatchJoinBuildOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
@@ -883,37 +874,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSinkSourceQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
-}
-
-/**
- * @brief Input Query Plan:
- *
- * --- Sink 1 --- CEPIteration -- Source 1
- *
- * Result Query plan:
- *
- * --- Physical Sink 1 --- Physical CEPIteration -- Physical Source 1
- *
- */
-TEST_F(LowerLogicalToPhysicalOperatorsTest, translateCEPiteration) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    queryPlan->appendOperatorAsNewRoot(iterationCEPOp);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-
-    NES_DEBUG("{}", queryPlan->toString());
-    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
-    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
-
-    phase->apply(queryPlan);
-    NES_DEBUG("{}", queryPlan->toString());
-
-    auto iterator = QueryPlanIterator(queryPlan).begin();
-
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalIterationCEPOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }

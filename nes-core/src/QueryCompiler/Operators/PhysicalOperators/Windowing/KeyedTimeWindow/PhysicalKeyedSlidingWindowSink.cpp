@@ -24,27 +24,24 @@ PhysicalKeyedSlidingWindowSink::PhysicalKeyedSlidingWindowSink(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler,
     Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
-      keyedEventTimeWindowHandler(keyedEventTimeWindowHandler), windowDefinition(windowDefinition) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(), windowDefinition(windowDefinition) {}
 
 std::shared_ptr<PhysicalKeyedSlidingWindowSink> PhysicalKeyedSlidingWindowSink::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler,
     Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalKeyedSlidingWindowSink>(getNextOperatorId(),
                                                             inputSchema,
                                                             outputSchema,
-                                                            keyedEventTimeWindowHandler,
+
                                                             windowDefinition);
 }
 
 std::string PhysicalKeyedSlidingWindowSink::toString() const { return "PhysicalKeyedSlidingWindowSink"; }
 Windowing::LogicalWindowDefinitionPtr PhysicalKeyedSlidingWindowSink::getWindowDefinition() { return windowDefinition; }
 OperatorNodePtr PhysicalKeyedSlidingWindowSink::copy() {
-    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler, windowDefinition);
+    return create(inputSchema, outputSchema,  windowDefinition);
 }
 
 }// namespace PhysicalOperators

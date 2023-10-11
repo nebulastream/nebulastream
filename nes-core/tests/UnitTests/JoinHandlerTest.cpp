@@ -35,7 +35,8 @@
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
-#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <gtest/gtest.h>
 #include <map>

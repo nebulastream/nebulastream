@@ -21,19 +21,15 @@ namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalNonKeyedWindowSliceStoreAppendOperator::PhysicalNonKeyedWindowSliceStoreAppendOperator(
     OperatorId id,
     SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractEmitOperator(),
-      windowHandler(keyedEventTimeWindowHandler) {}
+    SchemaPtr outputSchema)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractEmitOperator(){}
 
 std::shared_ptr<PhysicalNonKeyedWindowSliceStoreAppendOperator> PhysicalNonKeyedWindowSliceStoreAppendOperator::create(
     SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    SchemaPtr outputSchema) {
     return std::make_shared<PhysicalNonKeyedWindowSliceStoreAppendOperator>(getNextOperatorId(),
                                                                             inputSchema,
-                                                                            outputSchema,
-                                                                            keyedEventTimeWindowHandler);
+                                                                            outputSchema);
 }
 
 std::string PhysicalNonKeyedWindowSliceStoreAppendOperator::toString() const {
@@ -41,7 +37,7 @@ std::string PhysicalNonKeyedWindowSliceStoreAppendOperator::toString() const {
 }
 
 OperatorNodePtr PhysicalNonKeyedWindowSliceStoreAppendOperator::copy() {
-    return create(inputSchema, outputSchema, windowHandler);
+    return create(inputSchema, outputSchema);
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

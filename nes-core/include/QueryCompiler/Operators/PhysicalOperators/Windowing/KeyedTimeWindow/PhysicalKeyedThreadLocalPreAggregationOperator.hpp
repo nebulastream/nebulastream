@@ -28,8 +28,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
  */
 class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
-    using WindowHandlerType = std::variant<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr,
-                                           std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>,
+    using WindowHandlerType = std::variant<std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>,
                                            std::shared_ptr<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>>;
     PhysicalKeyedThreadLocalPreAggregationOperator(OperatorId id,
                                                    SchemaPtr inputSchema,

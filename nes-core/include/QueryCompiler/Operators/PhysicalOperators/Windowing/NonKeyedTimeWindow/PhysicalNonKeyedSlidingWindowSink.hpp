@@ -29,24 +29,18 @@ class PhysicalNonKeyedSlidingWindowSink : public PhysicalUnaryOperator, public A
     PhysicalNonKeyedSlidingWindowSink(OperatorId id,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
-                                      Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr eventTimeWindowHandler,
                                       Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalNonKeyedSlidingWindowSink>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr eventTimeWindowHandler,
            Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
-    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr getWindowHandler() {
-        return keyedEventTimeWindowHandler;
-    }
 
   private:
-    Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 

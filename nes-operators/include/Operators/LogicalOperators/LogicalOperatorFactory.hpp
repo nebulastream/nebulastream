@@ -195,20 +195,6 @@ class LogicalOperatorFactory {
     static BroadcastLogicalOperatorNodePtr createBroadcastOperator(OperatorId id = getNextOperatorId());
 
     /**
-     * CEP Operators
-     */
-
-    /**
-    * @brief Create a new logical iteration operator.
-    * @param minIterations  the minimal expected number of iterations
-    * @param maxIterations  the maximal expected number of iterations, if 0 unlimited
-    * @param id: the id of the operator if not defined then next free operator id is used.
-    * @return LogicalOperatorNodePtr
-    */
-    static LogicalUnaryOperatorNodePtr
-    createCEPIterationOperator(uint64_t minIterations, uint64_t maxIterations, OperatorId id = getNextOperatorId());
-
-    /**
      * @brief Create a new MapJavaUDFLogicalOperatorNode.
      * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
      * @param id The operator ID.

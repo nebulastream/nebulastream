@@ -26,22 +26,13 @@ class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator
     PhysicalKeyedGlobalSliceStoreAppendOperator(
         OperatorId id,
         SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler);
+        SchemaPtr outputSchema);
 
     static std::shared_ptr<PhysicalKeyedGlobalSliceStoreAppendOperator>
     create(SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler);
+           SchemaPtr outputSchema);
     std::string toString() const override;
     OperatorNodePtr copy() override;
-
-    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr getWindowHandler() {
-        return keyedEventTimeWindowHandler;
-    }
-
-  private:
-    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

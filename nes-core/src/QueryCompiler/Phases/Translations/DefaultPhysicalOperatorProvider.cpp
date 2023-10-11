@@ -24,8 +24,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -607,15 +605,10 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedKeyedWindow(WindowO
         // Handle sliding window
 
         auto globalSliceStoreAppend =
-            PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,
-                                                                                   windowOutputSchema,
-                                                                                   nullptr);
+            PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema, windowOutputSchema);
 
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
-        return PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema,
-                                                                         windowOutputSchema,
-                                                                         nullptr,
-                                                                         windowDefinition);
+        return PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema, windowOutputSchema, windowDefinition);
     }
 }
 
@@ -638,17 +631,14 @@ DefaultPhysicalOperatorProvider::replaceOperatorNodeTimeBasedNonKeyedWindow(Wind
     } else {
         // Handle sliding window
         //auto globalSliceStore =
-         //   std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::NonKeyedSlice>>();
+        //   std::make_shared<Windowing::Experimental::GlobalSliceStore<Windowing::Experimental::NonKeyedSlice>>();
 
         auto globalSliceStoreAppend =
-            PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator::create(windowInputSchema,
-                                                                                      windowOutputSchema,
-                                                                                      nullptr);
+            PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator::create(windowInputSchema, windowOutputSchema);
 
         operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
         return PhysicalOperators::PhysicalNonKeyedSlidingWindowSink::create(windowInputSchema,
                                                                             windowOutputSchema,
-                                                                            nullptr,
                                                                             windowDefinition);
     }
 }
@@ -733,7 +723,6 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
-    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
         //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
@@ -744,9 +733,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                 == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
                 NES_INFO("Lower ThresholdWindow");
                 auto thresholdWindowPhysicalOperator =
-                    PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
-                                                                               windowOutputSchema,
-                                                                               windowOperatorHandler);
+                    PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema, windowOutputSchema, nullptr);
                 thresholdWindowPhysicalOperator->addProperty("LogicalOperatorId", operatorNode->getId());
 
                 operatorNode->replace(thresholdWindowPhysicalOperator);
@@ -761,48 +748,42 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
             lowerThreadLocalWindowOperator(plan, operatorNode);
         } else {
             // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
-            auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowInputSchema,
-                                                                                                         windowOutputSchema,
-                                                                                                         windowOperatorHandler);
+            auto preAggregationOperator =
+                PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowInputSchema, windowOutputSchema, nullptr);
             operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
-            auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema,
-                                                                                    windowOutputSchema,
-                                                                                    windowOperatorHandler);
+            auto windowSink =
+                PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema, windowOutputSchema, nullptr);
             windowSink->addProperty("LogicalOperatorId", operatorNode->getId());
 
             operatorNode->replace(windowSink);
         }
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         // Translate a slice creation operator in -> SlicePreAggregationOperator -> SliceSinkOperator
-        auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowInputSchema,
-                                                                                                     windowOutputSchema,
-                                                                                                     windowOperatorHandler);
+        auto preAggregationOperator =
+            PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowInputSchema, windowOutputSchema, nullptr);
         operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
-        auto sliceSink =
-            PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        auto sliceSink = PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, nullptr);
         sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
         // Translate a slice merging operator in -> SliceMergingOperator -> SliceSinkOperator
         auto physicalSliceMergingOperator =
-            PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+            PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, nullptr);
         physicalSliceMergingOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
 
-        auto sliceSink =
-            PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        auto sliceSink = PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, nullptr);
         sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
 
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         // Translate a window computation operator in -> PhysicalSliceMergingOperator -> PhysicalWindowSinkOperator
         auto physicalSliceMergingOperator =
-            PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+            PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, nullptr);
         physicalSliceMergingOperator->addProperty("LogicalOperatorId", operatorNode->getId());
 
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
-        auto sliceSink =
-            PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
+        auto sliceSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema, windowOutputSchema, nullptr);
         sliceSink->addProperty("LogicalOperatorId", operatorNode->getId());
 
         operatorNode->replace(sliceSink);

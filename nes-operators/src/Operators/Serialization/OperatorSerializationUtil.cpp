@@ -13,6 +13,13 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
+#include <GRPC/Serialization/OperatorSerializationUtil.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <GRPC/Serialization/UDFSerializationUtil.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -23,6 +30,7 @@
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
@@ -35,6 +43,8 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
@@ -60,8 +70,39 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalBatchJoinDefinition.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MedianAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnBufferTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
@@ -144,10 +185,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         // serialize infer model
         serializeInferModelOperator(*operatorNode->as<InferModel::InferModelLogicalOperatorNode>(), serializedOperator);
 #endif// TFDEF
-
-    } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
-        // serialize CEPIteration operator
-        serializeCEPIterationOperator(*operatorNode->as<IterationLogicalOperatorNode>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
@@ -279,13 +316,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedProjectionOperator = SerializableOperator_ProjectionDetails();
         details.UnpackTo(&serializedProjectionOperator);
         operatorNode = deserializeProjectionOperator(serializedProjectionOperator);
-
-    } else if (details.Is<SerializableOperator_CEPIterationDetails>()) {
-        // de-serialize CEPIteration operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to CEPIterationLogicalOperator");
-        auto serializedCEPIterationOperator = SerializableOperator_CEPIterationDetails();
-        details.UnpackTo(&serializedCEPIterationOperator);
-        operatorNode = deserializeCEPIterationOperator(serializedCEPIterationOperator);
 
     } else if (details.Is<SerializableOperator_UnionDetails>()) {
         // de-serialize union operator
@@ -1938,23 +1968,6 @@ OperatorSerializationUtil::deserializeInferModelOperator(const SerializableOpera
                                                             inputFields,
                                                             outputFields,
                                                             getNextOperatorId());
-}
-
-void OperatorSerializationUtil::serializeCEPIterationOperator(const IterationLogicalOperatorNode& iterationOperator,
-                                                              SerializableOperator& serializedOperator) {
-    NES_TRACE("OperatorSerializationUtil:: serialize to IterationLogicalOperatorNode");
-    auto iterationDetails = SerializableOperator_CEPIterationDetails();
-    iterationDetails.set_miniteration(iterationOperator.getMinIterations());
-    iterationDetails.set_maxiteration(iterationOperator.getMaxIterations());
-
-    serializedOperator.mutable_details()->PackFrom(iterationDetails);
-}
-
-LogicalUnaryOperatorNodePtr
-OperatorSerializationUtil::deserializeCEPIterationOperator(const SerializableOperator_CEPIterationDetails& cepIterationDetails) {
-    auto maxIteration = cepIterationDetails.maxiteration();
-    auto minIteration = cepIterationDetails.miniteration();
-    return LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration, getNextOperatorId());
 }
 
 template<typename T, typename D>

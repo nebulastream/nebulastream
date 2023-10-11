@@ -19,14 +19,6 @@ namespace NES {
 class BasicValue;
 using BasicValuePtr = std::shared_ptr<BasicValue>;
 
-class ArrayPhysicalType;
-using ArrayPhysicalTypePtr = std::shared_ptr<ArrayPhysicalType>;
-
-namespace Compiler {
-class JITCompiler;
-using JITCompilerPtr = std::shared_ptr<JITCompiler>;
-}// namespace Compiler
-
 namespace Runtime {
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
@@ -57,11 +49,6 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class JoinLogicalOperatorNode;
 using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
 
-namespace Experimental {
-class BatchJoinLogicalOperatorNode;
-using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
-}// namespace Experimental
-
 namespace Join {
 class LogicalJoinDefinition;
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
@@ -69,20 +56,7 @@ using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-namespace Experimental {
-class LogicalBatchJoinDefinition;
-using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
-
-class BatchJoinOperatorHandler;
-using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
-}// namespace Experimental
 }// namespace Join
-
-namespace CEP {
-
-class CEPOperatorHandler;
-using CEPOperatorHandlerPtr [[maybe_unused]] = std::shared_ptr<CEPOperatorHandler>;
-}// namespace CEP
 
 namespace Windowing {
 
@@ -97,37 +71,6 @@ using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescript
 
 class WindowAggregationDescriptor;
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
-
-class AbstractWindowHandler;
-using AbstractWindowHandlerPtr = std::shared_ptr<AbstractWindowHandler>;
-
-namespace Experimental {
-// keyed window handlers
-class KeyedSliceMergingOperatorHandler;
-using KeyedSliceMergingOperatorHandlerPtr = std::shared_ptr<KeyedSliceMergingOperatorHandler>;
-
-class KeyedThreadLocalPreAggregationOperatorHandler;
-using KeyedThreadLocalPreAggregationOperatorHandlerPtr = std::shared_ptr<KeyedThreadLocalPreAggregationOperatorHandler>;
-
-class KeyedGlobalSliceStoreAppendOperatorHandler;
-using KeyedGlobalSliceStoreAppendOperatorHandlerPtr = std::shared_ptr<KeyedGlobalSliceStoreAppendOperatorHandler>;
-
-class KeyedSlidingWindowSinkOperatorHandler;
-using KeyedSlidingWindowSinkOperatorHandlerPtr = std::shared_ptr<KeyedSlidingWindowSinkOperatorHandler>;
-
-// global window handlers
-class NonKeyedSliceMergingOperatorHandler;
-using NonKeyedSliceMergingOperatorHandlerPtr = std::shared_ptr<NonKeyedSliceMergingOperatorHandler>;
-
-class NonKeyedSlidingWindowSinkOperatorHandler;
-using NonKeyedSlidingWindowSinkOperatorHandlerPtr = std::shared_ptr<NonKeyedSlidingWindowSinkOperatorHandler>;
-
-class NonKeyedThreadLocalPreAggregationOperatorHandler;
-using NonKeyedThreadLocalPreAggregationOperatorHandlerPtr = std::shared_ptr<NonKeyedThreadLocalPreAggregationOperatorHandler>;
-
-class NonKeyedGlobalSliceStoreAppendOperatorHandler;
-using NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr = std::shared_ptr<NonKeyedGlobalSliceStoreAppendOperatorHandler>;
-}// namespace Experimental
 
 }// namespace Windowing
 
