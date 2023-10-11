@@ -61,7 +61,6 @@ class AsyncRequestProcessor {
      * calls have no effect.
      * @return true if the executor was running and has been stopped
      */
-     //todo: proper shutdown
     bool stop();
 
     /**

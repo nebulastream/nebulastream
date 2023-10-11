@@ -97,7 +97,6 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         //remove single query from global query plan
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
         //undeploy SQP
-        //todo: status must not be DEPLOYED here
         queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
         if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
