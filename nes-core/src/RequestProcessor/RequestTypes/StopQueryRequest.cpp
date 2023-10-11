@@ -115,16 +115,12 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
                                                               + std::to_string(sharedQueryId));
             }
 
-
             //Perform deployment of re-placed shared query plan
             queryDeploymentPhase->execute(sharedQueryPlan);
 
             //Update the shared query plan as deployed
             sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
         }
-
-        //Remove all query plans that are either stopped or failed
-        globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
 
         //todo: #3742 FIXME: This is a work-around for an edge case. To reproduce this:
         // 1. The query merging feature is enabled.
