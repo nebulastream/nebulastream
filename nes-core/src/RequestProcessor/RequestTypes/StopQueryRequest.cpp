@@ -130,6 +130,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         // Actual Result:
         //  - Query status of the removed query will not be set to stopped and the query will remain in MarkedForHardStop.
         queryCatalogService->updateQueryStatus(queryId, QueryState::STOPPED, "Hard Stopped");
+        responsePromise.set_value(std::make_shared<StopQueryResponse>(true));
 
     } catch (RequestExecutionException& e) {
         auto requests = handleError(e, storageHandler);

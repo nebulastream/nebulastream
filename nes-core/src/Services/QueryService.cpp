@@ -177,8 +177,11 @@ bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
         return false;
     } else {
         auto stopRequest = RequestProcessor::Experimental::StopQueryRequest::create(queryId, 1);
+        auto future = stopRequest->getFuture();
         asyncRequestExecutor->runAsync(stopRequest);
-        return true;
+        //return true;
+        auto success =  std::static_pointer_cast<RequestProcessor::Experimental::StopQueryResponse>(future.get())->success;
+        return success;
     }
 }
 
@@ -190,9 +193,12 @@ bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
         auto request = FailQueryRequest::create(sharedQueryId, failureReason);
         return queryRequestQueue->add(request);
     } else {
-        auto stopRequest = RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId, querySubPlanId, 1);
-        asyncRequestExecutor->runAsync(stopRequest);
-        return true;
+        auto failRequest = RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId, querySubPlanId, 1);
+        auto future = failRequest->getFuture();
+        asyncRequestExecutor->runAsync(failRequest);
+        //return true;
+        auto returnedSharedQueryId = std::static_pointer_cast<RequestProcessor::Experimental::FailQueryResponse>(future.get())->sharedQueryId;
+        return returnedSharedQueryId != INVALID_SHARED_QUERY_ID;
     }
 }
 
