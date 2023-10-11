@@ -72,9 +72,10 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
                                                  + " in the global query plan");
     }
 
-    //respond to the calling service which is the shared query id o the query being undeployed
+    //respond to the calling service which is the shared query id to the query being undeployed
     responsePromise.set_value(std::make_shared<FailQueryResponse>(sharedQueryId));
 
+    //todo 4255: allow requests to skip to the front of the line
     queryCatalogService->checkAndMarkForFailure(sharedQueryId, querySubPlanId);
 
     globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
