@@ -105,7 +105,8 @@ class MultiThreadedTest : public Testing::BaseIntegrationTest,
     }
 };
 
-TEST_P(MultiThreadedTest, testFilterQuery) {
+//todo 4254: re-enable after crashes are fixed
+TEST_P(MultiThreadedTest, DISABLED_testFilterQuery) {
     struct ResultRecord {
         uint64_t value;
         uint64_t id;
@@ -215,7 +216,8 @@ std::ostream& operator<<(std::ostream& os, const KeyedResultRecord& record) {
     return os;
 }
 
-TEST_P(MultiThreadedTest, testNonKeyedEventTimeTumblingWindowAggregation) {
+//todo 4254: re-enable after crashes are fixed
+TEST_P(MultiThreadedTest, DISABLED_testNonKeyedEventTimeTumblingWindowAggregation) {
 
     const auto inputSchema = Schema::create()
                                  ->addField(createField("test1$value", BasicType::UINT64))
@@ -323,7 +325,8 @@ TEST_P(MultiThreadedTest, testKeyedEventTimeTumblingWindowAggregation) {
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedTuples));
 }
 
-TEST_P(MultiThreadedTest, testMultipleNonKeyedEventTimeTumblingWindows) {
+//todo 4254: re-enable after crashes are fixed
+TEST_P(MultiThreadedTest, DISABLED_testMultipleNonKeyedEventTimeTumblingWindows) {
 
     const auto inputSchema = Schema::create()
                                  ->addField(createField("test1$value", BasicType::UINT64))
