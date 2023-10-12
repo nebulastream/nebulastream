@@ -53,7 +53,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                          uint64_t numberOfOrigins = 0,
-                         uint16_t expectedVersionDrainEvents = 0);
+                         uint16_t numberOfInputSources = 0);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -141,9 +141,16 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     void unbuffer(Runtime::WorkerContext& workerContext);
 
+    /**
+     * @brief schedule a reconfiguration which lets this sink reconnect to the specified source once it has been drained
+     * @param newTargetNodeLocation the location of the node hosting the new source
+     * @param newTargetSourcePartition the partition of the new source
+     */
     void addPendingReconfiguration(NodeLocation newTargetNodeLocation, NesPartition newTargetSourcePartition);
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
+
+    void reconfigureReceiver(NesPartition newPartition, NodeLocation newReceiverLocation);
 
   private:
     uint64_t uniqueNetworkSinkDescriptorId;
@@ -157,7 +164,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
-    [[maybe_unused]] uint16_t expectedVersionDrainEvents;
+    uint16_t numberOfInputSources;
     std::atomic<uint16_t> receivedVersionDrainEvents;
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
 };

@@ -363,16 +363,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void setConnectSinksAsync(bool value);
 
-    /* todo #4230: this is a workaround because the id set in the sink descriptors on the coordinator side does not reach the
-     * constructor of the sink. So instead of using the default value received from the descriptors, we now obtain an id from the
-     * node engine. This function can be removed, once the proper values are set via the sink descriptor
-     */
-    /**
-     * @brief obtain a new unique descriptor to assign to a network sink on construction
-     * @return a unique id
-     */
-    uint64_t getUniqueSinkDescriptor();
-
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -416,7 +406,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
     bool connectSinksAsync;
-    std::atomic<uint64_t> nextFreeNetworkSinkId;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

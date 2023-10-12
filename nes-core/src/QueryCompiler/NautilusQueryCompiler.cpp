@@ -80,7 +80,6 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
                                                                                 networkSinkDescriptor->getRetryTimes(),
                                                                                 networkSinkDescriptor->getFaultToleranceType(),
                                                                                 networkSinkDescriptor->getNumberOfOrigins(),
-                                                                                networkSinkDescriptor->getUniqueNetworkSinkDescriptorId(),
                                                                                 expectedVersionDrainEvents);
             sinks.front()->setSinkDescriptor(updatedSinkDescriptor);
         }

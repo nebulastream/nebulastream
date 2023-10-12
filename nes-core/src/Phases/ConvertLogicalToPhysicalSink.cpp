@@ -183,7 +183,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema,
-                                 networkSinkDescriptor->getUniqueNetworkSinkDescriptorId(),
+                                 operatorId,
                                  querySubPlan->getQueryId(),
                                  querySubPlan->getQuerySubPlanId(),
                                  networkSinkDescriptor->getNodeLocation(),
@@ -194,7 +194,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getFaultToleranceType(),
                                  networkSinkDescriptor->getNumberOfOrigins(),
                                  networkSinkDescriptor->getRetryTimes(),
-                                 networkSinkDescriptor->getNumberOfExpectedVersionDrainEvents());
+                                 networkSinkDescriptor->getNumberOfInputSources());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

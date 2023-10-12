@@ -242,7 +242,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1,
                               uint8_t retryTimes = 5,
-                              uint16_t expectedVersionDrainEvents = 0);
+                              uint16_t numberOfInputSources = 0);
 
 /**
  * @brief create a monitoring data sink

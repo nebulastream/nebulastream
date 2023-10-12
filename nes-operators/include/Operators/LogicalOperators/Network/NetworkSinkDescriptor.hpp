@@ -44,8 +44,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     uint32_t retryTimes,
                                     FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1,
-                                    uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId(),
-                                    uint16_t expectedVersionDrainEvents = 0);
+                                    uint16_t numberOfInputSources = 0);
 
     /**
      * @brief returns the string representation of the network sink
@@ -85,12 +84,6 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     uint8_t getRetryTimes() const;
 
     /**
-     * @brief getter for unique network sink descriptor id
-     * @return id
-     */
-    uint64_t getUniqueNetworkSinkDescriptorId() const;
-
-    /**
      * @brief getter for fault-tolerance type
      * @return fault-tolerance type
      */
@@ -102,7 +95,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      */
     void setFaultToleranceType(FaultToleranceType faultToleranceType);
 
-    uint16_t getNumberOfExpectedVersionDrainEvents();
+    uint16_t getNumberOfInputSources();
 
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
@@ -111,14 +104,13 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    uint32_t retryTimes,
                                    FaultToleranceType faultToleranceType,
                                    uint64_t numberOfOrigins,
-                                   uint64_t uniqueNetworkSinkDescriptorId, uint16_t expectedVersionDrainEvents);
+                                   uint16_t numberOfInputSources);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
-    uint64_t uniqueNetworkSinkDescriptorId;
-    [[maybe_unused]] uint16_t expectedVersionDrainEvents;
+    uint16_t numberOfInputSources;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;

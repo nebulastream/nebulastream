@@ -223,7 +223,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               FaultToleranceType faultToleranceType,
                               uint64_t numberOfOrigins,
                               uint8_t retryTimes,
-                              uint16_t expectedVersionDrainEvents) {
+                              uint16_t numberOfInputSources) {
     return std::make_shared<Network::NetworkSink>(schema,
                                                   uniqueNetworkSinkDescriptorId,
                                                   queryId,
@@ -236,7 +236,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   retryTimes,
                                                   faultToleranceType,
                                                   numberOfOrigins,
-                                                  expectedVersionDrainEvents);
+                                                  numberOfInputSources);
 }
 
 DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
