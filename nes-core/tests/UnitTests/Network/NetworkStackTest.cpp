@@ -472,7 +472,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                                    "127.0.0.1",
                                    *freeDataPort,
                                    ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
-                                   buffMgr);
+                                   buffMgr, -1, 12);
 
         struct DataEmitterImpl : public DataEmitter {
             void emitWork(TupleBuffer&) override {}
