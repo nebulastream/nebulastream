@@ -146,6 +146,26 @@ class CoordinatorConfiguration : public BaseConfiguration {
                                                 "",
                                                 "The allowed origins to be set in the header of the responses to rest requests"};
 
+		/**
+		 * @brief This parameter sets the default width of all synopses
+		 */
+		DoubleOption synopsisWidth = {SYNOPSIS_CONFIG_WIDTH, 10000, "The default synopsis width"};
+
+		/**
+		 * @brief This parameter sets the maximum allowed error by all generated synopses
+		 */
+		DoubleOption synopsisError = {SYNOPSIS_CONFIG_ERROR, 0.001, "The maximum error allowed by all synopses"};
+
+		/**
+		 * @brief Sets the probability that the parametrized of a synopsis is exceeded. Not applicable to all synopses.
+		 */
+		DoubleOption synopsisProb = {SYNOPSIS_CONFIG_PROBABILITY, 0.001, "The probability, that the error exceeds the parametrized error. Only applicable to some synopses."};
+
+		/**
+		 * @brief The duration in either time or tuples over which all synopses are generated.
+		 */
+		IntOption synopsisWindowSize = {SYNOPSIS_CONFIG_WINDOWSIZE, 5, "The duration in either time or tuples over which all synopses are generated."};
+
     /**
      * @brief ELEGANT related configuration parameters
      */

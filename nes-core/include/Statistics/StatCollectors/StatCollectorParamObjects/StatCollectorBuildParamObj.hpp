@@ -12,37 +12,30 @@
     limitations under the License.
 */
 
-#ifndef NES_STATCOLLECTORPARAMOBJ_HPP
-#define NES_STATCOLLECTORPARAMOBJ_HPP
+#ifndef NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORS_STATCOLLECTORPARAMOBJECTS_STATCOLLECTORBUILDPARAMOBJ_HPP_
+#define NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORS_STATCOLLECTORPARAMOBJECTS_STATCOLLECTORBUILDPARAMOBJ_HPP_
 
 #include <string>
 #include <ctime>
+#include <memory>
 
 namespace NES {
 
-	using QueryId = uint64_t;
-
-	class Schema;
-	using SchemaPtr = std::shared_ptr<Schema>;
-
 namespace Experimental::Statistics {
 
-	class StatCollectorParamObj {
+	class StatCollectorBuildParamObj {
 	public:
-		StatCollectorParamObj(const std::string& logicalSourceName,
-		                      const std::string& physicalSourceName,
-		                      const std::string& fieldName,
-		                      const std::string& statCollectorType,
-		                      time_t windowSize = 1,
-		                      time_t slideFactor = 5)
+		StatCollectorBuildParamObj(const std::string& logicalSourceName,
+															 const std::string& physicalSourceName,
+															 const std::string& fieldName,
+															 time_t windowSize)
 				: logicalSourceName(logicalSourceName),
 				  physicalSourceName(physicalSourceName),
 				  fieldName(fieldName),
-				  statCollectorType(statCollectorType),
-				  windowSize(windowSize),
-				  slideFactor(slideFactor) {}
+				  windowSize(windowSize) {}
 
-		virtual ~StatCollectorParamObj() {}
+//		virtual ~StatCollectorBuildParamObj() = default;
+		virtual ~StatCollectorBuildParamObj() {}
 
 		const std::string& getLogicalSourceName() const {
 			return logicalSourceName;
@@ -52,50 +45,22 @@ namespace Experimental::Statistics {
 			return physicalSourceName;
 		}
 
-		SchemaPtr getSchema() const {
-			return schema;
-		}
-
-		void setSchema(const SchemaPtr& newSchema) {
-			schema = newSchema;
-		}
-
 		const std::string& getFieldName() const {
 			return fieldName;
-		}
-
-		const std::string& getStatCollectorType() const {
-			return statCollectorType;
-		}
-
-		QueryId getQueryId() const {
-			return queryId;
-		}
-
-		void setQueryId(QueryId newQueryId) {
-			queryId = newQueryId;
 		}
 
 		time_t getWindowSize() const {
 			return windowSize;
 		}
 
-		time_t getSlideFactor() const {
-			return slideFactor;
-		}
-
 	private:
 		const std::string logicalSourceName;
 		const std::string physicalSourceName;
-		SchemaPtr schema;
 		const std::string fieldName;
-		const std::string statCollectorType;
-		QueryId queryId;
 		const time_t windowSize;
-		const time_t slideFactor;
 	};
 
 }
 }
 
-#endif //NES_STATCOLLECTORPARAMOBJ_HPP
+#endif //NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORS_STATCOLLECTORPARAMOBJECTS_STATCOLLECTORBUILDPARAMOBJ_HPP_

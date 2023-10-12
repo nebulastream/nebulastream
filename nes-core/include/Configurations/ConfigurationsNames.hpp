@@ -214,6 +214,8 @@ const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
 const std::string SYNOPSIS_CONFIG_TYPE = "synopsisType";
 const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
 const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
+const std::string SYNOPSIS_CONFIG_ERROR = "synopsisError";
+const std::string SYNOPSIS_CONFIG_PROBABILITY = "synopsisProbability";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
 }// namespace NES::Configurations
