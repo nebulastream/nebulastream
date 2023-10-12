@@ -85,7 +85,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         }
         return success;
     }
-    NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
+    //todo: this currently must not cause a failure because we have to expect tuples after the channel was closed
+    NES_ERROR("Attempt to write to invalid channel, buffer is dropped");
     return false;
 }
 
@@ -185,7 +186,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 NES_THROW_RUNTIME_ERROR("Attempting reconnect but the new source descriptor equals the old one");
             }
 
-            //todo #4229: instead of keeping futures to wait for, implement a mechanism to signal the channel to stop connecting
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
                 workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
             }
@@ -203,7 +203,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
 
             //retrieve new channel
-            //todo: what happens in the nullptr case?
             auto newNetworkChannelFuture = workerContext.getAsyncConnectionResult(getUniqueNetworkSinkDescriptorId());
 
             //if the connection process did not finish yet, the reconfiguration was triggered by another thread.
@@ -220,6 +219,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
                 //todo 4228: if this sink run on a mobile device (add a flag to indicate this), keep trying to reconnect even after timeout
+                NES_THROW_RUNTIME_ERROR("could not establish connection");
                 break;
             }
             workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(newNetworkChannelFuture.value()));
@@ -256,7 +256,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             networkManager->unregisterSubpartitionProducer(nesPartition);
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType, queryManager->getNumberOfWorkerThreads()),
                             "Cannot remove network channel " << nesPartition.toString());
-            /* store a nullptr in place of the released channel, in case another write happens, that will prevent crashing and
+            /* store a nullptr in place of the released channel, in case another write happens afterwards, that will prevent crashing and
             allow throwing an error instead */
             workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             NES_DEBUG("NetworkSink: reconfigure() released channel on {} Thread {}",
