@@ -14,9 +14,9 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Spatial/DataTypes/Circle.hpp>
-#include <Spatial/DataTypes/Point.hpp>
-#include <Spatial/DataTypes/Rectangle.hpp>
+#include <Common/Spatial/Circle.hpp>
+#include <Common/Spatial/Point.hpp>
+#include <Common/Spatial/Rectangle.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 

@@ -15,7 +15,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>

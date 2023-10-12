@@ -13,7 +13,7 @@
 */
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <Topology/Topology.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <memory>
 #include <utility>
 

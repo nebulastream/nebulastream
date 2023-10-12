@@ -13,7 +13,7 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <string>

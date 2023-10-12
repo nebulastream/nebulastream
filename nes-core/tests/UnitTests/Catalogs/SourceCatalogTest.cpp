@@ -22,9 +22,9 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 

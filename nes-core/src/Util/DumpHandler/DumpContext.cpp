@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nodes/Util/DumpContext.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Nodes/Util/DumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>

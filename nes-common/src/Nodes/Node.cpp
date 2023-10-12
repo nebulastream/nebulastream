@@ -13,7 +13,7 @@
 */
 
 #include <Nodes/Node.hpp>
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <queue>

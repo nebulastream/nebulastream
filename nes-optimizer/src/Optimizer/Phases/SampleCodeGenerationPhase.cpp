@@ -16,7 +16,7 @@
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
-#include <Nodes/Util/DumpContext.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>

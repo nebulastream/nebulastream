@@ -52,14 +52,6 @@ class SourceCatalog {
     bool addLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr);
 
     /**
-   * @brief method to add a logical source
-   * @param logical source name
-   * @param schema of logical source as string
-   * @return bool indicating if insert was successful
-     */
-    bool addLogicalSource(const std::string& sourceName, const std::string& sourceSchema);
-
-    /**
        * @brief method to delete a logical source
        * @caution this method only remove the entry from the catalog not from the topology
        * @param name of logical source to delete
@@ -154,14 +146,6 @@ class SourceCatalog {
      * @return
      */
     std::vector<SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
-
-    /**
-     * @brief update an existing source
-     * @param sourceName: name of the logical source
-     * @param sourceSchema: string representing the schema
-     * @return true if successful
-     */
-    bool updateLogicalSource(const std::string& sourceName, const std::string& sourceSchema);
 
     /**
      * @brief method to update a logical source

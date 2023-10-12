@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
 

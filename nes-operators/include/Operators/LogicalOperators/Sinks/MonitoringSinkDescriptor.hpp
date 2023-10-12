@@ -15,9 +15,9 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MONITORINGSINKDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MONITORINGSINKDESCRIPTOR_HPP_
 
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Util/FaultToleranceType.hpp>
+#include <Util/MetricCollectorType.hpp>
 
 namespace NES {
 

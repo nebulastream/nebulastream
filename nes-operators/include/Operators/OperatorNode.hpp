@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_OPERATORNODE_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_OPERATORNODE_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <any>
 #include <unordered_map>

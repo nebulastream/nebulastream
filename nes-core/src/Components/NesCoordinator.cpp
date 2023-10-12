@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
@@ -30,11 +31,10 @@
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/LocationService.hpp>
-#include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
-#include <Services/TopologyManagerService.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
@@ -52,13 +52,13 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/SourceCatalogService.hpp>
+#include <Catalogs/Source/SourceCatalogService.hpp>
 
 #include <GRPC/HealthCheckRPCServer.hpp>
 #include <Health.pb.h>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
-#include <Topology/Topology.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>

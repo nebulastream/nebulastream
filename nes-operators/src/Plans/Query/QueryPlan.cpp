@@ -13,8 +13,8 @@
 */
 
 #include <Nodes/Node.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>

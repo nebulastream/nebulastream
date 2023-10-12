@@ -20,12 +20,12 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Services/LocationService.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
-#include <Services/TopologyManagerService.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
-#include <Util/Experimental/SpatialTypeUtility.hpp>
+#include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

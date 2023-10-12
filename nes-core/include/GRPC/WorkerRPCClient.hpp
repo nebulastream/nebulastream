@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TimeMeasurement.hpp>

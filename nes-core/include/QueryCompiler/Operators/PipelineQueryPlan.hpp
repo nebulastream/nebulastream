@@ -16,7 +16,7 @@
 
 #include <Nodes/Node.hpp>
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 #include <vector>

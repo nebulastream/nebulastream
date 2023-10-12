@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_PLANS_UTILS_PLANJSONGENERATOR_HPP_
 #define NES_CORE_INCLUDE_PLANS_UTILS_PLANJSONGENERATOR_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <nlohmann/json.hpp>
 
 namespace NES {

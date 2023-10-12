@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_FAILQUERYREQUEST_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_FAILQUERYREQUEST_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 
 namespace NES {

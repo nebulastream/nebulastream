@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <chrono>
 
 namespace NES {
@@ -86,6 +86,7 @@ class MonitoringSourceType : public PhysicalSourceType {
     MonitoringSourceType(Monitoring::MetricCollectorType metricCollectorType, std::chrono::milliseconds waitTime);
     Monitoring::MetricCollectorType metricCollectorType;
     std::chrono::milliseconds waitTime;
+    static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(1000);
 };
 
 }// namespace NES

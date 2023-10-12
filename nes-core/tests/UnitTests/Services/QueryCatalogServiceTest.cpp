@@ -19,7 +19,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>

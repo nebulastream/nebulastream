@@ -38,7 +38,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>

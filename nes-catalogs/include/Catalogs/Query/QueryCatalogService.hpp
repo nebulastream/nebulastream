@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_QUERYCATALOGSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_QUERYCATALOGSERVICE_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <mutex>

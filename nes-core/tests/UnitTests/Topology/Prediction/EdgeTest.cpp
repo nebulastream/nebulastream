@@ -13,7 +13,7 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Topology/Prediction/Edge.hpp>
+#include <Catalogs/Topology/Prediction/Edge.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

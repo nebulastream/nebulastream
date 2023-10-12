@@ -13,9 +13,8 @@
 */
 
 #include <string>
-
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Catalogs/Exceptions/UDFException.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Catalogs::UDF {

@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Copy Test Data --------------------------------------------------------------
+file(COPY test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
+message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
+
 # Type inference test
 add_nes_unit_test(type-inference-tests "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp")
 

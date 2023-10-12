@@ -23,11 +23,11 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
-#include <Services/SourceCatalogService.hpp>
-#include <Services/TopologyManagerService.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
-#include <Topology/Topology.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Source/SourceCatalogService.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>
 

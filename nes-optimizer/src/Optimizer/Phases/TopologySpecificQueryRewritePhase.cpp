@@ -17,7 +17,7 @@
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/NemoWindowPinningRule.hpp>
-#include <Topology/Topology.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <utility>
 
 namespace NES::Optimizer {

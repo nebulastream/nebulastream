@@ -23,8 +23,8 @@
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/details/EnumOptionDetails.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <map>
 #include <string>
 

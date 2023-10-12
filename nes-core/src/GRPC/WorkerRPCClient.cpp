@@ -20,8 +20,8 @@
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
+#include<Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 

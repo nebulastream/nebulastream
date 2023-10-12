@@ -14,51 +14,6 @@
 add_subdirectory(src)
 include(GNUInstallDirs)
 
-# Generate protobuf and grpc files and add them to individual nes-grpc target
-set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
-set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
-
-
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/nes-grpc/)
-file(GLOB PROTO_FILES "${PROTO_FILE_PATH}")
-foreach (PROTO_FILE ${PROTO_FILES})
-    get_filename_component(FILENAME ${PROTO_FILE} "NAME")
-    string(REGEX REPLACE "[.]proto$" ".pb.cc" OUTPUT_SOURCE ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
-    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".pb.h" OUTPUT_HEADER ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
-    list(APPEND OUTPUT_HEADER ${OUTPUT_HEADER})
-    string(REGEX REPLACE "[.]proto$" ".grpc.pb.cc" OUTPUT_SOURCE ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
-    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".grpc.pb.h" OUTPUT_HEADER ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
-    list(APPEND OUTPUT_HEADER ${OUTPUT_HEADER})
-endforeach ()
-
-add_custom_command(
-        OUTPUT ${OUTPUT_SOURCES}
-        COMMAND ${_PROTOBUF_PROTOC}
-        ARGS --grpc_out "${CMAKE_BINARY_DIR}/nes-grpc/"
-        --cpp_out "${CMAKE_BINARY_DIR}/nes-grpc/"
-        -I "${PROTO_PATH}"
-        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-        "${PROTO_FILE_PATH}"
-        DEPENDS "${PROTO_FILES}")
-
-macro(target_public_headers TARGET)
-    set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "${ARGN}")
-endmacro()
-
-# Add nes-grpc library
-add_library(nes-grpc SHARED ${OUTPUT_SOURCES})
-target_link_libraries(nes-grpc PRIVATE ${GRPC_LIBRARIES})
-target_include_directories(nes-grpc PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-
-install(TARGETS nes-grpc
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
-
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
@@ -66,7 +21,7 @@ add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes PUBLIC cpr::cpr ${CURL_LIBRARIES} nes-grpc nes-compiler nes-runtime nes-optimizer nes-configurations)
+target_link_libraries(nes PUBLIC cpr::cpr ${CURL_LIBRARIES} nes-common nes-compiler nes-runtime nes-optimizer nes-configurations)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes REUSE_FROM nes-common)
 endif ()

@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 #define NES_CORE_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>

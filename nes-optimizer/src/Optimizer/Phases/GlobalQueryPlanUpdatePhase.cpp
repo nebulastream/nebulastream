@@ -34,8 +34,8 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <RequestTypes/QueryRequests/FailQueryRequest.hpp>

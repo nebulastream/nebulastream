@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

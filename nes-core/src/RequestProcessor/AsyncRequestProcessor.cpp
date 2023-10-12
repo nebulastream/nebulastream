@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>

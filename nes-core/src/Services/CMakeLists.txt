@@ -17,7 +17,6 @@ add_source_files(nes-core
         RequestProcessorService.cpp
         QueryParsingService.cpp
         ReplicationService.cpp
-        AbstractHealthCheckService.cpp
         CoordinatortHealthCheckService.cpp
         WorkerHealthCheckService.cpp
         LocationService.cpp

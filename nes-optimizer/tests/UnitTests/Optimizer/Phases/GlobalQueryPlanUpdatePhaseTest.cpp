@@ -40,15 +40,15 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
-#include <WorkQueues/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
+#include <RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
+#include <RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 

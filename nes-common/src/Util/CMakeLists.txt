@@ -25,6 +25,7 @@ add_source_files(nes-common
 add_subdirectory(yaml)
 add_subdirectory(Logger)
 add_subdirectory(Subprocess)
+add_subdirectory(Mobility)
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_subdirectory(JNI)

@@ -12,16 +12,14 @@
     limitations under the License.
 */
 
+#include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
+#include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Exceptions/MapEntryNotFoundException.hpp>
-#include <Services/QueryParsingService.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-
 #include <utility>
 
 namespace NES::Catalogs::Source {
@@ -41,13 +39,6 @@ SourceCatalog::SourceCatalog(QueryParsingServicePtr queryParsingService) : query
     NES_DEBUG("SourceCatalog: construct source catalog");
     addDefaultSources();
     NES_DEBUG("SourceCatalog: construct source catalog successfully");
-}
-
-bool SourceCatalog::addLogicalSource(const std::string& sourceName, const std::string& sourceSchema) {
-    std::unique_lock lock(catalogMutex);
-    SchemaPtr schema = queryParsingService->createSchemaFromCode(sourceSchema);
-    NES_DEBUG("SourceCatalog: schema successfully created");
-    return addLogicalSource(sourceName, schema);
 }
 
 bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr) {
@@ -185,7 +176,8 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
 SchemaPtr SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
-        throw MapEntryNotFoundException("SourceCatalog: No schema found for logical source " + logicalSourceName);
+        throw Exceptions::LogicalSourceNotFoundException("SourceCatalog: No schema found for logical source "
+                                                         + logicalSourceName);
     }
     return logicalSourceNameToSchemaMapping[logicalSourceName];
 }
@@ -260,8 +252,8 @@ std::string SourceCatalog::getPhysicalSourceAndSchemaAsString() {
 std::vector<SourceCatalogEntryPtr> SourceCatalog::getPhysicalSources(const std::string& logicalSourceName) {
     if (logicalToPhysicalSourceMapping.find(logicalSourceName) == logicalToPhysicalSourceMapping.end()) {
         NES_ERROR("SourceCatalog: Unable to find source catalog entry with logical source name {}", logicalSourceName);
-        throw MapEntryNotFoundException("SourceCatalog: Logical source(s) [" + logicalSourceName
-                                        + "] are found to have no physical source(s) defined. ");
+        throw Exceptions::PhysicalSourceNotFoundException("SourceCatalog: Logical source(s) [" + logicalSourceName
+                                                          + "] are found to have no physical source(s) defined. ");
     }
     return logicalToPhysicalSourceMapping[logicalSourceName];
 }
@@ -277,22 +269,6 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString() 
         allLogicalSourceAsString[key] = val->toString();
     }
     return allLogicalSourceAsString;
-}
-
-bool SourceCatalog::updateLogicalSource(const std::string& sourceName, const std::string& sourceSchema) {
-    NES_INFO("SourceCatalog: Update the logical source {} with the schema {} ", sourceName, sourceSchema);
-    std::unique_lock lock(catalogMutex);
-
-    NES_TRACE("SourceCatalog: Check if logical source exists in the catalog.");
-    if (!containsLogicalSource(sourceName)) {
-        NES_ERROR("SourceCatalog: Unable to find logical source {} to update.", sourceName);
-        return false;
-    }
-
-    NES_TRACE("SourceCatalog: create a new schema object and add to the catalog");
-    SchemaPtr schema = queryParsingService->createSchemaFromCode(sourceSchema);
-    logicalSourceNameToSchemaMapping[sourceName] = schema;
-    return true;
 }
 
 bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr) {

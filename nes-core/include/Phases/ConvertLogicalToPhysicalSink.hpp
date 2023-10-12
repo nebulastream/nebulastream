@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 #define NES_CORE_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 namespace NES {

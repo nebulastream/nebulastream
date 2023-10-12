@@ -16,10 +16,8 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <CoordinatorRPCService.pb.h>
-#include <Services/SourceCatalogService.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Core.hpp>
+#include <Catalogs/Source/SourceCatalogService.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -86,14 +84,6 @@ bool SourceCatalogService::unregisterPhysicalSource(TopologyNodePtr topologyNode
     return success;
 }
 
-bool SourceCatalogService::registerLogicalSource(const std::string& logicalSourceName, const std::string& schemaString) {
-    NES_DEBUG("SourceCatalogService::registerLogicalSource: register logical source={} schema= {}",
-              logicalSourceName,
-              schemaString);
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
-    return sourceCatalog->addLogicalSource(logicalSourceName, schemaString);
-}
-
 bool SourceCatalogService::registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema) {
     NES_DEBUG("SourceCatalogService::registerLogicalSource: register logical source= {} schema= {}",
               logicalSourceName,
@@ -106,12 +96,6 @@ bool SourceCatalogService::updateLogicalSource(const std::string& logicalSourceN
     NES_DEBUG("SourceCatalogService::update logical source {} with schema {}", logicalSourceName, schema->toString());
     std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
     return sourceCatalog->updateLogicalSource(logicalSourceName, std::move(schema));
-}
-
-bool SourceCatalogService::updateLogicalSource(const std::string& logicalSourceName, const std::string& schema) {
-    NES_DEBUG("SourceCatalogService::update logical source {} with schema {}", logicalSourceName, schema);
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
-    return sourceCatalog->updateLogicalSource(logicalSourceName, schema);
 }
 
 bool SourceCatalogService::unregisterLogicalSource(const std::string& logicalSourceName) {

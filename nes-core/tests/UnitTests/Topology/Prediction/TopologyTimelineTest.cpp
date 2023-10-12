@@ -13,13 +13,13 @@
 */
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Topology/Prediction/Edge.hpp>
-#include <Topology/Prediction/TopologyDelta.hpp>
-#include <Topology/Prediction/TopologyTimeline.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
+#include <Catalogs/Topology/Prediction/Edge.hpp>
+#include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
+#include <Catalogs/Topology/Prediction/TopologyTimeline.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 

@@ -16,7 +16,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
@@ -38,10 +38,10 @@
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>

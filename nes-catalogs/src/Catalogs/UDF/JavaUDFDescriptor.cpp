@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Catalogs/Exceptions/UDFException.hpp>
 #include <algorithm>
 #include <numeric>
 #include <sstream>

@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
 #define NES_CORE_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 
 namespace NES {
 

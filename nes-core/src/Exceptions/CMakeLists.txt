@@ -13,12 +13,28 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        AccessNonLockedResourceException.cpp
-        QueryDeploymentException.cpp
-        QueryUndeploymentException.cpp
-        RequestExecutionException.cpp
+        ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp
-        ResourceLockingException.cpp
+        GlobalQueryPlanUpdateException.cpp
+        TaskExecutionException.cpp
+        InvalidFieldException.cpp
+        InvalidOperatorStateException.cpp
+        QueryDeploymentException.cpp
+        QueryPlacementException.cpp
+        QueryUndeploymentException.cpp
+        TypeInferenceException.cpp
+        SignatureComputationException.cpp
+        WindowProcessingException.cpp
+        InvalidCoordinateFormatException.cpp
+        MapEntryNotFoundException.cpp
+        LocationProviderException.cpp
+        ExecutionNodeNotFoundException.cpp
+        RPCException.cpp
         RPCQueryUndeploymentException.cpp
+        SharedQueryPlanNotFoundException.cpp
+        ResourceLockingException.cpp
         StorageHandlerAcquireResourcesException.cpp
+        AccessNonLockedResourceException.cpp
+        OperatorNotFoundException.cpp
+        InvalidLogicalOperatorNodeException.cpp
 )

@@ -17,8 +17,8 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/TopologyManagerService.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>

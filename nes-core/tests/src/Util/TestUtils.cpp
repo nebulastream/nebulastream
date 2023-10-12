@@ -15,14 +15,14 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/StdInt.hpp>

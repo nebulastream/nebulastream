@@ -28,19 +28,19 @@
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
-#include <Services/TopologyManagerService.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include<Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/Waypoint.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
-#include <Topology/Topology.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>

@@ -32,11 +32,11 @@
 #include <Runtime/NodeEngine.hpp>
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Core.hpp>
 #include <Util/QueryState.hpp>
 #include <regex>
