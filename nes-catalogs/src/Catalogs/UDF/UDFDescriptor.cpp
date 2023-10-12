@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/UDF/UDFDescriptor.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Catalogs/Exceptions/UDFException.hpp>
 
 namespace NES::Catalogs::UDF {
 

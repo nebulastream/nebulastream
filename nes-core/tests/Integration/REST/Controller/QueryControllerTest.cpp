@@ -17,8 +17,8 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>

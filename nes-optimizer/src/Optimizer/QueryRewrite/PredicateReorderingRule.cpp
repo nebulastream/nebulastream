@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>

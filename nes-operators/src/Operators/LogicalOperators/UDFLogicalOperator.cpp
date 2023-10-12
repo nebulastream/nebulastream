@@ -17,7 +17,7 @@
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
 #include <Catalogs/UDF/UDFDescriptor.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Catalogs/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -14,7 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 

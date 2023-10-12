@@ -17,7 +17,7 @@
 
 #include <API/Query.hpp>
 #include <Client/QueryConfig.hpp>
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Util/QueryState.hpp>
 #include <chrono>
 

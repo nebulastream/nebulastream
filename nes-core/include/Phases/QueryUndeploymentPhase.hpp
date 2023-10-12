@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_
 #define NES_CORE_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
 #include <iostream>
 #include <memory>

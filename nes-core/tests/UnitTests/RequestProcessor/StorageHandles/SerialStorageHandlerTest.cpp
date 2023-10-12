@@ -21,9 +21,9 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 class SerialStorageHandlerTest : public Testing::BaseUnitTest {

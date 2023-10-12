@@ -19,8 +19,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Util/DumpContext.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>

@@ -13,12 +13,13 @@
 */
 
 #include <Nodes/Node.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
+
 namespace NES {
 
 ConsoleDumpHandler::ConsoleDumpHandler(std::ostream& out) : out(out) {}

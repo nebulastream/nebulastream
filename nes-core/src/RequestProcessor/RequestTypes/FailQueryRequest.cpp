@@ -22,7 +22,7 @@
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Util/RequestType.hpp>
 
 namespace NES::RequestProcessor::Experimental {

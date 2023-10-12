@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Runtime/BufferManager.hpp>

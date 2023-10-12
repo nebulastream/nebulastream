@@ -23,7 +23,7 @@
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/MetricValidator.hpp>
 
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Runtime/BufferManager.hpp>
 

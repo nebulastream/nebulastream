@@ -14,3 +14,4 @@
 add_subdirectory(DataTypes)
 add_subdirectory(ValueTypes)
 add_subdirectory(PhysicalTypes)
+add_subdirectory(Spatial)

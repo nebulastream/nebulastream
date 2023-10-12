@@ -16,7 +16,7 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Util/Experimental/LocationProviderType.hpp>
+#include <Util/Mobility/LocationProviderType.hpp>
 #include <memory>
 
 namespace NES {

@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 #define NES_CORE_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>

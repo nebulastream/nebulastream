@@ -14,7 +14,7 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Exceptions/LocationProviderException.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>

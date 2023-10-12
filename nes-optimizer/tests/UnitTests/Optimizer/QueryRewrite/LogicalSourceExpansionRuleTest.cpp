@@ -23,8 +23,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -33,8 +33,8 @@
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 

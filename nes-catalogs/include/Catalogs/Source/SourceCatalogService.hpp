@@ -65,14 +65,6 @@ class SourceCatalogService {
 
     /**
      * @brief method to register a logical source
-     * @param logicalSourceName: name of the logical source
-     * @param schemaString: schema as string
-     * @return bool indicating success
-     */
-    bool registerLogicalSource(const std::string& logicalSourceName, const std::string& schemaString);
-
-    /**
-     * @brief method to register a logical source
      * @param logicalSourceName: logical source name
      * @param schema: schema object
      * @return bool indicating success
@@ -86,14 +78,6 @@ class SourceCatalogService {
      * @return bool indicating success
      */
     bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
-
-    /**
-     * @brief method to update schema of an existing logical source
-     * @param logicalSourceName: logical source name
-     * @param schema: schema object
-     * @return bool indicating success
-     */
-    bool updateLogicalSource(const std::string& logicalSourceName, const std::string& schema);
 
     /**
      * @brief method to unregister a logical source

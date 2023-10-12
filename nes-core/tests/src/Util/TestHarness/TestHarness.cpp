@@ -17,9 +17,9 @@
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
-#include <Services/TopologyManagerService.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <filesystem>
 #include <type_traits>

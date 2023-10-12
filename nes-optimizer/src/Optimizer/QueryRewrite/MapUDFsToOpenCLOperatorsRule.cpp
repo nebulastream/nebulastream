@@ -14,7 +14,7 @@
 
 #include <Catalogs/UDF/JavaUDFDescriptor.hpp>
 #include <Catalogs/UDF/UDFDescriptor.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Catalogs/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>

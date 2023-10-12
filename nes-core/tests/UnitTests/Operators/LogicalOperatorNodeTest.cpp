@@ -14,8 +14,8 @@
 
 #include <BaseIntegrationTest.hpp>//
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Util/DumpContext.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -31,8 +31,8 @@
 #include <iostream>
 #include <memory>
 
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Util/Core.hpp>
 

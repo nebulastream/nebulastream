@@ -13,13 +13,13 @@
 */
 
 #include <Services/LocationService.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
+#include<Util/Mobility/GeoLocation.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>

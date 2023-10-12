@@ -16,7 +16,8 @@
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_BENCHMARKSOURCETYPE_HPP_
 
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Sources/BenchmarkSource.hpp>
+#include <Util/GatheringMode.hpp>
+#include <Util/SourceMode.hpp>
 
 namespace NES {
 

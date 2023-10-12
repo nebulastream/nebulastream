@@ -15,7 +15,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
-#include <Services/TopologyManagerService.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 

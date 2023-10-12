@@ -25,10 +25,10 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>

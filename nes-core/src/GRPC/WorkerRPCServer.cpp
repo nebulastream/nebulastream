@@ -18,7 +18,7 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>

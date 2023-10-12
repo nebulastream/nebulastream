@@ -28,7 +28,7 @@
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>

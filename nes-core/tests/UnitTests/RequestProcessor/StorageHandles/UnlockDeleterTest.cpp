@@ -13,8 +13,8 @@
 */
 #include <BaseUnitTest.hpp>
 #include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::RequestProcessor::Experimental {

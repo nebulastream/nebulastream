@@ -27,13 +27,13 @@
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 

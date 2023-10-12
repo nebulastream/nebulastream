@@ -14,7 +14,7 @@
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <BaseIntegrationTest.hpp>
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>

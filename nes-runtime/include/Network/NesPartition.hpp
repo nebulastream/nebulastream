@@ -14,7 +14,8 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
-#include <Common/Identifiers.hpp>
+
+#include <Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <string>

@@ -13,9 +13,8 @@
 */
 
 #include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Sources/MonitoringSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <string>
 
 namespace NES {
@@ -30,7 +29,7 @@ MonitoringSourceTypePtr MonitoringSourceType::create(Monitoring::MetricCollector
 }
 
 MonitoringSourceTypePtr MonitoringSourceType::create(Monitoring::MetricCollectorType metricCollectorType) {
-    return create(metricCollectorType, MonitoringSource::DEFAULT_WAIT_TIME);
+    return create(metricCollectorType, DEFAULT_WAIT_TIME);
 }
 
 std::string MonitoringSourceType::toString() {
@@ -50,7 +49,7 @@ bool MonitoringSourceType::equal(const PhysicalSourceTypePtr& other) {
     return waitTime == otherSourceConfig->waitTime && metricCollectorType == otherSourceConfig->metricCollectorType;
 }
 
-void MonitoringSourceType::reset() { setWaitTime(MonitoringSource::DEFAULT_WAIT_TIME); }
+void MonitoringSourceType::reset() { setWaitTime(DEFAULT_WAIT_TIME); }
 
 std::chrono::milliseconds MonitoringSourceType::getWaitTime() const { return waitTime; }
 

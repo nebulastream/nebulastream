@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_MONITORING_MONITORINGPLAN_HPP_
 #define NES_CORE_INCLUDE_MONITORING_MONITORINGPLAN_HPP_
 
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <memory>

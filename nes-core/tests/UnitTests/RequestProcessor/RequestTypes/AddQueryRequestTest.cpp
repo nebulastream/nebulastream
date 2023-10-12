@@ -38,9 +38,9 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>

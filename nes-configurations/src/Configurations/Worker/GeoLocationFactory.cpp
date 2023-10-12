@@ -13,7 +13,7 @@
 */
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/GeoLocationFactory.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
+#include<Util/Mobility/GeoLocation.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 

@@ -30,7 +30,7 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -38,8 +38,8 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>

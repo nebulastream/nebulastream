@@ -15,11 +15,11 @@
 #ifndef NES_CORE_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define NES_CORE_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Services/SourceCatalogService.hpp>
+#include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
 #include <string>

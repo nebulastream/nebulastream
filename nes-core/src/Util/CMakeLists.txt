@@ -13,7 +13,6 @@
 
 add_source_files(nes-core
         Core.cpp
-        TimeMeasurement.cpp
         BufferSequenceNumber.cpp
         KalmanFilter.cpp
         )

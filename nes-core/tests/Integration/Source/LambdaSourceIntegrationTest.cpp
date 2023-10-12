@@ -23,7 +23,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
 

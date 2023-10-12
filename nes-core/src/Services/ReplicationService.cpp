@@ -22,7 +22,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/ReplicationService.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <cstdint>
 
 namespace NES {

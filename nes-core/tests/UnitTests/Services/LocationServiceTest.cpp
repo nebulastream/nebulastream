@@ -19,12 +19,12 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Services/LocationService.hpp>
-#include <Services/TopologyManagerService.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
-#include <Topology/Topology.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include<Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/Waypoint.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cmath>

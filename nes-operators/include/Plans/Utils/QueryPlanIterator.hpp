@@ -14,9 +14,11 @@
 
 #ifndef NES_CORE_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
 #define NES_CORE_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
+
 #include <Plans/Query/QueryPlan.hpp>
 #include <iterator>
 #include <stack>
+
 namespace NES {
 
 /**

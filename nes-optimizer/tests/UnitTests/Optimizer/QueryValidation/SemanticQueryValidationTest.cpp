@@ -27,8 +27,8 @@
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 

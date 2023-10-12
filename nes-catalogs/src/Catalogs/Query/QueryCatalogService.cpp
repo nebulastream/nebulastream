@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Exceptions/InvalidQueryStateException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 

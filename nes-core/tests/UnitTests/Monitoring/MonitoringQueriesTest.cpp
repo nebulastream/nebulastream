@@ -21,15 +21,15 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 //#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/AbstractMetricStore.hpp>
 
 #include <Runtime/BufferManager.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>

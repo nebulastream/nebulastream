@@ -15,10 +15,10 @@
 #define NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
-#include <Services/TopologyManagerService.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
-#include <Topology/Topology.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Util/Mobility/Waypoint.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>

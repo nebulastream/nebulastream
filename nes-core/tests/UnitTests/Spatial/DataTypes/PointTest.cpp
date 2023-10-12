@@ -14,7 +14,7 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Spatial/DataTypes/Point.hpp>
+#include <Common/Spatial/Point.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 

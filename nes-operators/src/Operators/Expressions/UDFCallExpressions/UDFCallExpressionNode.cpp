@@ -15,7 +15,7 @@
 #include <Catalogs/UDF/UDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Catalogs/Exceptions/UDFException.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>

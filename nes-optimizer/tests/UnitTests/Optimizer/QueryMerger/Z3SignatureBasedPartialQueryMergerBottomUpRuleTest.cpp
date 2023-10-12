@@ -39,9 +39,9 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <z3++.h>

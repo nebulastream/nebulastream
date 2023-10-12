@@ -29,7 +29,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {

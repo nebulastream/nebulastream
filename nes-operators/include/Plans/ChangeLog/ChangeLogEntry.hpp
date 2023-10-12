@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
 #define NES_CORE_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <memory>
 #include <set>
 

@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
 #define NES_CORE_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <memory>

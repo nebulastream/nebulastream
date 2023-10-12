@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nodes/Util/DumpContext.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>

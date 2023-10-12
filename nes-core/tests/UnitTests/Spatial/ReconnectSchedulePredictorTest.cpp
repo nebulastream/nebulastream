@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/Logger/Logger.hpp>

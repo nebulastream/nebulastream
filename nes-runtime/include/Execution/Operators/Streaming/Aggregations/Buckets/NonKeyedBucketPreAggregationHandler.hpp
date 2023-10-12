@@ -14,7 +14,7 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NonKeyedBucketPreAggregationHandler_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NonKeyedBucketPreAggregationHandler_HPP_
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/AbstractBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketStore.hpp>

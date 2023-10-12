@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/UDF/PythonUDFDescriptor.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Catalogs/Exceptions/UDFException.hpp>
 #include <sstream>
 
 namespace NES::Catalogs::UDF {

@@ -20,7 +20,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
+#include<Util/Mobility/GeoLocation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>

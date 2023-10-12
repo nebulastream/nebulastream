@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_
 
-#include <Services/AbstractHealthCheckService.hpp>
+#include <Catalogs/Topology/AbstractHealthCheckService.hpp>
 
 namespace NES {
 class NesWorker;

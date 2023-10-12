@@ -29,12 +29,12 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
-#include <Util/Experimental/SpatialTypeUtility.hpp>
+#include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/magicenum/magic_enum.hpp>

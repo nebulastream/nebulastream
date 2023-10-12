@@ -18,8 +18,8 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Services/MonitoringService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>

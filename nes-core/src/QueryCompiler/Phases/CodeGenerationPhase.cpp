@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>

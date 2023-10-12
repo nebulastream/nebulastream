@@ -13,7 +13,6 @@
 */
 
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 #include <utility>

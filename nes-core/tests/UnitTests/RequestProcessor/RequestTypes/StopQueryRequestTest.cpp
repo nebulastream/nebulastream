@@ -22,9 +22,9 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <gtest/gtest.h>
 
 namespace z3 {

@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>

@@ -28,7 +28,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Topology/Topology.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <cstring>

@@ -15,7 +15,7 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>

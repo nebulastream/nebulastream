@@ -28,7 +28,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 #include <string>

@@ -8,26 +8,27 @@
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
+    See the License for the specific language governing permissions andq
     limitations under the License.
 */
 
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
+
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Common/Identifiers.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <chrono>

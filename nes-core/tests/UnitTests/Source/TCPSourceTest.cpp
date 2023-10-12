@@ -25,13 +25,13 @@
 #include <iostream>
 #include <string>
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
 

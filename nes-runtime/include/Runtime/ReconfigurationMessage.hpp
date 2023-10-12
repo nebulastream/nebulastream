@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationType.hpp>
 #include <Util/Logger/Logger.hpp>

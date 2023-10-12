@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
