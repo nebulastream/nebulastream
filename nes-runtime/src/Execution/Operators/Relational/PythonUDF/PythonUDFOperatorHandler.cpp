@@ -15,6 +15,9 @@
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#include <Util/Timer.hpp>
+#include <filesystem>
+#include <fstream>
 #include <string>
 
 namespace NES::Runtime::Execution::Operators {
@@ -75,6 +78,10 @@ std::string PythonUDFOperatorHandler::getNumbaSignature(){
 }
 
 void PythonUDFOperatorHandler::initPython() {
+    Timer initPythonTimer("Initialize Python Function");
+    Timer execPythonTimer("Execute Python Code");
+    Timer compilePythonTimer("Compile Python Code");
+    initPythonTimer.start();
     this->moduleName = this->functionName + "Module";
     // initialize python interpreter
     Py_Initialize();
@@ -124,31 +131,54 @@ void PythonUDFOperatorHandler::initPython() {
                       this->function +
                       "\n" +
                       this->functionName + "_address = " + this->functionName + ".address";
-        PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
+        //PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
     } else {
         // default, just using the CPython compiler
         pythonCode += this->function;
-
-        // compile function string
-        PyObject* compiledPythonCode = Py_CompileString(pythonCode.c_str(), "", Py_file_input);
-        if (compiledPythonCode == NULL) {
-            if (PyErr_Occurred()) {
-                PyErr_Print();
-                PyErr_Clear();
-                NES_THROW_RUNTIME_ERROR("Could not compile function string.");
-            }
-        }
-
-        // add python code into our module
-        this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), compiledPythonCode);
-        if (this->pythonModule == NULL) {
-            if (PyErr_Occurred()) {
-                PyErr_Print();
-                PyErr_Clear();
-            }
-            NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
+    }
+    // compile function string
+    compilePythonTimer.start();
+    PyObject* compiledPythonCode = Py_CompileString(pythonCode.c_str(), "", Py_file_input);
+    if (compiledPythonCode == NULL) {
+        if (PyErr_Occurred()) {
+            PyErr_Print();
+            PyErr_Clear();
+            NES_THROW_RUNTIME_ERROR("Could not compile function string.");
         }
     }
+    compilePythonTimer.snapshot("compiledPythonCode");
+    compilePythonTimer.pause();
+    execPythonTimer.start();
+    // add python code into our module
+    this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), compiledPythonCode);
+    if (this->pythonModule == NULL) {
+        if (PyErr_Occurred()) {
+            PyErr_Print();
+            PyErr_Clear();
+        }
+        NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
+    }
+    execPythonTimer.snapshot("addedCodeintoModule");
+    execPythonTimer.pause();
+    initPythonTimer.snapshot("init");
+    initPythonTimer.pause();
+    auto path = std::filesystem::current_path().string() + "/dump/initpython.txt";
+    std::ofstream outputFile;
+    outputFile.open(path, std::ios_base::app);
+    outputFile << initPythonTimer.getPrintTime() << "\n";
+    outputFile.close();
+
+    path = std::filesystem::current_path().string() + "/dump/initcompilepython.txt";
+    std::ofstream outputCompileFile;
+    outputCompileFile.open(path, std::ios_base::app);
+    outputCompileFile << compilePythonTimer.getPrintTime() << "\n";
+    outputCompileFile.close();
+
+    path = std::filesystem::current_path().string() + "/dump/initexecutepython.txt";
+    std::ofstream outputExecuteFile;
+    outputExecuteFile.open(path, std::ios_base::app);
+    outputExecuteFile << execPythonTimer.getPrintTime() << "\n";
+    outputExecuteFile.close();
 }
 
 void PythonUDFOperatorHandler::finalize() {

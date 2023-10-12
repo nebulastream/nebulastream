@@ -14,7 +14,11 @@
 
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFNumbaUtils.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#include <Execution/Operators/Relational/PythonUDF/PythonUDFUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Timer.hpp>
+#include <filesystem>
+#include <fstream>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -69,11 +73,15 @@ void createInt64Numba(void* state, int64_t value) {
 
 template<typename T>
 T executeNumba(void* state){
+    Timer executeNumbaTimer("executeNumba");
+    executeNumbaTimer.start();
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     auto dyncall = handler->getDynCall();
     std::string addressVariableName = handler->getFunctionName() + "_address";
-    uintptr_t functionAddress = PyLong_AsUnsignedLongLong(PyDict_GetItemString(handler->getPythonLocals(), addressVariableName.c_str()));
+    auto addressAsStringPyObject = PyObject_GetAttrString(handler->getPythonModule(), addressVariableName.c_str());
+    pythonInterpreterErrorCheck(addressAsStringPyObject, __func__, __LINE__, "Could not get address object.");
+    uintptr_t functionAddress = PyLong_AsUnsignedLongLong(addressAsStringPyObject);
     T result;
     if constexpr (std::is_same<T, bool>::value) {
         result = dyncall.callB((void*) functionAddress);
@@ -92,6 +100,13 @@ T executeNumba(void* state){
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
+    executeNumbaTimer.snapshot("execute numba");
+    executeNumbaTimer.pause();
+    auto path = std::filesystem::current_path().string() + "/dump/executepython.txt";
+    std::ofstream outputFile;
+    outputFile.open(path, std::ios_base::app);
+    outputFile << executeNumbaTimer.getPrintTime() << "\n";
+    outputFile.close();
     return result;
 }
 

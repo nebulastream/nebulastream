@@ -13,17 +13,17 @@
 */
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
-#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Project.hpp>
+#include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
+#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -36,6 +36,8 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 
 namespace NES::Runtime::Execution {
@@ -67,7 +69,7 @@ class MicroBenchmarkRunner {
                       compileTimeTimer.getPrintTime(),
                       executionTimeTimer.getPrintTime());
         }
-
+        std::cout << pythonCompiler << std::endl << std::flush;
         NES_INFO("Final {} compilation time {}, execution time {} ",
                   compiler,
                   (sumCompilation / (double) iterations),
@@ -111,7 +113,7 @@ class MicroBenchmarkRunner {
     auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout) {
         auto buffer = bufferManager->getBufferBlocking();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t i = 0; i < 10; i++) {
+        for (uint64_t i = 0; i < bufferSize; i++) {
             dynamicBuffer[i][variableName].write((T) (i % 10_s64));
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
@@ -150,6 +152,7 @@ class MicroBenchmarkRunner {
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
     std::shared_ptr<WorkerContext> wc;
+    uint64_t bufferSize = 10;
     //std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
 };
 
@@ -414,13 +417,13 @@ class NumbaExampleUDF : public MicroBenchmarkRunner {
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override {
         std::map<std::string, std::string> modulesToImport;
-        modulesToImport.insert({"numpy", "np"});
+        //modulesToImport.insert({"numpy", "np"});
         std::string function = "def go_fast(x):"
-                               "\n\ta = np.arange(100).reshape(10, 10)"
-                               "\n\ttrace = 0.0"
-                               "\n\tfor i in range(a.shape[0]):"
-                               "\n\t\ttrace += np.tanh(a[i, i])"
-                               "\n\treturn 1"; // cannot return numpy array atm
+                               "\n\ttotal = 0.0"
+                               "\n\tfor i in range(10):"
+                               "\n\t\tfor j in range(1,10):"
+                               "\n\t\t\ttotal += (i/j)"
+                               "\n\treturn x"; // cannot return numpy array atm
         std::string functionName = "go_fast";
         auto variableName = "x";
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -449,15 +452,52 @@ class NumbaExampleUDF : public MicroBenchmarkRunner {
 
 }// namespace NES::Runtime::Execution
 
+void deleteContentInFile(std::string filePath) {
+    std::ofstream ofs1;
+    ofs1.open(filePath, std::ofstream::out | std::ofstream::trunc);
+    ofs1.close();
+}
+
 int main(int, char**) {
-    std::vector<std::string> compilers = {"PipelineCompiler"};
-    std::vector<std::string> pythonCompilers = {"numba"};
+    std::vector<std::string> compilers = {"PipelineCompiler", "CPPPipelineCompiler"};
+    std::vector<std::string> pythonCompilers = {"cpython", "numba"};
+    auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
+    auto initFile = std::filesystem::current_path().string() + "/dump/initpython.txt";
+    auto initcompileFile = std::filesystem::current_path().string() + "/dump/initexecutepython.txt";
+    auto initexecFile = std::filesystem::current_path().string() + "/dump/initcompilepython.txt";
+
+    deleteContentInFile(executeFile);
+    deleteContentInFile(initFile);
+    deleteContentInFile(initcompileFile);
+    deleteContentInFile(initexecFile);
     for (const auto& c : compilers) {
         for (const auto& pythonCompiler : pythonCompilers) {
+
+
+            std::ofstream outputFileExecute;
+            outputFileExecute.open(executeFile, std::ios_base::app);
+            outputFileExecute << pythonCompiler << "-" << c << "\n";
+            outputFileExecute.close();
+
+            std::ofstream outputFileInit;
+            outputFileInit.open(initFile, std::ios_base::app);
+            outputFileInit << pythonCompiler << "-" << c << "\n";
+            outputFileInit.close();
+
+            std::ofstream outputFileCompile;
+            outputFileCompile.open(initcompileFile, std::ios_base::app);
+            outputFileCompile << pythonCompiler << "-" << c << "\n";
+            outputFileCompile.close();
+
+            std::ofstream outputFileExecInit;
+            outputFileExecInit.open(initexecFile, std::ios_base::app);
+            outputFileExecInit << pythonCompiler << "-" << c << "\n";
+            outputFileExecInit.close();
+
             NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
-            // NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
-            // NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
-            // NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
+            //NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
+            //NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
+            //NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
             // TODO fix projection queries...
             // NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();

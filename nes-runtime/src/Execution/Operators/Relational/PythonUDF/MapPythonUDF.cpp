@@ -25,7 +25,9 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Python.h>
+#include <Util/Timer.hpp>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <utility>
 
@@ -37,6 +39,8 @@ namespace NES::Runtime::Execution::Operators {
  * @return the result of the python udf
  */
 void* executeMapUdf(void* state) {
+    Timer executeCPython("executeCPython");
+    executeCPython.start();
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     // get module and python arguments for the udf
@@ -69,6 +73,13 @@ void* executeMapUdf(void* state) {
                                 __func__,
                                 __LINE__,
                                 "Something went wrong. Result of the Python UDF is NULL");
+    executeCPython.snapshot("Executed CPython");
+    executeCPython.pause();
+    auto path = std::filesystem::current_path().string() + "/dump/executepython.txt";
+    std::ofstream outputFile;
+    outputFile.open(path, std::ios_base::app);
+    outputFile << executeCPython.getPrintTime() << "\n";
+    outputFile.close();
     return result;
 }
 
@@ -504,7 +515,7 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
  */
 void MapPythonUDF::terminate(ExecutionContext& ctx) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    FunctionCall<>("finalizePython", finalizePython, handler);
+    //FunctionCall<>("finalizePython", finalizePython, handler);
 }
 }// namespace NES::Runtime::Execution::Operators
 #endif//NAUTILUS_PYTHON_UDF_ENABLED
