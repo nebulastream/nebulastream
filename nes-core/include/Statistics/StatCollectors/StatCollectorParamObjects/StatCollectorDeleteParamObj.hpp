@@ -23,6 +23,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * This is the abstract class for all StatCollectorDeleteParamObjects
+		 */
 		class StatCollectorDeleteParamObj {
 		public:
 			StatCollectorDeleteParamObj(const std::string& logicalSourceName,
@@ -38,22 +41,37 @@ namespace NES {
 
 			virtual ~StatCollectorDeleteParamObj() {}
 
+			/**
+			 * @return returns the LogicalSourceName over which the statCollector was constructed
+			 */
 			const std::string& getLogicalSourceName() const {
 				return logicalSourceName;
 			}
 
+			/**
+			 * @return returns the physicalSourceName over which the statCollector was constructed
+			 */
 			const std::string& getPhysicalSourceName() const {
 				return physicalSourceName;
 			}
 
+			/**
+			 * @return returns the field over which the statCollector was constructed
+			 */
 			const std::string& getFieldName() const {
 				return fieldName;
 			}
 
+			/**
+			 * @return returns the type of the statCollector, e.g. Count-Min, HyperLogLog, or similar
+			 */
 			const std::string& getStatCollectorType() const {
 				return statCollectorType;
 			}
 
+			/**
+			 * @return returns the windowSize over which the statCollector was generated
+			 */
 			time_t getWindowSize() const {
 				return windowSize;
 			}

@@ -39,7 +39,7 @@ namespace NES {
 					  error(error), b(log2(calculateRegisters(error))), alphaM(calculateAlphaM(calculateRegisters(error))) {}
 
 			/**
-			 *
+			 * @brief calculates the next highest power of two for the input, unless the input is already a power of two
 			 * @param x the number which is to be rounded to the next power of two
 			 * @return x if x is already a power of two, otherwise x rounded up to the next highest power of two
 			 */
@@ -52,7 +52,7 @@ namespace NES {
 			}
 
 			/**
-			 *
+			 * @brief calculates the width/number of register of a HyperLogLog sketch through the error
 			 * @param fError the maximum allowed error of the HLL sketch
 			 * @return returns the width/number of registers to initialize the HLL sketch with
 			 */
@@ -62,7 +62,7 @@ namespace NES {
 			}
 
 			/**
-			 *
+			 * @brief calculates the width/number of registers of the hyperLogLog Sketch that is to be probed
 			 * @param m the width/number of register of the HLL sketch
 			 * @return return the bias correction constant alphaM
 			 */
@@ -78,14 +78,23 @@ namespace NES {
 				}
 			}
 
+			/**
+			 * @return returns the error of the hyperLogLog sketch that is to be probed/queried
+			 */
 			double getError() const {
 				return error;
 			}
 
+			/**
+			 * @return returns the number of bits that divides the hash of the HyperLogLog sketch that is to be probed/queried
+			 */
 			uint32_t getB() const {
 				return b;
 			}
 
+			/**
+			 * @return returns the bias correction constant of the hyperLogLog sketch that is to be probed/queried
+			 */
 			double getAlphaM() const {
 				return alphaM;
 			}

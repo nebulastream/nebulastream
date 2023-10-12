@@ -26,6 +26,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The derived class whose objects contain all the necessary information to generate actual Count-Min sketches
+		 */
 		class CountMinBuildParamObj : public SketchBuildParamObj {
 
 		public:
@@ -38,10 +41,16 @@ namespace NES {
 					: SketchBuildParamObj(logicalSourceName, physicalSourceName, fieldName, ceil(exp(1.0) / error), ceil(std::log(1.0 / prob)), windowSize),
 					  error(error), prob(prob) {}
 
+			/**
+			 * @return returns the error of Count-Min sketch that is to be generated
+			 */
 			double getError() const {
 				return error;
 			}
 
+			/**
+			 * @return returns the probability of the Count-Min sketch that is to be generated
+			 */
 			double getProb() const {
 				return prob;
 			}

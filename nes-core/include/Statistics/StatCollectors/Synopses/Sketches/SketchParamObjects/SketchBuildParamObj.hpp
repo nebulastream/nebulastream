@@ -23,22 +23,31 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The abstract class that acts as an interface for all classes implementing a sketchBuildParamObj
+		 */
 		class SketchBuildParamObj : public StatCollectorBuildParamObj {
 
 		public:
 			SketchBuildParamObj(const std::string& logicalSourceName,
 													const std::string& physicalSourceName,
 			                    const std::string& fieldName,
-													uint32_t depth,
-													uint32_t width,
-													time_t windowSize)
+													const uint32_t depth,
+													const uint32_t width,
+													const time_t windowSize)
 					: StatCollectorBuildParamObj(logicalSourceName, physicalSourceName, fieldName, windowSize),
 					  depth(depth), width(width) {}
 
+			/**
+			 * @return returns the depth of the sketch that is to be generated
+			 */
 			uint32_t getDepth() const {
 				return depth;
 			}
 
+			/**
+			 * @return returns the width of the sketch that is to be generated
+			 */
 			uint32_t getWidth() const {
 				return width;
 			}

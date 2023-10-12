@@ -23,6 +23,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The class that acts as an interface for all sketchDeleteParamObjects
+		 */
 		class SketchDeleteParamObj : public StatCollectorDeleteParamObj {
 
 		public:
@@ -30,16 +33,22 @@ namespace NES {
 			                    const std::string& physicalSourceName,
 			                    const std::string& fieldName,
 			                    const std::string& statCollectorType,
-			                    uint32_t depth,
-			                    uint32_t width,
-			                    time_t windowSize)
+			                    const uint32_t depth,
+			                    const uint32_t width,
+			                    const time_t windowSize)
 					: StatCollectorDeleteParamObj(logicalSourceName, physicalSourceName, fieldName, statCollectorType, windowSize),
-					  depth(depth), width(width) {}
+					depth(depth), width(width) {}
 
+			/**
+			 * @return returns the depth of the sketchParambj that is to be deleted
+			 */
 			uint32_t getDepth() const {
 				return depth;
 			}
 
+			/**
+			 * @return returns the width of the sketchParamObj that is to be deleted
+			 */
 			uint32_t getWidth() const {
 				return width;
 			}

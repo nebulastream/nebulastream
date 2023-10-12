@@ -25,6 +25,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The derived class from which objects can be generated, which contain all the necessary information needed to delete Count-Min sketches
+		 */
 		class CountMinDeleteParamObj : public SketchDeleteParamObj {
 
 		public:
@@ -38,10 +41,16 @@ namespace NES {
 					: SketchDeleteParamObj(logicalSourceName, physicalSourceName, fieldName, statCollectorType, ceil(exp(1.0) / error), ceil(std::log(1.0 / prob)), windowSize),
 					  error(error), prob(prob) {}
 
+			/**
+			 * @return returns the error of a Count-Min Sketch that is meant to be deleted from such a obj
+			 */
 			double getError() const {
 				return error;
 			}
 
+			/**
+			 * @return returns the probability of a Count-Min sketch that is meant to be deleted from such a obj
+			 */
 			double getProb() const {
 				return prob;
 			}

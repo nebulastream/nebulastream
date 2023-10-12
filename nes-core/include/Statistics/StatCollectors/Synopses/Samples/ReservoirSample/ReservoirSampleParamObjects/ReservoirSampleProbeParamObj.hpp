@@ -23,6 +23,9 @@
 
 namespace NES {
 
+	/**
+	 * The derived class from which objects can be generated that contain all necessary information for querying ReservoirSample statCollectors
+	 */
 	namespace Experimental::Statistics {
 
 		class ReservoirSampleProbeParamObj : public StatCollectorProbeParamObj {
@@ -38,6 +41,9 @@ namespace NES {
 					: StatCollectorProbeParamObj(logicalSourceName, physicalSourceName, fieldName, statCollectorType, expression, windowSize),
 					  width(width) {}
 
+			/**
+			 * @return returns the size of the reservoirSample that is to be queried/probed
+			 */
 			double getWidth() const {
 				return width;
 			}

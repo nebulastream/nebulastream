@@ -25,6 +25,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The derived class which generates objects which contain all the necessary information to delete reservoirSampel statCollectors
+		 */
 		class ReservoirSampleDeleteParamObj : public StatCollectorDeleteParamObj {
 
 		public:
@@ -37,6 +40,9 @@ namespace NES {
 					: StatCollectorDeleteParamObj(logicalSourceName, physicalSourceName, fieldName, statCollectorType, windowSize),
 					  width(width) {}
 
+			/**
+			 * @return returns the size of the ReservoirSample which is to be deleted
+			 */
 			double getWidth() const {
 				return width;
 			}

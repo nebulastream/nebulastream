@@ -24,6 +24,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * A derived class from which objects can be generated that are then used to generate DDSketches
+		 */
 		class DDSketchBuildParamObj : public SketchBuildParamObj {
 
 		public:
@@ -36,10 +39,16 @@ namespace NES {
 					                       1, Configurations::CoordinatorConfiguration::createDefault()->synopsisWindowSize, windowSize),
 					  error(error), gamma((1 + error) / (1 - error)) {}
 
+			/**
+			 * @return returns the error of the DDSketch that is to be generated
+			 */
 			double getError() const {
 				return error;
 			}
 
+			/**
+			 * @return returns the probability of the DDSketch that is to be generated
+			 */
 			double getGamma() const {
 				return gamma;
 			}

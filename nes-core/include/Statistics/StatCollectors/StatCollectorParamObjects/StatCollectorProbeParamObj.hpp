@@ -23,6 +23,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * This is the abstract class for all StatCollectorProbeParamObjects
+		 */
 		class StatCollectorProbeParamObj {
 		public:
 			StatCollectorProbeParamObj(const std::string& logicalSourceName,
@@ -40,26 +43,44 @@ namespace NES {
 
 			virtual ~StatCollectorProbeParamObj() {}
 
+			/**
+			 * @return returns the logicalSourceName over which the statCollector which we want to query was generated
+			 */
 			const std::string& getLogicalSourceName() const {
 				return logicalSourceName;
 			}
 
+			/**
+			 * @return returns the physicalSourceName over which the statCollector which we want to query was generated
+			 */
 			const std::string& getPhysicalSourceName() const {
 				return physicalSourceName;
 			}
 
+			/**
+			 * @return returns the fieldName over which the statCollector which we want to query was generated
+			 */
 			const std::string& getFieldName() const {
 				return fieldName;
 			}
 
+			/**
+			 * @return returns the statCollectorType, e.g. Count-Min, HyperLogLog or similar, needed to identify the correct statCollector which is to be queried
+			 */
 			const std::string& getStatCollectorType() const {
 				return statCollectorType;
 			}
 
+			/**
+			 * @return returns the expression which describes the statistic to be queried
+			 */
 			const std::string& getExpression() const {
 				return expression;
 			}
 
+			/**
+			 * @return returns the windowSize over which the statCollector that we want to query was constructed
+			 */
 			time_t getWindowSize() const {
 				return windowSize;
 			}

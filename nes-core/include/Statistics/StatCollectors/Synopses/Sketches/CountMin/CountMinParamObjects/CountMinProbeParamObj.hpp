@@ -25,6 +25,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The derived class through which objects can be generated through which Count-Min sketches can be queried
+		 */
 		class CountMinProbeParamObj : public SketchProbeParamObj {
 
 		public:
@@ -39,10 +42,16 @@ namespace NES {
 					: SketchProbeParamObj(logicalSourceName, physicalSourceName, fieldName, statCollectorType, expression, ceil(exp(1.0) / error), ceil(std::log(1.0 / prob)), windowSize),
 					  error(error), prob(prob) {}
 
+			/**
+			 * @return returns the error of the Count-Min sketch that is to be queried
+			 */
 			double getError() const {
 				return error;
 			}
 
+			/**
+			 * @return returns the probability of the Count-Min sketch that is to be queried
+			 */
 			double getProb() const {
 				return prob;
 			}

@@ -23,6 +23,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The intermediate class from which all sketchProbeParamObjs classes inherit
+		 */
 		class SketchProbeParamObj : public StatCollectorProbeParamObj {
 
 		public:
@@ -31,16 +34,22 @@ namespace NES {
 			                    const std::string& fieldName,
 													const std::string& statCollectorType,
 													const std::string& expression,
-			                    uint32_t depth,
-			                    uint32_t width,
-			                    time_t windowSize)
+			                    const uint32_t depth,
+			                    const uint32_t width,
+			                    const time_t windowSize)
 					: StatCollectorProbeParamObj(logicalSourceName, physicalSourceName, fieldName, statCollectorType, expression, windowSize),
 					  depth(depth), width(width) {}
 
+			/**
+			 * @return returns the depth of the sketch that is to be queried/probed
+			 */
 			uint32_t getDepth() const {
 				return depth;
 			}
 
+			/**
+			 * @return returns the width of the sketch that is to be queried/probed
+			 */
 			uint32_t getWidth() const {
 				return width;
 			}

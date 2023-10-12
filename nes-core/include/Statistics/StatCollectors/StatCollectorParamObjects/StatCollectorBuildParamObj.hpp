@@ -23,6 +23,9 @@ namespace NES {
 
 namespace Experimental::Statistics {
 
+	/**
+	 * This is the abstract class for all StatCollectorBuildParamObjects
+	 */
 	class StatCollectorBuildParamObj {
 	public:
 		StatCollectorBuildParamObj(const std::string& logicalSourceName,
@@ -37,18 +40,30 @@ namespace Experimental::Statistics {
 //		virtual ~StatCollectorBuildParamObj() = default;
 		virtual ~StatCollectorBuildParamObj() {}
 
+		/**
+		 * @return returns the logicalSourceName over which the statCollector is to be constructed
+		 */
 		const std::string& getLogicalSourceName() const {
 			return logicalSourceName;
 		}
 
+		/**
+		 * @return returns the physicalSourceName over which the statCollector is to be constructed
+		 */
 		const std::string& getPhysicalSourceName() const {
 			return physicalSourceName;
 		}
 
+		/**
+		 * @return returns the fieldName over which the statCollector is to be constructed
+		 */
 		const std::string& getFieldName() const {
 			return fieldName;
 		}
 
+		/**
+		 * @return returns the windowSize over which the statCollector is to be constructed
+		 */
 		time_t getWindowSize() const {
 			return windowSize;
 		}

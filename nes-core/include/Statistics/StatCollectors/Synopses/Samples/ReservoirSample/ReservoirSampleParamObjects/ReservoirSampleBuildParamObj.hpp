@@ -25,6 +25,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The derived class, which is used to create parameter objects from which Reservoir Samples can be generated
+		 */
 		class ReservoirSampleBuildParamObj : public StatCollectorBuildParamObj {
 
 		public:
@@ -36,6 +39,9 @@ namespace NES {
 					: StatCollectorBuildParamObj(logicalSourceName, physicalSourceName, fieldName, windowSize),
 					  width(width) {}
 
+			/**
+			 * @return returns the size of the Reservoir Sample that is to be constructed
+			 */
 			double getWidth() const {
 				return width;
 			}

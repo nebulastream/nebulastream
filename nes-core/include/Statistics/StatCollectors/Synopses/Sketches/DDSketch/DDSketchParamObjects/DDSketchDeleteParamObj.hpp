@@ -24,6 +24,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The derived class that generated objects that can be used to delete DDSketches
+		 */
 		class DDSketchDeleteParamObj : public SketchDeleteParamObj {
 
 		public:
@@ -37,10 +40,16 @@ namespace NES {
 					                      1, Configurations::CoordinatorConfiguration::createDefault()->synopsisWindowSize, windowSize),
 					  error(error), gamma((1 + error) / (1 - error)) {}
 
+			/**
+			 * @return returns the error of the DDSketch that is to be deleted with this object
+			 */
 			double getError() const {
 				return error;
 			}
 
+			/**
+			 * @return returns the gamma of the DDSketch that is to be deleted with this object
+			 */
 			double getGamma() const {
 				return gamma;
 			}

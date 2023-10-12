@@ -24,6 +24,9 @@ namespace NES {
 
 	namespace Experimental::Statistics {
 
+		/**
+		 * The derived class that creates objects that contain all necessary information to query/probe DDSketches
+		 */
 		class DDSketchProbeParamObj : public SketchProbeParamObj {
 
 		public:
@@ -38,10 +41,16 @@ namespace NES {
 					                      1, Configurations::CoordinatorConfiguration::createDefault()->synopsisWindowSize, windowSize),
 					  error(error), gamma((1 + error) / (1 - error)) {}
 
+			/**
+			 * @return returns the error of the DDSketch that is to be queried
+			 */
 			double getError() const {
 				return error;
 			}
 
+			/**
+			 * @return returns the gamma of the DDSketch that is to be queried
+			 */
 			double getGamma() const {
 				return gamma;
 			}
