@@ -673,22 +673,15 @@ bool NodeEngine::reconfigureNetworkSink(uint64_t newNodeId,
     } else {
         auto qep = deployedQEPs.at(querySubPlanId);
         auto networkSinks = qep->getSinks();
+        Network::NetworkSinkPtr networkSink;
         //make sure that query sub plan has network sink with specified id
         auto it =
-            std::find_if(networkSinks.begin(), networkSinks.end(), [uniqueNetworkSinkDescriptorId](const DataSinkPtr& dataSink) {
-              Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
+            std::find_if(networkSinks.begin(), networkSinks.end(), [uniqueNetworkSinkDescriptorId, &networkSink](const DataSinkPtr& dataSink) {
+              networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
               return networkSink && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
             });
         if (it != networkSinks.end()) {
-            auto networkSink = *it;
-            NES_DEBUG("Starting to buffer on Network Sink{}", uniqueNetworkSinkDescriptorId);
-            std::pair<Network::NodeLocation, Network::NesPartition> userData = {newNodeLocation, newPartition};
-            ReconfigurationMessage message = ReconfigurationMessage(qep->getQueryId(),
-                                                                    querySubPlanId,
-                                                                    Runtime::ReconfigurationType::ConnectToNewNetworkSource,
-                                                                    networkSink,
-                                                                    userData);
-            queryManager->addReconfigurationMessage(qep->getQueryId(), querySubPlanId, message, true);
+            networkSink->reconfigureReceiver(newPartition, newNodeLocation);
             return true;
         }
         //query sub plan did not have network sink with specified id
@@ -719,9 +712,5 @@ bool NodeEngine::getConnectSinksAsync() {
 
 void NodeEngine::setConnectSinksAsync(bool value) {
     connectSinksAsync = value;
-}
-
-uint64_t NodeEngine::getUniqueSinkDescriptor() {
-    return nextFreeNetworkSinkId++;
 }
 }// namespace NES::Runtime

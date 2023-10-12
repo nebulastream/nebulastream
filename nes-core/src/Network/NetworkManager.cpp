@@ -134,7 +134,6 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
                         retryTimes,
                         promise = std::move(promise), queryManager, reconfigurationMessage, abortConnectionFuture = std::move(abortConnectionFuture)]() mutable {
         auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
-        //todo: also move promise into the loop, or use coroutines
         auto channel = NetworkChannel::create(zmqContext,
                                               nodeLocation.createZmqURI(),
                                               nesPartition,

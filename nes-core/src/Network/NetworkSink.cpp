@@ -35,7 +35,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType,
                          uint64_t numberOfOrigins,
-                         uint16_t expectedVersionDrainEvents)
+                         uint16_t numberOfInputSources)
     : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
@@ -45,15 +45,15 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
         faultToleranceType,
         numberOfOrigins,
         nullptr),
-      uniqueNetworkSinkDescriptorId(nodeEngine->getUniqueSinkDescriptor()), nodeEngine(nodeEngine),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), expectedVersionDrainEvents(expectedVersionDrainEvents), receivedVersionDrainEvents(0), pendingReconfiguration(std::nullopt) {
-    //todo: #4230 use the uniqueNetworkSinkDescriptorId parameter to set the id instead of obtaining a value from the node engine
-    (void) uniqueNetworkSinkDescriptorId;
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), numberOfInputSources(numberOfInputSources),
+      receivedVersionDrainEvents(0), pendingReconfiguration(std::nullopt) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
+    //todo: what to do about this code?
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
@@ -67,7 +67,10 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
 SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    NES_TRACE("context {} writing data at sink {} on node {}", workerContext.getId(), getUniqueNetworkSinkDescriptorId(), nodeEngine->getNodeId());
+    NES_TRACE("context {} writing data at sink {} on node {}",
+              workerContext.getId(),
+              getUniqueNetworkSinkDescriptorId(),
+              nodeEngine->getNodeId());
     //if async establishing of connection is in process, do not attempt to send data but buffer it instead
     if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
         NES_TRACE("context {} buffering data", workerContext.getId());
@@ -254,7 +257,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
             unbuffer(workerContext);
             networkManager->unregisterSubpartitionProducer(nesPartition);
-            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), terminationType, queryManager->getNumberOfWorkerThreads()),
+            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
+                                                                terminationType,
+                                                                queryManager->getNumberOfWorkerThreads()),
                             "Cannot remove network channel " << nesPartition.toString());
             /* store a nullptr in place of the released channel, in case another write happens afterwards, that will prevent crashing and
             allow throwing an error instead */
@@ -270,32 +275,37 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
     NES_DEBUG("NetworkSink: postReconfigurationCallback() called {} parent plan {}", nesPartition.toString(), querySubPlanId);
     inherited0::postReconfigurationCallback(task);
 
-    //update info about receiving network source to new target
-    if (task.getType() == Runtime::ReconfigurationType::ConnectToNewNetworkSource) {
-        auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
-        networkManager->unregisterSubpartitionProducer(nesPartition);
-        receiverLocation = newReceiverLocation;
-        nesPartition = newPartition;
-    }
-    if (task.getType() == Runtime::ReconfigurationType::DrainVersion) {
-        if (pendingReconfiguration.has_value()) {
-            auto currentCount = ++receivedVersionDrainEvents;
-            NES_DEBUG("NetworkSink: postReconfigurationCallback() received {} of {} expected version drain events", currentCount, expectedVersionDrainEvents);
-            if (currentCount == expectedVersionDrainEvents) {
-                auto userData = pendingReconfiguration.value();
-                Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
-                                                                                          querySubPlanId,
-                                                                                          Runtime::ReconfigurationType::ConnectToNewNetworkSource,
-                                                                                          inherited0::shared_from_this(),
-                                                                                          userData);
-                queryManager->addReconfigurationMessage(nesPartition.getQueryId(), querySubPlanId, message, true);
-                pendingReconfiguration = std::nullopt;
-                receivedVersionDrainEvents = 0;
-            } else if (currentCount > expectedVersionDrainEvents) {
-                NES_THROW_RUNTIME_ERROR("Number of received version drain events is higher than the expected maximum");
+    switch (task.getType()) {
+        //update info about receiving network source to new target
+        case Runtime::ReconfigurationType::ConnectToNewNetworkSource: {
+            auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
+            networkManager->unregisterSubpartitionProducer(nesPartition);
+            receiverLocation = newReceiverLocation;
+            nesPartition = newPartition;
+            break;
+        }
+        case Runtime::ReconfigurationType::DrainVersion: {
+            if (pendingReconfiguration.has_value()) {
+                auto currentCount = ++receivedVersionDrainEvents;
+                NES_DEBUG("NetworkSink: postReconfigurationCallback() received {} of {} expected version drain events",
+                          currentCount,
+                          numberOfInputSources);
+                if (currentCount == numberOfInputSources) {
+                    auto [newReceiverLocation, newPartition] = pendingReconfiguration.value();
+                    reconfigureReceiver(newPartition, newReceiverLocation);
+                    pendingReconfiguration = std::nullopt;
+                    receivedVersionDrainEvents = 0;
+                } else if (currentCount > numberOfInputSources) {
+                    NES_THROW_RUNTIME_ERROR("Number of received version drain events is higher than the expected maximum");
+                }
+            } else {
+                NES_DEBUG("NetworkSink: postReconfigurationCallback() ignoring version drain event because no reconfiguration is "
+                          "pending");
             }
-        } else {
-            NES_DEBUG("NetworkSink: postReconfigurationCallback() ignoring version drain event because no reconfiguration is pending");
+            break;
+        }
+        default: {
+            break;
         }
     }
 }
@@ -319,6 +329,22 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
+
+void NetworkSink::reconfigureReceiver(NesPartition newPartition, NodeLocation newReceiverLocation) {
+    std::pair newReceiverTuple = {newReceiverLocation, newPartition};
+    //register event consumer for new source
+    NES_ASSERT2_FMT(networkManager->registerSubpartitionEventConsumer(newReceiverLocation,
+                                                                      newPartition,
+                                                                      inherited1::shared_from_this()),
+                    "Cannot register event listener " << nesPartition.toString());
+    Runtime::ReconfigurationMessage message =
+        Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
+                                        querySubPlanId,
+                                        Runtime::ReconfigurationType::ConnectToNewNetworkSource,
+                                        inherited0::shared_from_this(),
+                                        newReceiverTuple);
+    queryManager->addReconfigurationMessage(nesPartition.getQueryId(), querySubPlanId, message, false);
+}
 
 void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext,
                                         NodeLocation newNodeLocation,
@@ -345,7 +371,9 @@ void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext,
                                                                                   queryManager);
     //todo: #4227 use QueryTerminationType::Redeployment
     workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
-    workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(), Runtime::QueryTerminationType::HardStop, queryManager->getNumberOfWorkerThreads());
+    workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
+                                        Runtime::QueryTerminationType::HardStop,
+                                        queryManager->getNumberOfWorkerThreads());
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {

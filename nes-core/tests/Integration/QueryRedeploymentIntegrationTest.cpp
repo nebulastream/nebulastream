@@ -448,7 +448,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnect) {
     waitForFinalCount.notify_all();
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
-    //worker 2 did not receive any soft stop, because the node reconnected
+    //todo: once drain event propagation is implemented, wait for query to stop by itself on wrk2
     ASSERT_TRUE(wrk2->getNodeEngine()->stopQuery(sharedQueryId));
     //worker at coordinator expects double number of threads to send soft stop because source reconfig is not implemented yet
     ASSERT_TRUE(crd->getNesWorker()->getNodeEngine()->stopQuery(sharedQueryId));
