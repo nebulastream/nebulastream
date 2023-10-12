@@ -116,16 +116,24 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                             << endOfStreamMessage.getChannelId().toString());
         auto partition = endOfStreamMessage.getChannelId().getNesPartition();
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
-        auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads() + 1;
-        if (partitionManager->unregisterSubpartitionConsumer(partition) && partitionManager->getSubpartitionConsumerTotalConnections(partition) == expectedTotalConnectionsInPartitionManager) {
-            partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
-                ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
-            protocolListener->onEndOfStream(endOfStreamMessage);
-        } else {
+        auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads() + 1u;
+        if (!partitionManager->unregisterSubpartitionConsumer(partition)) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} but there is still some active "
                       "subpartition: {}",
                       endOfStreamMessage.getChannelId().toString(),
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
+        }  else if (partitionManager->getSubpartitionConsumerTotalConnections(partition).value() < expectedTotalConnectionsInPartitionManager) {
+            NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total connections for "
+                      "subpartition: {} has not been reached: {}/{}",
+                      endOfStreamMessage.getChannelId().toString(),
+                      *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()),
+                      partitionManager->getSubpartitionConsumerTotalConnections(partition).value(),
+                      expectedTotalConnectionsInPartitionManager);
+
+        } else {
+            partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
+                ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
+            protocolListener->onEndOfStream(endOfStreamMessage);
         }
     } else if (partitionManager->getProducerRegistrationStatus(endOfStreamMessage.getChannelId().getNesPartition())
                == PartitionRegistrationStatus::Registered) {
