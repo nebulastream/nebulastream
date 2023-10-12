@@ -494,14 +494,14 @@ int main(int, char**) {
             outputFileExecInit << pythonCompiler << "-" << c << "\n";
             outputFileExecInit.close();
 
-            NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
+            // NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
-            //NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
+            NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
             // TODO fix projection queries...
             // NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
             // NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();
-            // NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
+             //NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
         }
     }
 }

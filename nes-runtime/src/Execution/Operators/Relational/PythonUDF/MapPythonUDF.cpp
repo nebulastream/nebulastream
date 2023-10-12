@@ -376,7 +376,7 @@ bool useNumba(void* state) {
 void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    FunctionCall("createPythonEnvironment", createPythonEnvironment, handler);
+    // FunctionCall("createPythonEnvironment", createPythonEnvironment, handler);
     //auto numbaActivated = FunctionCall("useNumba", useNumba, handler);
     if (pythonCompiler == "numba") {
         // add Parameters

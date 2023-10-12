@@ -22,6 +22,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+PythonUDFOperatorHandler::PythonUDFOperatorHandler(const std::string& function,
+                         const std::string& functionName,
+                         const std::map<std::string, std::string> modulesToImport,
+                         const std::string& pythonCompiler,
+                         SchemaPtr inputSchema,
+                         SchemaPtr outputSchema)
+    : function(function), functionName(functionName), modulesToImport(modulesToImport), pythonCompiler(pythonCompiler), inputSchema(inputSchema), outputSchema(outputSchema) {
+    this->initPython();
+}
+
 std::string PythonUDFOperatorHandler::getNumbaDataType(AttributeFieldPtr& fieldDataType) {
     // https://numba.pydata.org/numba-doc/latest/reference/types.html
     // it looks like there are no for strings?
@@ -112,7 +122,6 @@ void PythonUDFOperatorHandler::initPython() {
 
     //choose python compiler, default is the CPython compiler
     if (this->pythonCompiler == "numba"){
-        dyncall.reset();
         // init globals and locals to be able to access the variables later when calling the function
         // they have to be a pyDict
         globals = PyDict_New();

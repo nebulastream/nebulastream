@@ -40,8 +40,7 @@ class PythonUDFOperatorHandler : public OperatorHandler {
                                       const std::map<std::string, std::string> modulesToImport,
                                       const std::string& pythonCompiler,
                                       SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema)
-        : function(function), functionName(functionName), modulesToImport(modulesToImport), pythonCompiler(pythonCompiler), inputSchema(inputSchema), outputSchema(outputSchema) {}
+                                      SchemaPtr outputSchema);
 
     /**
      * @brief This method returns the udf as a string

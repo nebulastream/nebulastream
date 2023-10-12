@@ -100,6 +100,8 @@ T executeNumba(void* state){
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
+    // reset all variables for next call
+    dyncall.reset();
     executeNumbaTimer.snapshot("execute numba");
     executeNumbaTimer.pause();
     auto path = std::filesystem::current_path().string() + "/dump/executepython.txt";
