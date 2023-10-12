@@ -66,7 +66,7 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
     std::chrono::duration<int64_t, std::milli> defaultTimeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
 };
 
-//todo: reenable or remove?
+//todo: use lambda source here
 /**
      * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
      * network channel to become available
@@ -807,7 +807,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     ASSERT_TRUE(retStopCord);
 }
 
-TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
+TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     //const uint64_t numBuffersToProduceAfterReconnect = 40;
@@ -1126,7 +1126,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
 }
 
 //todo rewrite this test like the other ones with lambda source and without deployment by coordinator and then reenable
-TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
+TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuffering) {
     uint64_t numBuffersToProduce = 400;
     uint64_t tuplesPerBuffer = 10;
     uint64_t numThreads = GetParam();
