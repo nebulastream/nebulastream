@@ -38,12 +38,12 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -93,9 +93,9 @@
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceMergingOperatorHandler.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
@@ -162,7 +162,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         auto logicalSourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
         auto physicalSourceOperator =
-            PhysicalOperators::PhysicalSourceOperator::create(Util::getNextOperatorId(),
+            PhysicalOperators::PhysicalSourceOperator::create(getNextOperatorId(),
                                                               logicalSourceOperator->getOriginId(),
                                                               logicalSourceOperator->getInputSchema(),
                                                               logicalSourceOperator->getOutputSchema(),
@@ -859,7 +859,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
-    if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<NonKeyedWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
         //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
         if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isContentBasedWindowType()) {

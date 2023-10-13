@@ -416,7 +416,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
             NES_TRACE("BasePlacementStrategy::placeNetworkOperator: For all topology nodes between the upstream topology node "
                       "add network source or sink operator.");
             const SchemaPtr& inputSchema = upStreamOperator->getOutputSchema();
-            uint64_t sourceOperatorId = Util::getNextOperatorId();
+            uint64_t sourceOperatorId = getNextOperatorId();
             // hint to understand the for loop below:
             // give a path from node0 (source) to nodeN (root)
             // base case: place network sink on node0 to send data to node1
@@ -501,7 +501,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     operatorToSubPlan[networkSource->getId()] = querySubPlan;
 
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: add network sink operator");
-                    sourceOperatorId = Util::getNextOperatorId();
+                    sourceOperatorId = getNextOperatorId();
                     OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
                     querySubPlan->appendOperatorAsNewRoot(networkSink);
                     operatorToSubPlan[networkSink->getId()] = querySubPlan;

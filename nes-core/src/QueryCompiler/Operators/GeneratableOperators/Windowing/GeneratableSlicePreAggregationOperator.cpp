@@ -39,7 +39,7 @@ GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(
     SchemaPtr outputSchema,
     Windowing::WindowOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return create(Util::getNextOperatorId(),
+    return create(getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(operatorHandler),

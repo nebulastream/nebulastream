@@ -28,7 +28,7 @@ GeneratableOperatorPtr GeneratableBufferEmit::create(OperatorId id, SchemaPtr ou
 }
 
 GeneratableOperatorPtr GeneratableBufferEmit::create(SchemaPtr outputSchema) {
-    return create(Util::getNextOperatorId(), std::move(outputSchema));
+    return create(getNextOperatorId(), std::move(outputSchema));
 }
 
 void GeneratableBufferEmit::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

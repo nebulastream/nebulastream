@@ -14,7 +14,7 @@
 
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/JavaUDFDescriptorBuilder.hpp>

@@ -33,8 +33,8 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -255,7 +255,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyNoMerge) {
             verifyChildrenOfType<SourceLogicalOperatorNode>(querySubPlans);
             verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 10);
         } else {
-            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifyChildrenOfType<NonKeyedWindowOperator>(querySubPlans);
             verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
         }
     }
@@ -283,7 +283,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFlatTopologyMerge) {
     for (const auto& executionNode : executionNodes) {
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
         if (executionNode->getId() == 1u) {
-            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifyChildrenOfType<NonKeyedWindowOperator>(querySubPlans);
             verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 10);
         } else {
             verifyChildrenOfType<WatermarkAssignerLogicalOperatorNode>(querySubPlans);
@@ -321,7 +321,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementThreeLevelsTopology) {
         } else if (executionNode->getId() >= 2u && executionNode->getId() <= 11u) {
             //intermediate nodes
             NES_DEBUG("NemoPlacementTest: Testing 1st level of the tree");
-            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifyChildrenOfType<NonKeyedWindowOperator>(querySubPlans);
             verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 10);
         } else {
             //leaves
@@ -356,7 +356,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsSparseTopology) {
         if (executionNode->getId() == 1u) {
             //coordinator
             NES_DEBUG("NemoPlacementTest: Testing Coordinator");
-            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifyChildrenOfType<NonKeyedWindowOperator>(querySubPlans);
             verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 4);
         } else if (executionNode->getId() >= 2u && executionNode->getId() <= 3u) {
             //intermediate nodes
@@ -411,7 +411,7 @@ TEST_F(NemoPlacementTest, testNemoPlacementFourLevelsDenseTopology) {
         } else if (executionNode->getId() >= 5u && executionNode->getId() <= 13u) {
             //intermediate nodes
             NES_DEBUG("NemoPlacementTest: Testing 2nd level of the tree");
-            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifyChildrenOfType<NonKeyedWindowOperator>(querySubPlans);
             verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 3);
         } else {
             //leaves

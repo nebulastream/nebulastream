@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -26,7 +26,7 @@ PhysicalFlatMapUDFOperator::PhysicalFlatMapUDFOperator(OperatorId id,
 PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(const SchemaPtr& inputSchema,
                                                        const SchemaPtr& outputSchema,
                                                        const Catalogs::UDF::UDFDescriptorPtr udfDescriptor) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, udfDescriptor);
+    return create(getNextOperatorId(), inputSchema, outputSchema, udfDescriptor);
 }
 
 PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(OperatorId id,

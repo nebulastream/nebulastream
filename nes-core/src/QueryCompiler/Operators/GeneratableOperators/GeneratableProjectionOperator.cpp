@@ -36,7 +36,7 @@ GeneratableOperatorPtr GeneratableProjectionOperator::create(OperatorId id,
 
 GeneratableOperatorPtr
 GeneratableProjectionOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
-    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expressions));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expressions));
 }
 
 void GeneratableProjectionOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

@@ -38,32 +38,36 @@ class PhysicalSourceFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static PhysicalSourcePtr createFromString(std::string identifier, std::map<std::string, std::string>& inputParams);
+    static PhysicalSourceTypePtr createFromString(std::string identifier, std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief create physical source config with yaml file
      * @param physicalSourceConfig yaml elements from yaml file
      * @return physical source config object
      */
-    static PhysicalSourcePtr createFromYaml(Yaml::Node& yamlConfig);
+    static PhysicalSourceTypePtr createFromYaml(Yaml::Node& yamlConfig);
 
   private:
     /**
      * @brief Compute Physical Source Type based on the command line arguments
+     * @param logicalSourceName: the logical source name this physical source contributes to
+     * @param physicalSourceName: the physical source name of this physical source
      * @param sourceType : the string representing the physical source type
      * @param commandLineParams : the command line arguments
      * @return PhysicalSourceType shared pointer
      */
-    static PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType,
+    static PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, std::string sourceType,
                                                           const std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief Compute Physical Source Type based on the yaml configuration
+     * @param logicalSourceName: the logical source name this physical source contributes to
+     * @param physicalSourceName: the physical source name of this physical source
      * @param sourceType : the string representing the physical source type
      * @param yamlConfig : the yaml configuration
      * @return PhysicalSourceType shared pointer
      */
-    static PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig);
+    static PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, Yaml::Node& yamlConfig);
 };
 }// namespace Configurations
 }// namespace NES

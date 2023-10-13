@@ -26,9 +26,9 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
@@ -171,7 +171,7 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
 //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
 std::string keyAssignment(std::string keyName) {
     //first, get unique ids for the key attributes
-    auto cepId = Util::getNextOperatorId();
+    auto cepId = getNextOperatorId();
     //second, create a unique name for both key attributes
     std::string cepKey = keyName + std::to_string(cepId);
     return cepKey;

@@ -27,7 +27,7 @@ PhysicalLimitOperator::create(OperatorId id, const SchemaPtr& inputSchema, const
 uint64_t PhysicalLimitOperator::getLimit() { return limit; }
 
 PhysicalOperatorPtr PhysicalLimitOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit) {
-    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), limit);
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), limit);
 }
 
 std::string PhysicalLimitOperator::toString() const { return "PhysicalLimitOperator"; }

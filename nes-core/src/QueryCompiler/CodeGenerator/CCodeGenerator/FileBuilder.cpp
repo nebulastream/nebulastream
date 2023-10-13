@@ -33,7 +33,7 @@ FileBuilder FileBuilder::create(const std::string&) {
         << "#include <cstdint>\n"
            "#include <string.h>\n"
            "#include <State/StateVariable.hpp>\n"
-           "#include <Windowing/LogicalWindowDefinition.hpp>\n"
+           "#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>\n"
            "#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>\n"
            "#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>\n"
            "#include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>\n"

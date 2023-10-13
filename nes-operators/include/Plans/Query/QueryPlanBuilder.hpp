@@ -15,10 +15,8 @@
 #ifndef NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 #define NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
-#include <API/Expressions/Expressions.hpp>
-#include <API/Query.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <string>
 
 namespace NES {

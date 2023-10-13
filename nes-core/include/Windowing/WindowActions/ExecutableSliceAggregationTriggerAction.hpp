@@ -22,16 +22,16 @@
 #include <State/StateManager.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <cstdint>
 #include <utility>
 

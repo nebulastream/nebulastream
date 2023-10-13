@@ -30,7 +30,7 @@ std::shared_ptr<PhysicalNonKeyedWindowSliceStoreAppendOperator> PhysicalNonKeyed
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::Experimental::NonKeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
-    return std::make_shared<PhysicalNonKeyedWindowSliceStoreAppendOperator>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalNonKeyedWindowSliceStoreAppendOperator>(getNextOperatorId(),
                                                                             inputSchema,
                                                                             outputSchema,
                                                                             keyedEventTimeWindowHandler);

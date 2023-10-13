@@ -18,9 +18,9 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
@@ -29,7 +29,7 @@ GeneratableOperatorPtr
 GeneratableWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(Util::getNextOperatorId(),
+    return create(getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(watermarkStrategyDescriptor));

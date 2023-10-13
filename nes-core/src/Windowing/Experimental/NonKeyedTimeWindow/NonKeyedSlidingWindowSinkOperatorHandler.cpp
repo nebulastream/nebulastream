@@ -22,7 +22,7 @@
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {

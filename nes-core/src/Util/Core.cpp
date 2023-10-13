@@ -16,7 +16,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -109,11 +109,6 @@ std::string Util::toCSVString(const SchemaPtr& schema) {
     ss.seekp(-1, std::ios_base::end);
     ss << std::endl;
     return ss.str();
-}
-
-OperatorId Util::getNextOperatorId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
 }
 
 uint64_t Util::getNextPipelineId() {

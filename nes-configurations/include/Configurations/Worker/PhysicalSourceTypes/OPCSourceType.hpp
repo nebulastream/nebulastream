@@ -38,20 +38,20 @@ class OPCSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    static OPCSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a OPCSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create(Yaml::Node yamlConfig);
+    static OPCSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief create a OPCSourceConfigPtr object
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create();
+    static OPCSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
     ~OPCSourceType() = default;
 
@@ -102,17 +102,17 @@ class OPCSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceType(std::map<std::string, std::string> sourceConfigMap);
+    explicit OPCSourceType(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceType(Yaml::Node yamlConfig);
+    explicit OPCSourceType(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with default values
      */
-    OPCSourceType();
+    OPCSourceType(std::string logicalSourceName, std::string physicalSourceName);
 
     Configurations::IntConfigOption namespaceIndex;
     Configurations::StringConfigOption nodeIdentifier;

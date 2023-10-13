@@ -13,13 +13,13 @@
 */
 
 #include <API/Schema.hpp>
-#include <OperatorNode.hpp>
-#include <Util/Core.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <utility>
 
 namespace NES {
+
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
@@ -203,4 +203,8 @@ void OperatorNode::addAllProperties(const OperatorProperties& properties) {
     }
 }
 
+OperatorId getNextOperatorId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
 }// namespace NES

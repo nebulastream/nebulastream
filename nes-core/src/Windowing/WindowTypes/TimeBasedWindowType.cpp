@@ -16,7 +16,7 @@
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 
 namespace NES::Windowing {

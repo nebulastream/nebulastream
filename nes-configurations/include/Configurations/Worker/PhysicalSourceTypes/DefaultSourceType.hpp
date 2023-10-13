@@ -39,20 +39,20 @@ class DefaultSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return DefaultSourceConfigPtr
      */
-    static DefaultSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    static DefaultSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a DefaultSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return DefaultSourceConfigPtr
      */
-    static DefaultSourceTypePtr create(Yaml::Node yamlConfig);
+    static DefaultSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief create defaultSourceConfig with default values
      * @return defaultSourceConfig with default values
      */
-    static DefaultSourceTypePtr create();
+    static DefaultSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
     const Configurations::IntConfigOption& getNumberOfBuffersToProduce() const;
 
@@ -89,18 +89,18 @@ class DefaultSourceType : public PhysicalSourceType {
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      * @param sourceConfigMap: the source configuration map
      */
-    explicit DefaultSourceType(std::map<std::string, std::string> sourceConfigMap);
+    explicit DefaultSourceType(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      * @param sourceTypeConfig: the configuration for yaml
      */
-    explicit DefaultSourceType(Yaml::Node sourceTypeConfig);
+    explicit DefaultSourceType(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node sourceTypeConfig);
 
     /**
      * @brief constructor to create a new Default source config object initialized with default values
      */
-    DefaultSourceType();
+    DefaultSourceType(std::string logicalSourceName, std::string physicalSourceName);
 
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption sourceGatheringInterval;

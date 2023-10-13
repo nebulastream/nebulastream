@@ -13,7 +13,7 @@
 */
 
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Windowing {
 

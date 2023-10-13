@@ -25,15 +25,15 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
@@ -156,7 +156,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
     if (joinDefinition->getLeftJoinKey()->getFieldName() == predicateFields[0]) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
         auto copyOfFilter = filterOperator->copy()->as<FilterLogicalOperatorNode>();
-        copyOfFilter->setId(Util::getNextOperatorId());
+        copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
@@ -176,7 +176,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
     } else if (joinDefinition->getRightJoinKey()->getFieldName() == predicateFields[0]) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
         auto copyOfFilter = filterOperator->copy()->as<FilterLogicalOperatorNode>();
-        copyOfFilter->setId(Util::getNextOperatorId());
+        copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
         ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
@@ -205,7 +205,7 @@ void FilterPushDownRule::pushFilterBelowUnion(FilterLogicalOperatorNodePtr filte
     std::vector<NodePtr> grandChildren = unionOperator->getChildren();
 
     auto copyOfFilterOperator = filterOperator->copy()->as<FilterLogicalOperatorNode>();
-    copyOfFilterOperator->setId(Util::getNextOperatorId());
+    copyOfFilterOperator->setId(getNextOperatorId());
     copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->copy());
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Created a copy of the filter operator");
 

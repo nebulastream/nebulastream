@@ -12,19 +12,22 @@
     limitations under the License.
 */
 
-#include <Configurations/Worker/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>
 #include <utility>
 
 namespace NES {
 
-BinarySourceTypePtr BinarySourceType::create(Yaml::Node yamlConfig) {
-    return std::make_shared<BinarySourceType>(BinarySourceType(yamlConfig));
+BinarySourceTypePtr
+BinarySourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+    return std::make_shared<BinarySourceType>(
+        BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName), yamlConfig));
 }
 
-BinarySourceType::BinarySourceType(Yaml::Node yamlConfig) : BinarySourceType() {
+BinarySourceType::BinarySourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig)
+    : BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>() != "\n") {
@@ -35,11 +38,17 @@ BinarySourceType::BinarySourceType(Yaml::Node yamlConfig) : BinarySourceType() {
     }
 }
 
-BinarySourceTypePtr BinarySourceType::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<BinarySourceType>(BinarySourceType(std::move(sourceConfigMap)));
+BinarySourceTypePtr BinarySourceType::create(std::string logicalSourceName,
+                                             std::string physicalSourceName,
+                                             std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<BinarySourceType>(
+        BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
 }
 
-BinarySourceType::BinarySourceType(std::map<std::string, std::string> sourceConfigMap) : BinarySourceType() {
+BinarySourceType::BinarySourceType(std::string logicalSourceName,
+                                   std::string physicalSourceName,
+                                   std::map<std::string, std::string> sourceConfigMap)
+    : BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from command line.");
     if (sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG)->second);
@@ -49,10 +58,12 @@ BinarySourceType::BinarySourceType(std::map<std::string, std::string> sourceConf
     }
 }
 
-BinarySourceTypePtr BinarySourceType::create() { return std::make_shared<BinarySourceType>(BinarySourceType()); }
+BinarySourceTypePtr BinarySourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
+    return std::make_shared<BinarySourceType>(BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+}
 
-BinarySourceType::BinarySourceType()
-    : PhysicalSourceType(SourceType::BINARY_SOURCE),
+BinarySourceType::BinarySourceType(std::string logicalSourceName, std::string physicalSourceName)
+    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::BINARY_SOURCE),
       filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                         "",
                                                                         "file path, needed for: CSVSource, BinarySource")) {

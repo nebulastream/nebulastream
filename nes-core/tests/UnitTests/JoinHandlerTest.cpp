@@ -21,14 +21,14 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
@@ -36,7 +36,7 @@
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <gtest/gtest.h>
 #include <map>
 #include <vector>

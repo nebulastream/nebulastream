@@ -17,7 +17,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
 

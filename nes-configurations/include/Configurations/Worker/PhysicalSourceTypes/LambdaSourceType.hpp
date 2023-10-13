@@ -42,7 +42,7 @@ class LambdaSourceType : public PhysicalSourceType {
      * @return a constructed LambdaSourceType
      */
     static LambdaSourceTypePtr
-    create(std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    create(std::string logicalSourceName, std::string physicalSourceName,std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProduce,
            uint64_t gatheringValue,
            GatheringMode gatheringMode,
@@ -72,7 +72,7 @@ class LambdaSourceType : public PhysicalSourceType {
     void reset() override;
 
   private:
-    explicit LambdaSourceType(
+    explicit LambdaSourceType(std::string logicalSourceName, std::string physicalSourceName,
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         uint64_t numBuffersToProduce,
         uint64_t gatheringValue,

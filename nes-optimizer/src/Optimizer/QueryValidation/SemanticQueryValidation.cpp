@@ -16,7 +16,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>

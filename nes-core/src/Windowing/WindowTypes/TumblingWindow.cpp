@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <utility>
 #include <vector>

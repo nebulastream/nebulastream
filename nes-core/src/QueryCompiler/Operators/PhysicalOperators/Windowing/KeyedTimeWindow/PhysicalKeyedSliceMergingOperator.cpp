@@ -34,7 +34,7 @@ PhysicalKeyedSliceMergingOperator::create(const SchemaPtr& inputSchema,
                                           const SchemaPtr& outputSchema,
                                           const WindowHandlerType& keyedEventTimeWindowHandler,
                                           const Windowing::LogicalWindowDefinitionPtr& windowDefinition) {
-    return std::make_shared<PhysicalKeyedSliceMergingOperator>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalKeyedSliceMergingOperator>(getNextOperatorId(),
                                                                inputSchema,
                                                                outputSchema,
                                                                keyedEventTimeWindowHandler,

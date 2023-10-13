@@ -218,12 +218,10 @@ class TestHarness {
 
     /**
      * @brief add a memory source to be used in the test
-     * @param logical source name
-     * @param schema schema of the source
-     * @param physical source name
+     * @param physicalSourceType schema of the source
+     * @param workerConfiguration source name
      */
-    TestHarness& attachWorkerWithLambdaSourceToCoordinator(const std::string& logicalSourceName,
-                                                           PhysicalSourceTypePtr physicalSource,
+    TestHarness& attachWorkerWithLambdaSourceToCoordinator(PhysicalSourceTypePtr physicalSourceType,
                                                            WorkerConfigurationPtr workerConfiguration);
 
     /**
@@ -232,17 +230,14 @@ class TestHarness {
      * @param csvSourceType csv source type
      * @param parentId id of the parent to connect
      */
-    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
-                                                         CSVSourceTypePtr csvSourceType,
-                                                         uint64_t parentId);
+    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(CSVSourceTypePtr csvSourceType, uint64_t parentId);
 
     /**
       * @brief add a csv source to be used in the test
       * @param logicalSourceName logical source name
       * @param csvSourceType csv source type
       */
-    TestHarness& attachWorkerWithCSVSourceToCoordinator(const std::string& logicalSourceName,
-                                                        const CSVSourceTypePtr& csvSourceType);
+    TestHarness& attachWorkerWithCSVSourceToCoordinator(const CSVSourceTypePtr& csvSourceType);
 
     /**
      * @brief add worker and connect to parent with specific parent id

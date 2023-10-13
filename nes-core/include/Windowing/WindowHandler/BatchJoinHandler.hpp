@@ -20,13 +20,13 @@
 #include <State/StateVariable.hpp>
 #include <Util/Core.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
+#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowHandler/AbstractBatchJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join::Experimental {
 

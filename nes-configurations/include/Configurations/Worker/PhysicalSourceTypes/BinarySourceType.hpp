@@ -38,20 +38,20 @@ class BinarySourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    static BinarySourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a BinarySourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(Yaml::Node yamlConfig);
+    static BinarySourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief create a BinarySourceTypePtr object with default values
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create();
+    static BinarySourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
     ~BinarySourceType() = default;
 
@@ -75,17 +75,17 @@ class BinarySourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceType(std::map<std::string, std::string> sourceConfigMap);
+    explicit BinarySourceType(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceType(Yaml::Node yamlConfig);
+    explicit BinarySourceType(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with default values as set below
      */
-    BinarySourceType();
+    BinarySourceType(std::string logicalSourceName, std::string physicalSourceName);
 
     Configurations::StringConfigOption filePath;
 };

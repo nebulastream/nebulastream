@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>

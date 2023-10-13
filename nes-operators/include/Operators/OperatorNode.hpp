@@ -29,6 +29,12 @@ class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 using OperatorProperties = std::unordered_map<std::string, std::any>;
 
+/**
+ * @brief Returns the next free operator id
+ * @return operator id
+ */
+OperatorId getNextOperatorId();
+
 class OperatorNode : public Node {
   public:
     explicit OperatorNode(OperatorId id);

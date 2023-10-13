@@ -17,8 +17,6 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -26,15 +24,17 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -59,11 +59,11 @@
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/PythonUDFDescriptorBuilder.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>

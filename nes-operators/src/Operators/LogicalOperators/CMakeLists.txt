@@ -17,24 +17,22 @@ add_source_files(nes-operators
         ProjectionLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
         InferModelLogicalOperatorNode.cpp
-        MapUDFLogicalOperatorNode.cpp
-        FlatMapUDFLogicalOperatorNode.cpp
         UnionLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp
         JoinLogicalOperatorNode.cpp
         BatchJoinLogicalOperatorNode.cpp
-        WatermarkAssignerLogicalOperatorNode.cpp
         RenameSourceOperatorNode.cpp
         LogicalBinaryOperatorNode.cpp
         LogicalUnaryOperatorNode.cpp
         InferModelOperatorHandler.cpp
         OpenCLLogicalOperatorNode.cpp
         LimitLogicalOperatorNode.cpp
-        UDFLogicalOperator.cpp
+        LogicalBatchJoinDefinition.cpp
         )
 
 add_subdirectory(CEP)
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
-add_subdirectory(Windowing)
+add_subdirectory(Watermarks)
+add_subdirectory(Windows)

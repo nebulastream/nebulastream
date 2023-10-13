@@ -17,7 +17,7 @@
 
 using namespace std::string_literals;
 
-#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/Exceptions/UDFException.hpp>
 #include <Util/Logger/Logger.hpp>

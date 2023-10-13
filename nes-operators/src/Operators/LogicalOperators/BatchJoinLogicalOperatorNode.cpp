@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <utility>
 
 namespace NES::Experimental {

@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_
 
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
@@ -37,20 +37,21 @@ class SenseSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    static SenseSourceTypePtr
+    create(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @param yamlConfig inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create(Yaml::Node yamlConfig);
+    static SenseSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create();
+    static SenseSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
     ~SenseSourceType() = default;
 
@@ -74,17 +75,19 @@ class SenseSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceType(std::map<std::string, std::string> sourceConfigMap);
+    SenseSourceType(std::string logicalSourceName,
+                    std::string physicalSourceName,
+                    std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceType(Yaml::Node yamlConfig);
+    SenseSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with default values
      */
-    SenseSourceType();
+    SenseSourceType(std::string logicalSourceName, std::string physicalSourceName);
 
     Configurations::StringConfigOption udfs;
 };

@@ -30,7 +30,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
     workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
     workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
     workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
-    workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+    workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::CompilationStrategy::DEBUG;
     workerConfiguration->numWorkerThreads = numWorkerThreads;
     workerConfiguration->bufferSizeInBytes = DEFAULT_BUFFERSIZE;
     workerConfiguration->numberOfBuffersInGlobalBufferManager = numWorkerThreads * DEFAULT_NO_BUFFERS_IN_GLOBAL_BM_PER_THREAD;

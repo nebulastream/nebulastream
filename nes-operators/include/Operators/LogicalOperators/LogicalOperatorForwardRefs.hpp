@@ -17,7 +17,7 @@
 
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <memory>
 
 namespace NES::Windowing {
@@ -111,8 +111,8 @@ using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 class WatermarkAssignerLogicalOperatorNode;
 using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
 
-class CentralWindowOperator;
-using CentralWindowOperatorPtr = std::shared_ptr<CentralWindowOperator>;
+class NonKeyedWindowOperator;
+using CentralWindowOperatorPtr = std::shared_ptr<NonKeyedWindowOperator>;
 
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;

@@ -18,7 +18,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

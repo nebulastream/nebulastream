@@ -22,7 +22,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>

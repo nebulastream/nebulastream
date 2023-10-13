@@ -14,7 +14,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Windowing.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>

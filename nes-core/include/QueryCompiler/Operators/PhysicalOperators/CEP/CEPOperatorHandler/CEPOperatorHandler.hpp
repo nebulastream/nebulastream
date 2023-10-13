@@ -19,7 +19,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/CEPForwardRefs.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::CEP {
 /**

@@ -22,7 +22,7 @@
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceStaging.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {

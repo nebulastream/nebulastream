@@ -12,31 +12,30 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FlatMapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 
 namespace NES {
 
@@ -106,7 +105,7 @@ LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefin
 LogicalUnaryOperatorNodePtr
 LogicalOperatorFactory::createCentralWindowSpecializedOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                                                OperatorId id) {
-    return std::make_shared<CentralWindowOperator>(windowDefinition, id);
+    return std::make_shared<NonKeyedWindowOperator>(windowDefinition, id);
 }
 
 LogicalUnaryOperatorNodePtr

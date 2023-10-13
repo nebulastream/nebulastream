@@ -15,8 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_PHASES_MEMORYLAYOUTSELECTIONPHASE_HPP_
 
-#include <API/Schema.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 #include <memory>
 #include <vector>
 
@@ -49,12 +48,7 @@ class MemoryLayoutSelectionPhase {
     /**
      * @brief Represents a particular MemoryLayoutPolicy to select different strategies.
      */
-    enum class MemoryLayoutPolicy : uint8_t {
-        // Enforces a row layout for all operators within a query.
-        FORCE_ROW_LAYOUT,
-        // Enforces a columnar layout for all operators within a query.
-        FORCE_COLUMN_LAYOUT
-    };
+
 
     /**
      * @brief Method for creating a new MemoryLayoutSelectionPhase requires to pass the memory layout policy
@@ -80,9 +74,9 @@ class MemoryLayoutSelectionPhase {
     MemoryLayoutPolicy policy;
 };
 
-static const std::map<std::string, MemoryLayoutSelectionPhase::MemoryLayoutPolicy> stringToMemoryLayoutPolicy{
-    {"FORCE_ROW_LAYOUT", MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT},
-    {"FORCE_COLUMN_LAYOUT", MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}};
+static const std::map<std::string, MemoryLayoutPolicy> stringToMemoryLayoutPolicy{
+    {"FORCE_ROW_LAYOUT", MemoryLayoutPolicy::FORCE_ROW_LAYOUT},
+    {"FORCE_COLUMN_LAYOUT", MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}};
 
 }// namespace NES::Optimizer
 

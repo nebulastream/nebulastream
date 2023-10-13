@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>

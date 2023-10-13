@@ -18,7 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 namespace NES::QueryCompilation::GeneratableOperators {
 

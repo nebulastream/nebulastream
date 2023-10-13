@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
 #define NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
 
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>

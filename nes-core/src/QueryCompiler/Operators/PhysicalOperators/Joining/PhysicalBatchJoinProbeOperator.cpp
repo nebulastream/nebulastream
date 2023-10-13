@@ -27,7 +27,7 @@ namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(SchemaPtr inputSchema,
                                                            SchemaPtr outputSchema,
                                                            Join::Experimental::BatchJoinOperatorHandlerPtr joinOperatorHandler) {
-    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(joinOperatorHandler));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(joinOperatorHandler));
 }
 
 PhysicalOperatorPtr

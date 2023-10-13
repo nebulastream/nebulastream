@@ -18,10 +18,10 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Util/Core.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <chrono>
 #include <string>
+
 namespace NES {
 namespace Network {
 
@@ -37,7 +37,6 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @param nesPartition
      * @param waitTime
      * @param retryTimes
-     * @param uniqueNetworkSinkDescriptorId : unique ID of NetworkSinkDescriptor
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr create(NodeLocation nodeLocation,
@@ -45,8 +44,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
                                     FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                    uint64_t numberOfOrigins = 1,
-                                    uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
+                                    uint64_t numberOfOrigins = 1);
 
     /**
      * @brief returns the string representation of the network sink
@@ -109,14 +107,12 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
                                    FaultToleranceType faultToleranceType,
-                                   uint64_t numberOfOrigins,
-                                   uint64_t uniqueNetworkSinkDescriptorId);
+                                   uint64_t numberOfOrigins);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
-    uint64_t uniqueNetworkSinkDescriptorId;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;

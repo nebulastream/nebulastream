@@ -41,7 +41,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>

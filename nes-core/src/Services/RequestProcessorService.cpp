@@ -16,7 +16,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>

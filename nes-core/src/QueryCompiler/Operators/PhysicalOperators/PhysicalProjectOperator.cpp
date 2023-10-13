@@ -31,7 +31,7 @@ PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id,
 
 PhysicalOperatorPtr
 PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
-    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expressions));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expressions));
 }
 
 std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions() { return expressions; }

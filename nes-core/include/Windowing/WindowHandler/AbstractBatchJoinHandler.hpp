@@ -19,8 +19,8 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
+#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>

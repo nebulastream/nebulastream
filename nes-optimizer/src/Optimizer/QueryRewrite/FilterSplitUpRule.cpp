@@ -61,12 +61,12 @@ void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperat
     if (filterOperator->getPredicate()->instanceOf<AndExpressionNode>()) {
         //create filter that contains expression1 of the andExpression
         auto child1 = filterOperator->copy()->as<FilterLogicalOperatorNode>();
-        child1->setId(Util::getNextOperatorId());
+        child1->setId(getNextOperatorId());
         child1->setPredicate(filterOperator->getPredicate()->getChildren()[0]->as<ExpressionNode>());
 
         //create filter that contains expression2 of the andExpression
         auto child2 = filterOperator->copy()->as<FilterLogicalOperatorNode>();
-        child2->setId(Util::getNextOperatorId());
+        child2->setId(getNextOperatorId());
         child2->setPredicate(filterOperator->getPredicate()->getChildren()[1]->as<ExpressionNode>());
 
         // insert new filter with expression1 of the andExpression

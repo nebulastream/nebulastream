@@ -38,7 +38,7 @@ GeneratableKeyedTumblingWindowSink::create(SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                            std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return create(Util::getNextOperatorId(),
+    return create(getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   windowDefinition,

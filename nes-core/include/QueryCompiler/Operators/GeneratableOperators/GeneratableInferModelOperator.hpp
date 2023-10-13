@@ -16,7 +16,7 @@
 
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
+#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 
 namespace NES {
 namespace QueryCompilation {

@@ -23,7 +23,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -136,14 +136,14 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                                 + std::to_string(blockingParentId));
                         }
                         //Assign new operator id
-                        operatorNode->setId(Util::getNextOperatorId());
+                        operatorNode->setId(getNextOperatorId());
                         blockingOperator->addChild(operatorNode);
                     }
                     //Remove the property
                     operatorNode->removeProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
                 } else {
                     //Assign new operator id
-                    operatorNode->setId(Util::getNextOperatorId());
+                    operatorNode->setId(getNextOperatorId());
                 }
             }
         }

@@ -20,8 +20,8 @@
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Util/Core.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
+#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
@@ -30,7 +30,7 @@
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
 template<class KeyType, class ValueTypeLeft, class ValueTypeRight>

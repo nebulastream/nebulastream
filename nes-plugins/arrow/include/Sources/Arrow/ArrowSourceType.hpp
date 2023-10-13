@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_ARROWSOURCETYPE_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_ARROWSOURCETYPE_HPP_
 
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
@@ -39,20 +39,21 @@ class ArrowSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return ArrowSourceTypePtr
      */
-    static ArrowSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    static ArrowSourceTypePtr
+    create(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a ArrowSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return ArrowSourceTypePtr
      */
-    static ArrowSourceTypePtr create(Yaml::Node yamlConfig);
+    static ArrowSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a default ArrowSourceTypePtr object
      * @return ArrowSourceTypePtr
      */
-    static ArrowSourceTypePtr create();
+    static ArrowSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
     /**
      * @brief creates a string representation of the source
@@ -129,17 +130,19 @@ class ArrowSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
      */
-    explicit ArrowSourceType(std::map<std::string, std::string> sourceConfigMap);
+    explicit ArrowSourceType(std::string logicalSourceName,
+                             std::string physicalSourceName,
+                             std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
      */
-    explicit ArrowSourceType(Yaml::Node yamlConfig);
+    explicit ArrowSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Arrow source config object initialized with default values
      */
-    ArrowSourceType();
+    ArrowSourceType(std::string logicalSourceName, std::string physicalSourceName);
 
     Configurations::StringConfigOption filePath;
     Configurations::IntConfigOption numberOfBuffersToProduce;

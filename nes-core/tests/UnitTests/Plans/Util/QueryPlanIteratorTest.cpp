@@ -31,7 +31,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
 #include <iostream>

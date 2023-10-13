@@ -19,7 +19,7 @@
 
 using namespace std::string_literals;
 
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES::Catalogs::UDF {

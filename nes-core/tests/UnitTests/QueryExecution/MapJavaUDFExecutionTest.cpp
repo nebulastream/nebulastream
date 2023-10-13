@@ -15,7 +15,7 @@
 #ifdef ENABLE_JNI
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Util/JNI/JNIUtils.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>

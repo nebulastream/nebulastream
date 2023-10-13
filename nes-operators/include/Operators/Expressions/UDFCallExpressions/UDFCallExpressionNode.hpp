@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFCALLEXPRESSIONNODE_HPP_
 
-#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>

@@ -33,7 +33,7 @@ std::shared_ptr<PhysicalKeyedGlobalSliceStoreAppendOperator> PhysicalKeyedGlobal
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
-    return std::make_shared<PhysicalKeyedGlobalSliceStoreAppendOperator>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalKeyedGlobalSliceStoreAppendOperator>(getNextOperatorId(),
                                                                          inputSchema,
                                                                          outputSchema,
                                                                          keyedEventTimeWindowHandler);

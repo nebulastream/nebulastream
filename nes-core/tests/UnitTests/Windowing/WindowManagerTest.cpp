@@ -28,7 +28,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
@@ -54,7 +54,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 using namespace NES::Windowing;
 namespace NES {
