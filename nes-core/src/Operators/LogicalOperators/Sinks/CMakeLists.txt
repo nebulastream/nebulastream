@@ -22,6 +22,5 @@ add_source_files(nes-core
         OPCSinkDescriptor.cpp
         MQTTSinkDescriptor.cpp
         NullOutputSinkDescriptor.cpp
-        MaterializedViewSinkDescriptor.cpp
         SinkDescriptor.cpp
         )

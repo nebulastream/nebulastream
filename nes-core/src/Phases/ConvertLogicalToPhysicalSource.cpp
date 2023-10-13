@@ -21,7 +21,6 @@
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
@@ -31,7 +30,6 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -283,27 +281,6 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   lambdaSourceDescriptor->getTaskQueueId(),
                                   sourceDescriptor->getPhysicalSourceName(),
                                   successors);
-    } else if (sourceDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
-        auto materializedViewSourceDescriptor =
-            sourceDescriptor->as<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
-        auto viewId = materializedViewSourceDescriptor->getViewId();
-        NES::Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
-        if (nodeEngine->getMaterializedViewManager()->containsView(viewId)) {
-            view = nodeEngine->getMaterializedViewManager()->getView(viewId);
-        } else {
-            view = nodeEngine->getMaterializedViewManager()->createView(NES::Experimental::MaterializedView::ViewType::TUPLE_VIEW,
-                                                                        viewId);
-        }
-        return NES::Experimental::MaterializedView::createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
-                                                                                 bufferManager,
-                                                                                 queryManager,
-                                                                                 operatorId,
-                                                                                 originId,
-                                                                                 numSourceLocalBuffers,
-                                                                                 sourceDescriptor->getPhysicalSourceName(),
-                                                                                 successors,
-                                                                                 std::move(view));
     } else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
         auto tcpSourceDescriptor = sourceDescriptor->as<TCPSourceDescriptor>();

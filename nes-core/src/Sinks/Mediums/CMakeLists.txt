@@ -17,7 +17,6 @@ add_source_files(nes-core
         SinkMedium.cpp
         PrintSink.cpp
         NullOutputSink.cpp
-        MaterializedViewSink.cpp
         MonitoringSink.cpp
         KafkaSink.cpp
 )

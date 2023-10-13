@@ -29,7 +29,6 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/HardwareManager.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/OpenCLManager.hpp>
@@ -785,7 +784,6 @@ void assertKiller() {
                          std::move(compiler),
                          std::make_shared<NES::Runtime::StateManager>(nodeEngineId),
                          std::weak_ptr<NesWorker>(),
-                         std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
                          std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
@@ -832,7 +830,6 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          std::move(compiler),
                          std::make_shared<NES::Runtime::StateManager>(nodeEngineId),
                          std::weak_ptr<NesWorker>(),
-                         std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
                          std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
@@ -908,7 +905,6 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          std::move(compiler),
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::weak_ptr<NesWorker>(),
-                         std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
                          std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,

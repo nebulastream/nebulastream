@@ -18,7 +18,6 @@
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
@@ -32,7 +31,6 @@
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
@@ -379,12 +377,6 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   lambdaSourceType->getTaskQueueId(),
                                                   logicalSourceName,
                                                   physicalSourceName);
-        }
-        case SourceType::MATERIALIZEDVIEW_SOURCE: {
-            auto materializeView =
-                physicalSourceType->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceType>();
-            return NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(schema,
-                                                                                                 materializeView->getId());
         }
         case SourceType::TCP_SOURCE: {
             auto tcpSourceType = physicalSourceType->as<TCPSourceType>();

@@ -45,10 +45,6 @@ add_nes_integration_test(and-operator-test "AndOperatorTest.cpp")
 add_nes_integration_test(seq-operator-test "SEQOperatorTest.cpp")
 
 
-### Materialized View Tests ###
-add_nes_unit_test(materialized-view-tests "MaterializedViewTest.cpp")
-
-
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "MultiWorkerTest.cpp")

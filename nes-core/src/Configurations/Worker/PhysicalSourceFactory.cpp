@@ -114,7 +114,6 @@ PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
         case SourceType::BINARY_SOURCE: return BinarySourceType::create(commandLineParams);
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(commandLineParams);
         case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(commandLineParams);
-        case SourceType::MATERIALIZEDVIEW_SOURCE: return DefaultSourceType::create(commandLineParams);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }

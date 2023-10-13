@@ -30,7 +30,6 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -48,7 +47,6 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
                        std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
-                       NES::Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
                        OpenCLManagerPtr&& openCLManager,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
@@ -58,8 +56,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
     : nodeId(INVALID_TOPOLOGY_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)),
-      materializedViewManager(std::move(materializedViewManager)), openCLManager(std::move(openCLManager)),
-      nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
+      openCLManager(std::move(openCLManager)), nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
 
@@ -398,10 +395,6 @@ Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManag
 AbstractQueryStatusListenerPtr NodeEngine::getQueryStatusListener() { return nesWorker; }
 
 HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManager; }
-
-NES::Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const {
-    return materializedViewManager;
-}
 
 Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);

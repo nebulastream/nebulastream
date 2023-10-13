@@ -35,7 +35,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/HardwareManager.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -274,7 +273,6 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::move(queryCompiler),
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::make_shared<DummyQueryListener>(),
-                         std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
                          std::make_shared<NES::Runtime::OpenCLManager>(),
                          0,
                          64,
@@ -451,7 +449,6 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
                          std::move(queryCompiler),
                          std::make_shared<NES::Runtime::StateManager>(0),
                          std::make_shared<DummyQueryListener>(),
-                         std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
                          std::make_shared<NES::Runtime::OpenCLManager>(),
                          0,
                          64,

@@ -24,7 +24,6 @@
 #include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/TCPSource.hpp>
 #include <chrono>
@@ -377,32 +376,6 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
                                      size_t numSourceLocalBuffers,
                                      const std::string& physicalSourceName,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
-
-namespace Experimental::MaterializedView {
-
-/**
- * @brief function to create a materialized view source
- * @param schema the schema of the source
- * @param bufferManager a pointer to the buffer manager
- * @param queryManager a pointer to the query manager
- * @param operatorId current operator id
- * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
- * @param numSourceLocalBuffers the number of buffers allocated to a source
- * @param physicalSourceName the name and unique identifier of a physical source
- * @param successors the subsequent operators in the pipeline to which the data is pushed
- * @param view a pointer to a materialized view
- * @return a data source pointer
- */
-DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
-                                           const Runtime::BufferManagerPtr bufferManager,
-                                           const Runtime::QueryManagerPtr queryManager,
-                                           const OperatorId operatorId,
-                                           OriginId originId,
-                                           const size_t numSourceLocalBuffers,
-                                           const std::string& physicalSourceName,
-                                           const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                                           const NES::Experimental::MaterializedView::MaterializedViewPtr view);
-}// namespace Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

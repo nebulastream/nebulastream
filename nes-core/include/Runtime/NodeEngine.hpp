@@ -32,10 +32,6 @@
 #include <vector>
 
 namespace NES {
-namespace Experimental::MaterializedView {
-class MaterializedViewManager;
-using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
-}// namespace Experimental::MaterializedView
 
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
@@ -255,12 +251,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     Network::PartitionManagerPtr getPartitionManager();
 
-    /**
-     * @brief getter of materialized view manager
-     * @return materialized view manager
-     */
-    NES::Experimental::MaterializedView::MaterializedViewManagerPtr getMaterializedViewManager() const;
-
     ///// Network Callback //////
 
     /**
@@ -360,7 +350,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
                         std::weak_ptr<AbstractQueryStatusListener>&&,
-                        NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
                         OpenCLManagerPtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
@@ -383,7 +372,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     StateManagerPtr stateManager;
     AbstractQueryStatusListenerPtr nesWorker;
     Network::NetworkManagerPtr networkManager;
-    NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     OpenCLManagerPtr openCLManager;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;

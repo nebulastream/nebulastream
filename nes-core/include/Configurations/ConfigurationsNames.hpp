@@ -143,7 +143,6 @@ const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
 const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
 const std::string OPC_SOURCE_CONFIG = "OPCSource";
 const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
-const std::string MATERIALIZEDVIEW_SOURCE_CONFIG = "MaterializedViewSource";
 const std::string TCP_SOURCE_CONFIG = "TCPSource";
 const std::string ARROW_SOURCE_CONFIG = "ArrowSource";
 
@@ -185,7 +184,6 @@ const std::string PASSWORD_CONFIG = "password";
 
 const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
-const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 const std::string TENSORFLOW_SUPPORTED_CONFIG = "tensorflowSupported";
 
 //TCPSourceType configs

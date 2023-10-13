@@ -21,7 +21,6 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/LambdaSource.hpp>
-#include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Sources/SenseSource.hpp>
@@ -355,28 +354,6 @@ DataSourcePtr createMonitoringSource(Monitoring::MetricCollectorPtr metricCollec
                                               successors);
 }
 
-namespace Experimental::MaterializedView {
-DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
-                                           const Runtime::BufferManagerPtr bufferManager,
-                                           const Runtime::QueryManagerPtr queryManager,
-                                           const OperatorId operatorId,
-                                           OriginId originId,
-                                           const size_t numSourceLocalBuffers,
-                                           const std::string& physicalSourceName,
-                                           const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                                           const Experimental::MaterializedView::MaterializedViewPtr view) {
-    return std::make_shared<Experimental::MaterializedView::MaterializedViewSource>(schema,
-                                                                                    bufferManager,
-                                                                                    queryManager,
-                                                                                    operatorId,
-                                                                                    originId,
-                                                                                    numSourceLocalBuffers,
-                                                                                    GatheringMode::INTERVAL_MODE,
-                                                                                    physicalSourceName,
-                                                                                    successors,
-                                                                                    view);
-}
-}// namespace Experimental::MaterializedView
 #ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       Runtime::BufferManagerPtr bufferManager,

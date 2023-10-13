@@ -16,7 +16,6 @@
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -195,19 +194,6 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getFaultToleranceType(),
                                  networkSinkDescriptor->getNumberOfOrigins(),
                                  networkSinkDescriptor->getRetryTimes());
-    } else if (sinkDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating materialized view sink");
-        auto materializedViewSinkDescriptor =
-            sinkDescriptor->as<NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
-        return NES::Experimental::MaterializedView::createMaterializedViewSink(
-            schema,
-            nodeEngine,
-            numOfProducers,
-            querySubPlan->getQueryId(),
-            querySubPlan->getQuerySubPlanId(),
-            materializedViewSinkDescriptor->getViewId(),
-            materializedViewSinkDescriptor->getFaultToleranceType(),
-            materializedViewSinkDescriptor->getNumberOfOrigins());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

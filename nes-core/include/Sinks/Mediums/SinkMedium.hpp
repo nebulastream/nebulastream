@@ -32,7 +32,6 @@ enum class SinkMediumTypes : uint8_t {
     OPC_SINK,
     MQTT_SINK,
     NULL_SINK,
-    MATERIALIZED_VIEW_SINK,
     MONITORING_SINK
 };
 
