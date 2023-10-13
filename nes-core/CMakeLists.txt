@@ -25,11 +25,6 @@ target_link_libraries(nes PUBLIC nes-compiler nes-runtime nes-optimizer nes-clie
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes REUSE_FROM nes-common)
 endif ()
-if (NES_USE_TF)
-    message(STATUS "Building with tensorflowlite")
-    find_package(tensorflow-lite-c REQUIRED)
-    target_link_libraries(nes PUBLIC tensorflowlite_c::tensorflowlite_c)
-endif ()
 
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach (dir ${LIBA_INCLUDES})
