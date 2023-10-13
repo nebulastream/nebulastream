@@ -23,7 +23,7 @@ namespace NES {
 	namespace Experimental::Statistics {
 
 		class StatCollectorBuildParamObj;
-		using statCollectorBuildParamObjPtr = std::shared_ptr<StatCollectorBuildParamObj>;
+		using StatCollectorBuildParamObjPtr = std::shared_ptr<StatCollectorBuildParamObj>;
 
 		class StatCollectorProbeParamObj;
 		using StatCollectorProbeParamObjPtr = std::shared_ptr<StatCollectorProbeParamObj>;
@@ -57,10 +57,10 @@ namespace NES {
 			 * @return An abstract statCollectorProbeParamObjPtr to a CountMinProbeParamObj
 			 */
 			StatCollectorProbeParamObjPtr createCountMinProbeParamObj(std::string& logicalSourceName,
-																													 std::string& physicalSourceName,
-																													 std::string& fieldName,
-																													 std::string& statCollectorType,
-																													 std::string& expression);
+																																std::string& physicalSourceName,
+																																std::string& fieldName,
+																																std::string& statCollectorType,
+																																std::string& expression);
 
 			/**
 			 * @brief Creates a CountMinDeleteParamObj and returns a abstract statCollectorDeleteParamObjPtr
@@ -91,10 +91,10 @@ namespace NES {
 			 * @return An abstract statCollectorProbeParamObjPtr to a HyperLogLogProbeParamObj
 			 */
 			StatCollectorProbeParamObjPtr createHyperLogLogProbeParamObj(std::string& logicalSourceName,
-			                                                        std::string& physicalSourceName,
-			                                                        std::string& fieldName,
-			                                                        std::string& statCollectorType,
-																															std::string& expression);
+																																	 std::string& physicalSourceName,
+																																	 std::string& fieldName,
+																																	 std::string& statCollectorType,
+																																	 std::string& expression);
 			/**
 			 * @brief Creates a HyperLogLogDeleteParamObj and returns a abstract statCollectorDeleteParamObjPtr
 			 * @param logicalSourceName the logicalSourceName on which the HyperLogLog sketch, that is to be deleted was generated
@@ -124,10 +124,10 @@ namespace NES {
 			 * @return An abstract statCollectorProbeParamObjPtr to a DDSketchProbeParamObj
 			 */
 			StatCollectorProbeParamObjPtr createDDSketchProbeParamObj(std::string& logicalSourceName,
-			                                                     std::string& physicalSourceName,
-			                                                     std::string& fieldName,
-			                                                     std::string& statCollectorType,
-			                                                     std::string& expression);
+																																std::string& physicalSourceName,
+																																std::string& fieldName,
+																																std::string& statCollectorType,
+																																std::string& expression);
 
 			/**
 			 * @brief Creates a DDSketchDeleteParamObj and returns a abstract statCollectorDeleteParamObjPtr
@@ -158,10 +158,10 @@ namespace NES {
 			 * @return An abstract statCollectorProbeParamObjPtr to a ReservoirSampleProbeParamObj
 			 */
 			StatCollectorProbeParamObjPtr createReservoirSampleProbeParamObj(std::string& logicalSourceName,
-			                                                            std::string& physicalSourceName,
-																																	std::string& fieldName,
-			                                                            std::string& statCollectorType,
-			                                                            std::string& expression);
+																																			 std::string& physicalSourceName,
+																																			 std::string& fieldName,
+																																			 std::string& statCollectorType,
+																																			 std::string& expression);
 
 			/**
 			 * @brief Creates a ReservoirSampleDeleteParamObj and returns a abstract statCollectorDeleteParamObjPtr

@@ -37,7 +37,7 @@ namespace NES {
 														 const double error = Configurations::CoordinatorConfiguration::createDefault()->synopsisError,
 														 const time_t windowSize = Configurations::CoordinatorConfiguration::createDefault()->synopsisWindowSize)
 					: SketchDeleteParamObj(logicalSourceName, physicalSourceName, fieldName, statCollectorType,
-					                      1, Configurations::CoordinatorConfiguration::createDefault()->synopsisWindowSize, windowSize),
+					                      1, Configurations::CoordinatorConfiguration::createDefault()->synopsisWidth, windowSize),
 					  error(error), gamma((1 + error) / (1 - error)) {}
 
 			/**
