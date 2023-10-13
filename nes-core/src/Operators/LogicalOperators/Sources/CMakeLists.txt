@@ -29,6 +29,5 @@ add_source_files(nes-core
         MQTTSourceDescriptor.cpp
         LambdaSourceDescriptor.cpp
         BenchmarkSourceDescriptor.cpp
-        MaterializedViewSourceDescriptor.cpp
         TCPSourceDescriptor.cpp
 )

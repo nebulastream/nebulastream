@@ -13,14 +13,12 @@
 */
 
 #include <Network/NetworkSink.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
-#include <Sinks/Mediums/MaterializedViewSink.hpp>
 #include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
@@ -259,35 +257,6 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                             numberOfOrigins);
 }
 
-namespace Experimental::MaterializedView {
-
-DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
-                                       Runtime::NodeEnginePtr const& nodeEngine,
-                                       uint32_t activeProducers,
-                                       QueryId queryId,
-                                       QuerySubPlanId parentPlanId,
-                                       uint64_t viewId,
-                                       FaultToleranceType faultToleranceType,
-                                       uint64_t numberOfOrigins) {
-    SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    NES::Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
-    if (nodeEngine->getMaterializedViewManager()->containsView(viewId)) {
-        view = nodeEngine->getMaterializedViewManager()->getView(viewId);
-    } else {
-        view = nodeEngine->getMaterializedViewManager()->createView(NES::Experimental::MaterializedView::ViewType::TUPLE_VIEW,
-                                                                    viewId);
-    }
-    return std::make_shared<NES::Experimental::MaterializedView::MaterializedViewSink>(std::move(view),
-                                                                                       format,
-                                                                                       nodeEngine,
-                                                                                       activeProducers,
-                                                                                       queryId,
-                                                                                       parentPlanId,
-                                                                                       faultToleranceType,
-                                                                                       numberOfOrigins);
-}
-
-}// namespace Experimental::MaterializedView
 #ifdef ENABLE_KAFKA_BUILD
 DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
                                QueryId queryId,

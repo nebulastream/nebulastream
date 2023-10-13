@@ -24,7 +24,6 @@
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/OpenCLManager.hpp>
@@ -75,12 +74,6 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
 
 NodeEngineBuilder& NodeEngineBuilder::setStateManager(StateManagerPtr stateManager) {
     this->stateManager = stateManager;
-    return *this;
-}
-
-NodeEngineBuilder& NodeEngineBuilder::setMaterializedViewManager(
-    NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager) {
-    this->materializedViewManager = materializedViewManager;
     return *this;
 }
 
@@ -177,9 +170,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 }
             }
         }
-        auto materializedViewManager = (!this->materializedViewManager)
-            ? std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>()
-            : this->materializedViewManager;
         if (!partitionManager) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating PartitionManager");
             throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating PartitionManager",
@@ -193,11 +183,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         if (!stateManager) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating StateManager");
             throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating StateManager",
-                                               NES::collectAndPrintStacktrace());
-        }
-        if (!materializedViewManager) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating MaterializedViewManager");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : error while creating MaterializedViewManager",
                                                NES::collectAndPrintStacktrace());
         }
 
@@ -256,7 +241,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(compiler),
             std::move(stateManager),
             std::move(nesWorker),
-            std::move(materializedViewManager),
             std::move(openCLManager),
             nodeEngineId,
             workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),

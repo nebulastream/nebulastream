@@ -28,7 +28,6 @@
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -91,6 +90,10 @@
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
+
+#include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/FaultToleranceType.hpp>
 
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD
@@ -1647,18 +1650,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(fileSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
-    } else if (sinkDescriptor.instanceOf<const Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
-        NES_TRACE("OperatorSerializationUtil:: serialized MaterializedViewSinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor");
-        auto materializedViewSinkDescriptor =
-            sinkDescriptor.as<const Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
-        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor();
-        serializedSinkDescriptor.set_viewid(materializedViewSinkDescriptor->getViewId());
-        sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(materializedViewSinkDescriptor->getFaultToleranceType()));
-        sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else {
-
         NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - {}", sinkDescriptor.toString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
@@ -1762,15 +1754,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
                                           serializedSinkDescriptor.addtimestamp(),
                                           FaultToleranceType(deserializedFaultTolerance),
                                           deserializedNumberOfOrigins);
-    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor>()) {
-        // de-serialize materialized view sink descriptor
-        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor();
-        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MaterializedViewSinkDescriptor");
-        return Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(
-            serializedSinkDescriptor.viewid(),
-            FaultToleranceType(deserializedFaultTolerance),
-            deserializedNumberOfOrigins);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type {}", sinkDetails.DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");

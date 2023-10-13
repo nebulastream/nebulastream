@@ -262,28 +262,6 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                  uint64_t numberOfOrigins = 1);
 
-namespace Experimental::MaterializedView {
-
-/**
- * @brief create materialized view sink
- * @param schema
- * @param nodeEngine
- * @param parentPlanId
- * @param viewId
- * @param faultToleranceType: fault tolerance type of a query
- * @param numberOfOrigins: number of origins of a given query
- * @return a data sink pointer
- */
-DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
-                                       const Runtime::NodeEnginePtr& nodeEngine,
-                                       uint32_t numOfProducers,
-                                       QueryId queryId,
-                                       QuerySubPlanId parentPlanId,
-                                       uint64_t viewId,
-                                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                       uint64_t numberOfOrigins = 1);
-
-}// namespace Experimental::MaterializedView
 #ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief create kafka sink

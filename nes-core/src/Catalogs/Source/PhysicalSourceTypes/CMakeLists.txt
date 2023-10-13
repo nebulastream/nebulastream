@@ -24,7 +24,6 @@ add_source_files(nes-core
         MQTTSourceType.cpp
         OPCSourceType.cpp
         SenseSourceType.cpp
-        MaterializedViewSourceType.cpp
         StaticDataSourceType.cpp
         TCPSourceType.cpp
 )

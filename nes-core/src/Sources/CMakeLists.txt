@@ -25,7 +25,6 @@ add_source_files(nes-core
         StaticDataSource.cpp
         LambdaSource.cpp
         BenchmarkSource.cpp
-        MaterializedViewSource.cpp
         TCPSource.cpp
         KafkaSource.cpp
 )

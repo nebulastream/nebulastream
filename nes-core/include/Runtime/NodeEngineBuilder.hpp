@@ -28,10 +28,6 @@ using JITCompilerPtr = std::shared_ptr<JITCompiler>;
 namespace Configurations {
 class QueryCompilerConfiguration;
 }
-namespace Experimental::MaterializedView {
-class MaterializedViewManager;
-using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
-}// namespace Experimental::MaterializedView
 
 }// namespace NES
 namespace NES::Runtime {
@@ -99,14 +95,6 @@ class NodeEngineBuilder {
     NodeEngineBuilder& setStateManager(StateManagerPtr stateManager);
 
     /**
-     * setter used to pass a materialized view manager to NodeEngineBuilder. Optional
-     * @param materializedViewManager
-     * @return NodeEngineBuilder&
-     */
-    NodeEngineBuilder&
-    setMaterializedViewManager(NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager);
-
-    /**
      * setter used to pass a language compiler to NodeEngineBuilder. Optional
      * @param languageCompiler
      * @return NodeEngineBuilder&
@@ -148,7 +136,6 @@ class NodeEngineBuilder {
     std::vector<BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;
     StateManagerPtr stateManager;
-    NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::shared_ptr<Compiler::LanguageCompiler> languageCompiler;
     Compiler::JITCompilerPtr jitCompiler;
     QueryCompilation::Phases::PhaseFactoryPtr phaseFactory;

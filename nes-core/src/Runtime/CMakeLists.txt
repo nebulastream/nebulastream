@@ -24,7 +24,6 @@ add_source_files(nes-core
         Task.cpp
         QueryStatistics.cpp
         NodeEngineBuilder.cpp
-        MaterializedViewManager.cpp
         )
 
 add_subdirectory(Profiler)
