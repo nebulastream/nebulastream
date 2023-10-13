@@ -28,7 +28,6 @@ cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies
 
 #toggle import and usage of s2 library
 option(NES_USE_S2 "Toggle use of s2 library" OFF)
-option(NES_USE_TF "Toggle tensorflow library" OFF)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
