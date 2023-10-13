@@ -58,7 +58,7 @@ class NonKeyedSlidingWindowTests : public Testing::BaseIntegrationTest {
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
         workerConfiguration->queryCompiler.compilationStrategy =
-            QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+            QueryCompilation::CompilationStrategy::DEBUG;
     }
 };
 

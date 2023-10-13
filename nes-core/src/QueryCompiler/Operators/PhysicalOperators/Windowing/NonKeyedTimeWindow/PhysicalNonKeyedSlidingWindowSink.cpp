@@ -32,7 +32,7 @@ std::shared_ptr<PhysicalNonKeyedSlidingWindowSink> PhysicalNonKeyedSlidingWindow
     SchemaPtr outputSchema,
     Windowing::Experimental::NonKeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler,
     Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalNonKeyedSlidingWindowSink>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalNonKeyedSlidingWindowSink>(getNextOperatorId(),
                                                                inputSchema,
                                                                outputSchema,
                                                                keyedEventTimeWindowHandler,

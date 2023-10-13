@@ -19,7 +19,7 @@ PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const SchemaPtr& input
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
 
 PhysicalOperatorPtr PhysicalEmitOperator::create(SchemaPtr inputSchema) {
-    return create(Util::getNextOperatorId(), std::move(inputSchema));
+    return create(getNextOperatorId(), std::move(inputSchema));
 }
 PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, const SchemaPtr& inputSchema) {
     return std::make_shared<PhysicalEmitOperator>(id, inputSchema);

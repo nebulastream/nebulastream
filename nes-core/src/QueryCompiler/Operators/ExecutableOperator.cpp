@@ -26,7 +26,7 @@ ExecutableOperator::ExecutableOperator(OperatorId id,
 OperatorNodePtr ExecutableOperator::create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                            std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
     return std::make_shared<ExecutableOperator>(
-        ExecutableOperator(Util::getNextOperatorId(), std::move(executablePipelineStage), std::move(operatorHandlers)));
+        ExecutableOperator(getNextOperatorId(), std::move(executablePipelineStage), std::move(operatorHandlers)));
 }
 
 Runtime::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage() {

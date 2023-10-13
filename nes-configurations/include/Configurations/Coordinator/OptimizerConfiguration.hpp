@@ -16,8 +16,8 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
-#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
-#include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Configurations/Enums/QueryMergerRule.hpp>
+#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -79,9 +79,9 @@ class OptimizerConfiguration : public BaseConfiguration {
      * FORCE_ROW_LAYOUT -> Enforces a row layout between all operators.
      * FORCE_COLUMN_LAYOUT -> Enforces a column layout between all operators.
      */
-    EnumOption<Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy> memoryLayoutPolicy = {
+    EnumOption<Optimizer::MemoryLayoutPolicy> memoryLayoutPolicy = {
         MEMORY_LAYOUT_POLICY_CONFIG,
-        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT,
+        Optimizer::MemoryLayoutPolicy::FORCE_ROW_LAYOUT,
         "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]"};
 
     /**

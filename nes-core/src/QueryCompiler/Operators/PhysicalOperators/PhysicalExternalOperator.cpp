@@ -28,7 +28,7 @@ PhysicalOperatorPtr
 PhysicalExternalOperator::create(const SchemaPtr& inputSchema,
                                  const SchemaPtr& outputSchema,
                                  const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, executablePipelineStage);
+    return create(getNextOperatorId(), inputSchema, outputSchema, executablePipelineStage);
 }
 PhysicalOperatorPtr
 PhysicalExternalOperator::create(OperatorId id,

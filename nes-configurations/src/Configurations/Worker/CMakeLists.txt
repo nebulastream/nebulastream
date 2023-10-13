@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-configurations
-        WorkerConfiguration.cpp
         PhysicalSourceFactory.cpp
         GeoLocationFactory.cpp
 )

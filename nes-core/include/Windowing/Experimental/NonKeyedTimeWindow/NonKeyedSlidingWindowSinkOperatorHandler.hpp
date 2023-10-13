@@ -17,7 +17,7 @@
 
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Experimental {
 class HashMapFactory;

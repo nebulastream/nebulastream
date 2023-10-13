@@ -18,8 +18,8 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <memory>
 #include <string>
 #include <vector>

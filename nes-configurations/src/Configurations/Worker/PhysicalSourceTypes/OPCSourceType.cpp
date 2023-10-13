@@ -19,17 +19,26 @@
 
 namespace NES {
 
-OPCSourceTypePtr OPCSourceType::create(Yaml::Node yamlConfig) {
-    return std::make_shared<OPCSourceType>(OPCSourceType(std::move(yamlConfig)));
+OPCSourceTypePtr OPCSourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+    return std::make_shared<OPCSourceType>(
+        OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(yamlConfig)));
 }
 
-OPCSourceTypePtr OPCSourceType::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<OPCSourceType>(OPCSourceType(std::move(sourceConfigMap)));
+OPCSourceTypePtr OPCSourceType::create(std::string logicalSourceName,
+                                       std::string physicalSourceName,
+                                       std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<OPCSourceType>(
+        OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
 }
 
-OPCSourceTypePtr OPCSourceType::create() { return std::make_shared<OPCSourceType>(OPCSourceType()); }
+OPCSourceTypePtr OPCSourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
+    return std::make_shared<OPCSourceType>(OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+}
 
-OPCSourceType::OPCSourceType(std::map<std::string, std::string> sourceConfigMap) : OPCSourceType() {
+OPCSourceType::OPCSourceType(std::string logicalSourceName,
+                             std::string physicalSourceName,
+                             std::map<std::string, std::string> sourceConfigMap)
+    : OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
     NES_INFO("OPCSourceType: Init default OPC source config object with values from command line args.");
     auto enumNameString = std::string(magic_enum::enum_name(SourceType::OPC_SOURCE));
     if (sourceConfigMap.find(enumNameString) != sourceConfigMap.end()) {
@@ -50,7 +59,8 @@ OPCSourceType::OPCSourceType(std::map<std::string, std::string> sourceConfigMap)
     }
 }
 
-OPCSourceType::OPCSourceType(Yaml::Node yamlConfig) : OPCSourceType() {
+OPCSourceType::OPCSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig)
+    : OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
     NES_INFO("OPCSourceType: Init default OPC source config object with values from YAML file.");
     if (!yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>() != "\n") {
@@ -74,8 +84,8 @@ OPCSourceType::OPCSourceType(Yaml::Node yamlConfig) : OPCSourceType() {
     }
 }
 
-OPCSourceType::OPCSourceType()
-    : PhysicalSourceType(SourceType::OPC_SOURCE),
+OPCSourceType::OPCSourceType(std::string logicalSourceName, std::string physicalSourceName)
+    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::OPC_SOURCE),
       namespaceIndex(Configurations::ConfigurationOption<uint32_t>::create(Configurations::NAME_SPACE_INDEX_CONFIG,
                                                                            1,
                                                                            "namespaceIndex for node, needed for: OPCSource")),

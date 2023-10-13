@@ -38,20 +38,20 @@ class MQTTSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    static MQTTSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create an MQTTSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr create(Yaml::Node yamlConfig);
+    static MQTTSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief create an MQTTSourceTypePtr object with default values
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr create();
+    static MQTTSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
     std::string toString() override;
 
@@ -150,18 +150,18 @@ class MQTTSourceType : public PhysicalSourceType {
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
      * @param sourceConfigMap inputted config options
      */
-    explicit MQTTSourceType(std::map<std::string, std::string> sourceConfigMap);
+    explicit MQTTSourceType(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from yamlConfig
      * @param yamlConfig inputted config options
      */
-    explicit MQTTSourceType(Yaml::Node yamlConfig);
+    explicit MQTTSourceType(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with default values as set below
      */
-    MQTTSourceType();
+    MQTTSourceType(std::string logicalSourceName, std::string physicalSourceName);
 
     Configurations::StringConfigOption url;
     Configurations::StringConfigOption clientId;

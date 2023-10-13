@@ -19,24 +19,30 @@
 
 namespace NES {
 
-LambdaSourceType::LambdaSourceType(std::function<void(NES::Runtime::TupleBuffer&, uint64_t)>&& generationFunction,
+LambdaSourceType::LambdaSourceType(std::string logicalSourceName,
+                                   std::string physicalSourceName,
+                                   std::function<void(NES::Runtime::TupleBuffer&, uint64_t)>&& generationFunction,
                                    uint64_t numBuffersToProduce,
                                    uint64_t gatheringValue,
                                    GatheringMode gatheringMode,
                                    uint64_t sourceAffinity,
                                    uint64_t taskQueueId)
-    : PhysicalSourceType(SourceType::LAMBDA_SOURCE), generationFunction(std::move(generationFunction)),
-      numBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(std::move(gatheringMode)),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
+    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::LAMBDA_SOURCE),
+      generationFunction(std::move(generationFunction)), numBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
+      gatheringMode(std::move(gatheringMode)), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
 LambdaSourceTypePtr LambdaSourceType::create(
+    std::string logicalSourceName,
+    std::string physicalSourceName,
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId) {
-    return std::make_shared<LambdaSourceType>(LambdaSourceType(std::move(generationFunction),
+    return std::make_shared<LambdaSourceType>(LambdaSourceType(std::move(logicalSourceName),
+                                                               std::move(physicalSourceName),
+                                                               std::move(generationFunction),
                                                                numBuffersToProcess,
                                                                gatheringValue,
                                                                gatheringMode,

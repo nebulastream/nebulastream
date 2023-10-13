@@ -20,7 +20,7 @@ PhysicalOperatorPtr PhysicalJoinSinkOperator::create(const SchemaPtr& leftInputS
                                                      const SchemaPtr& rightInputSchema,
                                                      const SchemaPtr& outputSchema,
                                                      const Join::JoinOperatorHandlerPtr& joinOperatorHandler) {
-    return create(Util::getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
+    return create(getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
 
 PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id,

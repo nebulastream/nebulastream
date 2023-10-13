@@ -40,20 +40,20 @@ class CSVSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    static CSVSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a CSVSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(Yaml::Node yamlConfig);
+    static CSVSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a default CSVSourceTypePtr object
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create();
+    static CSVSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
     /**
      * @brief creates a string representation of the source
@@ -150,17 +150,18 @@ class CSVSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceType(std::map<std::string, std::string> sourceConfigMap);
+    explicit CSVSourceType(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceType(Yaml::Node yamlConfig);
+    explicit CSVSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with default values
      */
-    CSVSourceType();
+    CSVSourceType(std::string logicalSourceName, std::string physicalSourceName);
+
     Configurations::StringConfigOption filePath;
     Configurations::BoolConfigOption skipHeader;
     Configurations::StringConfigOption delimiter;

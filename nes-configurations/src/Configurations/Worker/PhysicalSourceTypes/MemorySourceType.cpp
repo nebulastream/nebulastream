@@ -28,18 +28,18 @@ struct MemoryAreaDeleter {
 
 }// namespace detail
 
-MemorySourceType::MemorySourceType(uint8_t* memoryArea,
+MemorySourceType::MemorySourceType(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
                                    size_t memoryAreaSize,
                                    uint64_t numBuffersToProduce,
                                    uint64_t gatheringValue,
                                    GatheringMode gatheringMode,
                                    uint64_t sourceAffinity,
                                    uint64_t taskQueueId)
-    : PhysicalSourceType(SourceType::MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName),SourceType::MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
       memoryAreaSize(memoryAreaSize), numberOfBufferToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
-MemorySourceTypePtr MemorySourceType::create(uint8_t* memoryArea,
+MemorySourceTypePtr MemorySourceType::create(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
                                              size_t memoryAreaSize,
                                              uint64_t numBuffersToProcess,
                                              uint64_t gatheringValue,
@@ -47,7 +47,7 @@ MemorySourceTypePtr MemorySourceType::create(uint8_t* memoryArea,
                                              uint64_t sourceAffinity,
                                              uint64_t taskQueueId) {
     NES_ASSERT(memoryArea, "invalid memory area");
-    return std::make_shared<MemorySourceType>(MemorySourceType(memoryArea,
+    return std::make_shared<MemorySourceType>(MemorySourceType(std::move(logicalSourceName), std::move(physicalSourceName),memoryArea,
                                                                memoryAreaSize,
                                                                numBuffersToProcess,
                                                                gatheringValue,

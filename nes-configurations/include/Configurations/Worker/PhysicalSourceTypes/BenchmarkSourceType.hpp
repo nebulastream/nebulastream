@@ -41,7 +41,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param taskQueueId the id to which queue we put buffers of this urce
      * @return a constructed BenchmarkSourceType
      */
-    static BenchmarkSourceTypePtr create(uint8_t* memoryArea,
+    static BenchmarkSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
                                          size_t memoryAreaSize,
                                          uint64_t numberOfBuffersToProduce,
                                          uint64_t gatheringValue,
@@ -84,7 +84,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param sourceAffinity the source affinity
      * @param taskQueueId: taskQueueId
      */
-    explicit BenchmarkSourceType(uint8_t* memoryArea,
+    explicit BenchmarkSourceType(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
                                  size_t memoryAreaSize,
                                  uint64_t numBuffersToProduce,
                                  uint64_t gatheringValue,

@@ -19,8 +19,5 @@ add_source_files(nes-core
         IngestionTimeWatermarkGenerator.cpp
         WatermarkStrategy.cpp
         EventTimeWatermarkStrategy.cpp
-        WatermarkStrategyDescriptor.cpp
-        EventTimeWatermarkStrategyDescriptor.cpp
-        IngestionTimeWatermarkStrategyDescriptor.cpp
         IngestionTimeWatermarkStrategy.cpp
 )

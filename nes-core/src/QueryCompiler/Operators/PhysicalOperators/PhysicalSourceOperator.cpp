@@ -34,7 +34,7 @@ std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(OperatorI
 
 std::shared_ptr<PhysicalSourceOperator>
 PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor) {
-    return create(Util::getNextOperatorId(), 0, std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
+    return create(getNextOperatorId(), 0, std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
 }
 
 uint64_t PhysicalSourceOperator::getOriginId() { return originId; }

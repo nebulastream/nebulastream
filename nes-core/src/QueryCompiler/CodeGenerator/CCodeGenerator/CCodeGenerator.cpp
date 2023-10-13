@@ -69,8 +69,8 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
 #include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
@@ -4461,8 +4461,8 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
                         QueryCompilerOptions::CompilationStrategy compilationStrategy) {
     std::string src = generateCode(code);
     auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::Language::CPP, src);
-    auto enableDebugCompilation = compilationStrategy == QueryCompilerOptions::CompilationStrategy::DEBUG;
-    auto enableOptimizations = compilationStrategy == QueryCompilerOptions::CompilationStrategy::OPTIMIZE;
+    auto enableDebugCompilation = compilationStrategy == CompilationStrategy::DEBUG;
+    auto enableOptimizations = compilationStrategy == CompilationStrategy::OPTIMIZE;
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
                                                         "query",
                                                         false,

@@ -20,7 +20,7 @@
 using namespace std::string_literals;
 
 #include "Common/DataTypes/DataTypeFactory.hpp"
-#include <Catalogs/UDF/PythonUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 
 namespace NES::Catalogs::UDF {
 

@@ -53,7 +53,7 @@ using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceType> {
 
   public:
-    PhysicalSourceType(SourceType sourceType);
+    PhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, SourceType sourceType);
 
     virtual ~PhysicalSourceType() noexcept = default;
 
@@ -69,6 +69,18 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
      * @return
      */
     virtual std::string toString() = 0;
+
+    /**
+     * @brief returns the logical source name this physical source contributes to
+     * @return the logical source name
+     */
+    const std::string& getLogicalSourceName() const;
+
+    /**
+     * @brief returns the physical source name of this physical source
+     * @return the physical source name
+     */
+    const std::string& getPhysicalSourceName() const;
 
     /**
      * @brief Return source type
@@ -115,6 +127,8 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
     }
 
   private:
+    std::string logicalSourceName;
+    std::string physicalSourceName;
     SourceType sourceType;
 };
 

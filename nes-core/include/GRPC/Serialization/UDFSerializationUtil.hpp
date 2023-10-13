@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_GRPC_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
 #define NES_CORE_INCLUDE_GRPC_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
 
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <JavaUdfDescriptorMessage.pb.h>
 
 namespace NES {

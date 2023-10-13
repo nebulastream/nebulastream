@@ -43,7 +43,7 @@ class KeyedTumblingWindowTests : public Testing::BaseIntegrationTest, public ::t
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
         workerConfiguration->queryCompiler.compilationStrategy =
-            QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE;
+            QueryCompilation::CompilationStrategy::OPTIMIZE;
     }
 };
 

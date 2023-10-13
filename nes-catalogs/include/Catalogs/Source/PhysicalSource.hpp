@@ -34,13 +34,10 @@ class PhysicalSource {
   public:
     /**
      * @brief create method to construct physical Source
-     * @param logicalSourceName : logical source name
-     * @param physicalSourceName : physical source name
      * @param physicalSourceType : physical source type
      * @return shared pointer to a physical source
      */
-    static PhysicalSourcePtr
-    create(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType);
+    static PhysicalSourcePtr create(PhysicalSourceTypePtr physicalSourceType);
 
     /**
      * @brief Create physical source without physical source type

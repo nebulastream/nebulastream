@@ -12,5 +12,6 @@
 # limitations under the License.
 
 add_subdirectory(Coordinator)
+add_subdirectory(Enums)
 add_subdirectory(Worker)
 

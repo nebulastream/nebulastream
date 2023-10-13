@@ -16,7 +16,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
@@ -200,7 +200,7 @@ void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
-        visitingOp->setId(Util::getNextOperatorId());
+        visitingOp->setId(getNextOperatorId());
     }
 }
 

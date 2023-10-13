@@ -23,18 +23,22 @@
 
 namespace NES {
 
-ArrowSourceTypePtr ArrowSourceType::create(Yaml::Node yamlConfig) {
-    return std::make_shared<ArrowSourceType>(ArrowSourceType(std::move(yamlConfig)));
+ArrowSourceTypePtr ArrowSourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+    return std::make_shared<ArrowSourceType>(ArrowSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(yamlConfig)));
 }
 
-ArrowSourceTypePtr ArrowSourceType::create() { return std::make_shared<ArrowSourceType>(ArrowSourceType()); }
-
-ArrowSourceTypePtr ArrowSourceType::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<ArrowSourceType>(ArrowSourceType(std::move(sourceConfigMap)));
+ArrowSourceTypePtr ArrowSourceType::create(std::string logicalSourceName,
+                                           std::string physicalSourceName,
+                                           std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<ArrowSourceType>(ArrowSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
 }
 
-ArrowSourceType::ArrowSourceType()
-    : PhysicalSourceType(SourceType::ARROW_SOURCE),
+ArrowSourceTypePtr ArrowSourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
+    return std::make_shared<ArrowSourceType>(ArrowSourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+}
+
+ArrowSourceType::ArrowSourceType(std::string logicalSourceName, std::string physicalSourceName)
+    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::ARROW_SOURCE),
       filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                         "",
                                                                         "file path, needed for: ArrowSource.")),
@@ -56,7 +60,10 @@ ArrowSourceType::ArrowSourceType()
     NES_INFO("ArrowSourceTypeConfig: Init source config object with default values.");
 }
 
-ArrowSourceType::ArrowSourceType(std::map<std::string, std::string> sourceConfigMap) : ArrowSourceType() {
+ArrowSourceType::ArrowSourceType(std::string logicalSourceName,
+                                 std::string physicalSourceName,
+                                 std::map<std::string, std::string> sourceConfigMap)
+    : ArrowSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
     NES_INFO("ArrowSourceType: Init default Arrow source config object with values from command line.");
     if (sourceConfigMap.find(Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find(Configurations::FILE_PATH_CONFIG)->second);
@@ -83,7 +90,8 @@ ArrowSourceType::ArrowSourceType(std::map<std::string, std::string> sourceConfig
     }
 }
 
-ArrowSourceType::ArrowSourceType(Yaml::Node yamlConfig) : ArrowSourceType() {
+ArrowSourceType::ArrowSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig)
+    : ArrowSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
     NES_INFO("ArrowSourceType: Init default Arrow source config object with values from YAML file.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>() != "\n") {

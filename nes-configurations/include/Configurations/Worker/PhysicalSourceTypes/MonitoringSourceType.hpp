@@ -35,14 +35,17 @@ class MonitoringSourceType : public PhysicalSourceType {
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(Monitoring::MetricCollectorType metricCollectorType,
+    static MonitoringSourceTypePtr create(std::string logicalSourceName,
+                                          std::string physicalSourceName,
+                                          Monitoring::MetricCollectorType metricCollectorType,
                                           std::chrono::milliseconds waitTimeInMs);
 
     /**
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(Monitoring::MetricCollectorType metricCollectorType);
+    static MonitoringSourceTypePtr
+    create(std::string logicalSourceName, std::string physicalSourceName, Monitoring::MetricCollectorType metricCollectorType);
 
     /**
      * @brief creates a string representation of the source
@@ -83,7 +86,10 @@ class MonitoringSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new source type with defaults.
      */
-    MonitoringSourceType(Monitoring::MetricCollectorType metricCollectorType, std::chrono::milliseconds waitTime);
+    MonitoringSourceType(std::string logicalSourceName,
+                         std::string physicalSourceName,
+                         Monitoring::MetricCollectorType metricCollectorType,
+                         std::chrono::milliseconds waitTime);
     Monitoring::MetricCollectorType metricCollectorType;
     std::chrono::milliseconds waitTime;
     static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(1000);

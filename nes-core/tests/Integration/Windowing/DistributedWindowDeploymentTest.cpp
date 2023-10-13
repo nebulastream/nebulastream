@@ -279,10 +279,10 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testMultipleAggregationFunction
     // given: Set up both workers to use ThreadLocal aggregation
     auto workerConfiguration1 = WorkerConfiguration::create();
     workerConfiguration1->queryCompiler.windowingStrategy =
-        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+        QueryCompilation::WindowingStrategy::THREAD_LOCAL;
     auto workerConfiguration2 = WorkerConfiguration::create();
     workerConfiguration2->queryCompiler.windowingStrategy =
-        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+        QueryCompilation::WindowingStrategy::THREAD_LOCAL;
     // given: Set up the input schema: a timestamp, a key, a value
     struct InputData {
         uint64_t timestamp;
@@ -319,7 +319,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testMultipleAggregationFunction
     // given: The internal coordinator also uses THREAD_LOCAL aggregation and distributed window is disabled.
     testHarness.validate().setupTopology([](CoordinatorConfigurationPtr coordinatorConfiguration) {
         coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+            QueryCompilation::WindowingStrategy::THREAD_LOCAL;
         coordinatorConfiguration->optimizer.distributedWindowChildThreshold = 1000;
         coordinatorConfiguration->optimizer.distributedWindowCombinerThreshold = 1000;
     });

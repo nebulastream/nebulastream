@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
-#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Catalogs/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
@@ -39,7 +39,7 @@ QueryPlanPtr MapUDFsToOpenCLOperatorsRule::apply(NES::QueryPlanPtr queryPlan) {
         auto udfDescriptor = mapJavaUDFOperator->getUDFDescriptor();
         if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
             auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
-            auto openCLOperator = std::make_shared<OpenCLLogicalOperatorNode>(javaUDFDescriptor, Util::getNextOperatorId());
+            auto openCLOperator = std::make_shared<OpenCLLogicalOperatorNode>(javaUDFDescriptor, getNextOperatorId());
             //replace map java udf operator with open cl operator
             if (!mapJavaUDFOperator->replace(openCLOperator)) {
                 NES_ERROR("MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");

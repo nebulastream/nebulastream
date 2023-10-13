@@ -13,11 +13,18 @@
 */
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
+#include <Configurations/Enums/PipeliningStrategy.hpp>
 #include <Util/Common.hpp>
 #include <cstdint>
 #include <string>
+
 namespace NES::QueryCompilation {
 
 /**
@@ -25,12 +32,6 @@ namespace NES::QueryCompilation {
  */
 class QueryCompilerOptions {
   public:
-    enum class QueryCompiler : uint8_t {
-        // Uses the default query compiler
-        DEFAULT_QUERY_COMPILER,
-        // Uses the nautilus query compiler
-        NAUTILUS_QUERY_COMPILER
-    };
 
     enum class DumpMode : uint8_t {
         // Disables all dumping
@@ -61,43 +62,6 @@ class QueryCompilerOptions {
         BRANCHED,
         // Uses predication for filter expressions if possible
         PREDICATION
-    };
-
-    enum class CompilationStrategy : uint8_t {
-        // Use fast compilation strategy, i.e., does not apply any optimizations and omits debug output.
-        FAST,
-        // Creates debug output i.e., source code files and applies formatting. No code optimizations.
-        DEBUG,
-        // Applies all compiler optimizations.
-        OPTIMIZE,
-        // Applies all compiler optimizations and inlines proxy functions.
-        PROXY_INLINING
-    };
-
-    enum class PipeliningStrategy : uint8_t {
-        // Applies operator fusion.
-        OPERATOR_FUSION,
-        // Places each operator in an individual pipeline.
-        OPERATOR_AT_A_TIME
-    };
-
-    enum class OutputBufferOptimizationLevel : uint8_t {
-        // Use highest optimization available.
-        ALL,
-        // create separate result buffer and copy everything over after all operations are applied.
-        // Check size after every written tuple.
-        NO,
-        // If all records and all fields match up in input and result buffer we can simply emit the input buffer.
-        // For this no filter can be applied and no new fields can be added.
-        // The only typical operations possible are inplace-maps, e.g. "id = id + 1".
-        ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
-        // Output schema is smaller or equal (bytes) than input schema.
-        // We can reuse the buffer and omit size checks.
-        REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,
-        // enable the two optimizations individually (benchmarking only)
-        REUSE_INPUT_BUFFER_NO_FALLBACK,
-        OMIT_OVERFLOW_CHECK_NO_FALLBACK,
-        BITMASK
     };
 
     class StreamHashJoinOptions {
@@ -169,9 +133,9 @@ class QueryCompilerOptions {
 
     void setPipeliningStrategy(PipeliningStrategy pipeliningStrategy);
 
-    [[nodiscard]] QueryCompiler getQueryCompiler() const;
+    [[nodiscard]] QueryCompilerType getQueryCompiler() const;
 
-    void setQueryCompiler(QueryCompiler pipeliningStrategy);
+    void setQueryCompiler(QueryCompilerType queryCompilerType);
 
     [[nodiscard]] CompilationStrategy getCompilationStrategy() const;
 
@@ -184,12 +148,12 @@ class QueryCompilerOptions {
     /**
      * @brief Sets desired buffer optimization strategy.
      */
-    void setOutputBufferOptimizationLevel(QueryCompilerOptions::OutputBufferOptimizationLevel level);
+    void setOutputBufferOptimizationLevel(OutputBufferOptimizationLevel level);
 
     /**
      * @brief Returns desired buffer optimization strategy.
      */
-    [[nodiscard]] QueryCompilerOptions::OutputBufferOptimizationLevel getOutputBufferOptimizationLevel() const;
+    [[nodiscard]] OutputBufferOptimizationLevel getOutputBufferOptimizationLevel() const;
 
     /**
      * @brief Sets the number of local buffers per source.
@@ -255,7 +219,7 @@ class QueryCompilerOptions {
     CompilationStrategy compilationStrategy;
     FilterProcessingStrategy filterProcessingStrategy;
     WindowingStrategy windowingStrategy;
-    QueryCompiler queryCompiler;
+    QueryCompilerType queryCompiler;
     NautilusBackend nautilusBackend;
     DumpMode dumpMode;
     StreamHashJoinOptionsPtr hashJoinOptions;

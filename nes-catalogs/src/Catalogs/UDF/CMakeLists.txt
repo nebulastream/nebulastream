@@ -13,7 +13,4 @@
 
 add_source_files(nes-catalogs
         UDFCatalog.cpp
-        JavaUDFDescriptor.cpp
-        PythonUDFDescriptor.cpp
-        UDFDescriptor.cpp
 )

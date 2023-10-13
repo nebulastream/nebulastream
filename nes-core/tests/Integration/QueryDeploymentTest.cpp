@@ -23,7 +23,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/TupleBuffer.hpp>

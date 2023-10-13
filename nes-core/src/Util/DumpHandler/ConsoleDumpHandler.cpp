@@ -13,10 +13,10 @@
 */
 
 #include <Nodes/Node.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
@@ -64,7 +64,7 @@ void ConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, 
     }
 }
 
-void ConsoleDumpHandler::dump(const NodePtr node) { dumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
+void ConsoleDumpHandler::dump(const NodePtr node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
 void ConsoleDumpHandler::multilineDump(NodePtr const& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 

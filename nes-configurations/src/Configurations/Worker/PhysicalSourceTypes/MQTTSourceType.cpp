@@ -19,17 +19,26 @@
 
 namespace NES {
 
-MQTTSourceTypePtr MQTTSourceType::create(Yaml::Node yamlConfig) {
-    return std::make_shared<MQTTSourceType>(MQTTSourceType(std::move(yamlConfig)));
+MQTTSourceTypePtr MQTTSourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+    return std::make_shared<MQTTSourceType>(
+        MQTTSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(yamlConfig)));
 }
 
-MQTTSourceTypePtr MQTTSourceType::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<MQTTSourceType>(MQTTSourceType(std::move(sourceConfigMap)));
+MQTTSourceTypePtr MQTTSourceType::create(std::string logicalSourceName,
+                                         std::string physicalSourceName,
+                                         std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<MQTTSourceType>(
+        MQTTSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
 }
 
-MQTTSourceTypePtr MQTTSourceType::create() { return std::make_shared<MQTTSourceType>(MQTTSourceType()); }
+MQTTSourceTypePtr MQTTSourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
+    return std::make_shared<MQTTSourceType>(MQTTSourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+}
 
-MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMap) : MQTTSourceType() {
+MQTTSourceType::MQTTSourceType(std::string logicalSourceName,
+                               std::string physicalSourceName,
+                               std::map<std::string, std::string> sourceConfigMap)
+    : MQTTSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
     NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from command line args.");
 
     if (sourceConfigMap.find(Configurations::URL_CONFIG) != sourceConfigMap.end()) {
@@ -66,7 +75,8 @@ MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMa
     }
 }
 
-MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
+MQTTSourceType::MQTTSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig)
+    : MQTTSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
     NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from YAML file.");
 
     if (!yamlConfig[Configurations::URL_CONFIG].As<std::string>().empty()
@@ -111,8 +121,8 @@ MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
     }
 }
 
-MQTTSourceType::MQTTSourceType()
-    : PhysicalSourceType(SourceType::MQTT_SOURCE),
+MQTTSourceType::MQTTSourceType(std::string logicalSourceName, std::string physicalSourceName)
+    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::MQTT_SOURCE),
       url(Configurations::ConfigurationOption<std::string>::create(
           Configurations::URL_CONFIG,
           "ws://127.0.0.1:9001",

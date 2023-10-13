@@ -29,7 +29,7 @@ PhysicalThresholdWindowOperator::create(SchemaPtr inputSchema,
                                         SchemaPtr outputSchema,
                                         Windowing::WindowOperatorHandlerPtr operatorHandler) {
 
-    return std::make_shared<PhysicalThresholdWindowOperator>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(),
                                                              inputSchema,
                                                              outputSchema,
                                                              operatorHandler);

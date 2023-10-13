@@ -11,16 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        DistributionCharacteristic.cpp
-        TimeCharacteristic.cpp
-        LogicalWindowDefinition.cpp
-        LogicalJoinDefinition.cpp
-        LogicalBatchJoinDefinition.cpp
-)
 add_subdirectory(Watermark)
 add_subdirectory(Runtime)
-add_subdirectory(WindowAggregations)
 add_subdirectory(WindowActions)
 add_subdirectory(WindowMeasures)
 add_subdirectory(WindowPolicies)

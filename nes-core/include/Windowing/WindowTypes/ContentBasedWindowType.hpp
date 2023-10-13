@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_CONTENTBASEDWINDOWTYPE_HPP_
 
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <vector>
 
 namespace NES::Windowing {

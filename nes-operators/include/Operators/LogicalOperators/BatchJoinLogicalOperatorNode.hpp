@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 
 #include <memory>
 #include <z3++.h>

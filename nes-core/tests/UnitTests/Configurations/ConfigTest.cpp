@@ -15,13 +15,13 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include<Util/Mobility/GeoLocation.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -310,15 +310,15 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                                   "logicalSourceName=default",
                                                   "offsetMode=earliest"});
 
-    PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
+    PhysicalSourceTypePtr physicalSourceType1 = PhysicalSourceFactory::createFromString("", commandLineParams);
+    auto physicalSource1 = PhysicalSource::create(physicalSourceType1);
     EXPECT_EQ(physicalSource1->getLogicalSourceName(), "default");
     EXPECT_EQ(physicalSource1->getPhysicalSourceName(), "x");
     EXPECT_TRUE(physicalSource1->getPhysicalSourceType()->instanceOf<DefaultSourceType>());
 
-    DefaultSourceTypePtr physicalSourceType1 = physicalSource1->getPhysicalSourceType()->as<DefaultSourceType>();
-    EXPECT_EQ(physicalSourceType1->getSourceGatheringInterval()->getValue(),
-              physicalSourceType1->getSourceGatheringInterval()->getDefaultValue());
-    EXPECT_NE(physicalSourceType1->getNumberOfBuffersToProduce()->getValue(), 5u);
+    EXPECT_EQ(physicalSourceType1->as<DefaultSourceType>()->getSourceGatheringInterval()->getValue(),
+              physicalSourceType1->as<DefaultSourceType>()->getSourceGatheringInterval()->getDefaultValue());
+    EXPECT_NE(physicalSourceType1->as<DefaultSourceType>()->getNumberOfBuffersToProduce()->getValue(), 5u);
 
     auto commandLineParams1 = makeCommandLineArgs({"type=KAFKA_SOURCE",
                                                    "physicalSourceName=x",
@@ -329,18 +329,22 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                                    "groupId=testId",
                                                    "offsetMode=earliest"});
 
-    PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createFromString("", commandLineParams1);
+    PhysicalSourceTypePtr physicalSourceType2 = PhysicalSourceFactory::createFromString("", commandLineParams1);
+    auto physicalSource2 = PhysicalSource::create(physicalSourceType2);
     EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");
     EXPECT_EQ(physicalSource2->getPhysicalSourceName(), "x");
     EXPECT_TRUE(physicalSource2->getPhysicalSourceType()->instanceOf<KafkaSourceType>());
 
-    KafkaSourceTypePtr physicalSourceType2 = physicalSource2->getPhysicalSourceType()->as<KafkaSourceType>();
-    EXPECT_NE(physicalSourceType2->getBrokers()->getValue(), physicalSourceType2->getBrokers()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType2->getAutoCommit()->getValue(), physicalSourceType2->getAutoCommit()->getDefaultValue());
-    EXPECT_NE(physicalSourceType2->getGroupId()->getValue(), physicalSourceType2->getGroupId()->getDefaultValue());
-    EXPECT_NE(physicalSourceType2->getTopic()->getValue(), physicalSourceType2->getTopic()->getDefaultValue());
-    EXPECT_NE(physicalSourceType2->getConnectionTimeout()->getValue(),
-              physicalSourceType2->getConnectionTimeout()->getDefaultValue());
+    EXPECT_NE(physicalSourceType2->as<KafkaSourceType>()->getBrokers()->getValue(),
+              physicalSourceType2->as<KafkaSourceType>()->getBrokers()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType2->as<KafkaSourceType>()->getAutoCommit()->getValue(),
+              physicalSourceType2->as<KafkaSourceType>()->getAutoCommit()->getDefaultValue());
+    EXPECT_NE(physicalSourceType2->as<KafkaSourceType>()->getGroupId()->getValue(),
+              physicalSourceType2->as<KafkaSourceType>()->getGroupId()->getDefaultValue());
+    EXPECT_NE(physicalSourceType2->as<KafkaSourceType>()->getTopic()->getValue(),
+              physicalSourceType2->as<KafkaSourceType>()->getTopic()->getDefaultValue());
+    EXPECT_NE(physicalSourceType2->as<KafkaSourceType>()->getConnectionTimeout()->getValue(),
+              physicalSourceType2->as<KafkaSourceType>()->getConnectionTimeout()->getDefaultValue());
 }
 
 TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
@@ -351,11 +355,11 @@ TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
                                                   "physicalSourceName=x",
                                                   "logicalSourceName=default"});
     // when
-    PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
-    DefaultSourceTypePtr physicalSourceType1 = physicalSource1->getPhysicalSourceType()->as<DefaultSourceType>();
+    auto physicalSourceType1 = PhysicalSourceFactory::createFromString("", commandLineParams);
     // then
-    EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), physicalSourceType1->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType1->getGatheringMode()->getValue(), GatheringMode::INTERVAL_MODE);
+    EXPECT_EQ(physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getValue(),
+              physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getValue(), GatheringMode::INTERVAL_MODE);
 }
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInput) {
@@ -367,11 +371,11 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInpu
                                                   "logicalSourceName=default",
                                                   "filePath=fileLoc"});
     // when
-    PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
-    CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
+    auto physicalSourceType = PhysicalSourceFactory::createFromString("", commandLineParams);
     // then
-    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::INTERVAL_MODE);
+    EXPECT_EQ(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(),
+              physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(), GatheringMode::INTERVAL_MODE);
 }
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput) {
@@ -384,11 +388,10 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInp
                                                   "filePath=fileLoc",
                                                   "sourceGatheringMode=ADAPTIVE_MODE"});
     // when
-    PhysicalSourcePtr physicalSource = PhysicalSourceFactory::createFromString("", commandLineParams);
-    CSVSourceTypePtr physicalSourceType = physicalSource->getPhysicalSourceType()->as<CSVSourceType>();
+    auto physicalSourceType = PhysicalSourceFactory::createFromString("", commandLineParams);
     // then
-    EXPECT_NE(physicalSourceType->getGatheringMode()->getValue(), physicalSourceType->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType->getGatheringMode()->getValue(), GatheringMode::ADAPTIVE_MODE);
+    EXPECT_NE(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(), physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(), GatheringMode::ADAPTIVE_MODE);
 }
 
 TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode) {

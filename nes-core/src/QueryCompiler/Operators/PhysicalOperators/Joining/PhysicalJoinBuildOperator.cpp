@@ -20,7 +20,7 @@ PhysicalOperatorPtr PhysicalJoinBuildOperator::create(const SchemaPtr& inputSche
                                                       const SchemaPtr& outputSchema,
                                                       const Join::JoinOperatorHandlerPtr& operatorHandler,
                                                       JoinBuildSideType buildSide) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
+    return create(getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id,

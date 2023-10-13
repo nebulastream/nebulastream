@@ -12,14 +12,14 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <filesystem>
 #include <type_traits>
@@ -134,17 +134,15 @@ TestHarness& TestHarness::attachWorkerWithMemorySourceToCoordinator(const std::s
     return attachWorkerWithMemorySourceToWorkerWithId(std::move(logicalSourceName), 1);
 }
 
-TestHarness& TestHarness::attachWorkerWithLambdaSourceToCoordinator(const std::string& logicalSourceName,
-                                                                    PhysicalSourceTypePtr physicalSource,
+TestHarness& TestHarness::attachWorkerWithLambdaSourceToCoordinator(PhysicalSourceTypePtr physicalSource,
                                                                     WorkerConfigurationPtr workerConfiguration) {
     //We are assuming coordinator will start with id 1
     workerConfiguration->parentId = 1;
-    std::string physicalSourceName = getNextPhysicalSourceName();
     auto workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
         TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                               logicalSourceName,
-                                               physicalSourceName,
+                                               physicalSource->getLogicalSourceName(),
+                                               physicalSource->getPhysicalSourceName(),
                                                TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::LambdaSource,
                                                workerId);
     testHarnessWorkerConfiguration->setPhysicalSourceType(physicalSource);
@@ -152,29 +150,26 @@ TestHarness& TestHarness::attachWorkerWithLambdaSourceToCoordinator(const std::s
     return *this;
 }
 
-TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
-                                                                  CSVSourceTypePtr csvSourceType,
-                                                                  uint64_t parentId) {
+TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(CSVSourceTypePtr csvSourceType, uint64_t parentId) {
     auto workerConfiguration = WorkerConfiguration::create();
-    std::string physicalSourceName = getNextPhysicalSourceName();
-    auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
+    auto physicalSource =
+        PhysicalSource::create(csvSourceType->getLogicalSourceName(), csvSourceType->getPhysicalSourceName(), csvSourceType);
     workerConfiguration->physicalSources.add(physicalSource);
     workerConfiguration->parentId = parentId;
     uint32_t workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
         TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                               logicalSourceName,
-                                               physicalSourceName,
+                                               csvSourceType->getLogicalSourceName(),
+                                               csvSourceType->getPhysicalSourceName(),
                                                TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::CSVSource,
                                                workerId);
     testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
     return *this;
 }
 
-TestHarness& TestHarness::attachWorkerWithCSVSourceToCoordinator(const std::string& logicalSourceName,
-                                                                 const CSVSourceTypePtr& csvSourceType) {
+TestHarness& TestHarness::attachWorkerWithCSVSourceToCoordinator(const CSVSourceTypePtr& csvSourceType) {
     //We are assuming coordinator will start with id 1
-    return attachWorkerWithCSVSourceToWorkerWithId(std::move(logicalSourceName), std::move(csvSourceType), 1);
+    return attachWorkerWithCSVSourceToWorkerWithId(std::move(csvSourceType), 1);
 }
 
 TestHarness& TestHarness::attachWorkerToWorkerWithId(uint32_t parentId) {
@@ -280,7 +275,7 @@ PhysicalSourcePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorke
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                         << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
     auto memorySourceType =
-        MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, GatheringMode::INTERVAL_MODE);
+        MemorySourceType::create(logicalSourceName, workerConf->getPhysicalSourceName(), memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, GatheringMode::INTERVAL_MODE);
     return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
 };
 
@@ -305,8 +300,10 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode =
             QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
         coordinatorConfiguration->optimizer.performDistributedWindowOptimization = performDistributedWindowOptimization;
-        coordinatorConfiguration->worker.queryCompiler.windowingStrategy = windowingStrategy;
-        coordinatorConfiguration->worker.queryCompiler.joinStrategy = joinStrategy;
+
+        // Only this is currently supported in Nautilus
+        coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
+            QueryCompilation::WindowingStrategy::SLICING;
     }
     crdConfigFunctor(coordinatorConfiguration);
 
@@ -325,7 +322,10 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
             workerConfiguration->queryCompiler.queryCompilerType =
                 QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
             workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
-            workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
+
+            // Only this is currently supported in Nautilus
+            workerConfiguration->queryCompiler.windowingStrategy =
+                QueryCompilation::WindowingStrategy::SLICING;
             workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
         }
 

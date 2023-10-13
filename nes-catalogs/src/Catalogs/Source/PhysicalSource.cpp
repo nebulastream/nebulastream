@@ -24,10 +24,10 @@ PhysicalSource::PhysicalSource(std::string logicalSourceName,
     : logicalSourceName(logicalSourceName), physicalSourceName(physicalSourceName),
       physicalSourceType(std::move(physicalSourceType)) {}
 
-PhysicalSourcePtr
-PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType) {
-    return std::make_shared<PhysicalSource>(
-        PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), std::move(physicalSourceType)));
+PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType) {
+    return std::make_shared<PhysicalSource>(PhysicalSource(physicalSourceType->getLogicalSourceName(),
+                                                           physicalSourceType->getLogicalSourceName(),
+                                                           std::move(physicalSourceType)));
 }
 
 PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName) {

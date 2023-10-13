@@ -19,6 +19,8 @@
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/OperatorState.hpp>
+#include <map>
+#include <set>
 
 namespace z3 {
 class expr;

@@ -39,7 +39,7 @@ GeneratableKeyedSlidingWindowSink::create(SchemaPtr inputSchema,
                                           SchemaPtr outputSchema,
                                           Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return create(Util::getNextOperatorId(),
+    return create(getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(operatorHandler),

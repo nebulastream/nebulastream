@@ -34,7 +34,7 @@ PhysicalNonKeyedThreadLocalPreAggregationOperator::create(SchemaPtr inputSchema,
                                                           SchemaPtr outputSchema,
                                                           WindowHandlerType keyedEventTimeWindowHandler,
                                                           Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalNonKeyedThreadLocalPreAggregationOperator>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalNonKeyedThreadLocalPreAggregationOperator>(getNextOperatorId(),
                                                                                inputSchema,
                                                                                outputSchema,
                                                                                keyedEventTimeWindowHandler,

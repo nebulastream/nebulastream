@@ -11,4 +11,4 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Configurations/EnumOption.hpp>
+#include <Configurations/Enums/EnumOption.hpp>

@@ -19,18 +19,25 @@
 
 namespace NES {
 
-DefaultSourceTypePtr DefaultSourceType::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<DefaultSourceType>(DefaultSourceType(std::move(sourceConfigMap)));
+DefaultSourceTypePtr DefaultSourceType::create(std::string logicalSourceName,
+                                               std::string physicalSourceName,
+                                               std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<DefaultSourceType>(
+        DefaultSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
 }
 
-DefaultSourceTypePtr DefaultSourceType::create() { return std::make_shared<DefaultSourceType>(DefaultSourceType()); }
-
-DefaultSourceTypePtr DefaultSourceType::create(Yaml::Node yamlConfig) {
-    return std::make_shared<DefaultSourceType>(DefaultSourceType(std::move(yamlConfig)));
+DefaultSourceTypePtr
+DefaultSourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+    return std::make_shared<DefaultSourceType>(
+        DefaultSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(yamlConfig)));
 }
 
-DefaultSourceType::DefaultSourceType()
-    : PhysicalSourceType(SourceType::DEFAULT_SOURCE),
+DefaultSourceTypePtr DefaultSourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
+    return std::make_shared<DefaultSourceType>(DefaultSourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+}
+
+DefaultSourceType::DefaultSourceType(std::string logicalSourceName, std::string physicalSourceName)
+    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::DEFAULT_SOURCE),
       numberOfBuffersToProduce(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
                                                                 1,
@@ -45,9 +52,13 @@ DefaultSourceType::DefaultSourceType()
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-DefaultSourceType::DefaultSourceType(std::map<std::string, std::string>) : DefaultSourceType() {}
+DefaultSourceType::DefaultSourceType(std::string logicalSourceName,
+                                     std::string physicalSourceName,
+                                     std::map<std::string, std::string>)
+    : DefaultSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {}
 
-DefaultSourceType::DefaultSourceType(Yaml::Node) : DefaultSourceType() {}
+DefaultSourceType::DefaultSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node)
+    : DefaultSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {}
 
 std::string DefaultSourceType::toString() {
     std::stringstream ss;

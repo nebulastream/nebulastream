@@ -17,10 +17,14 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
-#include <Optimizer/Phases/QueryMergerPhase.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Configurations/Enums/PipeliningStrategy.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
+#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
+#include <Configurations/Enums/QueryExecutionMode.hpp>
 #include <Util/Common.hpp>
 #include <iostream>
 #include <map>
@@ -41,9 +45,9 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     /**
      * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.
      */
-    EnumOption<QueryCompilation::QueryCompilerOptions::QueryCompiler> queryCompilerType = {
+    EnumOption<QueryCompilation::QueryCompilerType> queryCompilerType = {
         QUERY_COMPILER_TYPE_CONFIG,
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
+        QueryCompilation::QueryCompilerType::DEFAULT_QUERY_COMPILER,
         "Indicates the type for the query compiler [DEFAULT_QUERY_COMPILER|NAUTILUS_QUERY_COMPILER]."};
 
     /**
@@ -58,9 +62,9 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     /**
      * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.
      */
-    EnumOption<QueryCompilation::QueryCompilerOptions::CompilationStrategy> compilationStrategy = {
+    EnumOption<QueryCompilation::CompilationStrategy> compilationStrategy = {
         QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
-        QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE,
+        QueryCompilation::CompilationStrategy::OPTIMIZE,
         "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE|PROXY_INLINING]."};
 
     /**
@@ -75,17 +79,17 @@ class QueryCompilerConfiguration : public BaseConfiguration {
     /**
      * @brief Sets the pipelining strategy. We differentiate between an OPERATOR_FUSION and OPERATOR_AT_A_TIME strategy.
      */
-    EnumOption<QueryCompilation::QueryCompilerOptions::PipeliningStrategy> pipeliningStrategy = {
+    EnumOption<QueryCompilation::PipeliningStrategy> pipeliningStrategy = {
         QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG,
-        QueryCompilation::QueryCompilerOptions::PipeliningStrategy::OPERATOR_FUSION,
+        QueryCompilation::PipeliningStrategy::OPERATOR_FUSION,
         "Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]."};
 
     /**
      * @brief Sets the output buffer optimization level.
      */
-    EnumOption<QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel> outputBufferOptimizationLevel = {
+    EnumOption<QueryCompilation::OutputBufferOptimizationLevel> outputBufferOptimizationLevel = {
         QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG,
-        QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ALL,
+        QueryCompilation::OutputBufferOptimizationLevel::ALL,
         "Indicates the OutputBufferAllocationStrategy "
         "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
         "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"

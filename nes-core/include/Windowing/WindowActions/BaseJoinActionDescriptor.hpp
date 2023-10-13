@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_BASEJOINACTIONDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_BASEJOINACTIONDESCRIPTOR_HPP_
-#include <Windowing/JoinForwardRefs.hpp>
+#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 
 namespace NES::Join {
 

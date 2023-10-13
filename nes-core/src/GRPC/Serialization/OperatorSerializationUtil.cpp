@@ -45,18 +45,18 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
@@ -72,9 +72,9 @@
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
@@ -150,9 +150,9 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         // serialize CEPIteration operator
         serializeCEPIterationOperator(*operatorNode->as<IterationLogicalOperatorNode>(), serializedOperator);
 
-    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
+    } else if (operatorNode->instanceOf<NonKeyedWindowOperator>()) {
         // serialize window operator
-        serializeWindowOperator(*operatorNode->as<CentralWindowOperator>(), serializedOperator);
+        serializeWindowOperator(*operatorNode->as<NonKeyedWindowOperator>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         // serialize window operator
@@ -293,7 +293,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");
         auto serializedUnionDescriptor = SerializableOperator_UnionDetails();
         details.UnpackTo(&serializedUnionDescriptor);
-        operatorNode = LogicalOperatorFactory::createUnionOperator(Util::getNextOperatorId());
+        operatorNode = LogicalOperatorFactory::createUnionOperator(getNextOperatorId());
 
     } else if (details.Is<SerializableOperator_BroadcastDetails>()) {
         // de-serialize broadcast operator
@@ -301,7 +301,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedBroadcastDescriptor = SerializableOperator_BroadcastDetails();
         details.UnpackTo(&serializedBroadcastDescriptor);
         // de-serialize broadcast descriptor
-        operatorNode = LogicalOperatorFactory::createBroadcastOperator(Util::getNextOperatorId());
+        operatorNode = LogicalOperatorFactory::createBroadcastOperator(getNextOperatorId());
 
     } else if (details.Is<SerializableOperator_MapDetails>()) {
         // de-serialize map operator
@@ -324,7 +324,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
         auto serializedWindowOperator = SerializableOperator_WindowDetails();
         details.UnpackTo(&serializedWindowOperator);
-        auto windowNode = deserializeWindowOperator(serializedWindowOperator, Util::getNextOperatorId());
+        auto windowNode = deserializeWindowOperator(serializedWindowOperator, getNextOperatorId());
         operatorNode = windowNode;
 
     } else if (details.Is<SerializableOperator_JoinDetails>()) {
@@ -332,14 +332,14 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         NES_TRACE("OperatorSerializationUtil:: de-serialize to JoinLogicalOperator");
         auto serializedJoinOperator = SerializableOperator_JoinDetails();
         details.UnpackTo(&serializedJoinOperator);
-        operatorNode = deserializeJoinOperator(serializedJoinOperator, Util::getNextOperatorId());
+        operatorNode = deserializeJoinOperator(serializedJoinOperator, getNextOperatorId());
 
     } else if (details.Is<SerializableOperator_BatchJoinDetails>()) {
         // de-serialize batch join operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to BatchJoinLogicalOperator");
         auto serializedBatchJoinOperator = SerializableOperator_BatchJoinDetails();
         details.UnpackTo(&serializedBatchJoinOperator);
-        operatorNode = deserializeBatchJoinOperator(serializedBatchJoinOperator, Util::getNextOperatorId());
+        operatorNode = deserializeBatchJoinOperator(serializedBatchJoinOperator, getNextOperatorId());
 
     } else if (details.Is<SerializableOperator_WatermarkStrategyDetails>()) {
         // de-serialize watermark assigner operator
@@ -451,7 +451,7 @@ LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails) {
     auto sourceDescriptor = deserializeSourceDescriptor(sourceDetails);
     return LogicalOperatorFactory::createSourceOperator(sourceDescriptor,
-                                                        Util::getNextOperatorId(),
+                                                        getNextOperatorId(),
                                                         sourceDetails.sourceoriginid());
 }
 
@@ -466,7 +466,7 @@ void OperatorSerializationUtil::serializeFilterOperator(const FilterLogicalOpera
 LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeFilterOperator(const SerializableOperator_FilterDetails& filterDetails) {
     auto filterExpression = ExpressionSerializationUtil::deserializeExpression(filterDetails.predicate());
-    return LogicalOperatorFactory::createFilterOperator(filterExpression, Util::getNextOperatorId());
+    return LogicalOperatorFactory::createFilterOperator(filterExpression, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeProjectionOperator(const ProjectionLogicalOperatorNode& projectionOperator,
@@ -490,7 +490,7 @@ OperatorSerializationUtil::deserializeProjectionOperator(const SerializableOpera
         exps.push_back(projectExpression);
     }
 
-    return LogicalOperatorFactory::createProjectionOperator(exps, Util::getNextOperatorId());
+    return LogicalOperatorFactory::createProjectionOperator(exps, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperatorNode& sinkOperator,
@@ -505,7 +505,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperatorN
 LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails) {
     auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
-    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, Util::getNextOperatorId());
+    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeMapOperator(const MapLogicalOperatorNode& mapOperator,
@@ -519,7 +519,7 @@ void OperatorSerializationUtil::serializeMapOperator(const MapLogicalOperatorNod
 LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails) {
     auto fieldAssignmentExpression = ExpressionSerializationUtil::deserializeExpression(mapDetails.expression());
     return LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(),
-                                                     Util::getNextOperatorId());
+                                                     getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode& windowOperator,
@@ -817,7 +817,7 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
             return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)->as<WindowOperatorNode>();
         case SerializableOperator_DistributionCharacteristic_Distribution_Complete:
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
-                ->as<CentralWindowOperator>();
+                ->as<NonKeyedWindowOperator>();
         case SerializableOperator_DistributionCharacteristic_Distribution_Combining:
             return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
                 ->as<WindowComputationOperator>();
@@ -1768,7 +1768,7 @@ void OperatorSerializationUtil::serializeLimitOperator(const LimitLogicalOperato
 
 LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails) {
-    return LogicalOperatorFactory::createLimitOperator(limitDetails.limit(), Util::getNextOperatorId());
+    return LogicalOperatorFactory::createLimitOperator(limitDetails.limit(), getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeWatermarkAssignerOperator(
@@ -1787,7 +1787,7 @@ LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeWatermarkAssig
     const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails) {
 
     auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
-    return LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, Util::getNextOperatorId());
+    return LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
@@ -1935,7 +1935,7 @@ OperatorSerializationUtil::deserializeInferModelOperator(const SerializableOpera
     return LogicalOperatorFactory::createInferModelOperator(inferModelDetails.mlfilename(),
                                                             inputFields,
                                                             outputFields,
-                                                            Util::getNextOperatorId());
+                                                            getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeCEPIterationOperator(const IterationLogicalOperatorNode& iterationOperator,
@@ -1952,7 +1952,7 @@ LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeCEPIterationOperator(const SerializableOperator_CEPIterationDetails& cepIterationDetails) {
     auto maxIteration = cepIterationDetails.maxiteration();
     auto minIteration = cepIterationDetails.miniteration();
-    return LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration, Util::getNextOperatorId());
+    return LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration, getNextOperatorId());
 }
 
 template<typename T, typename D>

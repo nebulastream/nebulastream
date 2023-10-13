@@ -92,12 +92,6 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 std::string toCSVString(const SchemaPtr& schema);
 
 /**
- * @brief Returns the next free operator id
- * @return operator id
- */
-OperatorId getNextOperatorId();
-
-/**
 * @brief Returns the next free pipeline id
 * @return node id
 */

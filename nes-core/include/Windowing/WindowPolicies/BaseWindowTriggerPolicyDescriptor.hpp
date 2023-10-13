@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEWINDOWTRIGGERPOLICYDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEWINDOWTRIGGERPOLICYDESCRIPTOR_HPP_
-#include <Windowing/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Windowing {
 

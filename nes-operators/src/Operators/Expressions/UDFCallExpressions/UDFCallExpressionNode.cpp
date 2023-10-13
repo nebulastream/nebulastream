@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/UDF/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Catalogs/Exceptions/UDFException.hpp>

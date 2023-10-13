@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -22,14 +23,12 @@
 #include <Configurations/Worker/PhysicalSourceTypes/OPCSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
-#include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/PhysicalSourceFactory.hpp>
-#include <Configurations/Worker/PhysicalSourceFactoryPlugin.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Configurations {
 
-PhysicalSourcePtr PhysicalSourceFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
+PhysicalSourceTypePtr PhysicalSourceFactory::createFromString(std::string,
+                                                              std::map<std::string, std::string>& commandLineParams) {
 
     std::string sourceType, logicalSourceName, physicalSourceName;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
@@ -58,11 +57,10 @@ PhysicalSourcePtr PhysicalSourceFactory::createFromString(std::string, std::map<
         return nullptr;
     }
 
-    auto physicalSourceType = createPhysicalSourceType(sourceType, commandLineParams);
-    return PhysicalSource::create(logicalSourceName, physicalSourceName, physicalSourceType);
+    return createPhysicalSourceType(logicalSourceName, physicalSourceName, sourceType, commandLineParams);
 }
 
-PhysicalSourcePtr PhysicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
+PhysicalSourceTypePtr PhysicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
     std::vector<PhysicalSourcePtr> physicalSources;
     //Iterate over all physical sources defined in the yaml file
     std::string logicalSourceName, physicalSourceName, sourceType;
@@ -88,8 +86,7 @@ PhysicalSourcePtr PhysicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) 
 
     if (yamlConfig[PHYSICAL_SOURCE_TYPE_CONFIGURATION].IsMap()) {
         auto physicalSourceTypeConfiguration = yamlConfig[PHYSICAL_SOURCE_TYPE_CONFIGURATION];
-        auto physicalSourceType = createPhysicalSourceType(sourceType, physicalSourceTypeConfiguration);
-        return PhysicalSource::create(logicalSourceName, physicalSourceName, physicalSourceType);
+        return createPhysicalSourceType(logicalSourceName, physicalSourceName, sourceType, physicalSourceTypeConfiguration);
     } else {
         NES_THROW_RUNTIME_ERROR(
             "Found Invalid Physical Source Configuration. Please define Source Type Configuration properties.");
@@ -97,7 +94,9 @@ PhysicalSourcePtr PhysicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) 
 }
 
 PhysicalSourceTypePtr
-PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
+PhysicalSourceFactory::createPhysicalSourceType(std::string logicalSourceName,
+                                                std::string physicalSourceName,
+                                                std::string sourceType,
                                                 const std::map<std::string, std::string>& commandLineParams) {
 
     // check if a plugin is registered to handle this source type
@@ -108,18 +107,22 @@ PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
     }
 
     switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
-        case SourceType::CSV_SOURCE: return CSVSourceType::create(commandLineParams);
-        case SourceType::MQTT_SOURCE: return MQTTSourceType::create(commandLineParams);
-        case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(commandLineParams);
-        case SourceType::OPC_SOURCE: return OPCSourceType::create(commandLineParams);
-        case SourceType::BINARY_SOURCE: return BinarySourceType::create(commandLineParams);
-        case SourceType::SENSE_SOURCE: return SenseSourceType::create(commandLineParams);
-        case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(commandLineParams);
+        case SourceType::CSV_SOURCE: return CSVSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::MQTT_SOURCE: return MQTTSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::OPC_SOURCE: return OPCSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::BINARY_SOURCE: return BinarySourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::SENSE_SOURCE: return SenseSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::DEFAULT_SOURCE:
+            return DefaultSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
 
-PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig) {
+PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::string logicalSourceName,
+                                                                      std::string physicalSourceName,
+                                                                      std::string sourceType,
+                                                                      Yaml::Node& yamlConfig) {
 
     // check a plugin is registered to handle this source type
     for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins()) {
@@ -133,13 +136,13 @@ PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::strin
     }
 
     switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
-        case SourceType::CSV_SOURCE: return CSVSourceType::create(yamlConfig);
-        case SourceType::MQTT_SOURCE: return MQTTSourceType::create(yamlConfig);
-        case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(yamlConfig);
-        case SourceType::OPC_SOURCE: return OPCSourceType::create(yamlConfig);
-        case SourceType::BINARY_SOURCE: return BinarySourceType::create(yamlConfig);
-        case SourceType::SENSE_SOURCE: return SenseSourceType::create(yamlConfig);
-        case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(yamlConfig);
+        case SourceType::CSV_SOURCE: return CSVSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::MQTT_SOURCE: return MQTTSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::OPC_SOURCE: return OPCSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::BINARY_SOURCE: return BinarySourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::SENSE_SOURCE: return SenseSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }

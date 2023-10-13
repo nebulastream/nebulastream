@@ -32,7 +32,7 @@ PhysicalNonKeyedSliceMergingOperator::create(SchemaPtr inputSchema,
                                              SchemaPtr outputSchema,
                                              WindowHandlerType keyedEventTimeWindowHandler,
                                              Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalNonKeyedSliceMergingOperator>(Util::getNextOperatorId(),
+    return std::make_shared<PhysicalNonKeyedSliceMergingOperator>(getNextOperatorId(),
                                                                   inputSchema,
                                                                   outputSchema,
                                                                   keyedEventTimeWindowHandler,

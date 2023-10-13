@@ -31,22 +31,6 @@ using OptimizerConfigurationPtr = std::shared_ptr<OptimizerConfiguration>;
 
 namespace NES::Optimizer {
 
-enum class QueryMergerRule : uint8_t {
-    SyntaxBasedCompleteQueryMergerRule,
-    SyntaxBasedPartialQueryMergerRule,
-    Z3SignatureBasedCompleteQueryMergerRule,
-    Z3SignatureBasedPartialQueryMergerRule,
-    Z3SignatureBasedPartialQueryMergerBottomUpRule,
-    HashSignatureBasedCompleteQueryMergerRule,
-    ImprovedHashSignatureBasedCompleteQueryMergerRule,
-    ImprovedHashSignatureBasedPartialQueryMergerRule,
-    HashSignatureBasedPartialQueryMergerRule,
-    DefaultQueryMergerRule,
-    HybridCompleteQueryMergerRule,
-    Z3SignatureBasedBottomUpQueryContainmentRule,
-    Z3SignatureBasedTopDownQueryContainmentMergerRule
-};
-
 class QueryMergerPhase;
 using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 

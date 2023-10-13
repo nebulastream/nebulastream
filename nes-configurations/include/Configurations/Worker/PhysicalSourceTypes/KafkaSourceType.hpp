@@ -38,20 +38,20 @@ class KafkaSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
+    static KafkaSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a KafkaSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceTypePtr create(Yaml::Node yamlConfig);
+    static KafkaSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief create a KafkaSourceConfigPtr object
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceTypePtr create();
+    static KafkaSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
     std::string toString() override;
 
@@ -159,17 +159,17 @@ class KafkaSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
-    explicit KafkaSourceType(std::map<std::string, std::string> sourceConfigMap);
+    explicit KafkaSourceType(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
-    explicit KafkaSourceType(Yaml::Node yamlConfig);
+    explicit KafkaSourceType(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Kafka source config object initialized with default values
      */
-    KafkaSourceType();
+    KafkaSourceType(std::string logicalSourceName, std::string physicalSourceName);
 
     Configurations::StringConfigOption brokers;
     Configurations::IntConfigOption autoCommit;
