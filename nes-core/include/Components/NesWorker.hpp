@@ -21,11 +21,11 @@
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/ReplicationService.hpp>
+#include <Util/PluginLoader.hpp>
 #include <future>
 #include <memory>
 #include <optional>
 #include <vector>
-#include <Util/PluginLoader.hpp>
 
 namespace grpc {
 class Server;

@@ -21,7 +21,6 @@ namespace NES {
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
-
 /**
  * @brief DataSource interface to register a new physical data source plugin.
  * Implementations of this plugin must implement createDatasource that translates a source descriptor to a DataSourcePtr.

@@ -152,9 +152,7 @@ void setupLogging(const std::string& logFileName, LogLevel level) {
     std::swap(detail::LoggerHolder::singleton, newLogger);
 }
 
-std::shared_ptr<detail::Logger> getInstance() {
-    return detail::LoggerHolder::singleton;
-}
+std::shared_ptr<detail::Logger> getInstance() { return detail::LoggerHolder::singleton; }
 
 }// namespace Logger
 
