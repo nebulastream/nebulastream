@@ -1,5 +1,44 @@
 # Changelog
 
+## [v0.5.220](https://github.com/nebulastream/nebulastream/tree/v0.5.220) (2023-10-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.219...v0.5.220)
+
+**Implemented enhancements:**
+
+- \[TASK\] Introduce plugins for operator definition [\#4130](https://github.com/nebulastream/nebulastream/issues/4130)
+- \[TASK\] Clean up build and probe for \(NLJ\) and \(HJ\) [\#4017](https://github.com/nebulastream/nebulastream/issues/4017)
+- \[TASK\] Extract OutputoriginId from StreamJoinOperatorHandler [\#3959](https://github.com/nebulastream/nebulastream/issues/3959)
+- \[TASK\] Add Abstract SynopsisTest [\#3921](https://github.com/nebulastream/nebulastream/issues/3921)
+- \[TASK\] Refactor NestedLoopJoin specific files by grouping and creating a struct [\#3907](https://github.com/nebulastream/nebulastream/issues/3907)
+- \[TASK\] MicroBenchmarkRun  for keyed aggregation [\#3837](https://github.com/nebulastream/nebulastream/issues/3837)
+- \[TASK\] ASP Operator Multithreading support [\#3825](https://github.com/nebulastream/nebulastream/issues/3825)
+- \[TASK\] Implement Haar-Wavelet [\#3787](https://github.com/nebulastream/nebulastream/issues/3787)
+- \[TASK\] Implement v-optimal histogram [\#3786](https://github.com/nebulastream/nebulastream/issues/3786)
+- \[TASK\] Implement 1-D equi-depth histogram [\#3785](https://github.com/nebulastream/nebulastream/issues/3785)
+- \[TASK\] Implement Sampling with window support [\#3783](https://github.com/nebulastream/nebulastream/issues/3783)
+- \[TASK\] Implement Reservoir Sampling without Window Support  [\#3781](https://github.com/nebulastream/nebulastream/issues/3781)
+- \[TASK\] Implement Exponential Count-Min [\#3780](https://github.com/nebulastream/nebulastream/issues/3780)
+- \[TASK\] Sequence Number, Origin Id and Watermark in Pipeline [\#3753](https://github.com/nebulastream/nebulastream/issues/3753)
+- \[TASK\] Run Join Tests with Hash Join and NLJ [\#3747](https://github.com/nebulastream/nebulastream/issues/3747)
+- \[TASK\] Create SynopsisFactory [\#3734](https://github.com/nebulastream/nebulastream/issues/3734)
+- \[TASK\] Add Window Support to Synopses [\#3628](https://github.com/nebulastream/nebulastream/issues/3628)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Enable Multithreaded Window Tests [\#3966](https://github.com/nebulastream/nebulastream/issues/3966)
+
+#### Operators 
+
+- \[Feature\] Nested Loop Join Sliding Window [\#3651](https://github.com/nebulastream/nebulastream/issues/3651)
+
+### Miscellaneous Issues ✌️
+
+- Extract query keys in ASP test `DEFAULT_QUERY_KEYS`.  [\#3947](https://github.com/nebulastream/nebulastream/issues/3947)
+- \[Feature\] Integrate ESPBench queries [\#3225](https://github.com/nebulastream/nebulastream/issues/3225)
+- \[Feature\] Integrate NEXMark queries  [\#3224](https://github.com/nebulastream/nebulastream/issues/3224)
+- \[Feature\] Investigate Hardware Performance Counters Join Reordering [\#2970](https://github.com/nebulastream/nebulastream/issues/2970)
+
 ## [v0.5.219](https://github.com/nebulastream/nebulastream/tree/v0.5.219) (2023-10-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.218...v0.5.219)
