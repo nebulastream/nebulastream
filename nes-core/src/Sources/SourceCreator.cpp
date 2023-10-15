@@ -463,8 +463,6 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
 }
 #endif
 
-
-
 DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const Runtime::BufferManagerPtr& bufferManager,
                               const Runtime::QueryManagerPtr& queryManager,
