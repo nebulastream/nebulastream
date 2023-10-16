@@ -12,19 +12,13 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-package NES;
+#ifndef NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICCOLLECTORS_STATISTICCOLLECTORTYPE_HPP_
+#define NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICCOLLECTORS_STATISTICCOLLECTORTYPE_HPP_
 
-/*
-The serializable wrapper definition for probeRequestParam
+namespace NES::Experimental::Statistics {
+/**
+ * @brief the types of StatisticCollectors
  */
-message GRPCStatProbeRequest {
-  string logicalSourceName = 1;
-  string fieldName = 2;
-  int32 statCollectorType = 3;
-  repeated string physicalSourceNames = 4;
-  string probeExpression = 5;
-  int64 startTime = 6;
-  int64 endTime = 7;
-  bool merge = 8;
-}
+enum class StatisticCollectorType { COUNT_MIN, HYPER_LOG_LOG, DDSKETCH, RESERVOIR, UNDEFINED };
+}// namespace NES::Experimental::Statistics
+#endif//NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICCOLLECTORS_STATISTICCOLLECTORTYPE_HPP_
