@@ -136,7 +136,7 @@ class TPCH_Query5 {
         auto& customers = tables[TPCHTable::Customer];
         auto customersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(customers->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> customersProjection = {"c_custkey", "c_nationkey"};
+        std::vector<Nautilus::Record::RecordFieldIdentifier> customersProjection = {"c_orderkey", "c_custkey", "c_nationkey"};
         auto customerScan = std::make_shared<Operators::Scan>(std::move(customersMemoryProviderPtr), customersProjection);
 
         /*
