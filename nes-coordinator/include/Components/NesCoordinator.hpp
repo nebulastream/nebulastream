@@ -109,8 +109,8 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs
 
 namespace Experimental::Statistics {
-class StatCoordinator;
-using StatCoordinatorPtr = std::shared_ptr<StatCoordinator>;
+class StatisticCoordinator;
+using StatisticCoordinatorPtr = std::shared_ptr<StatisticCoordinator>;
 }//namespace Experimental::Statistics
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener {
@@ -230,7 +230,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     /**
      * @return returns the statCoordinator, which is used to delegate and execute all data statistic requests
      */
-    NES::Experimental::Statistics::StatCoordinatorPtr getStatCoordinator();
+    NES::Experimental::Statistics::StatisticCoordinatorPtr getStatCoordinator();
 
   private:
     /**
@@ -267,7 +267,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     bool enableMonitoring;
     LocationServicePtr locationService;
-    NES::Experimental::Statistics::StatCoordinatorPtr statCoordinator;
+    NES::Experimental::Statistics::StatisticCoordinatorPtr statCoordinator;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

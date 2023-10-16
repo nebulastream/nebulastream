@@ -15,14 +15,14 @@
 #include <API/Schema.hpp>
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/StatRequestUtil.hpp>
+#include <GRPC/StatisticRequestUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Statistics/Requests/StatDeleteRequest.hpp>
-#include <Statistics/Requests/StatProbeRequest.hpp>
+#include <Statistics/Requests/StatisticDeleteRequest.hpp>
+#include <Statistics/Requests/StatisticProbeRequest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -462,42 +462,42 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
-std::vector<double> WorkerRPCClient::probeStat(const std::string& destAddress,
-                                               Experimental::Statistics::StatProbeRequest& probeRequest) {
+std::vector<double> WorkerRPCClient::probeStatistic(const std::string& destAddress,
+                                               Experimental::Statistics::StatisticProbeRequest& probeRequest) {
     NES_DEBUG("WorkerRPCClient: Statistic probe request address={}", destAddress);
 
     ClientContext context;
-    ProbeStatRequest request;
-    auto grpcProbeRequest = request.mutable_proberequestparamobj();
-    StatRequestUtil::serializeProbeRequest(probeRequest, grpcProbeRequest);
+    ProbeStatisticRequest request;
+    auto grpcProbeRequest = request.mutable_proberequest();
+    StatisticRequestUtil::serializeProbeRequest(probeRequest, grpcProbeRequest);
 
-    ProbeStatReply reply;
+    ProbeStatisticReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());
     auto workerStub = WorkerRPCService::NewStub(chan);
-    auto status = workerStub->ProbeStat(&context, request, &reply);
+    auto status = workerStub->ProbeStatistic(&context, request, &reply);
     if (status.ok()) {
-        std::vector<double> stats(reply.stats().begin(), reply.stats().end());
-        return stats;
+        std::vector<double> statistics(reply.statistics().begin(), reply.statistics().end());
+        return statistics;
     } else {
         NES_DEBUG("Returned Status was not ok");
         reply.Clear();
-        std::vector<double> stats(reply.stats().begin(), reply.stats().end());
-        return stats;
+        std::vector<double> statistics(reply.statistics().begin(), reply.statistics().end());
+        return statistics;
     }
 }
 
-bool WorkerRPCClient::deleteStat(const std::string& destAddress, Experimental::Statistics::StatDeleteRequest& deleteRequest) {
+bool WorkerRPCClient::deleteStatistic(const std::string& destAddress, Experimental::Statistics::StatisticDeleteRequest& deleteRequest) {
     NES_DEBUG("WorkerRPCClient: Statistic delete request address={}", destAddress);
 
     ClientContext context;
-    DeleteStatRequest request;
-    auto grpcDeleteRequest = request.mutable_deleterequestparamobj();
-    StatRequestUtil::serializeDeleteRequest(deleteRequest, grpcDeleteRequest);
+    DeleteStatisticRequest request;
+    auto grpcDeleteRequest = request.mutable_deleterequest();
+    StatisticRequestUtil::serializeDeleteRequest(deleteRequest, grpcDeleteRequest);
 
-    DeleteStatReply reply;
+    DeleteStatisticReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());
     auto workerStub = WorkerRPCService::NewStub(chan);
-    auto status = workerStub->DeleteStat(&context, request, &reply);
+    auto status = workerStub->DeleteStatistic(&context, request, &reply);
 
     if (status.ok() && reply.success() == true) {
         NES_DEBUG("Returned Status was ok");

@@ -16,11 +16,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-#include <Statistics/Requests/StatCreateRequest.hpp>
-#include <Statistics/Requests/StatDeleteRequest.hpp>
-#include <Statistics/Requests/StatProbeRequest.hpp>
-#include <Statistics/StatCollectors/StatCollectorType.hpp>
-#include <Statistics/StatCoordinator/StatCoordinator.hpp>
+#include <Statistics/StatisticManager/StatisticManager.hpp>
+#include <Statistics/Requests/StatisticCreateRequest.hpp>
+#include <Statistics/Requests/StatisticDeleteRequest.hpp>
+#include <Statistics/Requests/StatisticProbeRequest.hpp>
+#include <Statistics/StatisticCoordinator/StatisticCoordinator.hpp>
+#include <Statistics/StatisticManager/StatisticCollectorIdentifier.hpp>
+#include <Statistics/StatisticManager/StatisticCollectorStorage.hpp>
+#include <Statistics/StatisticCollectors/StatisticCollectorType.hpp>
 
 #include <API/Schema.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
@@ -59,27 +62,27 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     auto defaultLogicalSourceName = "defaultLogicalSourceName";
     std::vector<std::string> physicalSourceNames(1, "defaultPhysicalSourceName");
     auto defaultFieldName = "defaultFieldName";
-    auto statCollectorType = Experimental::Statistics::StatCollectorType::COUNT_MIN;
+    auto statisticCollectorType = Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
     auto probeExpression = "x == 15";
     auto startTime = 100;
     auto endTime = 10;
 
-    auto createObj = Experimental::Statistics::StatCreateRequest(defaultLogicalSourceName,
+    auto createObj = Experimental::Statistics::StatisticCreateRequest(defaultLogicalSourceName,
                                                                  defaultFieldName,
-                                                                 Experimental::Statistics::StatCollectorType::COUNT_MIN);
+                                                                 Experimental::Statistics::StatisticCollectorType::COUNT_MIN);
 
-    auto probeObj = Experimental::Statistics::StatProbeRequest(defaultLogicalSourceName,
+    auto probeObj = Experimental::Statistics::StatisticProbeRequest(defaultLogicalSourceName,
                                                                defaultFieldName,
-                                                               Experimental::Statistics::StatCollectorType::COUNT_MIN,
+                                                               Experimental::Statistics::StatisticCollectorType::COUNT_MIN,
                                                                probeExpression,
                                                                physicalSourceNames,
                                                                startTime,
                                                                endTime);
 
-    auto deleteObj = Experimental::Statistics::StatDeleteRequest(defaultLogicalSourceName,
-                                                                 defaultFieldName,
-                                                                 Experimental::Statistics::StatCollectorType::COUNT_MIN,
-                                                                 endTime);
+    auto deleteObj = Experimental::Statistics::StatisticDeleteRequest(defaultLogicalSourceName,
+                                                                      defaultFieldName,
+                                                                      Experimental::Statistics::StatisticCollectorType::COUNT_MIN,
+                                                                      endTime);
 
     // create coordinator
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
@@ -107,16 +110,29 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     NES_INFO("createProbeAndDeleteTest: Worker1 started successfully");
 
     auto statCoordinator = crd->getStatCoordinator();
-    auto success = statCoordinator->createStat(createObj);
+    auto success = statCoordinator->createStatistic(createObj);
 
     // checks if the query ID is 1
     EXPECT_EQ(success, 1);
 
-    auto stats = statCoordinator->probeStat(probeObj);
+    auto statCollectorStorage = wrk1->getStatisticManager()->getStatisticCollectorStorage();
+    double statistic = 1.0;
+    for (auto physicalSourceName : physicalSourceNames) {
+        auto statCollectorIdentifier = NES::Experimental::Statistics::StatisticCollectorIdentifier(defaultLogicalSourceName,
+                                                                                                   physicalSourceName,
+                                                                                                   wrk1->getTopologyNodeId(),
+                                                                                                   defaultFieldName,
+                                                                                                   statisticCollectorType);
+
+        statCollectorStorage->createStatistic(statCollectorIdentifier, statistic);
+        statistic += 1.0;
+    }
+
+    auto stats = statCoordinator->probeStatistic(probeObj);
 
     EXPECT_EQ(stats[0], 1);
 
-    success = statCoordinator->deleteStat(deleteObj);
+    success = statCoordinator->deleteStatistic(deleteObj);
 
     EXPECT_EQ(success, true);
 }

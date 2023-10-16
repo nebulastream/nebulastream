@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATCREATEREQUEST_HPP_
-#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATCREATEREQUEST_HPP_
+#ifndef NES_NES_WORKER_INCLUDE_STATISTICS_REQUESTS_STATISTICCREATEREQUEST_HPP_
+#define NES_NES_WORKER_INCLUDE_STATISTICS_REQUESTS_STATISTICCREATEREQUEST_HPP_
 
-#include <Statistics/Requests/StatRequest.hpp>
-#include <Statistics/StatCollectors/StatCollectorType.hpp>
+#include <Statistics/Requests/StatisticRequest.hpp>
+#include <Statistics/StatisticCollectors/StatisticCollectorType.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -24,15 +24,14 @@
 namespace NES::Experimental::Statistics {
 
 /**
- * @brief the inherited class that defines what is needed to build Statistics
+ * @brief the inherited class that defines what is needed to build statistics
  */
-class StatCreateRequest : public StatRequest {
+class StatisticCreateRequest : public StatisticRequest {
   public:
-    StatCreateRequest(const std::string& logicalSourceName,
-                      const std::string& fieldName,
-                      const StatCollectorType statCollectorType)
-        : StatRequest(logicalSourceName, fieldName, statCollectorType) {}
+    StatisticCreateRequest(const std::string& logicalSourceName,
+                           const std::string& fieldName,
+                           const StatisticCollectorType statisticCollectorType);
 };
 }// namespace NES::Experimental::Statistics
 
-#endif//NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATCREATEREQUEST_HPP_
+#endif//NES_NES_WORKER_INCLUDE_STATISTICS_REQUESTS_STATISTICCREATEREQUEST_HPP_

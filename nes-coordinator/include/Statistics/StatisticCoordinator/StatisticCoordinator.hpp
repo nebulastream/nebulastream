@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATCOORDINATOR_HPP_
-#define NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATCOORDINATOR_HPP_
+#ifndef NES_NES_COORDINATOR_INCLUDE_STATISTICS_STATISTICCOORDINATOR_STATISTICCOORDINATOR_HPP_
+#define NES_NES_COORDINATOR_INCLUDE_STATISTICS_STATISTICCOORDINATOR_STATISTICCOORDINATOR_HPP_
 
-#include "Identifiers.hpp"
-#include "StatQueryIdentifier.hpp"
+#include <Identifiers.hpp>
+#include <Statistics/StatisticCoordinator/StatisticQueryIdentifier.hpp>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -32,59 +32,59 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}
+}// namespace Catalogs::Source
 
 namespace Experimental::Statistics {
 
-class StatRequest;
-class StatCreateRequest;
-class StatProbeRequest;
-class StatDeleteRequest;
-class StatCollectorIdentifier;
+class StatisticRequest;
+class StatisticCreateRequest;
+class StatisticProbeRequest;
+class StatisticDeleteRequest;
+class StatisticCollectorIdentifier;
 
-/*
- * @brief the statCoordinator is a class that is a member of the coordinator node and that handles all
+/**
+ * @brief the statisticCoordinator is a class that is a member of the coordinator node and that handles all
  * calls to create, query, and delete statistics. It forwards these to the local worker nodes and
  * combines local results to global ones if desired.
  */
-class StatCoordinator {
+class StatisticCoordinator {
   public:
     /**
-     * @param queryService the query service gives the StatCoordinator the functionality to start and
+     * @param queryService the query service gives the StatisticCoordinator the functionality to start and
      * stop statistic queries
-     * @param sourceCatalog the source catalog allows the StatCoordinator to understand the relationship
+     * @param sourceCatalog the source catalog allows the StatisticCoordinator to understand the relationship
      * between logical and physical sources and get the IPs of the nodes on which the physical sources
      * are located
      */
-    StatCoordinator(QueryServicePtr queryService, Catalogs::Source::SourceCatalogPtr sourceCatalog);
+    StatisticCoordinator(QueryServicePtr queryService, Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
     /**
      * @brief checks if the parametrized statistic query already exists and if not starts one accordingly
-     * @param buildParamObj the parameter object specifying the data source (logicalSourceName and fieldName)
+     * @param createRequest the parameter object specifying the data source (logicalSourceName and fieldName)
      * as well as the type of Statistic that is desired on the data source
      * @return the QueryId of the query that is now generating the statistic
      */
-    QueryId createStat(StatCreateRequest& buildRequest);
+    QueryId createStatistic(StatisticCreateRequest& createRequest);
 
     /**
      * @brief checks if the desired statistic exists for all specified physicalSources and if so, queries
-     * all StatCollectors for the specified statistic. Depending on the probeQuery many local statistics
+     * all StatisticCollectors for the specified statistic. Depending on the probeQuery many local statistics
      * are returned or one globally merged statistic is returned
-     * @param probeParamObj the parameter object that specifies what statistic is desired. The user has to
+     * @param probeRequest the parameter object that specifies what statistic is desired. The user has to
      * specify the data source (logicalSource, physicalSource(s), and the field name),the time frame
      * (startTime and endTime), the statistic type and which specific statistic is desired (e.g. selectivity
      * (Count-Min) and x == 15), as well as whether the results are to be merged or not (merge).
      * @return a vector of one or more statistics that were queried
      */
-    std::vector<double> probeStat(StatProbeRequest& probeRequest);
+    std::vector<double> probeStatistic(StatisticProbeRequest& probeRequest);
 
     /**
-     * @brief attempts to stops a statistic query and deletes all associated StatCollectors
-     * @param deleteParamObj specifies the data source (logicalSourceName and fieldName) for which to
-     * delete the StatCollector of StatCollectorType.
+     * @brief attempts to stops a statistic query and deletes all associated StatisticCollectors
+     * @param deleteRequest specifies the data source (logicalSourceName and fieldName) for which to
+     * delete the StatisticCollector of StatisticCollectorType.
      * @return true when successful and false otherwise
      */
-    bool deleteStat(StatDeleteRequest& deleteRequest);
+    bool deleteStatistic(StatisticDeleteRequest& deleteRequest);
 
   private:
     /**
@@ -96,12 +96,12 @@ class StatCoordinator {
      */
     std::vector<std::string> addressesOfLogicalStream(const std::string& logicalSourceName);
 
-    std::unordered_map<StatQueryIdentifier, QueryId, StatQueryIdentifier::Hash> trackedStatistics;
+    std::unordered_map<StatisticQueryIdentifier, QueryId, StatisticQueryIdentifier::Hash> trackedStatistics;
     QueryServicePtr queryService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     WorkerRPCClientPtr workerClient;
 };
-}
-}
+}// namespace Experimental::Statistics
+}// namespace NES
 
-#endif//NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATCOORDINATOR_HPP_
+#endif//NES_NES_COORDINATOR_INCLUDE_STATISTICS_STATISTICCOORDINATOR_STATISTICCOORDINATOR_HPP_

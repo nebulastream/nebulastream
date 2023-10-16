@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        StatCoordinator.cpp
-        StatQueryIdentifier.cpp)
+add_source_files(nes-worker
+        StatisticCreateRequest.cpp
+        StatisticProbeRequest.cpp
+        StatisticDeleteRequest.cpp
+        StatisticRequest.cpp)

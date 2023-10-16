@@ -15,8 +15,8 @@
 syntax = "proto3";
 import "SerializableQueryPlan.proto";
 import "WorkerLocation.proto";
-import "ProbeRequestParamObj.proto";
-import "DeleteRequestParamObj.proto";
+import "StatisticProbeRequest.proto";
+import "StatisticDeleteRequest.proto";
 
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
@@ -43,8 +43,8 @@ service WorkerRPCService {
   rpc UploadMlModelClientStream(stream MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelServerStream(MlModelFileUploadRequest) returns(stream MlModelFileUploadResponse) {}
 
-  rpc ProbeStat (ProbeStatRequest) returns(ProbeStatReply) {}
-  rpc DeleteStat (DeleteStatRequest) returns(DeleteStatReply) {}
+  rpc ProbeStatistic (ProbeStatisticRequest) returns(ProbeStatisticReply) {}
+  rpc DeleteStatistic (DeleteStatisticRequest) returns(DeleteStatisticReply) {}
 }
 
 message DeployQueryRequest {
@@ -177,18 +177,18 @@ message MlModelFileUploadResponse {
   MlModelFileUploadStatus status = 2;
 }
 
-message ProbeStatRequest {
-  NES.GRPCStatProbeRequest probeRequestParamObj = 1;
+message ProbeStatisticRequest {
+  NES.GRPCStatisticProbeRequest probeRequest = 1;
 }
 
-message ProbeStatReply {
-  repeated double stats = 1;
+message ProbeStatisticReply {
+  repeated double statistics = 1;
 }
 
-message DeleteStatRequest {
-  NES.GRPCStatDeleteRequest deleteRequestParamObj= 1;
+message DeleteStatisticRequest {
+  NES.GRPCStatisticDeleteRequest deleteRequest = 1;
 }
 
-message DeleteStatReply {
+message DeleteStatisticReply {
   bool success = 1;
 }

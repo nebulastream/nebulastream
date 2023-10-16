@@ -10,5 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(StatisticManager)
-add_subdirectory(Requests)
+add_source_files(nes-core
+        StatisticCoordinator.cpp
+        StatisticQueryIdentifier.cpp)

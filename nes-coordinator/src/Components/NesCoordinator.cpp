@@ -48,7 +48,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
-#include <Statistics/StatCoordinator/StatCoordinator.hpp>
+#include <Statistics/StatisticCoordinator/StatisticCoordinator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <WorkQueues/RequestQueue.hpp>
@@ -136,7 +136,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     monitoringService = std::make_shared<MonitoringService>(topology, queryService, queryCatalogService, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 
-    statCoordinator = std::make_shared<Experimental::Statistics::StatCoordinator>(queryService, sourceCatalog);
+    statCoordinator = std::make_shared<Experimental::Statistics::StatisticCoordinator>(queryService, sourceCatalog);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -381,6 +381,6 @@ LocationServicePtr NesCoordinator::getLocationService() const { return locationS
 
 GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() const { return globalExecutionPlan; }
 
-Experimental::Statistics::StatCoordinatorPtr NesCoordinator::getStatCoordinator() { return statCoordinator; }
+Experimental::Statistics::StatisticCoordinatorPtr NesCoordinator::getStatCoordinator() { return statCoordinator; }
 
 }// namespace NES
