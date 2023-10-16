@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <GRPC/StatRequestUtil.hpp>
+#include <GRPC/StatisticRequestUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
@@ -22,9 +22,10 @@
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Statistics/Requests/StatDeleteRequest.hpp>
-#include <Statistics/Requests/StatProbeRequest.hpp>
-#include <Statistics/StatManager/StatManager.hpp>
+#include <Statistics/Requests/StatisticDeleteRequest.hpp>
+#include <Statistics/Requests/StatisticProbeRequest.hpp>
+#include <Statistics/StatisticManager/StatisticCollectorStorage.hpp>
+#include <Statistics/StatisticManager/StatisticManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -36,9 +37,10 @@ namespace NES {
 WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                                  Monitoring::MonitoringAgentPtr monitoringAgent,
                                  NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                                 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
+                                 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor,
+                                 NES::Experimental::Statistics::StatisticManagerPtr statisticManager)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)),
-      locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)) {
+      locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)), statisticManager(statisticManager) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
@@ -218,21 +220,20 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     return Status::OK;
 }
 
-Status WorkerRPCServer::ProbeStat(grpc::ServerContext*, const ProbeStatRequest* request, ProbeStatReply* reply) {
+Status WorkerRPCServer::ProbeStatistic(grpc::ServerContext*, const ProbeStatisticRequest* request, ProbeStatisticReply* reply) {
 
-    auto probeRequest = &request->proberequestparamobj();
-    auto serializedProbeRequest = StatRequestUtil::deserializeProbeRequest(probeRequest);
-    statManager->probeStats(serializedProbeRequest, reply);
-    auto stats = reply->stats();
+    auto probeRequest = &request->proberequest();
+    auto serializedProbeRequest = StatisticRequestUtil::deserializeProbeRequest(probeRequest);
+    statisticManager->probeStatistic(serializedProbeRequest, reply, nodeEngine->getNodeId());
 
     return Status::OK;
 }
 
-Status WorkerRPCServer::DeleteStat(grpc::ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) {
+Status WorkerRPCServer::DeleteStatistic(grpc::ServerContext*, const DeleteStatisticRequest* request, DeleteStatisticReply* reply) {
 
-    auto deleteRequest = &request->deleterequestparamobj();
-    auto serializedDeleteRequest = StatRequestUtil::deserializeDeleteRequest(deleteRequest);
-    auto success = statManager->deleteStat(serializedDeleteRequest);
+    auto deleteRequest = &request->deleterequest();
+    auto serializedDeleteRequest = StatisticRequestUtil::deserializeDeleteRequest(deleteRequest);
+    auto success = statisticManager->deleteStatistic(serializedDeleteRequest, nodeEngine->getNodeId());
     if (success == true) {
         reply->set_success(true);
         return Status::OK;

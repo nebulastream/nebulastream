@@ -42,8 +42,8 @@ using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor
 }// namespace Spatial::Mobility::Experimental
 
 namespace Experimental::Statistics {
-class StatManager;
-using StatManagerPtr = std::unique_ptr<StatManager>;
+class StatisticManager;
+using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
 }// namespace Experimental::Statistics
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
@@ -51,7 +51,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                     Monitoring::MonitoringAgentPtr monitoringAgent,
                     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor);
+                    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor,
+                    NES::Experimental::Statistics::StatisticManagerPtr statisticManager);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -75,16 +76,16 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
-    Status ProbeStat(ServerContext*, const ProbeStatRequest* request, ProbeStatReply* reply) override;
+    Status ProbeStatistic(ServerContext*, const ProbeStatisticRequest* request, ProbeStatisticReply* reply) override;
 
-    Status DeleteStat(ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) override;
+    Status DeleteStatistic(ServerContext*, const DeleteStatisticRequest* request, DeleteStatisticReply* reply) override;
 
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Monitoring::MonitoringAgentPtr monitoringAgent;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
-    NES::Experimental::Statistics::StatManagerPtr statManager;
+    NES::Experimental::Statistics::StatisticManagerPtr statisticManager;
 };
 
 }// namespace NES

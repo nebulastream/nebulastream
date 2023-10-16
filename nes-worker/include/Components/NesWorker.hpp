@@ -72,8 +72,8 @@ using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 }// namespace Monitoring
 
 namespace Experimental::Statistics {
-class StatManager;
-using StatManagerPtr = std::unique_ptr<StatManager>;
+class StatisticManager;
+using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
 }// namespace Experimental::Statistics
 
 static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
@@ -260,6 +260,11 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
+    /**
+     * @return
+     */
+    NES::Experimental::Statistics::StatisticManagerPtr getStatisticManager();
+
   private:
     /**
      * @brief method to register physical source with the coordinator
@@ -303,7 +308,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
     Util::PluginLoader pluginLoader = Util::PluginLoader();
-    NES::Experimental::Statistics::StatManagerPtr statManager;
+    NES::Experimental::Statistics::StatisticManagerPtr statisticManager;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

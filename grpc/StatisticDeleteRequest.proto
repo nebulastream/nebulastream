@@ -18,9 +18,9 @@ package NES;
 /*
 The serializable wrapper definition for probeRequestParam
  */
-message GRPCStatDeleteRequest {
+message GRPCStatisticDeleteRequest {
   string logicalSourceName = 1;
   string fieldName = 2;
-  int32 statCollectorType = 3;
+  int32 statisticCollectorType = 3;
   int64 endTime = 4;
 }

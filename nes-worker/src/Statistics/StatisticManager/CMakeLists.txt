@@ -11,5 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-worker
-        StatManager.cpp
-        StatCollectorIdentifier.cpp)
+        StatisticManager.cpp
+        StatisticCollectorIdentifier.cpp
+        StatisticCollectorStorage.cpp)

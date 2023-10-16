@@ -33,7 +33,7 @@
 #include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
-#include <Statistics/StatManager/StatManager.hpp>
+#include <Statistics/StatisticManager/StatisticManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -63,7 +63,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
           workerConfig->mobilityConfiguration)),
-      statManager(std::make_unique<NES::Experimental::Statistics::StatManager>()) {
+      statisticManager(std::make_unique<NES::Experimental::Statistics::StatisticManager>()) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -98,7 +98,7 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
 }
 
 void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>& portPromise) {
-    WorkerRPCServer service(nodeEngine, monitoringAgent, locationProvider, trajectoryPredictor);
+    WorkerRPCServer service(nodeEngine, monitoringAgent, locationProvider, trajectoryPredictor, statisticManager);
     ServerBuilder builder;
     int actualRpcPort;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials(), &actualRpcPort);
@@ -437,6 +437,10 @@ bool NesWorker::unregisterPhysicalSource(std::string logicalName, std::string ph
 }
 
 const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const { return workerConfig; }
+
+NES::Experimental::Statistics::StatisticManagerPtr NesWorker::getStatisticManager() {
+    return statisticManager;
+}
 
 bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes) {
     NES_ASSERT(!physicalSourceTypes.empty(), "invalid physical sources");

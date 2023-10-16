@@ -14,40 +14,40 @@
 
 #include <algorithm>
 
-#include <Statistics/Requests/StatCreateRequest.hpp>
-#include <Statistics/Requests/StatDeleteRequest.hpp>
-#include <Statistics/Requests/StatProbeRequest.hpp>
-#include <Statistics/StatCoordinator/StatCoordinator.hpp>
+#include <Statistics/Requests/StatisticCreateRequest.hpp>
+#include <Statistics/Requests/StatisticDeleteRequest.hpp>
+#include <Statistics/Requests/StatisticProbeRequest.hpp>
+#include <Statistics/StatisticCoordinator/StatisticCoordinator.hpp>
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <GRPC/WorkerRPCClient.hpp>
 
 namespace NES::Experimental::Statistics {
 
-StatCoordinator::StatCoordinator(QueryServicePtr queryService, Catalogs::Source::SourceCatalogPtr sourceCatalog)
+StatisticCoordinator::StatisticCoordinator(QueryServicePtr queryService, Catalogs::Source::SourceCatalogPtr sourceCatalog)
     : queryService(queryService), sourceCatalog(sourceCatalog), workerClient(WorkerRPCClient::create()) {}
 
-QueryId StatCoordinator::createStat(StatCreateRequest& createRequest) {
+QueryId StatisticCoordinator::createStatistic(StatisticCreateRequest& createRequest) {
 
-    auto statQueryIdentifier = StatQueryIdentifier(createRequest.getLogicalSourceName(),
-                                                   createRequest.getFieldName(),
-                                                   createRequest.getStatCollectorType());
-    auto statQueryIdIt = trackedStatistics.find(statQueryIdentifier);
+    auto statisticQueryIdentifier = StatisticQueryIdentifier(createRequest.getLogicalSourceName(),
+                                                             createRequest.getFieldName(),
+                                                             createRequest.getStatisticCollectorType());
+    auto statisticQueryIdIt = trackedStatistics.find(statisticQueryIdentifier);
 
     QueryId queryId;
-    if (statQueryIdIt == trackedStatistics.end()) {
+    if (statisticQueryIdIt == trackedStatistics.end()) {
 
         NES_DEBUG("Statistic does not yet exist");
         // ToDo: add logic for different queries in later issue
-        auto sourceName = statQueryIdentifier.getLogicalSourceName();
-        auto fieldName = statQueryIdentifier.getFieldName();
+        auto sourceName = statisticQueryIdentifier.getLogicalSourceName();
+        auto fieldName = statisticQueryIdentifier.getFieldName();
         auto query = Query::from(sourceName).filter(Attribute(fieldName) < 42).sink(PrintSinkDescriptor::create());
 
         // ToDo: add actual statistic query. Issue: 4314
@@ -59,21 +59,21 @@ QueryId StatCoordinator::createStat(StatCreateRequest& createRequest) {
         //                                                        LineageType::IN_MEMORY);
         queryId = 1;
         NES_DEBUG("Adding statistic to the unordered_map of tracked statistics");
-        trackedStatistics[statQueryIdentifier] = queryId;
+        trackedStatistics[statisticQueryIdentifier] = queryId;
 
         return queryId;
 
     } else {
 
         NES_DEBUG("Statistic already exists. QueryID of the generating query is returned")
-        queryId = statQueryIdIt->second;
+        queryId = statisticQueryIdIt->second;
         return queryId;
     }
 }
 
-std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
+std::vector<double> StatisticCoordinator::probeStatistic(StatisticProbeRequest& probeRequest) {
 
-    std::vector<double> stats;
+    std::vector<double> statistics;
     std::vector<double> erroneousResult{-1.0};
     auto queriedPhysicalSources = probeRequest.getPhysicalSourceNames();
     probeRequest.clearPhysicalSourceNames();
@@ -82,7 +82,8 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
     // have multiple physicalSource we want to query
     auto allPhysicalSources =
         sourceCatalog->getSubsetOfPhysicalSources(probeRequest.getLogicalSourceName(), queriedPhysicalSources);
-    std::sort(allPhysicalSources.begin(), allPhysicalSources.end(),
+    std::sort(allPhysicalSources.begin(),
+              allPhysicalSources.end(),
               [](const Catalogs::Source::SourceCatalogEntryPtr& entry1, const Catalogs::Source::SourceCatalogEntryPtr& entry2) {
                   return entry1->getNode()->getId() < entry2->getNode()->getId();
               });
@@ -97,13 +98,13 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
     }
 
     // all the desired physicalSource exist
-    auto statQueryIdentifier = StatQueryIdentifier(probeRequest.getLogicalSourceName(),
-                                                   probeRequest.getFieldName(),
-                                                   probeRequest.getStatCollectorType());
+    auto statisticQueryIdentifier = StatisticQueryIdentifier(probeRequest.getLogicalSourceName(),
+                                                             probeRequest.getFieldName(),
+                                                             probeRequest.getStatisticCollectorType());
 
-    auto statQueryPairIt = trackedStatistics.find(statQueryIdentifier);
+    auto statisticQueryPairIt = trackedStatistics.find(statisticQueryIdentifier);
 
-    if (statQueryPairIt == trackedStatistics.end()) {
+    if (statisticQueryPairIt == trackedStatistics.end()) {
         NES_DEBUG("Statistic cannot queried, as it is not being generated.");
         return erroneousResult;
     } else {
@@ -124,27 +125,27 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
                     break;
                 }
             }
-            auto localStats = workerClient->probeStat(destAddress, probeRequest);
-            stats.insert(stats.end(), localStats.begin(), localStats.end());
+            auto localStatistics = workerClient->probeStatistic(destAddress, probeRequest);
+            statistics.insert(statistics.end(), localStatistics.begin(), localStatistics.end());
         }
     }
     if (probeRequest.getMerge()) {
-        //ToDo: In future potentially combine fine grained stats to coarse grained ones
+        //ToDo: In future potentially combine fine grained statistics to coarse grained ones
     }
 
-    return stats;
+    return statistics;
 }
 
-bool StatCoordinator::deleteStat(StatDeleteRequest& deleteRequest) {
+bool StatisticCoordinator::deleteStatistic(StatisticDeleteRequest& deleteRequest) {
 
     // check if statistic(s) even exists
-    auto statQueryIdentifier = StatQueryIdentifier(deleteRequest.getLogicalSourceName(),
-                                                   deleteRequest.getFieldName(),
-                                                   deleteRequest.getStatCollectorType());
+    auto statisticQueryIdentifier = StatisticQueryIdentifier(deleteRequest.getLogicalSourceName(),
+                                                             deleteRequest.getFieldName(),
+                                                             deleteRequest.getStatisticCollectorType());
 
-    auto statQueryIdIt = trackedStatistics.find(statQueryIdentifier);
-    if (statQueryIdIt == trackedStatistics.end()) {
-        // stat is not being generated, return with error value
+    auto statisticQueryIdIt = trackedStatistics.find(statisticQueryIdentifier);
+    if (statisticQueryIdIt == trackedStatistics.end()) {
+        // statistic is not being generated, return with error value
         return -1;
     } else {
         auto allAddresses = addressesOfLogicalStream(deleteRequest.getLogicalSourceName());
@@ -152,25 +153,26 @@ bool StatCoordinator::deleteStat(StatDeleteRequest& deleteRequest) {
         // Success equal to one for the moment
         int32_t success = 1;
         for (std::string destAddress : allAddresses) {
-            success = workerClient->deleteStat(destAddress, deleteRequest);
+            success = workerClient->deleteStatistic(destAddress, deleteRequest);
             if (success == -1) {
                 return success;
             }
         }
         // ToDo: Add Logic to stop statistic queries. Issue: 4315
         //        NES_DEBUG("Trying to stop query!");
-        //        auto queryStopped = queryService->validateAndQueueStopQueryRequest(statQueryIdIt->second);
+        //        auto queryStopped = queryService->validateAndQueueStopQueryRequest(statisticQueryIdIt->second);
         //        if (!queryStopped) {
         //            return -1;
         //        }
 
-        trackedStatistics.erase(statQueryIdentifier);
-        NES_DEBUG("StatCollectors successfully deleted and query stopped!");
+        trackedStatistics.erase(statisticQueryIdentifier);
+        NES_DEBUG("StatisticCollectors successfully deleted!");
+        NES_DEBUG("Statistic queries successfully stopped!");
         return success;
     }
 }
 
-std::vector<std::string> StatCoordinator::addressesOfLogicalStream(const std::string& logicalSourceName) {
+std::vector<std::string> StatisticCoordinator::addressesOfLogicalStream(const std::string& logicalSourceName) {
 
     std::vector<std::string> addresses;
     auto physicalSources = sourceCatalog->getPhysicalSources(logicalSourceName);

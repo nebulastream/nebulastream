@@ -61,11 +61,11 @@ using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 }// namespace Spatial::Mobility::Experimental
 
 namespace Experimental::Statistics {
-class StatProbeRequest;
-using StatProbeRequestPtr = std::unique_ptr<StatProbeRequest>;
+class StatisticProbeRequest;
+using StatisticProbeRequestPtr = std::unique_ptr<StatisticProbeRequest>;
 
-class StatDeleteRequest;
-using StatDeleteRequestPtr = std::unique_ptr<StatDeleteRequest>;
+class StatisticDeleteRequest;
+using StatisticDeleteRequestPtr = std::unique_ptr<StatisticDeleteRequest>;
 }
 
 enum class RpcClientModes : uint8_t { Register, Unregister, Start, Stop };
@@ -251,18 +251,18 @@ class WorkerRPCClient {
     /**
      * @brief Sends a request to a node to query a statistic
      * @param destAddress the address of the node to which the statistic probe query is sent
-     * @param probeRequest a request that has all necessary information to query a statCollector for a statistic
+     * @param probeRequest a request that has all necessary information to query a statisticCollector for a statistic
      * @return returns the queried statistic(s) or a vector only containing a nullptr
      */
-    std::vector<double> probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequest);
+    std::vector<double> probeStatistic(const std::string& destAddress, Experimental::Statistics::StatisticProbeRequest& probeRequest);
 
     /**
      * @brief Sends a request to a node to delete a specific statistic
      * @param destAddress the address of the node
-     * @param deleteRequest a request which contains all necessary info for the deletion of one one or more StatCollectors
+     * @param deleteRequest a request which contains all necessary info for the deletion of one one or more StatisticCollectors
      * @return returns true when successful and false otherwise
      */
-    bool deleteStat(const std::string& destAddress, Experimental::Statistics::StatDeleteRequest& deleteRequest);
+    bool deleteStatistic(const std::string& destAddress, Experimental::Statistics::StatisticDeleteRequest& deleteRequest);
 
   private:
     WorkerRPCClient() = default;

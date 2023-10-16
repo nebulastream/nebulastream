@@ -16,5 +16,5 @@ add_source_files(nes-worker
         WorkerRPCServer.cpp
         CallData.cpp
         HealthCheckRPCServer.cpp
-        StatRequestUtil.cpp
+        StatisticRequestUtil.cpp
 )

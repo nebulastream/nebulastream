@@ -12,19 +12,12 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-package NES;
+#include <Statistics/Requests/StatisticCreateRequest.hpp>
 
-/*
-The serializable wrapper definition for probeRequestParam
- */
-message GRPCStatProbeRequest {
-  string logicalSourceName = 1;
-  string fieldName = 2;
-  int32 statCollectorType = 3;
-  repeated string physicalSourceNames = 4;
-  string probeExpression = 5;
-  int64 startTime = 6;
-  int64 endTime = 7;
-  bool merge = 8;
-}
+namespace NES::Experimental::Statistics {
+
+StatisticCreateRequest::StatisticCreateRequest(const std::string& logicalSourceName,
+                                               const std::string& fieldName,
+                                               const StatisticCollectorType statisticCollectorType)
+    : StatisticRequest(logicalSourceName, fieldName, statisticCollectorType) {}
+}// namespace NES::Experimental::Statistics
