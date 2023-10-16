@@ -23,6 +23,18 @@
 
 namespace NES {
 
+struct StatCollectorIdentifierHash {
+    std::size_t operator()(const NES::Experimental::Statistics::StatCollectorIdentifier& identifier) const {
+        // Combine the hash codes of the components to get a unique identifier
+        size_t hashValue = 0;
+        hashValue ^= std::hash<std::string>()(identifier.getLogicalSourceName()) + 0x9e3779b9 + (hashValue << 6) + (hashValue >> 2);
+        hashValue ^= std::hash<std::string>()(identifier.getPhysicalSourceName()) + 0x9e3779b9 + (hashValue << 6) + (hashValue >> 2);
+        hashValue ^= std::hash<std::string>()(identifier.getFieldName()) + 0x9e3779b9 + (hashValue << 6) + (hashValue >> 2);
+        hashValue ^= std::hash<std::string>()(identifier.getExpression()) + 0x9e3779b9 + (hashValue << 6) + (hashValue >> 2);
+        return hashValue;
+    }
+};
+
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
