@@ -229,6 +229,12 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         uint64_t d;
         uint64_t e;
         uint64_t f;
+        uint64_t g;
+        uint64_t h;
+        uint64_t i;
+        uint64_t k;
+        uint64_t l;
+        uint64_t m;
         uint64_t timestamp1;
         uint64_t timestamp2;
     };

@@ -17,6 +17,10 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -55,10 +59,22 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
     for (uint64_t i = 0; i < topologyNodes.size(); i++) {
         // Set the Pinned operator property
         auto currentRow = matrix[i];
+        bool queryIsSet = false;
         for (uint64_t j = 0; j < operators.size(); j++) {
             if (currentRow[j]) {
                 // if the the value of the matrix at (i,j) is 1, then add a PINNED_NODE_ID of the topologyNodes[i] to operators[j]
                 operators[j]->as<OperatorNode>()->addProperty(PINNED_NODE_ID, topologyNodes[i]->getId());
+                if (!queryIsSet && (operators[j]->as<OperatorNode>()->instanceOf<WindowLogicalOperatorNode>() || operators[j]->as<OperatorNode>()->instanceOf<JoinLogicalOperatorNode>())) {
+                    queryType = QueryType::MEMORY_HEAVY;
+                    queryIsSet = true;
+                }
+                else if (!queryIsSet && (operators[j]->as<OperatorNode>()->instanceOf<FilterLogicalOperatorNode>() || operators[j]->as<OperatorNode>()->instanceOf<MapLogicalOperatorNode>())) {
+                    queryType = QueryType::CPU_HEAVY;
+                    queryIsSet = true;
+                }
+                else if (!queryIsSet && operators[j]->as<OperatorNode>()->instanceOf<SinkLogicalOperatorNode>()) {
+                    queryType = QueryType::NETWORK_HEAVY;
+                }
             }
         }
     }
@@ -79,6 +95,15 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
         adaptEpochCallback = [](std::vector<TopologyNodePtr>) {
         };
     }
+    if (ftPlacement == FaultTolerancePlacement::MFTPH) {
+        adjustWeightsCallback = [this](QueryType::Value queryType, FaultToleranceType::Value ftType) {
+            adjustWeights(queryType, ftType);
+        };
+    } else {
+        adjustWeightsCallback = [](QueryType::Value queryType, FaultToleranceType::Value ftType) {
+        };
+    }
+
     std::set<TopologyNodePtr> topologyNodesWithUpStreamPinnedOperators;
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
@@ -150,7 +175,7 @@ void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodeP
         if (ftPlacement == FaultTolerancePlacement::NAIVE) {
             selectedTopology = placeFaultToleranceNaive(availablePaths);
         } else {
-            selectedTopology = placeFaultToleranceMFTP(availablePaths);
+            selectedTopology = placeFaultToleranceMFTP(availablePaths, faultToleranceType);
         }
     }
     //4. Map nodes in the selected topology by their ids.
@@ -228,17 +253,30 @@ BasePlacementStrategy::placeFaultToleranceNaive(std::vector<std::vector<Topology
 }
 
 std::vector<TopologyNodePtr>
-BasePlacementStrategy::placeFaultToleranceMFTP(std::vector<std::vector<TopologyNodePtr>> availablePaths) {
+BasePlacementStrategy::placeFaultToleranceMFTP(std::vector<std::vector<TopologyNodePtr>> availablePaths, FaultToleranceType::Value faultToleranceType) {
     auto longestPath = std::max_element(availablePaths.begin(), availablePaths.end(), Util::pathComparator);
     std::map<uint64_t, std::pair<double, double>> individualScores = std::map<uint64_t, std::pair<double, double>>();
     std::vector<TopologyNodePtr> ftPlacementPath = std::vector<TopologyNodePtr>();
     PlacementScore maxFaultTolerancePlacementScore = {0, ftPlacementPath, individualScores};
     auto selectedTopologyForPlacement = std::vector<TopologyNodePtr>();
+    uint64_t minNumOfNodesForFT = 0;
+
+    adjustWeightsCallback(queryType, faultToleranceType);
+
     for (auto path : availablePaths) {
         auto currentPath = path;
         currentPath.erase(currentPath.begin());
         PlacementScore placementScore = placeFaultTolerance(currentPath, path);
-        if (placementScore.score > maxFaultTolerancePlacementScore.score) {
+        if (faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
+            minNumOfNodesForFT = floor(currentPath.size() * 0.75);
+        }
+        else if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+            minNumOfNodesForFT = floor(currentPath.size() * 0.5);
+        }
+        else if (faultToleranceType == FaultToleranceType::AT_MOST_ONCE) {
+            minNumOfNodesForFT = floor(currentPath.size() * 0.25);
+        }
+        if (placementScore.score > maxFaultTolerancePlacementScore.score && placementScore.path.size() >= minNumOfNodesForFT) {
             maxFaultTolerancePlacementScore = placementScore;
             selectedTopologyForPlacement = path;
         }
@@ -259,9 +297,7 @@ BasePlacementStrategy::placeFaultToleranceMFTP(std::vector<std::vector<TopologyN
                 throw Exceptions::RuntimeException("BasePlacementStrategy::Cannot place fault tolerance. Not enough resources.");
             } else {
                 topology->reduceMemory(currentTopologyNode->getId(), memoryToReduce);
-                std::cout << "New memory:" << currentTopologyNode->getAvailableMemory();
                 topology->reduceNetwork(currentTopologyNode->getId(), networkToReduce);
-                std::cout << "New network:" << currentTopologyNode->getAvailableNetwork();
                 topology->setEpoch(currentTopologyNode->getId(), currentTopologyNode->getEpochValue());
                 currentTopologyNode->addNodeProperty("isBuffering", 1);
             }
@@ -428,6 +464,33 @@ void BasePlacementStrategy::adaptEpoch(std::vector<TopologyNodePtr> pathForPlace
     }
 }
 
+void BasePlacementStrategy::adjustWeights(QueryType::Value queryType, FaultToleranceType::Value ftType) {
+    double w_resources = 0;
+    if (ftType == FaultToleranceType::EXACTLY_ONCE) {
+        w_safety = 0.75;
+        w_resources = 0.25;
+    }
+    else if (ftType == FaultToleranceType::AT_LEAST_ONCE) {
+        w_safety = 0.50;
+        w_resources = 0.50;
+    }
+    else if (ftType == FaultToleranceType::AT_MOST_ONCE) {
+        w_safety = 0.25;
+        w_resources = 0.75;
+    }
+    else if (ftType == FaultToleranceType::NONE) {
+        w_safety = 0.0;
+        w_resources = 1.0;
+    }
+    if (queryType == QueryType::MEMORY_HEAVY) {
+        w_memory = 0.7 * w_resources;
+        w_network = 0.3 * w_resources;
+    }
+    else if (queryType == QueryType::NETWORK_HEAVY) {
+        w_memory = 0.3 * w_resources;
+        w_network = 0.7 * w_resources;
+    }
+}
 void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {

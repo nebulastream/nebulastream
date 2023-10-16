@@ -20,6 +20,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/FaultTolerancePlacement.hpp>
 #include <Util/FaultToleranceType.hpp>
+#include <Util/QueryType.hpp>
 #include <Util/LineageType.hpp>
 #include <chrono>
 #include <functional>
@@ -233,11 +234,13 @@ class BasePlacementStrategy {
     std::map<uint64_t, TopologyNodePtr> topologyMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
+    QueryType::Value queryType;
     double w_memory = 0.33;
     double w_network = 0.33;
     double w_safety = 0.33;
 
     std::function<void(std::vector<TopologyNodePtr>)> adaptEpochCallback;
+    std::function<void(QueryType::Value queryType, FaultToleranceType::Value ftType)> adjustWeightsCallback;
 
   private:
     /**
@@ -284,9 +287,10 @@ class BasePlacementStrategy {
     /**
      * @brief place fault tolerance in elaborative way
      * @param availablePaths : available paths between pinned operators
+     * @param faultToleranceType : provided level of reliability
      * @return selected placement
      */
-    std::vector<TopologyNodePtr> placeFaultToleranceMFTP(std::vector<std::vector<TopologyNodePtr>> availablePaths);
+    std::vector<TopologyNodePtr> placeFaultToleranceMFTP(std::vector<std::vector<TopologyNodePtr>> availablePaths, FaultToleranceType::Value faultToleranceType);
 
     /**
      * @brief place fault tolerance in elaborative way
@@ -307,9 +311,16 @@ class BasePlacementStrategy {
     /**
      * Calculates the optimal epoch parameter considering the smallest device on the path
      * @param pathForPlacement path that was chosen for placement
-     * @return new epoch
      */
     void adaptEpoch(std::vector<TopologyNodePtr> pathForPlacement);
+
+    /**
+     * Calculates the optimal weights based on the query type
+     * @param queryType as an option of three possibilities: 0 - memory-heavy, 1 - cpu-heavy, 2 - network-heavy
+     * @param ftType level of reliability specified by the user
+     */
+    void adjustWeights(QueryType::Value queryType, FaultToleranceType::Value ftType);
+
 
     /**
      * Check if operator present in the given collection
