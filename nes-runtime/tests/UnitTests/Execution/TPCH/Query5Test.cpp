@@ -97,35 +97,59 @@ namespace NES::Runtime::Execution {
         };
 
         TEST_P(TPCH_Q5, joinPipeline) {
-            //TODO 4240: adjust the test
-//            auto& customers = tables[TPCHTable::Customer];
-//            auto& orders = tables[TPCHTable::Orders];
-//            auto& lineitems = tables[TPCHTable::LineItem];
-//
-//            auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
-//
-//            // process query
-//            auto pipeline1 = plan.getPipeline(0);
-//            auto pipeline2 = plan.getPipeline(1);
-//            auto pipeline3 = plan.getPipeline(2);
-//            auto aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
-//            auto orderCustomersJoinBuildPipeline = provider->create(pipeline2.pipeline, options);
-//            auto lineitems_ordersJoinBuildPipeline = provider->create(pipeline3.pipeline, options);
-//
-//            aggExecutablePipeline->setup(*pipeline1.ctx);
-//            orderCustomersJoinBuildPipeline->setup(*pipeline2.ctx);
-//            lineitems_ordersJoinBuildPipeline->setup(*pipeline3.ctx);
-//
-//            for (auto& chunk : customers->getChunks()) {
-//                aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
-//            }
-//
-//            auto joinHandler = pipeline1.ctx->getOperatorHandler<BatchJoinHandler>(0);
-//            auto numberOfKeys = joinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-//            EXPECT_EQ(numberOfKeys, 337);
-//            auto hm = joinHandler->mergeState();
-//            EXPECT_EQ(hm->getCurrentSize(), 337);
-//
+            auto& orders = tables[TPCHTable::Orders];
+
+            // Get the pipeline plan of the query
+            auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
+
+            // Get the pipelines from the plan
+            auto orderScanPipeline = plan.getPipeline(0);
+            auto custLineItemJoinPipeline = plan.getPipeline(1);
+
+            // Create executable pipelines stages (EPS) from the plan
+            auto orderScanHTBuildEps = provider->create(orderScanPipeline.pipeline, options);
+            auto custOrderJoinEps = provider->create(custLineItemJoinPipeline.pipeline, options);
+            auto lineItemJoinPipeline = provider->create(plan.getPipeline(2).pipeline, options);
+            auto supplierJoinPipeline = provider->create(plan.getPipeline(3).pipeline, options);
+            auto nationJoinPipeline = provider->create(plan.getPipeline(4).pipeline, options);
+            auto regionJoinAggProjectPipeline = provider->create(plan.getPipeline(5).pipeline, options);
+
+            // Setup each pipeline
+            orderScanHTBuildEps->setup(*orderScanPipeline.ctx);
+            custOrderJoinEps->setup(*custLineItemJoinPipeline.ctx);
+            lineItemJoinPipeline->setup(*plan.getPipeline(2).ctx);
+            supplierJoinPipeline->setup(*plan.getPipeline(3).ctx);
+            nationJoinPipeline->setup(*plan.getPipeline(4).ctx);
+            regionJoinAggProjectPipeline->setup(*plan.getPipeline(5).ctx);
+
+            /*
+             * Execute and assert the first pipeline
+            */
+            for (auto& chunk : orders->getChunks()) {
+                orderScanHTBuildEps->execute(chunk, *orderScanPipeline.ctx, *wc);
+            }
+
+            // Assert the content of the hash map
+            auto orderCustJoinHandler = orderScanPipeline.ctx->getOperatorHandler<BatchJoinHandler>(0);
+            auto orderCustJoinNumberOfKeys = orderCustJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+            EXPECT_EQ(orderCustJoinNumberOfKeys, 4570);
+            auto orderCustJoinHashMap = orderCustJoinHandler->mergeState();
+            EXPECT_EQ(orderCustJoinHashMap->getCurrentSize(), 4570);
+
+            /*
+             * Execute and assert the second pipeline
+            */
+            for (auto& chunk : orders->getChunks()) {
+                custOrderJoinEps->execute(chunk, *custLineItemJoinPipeline.ctx, *wc);
+            }
+
+            // Assert the content of the hash map
+            auto custLineItemJoinHandler = custLineItemJoinPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);
+            auto custLineItemNumberOfKeys = custLineItemJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+            EXPECT_EQ(custLineItemNumberOfKeys, 4570);
+            auto custLineItemHashMap = custLineItemJoinHandler->mergeState();
+            EXPECT_EQ(custLineItemHashMap->getCurrentSize(), 4570);
+
 //            for (auto& chunk : orders->getChunks()) {
 //                orderCustomersJoinBuildPipeline->execute(chunk, *pipeline2.ctx, *wc);
 //            }
