@@ -105,10 +105,6 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-DFMT_HEADER_ONLY"s);
     compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
 
-#ifdef TFDEF
-    compilationFlags.addFlag("-DTFDEF=1");
-#endif// TFDEF
-
     for (auto api : request->getExternalAPIs()) {
         compilationFlags.mergeFlags(api->getCompilerFlags());
     }

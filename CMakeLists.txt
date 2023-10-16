@@ -626,11 +626,6 @@ add_definitions(-D '__STDC_CONSTANT_MACROS')
 add_definitions(-D '__STDC_LIMIT_MACROS')
 
 
-# Check if we build with TensorFlow Lite
-if (NES_USE_TF)
-    add_compile_definitions(TFDEF)
-endif ()
-
 # $ORIGIN is to read the shared object from the installation directory
 if (ORIGIN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")

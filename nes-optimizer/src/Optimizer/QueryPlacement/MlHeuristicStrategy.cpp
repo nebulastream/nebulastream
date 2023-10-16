@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#ifdef TFDEF
-
 #include <API/Schema.hpp>
 #include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
@@ -366,5 +364,3 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 }
 
 }// namespace NES::Optimizer
-
-#endif//TFDEF

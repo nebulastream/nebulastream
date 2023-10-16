@@ -50,12 +50,10 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                                     topology,
                                                     typeInferencePhase);
 
-// #2486        case PlacementStrategy::IFCOP:
-//            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-#ifdef TFDEF
+            // #2486        case PlacementStrategy::IFCOP:
+            //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::MlHeuristic:
             return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-#endif
 
         // FIXME: enable them with issue #755
         //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);

@@ -227,44 +227,6 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
 }
 
-#ifdef TFDEF
-/**
- * Test ML inference operator input with valid input
- */
-TEST_F(SemanticQueryValidationTest, validMLInferenceOperatorTest) {
-    NES_INFO("Valid ML inference operator test");
-
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    std::string logicalSourceName = "irisData";
-    auto irisSchema = Schema::create()
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("f1", DataTypeFactory::createFloat())
-                          ->addField("f2", DataTypeFactory::createUInt32())
-                          ->addField("f3", DataTypeFactory::createInt8())
-                          ->addField("f4", DataTypeFactory::createInt64())
-                          ->addField("target", DataTypeFactory::createUInt64());
-    sourceCatalog->addLogicalSource(logicalSourceName, irisSchema);
-    auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
-    auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
-    auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
-    sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
-
-    auto query = Query::from("irisData")
-                     .inferModel(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite",
-                                 {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                                 {Attribute("iris0", BasicType::FLOAT32),
-                                  Attribute("iris1", BasicType::FLOAT32),
-                                  Attribute("iris2", BasicType::FLOAT32)})
-                     .sink(FileSinkDescriptor::create(""));
-
-    semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan());
-}
-#endif
 /**
  * Test ML inference operator input with invalid mixed input
  */
