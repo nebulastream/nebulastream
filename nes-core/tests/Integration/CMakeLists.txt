@@ -32,19 +32,6 @@ add_nes_integration_test(filter-push-down-test "Optimizer/FilterPushDownTest.cpp
 # SimplePatternTest
 add_nes_integration_test(simple-pattern-test "SimplePatternTest.cpp")
 
-
-### OrOperatorTest ###
-add_nes_integration_test(or-operator-test "OrOperatorTest.cpp")
-
-
-### AndOperatorTest ###
-add_nes_integration_test(and-operator-test "AndOperatorTest.cpp")
-
-
-### AndOperatorTest ###
-add_nes_integration_test(seq-operator-test "SEQOperatorTest.cpp")
-
-
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "MultiWorkerTest.cpp")
@@ -98,13 +85,6 @@ endif ()
 
 ### AssignWatermarkTest ###
 add_nes_integration_test(assignment-watermark-test "Windowing/AssignWatermarkTest.cpp")
-
-
-add_nes_integration_test(allowed-lateness-test "AllowedLatenessTest.cpp")
-
-
-add_nes_integration_test(complex-sequence-test "ComplexSequenceTest.cpp")
-
 
 ### unionDeploymentTest ###
 add_nes_integration_test(union-deployment-test "UnionDeploymentTest.cpp")

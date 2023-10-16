@@ -733,7 +733,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                 == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
                 NES_INFO("Lower ThresholdWindow");
                 auto thresholdWindowPhysicalOperator =
-                    PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema, windowOutputSchema, nullptr);
+                    PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema, windowOutputSchema, windowDefinition);
                 thresholdWindowPhysicalOperator->addProperty("LogicalOperatorId", operatorNode->getId());
 
                 operatorNode->replace(thresholdWindowPhysicalOperator);
