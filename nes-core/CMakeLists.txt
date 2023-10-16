@@ -73,7 +73,6 @@ endif ()
 if (NES_USE_TF)
     message(STATUS "Building with tensorflowlite")
     find_package(tensorflow-lite-c REQUIRED)
-
     target_link_libraries(nes PUBLIC tensorflowlite_c::tensorflowlite_c)
 endif ()
 
