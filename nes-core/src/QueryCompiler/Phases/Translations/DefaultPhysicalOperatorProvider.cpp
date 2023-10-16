@@ -155,11 +155,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         lowerMapOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
-#ifdef TFDEF
         lowerInferModelOperator(queryPlan, operatorNode);
-#else
-        NES_THROW_RUNTIME_ERROR("TFDEF is not defined but InferModelLogicalOperatorNode is used!");
-#endif// TFDEF
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<MapUDFLogicalOperatorNode>()) {
@@ -211,18 +207,16 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
     operatorNode->replace(physicalProjectOperator);
 }
 
-#ifdef TFDEF
 void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto inferModelOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
-    auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
-                                                                                            inferModelOperator->getOutputSchema(),
-                                                                                            inferModelOperator->getModel(),
-                                                                                            inferModelOperator->getInputFields(),
-                                                                                            inferModelOperator->getOutputFields(),
-                                                                                            nullptr);
+    auto physicalInferModelOperator =
+        PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
+                                                              inferModelOperator->getOutputSchema(),
+                                                              inferModelOperator->getModel(),
+                                                              inferModelOperator->getInputFields(),
+                                                              inferModelOperator->getOutputFields());
     operatorNode->replace(physicalInferModelOperator);
 }
-#endif// TFDEF
 
 void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();

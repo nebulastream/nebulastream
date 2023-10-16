@@ -208,12 +208,11 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
 
     auto inferModelOperators = queryPlan->getOperatorByType<InferModel::InferModelLogicalOperatorNode>();
     if (!inferModelOperators.empty()) {
-#ifdef TFDEF
         DataTypePtr commonStamp;
         for (const auto& inferModelOperator : inferModelOperators) {
             for (const auto& inputField : inferModelOperator->getInputFields()) {
                 auto field = inputField->as<FieldAccessExpressionNode>();
-                if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
+                if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean() && !field->getStamp()->isText()) {
                     throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for "
                                                 "infer model not supported: "
                                                 + field->getStamp()->toString());
@@ -230,10 +229,6 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
             throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types "
                                         "cannot be mixed as input to infer model.");
         }
-#else
-        throw InvalidQueryException("SemanticQueryValidation: this binary does not support infer model operator. Use "
-                                    "-DNES_USE_TF=1 to compile the project.");
-#endif
     }
 }
 

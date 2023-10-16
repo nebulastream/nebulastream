@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef TFDEF
 
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
@@ -98,7 +97,5 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     void performOperatorRedundancyElimination(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
 };
 }// namespace NES::Optimizer
-
-#endif//MLHEURISTIC_HPP
 
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
