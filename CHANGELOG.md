@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.221](https://github.com/nebulastream/nebulastream/tree/v0.5.221) (2023-10-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.220...v0.5.221)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move materialized view support to feature branch  [\#4242](https://github.com/nebulastream/nebulastream/issues/4242)
+
 ## [v0.5.220](https://github.com/nebulastream/nebulastream/tree/v0.5.220) (2023-10-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.219...v0.5.220)
