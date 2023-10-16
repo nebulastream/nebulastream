@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.5.222](https://github.com/nebulastream/nebulastream/tree/v0.5.222) (2023-10-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.221...v0.5.222)
+
 ## [v0.5.221](https://github.com/nebulastream/nebulastream/tree/v0.5.221) (2023-10-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.220...v0.5.221)
