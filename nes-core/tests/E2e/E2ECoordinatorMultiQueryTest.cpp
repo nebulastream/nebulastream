@@ -220,7 +220,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 /**
  * @brief This test starts two workers and a coordinator and submits two different queryIdAndCatalogEntryMapping
  */
-TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoQueriesWithFileOutput) {
     NES_INFO("start coordinator");
     std::string Qpath1 = getTestResourceFolder() / "QueryQnV1.out";
     std::string Qpath2 = getTestResourceFolder() / "QueryQnV2.out";

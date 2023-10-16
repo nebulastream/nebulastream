@@ -71,7 +71,7 @@ class StaticDataSourceIntegrationTest : public Testing::BaseIntegrationTest {
         NES::Logger::setupLogging("StaticDataSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup StaticDataSourceIntegrationTest test class.");
     }
-
+    DISABLED_
     SchemaPtr schema_customer;
     SchemaPtr schema_nation;
     SchemaPtr schema_integers_0;

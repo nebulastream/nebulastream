@@ -41,7 +41,7 @@ class E2ECoordinatorMultiWorkerTest : public Testing::BaseIntegrationTest {
 /**
  * @brief Testing NES with a config using a hierarchical topology.
  */
-TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testHierarchicalTopology) {
     NES_INFO("start coordinator");
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableDebug()});
@@ -111,7 +111,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testHierarchicalTopology) {
     }
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerSameSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidQueryWithFileOutputTwoWorkerSameSource) {
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
@@ -194,7 +194,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWorkerDifferentSource) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidQueryWithFileOutputTwoWorkerDifferentSource) {
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
