@@ -14,14 +14,8 @@ add_nes_integration_test(node-engine-test "Runtime/NodeEngineTest.cpp")
 
 add_nes_unit_test(watermark-manager-test "Runtime/WatermarkManagerTest.cpp")
 
-
-add_nes_unit_test(lock-free-multi-origin-watermark-processor-test "Windowing/Experimental/LockFreeMultiOriginWatermarkProcessorTest.cpp")
-
-
-
 ### Translate Physical Operator Tests ###
 add_nes_unit_test(translate-physical-operator-tests "QueryCompiler/LowerLogicalToPhysicalOperatorsTest.cpp")
-
 
 ### AddScanAndEmitPhase Test ###
 add_nes_unit_test(add-scan-and-emit-phase-tests "QueryCompiler/AddScanAndEmitPhaseTest.cpp")
