@@ -25,9 +25,10 @@ class LanguageCompiler;
 class JITCompiler;
 using JITCompilerPtr = std::shared_ptr<JITCompiler>;
 }// namespace Compiler
-namespace Configurations {
-class QueryCompilerConfiguration;
-}
+namespace Experimental::MaterializedView {
+class MaterializedViewManager;
+using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
+}// namespace Experimental::MaterializedView
 
 }// namespace NES
 namespace NES::Runtime {

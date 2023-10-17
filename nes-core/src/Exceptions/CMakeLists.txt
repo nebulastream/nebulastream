@@ -16,7 +16,6 @@ add_source_files(nes-core
         ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp
         TaskExecutionException.cpp
-        InvalidFieldException.cpp
         InvalidOperatorStateException.cpp
         QueryDeploymentException.cpp
         QueryUndeploymentException.cpp
@@ -31,5 +30,4 @@ add_source_files(nes-core
         StorageHandlerAcquireResourcesException.cpp
         AccessNonLockedResourceException.cpp
         OperatorNotFoundException.cpp
-        InvalidLogicalOperatorNodeException.cpp
 )

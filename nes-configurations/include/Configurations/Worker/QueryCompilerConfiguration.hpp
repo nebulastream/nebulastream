@@ -17,7 +17,6 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/PipeliningStrategy.hpp>
