@@ -280,8 +280,8 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << NES_VERSION;
         outputCsvStream << "," << magic_enum::enum_name(configPerRun.nautilusBackend->getValue());
         outputCsvStream << "," << schemaSizeInB;
-        outputCsvStream << "," << configPerRun.cudaThreadsPerBlock->getValue();
         outputCsvStream << "," << configPerRun.stageBufferSize->getValue();
+        outputCsvStream << "," << configPerRun.cudaThreadsPerBlock->getValue();
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
