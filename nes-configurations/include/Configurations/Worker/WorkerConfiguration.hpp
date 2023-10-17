@@ -21,8 +21,8 @@
 #include <Configurations/Enums/QueryExecutionMode.hpp>
 #include <Configurations/Worker/GeoLocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/SpatialType.hpp>

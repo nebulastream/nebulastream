@@ -13,10 +13,9 @@
 */
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing {
 

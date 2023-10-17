@@ -114,7 +114,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
     auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
-        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
+        Optimizer::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
@@ -144,7 +144,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     auto plan = query.getQueryPlan();
 
     auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
-        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT);
+        Optimizer::MemoryLayoutPolicy::FORCE_ROW_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
@@ -177,7 +177,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     plan = typeInference->execute(plan);
 
     auto phase = Optimizer::MemoryLayoutSelectionPhase::create(
-        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
+        Optimizer::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT);
     phase->execute(plan);
     plan = typeInference->execute(plan);
     // Check if all operators in the query have an column layout
