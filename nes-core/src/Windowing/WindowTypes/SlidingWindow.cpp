@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
-#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <utility>
 

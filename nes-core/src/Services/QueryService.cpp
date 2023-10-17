@@ -36,8 +36,8 @@
 #include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include  <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 
 namespace NES {
 

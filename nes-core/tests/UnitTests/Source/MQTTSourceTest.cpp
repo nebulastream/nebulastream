@@ -218,7 +218,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     mqttSourceType->setCleanSession(true);
     mqttSourceType->setFlushIntervalMS(2000);
     auto physicalSource = PhysicalSource::create("stream", "test_stream", mqttSourceType);
-    wrkConf->physicalSources.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -286,7 +286,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     mqttSourceType->setFlushIntervalMS(2000);
     mqttSourceType->setInputFormat("CSV");
     auto physicalSource = PhysicalSource::create("iris", "iris_phys", mqttSourceType);
-    wrkConf->physicalSources.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

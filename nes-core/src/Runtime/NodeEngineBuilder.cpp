@@ -192,7 +192,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
         QueryCompilation::QueryCompilerPtr compiler;
         if (workerConfiguration->queryCompiler.queryCompilerType
-            == QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
+            == QueryCompilation::QueryCompiler::DEFAULT_QUERY_COMPILER) {
             auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
             auto jitCompiler = (!this->jitCompiler)
                 ? Compiler::JITCompilerBuilder()
@@ -205,7 +205,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                       jitCompiler,
                                                                       workerConfiguration->enableSourceSharing.getValue());
         } else if (workerConfiguration->queryCompiler.queryCompilerType
-                   == QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
+                   == QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER) {
             compiler = QueryCompilation::NautilusQueryCompiler::create(queryCompilationOptions,
                                                                        phaseFactory,
                                                                        workerConfiguration->enableSourceSharing.getValue());
@@ -216,7 +216,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                NES::collectAndPrintStacktrace());
         }
         std::vector<PhysicalSourcePtr> physicalSources;
-        for (auto entry : workerConfiguration->physicalSources.getValues()) {
+        for (auto entry : workerConfiguration->physicalSourceTypes.getValues()) {
             physicalSources.push_back(entry.getValue());
         }
         if (!openCLManager) {
@@ -269,7 +269,7 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     // set output buffer optimization level
     queryCompilationOptions->setOutputBufferOptimizationLevel(queryCompilerConfiguration.outputBufferOptimizationLevel);
 
-    if (queryCompilerType == QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER
+    if (queryCompilerType == QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER
         && queryCompilerConfiguration.windowingStrategy == QueryCompilation::WindowingStrategy::LEGACY) {
         // sets SLICING windowing strategy as the default if nautilus is active.
         NES_WARNING("The LEGACY window strategy is not supported by Nautilus. Switch to SLICING!")

@@ -21,6 +21,8 @@
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Enums/PipeliningStrategy.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
 #include <Util/Common.hpp>
 #include <cstdint>
 #include <string>
@@ -32,31 +34,6 @@ namespace NES::QueryCompilation {
  */
 class QueryCompilerOptions {
   public:
-
-    enum class DumpMode : uint8_t {
-        // Disables all dumping
-        NONE,
-        // Dumps intermediate representations to console, std:out
-        CONSOLE,
-        // Dumps intermediate representations to file
-        FILE,
-        // Dumps intermediate representations to console and file
-        FILE_AND_CONSOLE
-    };
-
-    enum class NautilusBackend : uint8_t {
-        // Uses the interpretation based nautilus backend.
-        INTERPRETER,
-        // Uses the mlir based nautilus backend.
-        MLIR_COMPILER,
-        // Uses the byte code interpretation based nautilus backend.
-        BC_INTERPRETER,
-        // Uses the flounder based nautilus backend.
-        FLOUNDER_COMPILER,
-        // Uses the cpp based nautilus backend.
-        CPP_COMPILER
-    };
-
     enum class FilterProcessingStrategy : uint8_t {
         // Uses a branches to process filter expressions
         BRANCHED,

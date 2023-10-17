@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
+#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
 #include <string>
 
 namespace NES::Experimental {

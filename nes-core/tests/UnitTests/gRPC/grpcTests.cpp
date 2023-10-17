@@ -70,7 +70,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     srcConf1->setNumberOfTuplesToProducePerBuffer(0);
     srcConf1->setNumberOfBuffersToProduce(0);
     auto windowSource = PhysicalSource::create("Win1", "test_stream1", srcConf1);
-    wrkConf->physicalSources.add(windowSource);
+    wrkConf->physicalSourceTypes.add(windowSource);
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -140,7 +140,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
     srcConf1->setNumberOfTuplesToProducePerBuffer(0);
     srcConf1->setNumberOfBuffersToProduce(0);
     auto windowSource = PhysicalSource::create("Win1", "test_stream1", srcConf1);
-    workerConfig1->physicalSources.add(windowSource);
+    workerConfig1->physicalSourceTypes.add(windowSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

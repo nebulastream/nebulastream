@@ -17,7 +17,7 @@
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>

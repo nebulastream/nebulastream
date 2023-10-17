@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
-#include <Exceptions/SignatureComputationException.hpp>
+#include <Optimizer/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
@@ -35,6 +34,7 @@
 #include <iterator>
 #include <utility>
 #include <z3++.h>
+
 using namespace std::string_literals;
 namespace NES::Optimizer {
 

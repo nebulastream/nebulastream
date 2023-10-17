@@ -71,7 +71,7 @@ class MQTTTSinkTest : public Testing::BaseIntegrationTest {
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
-        workerConfiguration->physicalSources.add(conf);
+        workerConfiguration->physicalSourceTypes.add(conf);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())

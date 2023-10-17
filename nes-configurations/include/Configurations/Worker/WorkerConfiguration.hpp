@@ -17,12 +17,13 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/GeoLocationFactory.hpp>
-#include <Configurations/Worker/PhysicalSourceFactory.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/Enums/EnumOptionDetails.hpp>
 #include <Configurations/Enums/QueryExecutionMode.hpp>
+#include <Configurations/Worker/GeoLocationFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <map>
@@ -49,7 +50,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Factory function for a worker config
      */
-    static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
+    static WorkerConfigurationPtr create() { return std::make_shared<WorkerConfiguration>(); }
 
     /**
      * @brief Id of the Worker.
@@ -191,7 +192,8 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Indicates a sequence of physical sources.
      */
-    SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {PHYSICAL_SOURCES, "Physical sources"};
+    SequenceOption<WrapOption<PhysicalSourceTypePtr, PhysicalSourceTypeFactory>> physicalSourceTypes = {PHYSICAL_SOURCES,
+                                                                                                        "Physical sources"};
 
     /**
      * @brief location coordinate of the node if any
@@ -292,7 +294,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &enableMonitoring,
                 &monitoringWaitTime,
                 &queryCompiler,
-                &physicalSources,
+                &physicalSourceTypes,
                 &locationCoordinates,
                 &nodeSpatialType,
                 &mobilityConfiguration,

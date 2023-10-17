@@ -14,15 +14,14 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Windowing.hpp>
-#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/MedianAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <utility>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 
 namespace NES::API {
 

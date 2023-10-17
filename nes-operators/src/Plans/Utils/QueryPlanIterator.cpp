@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Plans/Query/QueryPlan.hpp>
+
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES {
 
 QueryPlanIterator::QueryPlanIterator(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)){};

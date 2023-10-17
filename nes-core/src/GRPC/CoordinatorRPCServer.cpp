@@ -14,7 +14,7 @@
 
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Exceptions/InvalidQueryStateException.hpp>
+#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>

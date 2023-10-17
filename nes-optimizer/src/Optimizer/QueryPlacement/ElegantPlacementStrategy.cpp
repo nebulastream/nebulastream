@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Exceptions/QueryPlacementException.hpp>
+#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>

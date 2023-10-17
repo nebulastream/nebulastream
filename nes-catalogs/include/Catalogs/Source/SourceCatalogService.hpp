@@ -25,6 +25,9 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
+class LogicalSource;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
+
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;

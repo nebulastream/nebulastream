@@ -53,8 +53,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <filesystem>
@@ -129,7 +129,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -177,7 +177,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -234,7 +234,7 @@ TEST_F(QueryCompilerTest, mapQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -281,7 +281,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -327,7 +327,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -379,7 +379,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -433,7 +433,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -488,8 +488,8 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto sourceConf1 = PhysicalSource::create(leftSourceLogicalSourceName, "x1", defaultSourceType);
     auto sourceConf2 = PhysicalSource::create(rightSourceLogicalSourceName, "x1", defaultSourceType);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf1);
-    workerConfiguration->physicalSources.add(sourceConf2);
+    workerConfiguration->physicalSourceTypes.add(sourceConf1);
+    workerConfiguration->physicalSourceTypes.add(sourceConf2);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -550,7 +550,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
 
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 

@@ -13,9 +13,10 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Coordinator/LogicalSourceType.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
@@ -26,7 +27,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace NES {
@@ -105,11 +105,11 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
     EXPECT_EQ(logicalSources[0].getValue()->getLogicalSourceName(), "lsn1");
     EXPECT_EQ(logicalSources[1].getValue()->getLogicalSourceName(), "lsn2");
     EXPECT_EQ(logicalSources[2].getValue()->getLogicalSourceName(), "lsn3");
-    auto firstSourceSchema = logicalSources[0].getValue()->getSchema();
-    auto secondSourceSchema = logicalSources[1].getValue()->getSchema();
-    auto thirdSourceSchema = logicalSources[2].getValue()->getSchema();
-    EXPECT_EQ(firstSourceSchema->getSize(), 3);
-    EXPECT_EQ(secondSourceSchema->getSize(), 1);
+    auto firstSourceSchema = logicalSources[0].getValue()->getSchemaType();
+    auto secondSourceSchema = logicalSources[1].getValue()->getSchemaType();
+    auto thirdSourceSchema = logicalSources[2].getValue()->getSchemaType();
+    EXPECT_EQ(firstSourceSchema->getSchemaFieldDetails().size(), 3);
+    EXPECT_EQ(secondSourceSchema->getSchemaFieldDetails().size(), 1);
     EXPECT_TRUE(firstSourceSchema->contains("csv_id"));
     EXPECT_TRUE(firstSourceSchema->contains("csv_id_2"));
     EXPECT_TRUE(firstSourceSchema->contains("csv_id_3"));
@@ -172,7 +172,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->numberOfBuffersPerEpoch.getValue(), workerConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
-    EXPECT_TRUE(workerConfigPtr->physicalSources.empty());
+    EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.empty());
 }
 
 TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
@@ -195,11 +195,11 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
               workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
-    EXPECT_TRUE(!workerConfigPtr->physicalSources.empty());
-    EXPECT_TRUE(workerConfigPtr->physicalSources.size() == 2);
-    for (const auto& physicalSource : workerConfigPtr->physicalSources.getValues()) {
-        EXPECT_TRUE(physicalSource.getValue()->getPhysicalSourceType()->instanceOf<DefaultSourceType>()
-                    || physicalSource.getValue()->getPhysicalSourceType()->instanceOf<MQTTSourceType>());
+    EXPECT_TRUE(!workerConfigPtr->physicalSourceTypes.empty());
+    EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.size() == 2);
+    for (const auto& physicalSource : workerConfigPtr->physicalSourceTypes.getValues()) {
+        EXPECT_TRUE(physicalSource.getValue()->instanceOf<DefaultSourceType>()
+                    || physicalSource.getValue()->instanceOf<MQTTSourceType>());
     }
     EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
 }
@@ -310,7 +310,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                                   "logicalSourceName=default",
                                                   "offsetMode=earliest"});
 
-    PhysicalSourceTypePtr physicalSourceType1 = PhysicalSourceFactory::createFromString("", commandLineParams);
+    PhysicalSourceTypePtr physicalSourceType1 = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
     auto physicalSource1 = PhysicalSource::create(physicalSourceType1);
     EXPECT_EQ(physicalSource1->getLogicalSourceName(), "default");
     EXPECT_EQ(physicalSource1->getPhysicalSourceName(), "x");
@@ -329,7 +329,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                                    "groupId=testId",
                                                    "offsetMode=earliest"});
 
-    PhysicalSourceTypePtr physicalSourceType2 = PhysicalSourceFactory::createFromString("", commandLineParams1);
+    PhysicalSourceTypePtr physicalSourceType2 = PhysicalSourceTypeFactory::createFromString("", commandLineParams1);
     auto physicalSource2 = PhysicalSource::create(physicalSourceType2);
     EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");
     EXPECT_EQ(physicalSource2->getPhysicalSourceName(), "x");
@@ -355,7 +355,7 @@ TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput) {
                                                   "physicalSourceName=x",
                                                   "logicalSourceName=default"});
     // when
-    auto physicalSourceType1 = PhysicalSourceFactory::createFromString("", commandLineParams);
+    auto physicalSourceType1 = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
     // then
     EXPECT_EQ(physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getValue(),
               physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getDefaultValue());
@@ -371,7 +371,7 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInpu
                                                   "logicalSourceName=default",
                                                   "filePath=fileLoc"});
     // when
-    auto physicalSourceType = PhysicalSourceFactory::createFromString("", commandLineParams);
+    auto physicalSourceType = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
     // then
     EXPECT_EQ(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(),
               physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
@@ -388,9 +388,10 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInp
                                                   "filePath=fileLoc",
                                                   "sourceGatheringMode=ADAPTIVE_MODE"});
     // when
-    auto physicalSourceType = PhysicalSourceFactory::createFromString("", commandLineParams);
+    auto physicalSourceType = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
     // then
-    EXPECT_NE(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(), physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
+    EXPECT_NE(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(),
+              physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
     EXPECT_EQ(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(), GatheringMode::ADAPTIVE_MODE);
 }
 
@@ -399,9 +400,9 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY)
                                                       / "workerWithAdaptiveCSVSource.yaml");
-    EXPECT_TRUE(workerConfigPtr->physicalSources.size() == 1);
+    EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.size() == 1);
 
-    auto csvSourceType = workerConfigPtr->physicalSources.getValues()[0].getValue()->getPhysicalSourceType()->as<CSVSourceType>();
+    auto csvSourceType = workerConfigPtr->physicalSourceTypes.getValues()[0].getValue()->as<CSVSourceType>();
     EXPECT_NE(csvSourceType->getGatheringMode()->getValue(), csvSourceType->getGatheringMode()->getDefaultValue());
     EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), magic_enum::enum_cast<GatheringMode>("ADAPTIVE_MODE").value());
 }

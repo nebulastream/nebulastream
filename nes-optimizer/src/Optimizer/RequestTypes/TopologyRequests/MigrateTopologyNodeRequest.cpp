@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <RequestTypes/TopologyRequests/MigrateTopologyNodeRequest.hpp>
+#include <Optimizer/RequestTypes/TopologyRequests/MigrateTopologyNodeRequest.hpp>
 #include <sstream>
 
 namespace NES::Experimental {

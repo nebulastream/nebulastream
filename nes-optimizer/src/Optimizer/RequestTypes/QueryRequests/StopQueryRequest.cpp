@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <string>
 namespace NES {
 

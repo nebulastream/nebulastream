@@ -98,7 +98,7 @@ message UnregisterWorkerReply {
 
 message RegisterPhysicalSourcesRequest {
   uint64 workerId = 1;
-  repeated PhysicalSourceDefinition physicalSources = 2;
+  repeated PhysicalSourceDefinition physicalSourceTypes = 2;
 }
 
 message PhysicalSourceDefinition {

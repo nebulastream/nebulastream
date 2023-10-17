@@ -22,6 +22,11 @@
 
 namespace NES {
 
+namespace Configurations {
+class SchemaType;
+using SchemaTypePtr = std::shared_ptr<SchemaType>;
+}// namespace Configuration
+
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
@@ -51,6 +56,12 @@ class Schema {
      * @return SchemaPtr
      */
     static SchemaPtr create(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
+
+    /**
+     * @brief Factory method to create a new SchemaPtr from schema type.
+     * @return SchemaPtr
+     */
+    SchemaPtr createFromSchemaType(Configurations::SchemaTypePtr schemaType, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
      * @brief Creates a copy of this schema.
@@ -230,6 +241,16 @@ class Schema {
     std::vector<AttributeFieldPtr> fields;
 
   private:
+    /**
+     * Return the appropriate NES type from yaml string configuration. Ignores
+     * fieldLength if it doesn't make sense, errors length is missing and type
+     * is string.
+     * @param fieldType the type of the schema field from yaml
+     * @param fieldLength the length of the field from yaml
+     * @return the appropriate DataTypePtr
+     */
+    DataTypePtr stringToFieldType(std::string fieldType, std::string fieldLength);
+
     MemoryLayoutType layoutType;
 };
 

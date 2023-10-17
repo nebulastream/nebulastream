@@ -13,7 +13,7 @@
 */
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Exceptions/QueryPlacementException.hpp>
+#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>

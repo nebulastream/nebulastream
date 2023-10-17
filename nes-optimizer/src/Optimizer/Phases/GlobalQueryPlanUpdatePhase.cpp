@@ -14,12 +14,15 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -29,19 +32,17 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
+#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <RequestTypes/QueryRequests/FailQueryRequest.hpp>
-#include <RequestTypes/QueryRequests/StopQueryRequest.hpp>
-#include <RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
-#include <RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
 
 namespace NES::Optimizer {
 

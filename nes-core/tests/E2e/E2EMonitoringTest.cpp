@@ -210,7 +210,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
 TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->enableMonitoring = true;
     coordinatorConfig->optimizer.enableNemoPlacement = true;
 
@@ -225,7 +225,7 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->enableMonitoring = true;
     workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);

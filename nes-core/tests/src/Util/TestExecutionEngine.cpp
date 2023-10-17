@@ -18,7 +18,7 @@
 
 namespace NES::Testing {
 
-TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOptions::QueryCompiler& compiler,
+TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompiler& compiler,
                                          const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode,
                                          const uint64_t numWorkerThreads,
                                          const QueryCompilation::StreamJoinStrategy& joinStrategy,
@@ -38,7 +38,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
 
     auto defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
-    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(sourceConf);
     auto phaseProvider = std::make_shared<TestUtils::TestPhaseProvider>();
     nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                      .setPhaseFactory(phaseProvider)

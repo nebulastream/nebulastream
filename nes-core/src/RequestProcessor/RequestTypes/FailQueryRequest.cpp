@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Exceptions/InvalidQueryStateException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
+#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RuntimeException.hpp>
-#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>

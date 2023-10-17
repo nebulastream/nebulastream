@@ -15,7 +15,7 @@
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 
 #include<Util/Mobility/GeoLocation.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <memory>

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Exceptions/QueryPlacementException.hpp>
+#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>

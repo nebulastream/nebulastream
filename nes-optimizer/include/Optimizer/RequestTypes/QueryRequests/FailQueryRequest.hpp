@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_QUERYREQUESTS_FAILQUERYREQUEST_HPP_
 
 #include <Identifiers.hpp>
-#include <RequestTypes/Request.hpp>
+#include <Optimizer/RequestTypes/Request.hpp>
 #include <memory>
 #include <string>
 

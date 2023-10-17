@@ -13,8 +13,8 @@
 */
 #include <BaseIntegrationTest.hpp>
 #include <Util/Mobility/Waypoint.hpp>
-#include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Mobility/LocationProviders/LocationProviderCSV.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>

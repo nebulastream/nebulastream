@@ -22,6 +22,8 @@
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/PipeliningStrategy.hpp>
 #include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
 #include <Configurations/Enums/QueryExecutionMode.hpp>
@@ -33,6 +35,11 @@
 #include <utility>
 
 namespace NES::Configurations {
+
+static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
+static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
+static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
+static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
 
 /**
  * @brief Configuration for the query compiler
@@ -54,9 +61,9 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      * @brief Sets the dump mode for the query compiler. We differentiate between NONE, CONSOLE, FILE, and FILE_AND_CONSOLE.
      * @note This setting is only for the nautilus compiler
      */
-    EnumOption<QueryCompilation::QueryCompilerOptions::DumpMode> queryCompilerDumpMode = {
+    EnumOption<QueryCompilation::DumpMode> queryCompilerDumpMode = {
         QUERY_COMPILER_DUMP_MODE,
-        QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
+        QueryCompilation::DumpMode::NONE,
         "Indicates the type for the query compiler [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
 
     /**
@@ -68,13 +75,13 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE|PROXY_INLINING]."};
 
     /**
-     * @brief Sets the backend for nautilus. We differentiate between MLIR_COMPILER, INTERPRETER, BC_INTERPRETER, and FLOUNDER_COMPILER compilation.
+     * @brief Sets the backend for nautilus. We differentiate between MLIR_COMPILER_BACKEND, INTERPRETER, BC_INTERPRETER_BACKEND, and FLOUNDER_COMPILER_BACKEND compilation.
      */
-    EnumOption<QueryCompilation::QueryCompilerOptions::NautilusBackend> nautilusBackend = {
+    EnumOption<QueryCompilation::NautilusBackend> nautilusBackend = {
         QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG,
-        QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER,
+        QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND,
         "Indicates the nautilus backend for the nautilus query compiler "
-        "[MLIR_COMPILER|INTERPRETER|BC_INTERPRETER|FLOUNDER_COMPILER]."};
+        "[MLIR_COMPILER_BACKEND|INTERPRETER|BC_INTERPRETER_BACKEND|FLOUNDER_COMPILER_BACKEND]."};
 
     /**
      * @brief Sets the pipelining strategy. We differentiate between an OPERATOR_FUSION and OPERATOR_AT_A_TIME strategy.
@@ -112,17 +119,17 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      * Config options for hash join
      */
     UIntOption numberOfPartitions = {STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG,
-                                     NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS,
+                                     NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS,
                                      "Partitions in the hash table"};
     UIntOption pageSize = {STREAM_HASH_JOIN_PAGE_SIZE_CONFIG,
-                           NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
+                           NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
                            "Page size of hash table"};
     UIntOption preAllocPageCnt = {STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG,
-                                  NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
+                                  NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
                                   "Page count of pre allocated pages in each bucket hash table"};
 
     UIntOption maxHashTableSize = {STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG,
-                                   NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+                                   NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
                                    "Maximum size of hash table"};
 
     EnumOption<QueryCompilation::StreamJoinStrategy> joinStrategy = {

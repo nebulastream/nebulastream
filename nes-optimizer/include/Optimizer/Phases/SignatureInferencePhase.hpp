@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
 
-#include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Configurations/Enums/QueryMergerRule.hpp>
 #include <memory>
 
 namespace z3 {

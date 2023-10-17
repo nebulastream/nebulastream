@@ -23,8 +23,8 @@
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 namespace NES::Windowing::Experimental {
 
 NonKeyedGlobalSliceStoreAppendOperatorHandler::NonKeyedGlobalSliceStoreAppendOperatorHandler(

@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Exceptions/QueryPlacementException.hpp>
+#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Util/DumpHandler/DumpContext.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>

@@ -118,7 +118,7 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
     auto physicalSource1 = PhysicalSource::create("window", "x1", lambdaSource);
-    workerConfig->physicalSources.add(physicalSource1);
+    workerConfig->physicalSourceTypes.add(physicalSource1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -205,7 +205,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
     auto physicalSource1 = PhysicalSource::create("window", "x1", lambdaSource);
-    workerConfig->physicalSources.add(physicalSource1);
+    workerConfig->physicalSourceTypes.add(physicalSource1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -281,7 +281,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
     auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
-    workerConfig->physicalSources.add(physicalSource1);
+    workerConfig->physicalSourceTypes.add(physicalSource1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

@@ -193,9 +193,9 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSources.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(physicalSource);
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -234,9 +234,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSources.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(physicalSource);
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -311,9 +311,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSources.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(physicalSource);
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -370,9 +370,9 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSources.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(physicalSource);
     workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -434,9 +434,9 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSources.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(physicalSource);
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);

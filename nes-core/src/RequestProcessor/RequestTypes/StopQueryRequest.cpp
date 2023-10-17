@@ -14,15 +14,15 @@
 
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
-#include <Exceptions/InvalidQueryStateException.hpp>
+#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
-#include <Exceptions/QueryPlacementException.hpp>
+#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
-#include <Exceptions/TypeInferenceException.hpp>
-#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
+#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
+#include <Phases/QueryDeploymentPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
-#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>

@@ -19,13 +19,13 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 #include <API/QueryAPI.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
@@ -51,8 +51,7 @@ class KeyedSlidingWindowTests : public Testing::BaseIntegrationTest, public ::te
         Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
-        workerConfiguration->queryCompiler.compilationStrategy =
-            QueryCompilation::CompilationStrategy::DEBUG;
+        workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::CompilationStrategy::DEBUG;
     }
 };
 
@@ -125,8 +124,13 @@ struct OutputMultiKeys {
     }
 };
 
-PhysicalSourceTypePtr createSimpleInputStream(uint64_t numberOfBuffers, uint64_t numberOfKeys = 1) {
+PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
+                                              std::string physicalSourceName,
+                                              uint64_t numberOfBuffers,
+                                              uint64_t numberOfKeys = 1) {
     return LambdaSourceType::create(
+        logicalSourceName,
+        physicalSourceName,
         [numberOfKeys](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             auto inputValue = (InputValue*) buffer.getBuffer();
             for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
@@ -143,10 +147,16 @@ PhysicalSourceTypePtr createSimpleInputStream(uint64_t numberOfBuffers, uint64_t
 
 class DataGeneratorMultiKey {
   public:
-    DataGeneratorMultiKey(uint64_t numberOfBuffers, uint64_t numberOfKeys = 1)
-        : numberOfBuffers(numberOfBuffers), numberOfKeys(numberOfKeys){};
+    DataGeneratorMultiKey(std::string logicalSourceName,
+                          std::string physicalSourceName,
+                          uint64_t numberOfBuffers,
+                          uint64_t numberOfKeys = 1)
+        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
+          numberOfBuffers(numberOfBuffers), numberOfKeys(numberOfKeys){};
     PhysicalSourceTypePtr getSource() {
         return LambdaSourceType::create(
+            logicalSourceName,
+            physicalSourceName,
             [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
                 auto inputValue = (InputValueMultiKeys*) buffer.getBuffer();
                 for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
@@ -164,6 +174,8 @@ class DataGeneratorMultiKey {
     }
 
   private:
+    std::string logicalSourceName;
+    std::string physicalSourceName;
     uint64_t numberOfBuffers;
     uint64_t numberOfKeys;
     std::atomic_uint64_t counter = 0;
@@ -171,9 +183,13 @@ class DataGeneratorMultiKey {
 
 class DataGenerator {
   public:
-    DataGenerator(uint64_t numberOfBuffers) : numberOfBuffers(numberOfBuffers){};
+    DataGenerator(std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers)
+        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
+          numberOfBuffers(numberOfBuffers){};
     PhysicalSourceTypePtr getSource() {
         return LambdaSourceType::create(
+            logicalSourceName,
+            physicalSourceName,
             [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
                 auto inputValue = (InputValue*) buffer.getBuffer();
                 for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
@@ -191,6 +207,8 @@ class DataGenerator {
     }
 
   private:
+    std::string logicalSourceName;
+    std::string physicalSourceName;
     uint64_t numberOfBuffers;
     std::atomic_uint64_t counter = 0;
 };
@@ -207,11 +225,11 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength) {
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
 
-    auto lambdaSource = createSimpleInputStream(1);
+    auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -237,11 +255,11 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
 
-    auto lambdaSource = createSimpleInputStream(1);
+    auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
                            .enableNautilus()
-                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -266,11 +284,11 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
-    auto lambdaSource = createSimpleInputStream(100);
+    auto lambdaSource = createSimpleInputStream("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
                            .enableNautilus()
-                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
@@ -291,11 +309,11 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
-    auto dg = DataGenerator(100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
@@ -331,11 +349,11 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(300)))
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
-    auto dg = DataGenerator(100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
@@ -367,11 +385,11 @@ TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
                      .byKey(Attribute("key1"), Attribute("key2"), Attribute("key3"))
                      .apply(Sum(Attribute("value")));
-    auto dg = DataGeneratorMultiKey(1, 102);
+    auto dg = DataGeneratorMultiKey("window", "window1", 1, 102);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();

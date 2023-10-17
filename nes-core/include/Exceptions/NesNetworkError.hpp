@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
-#include <Network/NesPartition.hpp>
+#include<Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <stdexcept>
 

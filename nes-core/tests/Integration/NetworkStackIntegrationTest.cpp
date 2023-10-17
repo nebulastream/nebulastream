@@ -15,12 +15,12 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
@@ -186,8 +186,8 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
             }
             bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
         };
-        auto defaultSourceType = DefaultSourceType::create();
-        auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
+        auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
+        auto physicalSource = PhysicalSource::create(defaultSourceType);
         std::vector<PhysicalSourcePtr> physicalSources{physicalSource};
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto stateManager = std::make_shared<Runtime::StateManager>(0);
@@ -347,12 +347,11 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
             ASSERT_TRUE(recvEngine->stop());
         });
 
-        auto defaultSourceType = DefaultSourceType::create();
-        auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
+        auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
         auto workerConfig2 = WorkerConfiguration::create();
         workerConfig2->dataPort = *dataPort2;
         workerConfig2->bufferSizeInBytes = bufferSize;
-        workerConfig2->physicalSources.add(physicalSource);
+        workerConfig2->physicalSourceTypes.add(defaultSourceType);
         auto nodeEngineBuilder2 =
             Runtime::NodeEngineBuilder::create(workerConfig2).setQueryStatusListener(std::make_shared<DummyQueryListener>());
         auto sendEngine = nodeEngineBuilder2.build();
@@ -523,12 +522,11 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
             ASSERT_TRUE(recvEngine->stop());
         });
 
-        auto defaultSourceType = DefaultSourceType::create();
-        auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
+        auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
         auto workerConfig2 = WorkerConfiguration::create();
         workerConfig2->dataPort = *dataPort2;
         workerConfig2->bufferSizeInBytes = bufferSize;
-        workerConfig2->physicalSources.add(physicalSource);
+        workerConfig2->physicalSourceTypes.add(defaultSourceType);
         auto nodeEngineBuilder2 =
             Runtime::NodeEngineBuilder::create(workerConfig2).setQueryStatusListener(std::make_shared<DummyQueryListener>());
         auto sendEngine = nodeEngineBuilder2.build();
@@ -645,20 +643,19 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                            ->addField("test$one", DataTypeFactory::createInt64())
                            ->addField("test$value", DataTypeFactory::createInt64());
 
-    auto defaultSourceType = DefaultSourceType::create();
-    std::vector<PhysicalSourcePtr> physicalSources;
+    std::vector<PhysicalSourceTypePtr> physicalSourceTypes;
     for (auto i = 0; i < numQueries; ++i) {
         auto str = std::to_string(i);
-        auto physicalSource = PhysicalSource::create("default_logical"s + str, "default"s + str, defaultSourceType);
-        physicalSources.emplace_back(physicalSource);
+        auto defaultSourceType = DefaultSourceType::create("default_logical"s + str, "default"s + str);
+        physicalSourceTypes.emplace_back(defaultSourceType);
     }
 
     auto latch = std::make_shared<ThreadBarrier>(numQueries);
 
     auto workerConfiguration1 = WorkerConfiguration::create();
     workerConfiguration1->dataPort.setValue(*dataPort1);
-    for (auto source : physicalSources) {
-        workerConfiguration1->physicalSources.add(source);
+    for (auto physicalSourceType : physicalSourceTypes) {
+        workerConfiguration1->physicalSourceTypes.add(physicalSourceType);
     }
     workerConfiguration1->numWorkerThreads.setValue(numThreads);
     workerConfiguration1->bufferSizeInBytes.setValue(bufferSize);
@@ -673,8 +670,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
     auto workerConfiguration2 = WorkerConfiguration::create();
     workerConfiguration2->dataPort.setValue(*dataPort2);
-    for (auto source : physicalSources) {
-        workerConfiguration2->physicalSources.add(source);
+    for (auto source : physicalSourceTypes) {
+        workerConfiguration2->physicalSourceTypes.add(source);
     }
     workerConfiguration2->numWorkerThreads.setValue(numThreads);
     workerConfiguration2->bufferSizeInBytes.setValue(bufferSize);
@@ -922,11 +919,10 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                            ->addField("test$value", DataTypeFactory::createInt64());
     auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
 
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
     auto workerConfiguration1 = WorkerConfiguration::create();
     workerConfiguration1->dataPort.setValue(*dataPort1);
-    workerConfiguration1->physicalSources.add(physicalSource);
+    workerConfiguration1->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration1->bufferSizeInBytes.setValue(bufferSize);
     workerConfiguration1->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
     workerConfiguration1->numberOfBuffersInSourceLocalBufferPool.setValue(64);
@@ -937,7 +933,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                 .build();
     auto workerConfiguration2 = WorkerConfiguration::create();
     workerConfiguration2->dataPort.setValue(*dataPort2);
-    workerConfiguration2->physicalSources.add(physicalSource);
+    workerConfiguration2->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration2->bufferSizeInBytes.setValue(bufferSize);
     workerConfiguration2->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
     workerConfiguration2->numberOfBuffersInSourceLocalBufferPool.setValue(64);

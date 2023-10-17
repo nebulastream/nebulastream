@@ -110,7 +110,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
                      metricTypeString,
                      workerConfig->monitoringWaitTime.getValue());
             auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
-            workerConfig->physicalSources.add(source);
+            workerConfig->physicalSourceTypes.add(source);
         }
         return true;
     }

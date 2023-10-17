@@ -13,7 +13,7 @@
 */
 
 #include <Util/magicenum/magic_enum.hpp>
-#include <RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <utility>
 
 namespace NES {

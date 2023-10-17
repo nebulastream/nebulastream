@@ -14,6 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 #define NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+
 #include <Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>

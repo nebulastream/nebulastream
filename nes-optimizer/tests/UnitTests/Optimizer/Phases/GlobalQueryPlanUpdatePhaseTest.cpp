@@ -25,7 +25,7 @@
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
+#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>

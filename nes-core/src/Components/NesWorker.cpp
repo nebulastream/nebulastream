@@ -32,7 +32,7 @@
 #include <Util/Mobility/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -370,7 +370,7 @@ bool NesWorker::connect() {
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
 
-        auto configPhysicalSources = workerConfig->physicalSources.getValues();
+        auto configPhysicalSources = workerConfig->physicalSourceTypes.getValues();
         if (!configPhysicalSources.empty()) {
             std::vector<PhysicalSourcePtr> physicalSources;
             for (auto& physicalSource : configPhysicalSources) {

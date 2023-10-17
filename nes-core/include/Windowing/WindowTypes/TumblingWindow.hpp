@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_TUMBLINGWINDOW_HPP_
 
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Windowing {

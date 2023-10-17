@@ -19,15 +19,15 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 #include <API/QueryAPI.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
-#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
@@ -57,8 +57,7 @@ class NonKeyedSlidingWindowTests : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
-        workerConfiguration->queryCompiler.compilationStrategy =
-            QueryCompilation::CompilationStrategy::DEBUG;
+        workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::CompilationStrategy::DEBUG;
     }
 };
 
@@ -100,8 +99,13 @@ struct OutputMultiAgg {
     }
 };
 
-PhysicalSourceTypePtr createSimpleInputStream(uint64_t numberOfBuffers, uint64_t numberOfKeys = 1) {
+PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
+                                              std::string physicalSourceName,
+                                              uint64_t numberOfBuffers,
+                                              uint64_t numberOfKeys = 1) {
     return LambdaSourceType::create(
+        logicalSourceName,
+        physicalSourceName,
         [numberOfKeys](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             auto inputValue = (InputValue*) buffer.getBuffer();
             for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
@@ -118,9 +122,13 @@ PhysicalSourceTypePtr createSimpleInputStream(uint64_t numberOfBuffers, uint64_t
 
 class DataGenerator {
   public:
-    DataGenerator(uint64_t numberOfBuffers) : numberOfBuffers(numberOfBuffers){};
+    DataGenerator(std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers)
+        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
+          numberOfBuffers(numberOfBuffers){};
     PhysicalSourceTypePtr getSource() {
         return LambdaSourceType::create(
+            logicalSourceName,
+            physicalSourceName,
             [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
                 auto inputValue = (InputValue*) buffer.getBuffer();
                 for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
@@ -138,6 +146,8 @@ class DataGenerator {
     }
 
   private:
+    std::string logicalSourceName;
+    std::string physicalSourceName;
     uint64_t numberOfBuffers;
     std::atomic_uint64_t counter = 0;
 };
@@ -153,11 +163,11 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
                      .apply(Sum(Attribute("value")));
 
-    auto lambdaSource = createSimpleInputStream(1);
+    auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -181,13 +191,12 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
                      .apply(Sum(Attribute("value")));
-    // R"(Query::from("window"))";
 
-    auto lambdaSource = createSimpleInputStream(1);
+    auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -211,11 +220,11 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
                      .apply(Sum(Attribute("value")));
-    auto lambdaSource = createSimpleInputStream(100);
+    auto lambdaSource = createSimpleInputStream("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
@@ -235,11 +244,11 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
                      .apply(Sum(Attribute("value")));
-    auto dg = DataGenerator(100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
@@ -274,11 +283,11 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
     auto query = Query::from("window")
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(300)))
                      .apply(Sum(Attribute("value")));
-    auto dg = DataGenerator(100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+                           .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();

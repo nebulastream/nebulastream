@@ -81,7 +81,7 @@ class QueryExecutionTest : public Testing::BaseUnitTest {
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
         auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->physicalSources.add(sourceConf);
+        workerConfiguration->physicalSourceTypes.add(sourceConf);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())

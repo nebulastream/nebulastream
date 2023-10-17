@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_QUERYREQUESTS_ADDQUERYREQUEST_HPP_
 
 #include <Util/PlacementStrategy.hpp>
-#include <RequestTypes/Request.hpp>
+#include  <Optimizer/RequestTypes/Request.hpp>
 #include <future>
 
 namespace NES {

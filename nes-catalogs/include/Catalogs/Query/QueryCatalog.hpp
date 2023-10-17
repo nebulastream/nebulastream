@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
 
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
@@ -27,7 +26,15 @@
 #include <string>
 #include <vector>
 
-namespace NES::Catalogs::Query {
+namespace NES {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace Catalogs::Query {
+
+class QueryCatalogEntry;
+using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 
 /**
  * @brief catalog class to handle the queryIdAndCatalogEntryMapping in the system
@@ -128,6 +135,6 @@ class QueryCatalog {
 };
 
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace NES::Catalogs::Query
-
+}// namespace Catalogs::Query
+}// namespace NES
 #endif// NES_CORE_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_

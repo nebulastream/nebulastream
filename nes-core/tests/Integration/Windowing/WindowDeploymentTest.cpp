@@ -291,15 +291,15 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     auto windowSource = PhysicalSource::create("windowSource", "test_stream", sourceConfig);
-    workerConfig->physicalSources.add(windowSource);
+    workerConfig->physicalSourceTypes.add(windowSource);
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
     workerConfig->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     //register logical source qnv
     auto window = Schema::create()

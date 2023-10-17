@@ -12,37 +12,34 @@
     limitations under the License.
 */
 
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
-#include <Exceptions/InvalidQueryStateException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
-#include <Exceptions/QueryPlacementException.hpp>
+#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
-#include <Exceptions/TypeInferenceException.hpp>
+#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <Phases/QueryDeploymentPhase.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/FailQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <exception>
-
-#include <utility>
 #include <z3++.h>
 
 namespace NES {

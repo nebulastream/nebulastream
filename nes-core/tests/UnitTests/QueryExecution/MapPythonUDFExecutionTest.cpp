@@ -38,7 +38,7 @@ class MapPythonUDFQueryExecutionTest : public Testing::BaseUnitTest {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("Setting up Nautilus Compiler");
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
-            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
             dumpMode);
     }
 
