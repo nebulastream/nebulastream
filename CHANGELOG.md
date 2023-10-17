@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.5.224](https://github.com/nebulastream/nebulastream/tree/v0.5.224) (2023-10-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.223...v0.5.224)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor FixedPagesLinkedList into Classes [\#4208](https://github.com/nebulastream/nebulastream/issues/4208)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Unable to Start the executable docker image due to missing shared libraries [\#4262](https://github.com/nebulastream/nebulastream/issues/4262)
+
+## [v0.5.223](https://github.com/nebulastream/nebulastream/tree/v0.5.223) (2023-10-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.222...v0.5.223)
+
 ## [v0.5.222](https://github.com/nebulastream/nebulastream/tree/v0.5.222) (2023-10-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.221...v0.5.222)
