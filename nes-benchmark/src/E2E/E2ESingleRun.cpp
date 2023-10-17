@@ -278,9 +278,10 @@ void E2ESingleRun::writeMeasurementsToCsv() {
          measurements.getMeasurementsAsCSV(schemaSizeInB, configPerRun.numberOfQueriesToDeploy->getValue())) {
         outputCsvStream << "\"" << configOverAllRuns.benchmarkName->getValue() << "\"";
         outputCsvStream << "," << NES_VERSION;
-        outputCsvStream << "," << configPerRun.nautilusBackend;
+        outputCsvStream << "," << magic_enum::enum_name(configPerRun.nautilusBackend->getValue());
         outputCsvStream << "," << schemaSizeInB;
-        outputCsvStream << "," << configPerRun.stageBufferSize;
+        outputCsvStream << "," << configPerRun.cudaThreadsPerBlock->getValue();
+        outputCsvStream << "," << configPerRun.stageBufferSize->getValue();
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
