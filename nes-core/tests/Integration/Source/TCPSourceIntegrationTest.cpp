@@ -275,7 +275,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     sourceConfig->setTupleSeparator('\n');
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(physicalSource);
     workerConfig1->bufferSizeInBytes = 30;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -372,7 +372,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     sourceConfig->setTupleSeparator('\n');
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(physicalSource);
     workerConfig1->bufferSizeInBytes = 50;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -469,7 +469,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     sourceConfig->setBytesUsedForSocketBufferSizeTransfer(2);
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(physicalSource);
     workerConfig1->bufferSizeInBytes = 50;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -566,7 +566,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     sourceConfig->setBytesUsedForSocketBufferSizeTransfer(2);
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(physicalSource);
     workerConfig1->bufferSizeInBytes = 50;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -663,7 +663,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     sourceConfig->setBytesUsedForSocketBufferSizeTransfer(2);
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(physicalSource);
     workerConfig1->bufferSizeInBytes = 50;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -760,7 +760,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     sourceConfig->setBytesUsedForSocketBufferSizeTransfer(2);
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(physicalSource);
     workerConfig1->bufferSizeInBytes = 50;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -857,7 +857,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     sourceConfig->setSocketBufferSize(14);
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(physicalSource);
     workerConfig1->bufferSizeInBytes = 50;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -954,7 +954,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     sourceConfig->setSocketBufferSize(44);
 
     auto physicalSource = PhysicalSource::create("tcpStream", "tcpStream", sourceConfig);
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(physicalSource);
     workerConfig1->bufferSizeInBytes = 50;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

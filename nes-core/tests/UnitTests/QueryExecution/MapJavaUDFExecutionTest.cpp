@@ -42,7 +42,7 @@ class MapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(
-            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
             dumpMode);
     }
 

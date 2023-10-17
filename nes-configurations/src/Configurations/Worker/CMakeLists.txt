@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-configurations
-        PhysicalSourceFactory.cpp
+        PhysicalSourceTypeFactory.cpp
         GeoLocationFactory.cpp
 )
 

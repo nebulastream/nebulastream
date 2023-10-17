@@ -20,7 +20,7 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <iostream>
 #include <utility>
 
@@ -32,7 +32,7 @@ constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode:
 
 class KeyedTumblingWindowQueryExecutionTest
     : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
+      public ::testing::WithParamInterface<QueryCompilation::QueryCompiler> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("KeyedTumblingWindowQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -212,7 +212,7 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
 
 INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
                         KeyedTumblingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<KeyedTumblingWindowQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 
-#include <Network/NesPartition.hpp>
+#include<Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>

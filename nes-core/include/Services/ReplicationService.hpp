@@ -13,12 +13,16 @@
 */
 #ifndef NES_CORE_INCLUDE_SERVICES_REPLICATIONSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_REPLICATIONSERVICE_HPP_
+
 #include <Components/NesCoordinator.hpp>
 #include <mutex>
 #include <unordered_map>
 #include <utility>
 
 namespace NES {
+
+class SourceLogicalOperatorNode;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 using EpochId = int;
 

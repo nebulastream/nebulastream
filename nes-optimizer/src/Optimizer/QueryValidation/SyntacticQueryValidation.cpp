@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <API/QueryAPI.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>

@@ -515,7 +515,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->physicalSources.add(sourceConf);
+        workerConfigurations->physicalSourceTypes.add(sourceConf);
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                                .build();
@@ -1903,7 +1903,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("input1", "test_stream1", lambdaSourceType);
-    wrkConf->physicalSources.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(physicalSource);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);

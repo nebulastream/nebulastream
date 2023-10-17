@@ -33,10 +33,10 @@
 #include <Util/Mobility/Waypoint.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
-#include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
+#include <Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
@@ -1078,7 +1078,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
     auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sequenceSource);
+    wrkConf1->physicalSourceTypes.add(sequenceSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -1179,7 +1179,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
     auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sequenceSource);
+    wrkConf1->physicalSourceTypes.add(sequenceSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -1365,7 +1365,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
     auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSources.add(sequenceSource);
+    wrkConf1->physicalSourceTypes.add(sequenceSource);
 
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);

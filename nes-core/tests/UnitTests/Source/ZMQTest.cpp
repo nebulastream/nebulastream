@@ -50,7 +50,7 @@ class ZMQTest : public Testing::BaseIntegrationTest {
         NES_DEBUG("Setup ZMQTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->physicalSources.add(conf);
+        workerConfigurations->physicalSourceTypes.add(conf);
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();

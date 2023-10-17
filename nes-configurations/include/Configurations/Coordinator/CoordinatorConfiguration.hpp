@@ -17,21 +17,16 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/Coordinator/ElegantConfigurations.hpp>
-#include <Configurations/Coordinator/LogicalSourceFactory.hpp>
+#include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Configurations/Enums/StorageHandlerType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <REST/ServerTypes.hpp>
-#include <RequestProcessor/StorageHandles/StorageHandlerType.hpp>
 #include <iostream>
 #include <map>
 #include <string>
 #include <thread>
 
 namespace NES {
-
-class LogicalSource;
-using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
-
 namespace Configurations {
 
 class CoordinatorConfiguration;
@@ -115,7 +110,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Allows the configuration of logical sources at the coordinator.
      * @deprecated This is currently only used for testing and will be removed.
      */
-    SequenceOption<WrapOption<LogicalSourcePtr, LogicalSourceFactory>> logicalSources = {LOGICAL_SOURCES, "Logical Sources"};
+    SequenceOption<WrapOption<LogicalSourceTypePtr, LogicalSourceTypeFactory>> logicalSources = {LOGICAL_SOURCES,
+                                                                                                 "Logical Sources"};
 
     /**
      * @brief Configuration yaml path.

@@ -44,7 +44,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     //register logical source qnv
     auto ktmSchema = Schema::create()
@@ -86,7 +86,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     workerConfig1->queryCompiler = queryCompilerConfiguration;
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     // create source
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "ktm.csv");
@@ -94,7 +94,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(1);
     auto physicalSource1 = PhysicalSource::create("ktm", "test_stream", csvSourceType1);
-    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart2 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=3
     ASSERT_TRUE(retStart2);

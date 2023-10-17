@@ -15,15 +15,11 @@
 add_source_files(nes-core
         ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp
-        GlobalQueryPlanUpdateException.cpp
         TaskExecutionException.cpp
         InvalidFieldException.cpp
         InvalidOperatorStateException.cpp
         QueryDeploymentException.cpp
-        QueryPlacementException.cpp
         QueryUndeploymentException.cpp
-        TypeInferenceException.cpp
-        SignatureComputationException.cpp
         WindowProcessingException.cpp
         InvalidCoordinateFormatException.cpp
         MapEntryNotFoundException.cpp
@@ -31,7 +27,6 @@ add_source_files(nes-core
         ExecutionNodeNotFoundException.cpp
         RPCException.cpp
         RPCQueryUndeploymentException.cpp
-        SharedQueryPlanNotFoundException.cpp
         ResourceLockingException.cpp
         StorageHandlerAcquireResourcesException.cpp
         AccessNonLockedResourceException.cpp

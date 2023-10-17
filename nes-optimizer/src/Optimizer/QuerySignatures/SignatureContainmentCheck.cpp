@@ -25,9 +25,9 @@
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Operators/LogicalOperators/Windows/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 
 namespace NES::Optimizer {
 

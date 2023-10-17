@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Configurations/Coordinator/SchemaType.hpp>
+
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -272,5 +274,74 @@ std::vector<std::string> Schema::getFieldNames() const {
 }
 
 bool Schema::empty() { return fields.empty(); }
+
+DataTypePtr Schema::stringToFieldType(std::string fieldNodeType, std::string fieldNodeLength) {
+    if (fieldNodeType == "CHAR") {
+        if (fieldNodeLength.empty() || fieldNodeLength == "\n" || fieldNodeLength == "0") {
+            NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length properly.");
+        }
+        return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
+    }
+
+    if (fieldNodeType == "TEXT") {
+        return DataTypeFactory::createText();
+    }
+
+    if (fieldNodeType == "BOOLEAN") {
+        return DataTypeFactory::createBoolean();
+    }
+
+    if (fieldNodeType == "INT8") {
+        return DataTypeFactory::createInt8();
+    }
+
+    if (fieldNodeType == "UINT8") {
+        return DataTypeFactory::createUInt8();
+    }
+
+    if (fieldNodeType == "INT16") {
+        return DataTypeFactory::createInt16();
+    }
+
+    if (fieldNodeType == "UINT16") {
+        return DataTypeFactory::createUInt16();
+    }
+
+    if (fieldNodeType == "INT32") {
+        return DataTypeFactory::createInt32();
+    }
+
+    if (fieldNodeType == "UINT32") {
+        return DataTypeFactory::createUInt32();
+    }
+
+    if (fieldNodeType == "INT64") {
+        return DataTypeFactory::createInt64();
+    }
+
+    if (fieldNodeType == "UINT64") {
+        return DataTypeFactory::createUInt64();
+    }
+
+    if (fieldNodeType == "FLOAT32") {
+        return DataTypeFactory::createFloat();
+    }
+
+    if (fieldNodeType == "FLOAT64") {
+        return DataTypeFactory::createDouble();
+    }
+
+    NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. " << fieldNodeType
+                                                                           << " is not a proper Schema Field Type.");
+}
+
+SchemaPtr Schema::createFromSchemaType(Configurations::SchemaTypePtr schemaType, Schema::MemoryLayoutType layoutType) {
+    auto schema = Schema::create(layoutType);
+    for (const auto& schemaFieldDetail : schemaType->getSchemaFieldDetails()) {
+        schema->addField(schemaFieldDetail.fieldName,
+                         stringToFieldType(schemaFieldDetail.fieldType, schemaFieldDetail.fieldLength));
+    };
+    return schema;
+}
 
 }// namespace NES

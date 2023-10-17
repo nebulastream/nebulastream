@@ -23,8 +23,8 @@
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 namespace NES::Windowing::Experimental {
 
 NonKeyedSlidingWindowSinkOperatorHandler::NonKeyedSlidingWindowSinkOperatorHandler(

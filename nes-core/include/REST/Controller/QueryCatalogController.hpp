@@ -15,7 +15,7 @@
 #define NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
+#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>

@@ -27,7 +27,7 @@ if (HOST_IS_MUSL)
     target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
 endif ()
 
-target_link_libraries(nes-runtime PUBLIC nes-common nes-data-types)
+target_link_libraries(nes-runtime PUBLIC nes-common nes-operators nes-data-types nes-configurations)
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

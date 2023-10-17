@@ -13,6 +13,8 @@
 
 add_source_files(nes-configurations
         CoordinatorConfiguration.cpp
-        LogicalSourceFactory.cpp
+        LogicalSourceTypeFactory.cpp
+        LogicalSourceType.cpp
+        SchemaType.cpp
         )
 

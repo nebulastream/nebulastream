@@ -23,6 +23,7 @@
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
+
 namespace NES::Configurations {
 
 /**

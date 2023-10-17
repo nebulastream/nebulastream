@@ -93,7 +93,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
                                                            0,
                                                            0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
-    wrkConf->physicalSources.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -196,7 +196,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     auto benchmarkSourceType =
         BenchmarkSourceType::create(memArea, memAreaSize, 1, 0, GatheringMode::INTERVAL_MODE, SourceMode::COPY_BUFFER, 0, 0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
-    wrkConf->physicalSources.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -307,7 +307,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
                                                            0,
                                                            0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
-    wrkConf->physicalSources.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);

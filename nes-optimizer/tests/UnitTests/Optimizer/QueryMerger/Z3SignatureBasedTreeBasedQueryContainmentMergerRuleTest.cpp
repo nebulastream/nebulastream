@@ -19,12 +19,13 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -43,9 +44,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
 #include <z3++.h>
 
@@ -108,30 +108,36 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-        auto csvSourceType = CSVSourceType::create();
-        PhysicalSourcePtr windTurbinesPhysicalSource = PhysicalSource::create("windTurbines", "windTurbines", csvSourceType);
+        auto csvSourceWindTurbine = CSVSourceType::create("windTurbines", "windTurbines");
         LogicalSourcePtr windTurbinesLogicalSource = LogicalSource::create("windTurbines", schema);
+        PhysicalSourcePtr windTurbinesPhysicalSource = PhysicalSource::create(csvSourceWindTurbine);
         Catalogs::Source::SourceCatalogEntryPtr sce1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(windTurbinesPhysicalSource,
                                                                    windTurbinesLogicalSource,
                                                                    physicalNode);
         sourceCatalog->addPhysicalSource("windTurbines", sce1);
-        PhysicalSourcePtr solarPanels1PhysicalSource = PhysicalSource::create("solarPanels1", "solarPanels1", csvSourceType);
+
+        auto csvSourceSolarPanel1 = CSVSourceType::create("solarPanels1", "solarPanels1");
         LogicalSourcePtr solarPanels1LogicalSource = LogicalSource::create("solarPanels1", schema);
+        PhysicalSourcePtr solarPanels1PhysicalSource = PhysicalSource::create(csvSourceSolarPanel1);
         Catalogs::Source::SourceCatalogEntryPtr sce2 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(solarPanels1PhysicalSource,
                                                                    solarPanels1LogicalSource,
                                                                    physicalNode);
-        sourceCatalog->addPhysicalSource("solarPanels1", sce2);
-        PhysicalSourcePtr solarPanels2PhysicalSource = PhysicalSource::create("solarPanels2", "solarPanels2", csvSourceType);
+        sourceCatalog->addPhysicalSource("solarPanels2", sce2);
+
         LogicalSourcePtr solarPanels2LogicalSource = LogicalSource::create("solarPanels2", schema);
+        auto csvSourceSolarPanel2 = CSVSourceType::create("solarPanels2", "solarPanels2");
+        PhysicalSourcePtr solarPanels2PhysicalSource = PhysicalSource::create(csvSourceSolarPanel2);
         Catalogs::Source::SourceCatalogEntryPtr sce3 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(solarPanels2PhysicalSource,
                                                                    solarPanels2LogicalSource,
                                                                    physicalNode);
         sourceCatalog->addPhysicalSource("solarPanels2", sce3);
-        PhysicalSourcePtr householdsPhysicalSource = PhysicalSource::create("households", "households", csvSourceType);
+
+        auto csvSourceHouseHolds = CSVSourceType::create("households", "households");
         LogicalSourcePtr householdsLogicalSource = LogicalSource::create("households", schemaHouseholds);
+        PhysicalSourcePtr householdsPhysicalSource = PhysicalSource::create(csvSourceHouseHolds);
         Catalogs::Source::SourceCatalogEntryPtr sce4 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(householdsPhysicalSource,
                                                                    householdsLogicalSource,

@@ -18,7 +18,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
@@ -45,7 +45,7 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::BaseIntegrationTest {
         auto workerConfiguration = WorkerConfiguration::create();
         port = getAvailablePort();
         workerConfiguration->dataPort = *port;
-        workerConfiguration->physicalSources.add(physicalSource);
+        workerConfiguration->physicalSourceTypes.add(physicalSource);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())

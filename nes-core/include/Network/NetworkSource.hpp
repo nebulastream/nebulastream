@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
-#include <Network/NodeLocation.hpp>
+#include<Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>

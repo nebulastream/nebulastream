@@ -46,16 +46,16 @@ PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryP
 
 std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
     switch (compilerOptions->getNautilusBackend()) {
-        case QueryCompilerOptions::NautilusBackend::INTERPRETER: {
+        case NautilusBackend::INTERPRETER: {
             return "PipelineInterpreter";
         };
-        case QueryCompilerOptions::NautilusBackend::MLIR_COMPILER: {
+        case NautilusBackend::MLIR_COMPILER_BACKEND: {
             return "PipelineCompiler";
         };
-        case QueryCompilerOptions::NautilusBackend::BC_INTERPRETER: {
+        case NautilusBackend::BC_INTERPRETER_BACKEND: {
             return "BCInterpreter";
         };
-        case QueryCompilerOptions::NautilusBackend::CPP_COMPILER: {
+        case NautilusBackend::CPP_COMPILER_BACKEND: {
             return "CPPPipelineCompiler";
         };
         default: {
@@ -77,12 +77,12 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     options.setIdentifier(identifier);
 
     // enable dump to console if the compiler options are set
-    options.setDumpToConsole(compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::CONSOLE
-                             || compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE);
+    options.setDumpToConsole(compilerOptions->getDumpMode() == DumpMode::CONSOLE
+                             || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
     // enable dump to file if the compiler options are set
-    options.setDumpToFile(compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE
-                          || compilerOptions->getDumpMode() == QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE);
+    options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE
+                          || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
     options.setProxyInlining(compilerOptions->getCompilationStrategy()
                              == CompilationStrategy::PROXY_INLINING);

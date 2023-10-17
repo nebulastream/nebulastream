@@ -154,7 +154,7 @@ TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(CSVSourceTypeP
     auto workerConfiguration = WorkerConfiguration::create();
     auto physicalSource =
         PhysicalSource::create(csvSourceType->getLogicalSourceName(), csvSourceType->getPhysicalSourceName(), csvSourceType);
-    workerConfiguration->physicalSources.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(physicalSource);
     workerConfiguration->parentId = parentId;
     uint32_t workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
@@ -296,7 +296,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
     if (useNautilus) {
         coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
-            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
         coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode =
             QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
         coordinatorConfiguration->optimizer.performDistributedWindowOptimization = performDistributedWindowOptimization;
@@ -320,7 +320,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         auto workerConfiguration = workerConf->getWorkerConfiguration();
         if (useNautilus) {
             workerConfiguration->queryCompiler.queryCompilerType =
-                QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+                QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
             workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
 
             // Only this is currently supported in Nautilus
@@ -336,12 +336,12 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         switch (workerConf->getSourceType()) {
             case TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource: {
                 auto physicalSource = createPhysicalSourceOfMemoryType(workerConf);
-                workerConfiguration->physicalSources.add(physicalSource);
+                workerConfiguration->physicalSourceTypes.add(physicalSource);
                 break;
             }
             case TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::LambdaSource: {
                 auto physicalSource = createPhysicalSourceOfLambdaType(workerConf);
-                workerConfiguration->physicalSources.add(physicalSource);
+                workerConfiguration->physicalSourceTypes.add(physicalSource);
                 break;
             }
             default: break;

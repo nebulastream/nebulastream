@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Exceptions/TypeInferenceException.hpp>
+#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
 
 namespace NES {

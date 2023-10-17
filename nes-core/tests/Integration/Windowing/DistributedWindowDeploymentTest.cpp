@@ -118,7 +118,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedTumblingWindowQu
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     //register logical source qnv
     auto window = Schema::create()
                       ->addField("id", BasicType::UINT64)
@@ -362,7 +362,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
 
@@ -443,7 +443,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedWindowIngestionT
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     //register logical source qnv
     auto window = Schema::create()
@@ -535,7 +535,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeI
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -563,7 +563,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeI
     NES_DEBUG("DistributedWindowDeploymentTest: Start worker 1");
     workerConfig->coordinatorPort = port;
     workerConfig->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

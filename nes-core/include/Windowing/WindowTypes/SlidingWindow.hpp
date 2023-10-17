@@ -14,8 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWTYPES_SLIDINGWINDOW_HPP_
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 namespace NES::Windowing {
 /**
  * A SlidingWindow assigns records to multiple overlapping windows.

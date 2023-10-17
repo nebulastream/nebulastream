@@ -23,8 +23,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Exceptions/InvalidQueryStateException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
+#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>

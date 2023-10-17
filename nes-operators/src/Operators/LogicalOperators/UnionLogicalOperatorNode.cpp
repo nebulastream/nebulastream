@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Exceptions/TypeInferenceException.hpp>
+#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>

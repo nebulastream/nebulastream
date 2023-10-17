@@ -58,7 +58,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
     coordinatorConf->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConf->worker.queryCompiler.queryCompilerDumpMode =
         QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
     coordinatorConf->worker.queryCompiler.nautilusBackend =
@@ -124,7 +124,7 @@ void E2ESingleRun::createSources() {
 
             auto sourceConfig = createPhysicalSourceType(createdBuffers, sourceCnt, i, generatorName);
             auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
-            coordinatorConf->worker.physicalSources.add(physicalSource);
+            coordinatorConf->worker.physicalSourceTypes.add(physicalSource);
 
             sourceCnt++;
             NES_INFO("Created {} for {}", physicalStreamName, logicalSource->getLogicalSourceName());

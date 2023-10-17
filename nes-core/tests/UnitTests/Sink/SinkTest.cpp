@@ -77,7 +77,7 @@ class SinkTest : public Testing::BaseIntegrationTest {
         path_to_bin_file = getTestResourceFolder() / "sink.bin";
         path_to_osfile_file = getTestResourceFolder() / "testOs.txt";
         auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->physicalSources.add(PhysicalSource::create("x", "x1"));
+        workerConfiguration->physicalSourceTypes.add(PhysicalSource::create("x", "x1"));
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                                .build();

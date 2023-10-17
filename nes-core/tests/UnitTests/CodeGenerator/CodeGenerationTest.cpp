@@ -79,7 +79,7 @@ class CodeGenerationTest : public Testing::BaseIntegrationTest {
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
-        workerConfiguration->physicalSources.add(sourceConf);
+        workerConfiguration->physicalSourceTypes.add(sourceConf);
         workerConfiguration->bufferSizeInBytes.setValue(4096);
         workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(1024);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);

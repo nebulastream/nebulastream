@@ -22,6 +22,8 @@
 #include <Configurations/Enums/QueryExecutionMode.hpp>
 #include <Configurations/Enums/QueryMergerRule.hpp>
 #include <Configurations/Enums/EnumOptionDetails.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Configurations {
@@ -30,6 +32,8 @@ template class EnumOption<NES::Spatial::Experimental::SpatialType>;
 template class EnumOption<NES::QueryCompilation::QueryCompilerType>;
 template class EnumOption<NES::QueryCompilation::CompilationStrategy>;
 template class EnumOption<NES::QueryCompilation::PipeliningStrategy>;
+template class EnumOption<NES::QueryCompilation::DumpMode>;
+template class EnumOption<NES::QueryCompilation::NautilusBackend>;
 template class EnumOption<NES::QueryCompilation::OutputBufferOptimizationLevel>;
 template class EnumOption<NES::QueryCompilation::WindowingStrategy>;
 template class EnumOption<NES::Runtime::QueryExecutionMode>;

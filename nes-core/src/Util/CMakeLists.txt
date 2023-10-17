@@ -15,6 +15,7 @@ add_source_files(nes-core
         Core.cpp
         BufferSequenceNumber.cpp
         KalmanFilter.cpp
+        PlanJsonGenerator.cpp
         )
 if (NES_USE_MQTT)
     add_source_files(nes-core

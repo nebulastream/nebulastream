@@ -81,7 +81,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     csvSourceType1->setNumberOfBuffersToProduce(20);
     //register physical source R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
-    worker1Configuration->physicalSources.add(conf70);
+    worker1Configuration->physicalSourceTypes.add(conf70);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -98,7 +98,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     csvSourceType2->setNumberOfBuffersToProduce(20);
     //register physical source R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
-    worker2Configuration->physicalSources.add(conf73);
+    worker2Configuration->physicalSourceTypes.add(conf73);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -171,7 +171,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     csvSourceType1->setNumberOfBuffersToProduce(2);
     //register physical source R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
-    worker1Configuration->physicalSources.add(conf70);
+    worker1Configuration->physicalSourceTypes.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -187,7 +187,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     csvSourceType2->setNumberOfBuffersToProduce(2);
     //register physical source R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
-    worker2Configuration->physicalSources.add(conf73);
+    worker2Configuration->physicalSourceTypes.add(conf73);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -266,7 +266,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     csvSourceType1->setNumberOfBuffersToProduce(35);
     //register physical source R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
-    worker1Configuration->physicalSources.add(conf70);
+    worker1Configuration->physicalSourceTypes.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -282,7 +282,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     csvSourceType2->setNumberOfBuffersToProduce(35);
     //register physical source R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
-    worker2Configuration->physicalSources.add(conf73);
+    worker2Configuration->physicalSourceTypes.add(conf73);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -298,7 +298,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     csvSourceType3->setNumberOfBuffersToProduce(35);
     //register physical source R20000732
     PhysicalSourcePtr conf732 = PhysicalSource::create("QnV3", "test_stream_QnV3", csvSourceType3);
-    worker3Configuration->physicalSources.add(conf732);
+    worker3Configuration->physicalSourceTypes.add(conf732);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(worker3Configuration));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
@@ -380,7 +380,7 @@ TEST_F(OrOperatorTest, DISABLED_testOrPatternFilter) {
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     //register physical source R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream_R2000070", csvSourceType1);
-    worker1Configuration->physicalSources.add(conf70);
+    worker1Configuration->physicalSourceTypes.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -395,7 +395,7 @@ TEST_F(OrOperatorTest, DISABLED_testOrPatternFilter) {
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
     //register physical source R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_R2000073", csvSourceType2);
-    worker2Configuration->physicalSources.add(conf73);
+    worker2Configuration->physicalSourceTypes.add(conf73);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);

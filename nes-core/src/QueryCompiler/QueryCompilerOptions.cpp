@@ -37,7 +37,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     options.setWindowingStrategy(WindowingStrategy::LEGACY);
     options.setQueryCompiler(QueryCompilerType::DEFAULT_QUERY_COMPILER);
     options.setDumpMode(DumpMode::FILE_AND_CONSOLE);
-    options.setNautilusBackend(NautilusBackend::MLIR_COMPILER);
+    options.setNautilusBackend(NautilusBackend::MLIR_COMPILER_BACKEND);
 
     QueryCompilerOptions::StreamHashJoinOptionsPtr hashOptions = std::make_shared<QueryCompilerOptions::StreamHashJoinOptions>();
     hashOptions->setNumberOfPartitions(NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);

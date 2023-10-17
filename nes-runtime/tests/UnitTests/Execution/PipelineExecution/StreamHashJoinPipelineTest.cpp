@@ -11,8 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -188,10 +190,10 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                                                         leftSchema->getSchemaSizeInBytes(),
                                                         rightSchema->getSchemaSizeInBytes(),
                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                        NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
-                                                        NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
-                                                        NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
-                                                        NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
+                                                        NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE,
+                                                        NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT,
+                                                        NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
+                                                        NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

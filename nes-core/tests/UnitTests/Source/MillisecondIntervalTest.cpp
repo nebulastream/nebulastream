@@ -99,7 +99,7 @@ class MillisecondIntervalTest : public Testing::BaseIntegrationTest {
         csvSourceType->setNumberOfBuffersToProduce(3);
         PhysicalSourcePtr sourceConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
         auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->physicalSources.add(sourceConf);
+        workerConfigurations->physicalSourceTypes.add(sourceConf);
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                                .build();
@@ -285,7 +285,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     auto defaultSourceType = DefaultSourceType::create();
     defaultSourceType->setNumberOfBuffersToProduce(3);
     auto physicalSource = PhysicalSource::create("testStream", "x1", defaultSourceType);
-    wrkConf->physicalSources.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

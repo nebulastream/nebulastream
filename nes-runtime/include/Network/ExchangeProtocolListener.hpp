@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_
 
-#include <Network/NesPartition.hpp>
+#include<Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 

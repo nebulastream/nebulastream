@@ -13,7 +13,7 @@
 */
 
 #include <Util/Mobility/GeoLocation.hpp>
-#include <RequestTypes/TopologyRequests/AddTopologyNodeRequest.hpp>
+#include <Optimizer/RequestTypes/TopologyRequests/AddTopologyNodeRequest.hpp>
 #include <utility>
 
 namespace NES::Experimental {

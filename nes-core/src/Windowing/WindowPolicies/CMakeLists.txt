@@ -12,11 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        OnTimeTriggerPolicyDescription.cpp
-        BaseWindowTriggerPolicyDescriptor.cpp
-        OnWatermarkChangeTriggerPolicyDescription.cpp
-        OnBufferTriggerPolicyDescription.cpp
-        OnRecordTriggerPolicyDescription.cpp
         ExecutableOnTimeTriggerPolicy.cpp
         ExecutableOnWatermarkChangeTriggerPolicy.cpp
 )

@@ -17,9 +17,8 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <REST/ServerTypes.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <SerializableOperator.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -113,12 +112,11 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     NES_DEBUG("SourceCatalogControllerTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    auto csvSourceType1 = CSVSourceType::create();
+    auto csvSourceType1 = CSVSourceType::create("default_logical", "physical_test");
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(2);
-    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_test", csvSourceType1);
-    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -202,7 +200,7 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     Catalogs::Source::SourceCatalogPtr sourceCatalog = coordinator->getSourceCatalog();
-    std::string schema = "Schema::create()->addField(\"ID\", BasicType::UINT64)";
+    auto schema = Schema::create()->addField("ID", BasicType::UINT64);
     const std::string sourceName = "car";
     sourceCatalog->addLogicalSource(sourceName, schema);
     nlohmann::json request;

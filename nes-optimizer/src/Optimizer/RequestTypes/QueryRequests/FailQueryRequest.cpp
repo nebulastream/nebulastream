@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <utility>
 
 namespace NES {

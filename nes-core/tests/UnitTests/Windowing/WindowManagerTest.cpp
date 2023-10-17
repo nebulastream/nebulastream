@@ -45,7 +45,7 @@
 #include <utility>
 #include <vector>
 
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
 #include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
@@ -227,7 +227,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSources.add(conf);
+    workerConfigurations->physicalSourceTypes.add(conf);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
@@ -319,7 +319,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSources.add(conf);
+    workerConfigurations->physicalSourceTypes.add(conf);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
@@ -415,7 +415,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSources.add(conf);
+    workerConfigurations->physicalSourceTypes.add(conf);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
@@ -501,7 +501,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSources.add(conf);
+    workerConfigurations->physicalSourceTypes.add(conf);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
@@ -584,7 +584,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto port = getAvailablePort();
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(*port);
-    workerConfigurations->physicalSources.add(conf);
+    workerConfigurations->physicalSourceTypes.add(conf);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
@@ -671,7 +671,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
-    workerConfigurations->physicalSources.add(conf);
+    workerConfigurations->physicalSourceTypes.add(conf);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
@@ -758,7 +758,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSources.add(conf);
+    workerConfigurations->physicalSourceTypes.add(conf);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();

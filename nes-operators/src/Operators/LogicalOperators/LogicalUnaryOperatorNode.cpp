@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <Exceptions/TypeInferenceException.hpp>
+#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {

@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_TOPOLOGYREQUESTS_ADDTOPOLOGYLINKREQUEST_HPP_
 #define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_TOPOLOGYREQUESTS_ADDTOPOLOGYLINKREQUEST_HPP_
 
-#include <RequestTypes/Request.hpp>
+#include  <Optimizer/RequestTypes/Request.hpp>
 #include <future>
 
 namespace NES::Experimental {

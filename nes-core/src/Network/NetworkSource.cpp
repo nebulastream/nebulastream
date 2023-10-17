@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Network/NesPartition.hpp>
+#include<Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>

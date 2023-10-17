@@ -17,12 +17,13 @@ add_source_files(nes-operators
         LogicalWindowDefinition.cpp
         SliceCreationOperator.cpp
         SliceMergingOperator.cpp
-        TimeCharacteristic.cpp
         WindowComputationOperator.cpp
         WindowLogicalOperatorNode.cpp
         WindowOperatorNode.cpp
-        WindowType.cpp
 )
 
+add_subdirectory(Actions)
 add_subdirectory(Aggregations)
 add_subdirectory(Joins)
+add_subdirectory(Measures)
+add_subdirectory(Types)

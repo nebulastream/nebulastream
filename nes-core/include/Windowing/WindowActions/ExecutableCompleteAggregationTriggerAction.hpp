@@ -32,9 +32,9 @@
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <cstdint>
 #include <memory>

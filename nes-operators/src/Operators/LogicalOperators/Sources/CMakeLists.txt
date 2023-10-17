@@ -22,7 +22,6 @@ add_source_files(nes-operators
         DefaultSourceDescriptor.cpp
         LogicalSourceDescriptor.cpp
         MonitoringSourceDescriptor.cpp
-        NetworkSourceDescriptor.cpp
         OPCSourceDescriptor.cpp
         MemorySourceDescriptor.cpp
         StaticDataSourceDescriptor.cpp

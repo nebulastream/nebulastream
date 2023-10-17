@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <RequestTypes/QueryRequests/RestartQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/RestartQueryRequest.hpp>
 #include <string>
 
 namespace NES {

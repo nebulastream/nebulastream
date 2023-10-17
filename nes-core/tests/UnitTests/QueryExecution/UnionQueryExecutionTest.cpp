@@ -20,7 +20,7 @@ using namespace NES;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class UnionQueryExecutionTest : public Testing::BaseUnitTest,
-                                public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
+                                public ::testing::WithParamInterface<QueryCompilation::QueryCompiler> {
   public:
     struct __attribute__((packed)) DefaultRecord {
         int64_t id;
@@ -233,7 +233,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutResults) {
 
 INSTANTIATE_TEST_CASE_P(testFilterQueries,
                         UnionQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<UnionQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

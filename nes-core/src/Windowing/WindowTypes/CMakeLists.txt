@@ -12,9 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        TimeBasedWindowType.cpp
-        ContentBasedWindowType.cpp
         TumblingWindow.cpp
         SlidingWindow.cpp
-        ThresholdWindow.cpp
-)
+ )

@@ -18,7 +18,6 @@ add_source_files(nes-operators
         ZmqSinkDescriptor.cpp
         PrintSinkDescriptor.cpp
         MonitoringSinkDescriptor.cpp
-        NetworkSinkDescriptor.cpp
         OPCSinkDescriptor.cpp
         MQTTSinkDescriptor.cpp
         NullOutputSinkDescriptor.cpp

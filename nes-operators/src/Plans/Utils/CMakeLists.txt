@@ -13,6 +13,5 @@
 
 add_source_files(nes-operators
         PlanIdGenerator.cpp
-        PlanJsonGenerator.cpp
         QueryPlanIterator.cpp
 )

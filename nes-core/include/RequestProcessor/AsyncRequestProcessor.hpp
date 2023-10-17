@@ -16,6 +16,7 @@
 
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <limits.h>
+#include <deque>
 
 namespace NES::RequestProcessor::Experimental {
 

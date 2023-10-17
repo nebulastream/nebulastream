@@ -78,7 +78,7 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->enableMonitoring = true;
         coordinatorConfig->worker.queryCompiler.queryCompilerType =
-            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
         return std::make_shared<NesCoordinator>(coordinatorConfig);
     }
@@ -88,9 +88,9 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfSlots = (12);
         workerConfig->enableMonitoring = (true);
-        workerConfig->physicalSources.add(phSource);
+        workerConfig->physicalSourceTypes.add(phSource);
         workerConfig->queryCompiler.queryCompilerType =
-            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
         return std::make_shared<NesWorker>(std::move(workerConfig));
     }
 

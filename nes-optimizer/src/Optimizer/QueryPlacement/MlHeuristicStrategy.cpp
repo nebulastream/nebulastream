@@ -15,7 +15,7 @@
 #ifdef TFDEF
 
 #include <API/Schema.hpp>
-#include <Exceptions/QueryPlacementException.hpp>
+#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>

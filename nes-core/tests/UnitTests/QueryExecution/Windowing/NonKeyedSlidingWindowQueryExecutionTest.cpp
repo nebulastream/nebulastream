@@ -20,7 +20,7 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <iostream>
 #include <utility>
 
@@ -42,7 +42,7 @@ class NonKeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
         Testing::BaseUnitTest::SetUp();
         auto windowStrategy = this->GetParam();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(
-            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
             dumpMode,
             1,
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,

@@ -61,7 +61,7 @@ class KafkaSourceTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
-        kafkaSourceType = KafkaSourceType::create();
+        kafkaSourceType = KafkaSourceType::create("Kafka","Kafka1");
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())

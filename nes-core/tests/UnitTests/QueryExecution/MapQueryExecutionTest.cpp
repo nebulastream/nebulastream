@@ -31,7 +31,7 @@ constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode:
 
 class MapQueryExecutionTest
     : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<std::tuple<QueryCompilation::QueryCompilerOptions::QueryCompiler,
+      public ::testing::WithParamInterface<std::tuple<QueryCompilation::QueryCompiler,
                                                       std::string,
                                                       std::vector<string>,
                                                       std::vector<string>,
@@ -72,42 +72,42 @@ class MapQueryExecutionTest
     // The test data is a four-tuple which contains the nautilus compiler, the name of the test,
     // the field names for the result schema, the names for the query and the sign int for the input buffer.
     static auto createMapQueryArithmeticTestData() {
-        return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "MapQueryArithmetic",
                                std::vector<string>{"test$id", "test$one"},
                                std::vector<string>{"id"},
                                1);
     }
     static auto createLogTestData() {
-        return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "MapLogarithmicFunctions",
                                std::vector<string>{"test$id", "test$log10", "test$log2", "test$ln"},
                                std::vector<string>{"log10", "log2", "ln"},
                                1);
     }
     static auto createTwoMapQueryTestData() {
-        return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "TwoMapQuery",
                                std::vector<string>{"test$id", "test$new1", "test$new2"},
                                std::vector<string>{"test$new1", "test$new2"},
                                1);
     }
     static auto createAbsTestData() {
-        return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "MapAbsFunction",
                                std::vector<string>{"test$id", "test$abs"},
                                std::vector<string>{"abs"},
                                -1);
     }
     static auto createTrigTestData() {
-        return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "MapTrigonometricFunctions",
                                std::vector<string>{"test$id", "test$sin", "test$cos", "test$radians"},
                                std::vector<string>{"sin", "cos", "radians"},
                                1);
     }
     static auto createPowerTestData() {
-        return std::make_tuple(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER,
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "MapPowerFunction",
                                std::vector<string>{"test$left$id", "test$right$id", "test$power"},
                                std::vector<string>{"left$id", "right$id", "power"},

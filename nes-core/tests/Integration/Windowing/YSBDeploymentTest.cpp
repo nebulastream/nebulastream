@@ -45,7 +45,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("YSBDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -69,7 +69,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->coordinatorPort = port;
     workerConfig->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     auto ysbSchema = Schema::create()
                          ->addField("ysb$user_id", BasicType::UINT64)
                          ->addField("ysb$page_id", BasicType::UINT64)
@@ -146,7 +146,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
 
     auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("ysb", "YSB_phy", lambdaSourceType);
-    workerConfig->physicalSources.add(physicalSource);
+    workerConfig->physicalSourceTypes.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

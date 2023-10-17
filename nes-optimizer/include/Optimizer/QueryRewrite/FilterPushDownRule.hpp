@@ -16,18 +16,9 @@
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWNRULE_HPP_
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
-
-class Node;
-using NodePtr = std::shared_ptr<Node>;
-
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
-
-class MapLogicalOperatorNode;
-using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
-
 class FieldAccessExpressionNode;
 using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 }// namespace NES

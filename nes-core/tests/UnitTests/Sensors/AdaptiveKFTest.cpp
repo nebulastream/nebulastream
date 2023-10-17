@@ -54,7 +54,7 @@ class AdaptiveKFTest : public Testing::BaseIntegrationTest {
         schema = Schema::create()->addField("temperature", BasicType::UINT32);
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
-        workerConfiguration->physicalSources.add(sourceConf);
+        workerConfiguration->physicalSourceTypes.add(sourceConf);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 

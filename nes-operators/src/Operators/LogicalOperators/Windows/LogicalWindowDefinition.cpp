@@ -17,10 +17,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <utility>
 
 namespace NES::Windowing {
