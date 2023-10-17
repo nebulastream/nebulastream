@@ -261,9 +261,6 @@ class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto valueLeft = std::make_shared<Expressions::ConstantInt64ValueExpression>(10);
-        auto valueRight = std::make_shared<Expressions::ReadFieldExpression>("x");
-        auto addExpression = std::make_shared<Expressions::AddExpression>(valueRight, valueLeft);
         std::vector<Record::RecordFieldIdentifier> inputFields{"x", "y", "z"};
         std::vector<Record::RecordFieldIdentifier> outputFields{"x"};
         auto projectOperator = std::make_shared<Operators::Project>(inputFields, outputFields);
@@ -276,17 +273,17 @@ class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scanOperator);
 
-        /*
+
         auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
         for (int64_t i = 0; i < 100; i++) {
             dynamicBuffer[i]["x"].write(i % 10_s64);
             dynamicBuffer[i]["y"].write(+1_s64);
             dynamicBuffer[i]["z"].write(+1_s64);
             dynamicBuffer.setNumberOfTuples(i + 1);
-        }*/
+        }
 
-        auto buffer = NES::Runtime::TupleBuffer();
+        //auto buffer = NES::Runtime::TupleBuffer();
         auto executablePipeline = provider->create(pipeline, options);
         auto pipelineContext = MockedPipelineExecutionContext();
 
@@ -380,22 +377,46 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
         std::string function = "def simple_projection(x, y, z):"
                                "\n\treturn x\n";
         std::string functionName = "simple_projection";
+
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField("x", BasicType::INT64)
-                          ->addField("y", BasicType::INT64)
-                          ->addField("z", BasicType::INT64);
+                               ->addField("x", BasicType::INT64)
+                               ->addField("y", BasicType::INT64)
+                               ->addField("z", BasicType::INT64);
         auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("x", BasicType::INT64);
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
+                                ->addField("x", BasicType::INT32);
+        auto inputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
+        auto outputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
+
 
         compileTimeTimer.start();
-        auto pipeline = initPipelineOperator(inputSchema, outputSchema, bm);
-        auto buffer = NES::Runtime::TupleBuffer(); // dummy buffer copied from TPCHBenchmark
-        //auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
+        auto projectOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        scanOperator->setChild(projectOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        projectOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+
+        auto buffer = bm->getBufferBlocking();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
+        for (int64_t i = 0; i < 100; i++) {
+            dynamicBuffer[i]["x"].write(i % 10_s64);
+            dynamicBuffer[i]["y"].write(+1_s64);
+            dynamicBuffer[i]["z"].write(+1_s64);
+            dynamicBuffer.setNumberOfTuples(i + 1);
+        }
+
+        //auto buffer = NES::Runtime::TupleBuffer();
         auto executablePipeline = provider->create(pipeline, options);
         auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
+
         executablePipeline->setup(pipelineContext);
         compileTimeTimer.snapshot("setup");
         compileTimeTimer.pause();
@@ -497,11 +518,11 @@ int main(int, char**) {
             // NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
-            NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
+            //NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
             // TODO fix projection queries...
-            // NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
-            // NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();
-             //NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
+            NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
+            //NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();
+            //NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
         }
     }
 }
