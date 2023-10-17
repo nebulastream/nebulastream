@@ -21,6 +21,23 @@
 #include <Statistics/Requests/StatProbeRequest.hpp>
 #include <Statistics/Requests/StatRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
+#include <Statistics/StatCoordinator.hpp>
+
+#include <Components/NesCoordinator.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Components/NesWorker.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+
+
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
+
+#include <Services/SourceCatalogService.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
+//#include <Catalogs/Source/SourceCatalog.hpp>
+//#include <Sources/
 
 namespace NES {
 
