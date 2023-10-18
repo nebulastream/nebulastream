@@ -42,19 +42,22 @@ FailQueryRequestPtr FailQueryRequest::create(NES::QueryId queryId, NES::QuerySub
     return std::make_shared<FailQueryRequest>(queryId, failedSubPlanId, maxRetries);
 }
 
-void FailQueryRequest::preRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) {}
+void FailQueryRequest::preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {}
 
-std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(RequestExecutionException&, const StorageHandlerPtr&) {
+std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(std::exception_ptr ex, const StorageHandlerPtr&) {
     //make sure the promise is set before returning in case a the caller is waiting on it
     try {
-        responsePromise.set_value(std::make_shared<FailQueryResponse>(INVALID_QUERY_ID));
-    } catch (std::exception& e) {
+        responsePromise.set_exception(ex);
+    } catch (std::future_error& e) {
+        if (e.code() != std::future_errc::promise_already_satisfied) {
+            throw;
+        }
         NES_INFO("Promise value was already set");
     }
     return {};
 }
 
-void FailQueryRequest::postRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) {
+void FailQueryRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {
 
     //todo #3727: perform error handling
 }
@@ -96,5 +99,6 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
 
     //no follow up requests
     return {};
+    //todo: catch exceptions for error handling
 }
 }// namespace NES::RequestProcessor::Experimental

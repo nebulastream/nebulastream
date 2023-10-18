@@ -34,11 +34,11 @@ class AsyncRequestProcessor {
       public:
         FlushRequest() : AbstractRequest({}, 0) {}
         std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override { return {}; }
-        std::vector<AbstractRequestPtr> rollBack(RequestExecutionException&, const StorageHandlerPtr&) override { return {}; }
+        std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
 
       protected:
-        void preRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) override {}
-        void postRollbackHandle(const RequestExecutionException&, const StorageHandlerPtr&) override {}
+        void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
+        void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
         void postExecution(const StorageHandlerPtr&) override {}
     };
 

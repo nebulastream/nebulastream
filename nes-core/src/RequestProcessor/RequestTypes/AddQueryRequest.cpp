@@ -125,59 +125,75 @@ AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
     return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, faultTolerance, lineage, maxRetries, z3Context);
 }
 
-void AddQueryRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
+void AddQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
                                         [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
-std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] RequestExecutionException& exception,
+std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] std::exception_ptr exception,
                                                           [[maybe_unused]] const StorageHandlerPtr& storageHandler) {
     try {
-        NES_TRACE("Error: {}", exception.what());
-        if (exception.instanceOf<Exceptions::QueryNotFoundException>()) {
-            NES_ERROR("{}", exception.what());
-        } else if (exception.instanceOf<Exceptions::InvalidQueryStateException>()
-                   || exception.instanceOf<MapEntryNotFoundException>() || exception.instanceOf<TypeInferenceException>()
-                   || exception.instanceOf<Exceptions::LogicalSourceNotFoundException>()
-                   || exception.instanceOf<SignatureComputationException>()
-                   || exception.instanceOf<Exceptions::PhysicalSourceNotFoundException>()
-                   || exception.instanceOf<Exceptions::SharedQueryPlanNotFoundException>() || exception.instanceOf<UDFException>()
-                   || exception.instanceOf<Exceptions::OperatorNotFoundException>()
-                   || exception.instanceOf<Exceptions::InvalidLogicalOperatorException>()
-                   || exception.instanceOf<GlobalQueryPlanUpdateException>()) {
-            NES_ERROR("{}", exception.what());
-            auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
-            queryCatalogService->updateQueryStatus(queryId,
-                                                   QueryState::FAILED,
-                                                   "Query failed due to " + std::string(exception.what()));
-        } else if (exception.instanceOf<Exceptions::QueryPlacementException>()
-                   || exception.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
-                   || exception.instanceOf<QueryDeploymentException>()) {
-            NES_ERROR("{}", exception.what());
-            auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
-            globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
-            auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
-            queryCatalogService->updateQueryStatus(queryId,
-                                                   QueryState::FAILED,
-                                                   "Query failed due to " + std::string(exception.what()));
-        } else {
-            NES_ERROR("Unknown exception: {}", exception.what());
+        try{
+            std::rethrow_exception(exception);
+        } catch (Exceptions::RequestExecutionException& e) {
+            if (e.instanceOf<Exceptions::QueryNotFoundException>()) {
+                NES_ERROR("{}", e.what());
+            } else if (e.instanceOf<Exceptions::InvalidQueryStateException>()
+                       || e.instanceOf<MapEntryNotFoundException>() || e.instanceOf<TypeInferenceException>()
+                       || e.instanceOf<Exceptions::LogicalSourceNotFoundException>()
+                       || e.instanceOf<SignatureComputationException>()
+                       || e.instanceOf<Exceptions::PhysicalSourceNotFoundException>()
+                       || e.instanceOf<Exceptions::SharedQueryPlanNotFoundException>()
+                       || e.instanceOf<UDFException>() || e.instanceOf<Exceptions::OperatorNotFoundException>()
+                       || e.instanceOf<Exceptions::InvalidLogicalOperatorException>()
+                       || e.instanceOf<GlobalQueryPlanUpdateException>()) {
+                NES_ERROR("{}", e.what());
+                auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+                queryCatalogService->updateQueryStatus(queryId,
+                                                       QueryState::FAILED,
+                                                       "Query failed due to " + std::string(e.what()));
+            } else if (e.instanceOf<Exceptions::QueryPlacementException>()
+                       || e.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
+                       || e.instanceOf<QueryDeploymentException>()) {
+                NES_ERROR("{}", e.what());
+                auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
+                globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
+                auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+                queryCatalogService->updateQueryStatus(queryId,
+                                                       QueryState::FAILED,
+                                                       "Query failed due to " + std::string(e.what()));
+            } else {
+                NES_ERROR("Unknown exception: {}", e.what());
+                try {
+                    responsePromise.set_exception(exception);
+                } catch (std::future_error& e) {
+                    //rethrow exception if it did not occur because future was already satisfied
+                    if (e.code() != std::future_errc::promise_already_satisfied) {
+                        throw;
+                    }
+                    NES_INFO("Promise value was already set");
+                }
+            }
         }
     } catch (RequestExecutionException& exception) {
         if (retry()) {
-            handleError(exception, storageHandler);
+            handleError(std::current_exception(), storageHandler);
         } else {
             NES_ERROR("StopQueryRequest: Final failure to rollback. No retries left. Error: {}", exception.what());
         }
     }
+
     //make sure the promise is set before returning in case a the caller is waiting on it
     try {
         responsePromise.set_value(std::make_shared<AddQueryResponse>(INVALID_QUERY_ID));
-    } catch (std::exception& e) {
+    } catch (std::future_error& e) {
+        if (e.code() != std::future_errc::promise_already_satisfied) {
+            throw;
+        }
         NES_INFO("Promise value was already set");
     }
     return {};
 }
 
-void AddQueryRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& exception,
+void AddQueryRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr exception,
                                          [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
 void AddQueryRequest::postExecution(const StorageHandlerPtr& storageHandler) { storageHandler->releaseResources(requestId); }
@@ -347,7 +363,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
-        handleError(exception, storageHandler);
+        handleError(std::current_exception(), storageHandler);
     }
     return {};
 }

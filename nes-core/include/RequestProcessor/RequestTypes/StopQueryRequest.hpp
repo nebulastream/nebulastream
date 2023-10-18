@@ -124,21 +124,21 @@ class StopQueryRequest : public AbstractRequest {
      * @param ex: The exception thrown during request execution.
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      */
-    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, const StorageHandlerPtr& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void preRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) override;
+    void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
      * @param storageHandle: The storage access handle used by the request
      */
-    void postRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) override;
+    void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures

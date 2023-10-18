@@ -133,78 +133,102 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         responsePromise.set_value(std::make_shared<StopQueryResponse>(true));
 
     } catch (RequestExecutionException& e) {
-        auto requests = handleError(e, storageHandler);
+        auto requests = handleError(std::current_exception(), storageHandler);
         failureRequests.insert(failureRequests.end(), requests.begin(), requests.end());
     }
     return failureRequests;
 }
 
-void StopQueryRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) { storageHandler->releaseResources(requestId); }
+void StopQueryRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) {
+    storageHandler->releaseResources(requestId);
+}
 
 std::string StopQueryRequest::toString() { return "StopQueryRequest { QueryId: " + std::to_string(queryId) + "}"; }
 
-void StopQueryRequest::preRollbackHandle(const RequestExecutionException& ex,
-                                         [[maybe_unused]] const StorageHandlerPtr& storageHandle) {
-    NES_TRACE("Error: {}", ex.what());
-}
+void StopQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
+                                         [[maybe_unused]] const StorageHandlerPtr& storageHandle) {}
 
-void StopQueryRequest::postRollbackHandle(const RequestExecutionException& ex,
-                                          [[maybe_unused]] const StorageHandlerPtr& storageHandle) {
-    NES_TRACE("Error: {}", ex.what());
-}
+void StopQueryRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr ex,
+                                          [[maybe_unused]] const StorageHandlerPtr& storageHandle) {}
 
-std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionException& ex,
+std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(std::exception_ptr exception,
                                                            const StorageHandlerPtr& storageHandler) {
     std::vector<AbstractRequestPtr> failRequest;
+
+    //if this request cannot handle the exception itself, pass it back to the thread that created the request
+    bool setExceptionInPromise = false;
+
     try {
-        NES_TRACE("Error: {}", ex.what());
-        if (ex.instanceOf<Exceptions::QueryPlacementException>()) {
-            NES_ERROR("{}", ex.what());
-            std::promise<Experimental::FailQueryResponse> failPromise;
-            failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
-        } else if (ex.instanceOf<QueryDeploymentException>() || ex.instanceOf<InvalidQueryException>()) {
-            //Happens if:
-            //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
-            //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
-            //2. QueryDeploymentException The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF
-            //3. QueryDeploymentException: Error in call to Elegant acceleration service with code
-            //4. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
-            std::promise<Experimental::FailQueryResponse> failPromise;
-            failRequest.push_back(FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
-        } else if (ex.instanceOf<TypeInferenceException>() || ex.instanceOf<Exceptions::QueryUndeploymentException>()) {
-            // In general, failures in QueryUndeploymentPhase are concerned with the current sqp id and a failure with a topology node
-            // Therefore, for QueryUndeploymentException, we assume that the sqp is not running on any node, and we can set the sqp's status to stopped
-            // we do this as long as there are retries present, otherwise, we fail the query
-            NES_ERROR("{}", ex.what());
-            queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
-        } else if (ex.instanceOf<Exceptions::QueryNotFoundException>()
-                   || ex.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
-                   || ex.instanceOf<Exceptions::InvalidQueryStateException>()) {
-            //Happens if:
-            //1. could not obtain execution nodes by shared query id --> non-recoverable
-            //2. if check and mark for hard stop failed, means that stop is already in process, hence, we don't do anything
-            //3. Could not find topology node to release resources
-            //4. Could not find sqp in global query plan
-            //5. Could not remove query sub plan from execution node
-            //--> SQP is not running on any nodes:
-            //log the error to let the user know
-            //no other action necessary
-            NES_ERROR("{}", ex.what());
-        } else if (ex.instanceOf<Exceptions::RuntimeException>()) {
-            //todo: #3821 change to more specific exceptions
-            //1. Called from QueryUndeploymentPhase: GlobalQueryPlan: Unable to remove all child operators of the identified sink operator in the shared query plan
-            //2. Called from PlacementStrategyPhase: PlacementStrategyFactory: Unknown placement strategy
-            NES_ERROR("RuntimeException: {}", ex.what());
-        } else {
-            //todo: #3821 retry for these errors, add specific rpcCallException and retry failed part, differentiate between deployment and undeployment phase
-            //RPC call errors:
-            //1. asynchronous call to worker to stop shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR;
-            //2. asynchronous call to worker to unregister shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR:
-            NES_ERROR("Unknown exception: {}", ex.what());
+        try {
+            std::rethrow_exception(exception);
+        } catch (Exceptions::RequestExecutionException& ex) {
+            NES_TRACE("Error: {}", ex.what());
+            if (ex.instanceOf<Exceptions::QueryPlacementException>()) {
+                NES_ERROR("{}", ex.what());
+                std::promise<Experimental::FailQueryResponse> failPromise;
+                failRequest.push_back(
+                    FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+            } else if (ex.instanceOf<QueryDeploymentException>() || ex.instanceOf<InvalidQueryException>()) {
+                //Happens if:
+                //1. InvalidQueryException: inside QueryDeploymentPhase, if the query sub-plan metadata already exists in the query catalog --> non-recoverable
+                //todo: #3821 change to more specific exceptions, remove QueryDeploymentException
+                //2. QueryDeploymentException The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF
+                //3. QueryDeploymentException: Error in call to Elegant acceleration service with code
+                //4. QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
+                std::promise<Experimental::FailQueryResponse> failPromise;
+                failRequest.push_back(
+                    FailQueryRequest::create(ex.getQueryId(), INVALID_QUERY_SUB_PLAN_ID, MAX_RETRIES_FOR_FAILURE));
+            } else if (ex.instanceOf<TypeInferenceException>() || ex.instanceOf<Exceptions::QueryUndeploymentException>()) {
+                // In general, failures in QueryUndeploymentPhase are concerned with the current sqp id and a failure with a topology node
+                // Therefore, for QueryUndeploymentException, we assume that the sqp is not running on any node, and we can set the sqp's status to stopped
+                // we do this as long as there are retries present, otherwise, we fail the query
+                NES_ERROR("{}", ex.what());
+                queryCatalogService->updateQueryStatus(ex.getQueryId(), QueryState::FAILED, ex.what());
+            } else if (ex.instanceOf<Exceptions::QueryNotFoundException>()
+                       || ex.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
+                       || ex.instanceOf<Exceptions::InvalidQueryStateException>()) {
+                //Happens if:
+                //1. could not obtain execution nodes by shared query id --> non-recoverable
+                //2. if check and mark for hard stop failed, means that stop is already in process, hence, we don't do anything
+                //3. Could not find topology node to release resources
+                //4. Could not find sqp in global query plan
+                //5. Could not remove query sub plan from execution node
+                //--> SQP is not running on any nodes:
+                //log the error to let the user know
+                //no other action necessary
+                NES_ERROR("{}", ex.what());
+                setExceptionInPromise = true;
+            } else if (ex.instanceOf<Exceptions::RuntimeException>()) {
+                //todo: #3821 change to more specific exceptions
+                //1. Called from QueryUndeploymentPhase: GlobalQueryPlan: Unable to remove all child operators of the identified sink operator in the shared query plan
+                //2. Called from PlacementStrategyPhase: PlacementStrategyFactory: Unknown placement strategy
+                NES_ERROR("RuntimeException: {}", ex.what());
+                setExceptionInPromise = true;
+            } else {
+                //todo: #3821 retry for these errors, add specific rpcCallException and retry failed part, differentiate between deployment and undeployment phase
+                //RPC call errors:
+                //1. asynchronous call to worker to stop shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR;
+                //2. asynchronous call to worker to unregister shared query plan failed --> currently invokes NES_THROW_RUNTIME_ERROR:
+                NES_ERROR("Unknown exception: {}", ex.what());
+                setExceptionInPromise = true;
+            }
         }
+
+        //if the exception was not handled above, pass exception to thread that create the task
+        if (setExceptionInPromise) {
+            try {
+                responsePromise.set_exception(exception);
+            } catch (std::future_error& e) {
+                if (e.code() != std::future_errc::promise_already_satisfied) {
+                    throw;
+                }
+                NES_INFO("Promise value was already set");
+            }
+        }
+
     } catch (RequestExecutionException& e) {
         if (retry()) {
-            handleError(e, storageHandler);
+            handleError(std::current_exception(), storageHandler);
         } else {
             NES_ERROR("StopQueryRequest: Final failure to rollback. No retries left. Error: {}", e.what());
         }
@@ -212,7 +236,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::rollBack(RequestExecutionExcep
     //make sure the promise is set before returning in case a the caller is waiting on it
     try {
         responsePromise.set_value(std::make_shared<StopQueryResponse>(false));
-    } catch (std::exception& e) {
+    } catch (std::future_error& e) {
         NES_INFO("Promise value was already set");
     }
     return failRequest;
