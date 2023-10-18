@@ -12,7 +12,9 @@
      limitations under the License.
 */
 
+#ifndef UNIKERNEL_LIB
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
+#endif
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/ThreadLocalSliceStore.hpp>
 
@@ -103,6 +105,8 @@ ThreadLocalSliceStore<SliceType>::SliceTypePtr& ThreadLocalSliceStore<SliceType>
                                 << ts << " current front: " << getLastSlice()->getStart() << " - " << getLastSlice()->getEnd());
     }
 }
+#ifndef UNIKERNEL_LIB
 template class ThreadLocalSliceStore<KeyedSlice>;
+#endif
 template class ThreadLocalSliceStore<NonKeyedSlice>;
 }// namespace NES::Runtime::Execution::Operators
