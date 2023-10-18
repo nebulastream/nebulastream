@@ -138,6 +138,7 @@
 #endif
 #ifdef ENABLE_MQTT_BUILD
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <fstream>
 
