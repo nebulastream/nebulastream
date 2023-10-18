@@ -27,10 +27,14 @@ namespace NES::Exceptions {
 class InvalidQueryStateException : public RequestExecutionException {
   public:
     explicit InvalidQueryStateException(const std::vector<QueryState>& expectedState, QueryState actualState);
+
     [[nodiscard]] const char* what() const noexcept override;
+
+    [[nodiscard]] QueryState getActualState();
 
   private:
     std::string message;
+    QueryState actualState;
 };
 }// namespace NES::Exceptions
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATEEXCEPTION_HPP_

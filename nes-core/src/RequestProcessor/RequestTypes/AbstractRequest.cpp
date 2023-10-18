@@ -22,7 +22,7 @@ AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResour
     : requestId(INVALID_REQUEST_ID), responsePromise(), maxRetries(maxRetries), actualRetries(0),
       requiredResources(requiredResources) {}
 
-std::vector<AbstractRequestPtr> AbstractRequest::handleError(RequestExecutionException& ex,
+std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exception_ptr& ex,
                                                              const StorageHandlerPtr& storageHandle) {
 
     //error handling to be performed before rolling back

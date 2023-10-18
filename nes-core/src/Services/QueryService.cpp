@@ -18,6 +18,8 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/InvalidQueryStateException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
@@ -179,9 +181,14 @@ bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
         auto stopRequest = RequestProcessor::Experimental::StopQueryRequest::create(queryId, 1);
         auto future = stopRequest->getFuture();
         asyncRequestExecutor->runAsync(stopRequest);
-        //return true;
-        auto success =  std::static_pointer_cast<RequestProcessor::Experimental::StopQueryResponse>(future.get())->success;
-        return success;
+        try {
+            auto response = future.get();
+            auto success = std::static_pointer_cast<RequestProcessor::Experimental::StopQueryResponse>(response)->success;
+            return success;
+        } catch (Exceptions::InvalidQueryStateException& e) {
+            //return true if the query was already stopped
+            return e.getActualState() == QueryState::STOPPED;
+        }
     }
 }
 
@@ -196,8 +203,8 @@ bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
         auto failRequest = RequestProcessor::Experimental::FailQueryRequest::create(sharedQueryId, querySubPlanId, 1);
         auto future = failRequest->getFuture();
         asyncRequestExecutor->runAsync(failRequest);
-        //return true;
-        auto returnedSharedQueryId = std::static_pointer_cast<RequestProcessor::Experimental::FailQueryResponse>(future.get())->sharedQueryId;
+        auto returnedSharedQueryId =
+            std::static_pointer_cast<RequestProcessor::Experimental::FailQueryResponse>(future.get())->sharedQueryId;
         return returnedSharedQueryId != INVALID_SHARED_QUERY_ID;
     }
 }

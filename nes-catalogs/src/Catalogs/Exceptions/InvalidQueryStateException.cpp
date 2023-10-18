@@ -19,7 +19,7 @@
 namespace NES::Exceptions {
 
 InvalidQueryStateException::InvalidQueryStateException(const std::vector<QueryState>& expectedState, QueryState actualState)
-    : RequestExecutionException("Invalid query status") {
+    :  RequestExecutionException("Invalid query status"), actualState(actualState) {
 
     std::stringstream expectedStatus;
     for (auto const& state : expectedState) {
@@ -30,5 +30,7 @@ InvalidQueryStateException::InvalidQueryStateException(const std::vector<QuerySt
 }
 
 const char* InvalidQueryStateException::what() const noexcept { return message.c_str(); }
+
+QueryState InvalidQueryStateException::getActualState() { return actualState; }
 
 }// namespace NES::Exceptions
