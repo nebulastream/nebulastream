@@ -120,7 +120,12 @@ using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
-using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
+using SuccessorExecutablePipeline = std::variant<DataSinkPtr
+#ifndef UNIKERNEL_SUPPORT_LIB
+                                                 ,
+                                                 ExecutablePipelinePtr
+#endif
+                                                 >;
 using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
 
 class ExecutablePipelineStage;

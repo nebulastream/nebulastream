@@ -22,7 +22,9 @@
 
 namespace NES {
 PrintSink::PrintSink(SinkFormatPtr format,
+#ifndef UNIKERNEL_SUPPORT_LIB
                      Runtime::NodeEnginePtr nodeEngine,
+#endif
                      uint32_t numOfProducers,
                      QueryId queryId,
                      QuerySubPlanId querySubPlanId,
@@ -30,7 +32,9 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      FaultToleranceType faultToleranceType,
                      uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
+#ifndef UNIKERNEL_SUPPORT_LIB
                  std::move(nodeEngine),
+#endif
                  numOfProducers,
                  queryId,
                  querySubPlanId,

@@ -116,6 +116,7 @@ uint64_t Util::getNextPipelineId() {
     return ++id;
 }
 
+#ifndef UNIKERNEL_SUPPORT_LIB
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                             std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
@@ -146,6 +147,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
     return true;
 }
 
+#endif// UNIKERNEL_SUPPORT_LIB
 std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::string& csvFile,
                                                                  const SchemaPtr& schema,
                                                                  Runtime::BufferManagerPtr bufferManager,

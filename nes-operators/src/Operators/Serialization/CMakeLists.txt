@@ -20,3 +20,9 @@ add_source_files(nes-operators
         ShapeTypeSerializationUtil.cpp
         UDFSerializationUtil.cpp
 )
+
+add_source_files(nes-unikernel-support-core
+        SchemaSerializationUtil.cpp
+        DataTypeSerializationUtil.cpp
+        )
+

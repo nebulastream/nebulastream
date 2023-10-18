@@ -18,6 +18,9 @@ add_source_files(nes-core
         NetworkSource.cpp
 )
 
+add_source_files(nes-unikernel-support-core
+        NetworkSink.cpp
+        NetworkSource.cpp)
 add_source_files(nes-unikernel-core
         ZmqServer.cpp
         NetworkManager.cpp

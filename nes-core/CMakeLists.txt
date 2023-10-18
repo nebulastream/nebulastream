@@ -14,6 +14,24 @@
 add_subdirectory(src)
 include(GNUInstallDirs)
 
+# Add nes-unikernel-core
+get_source(nes-unikernel-core NES_UNIKERNEL_CORE_SOURCE_FILES)
+add_library(nes-unikernel STATIC ${NES_UNIKERNEL_CORE_SOURCE_FILES})
+target_compile_options(nes-unikernel PRIVATE "-DUNIKERNEL_LIB=1")
+target_include_directories(nes-unikernel PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+set_property(TARGET nes-unikernel PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+target_link_libraries(nes-unikernel PUBLIC nes-unikernel-runtime)
+
+# Add nes-unikernel-support-core
+get_source(nes-unikernel-support-core NES_UNIKERNEL_CORE_SUPPORT_SOURCE_FILES)
+add_library(nes-unikernel-support STATIC ${NES_UNIKERNEL_CORE_SUPPORT_SOURCE_FILES} ${NES_UNIKERNEL_CORE_SOURCE_FILES})
+target_compile_options(nes-unikernel-support PRIVATE "-DUNIKERNEL_SUPPORT_LIB=1")
+target_include_directories(nes-unikernel-support PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+target_link_libraries(nes-unikernel-support PUBLIC nes-unikernel-support-runtime nes-grpc)
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES})

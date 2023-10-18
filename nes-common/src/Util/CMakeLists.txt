@@ -17,6 +17,9 @@ add_source_files(nes-unikernel-common
         ThreadNaming.cpp
         NonBlockingMonotonicSeqQueue.cpp
 )
+add_source_files(nes-unikernel-support-common
+        Common.cpp
+)
 add_source_files(nes-common
         Common.cpp
         DumpHelper.cpp

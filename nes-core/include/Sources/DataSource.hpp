@@ -22,6 +22,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/GatheringMode.hpp>
 #include <atomic>
 #include <chrono>
@@ -68,7 +69,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     explicit DataSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
+#ifndef UNIKERNEL_SUPPORT_LIB
                         Runtime::QueryManagerPtr queryManager,
+#else
+                         NES::Runtime::WorkerContextPtr workerContext,
+#endif
                         OperatorId operatorId,
                         OriginId originId,
                         size_t numSourceLocalBuffers,
@@ -275,7 +280,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     void incrementNumberOfConsumerQueries() { numberOfConsumerQueries++; };
 
   protected:
+#ifndef UNIKERNEL_SUPPORT_LIB
     Runtime::QueryManagerPtr queryManager;
+#else
+    Runtime::WorkerContextPtr workerContext;
+#endif
     Runtime::BufferManagerPtr localBufferManager;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;

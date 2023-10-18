@@ -27,7 +27,11 @@ namespace NES::Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema,
                              Runtime::BufferManagerPtr bufferManager,
+#ifndef UNIKERNEL_SUPPORT_LIB
                              Runtime::QueryManagerPtr queryManager,
+#else
+                              NES::Runtime::WorkerContextPtr workerContext,
+#endif
                              NetworkManagerPtr networkManager,
                              NesPartition nesPartition,
                              NodeLocation sinkLocation,
@@ -39,7 +43,11 @@ NetworkSource::NetworkSource(SchemaPtr schema,
 
     : DataSource(std::move(schema),
                  std::move(bufferManager),
+#ifndef UNIKERNEL_SUPPORT_LIB
                  std::move(queryManager),
+#else
+                  std::move(workerContext),
+#endif
                  nesPartition.getOperatorId(),
                  /*default origin id for the network source this is always zero*/ 0,
                  numSourceLocalBuffers,
@@ -83,24 +91,41 @@ bool NetworkSource::start() {
         for (const auto& successor : executableSuccessors) {
             auto querySubPlanId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
                                                                     return sink->getParentPlanId();
-                                                                },
+                                                                }
+#ifndef UNIKERNEL_SUPPORT_LIB
+                                                                ,
                                                                 [](Execution::ExecutablePipelinePtr pipeline) {
                                                                     return pipeline->getQuerySubPlanId();
-                                                                }},
+                                                                }
+#endif
+                                             },
                                              successor);
             auto queryId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
                                                              return sink->getQueryId();
-                                                         },
+                                                         }
+#ifndef UNIKERNEL_SUPPORT_LIB
+                                                         ,
                                                          [](Execution::ExecutablePipelinePtr pipeline) {
                                                              return pipeline->getQueryId();
-                                                         }},
+                                                         }
+#endif
+                                      },
                                       successor);
 
+#ifndef UNIKERNEL_SUPPORT_LIB
             auto newReconf = ReconfigurationMessage(queryId,
                                                     querySubPlanId,
                                                     Runtime::ReconfigurationType::Initialize,
                                                     shared_from_base<DataSource>());
             queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, true);
+#else
+            auto newReconf = ReconfigurationMessage(queryId,
+                                                    querySubPlanId,
+                                                    Runtime::ReconfigurationType::Initialize,
+                                                    shared_from_base<DataSource>(),
+                                                    1u);
+            this->reconfigure(newReconf, *workerContext);
+#endif
             break;// hack as currently we assume only one executableSuccessor
         }
         NES_DEBUG("NetworkSource: start completed on {}", nesPartition);
@@ -116,9 +141,12 @@ bool NetworkSource::fail() {
         NES_DEBUG("NetworkSource: fail called on {}", nesPartition);
         auto newReconf =
             ReconfigurationMessage(-1, -1, ReconfigurationType::FailEndOfStream, DataSource::shared_from_base<DataSource>());
+#ifndef UNIKERNEL_SUPPORT_LIB
         queryManager->addReconfigurationMessage(-1, -1, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Failure);
         return queryManager->addEndOfStream(shared_from_base<NetworkSource>(), Runtime::QueryTerminationType::Failure);
+#endif
+        return true;//TODO: Unikernel
     }
     return false;
 }
@@ -135,9 +163,11 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
                                                 invalidId,
                                                 ReconfigurationType::HardEndOfStream,
                                                 DataSource::shared_from_base<DataSource>());
+#ifndef UNIKERNEL_SUPPORT_LIB
         queryManager->addReconfigurationMessage(invalidId, invalidId, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
+#endif
         NES_DEBUG("NetworkSource: stop called on {} sent hard eos", nesPartition);
     } else {
         NES_DEBUG("NetworkSource: stop called on {} but was already stopped", nesPartition);
@@ -151,7 +181,11 @@ void NetworkSource::onEvent(Runtime::BaseEvent& event) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
         auto queryId = epochEvent->queryIdValue();
+#ifndef UNIKERNEL_SUPPORT_LIB
         auto success = queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
+#else
+        auto success = true;
+#endif
         if (success) {
             NES_DEBUG("NetworkSource::onEvent: epoch {} queryId {} propagated", epochBarrier, queryId);
         } else {
@@ -247,19 +281,29 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
         bool expected = true;
         if (running.compare_exchange_strong(expected, false)) {
             NES_DEBUG("NetworkSource is stopped on reconf task with id {}", nesPartition.toString());
+#ifndef UNIKERNEL_SUPPORT_LIB
             queryManager->notifySourceCompletion(shared_from_base<DataSource>(), terminationType);
+#endif
         }
     }
 }
 
-void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runtime::QueryManagerPtr&) {
+void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&
+#ifndef UNIKERNEL_SUPPORT_LIB
+                                   ,
+                                   const Runtime::QueryManagerPtr&
+#endif
+) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
+
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
     if (Runtime::QueryTerminationType::Graceful == terminationType) {
+#ifndef UNIKERNEL_SUPPORT_LIB
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
+#endif
     } else {
         NES_WARNING("Ignoring forceful EoS on {}", nesPartition);
     }

@@ -16,3 +16,7 @@ add_source_files(nes-core
         JSONParser.cpp
         CSVParser.cpp
 )
+add_source_files(nes-unikernel-support-core
+        Parser.cpp
+        CSVParser.cpp
+        )

@@ -24,28 +24,43 @@
 namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
+#ifndef UNIKERNEL_SUPPORT_LIB
                        Runtime::NodeEnginePtr nodeEngine,
+#endif
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, queryId, querySubPlanId, FaultToleranceType::NONE, 1, nullptr) {}
+    : SinkMedium(sinkFormat,
+#ifndef UNIKERNEL_SUPPORT_LIB
+                 nodeEngine,
+#endif
+                 numOfProducers, queryId, querySubPlanId, FaultToleranceType::NONE, 1, nullptr) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
+#ifndef UNIKERNEL_SUPPORT_LIB
                        Runtime::NodeEnginePtr nodeEngine,
+#endif
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId,
                        FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins,
                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
-    : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
-      querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins),
-      watermarkProcessor(std::move(watermarkProcessor)) {
+    : sinkFormat(std::move(sinkFormat)),
+#ifndef UNIKERNEL_SUPPORT_LIB
+      nodeEngine(std::move(nodeEngine)),
+#endif
+      activeProducers(numOfProducers), queryId(queryId), querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType),
+      numberOfOrigins(numberOfOrigins), watermarkProcessor(std::move(watermarkProcessor)) {
     bufferCount = 0;
+#ifndef UNIKERNEL_SUPPORT_LIB
+    NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
+#else
+    buffersPerEpoch = 1000;//TODO
+#endif
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
-    NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
         updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             updateWatermark(inputBuffer);
@@ -89,6 +104,7 @@ QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 QueryId SinkMedium::getQueryId() const { return queryId; }
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
+#ifndef UNIKERNEL_SUPPORT_LIB
     uint64_t queryId = nodeEngine->getQueryManager()->getQueryId(querySubPlanId);
     NES_ASSERT(queryId >= 0, "SinkMedium: no queryId found for querySubPlanId");
     if (auto listener = nodeEngine->getQueryStatusListener(); listener) {
@@ -98,6 +114,10 @@ bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
         }
     }
     return false;
+#else
+    NES_DEBUG("EPOCH: {}", epochBarrier)
+    return true;
+#endif
 }
 
 void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
@@ -130,9 +150,11 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         NES_DEBUG("Got EoS on Sink  {}", toString());
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
+#ifndef UNIKERNEL_SUPPORT_LIB
             nodeEngine->getQueryManager()->notifySinkCompletion(querySubPlanId,
                                                                 std::static_pointer_cast<SinkMedium>(shared_from_this()),
                                                                 terminationType);
+#endif
             NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);
         }
     }
