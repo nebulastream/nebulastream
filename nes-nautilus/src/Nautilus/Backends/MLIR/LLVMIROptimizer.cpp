@@ -37,6 +37,9 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
         auto tmBuilderOrError = llvm::orc::JITTargetMachineBuilder::detectHost();
         NES_ASSERT2_FMT(tmBuilderOrError, "Failed to create a JITTargetMachineBuilder for the host");
         auto targetMachine = tmBuilderOrError->createTargetMachine();
+        if (auto e = targetMachine.takeError()) {
+            NES_THROW_RUNTIME_ERROR("Failed to create a target machine for the host");
+        }
         llvm::TargetMachine* targetMachinePtr = targetMachine->get();
         targetMachinePtr->setOptLevel(llvm::CodeGenOpt::Level::Aggressive);
 
