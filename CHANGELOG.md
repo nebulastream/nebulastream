@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.228](https://github.com/nebulastream/nebulastream/tree/v0.5.228) (2023-10-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.227...v0.5.228)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Use of Uninitialized Value in `NautilusPipelineOperator` [\#4251](https://github.com/nebulastream/nebulastream/issues/4251)
+
 ## [v0.5.227](https://github.com/nebulastream/nebulastream/tree/v0.5.227) (2023-10-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.226...v0.5.227)
