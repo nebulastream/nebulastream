@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <atomic>
 #include <map>
 #include <tuple>
 #include <vector>
