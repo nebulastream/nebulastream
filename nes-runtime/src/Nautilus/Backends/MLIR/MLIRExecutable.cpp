@@ -21,7 +21,13 @@
 namespace NES::Nautilus::Backends::MLIR {
 MLIRExecutable::MLIRExecutable(std::unique_ptr<mlir::ExecutionEngine> engine) : engine(std::move(engine)) {}
 
-void* MLIRExecutable::getInvocableFunctionPtr(const std::string& member) { return engine->lookup(member).get(); }
+void* MLIRExecutable::getInvocableFunctionPtr(const std::string& member) {
+    auto function = engine->lookup(member);
+    if (auto error = function.takeError()) {
+        NES_THROW_RUNTIME_ERROR("Error while looking up function");
+    }
+    return function.get();
+}
 bool MLIRExecutable::hasInvocableFunctionPtr() { return true; }
 MLIRExecutable::~MLIRExecutable() { NES_DEBUG("~MLIRExecutable"); }
 
