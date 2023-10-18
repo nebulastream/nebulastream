@@ -8,5 +8,5 @@ add_executable(e2e-tests
         "E2EMonitoringTest.cpp"
         )
 target_link_libraries(e2e-tests nes-core-test-util)
-gtest_discover_tests(e2e-tests WORKING_DIRECTORY ${CMAKE_BINARY_DIR} PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR}  DISCOVERY_MODE PRE_TEST)
+gtest_discover_tests(e2e-tests WORKING_DIRECTORY ${CMAKE_BINARY_DIR} PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR}  DISCOVERY_MODE PRE_TEST DISCOVERY_TIMEOUT 30)
 add_dependencies(e2e-tests nesCoordinator nesWorker)
