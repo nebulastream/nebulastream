@@ -38,7 +38,13 @@ HJOperatorHandlerSlicing::HJOperatorHandlerSlicing(const std::vector<OriginId>& 
                         totalSizeForDataStructures,
                         preAllocPageSizeCnt,
                         pageSize,
-                        numPartitions) {}
+                        numPartitions),
+      StreamJoinOperatorHandlerSlicing(inputOrigins,
+                                       outputOriginId,
+                                       windowSize,
+                                       windowSlide,
+                                       sizeOfRecordLeft,
+                                       sizeOfRecordRight) {}
 
 HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(const std::vector<OriginId>& inputOrigins,
                                                       const OriginId outputOriginId,

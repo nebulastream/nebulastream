@@ -11,6 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        ShapeExpressionNode.cpp
+        CircleExpressionNode.cpp
+        PointExpressionNode.cpp
+        PolygonExpressionNode.cpp
+        RectangleExpressionNode.cpp
+)
 add_source_files(nes-operators
         ShapeExpressionNode.cpp
         CircleExpressionNode.cpp

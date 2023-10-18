@@ -26,6 +26,7 @@ LogicalOperatorNode::LogicalOperatorNode(uint64_t id)
 
 Optimizer::QuerySignaturePtr LogicalOperatorNode::getZ3Signature() { return z3Signature; }
 
+#ifndef UNIKERNEL_EXPORT
 void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
     if (z3Signature) {
         return;
@@ -40,6 +41,7 @@ void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
     }
     z3Signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
 }
+#endif
 
 void LogicalOperatorNode::setZ3Signature(Optimizer::QuerySignaturePtr signature) { this->z3Signature = std::move(signature); }
 

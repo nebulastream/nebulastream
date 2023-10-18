@@ -11,6 +11,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        ExecutionPlanRollbackException.cpp
+        RequestTypeNotHandledException.cpp
+        TaskExecutionException.cpp
+        QueryDeploymentException.cpp
+        QueryUndeploymentException.cpp
+        WindowProcessingException.cpp
+        InvalidCoordinateFormatException.cpp
+        MapEntryNotFoundException.cpp
+        LocationProviderException.cpp
+        ExecutionNodeNotFoundException.cpp
+        ResourceLockingException.cpp
+        StorageHandlerAcquireResourcesException.cpp
+        AccessNonLockedResourceException.cpp
+)
 add_source_files(nes-core
         ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp

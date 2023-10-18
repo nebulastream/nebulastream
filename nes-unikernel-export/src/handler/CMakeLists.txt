@@ -1,0 +1,22 @@
+add_source_files(unikernel-export
+        HJOperatorHandler.cpp
+        NLJOperatorHandler.cpp
+        NLJOperatorHandlerSlicing.cpp
+        NLJOperatorHandlerBucketing.cpp
+        AbstractBucketPreAggregationHandler.cpp
+        AbstractSlicePreAggregationHandler.cpp
+        StreamJoinOperatorHandlerBucketing.cpp
+        StreamJoinOperatorHandlerSlicing.cpp
+        StreamJoinOperatorHandler.cpp
+        AppendToSliceStoreAction.cpp
+        AppendToSliceStoreAction.cpp
+        EverythingThatIsNeeded.cpp
+        KeyedBucketPreAggregationHandler.cpp
+        KeyedSliceMergingHandler.cpp
+        HJOperatorHandlerSlicing.cpp
+        HJOperatorHandlerBucketing.cpp
+        KeyedSlicePreAggregationHandler.cpp
+        NonKeyedBucketPreAggregationHandler.cpp
+        NonKeyedSliceMergingHandler.cpp
+        NonKeyedSlicePreAggregationHandler.cpp
+)

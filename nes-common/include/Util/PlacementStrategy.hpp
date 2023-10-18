@@ -27,9 +27,11 @@ enum class PlacementStrategy : uint8_t {
     ILP = 3,
     Manual = 4,
     MlHeuristic = 5,
+#ifndef UNIKERNEL_EXPORT
     ELEGANT_PERFORMANCE = 6,
     ELEGANT_ENERGY = 7,
     ELEGANT_BALANCED = 8
+#endif
     // FIXME: enable them with issue #755
     // LowLatency,
     //  HighThroughput,

@@ -21,6 +21,10 @@ add_source_files(nes-core
         KafkaSink.cpp
 )
 
+add_source_files(unikernel-export
+        SinkMedium.cpp
+        NullOutputSink.cpp
+)
 add_source_files(nes-unikernel-support-core
         PrintSink.cpp
         SinkMedium.cpp

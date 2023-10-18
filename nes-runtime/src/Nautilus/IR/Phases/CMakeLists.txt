@@ -12,6 +12,11 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        RemoveBrOnlyBlocksPhase.cpp
+        StructuredControlFlowPhase.cpp
+        LoopDetectionPhase.cpp
+)
 add_source_files(nes-runtime
         RemoveBrOnlyBlocksPhase.cpp
         StructuredControlFlowPhase.cpp

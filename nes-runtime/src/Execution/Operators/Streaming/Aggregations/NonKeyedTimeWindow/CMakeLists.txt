@@ -10,6 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        NonKeyedSlicePreAggregation.cpp
+        NonKeyedWindowEmitAction.cpp
+        NonKeyedSliceMerging.cpp
+)
 add_source_files(nes-runtime
         NonKeyedSlicePreAggregation.cpp
         NonKeyedSlicePreAggregationHandler.cpp
@@ -18,4 +23,12 @@ add_source_files(nes-runtime
         NonKeyedSliceMerging.cpp
         NonKeyedSliceMergingHandler.cpp
         NonKeyedWindowEmitAction.cpp
+)
+
+add_source_files(nes-unikernel-runtime
+        NonKeyedSlicePreAggregation.cpp
+        NonKeyedSliceMergingHandler.cpp
+        NonKeyedSlicePreAggregationHandler.cpp
+        NonKeyedThreadLocalSliceStore.cpp
+        NonKeyedSlice.cpp
 )

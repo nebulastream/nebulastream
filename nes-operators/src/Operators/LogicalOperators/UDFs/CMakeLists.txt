@@ -11,6 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        JavaUDFDescriptor.cpp
+        PythonUDFDescriptor.cpp
+        UDFDescriptor.cpp
+        UDFLogicalOperator.cpp
+)
 add_source_files(nes-operators
         JavaUDFDescriptor.cpp
         PythonUDFDescriptor.cpp

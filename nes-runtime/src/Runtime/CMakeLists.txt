@@ -25,6 +25,16 @@ add_source_files(nes-unikernel-runtime
         TaggedPointer.cpp
         Allocator/NesDefaultMemoryAllocator.cpp
 )
+add_source_files(unikernel-export
+        BufferManager.cpp
+        FixedSizeBufferPool.cpp
+        TupleBuffer.cpp
+        LocalBufferPool.cpp
+        BloomFilter.cpp
+        TaggedPointer.cpp
+        Allocator/NumaRegionMemoryAllocator.cpp
+        Allocator/NesDefaultMemoryAllocator.cpp
+)
 add_source_files(nes-runtime
         apex_memmove.cpp
         BufferStorage.cpp

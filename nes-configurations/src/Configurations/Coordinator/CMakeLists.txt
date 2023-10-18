@@ -11,6 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        LogicalSourceTypeFactory.cpp
+        LogicalSourceType.cpp
+        SchemaType.cpp
+)
 add_source_files(nes-configurations
         CoordinatorConfiguration.cpp
         LogicalSourceTypeFactory.cpp

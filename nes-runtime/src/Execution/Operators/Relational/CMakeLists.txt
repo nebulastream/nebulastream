@@ -19,6 +19,12 @@ endif ()
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_subdirectory(JavaUDF)
 endif ()
+add_source_files(unikernel-export
+        Map.cpp
+        Selection.cpp
+        Limit.cpp
+        Project.cpp
+)
 add_source_files(nes-runtime
         Map.cpp
         Selection.cpp

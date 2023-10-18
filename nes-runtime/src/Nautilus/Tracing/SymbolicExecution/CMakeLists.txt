@@ -12,6 +12,10 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        SymbolicExecutionContext.cpp
+        SymbolicExecutionPath.cpp
+)
 add_source_files(nes-runtime
         SymbolicExecutionContext.cpp
         SymbolicExecutionPath.cpp

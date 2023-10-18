@@ -11,6 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-query-export
+        Query.cpp
+        Windowing.cpp
+        WindowedQuery.cpp
+)
 add_source_files(nes-client
         Query.cpp
         Windowing.cpp

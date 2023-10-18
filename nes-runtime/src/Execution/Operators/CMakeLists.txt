@@ -10,6 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        Operator.cpp
+        ExecutableOperator.cpp
+        Emit.cpp
+        Scan.cpp
+        ExecutionContext.cpp
+)
 add_source_files(nes-runtime
         Operator.cpp
         ExecutableOperator.cpp

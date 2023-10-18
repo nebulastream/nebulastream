@@ -46,6 +46,7 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     return ss.str();
 }
 
+#ifndef UNIKERNEL_EXPORT
 std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -110,6 +111,7 @@ std::string Util::toCSVString(const SchemaPtr& schema) {
     ss << std::endl;
     return ss.str();
 }
+#endif
 
 uint64_t Util::getNextPipelineId() {
     static std::atomic_uint64_t id = 0;
@@ -146,8 +148,8 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
 
     return true;
 }
-
 #endif// UNIKERNEL_SUPPORT_LIB
+#ifndef UNIKERNEL_EXPORT
 std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::string& csvFile,
                                                                  const SchemaPtr& schema,
                                                                  Runtime::BufferManagerPtr bufferManager,
@@ -207,6 +209,8 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema) {
     }
     return retVector;
 }
+#endif
+
 
 std::string Util::trim(const std::string& str) {
     size_t start = str.find_first_not_of(" \t\n\r");

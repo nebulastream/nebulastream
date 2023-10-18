@@ -11,6 +11,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        PhysicalOperator.cpp
+        PhysicalUnaryOperator.cpp
+        PhysicalBinaryOperator.cpp
+        PhysicalSourceOperator.cpp
+        PhysicalSinkOperator.cpp
+        PhysicalFilterOperator.cpp
+        PhysicalLimitOperator.cpp
+        PhysicalProjectOperator.cpp
+        PhysicalInferModelOperator.cpp
+        PhysicalMapOperator.cpp
+        PhysicalMapUDFOperator.cpp
+        PhysicalFlatMapUDFOperator.cpp
+        PhysicalMultiplexOperator.cpp
+        PhysicalDemultiplexOperator.cpp
+        PhysicalWatermarkAssignmentOperator.cpp
+        PhysicalScanOperator.cpp
+        PhysicalEmitOperator.cpp
+        PhysicalExternalOperator.cpp
+)
 add_source_files(nes-core
         PhysicalInferModelOperator.cpp
         PhysicalOperator.cpp

@@ -11,6 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        GeographyFieldsAccessExpressionNode.cpp
+        STWithinExpressionNode.cpp
+        STDWithinExpressionNode.cpp
+        STKnnExpressionNode.cpp
+)
 add_source_files(nes-operators
         GeographyFieldsAccessExpressionNode.cpp
         STWithinExpressionNode.cpp

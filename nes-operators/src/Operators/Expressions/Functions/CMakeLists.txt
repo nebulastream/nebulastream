@@ -11,6 +11,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        FunctionExpression.cpp
+        FunctionRegistry.cpp
+        LnFunction.cpp
+        Log2Function.cpp
+        Log10Function.cpp
+        AbsFunction.cpp
+        PowerFunction.cpp
+        SinFunction.cpp
+        CosFunction.cpp
+        RadiansFunction.cpp
+)
 add_source_files(nes-operators
         FunctionExpression.cpp
         FunctionRegistry.cpp

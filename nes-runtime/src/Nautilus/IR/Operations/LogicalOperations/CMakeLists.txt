@@ -10,6 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        AndOperation.cpp
+        OrOperation.cpp
+        NegateOperation.cpp
+        CompareOperation.cpp
+        BitWiseAndOperation.cpp
+        BitWiseOrOperation.cpp
+        BitWiseLeftShiftOperation.cpp
+        BitWiseRightShiftOperation.cpp
+        BitWiseXorOperation.cpp
+)
 add_source_files(nes-runtime
         AndOperation.cpp
         OrOperation.cpp

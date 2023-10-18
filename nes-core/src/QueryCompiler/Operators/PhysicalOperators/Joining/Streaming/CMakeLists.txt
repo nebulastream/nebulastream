@@ -11,6 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        PhysicalStreamJoinOperator.cpp
+        PhysicalStreamJoinBuildOperator.cpp
+        PhysicalStreamJoinProbeOperator.cpp
+)
 add_source_files(nes-core
         PhysicalStreamJoinOperator.cpp
         PhysicalStreamJoinBuildOperator.cpp

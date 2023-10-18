@@ -10,6 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        BatchAggregation.cpp
+        BatchAggregationScan.cpp
+        BatchAggregationHandler.cpp
+        BatchKeyedAggregation.cpp
+        BatchKeyedAggregationHandler.cpp
+)
 add_source_files(nes-runtime
         BatchAggregation.cpp
         BatchAggregationScan.cpp

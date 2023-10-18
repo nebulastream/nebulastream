@@ -36,6 +36,9 @@ namespace NES {
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
+class OpenCLManager;
+using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
+
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
@@ -67,8 +70,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
   public:
     enum class NodeEngineQueryStatus : uint8_t { started, stopped, registered };
-
-    virtual ~NodeEngine() override;
 
     NodeEngine() = delete;
     NodeEngine(const NodeEngine&) = delete;
@@ -331,6 +332,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources);
 
   public:
+#ifndef UNIKERNEL_EXPORT
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
@@ -350,13 +352,27 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersPerWorker,
                         bool sourceSharing);
 
+    virtual ~NodeEngine() override;
+#else
+    /**
+     * @brief Create a node engine and gather node information
+     * and initialize QueryManager, BufferManager and ThreadPool
+     */
+    explicit NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources, std::vector<BufferManagerPtr>&& bms)
+        : nodeId(1), physicalSources(std::move(physicalSources)), bufferManagers(std::move(bms)) {}
+    virtual ~NodeEngine() = default;
+#endif
+
   private:
     TopologyNodeId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
+#ifndef UNIKERNEL_EXPORT
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     HardwareManagerPtr hardwareManager;
+#endif
     std::vector<BufferManagerPtr> bufferManagers;
+#ifndef UNIKERNEL_EXPORT
     QueryManagerPtr queryManager;
     BufferStoragePtr bufferStorage;
     Monitoring::MetricStorePtr metricStore;
@@ -372,6 +388,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
     bool sourceSharing;
+#endif
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

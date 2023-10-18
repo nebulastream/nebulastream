@@ -11,6 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        Circle.cpp
+        Point.cpp
+        Polygon.cpp
+        Rectangle.cpp
+)
 add_source_files(nes-data-types
         Circle.cpp
         Point.cpp

@@ -498,5 +498,13 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               const std::string& physicalSourceName,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
+DataSourcePtr createNoOpSource(const SchemaPtr& schema,
+                               const Runtime::BufferManagerPtr& bufferManager,
+                               const Runtime::QueryManagerPtr& queryManager,
+                               OperatorId operatorId,
+                               OriginId originId,
+                               size_t numSourceLocalBuffers,
+                               const std::string& physicalSourceName,
+                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SOURCES_SOURCECREATOR_HPP_

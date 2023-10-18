@@ -11,6 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        ChainedHashMap.cpp
+        ChainedHashMapRef.cpp
+)
 add_source_files(nes-runtime
         ChainedHashMap.cpp
         ChainedHashMapRef.cpp

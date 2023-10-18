@@ -12,6 +12,10 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        BatchSort.cpp
+        BatchSortScan.cpp
+)
 add_source_files(nes-runtime
         BatchSort.cpp
         BatchSortScan.cpp

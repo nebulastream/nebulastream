@@ -11,6 +11,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-query-export
+        SumAggregationDescriptor.cpp
+        MaxAggregationDescriptor.cpp
+        MinAggregationDescriptor.cpp
+        CountAggregationDescriptor.cpp
+        AvgAggregationDescriptor.cpp
+        MedianAggregationDescriptor.cpp
+        WindowAggregationDescriptor.cpp
+)
+add_source_files(unikernel-export
+        SumAggregationDescriptor.cpp
+        MaxAggregationDescriptor.cpp
+        MinAggregationDescriptor.cpp
+        CountAggregationDescriptor.cpp
+        AvgAggregationDescriptor.cpp
+        MedianAggregationDescriptor.cpp
+        WindowAggregationDescriptor.cpp
+)
 add_source_files(nes-operators
         SumAggregationDescriptor.cpp
         MaxAggregationDescriptor.cpp

@@ -11,6 +11,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-query-export
+        WindowType.cpp
+        TimeBasedWindowType.cpp
+        ContentBasedWindowType.cpp
+        TumblingWindow.cpp
+        SlidingWindow.cpp
+        ThresholdWindow.cpp
+)
+add_source_files(unikernel-export
+        ContentBasedWindowType.cpp
+        ThresholdWindow.cpp
+        TimeBasedWindowType.cpp
+        WindowType.cpp
+        SlidingWindow.cpp
+        TumblingWindow.cpp
+        WindowState.cpp
+)
 add_source_files(nes-operators
         ContentBasedWindowType.cpp
         ThresholdWindow.cpp

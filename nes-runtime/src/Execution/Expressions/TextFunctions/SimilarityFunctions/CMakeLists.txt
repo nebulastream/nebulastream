@@ -10,6 +10,12 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
+ add_source_files(unikernel-export
+         LevenshteinDistance.cpp
+         HammingDistance.cpp
+         JaccardDistance.cpp
+         JaroSimilarity.cpp
+ )
  add_source_files(nes-runtime
          LevenshteinDistance.cpp
          HammingDistance.cpp

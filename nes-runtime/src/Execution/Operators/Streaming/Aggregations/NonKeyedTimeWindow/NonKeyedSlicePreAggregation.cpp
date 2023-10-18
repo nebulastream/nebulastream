@@ -25,13 +25,21 @@
 namespace NES::Runtime::Execution::Operators {
 
 void* getSliceStoreProxy(void* op, uint64_t workerId) {
+#ifndef UNIKERNEL_EXPORT
     auto handler = static_cast<NonKeyedSlicePreAggregationHandler*>(op);
     return handler->getThreadLocalSliceStore(workerId);
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
+#ifndef UNIKERNEL_EXPORT
     auto sliceStore = static_cast<NonKeyedThreadLocalSliceStore*>(ss);
     return sliceStore->findSliceByTs(ts)->getState()->ptr;
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 void triggerThreadLocalStateProxy(void* op,

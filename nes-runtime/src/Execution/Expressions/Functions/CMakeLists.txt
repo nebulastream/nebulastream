@@ -10,6 +10,39 @@
  # See the License for the specific language governing permissions and
  # limitations under the License.
 
+ add_source_files(unikernel-export
+         ModExpression.cpp
+         PiExpression.cpp
+         RadiansExpression.cpp
+         DegreesExpression.cpp
+         CosExpression.cpp
+         SinExpression.cpp
+         AbsExpression.cpp
+         CotExpression.cpp
+         AsinExpression.cpp
+         MinExpression.cpp
+         MaxExpression.cpp
+         AtanExpression.cpp
+         Atan2Expression.cpp
+         AcosExpression.cpp
+         SqrtExpression.cpp
+         CbrtExpression.cpp
+         FactorialExpression.cpp
+         GammaExpression.cpp
+         LGammaExpression.cpp
+         Log10Expression.cpp
+         PowerExpression.cpp
+         BitcounterExpression.cpp
+         Log2Expression.cpp
+         LnExpression.cpp
+         TanExpression.cpp
+         FloorExpression.cpp
+         CeilExpression.cpp
+         RandomExpression.cpp
+         TruncExpression.cpp
+         SignExpression.cpp
+         ExpExpression.cpp
+ )
  add_source_files(nes-runtime
          ModExpression.cpp
          PiExpression.cpp

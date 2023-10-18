@@ -10,6 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        AggregationFunction.cpp
+        SumAggregation.cpp
+        CountAggregation.cpp
+        AvgAggregation.cpp
+        MinAggregation.cpp
+        MaxAggregation.cpp
+        HyperLogLogDistinctCountApproximation.cpp
+        QuantileEstimationAggregation.cpp
+)
 add_source_files(nes-runtime
         AggregationFunction.cpp
         SumAggregation.cpp

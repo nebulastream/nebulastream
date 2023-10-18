@@ -109,6 +109,7 @@ PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceNam
     }
 
     switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
+#ifndef UNIKERNEL_EXPORT
         case SourceType::CSV_SOURCE: return CSVSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         case SourceType::MQTT_SOURCE: return MQTTSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
@@ -117,6 +118,7 @@ PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceNam
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         case SourceType::DEFAULT_SOURCE:
             return DefaultSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+#endif
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
@@ -138,6 +140,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(std::s
     }
 
     switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
+#ifndef UNIKERNEL_EXPORT
         case SourceType::CSV_SOURCE: return CSVSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::MQTT_SOURCE: return MQTTSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
@@ -145,6 +148,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(std::s
         case SourceType::BINARY_SOURCE: return BinarySourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::SENSE_SOURCE: return SenseSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
         case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+#endif
         default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }

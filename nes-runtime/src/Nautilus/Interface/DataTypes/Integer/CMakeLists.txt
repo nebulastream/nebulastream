@@ -11,6 +11,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        Int.cpp
+        Int8.cpp
+        Int16.cpp
+        Int32.cpp
+        Int64.cpp
+        UInt8.cpp
+        UInt16.cpp
+        UInt32.cpp
+        UInt64.cpp
+        IntInvocationPlugin.cpp
+)
 add_source_files(nes-runtime
         Int.cpp
         Int8.cpp

@@ -11,6 +11,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        ExpressionNode.cpp
+        ConstantValueExpressionNode.cpp
+        FieldAccessExpressionNode.cpp
+        BinaryExpressionNode.cpp
+        UnaryExpressionNode.cpp
+        FieldAssignmentExpressionNode.cpp
+        FieldRenameExpressionNode.cpp
+        WhenExpressionNode.cpp
+        CaseExpressionNode.cpp
+)
 add_source_files(nes-operators
         ExpressionNode.cpp
         ConstantValueExpressionNode.cpp

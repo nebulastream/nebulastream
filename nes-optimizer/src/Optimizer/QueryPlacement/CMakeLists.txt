@@ -11,6 +11,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+		BasePlacementStrategy.cpp
+		BottomUpStrategy.cpp
+		TopDownStrategy.cpp
+		MlHeuristicStrategy.cpp
+		ManualPlacementStrategy.cpp
+		IFCOPStrategy.cpp
+		ILPStrategy.cpp
+		PlacementStrategyFactory.cpp
+)
 add_source_files(nes-optimizer
         BasePlacementStrategy.cpp
         BottomUpStrategy.cpp

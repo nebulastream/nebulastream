@@ -11,6 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        Stamp.cpp
+        ArrayStamp.cpp
+        VoidStamp.cpp
+        AddressStamp.cpp
+        IntegerStamp.cpp
+        BooleanStamp.cpp
+        FloatStamp.cpp
+        StampFactory.cpp)
 add_source_files(nes-runtime
         Stamp.cpp
         ArrayStamp.cpp

@@ -11,6 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        AddExpression.cpp
+        SubExpression.cpp
+        DivExpression.cpp
+        MulExpression.cpp
+)
 add_source_files(nes-runtime
         AddExpression.cpp
         SubExpression.cpp

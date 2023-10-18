@@ -47,6 +47,7 @@ Value<MemRef> ExecutionContext::allocateBuffer() {
 }
 
 void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
+#ifndef UNIKERNEL_EXPORT
     auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto workerCtx = static_cast<WorkerContext*>(wc);
@@ -56,6 +57,9 @@ void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
     }
     // delete tuple buffer as it was allocated within the pipeline and is not required anymore
     delete tb;
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& buffer) {
@@ -85,6 +89,7 @@ void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std:
 }
 
 void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index) {
+#ifndef UNIKERNEL_EXPORT
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto handlers = pipelineCtx->getOperatorHandlers();
     auto size = handlers.size();
@@ -92,6 +97,9 @@ void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index) {
         NES_THROW_RUNTIME_ERROR("operator handler at index " + std::to_string(index) + " is not registered");
     }
     return handlers[index].get();
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 Value<MemRef> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex) {

@@ -13,6 +13,16 @@
 add_subdirectory(NestedLoopJoin)
 add_subdirectory(HashJoin)
 
+add_source_files(unikernel-export
+        StreamJoinBuild.cpp
+        StreamJoinProbe.cpp
+        StreamJoinBuildBucketing.cpp
+        StreamSlice.cpp
+        StreamJoinUtil.cpp
+        StreamSlice.cpp
+        StreamJoinOperator.cpp
+)
+
 add_source_files(nes-runtime
         StreamJoinOperatorHandler.cpp
         StreamJoinBuild.cpp

@@ -42,6 +42,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     NES_DEBUG("Convert sink  {}", operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");
     NES_ASSERT(querySubPlan, "Invalid query sub-plan");
+#ifndef UNIKERNEL_EXPORT
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
@@ -54,6 +55,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                   printSinkDescriptor->getFaultToleranceType(),
                                   printSinkDescriptor->getNumberOfOrigins());
     }
+#endif
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink {}", schema->toString());
@@ -63,6 +65,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     numOfProducers,
                                     nullOutputSinkDescriptor->getFaultToleranceType(),
                                     nullOutputSinkDescriptor->getNumberOfOrigins());
+#ifndef UNIKERNEL_EXPORT
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
@@ -194,6 +197,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getFaultToleranceType(),
                                  networkSinkDescriptor->getNumberOfOrigins(),
                                  networkSinkDescriptor->getRetryTimes());
+#endif
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

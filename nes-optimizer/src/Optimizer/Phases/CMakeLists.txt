@@ -12,6 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        SignatureInferencePhase.cpp
+        TopologySpecificQueryRewritePhase.cpp
+        TypeInferencePhase.cpp
+        QueryPlacementPhase.cpp
+        QueryRewritePhase.cpp
+        MemoryLayoutSelectionPhase.cpp
+        OriginIdInferencePhase.cpp
+)
 add_source_files(nes-optimizer
         SignatureInferencePhase.cpp
         TopologySpecificQueryRewritePhase.cpp

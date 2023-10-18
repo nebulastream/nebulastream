@@ -13,8 +13,14 @@
 */
 
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
+
+#ifndef UNIKERNEL_LIB
+
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
+
+#endif
+
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
@@ -27,6 +33,10 @@
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <set>
 #include <vector>
+
+#ifdef UNIKERNEL_LIB
+extern NES::Runtime::BufferManagerPtr the_buffermanager;
+#endif
 namespace NES::Runtime::Execution::Operators {
 
 template<class SliceType, typename SliceStore>
@@ -55,7 +65,12 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::dispatchSliceMer
         task->sequenceNumber = resultSequenceNumber++;
         task->slices = slices;
         NES_DEBUG("{} Deploy merge task for slice {}-{} ", windowSize, task->startSlice, task->endSlice);
+
+#if !(!defined(UNIKERNEL_SUPPORT_LIB) && defined(UNIKERNEL_LIB))
         ctx.dispatchBuffer(buffer);
+#else
+        ctx.emit(buffer);
+#endif
     }
 }
 
@@ -100,11 +115,13 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::trigger(WorkerCo
     }
     dispatchSliceMergingTasks(ctx, wctx.getBufferProvider(), collectedSlices);
 };
+
 template<class SliceType, typename SliceStore>
 SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThreadLocalSliceStore(uint64_t workerId) {
     auto index = workerId % threadLocalSliceStores.size();
     return threadLocalSliceStores[index].get();
 }
+
 template<class SliceType, typename SliceStore>
 void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::start(PipelineExecutionContextPtr, uint32_t) {
     NES_DEBUG("start AbstractSlicePreAggregationHandler");
@@ -134,14 +151,24 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::stop(QueryTermin
                 collectedSlices.find(sliceData)->second.emplace_back(std::move(slice));
             }
         }
+#if !(!defined(UNIKERNEL_SUPPORT_LIB) && defined(UNIKERNEL_LIB))
         dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(), collectedSlices);
+#else
+        dispatchSliceMergingTasks(*ctx, the_buffermanager, collectedSlices);
+#endif
     }
 }
+
 template<class SliceType, typename SliceStore>
 AbstractSlicePreAggregationHandler<SliceType, SliceStore>::~AbstractSlicePreAggregationHandler() {}
 
 // Instantiate types
 template class AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore>;
+
+#ifndef UNIKERNEL_LIB
+
 template class AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore>;
+
+#endif
 
 }// namespace NES::Runtime::Execution::Operators

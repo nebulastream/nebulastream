@@ -142,6 +142,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     }
     auto nautilusPipelineWrapper = NautilusPipelineOperator::create(pipeline, operatorHandlers);
     queryPlan->addRootOperator(nautilusPipelineWrapper);
+    NES_DEBUG("Pipeline: {}", operatorPipeline->getPipelineId())
     return operatorPipeline;
 }
 

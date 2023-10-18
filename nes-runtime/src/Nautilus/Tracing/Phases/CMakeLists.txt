@@ -12,6 +12,10 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        SSACreationPhase.cpp
+        TraceToIRConversionPhase.cpp
+)
 add_source_files(nes-runtime
         SSACreationPhase.cpp
         TraceToIRConversionPhase.cpp

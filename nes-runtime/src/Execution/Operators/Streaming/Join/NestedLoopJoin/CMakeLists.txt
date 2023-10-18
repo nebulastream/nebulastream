@@ -12,7 +12,11 @@
 
 add_subdirectory(Bucketing)
 add_subdirectory(Slicing)
-
+add_source_files(unikernel-export
+        NLJSlice.cpp
+        NLJProbe.cpp
+        NLJSlice.cpp
+)
 add_source_files(nes-runtime
         NLJOperatorHandler.cpp
         NLJProbe.cpp

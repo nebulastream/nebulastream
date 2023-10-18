@@ -11,6 +11,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        Watermark.cpp
+        WatermarkProcessor.cpp
+        MultiOriginWatermarkProcessor.cpp
+        EventTimeWatermarkGenerator.cpp
+        IngestionTimeWatermarkGenerator.cpp
+        WatermarkStrategy.cpp
+        EventTimeWatermarkStrategy.cpp
+        IngestionTimeWatermarkStrategy.cpp
+)
 add_source_files(nes-core
         Watermark.cpp
         WatermarkProcessor.cpp

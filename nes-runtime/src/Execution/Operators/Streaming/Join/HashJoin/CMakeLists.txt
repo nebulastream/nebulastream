@@ -13,7 +13,10 @@
 add_subdirectory(Bucketing)
 add_subdirectory(HashTable)
 add_subdirectory(Slicing)
-
+add_source_files(unikernel-export
+        HJProbe.cpp
+        HJSlice.cpp
+)
 add_source_files(nes-runtime
         HJOperatorHandler.cpp
         HJProbe.cpp

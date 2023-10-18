@@ -69,7 +69,6 @@ namespace Util {
 * @return string of tuple buffer
 */
 std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
-#endif
 /**
  * @brief create CSV lines from the tuples
  * @param tbuffer the tuple buffer

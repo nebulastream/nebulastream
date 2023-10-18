@@ -11,6 +11,10 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        FunctionCall.cpp
+        Record.cpp
+)
 add_source_files(nes-runtime
         FunctionCall.cpp
         Record.cpp

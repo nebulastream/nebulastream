@@ -12,6 +12,15 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        Block.cpp
+        BlockRef.cpp
+        ConstantValue.cpp
+        TraceOperation.cpp
+        ExecutionTrace.cpp
+        FunctionCallTarget.cpp
+        OperationRef.cpp
+)
 add_source_files(nes-runtime
         Block.cpp
         BlockRef.cpp

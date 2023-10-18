@@ -11,6 +11,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        AttributeSortRule.cpp
+        BinaryOperatorSortRule.cpp
+        DistributedJoinRule.cpp
+        DistributedWindowRule.cpp
+        FilterMergeRule.cpp
+        FilterPushDownRule.cpp
+        FilterSplitUpRule.cpp
+        LogicalSourceExpansionRule.cpp
+        MapUDFsToOpenCLOperatorsRule.cpp
+        NemoWindowPinningRule.cpp
+        PredicateReorderingRule.cpp
+        ProjectBeforeUnionOperatorRule.cpp
+        RedundancyEliminationRule.cpp
+        RenameSourceToProjectOperatorRule.cpp
+)
 add_source_files(nes-optimizer
         AttributeSortRule.cpp
         BinaryOperatorSortRule.cpp

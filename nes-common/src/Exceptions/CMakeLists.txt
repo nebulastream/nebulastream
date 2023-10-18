@@ -17,6 +17,14 @@ add_source_files(nes-unikernel-common
         NotImplementedException.cpp
 )
 
+add_source_files(unikernel-export
+        SignalHandling.cpp
+        RuntimeException.cpp
+        NotImplementedException.cpp
+        CoordinatesOutOfRangeException.cpp
+        InvalidArgumentException.cpp
+        RequestExecutionException.cpp
+)
 add_source_files(nes-common
         SignalHandling.cpp
         RuntimeException.cpp

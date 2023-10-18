@@ -15,6 +15,21 @@ add_subdirectory(ArithmeticOperations)
 add_subdirectory(LogicalOperations)
 add_subdirectory(Loop)
 
+add_source_files(unikernel-export
+        Operation.cpp
+        LoadOperation.cpp
+        StoreOperation.cpp
+        ConstIntOperation.cpp
+        ConstFloatOperation.cpp
+        AddressOperation.cpp
+        FunctionOperation.cpp
+        IfOperation.cpp
+        ProxyCallOperation.cpp
+        ReturnOperation.cpp
+        CastOperation.cpp
+        BranchOperation.cpp
+        ConstBooleanOperation.cpp
+)
 add_source_files(nes-runtime
         Operation.cpp
         LoadOperation.cpp

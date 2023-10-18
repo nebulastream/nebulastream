@@ -11,6 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        ConvertLogicalToPhysicalSource.cpp
+        ConvertLogicalToPhysicalSink.cpp
+)
 add_source_files(nes-core
         ConvertLogicalToPhysicalSource.cpp
         ConvertLogicalToPhysicalSink.cpp

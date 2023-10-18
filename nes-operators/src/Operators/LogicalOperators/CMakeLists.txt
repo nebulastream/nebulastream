@@ -11,6 +11,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        LogicalOperatorNode.cpp
+        FilterLogicalOperatorNode.cpp
+        ProjectionLogicalOperatorNode.cpp
+        MapLogicalOperatorNode.cpp
+        InferModelLogicalOperatorNode.cpp
+        UnionLogicalOperatorNode.cpp
+        LogicalOperatorFactory.cpp
+        BroadcastLogicalOperatorNode.cpp
+        BatchJoinLogicalOperatorNode.cpp
+        RenameSourceOperatorNode.cpp
+        LogicalBinaryOperatorNode.cpp
+        LogicalUnaryOperatorNode.cpp
+        OpenCLLogicalOperatorNode.cpp
+        LimitLogicalOperatorNode.cpp
+        LogicalBatchJoinDefinition.cpp
+)
 add_source_files(nes-operators
         LogicalOperatorNode.cpp
         FilterLogicalOperatorNode.cpp

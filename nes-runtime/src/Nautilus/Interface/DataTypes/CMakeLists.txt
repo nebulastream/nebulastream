@@ -11,6 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        Any.cpp
+        Value.cpp
+        Boolean.cpp
+        InvocationPlugin.cpp
+        BooleanInvocationPlugin.cpp
+        MemRefInvocationPlugin.cpp
+        MemRefUtils.cpp
+)
 add_source_files(nes-runtime
         Any.cpp
         Value.cpp

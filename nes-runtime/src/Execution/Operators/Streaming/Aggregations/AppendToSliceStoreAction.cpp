@@ -41,6 +41,9 @@ void triggerSlidingWindows(void* sh, void* wctx, void* pctx, uint64_t sequenceNu
 
 template<class Slice>
 AppendToSliceStoreHandler<Slice>::AppendToSliceStoreHandler(uint64_t windowSize, uint64_t windowSlide) {
+    static_assert(std::is_same_v<Slice, NonKeyedSlice> || std::is_same_v<Slice, KeyedSlice>,
+                  "AppendToSliceStoreHandler only Supports: KeyedSlice and NonKeyedSlice");
+
     std::vector<OriginId> ids = {0};
     watermarkProcessor = std::make_unique<MultiOriginWatermarkProcessor>(ids);
     sliceStore = std::make_unique<SlidingWindowSliceStore<Slice>>(windowSize, windowSlide);

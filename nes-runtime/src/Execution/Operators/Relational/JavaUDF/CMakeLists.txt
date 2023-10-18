@@ -10,6 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        FlatMapJavaUDF.cpp
+        MapJavaUDF.cpp
+        JavaUDFOperatorHandler.cpp
+        JavaUDFUtils.cpp
+        AbstractJavaUDFOperator.cpp
+)
 add_source_files(nes-runtime
         FlatMapJavaUDF.cpp
         MapJavaUDF.cpp

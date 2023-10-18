@@ -43,6 +43,7 @@ class WorkerContext {
     using WorkerContextBufferProvider = WorkerContextBufferProviderPtr::element_type;
     using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
 
+#ifndef UNIKERNEL_EXPORT
     /// the id of this worker context (unique per thread).
     uint32_t workerId;
     /// object reference counters
@@ -58,14 +59,20 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
+#endif
 
   public:
+#ifndef UNIKERNEL_EXPORT
     explicit WorkerContext(uint32_t workerId,
                            const BufferManagerPtr& bufferManager,
                            uint64_t numberOfBuffersPerWorker,
                            uint32_t queueId = 0);
 
     ~WorkerContext();
+#else
+    explicit WorkerContext() = default;
+    ~WorkerContext() = default;
+#endif
 
     /**
      * @brief Allocates a new tuple buffer.

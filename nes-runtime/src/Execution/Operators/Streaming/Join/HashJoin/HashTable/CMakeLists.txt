@@ -10,6 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        StreamJoinHashTable.cpp
+        GlobalHashTableLockFree.cpp
+        GlobalHashTableLocking.cpp
+        FixedPagesLinkedList.cpp
+        LocalHashTable.cpp
+        MergingHashTable.cpp)
 add_source_files(nes-runtime
         FixedPagesLinkedList.cpp
         GlobalHashTableLockFree.cpp

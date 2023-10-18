@@ -27,11 +27,15 @@
 namespace NES::Runtime::Execution::Operators {
 
 void* createKeyedState(void* op, void* sliceMergeTaskPtr) {
+#ifndef UNIKERNEL_EXPORT
     auto handler = static_cast<KeyedSliceMergingHandler*>(op);
     auto sliceMergeTask = static_cast<SliceMergeTask<KeyedSlice>*>(sliceMergeTaskPtr);
     auto globalState = handler->createGlobalSlice(sliceMergeTask);
     // we give nautilus the ownership, thus deletePartition must be called.
     return globalState.release();
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 void* getKeyedSliceState(void* gs) {
@@ -55,9 +59,13 @@ void freeKeyedSliceMergeTask(void* smt) {
 }
 
 void setupKeyedSliceMergingHandler(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
+#ifndef UNIKERNEL_EXPORT
     auto handler = static_cast<KeyedSliceMergingHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, keySize, valueSize);
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,

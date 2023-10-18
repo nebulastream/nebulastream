@@ -15,7 +15,9 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#ifndef UNIKERNEL_EXPORT
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#endif
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
@@ -41,6 +43,7 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
         case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::Manual: return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+#ifndef UNIKERNEL_EXPORT
         case PlacementStrategy::ELEGANT_PERFORMANCE:
         case PlacementStrategy::ELEGANT_ENERGY:
         case PlacementStrategy::ELEGANT_BALANCED:
@@ -50,7 +53,7 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                                     topology,
                                                     typeInferencePhase);
 
-// #2486        case PlacementStrategy::IFCOP:
+#endif// #2486        case PlacementStrategy::IFCOP:
 //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 #ifdef TFDEF
         case PlacementStrategy::MlHeuristic:

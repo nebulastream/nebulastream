@@ -72,4 +72,11 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(
 
     return allWindows;
 }
+StreamJoinOperatorHandlerSlicing::StreamJoinOperatorHandlerSlicing(const std::vector<OriginId>& inputOrigins,
+                                                                   const OriginId outputOriginId,
+                                                                   const uint64_t windowSize,
+                                                                   const uint64_t windowSlide,
+                                                                   uint64_t sizeOfRecordLeft,
+                                                                   uint64_t sizeOfRecordRight)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight) {}
 }// namespace NES::Runtime::Execution::Operators

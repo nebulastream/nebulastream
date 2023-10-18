@@ -35,6 +35,10 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#ifdef UNIKERNEL_EXPORT
+#include "Operators/LogicalOperators/Sources/NoOpSourceDescriptor.h"
+#endif
+
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <Runtime/HardwareManager.hpp>
@@ -68,7 +72,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);
     auto queryManager = nodeEngine->getQueryManager();
     auto networkManager = nodeEngine->getNetworkManager();
-
+#ifndef UNIKERNEL_EXPORT
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ZMQ source");
         const ZmqSourceDescriptorPtr zmqSourceDescriptor = sourceDescriptor->as<ZmqSourceDescriptor>();
@@ -293,6 +297,17 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                numSourceLocalBuffers,
                                sourceDescriptor->getPhysicalSourceName(),
                                successors);
+#else
+    if (sourceDescriptor->instanceOf<NoOpSourceDescriptor>()) {
+        return createNoOpSource(sourceDescriptor->getSchema(),
+                                bufferManager,
+                                queryManager,
+                                operatorId,
+                                originId,
+                                numSourceLocalBuffers,
+                                sourceDescriptor->getPhysicalSourceName(),
+                                successors);
+#endif
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

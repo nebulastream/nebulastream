@@ -28,13 +28,21 @@
 namespace NES::Runtime::Execution::Operators {
 
 void* getKeyedSliceStoreProxy(void* op, uint64_t workerId) {
+#ifndef UNIKERNEL_EXPORT
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(op);
     return handler->getThreadLocalSliceStore(workerId);
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 void* findKeyedSliceStateByTsProxy(void* ss, uint64_t ts) {
+#ifndef UNIKERNEL_EXPORT
     auto sliceStore = static_cast<KeyedThreadLocalSliceStore*>(ss);
     return sliceStore->findSliceByTs(ts)->getState().get();
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 void triggerKeyedThreadLocalWindow(void* op,
@@ -50,9 +58,13 @@ void triggerKeyedThreadLocalWindow(void* op,
 }
 
 void setupWindowHandler2(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
+#ifndef UNIKERNEL_EXPORT
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, keySize, valueSize);
+#else
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
+#endif
 }
 
 class LocalKeyedSliceStoreState : public Operators::OperatorState {

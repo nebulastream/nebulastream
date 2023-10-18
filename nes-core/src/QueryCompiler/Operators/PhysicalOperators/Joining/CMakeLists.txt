@@ -13,6 +13,11 @@
 
 add_subdirectory(Streaming)
 
+add_source_files(unikernel-export
+        PhysicalJoinOperator.cpp
+        PhysicalJoinBuildOperator.cpp
+        PhysicalJoinSinkOperator.cpp
+)
 add_source_files(nes-core
         PhysicalJoinOperator.cpp
         PhysicalJoinBuildOperator.cpp

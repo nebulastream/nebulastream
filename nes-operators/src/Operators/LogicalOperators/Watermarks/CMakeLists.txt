@@ -11,6 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        EventTimeWatermarkStrategyDescriptor.cpp
+        IngestionTimeWatermarkStrategyDescriptor.cpp
+        WatermarkAssignerLogicalOperatorNode.cpp
+        WatermarkStrategyDescriptor.cpp
+)
+
 add_source_files(nes-operators
         EventTimeWatermarkStrategyDescriptor.cpp
         IngestionTimeWatermarkStrategyDescriptor.cpp

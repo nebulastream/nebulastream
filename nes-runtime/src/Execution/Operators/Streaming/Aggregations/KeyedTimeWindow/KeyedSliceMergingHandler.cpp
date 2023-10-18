@@ -45,5 +45,4 @@ KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<KeyedSl
     return std::make_unique<KeyedSlice>(std::move(hashMap), sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
 KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
-
 }// namespace NES::Runtime::Execution::Operators

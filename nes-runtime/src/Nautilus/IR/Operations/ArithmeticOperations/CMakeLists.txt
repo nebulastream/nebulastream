@@ -11,6 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        AddOperation.cpp
+        SubOperation.cpp
+        DivOperation.cpp
+        ModOperation.cpp
+        MulOperation.cpp
+)
 add_source_files(nes-runtime
         AddOperation.cpp
         SubOperation.cpp

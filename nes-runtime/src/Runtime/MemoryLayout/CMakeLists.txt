@@ -11,6 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        ColumnLayout.cpp
+        MemoryLayoutTupleBuffer.cpp
+        RowLayout.cpp
+        MemoryLayout.cpp
+        DynamicTupleBuffer.cpp
+        BufferAccessException.cpp
+)
 add_source_files(nes-runtime
         ColumnLayout.cpp
         MemoryLayoutTupleBuffer.cpp

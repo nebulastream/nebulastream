@@ -50,6 +50,8 @@ class NautilusCompilationPhase {
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
+    std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> getCompiledPipelineStage(OperatorPipelinePtr pipeline);
+
   private:
     const QueryCompilation::QueryCompilerOptionsPtr compilerOptions;
 };

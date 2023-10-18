@@ -13,6 +13,17 @@
 add_subdirectory(Aggregations)
 add_subdirectory(Join)
 
+add_source_files(nes-unikernel-runtime
+        MultiOriginWatermarkProcessor.cpp
+        SlidingWindowAssigner.cpp
+)
+add_source_files(unikernel-export
+        MultiOriginWatermarkProcessor.cpp
+        SlidingWindowAssigner.cpp
+        EventTimeWatermarkAssignment.cpp
+        IngestionTimeWatermarkAssignment.cpp
+        TimeFunction.cpp
+)
 add_source_files(nes-runtime
         MultiOriginWatermarkProcessor.cpp
         SlidingWindowAssigner.cpp
