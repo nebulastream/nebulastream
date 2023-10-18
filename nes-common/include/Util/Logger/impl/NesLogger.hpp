@@ -43,7 +43,7 @@ class Logger {
      * @param logFileName
      * @param level
      */
-    explicit Logger(const std::string& logFileName, LogLevel level);
+    explicit Logger(const std::string* logFileName, LogLevel level);
 
     ~Logger();
 
@@ -171,6 +171,12 @@ namespace Logger {
  * @param level
  */
 void setupLogging(const std::string& logFileName, LogLevel level);
+
+/**
+ * @brief Setups the logging using a file path for the filesystem logging and a logging level
+ * @param level
+ */
+void setupLogging(LogLevel level);
 
 std::shared_ptr<detail::Logger> getInstance();// singleton is ok here
 }// namespace Logger
