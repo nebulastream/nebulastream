@@ -92,6 +92,7 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
     std::shared_ptr<BufferManager> bufferManager;
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::deque<detail::MemorySegment*> exclusiveBuffers;
+    std::atomic<uint32_t> exclusiveBufferCount;
 #else
     folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
     std::atomic<uint32_t> exclusiveBufferCount;
