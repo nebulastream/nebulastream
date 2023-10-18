@@ -15,8 +15,8 @@
 #include <Services/LocationService.hpp>
 #include<Util/Mobility/GeoLocation.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Mobility/SpatialType.hpp>

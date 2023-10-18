@@ -18,7 +18,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/TypeInferenceException.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Plans/Query/QueryPlan.hpp>

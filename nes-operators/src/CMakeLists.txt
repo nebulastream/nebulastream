@@ -14,3 +14,4 @@
 add_subdirectory(Exceptions)
 add_subdirectory(Operators)
 add_subdirectory(Plans)
+add_subdirectory(Utils)

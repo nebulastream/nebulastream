@@ -16,8 +16,6 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Sources/DataSource.hpp>
-#include <Sources/StaticDataSource.hpp>
 
 namespace NES::Experimental {
 /**

@@ -31,8 +31,6 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FieldAccessExpressionNode;
 using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 
-class ExpressionItem;
-
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 

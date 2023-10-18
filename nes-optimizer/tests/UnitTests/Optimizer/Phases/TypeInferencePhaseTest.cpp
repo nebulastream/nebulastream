@@ -24,10 +24,10 @@
 #include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -47,7 +47,7 @@
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>

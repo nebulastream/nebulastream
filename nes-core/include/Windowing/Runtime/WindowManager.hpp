@@ -19,8 +19,8 @@
 #include <Windowing/Runtime/SliceMetaData.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 

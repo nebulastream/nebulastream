@@ -13,7 +13,7 @@
 */
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>

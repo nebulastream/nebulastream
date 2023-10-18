@@ -19,7 +19,7 @@
 #include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
-#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
+#include  <Exceptions/TypeInferenceException.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>

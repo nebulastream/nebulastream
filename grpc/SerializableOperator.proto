@@ -45,7 +45,6 @@ message NodeLocation {
 The serializable wrapper for the source config object
  */
 message SerializablePhysicalSourceType{
-  string sourceType = 1;
   enum InputFormat{
       JSON = 0;
       CSV = 1;
@@ -75,6 +74,7 @@ message SerializablePhysicalSourceType{
   The serializable wrapper for the csv source config object
   */
   message SerializableCSVSourceType{
+
     string filePath = 1;
     bool skipHeader = 2;
     string delimiter = 3;
@@ -145,7 +145,10 @@ message SerializablePhysicalSourceType{
     uint32 sourceGatheringInterval = 4;
   }
 
-  google.protobuf.Any specificPhysicalSourceType = 2;
+  string sourceType = 1;
+  string logicalSourceName = 2;
+  string physicalSourceName = 3;
+  google.protobuf.Any specificPhysicalSourceType = 4;
 }
 
 /*

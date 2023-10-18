@@ -40,7 +40,7 @@ add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
 target_include_directories(nes-core-test-util PUBLIC "./include")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nes-core-test-util PUBLIC nes nes-test-util)
+target_link_libraries(nes-core-test-util PUBLIC nes nes-test-util nes-client)
 
 if (CODE_COVERAGE)
     target_code_coverage(nes AUTO)

@@ -35,7 +35,7 @@ class WindowAggregationDescriptor {
     * @param asField
     * @return WindowAggregationDescriptor
     */
-    WindowAggregationDescriptorPtr as(const ExpressionItem& asField);
+    WindowAggregationDescriptorPtr as(const ExpressionNodePtr& asField);
 
     /**
     * Returns the result field of the aggregation

@@ -13,9 +13,8 @@
 */
 
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/Watermark/WatermarkStrategy.hpp>
+
 namespace NES {
 
 WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(

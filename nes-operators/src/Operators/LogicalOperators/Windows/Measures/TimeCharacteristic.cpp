@@ -13,8 +13,6 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Expressions/Expressions.hpp>
-#include <API/Windowing.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,16 +21,15 @@
 
 namespace NES::Windowing {
 
-TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(API::Milliseconds()) {}
+TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1)) {}
 TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit)
     : type(type), field(std::move(field)), unit(std::move(unit)) {}
 
-TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldValue, const TimeUnit& unit) {
-    auto keyExpression = fieldValue.getExpressionNode();
-    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
+TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionNodePtr fieldValue, const TimeUnit& unit) {
+    if (!fieldValue->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", fieldValue->toString());
     }
-    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+    auto fieldAccess = fieldValue->as<FieldAccessExpressionNode>();
     AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }

@@ -26,7 +26,7 @@ class AvgAggregationDescriptor : public WindowAggregationDescriptor {
     /**
     * Factory method to creates a avg aggregation on a particular field.
     */
-    static WindowAggregationPtr on(ExpressionItem onField);
+    static WindowAggregationPtr on(const ExpressionNodePtr& onField);
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 

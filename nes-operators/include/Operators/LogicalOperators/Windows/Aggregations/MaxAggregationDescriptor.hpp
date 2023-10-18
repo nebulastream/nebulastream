@@ -25,9 +25,9 @@ namespace NES::Windowing {
 class MaxAggregationDescriptor : public WindowAggregationDescriptor {
   public:
     /**
-   * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
-   */
-    static WindowAggregationPtr on(ExpressionItem onField);
+     * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
+     */
+    static WindowAggregationPtr on(const ExpressionNodePtr& onField);
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 

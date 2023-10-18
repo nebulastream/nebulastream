@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
-#include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

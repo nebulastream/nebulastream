@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Windowing/Runtime/WindowState.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
 
 namespace NES::Windowing {
 

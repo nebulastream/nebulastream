@@ -17,7 +17,7 @@
 
 #include <API/AttributeField.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 

@@ -19,7 +19,7 @@
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>

@@ -52,7 +52,7 @@
 #endif//TFDEF
 
 #include <API/Expressions/Expressions.hpp>
-#include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
+#include QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
@@ -74,7 +74,7 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
-#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>

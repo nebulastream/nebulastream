@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <GRPC/WorkerRPCClient.hpp>

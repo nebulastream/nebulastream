@@ -16,4 +16,6 @@ add_source_files(nes-operators
         ThresholdWindow.cpp
         TimeBasedWindowType.cpp
         WindowType.cpp
+        SlidingWindow.cpp
+        TumblingWindow.cpp
 )

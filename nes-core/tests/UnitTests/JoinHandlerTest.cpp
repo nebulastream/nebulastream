@@ -26,7 +26,7 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Windowing/Runtime/WindowState.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>

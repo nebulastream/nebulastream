@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
+
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>

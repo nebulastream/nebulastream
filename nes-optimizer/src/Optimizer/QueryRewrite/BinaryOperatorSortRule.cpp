@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <Exceptions/PhysicalSourceNotFoundException.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>

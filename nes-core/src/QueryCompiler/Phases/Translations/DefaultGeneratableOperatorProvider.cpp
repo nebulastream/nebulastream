@@ -83,7 +83,7 @@
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 

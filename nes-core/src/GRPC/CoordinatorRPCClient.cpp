@@ -21,7 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>

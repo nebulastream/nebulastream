@@ -28,8 +28,8 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
 
   public:
     InferModelLogicalOperatorNode(std::string model,
-                                  std::vector<ExpressionItemPtr> inputFields,
-                                  std::vector<ExpressionItemPtr> outputFields,
+                                  std::vector<ExpressionNodePtr> inputFields,
+                                  std::vector<ExpressionNodePtr> outputFields,
                                   OperatorId id);
 
     /**
@@ -86,13 +86,13 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @brief getter for inputFieldsPtr
      * @return inputFieldsPtr
      */
-    const std::vector<ExpressionItemPtr>& getInputFields() const;
+    const std::vector<ExpressionNodePtr>& getInputFields() const;
 
     /**
      * @brief getter for outputFieldsPtr
      * @return outputFieldsPtr
      */
-    const std::vector<ExpressionItemPtr>& getOutputFields() const;
+    const std::vector<ExpressionNodePtr>& getOutputFields() const;
 
   private:
     /**
@@ -103,8 +103,8 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
 
   private:
     std::string model;
-    std::vector<ExpressionItemPtr> inputFields;
-    std::vector<ExpressionItemPtr> outputFields;
+    std::vector<ExpressionNodePtr> inputFields;
+    std::vector<ExpressionNodePtr> outputFields;
 };
 
 }// namespace NES::InferModel

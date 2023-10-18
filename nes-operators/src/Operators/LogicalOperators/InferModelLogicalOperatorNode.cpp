@@ -13,11 +13,10 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Expressions/Expressions.hpp>
+
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <utility>
@@ -25,8 +24,8 @@
 namespace NES::InferModel {
 
 InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model,
-                                                             std::vector<ExpressionItemPtr> inputFields,
-                                                             std::vector<ExpressionItemPtr> outputFields,
+                                                             std::vector<ExpressionNodePtr> inputFields,
+                                                             std::vector<ExpressionNodePtr> outputFields,
                                                              OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), model(std::move(model)), inputFields(std::move(inputFields)),
       outputFields(std::move(outputFields)) {
@@ -87,7 +86,7 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
     auto inputSchema = getInputSchema();
 
     for (auto inputField : inputFields) {
-        auto inputExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto inputExpression = inputField->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(inputExpression);
         inputExpression->inferStamp(typeInferencePhaseContext, inputSchema);
         auto fieldName = inputExpression->getFieldName();
@@ -95,7 +94,7 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
     }
 
     for (auto outputField : outputFields) {
-        auto outputExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto outputExpression = outputField->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(outputExpression);
         auto fieldName = outputExpression->getFieldName();
         if (outputSchema->hasFieldName(fieldName)) {
@@ -146,8 +145,8 @@ const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
     return path;
 }
 
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFields() const { return inputFields; }
+const std::vector<ExpressionNodePtr>& InferModelLogicalOperatorNode::getInputFields() const { return inputFields; }
 
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFields() const { return outputFields; }
+const std::vector<ExpressionNodePtr>& InferModelLogicalOperatorNode::getOutputFields() const { return outputFields; }
 
 }// namespace NES::InferModel

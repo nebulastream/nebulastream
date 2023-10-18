@@ -13,7 +13,6 @@
 */
 
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
-#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

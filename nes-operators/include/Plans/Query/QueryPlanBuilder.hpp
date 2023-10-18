@@ -32,7 +32,7 @@ class QueryPlanBuilder {
      * @param sourceName name of the source to query. This name has to be registered in the query catalog.
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr createQueryPlan(std::string sourceName);
+    static QueryPlanPtr createQueryPlan(std::string sourceName);
 
     /**
       * @brief this call projects out the attributes in the parameter list
@@ -40,7 +40,7 @@ class QueryPlanBuilder {
       * @param queryPlan the queryPlan to add the projection node
       * @return the updated queryPlan
       */
-    static NES::QueryPlanPtr addProjection(std::vector<NES::ExpressionNodePtr> expressions, NES::QueryPlanPtr queryPlan);
+    static QueryPlanPtr addProjection(std::vector<ExpressionNodePtr> expressions, QueryPlanPtr queryPlan);
 
     /**
      * @brief this call add the rename operator to the queryPlan, this operator renames the source
@@ -48,7 +48,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan to add the rename node
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr addRename(std::string const& newSourceName, NES::QueryPlanPtr queryPlan);
+    static QueryPlanPtr addRename(std::string const& newSourceName, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call add the filter operator to the queryPlan, the operator filters records according to the predicate. An
@@ -57,7 +57,7 @@ class QueryPlanBuilder {
      * @param queryPlanPtr the queryPlan the filter node is added to
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr addFilter(NES::ExpressionNodePtr const& filterExpression, NES::QueryPlanPtr queryPlan);
+    static QueryPlanPtr addFilter(ExpressionNodePtr const& filterExpression, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
@@ -65,7 +65,7 @@ class QueryPlanBuilder {
      * @param queryPlanPtr the queryPlan the filter node is added to
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr addLimit(const uint64_t limit, NES::QueryPlanPtr queryPlan);
+    static QueryPlanPtr addLimit(const uint64_t limit, QueryPlanPtr queryPlan);
 
     /**
      * @brief: Map records according to a map expression. An
@@ -74,7 +74,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static NES::QueryPlanPtr addMap(NES::FieldAssignmentExpressionNodePtr const& mapExpression, NES::QueryPlanPtr queryPlan);
+    static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
 
     /**
      * @brief: Map java udf according to the java method given in the descriptor.
@@ -82,7 +82,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static NES::QueryPlanPtr addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
+    static QueryPlanPtr addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan);
 
     /**
      * @brief: FlatMap java udf according to the java method given in the descriptor.
@@ -90,7 +90,7 @@ class QueryPlanBuilder {
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static NES::QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
+    static QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan);
 
     /**
     * @brief UnionOperator to combine two query plans
@@ -98,7 +98,7 @@ class QueryPlanBuilder {
     * @param rightQueryPlan the right query plan to combine by the union
     * @return the updated queryPlan combining left and rightQueryPlan with union
     */
-    static NES::QueryPlanPtr addUnion(NES::QueryPlanPtr leftQueryPlan, NES::QueryPlanPtr rightQueryPlan);
+    static QueryPlanPtr addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
 
     /**
      * @brief This methods add the join operator to a query
@@ -110,12 +110,12 @@ class QueryPlanBuilder {
      * @param joinType the definition of how the composition of the sources should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr addJoin(NES::QueryPlanPtr leftQueryPlan,
-                                     NES::QueryPlanPtr rightQueryPlan,
-                                     NES::ExpressionItem onLeftKey,
-                                     NES::ExpressionItem onRightKey,
-                                     const NES::Windowing::WindowTypePtr& windowType,
-                                     NES::Join::LogicalJoinDefinition::JoinType joinType);
+    static QueryPlanPtr addJoin(QueryPlanPtr leftQueryPlan,
+                                     QueryPlanPtr rightQueryPlan,
+                                     ExpressionNodePtr onLeftKey,
+                                     ExpressionNodePtr onRightKey,
+                                     const Windowing::WindowTypePtr& windowType,
+                                     Join::LogicalJoinDefinition::JoinType joinType);
 
     /**
      * @brief This methods add the batch join operator to a query
@@ -126,25 +126,25 @@ class QueryPlanBuilder {
      * @param onBuildKey key attribute of the right source
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr addBatchJoin(NES::QueryPlanPtr leftQueryPlan,
-                                          NES::QueryPlanPtr rightQueryPlan,
-                                          NES::ExpressionItem onProbeKey,
-                                          NES::ExpressionItem onBuildKey);
+    static QueryPlanPtr addBatchJoin(QueryPlanPtr leftQueryPlan,
+                                          QueryPlanPtr rightQueryPlan,
+                                          ExpressionNodePtr onProbeKey,
+                                          ExpressionNodePtr onBuildKey);
     /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor to add to the queryPlan
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr addSink(NES::QueryPlanPtr queryPlan, NES::SinkDescriptorPtr sinkDescriptor);
+    static QueryPlanPtr addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor);
 
     /**
      * @brief Create watermark assigner operator and adds it to the queryPlan
      * @param watermarkStrategyDescriptor which represents the semantic of this watermarkStrategy.
      * @return queryPlan
      */
-    static NES::QueryPlanPtr assignWatermark(NES::QueryPlanPtr queryPlan,
-                                             NES::Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+    static QueryPlanPtr assignWatermark(QueryPlanPtr queryPlan,
+                                             Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
 
     /**
     * @brief: Method that checks in case a window is contained in the query
@@ -153,8 +153,8 @@ class QueryPlanBuilder {
     * @param queryPlan the queryPlan to check and add the watermark strategy to
     * @return the updated queryPlan
     */
-    static NES::QueryPlanPtr checkAndAddWatermarkAssignment(NES::QueryPlanPtr queryPlan,
-                                                            const NES::Windowing::WindowTypePtr windowType);
+    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan,
+                                                            const Windowing::WindowTypePtr windowType);
 
   private:
     /**
@@ -163,7 +163,7 @@ class QueryPlanBuilder {
      * @param side points out from which side, i.e., left or right query plan, the ExpressionNode is
      * @return expressionNode as FieldAccessExpressionNode
      */
-    static std::shared_ptr<NES::FieldAccessExpressionNode> checkExpression(NES::ExpressionNodePtr expression, std::string side);
+    static std::shared_ptr<FieldAccessExpressionNode> checkExpression(ExpressionNodePtr expression, std::string side);
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources
@@ -172,9 +172,9 @@ class QueryPlanBuilder {
     * @param: rightQueryPlan the right query plan of the binary operation
     * @return the updated queryPlan
     */
-    static NES::QueryPlanPtr addBinaryOperatorAndUpdateSource(NES::OperatorNodePtr operatorNode,
-                                                              NES::QueryPlanPtr leftQueryPlan,
-                                                              NES::QueryPlanPtr rightQueryPlan);
+    static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorNodePtr operatorNode,
+                                                              QueryPlanPtr leftQueryPlan,
+                                                              QueryPlanPtr rightQueryPlan);
 };
 }// end namespace NES
 #endif// NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_

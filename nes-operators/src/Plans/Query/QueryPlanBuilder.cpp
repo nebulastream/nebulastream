@@ -13,25 +13,26 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Plans/Query/QueryPlanBuilder.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <utility>
 
@@ -110,14 +111,14 @@ QueryPlanPtr QueryPlanBuilder::addUnion(NES::QueryPlanPtr leftQueryPlan, NES::Qu
 
 QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
                                        NES::QueryPlanPtr rightQueryPlan,
-                                       ExpressionItem onLeftKey,
-                                       ExpressionItem onRightKey,
+                                       ExpressionNodePtr onLeftKey,
+                                       ExpressionNodePtr onRightKey,
                                        const Windowing::WindowTypePtr& windowType,
                                        Join::LogicalJoinDefinition::JoinType joinType) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
-    auto leftKeyFieldAccess = checkExpression(onLeftKey.getExpressionNode(), "leftSide");
-    auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey.getExpressionNode(), "leftSide");
+    auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
+    auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "leftSide");
 
     //we use a on time trigger as default that triggers on each change of the watermark
     auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
@@ -158,11 +159,11 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
 
 NES::QueryPlanPtr QueryPlanBuilder::addBatchJoin(NES::QueryPlanPtr leftQueryPlan,
                                                  NES::QueryPlanPtr rightQueryPlan,
-                                                 ExpressionItem onProbeKey,
-                                                 ExpressionItem onBuildKey) {
+                                                 ExpressionNodePtr onProbeKey,
+                                                 ExpressionNodePtr onBuildKey) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
-    auto probeKeyFieldAccess = checkExpression(onProbeKey.getExpressionNode(), "onProbeKey");
-    auto buildKeyFieldAccess = checkExpression(onBuildKey.getExpressionNode(), "onBuildKey");
+    auto probeKeyFieldAccess = checkExpression(onProbeKey, "onProbeKey");
+    auto buildKeyFieldAccess = checkExpression(onBuildKey, "onBuildKey");
 
     NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
@@ -202,11 +203,12 @@ NES::QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(NES::QueryPla
         if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             return assignWatermark(queryPlan, Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
         } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
-            return assignWatermark(queryPlan,
-                                   Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                                       Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
-                                       API::Milliseconds(0),
-                                       timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
+            return assignWatermark(
+                queryPlan,
+                Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                    FieldAccessExpressionNode::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
+                    Windowing::TimeMeasure(0),
+                    timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
         }
     }
     return queryPlan;

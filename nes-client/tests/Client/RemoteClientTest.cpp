@@ -15,19 +15,19 @@
 #include <gtest/gtest.h>
 
 #include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Client/ClientException.hpp>
 #include <Client/QueryConfig.hpp>
 #include <Client/RemoteClient.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <unistd.h>
@@ -59,9 +59,8 @@ class RemoteClientTest : public Testing::BaseIntegrationTest {
         ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 0));
 
         NES_DEBUG("RemoteClientTest: Start worker 1");
-        DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
-        auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
-        wrkConf->physicalSourceTypes.add(physicalSource1);
+        DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create("default_logical", "physical_car");
+        wrkConf->physicalSourceTypes.add(defaultSourceType1);
         wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool retStart1 = wrk->start(false, true);
         ASSERT_TRUE(retStart1);

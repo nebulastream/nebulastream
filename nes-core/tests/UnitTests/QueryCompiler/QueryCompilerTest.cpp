@@ -24,7 +24,6 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Nodes/Util/VizDumpHandler.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -55,8 +54,8 @@
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>

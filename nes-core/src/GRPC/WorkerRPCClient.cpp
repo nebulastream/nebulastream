@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>

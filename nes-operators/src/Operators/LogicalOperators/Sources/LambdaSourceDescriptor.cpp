@@ -14,6 +14,7 @@
 
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <API/Schema.hpp>
 #include <utility>
 
 namespace NES {

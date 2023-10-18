@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <chrono>
 #include <utility>
+
 namespace NES {
 
 DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency)

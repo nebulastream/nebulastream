@@ -19,8 +19,8 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Catalogs/Exceptions/UDFException.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <GRPC/Serialization/UDFSerializationUtil.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <UdfCatalogService.pb.h>

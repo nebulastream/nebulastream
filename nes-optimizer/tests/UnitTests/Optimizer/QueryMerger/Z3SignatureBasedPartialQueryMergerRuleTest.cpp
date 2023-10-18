@@ -85,7 +85,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest 
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4, properties);
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
-        auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
+        auto physicalSourceCar = PhysicalSource::create(DefaultSourceType::create("car", "testCar"));
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
@@ -94,7 +94,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest 
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry2);
 
         auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
-        auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
+        auto physicalSourceBike = PhysicalSource::create(DefaultSourceType::create("bike", "testBike"));
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry3 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry4 =
@@ -103,7 +103,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::BaseUnitTest 
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry4);
 
         auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
-        auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
+        auto physicalSourceTruck = PhysicalSource::create(DefaultSourceType::create("truck", "testTruck"));
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry5 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry6 =

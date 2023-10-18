@@ -14,11 +14,10 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

@@ -12,14 +12,18 @@
     limitations under the License.
 */
 
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
@@ -28,16 +32,11 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
-#include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
-#include  <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 
 namespace NES {
 

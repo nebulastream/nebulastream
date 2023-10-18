@@ -14,10 +14,9 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
+#include  <Exceptions/TypeInferenceException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <utility>

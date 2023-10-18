@@ -16,8 +16,8 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Sources/BenchmarkSource.hpp>
-#include <Sources/DataSource.hpp>
+#include <Util/SourceMode.hpp>
+#include <Util/GatheringMode.hpp>
 
 namespace NES {
 /**

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <sstream>
@@ -25,8 +24,8 @@ WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessExpres
 WindowAggregationDescriptor::WindowAggregationDescriptor(const ExpressionNodePtr& onField, const ExpressionNodePtr& asField)
     : onField(onField), asField(asField) {}
 
-WindowAggregationDescriptorPtr WindowAggregationDescriptor::as(const ExpressionItem& asField) {
-    const auto& field = ExpressionItem(asField).getExpressionNode()->as<FieldAccessExpressionNode>();
+WindowAggregationDescriptorPtr WindowAggregationDescriptor::as(const ExpressionNodePtr& asField) {
+    const auto& field = asField->as<FieldAccessExpressionNode>();
     this->asField = field;
     return this->copy();
 }

@@ -16,7 +16,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/LogicalOperators/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>

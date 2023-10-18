@@ -16,10 +16,10 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Exceptions/OperatorNotFoundException.hpp>
-#include <Exceptions/PhysicalSourceNotFoundException.hpp>
+#include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -28,7 +28,6 @@
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 

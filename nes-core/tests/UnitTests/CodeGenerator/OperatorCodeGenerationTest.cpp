@@ -24,7 +24,7 @@
 #include <Network/NetworkChannel.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
+#include QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
@@ -55,7 +55,7 @@
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>

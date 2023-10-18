@@ -13,7 +13,7 @@
 */
 
 #include "SerializableOperator.pb.h"
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/NesFormat.hpp>

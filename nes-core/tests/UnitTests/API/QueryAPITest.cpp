@@ -42,9 +42,9 @@
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
