@@ -12,10 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        PhysicalHashJoinOperator.cpp
-        PhysicalHashJoinBuildOperator.cpp
-        PhysicalHashJoinProbeOperator.cpp
-        PhysicalNestedLoopJoinOperator.cpp
-        PhysicalNestedLoopJoinBuildOperator.cpp
-        PhysicalNestedLoopJoinProbeOperator.cpp
+        PhysicalStreamJoinOperator.cpp
+        PhysicalStreamJoinBuildOperator.cpp
+        PhysicalStreamJoinProbeOperator.cpp
 )

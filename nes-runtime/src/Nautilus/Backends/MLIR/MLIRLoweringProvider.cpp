@@ -622,6 +622,13 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
                                                           frame.getValue(compareOp->getLeftInput()->getIdentifier()),
                                                           frame.getValue(compareOp->getRightInput()->getIdentifier()));
         frame.setValue(compareOp->getIdentifier(), cmpOp);
+    } else if (leftStamp->isBoolean() && rightStamp->isBoolean()) {
+        // handle boolean comparison
+        auto cmpOp = builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
+                                                          mlir::arith::CmpIPredicate::eq,
+                                                          frame.getValue(compareOp->getLeftInput()->getIdentifier()),
+                                                          frame.getValue(compareOp->getRightInput()->getIdentifier()));
+        frame.setValue(compareOp->getIdentifier(), cmpOp);
     } else {
         NES_THROW_RUNTIME_ERROR("Unknown type to compare: " << leftStamp->toString() << " and " << rightStamp->toString());
     }

@@ -81,7 +81,7 @@ void PagedVectorRef::setNumberOfTotalEntries(const Value<>& val) {
     getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).store(val);
 }
 
-PagedVectorRefIter PagedVectorRef::begin() { return {*this}; }
+PagedVectorRefIter PagedVectorRef::begin() { return at(0_u64); }
 
 PagedVectorRefIter PagedVectorRef::at(Value<UInt64> pos) {
     PagedVectorRefIter pagedVectorRefIter(*this);
@@ -90,6 +90,14 @@ PagedVectorRefIter PagedVectorRef::at(Value<UInt64> pos) {
 }
 
 PagedVectorRefIter PagedVectorRef::end() { return at(this->getTotalNumberOfEntries()); }
+
+bool PagedVectorRef::operator==(const PagedVectorRef& other) const {
+    if (this == &other) {
+        return true;
+    }
+
+    return entrySize == other.entrySize && pagedVectorRef == other.pagedVectorRef;
+}
 
 PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRef& pagedVectorRef) : pos(0_u64), pagedVectorRef(pagedVectorRef) {}
 
@@ -101,6 +109,7 @@ PagedVectorRefIter& PagedVectorRefIter::operator=(const PagedVectorRefIter& it) 
     }
 
     pos = it.pos;
+    pagedVectorRef = it.pagedVectorRef;
     return *this;
 }
 
@@ -122,7 +131,7 @@ bool PagedVectorRefIter::operator==(const PagedVectorRefIter& other) const {
         return true;
     }
 
-    return pos == other.pos;
+    return pos == other.pos && pagedVectorRef == other.pagedVectorRef;
 }
 
 bool PagedVectorRefIter::operator!=(const PagedVectorRefIter& other) const { return !(*this == other); }

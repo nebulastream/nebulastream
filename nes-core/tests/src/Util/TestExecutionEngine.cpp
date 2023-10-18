@@ -22,7 +22,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
                                          const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode,
                                          const uint64_t numWorkerThreads,
                                          const QueryCompilation::StreamJoinStrategy& joinStrategy,
-                                         const QueryCompilation::QueryCompilerOptions::WindowingStrategy& windowingStrategy) {
+                                         const QueryCompilation::WindowingStrategy& windowingStrategy) {
     auto workerConfiguration = WorkerConfiguration::create();
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
@@ -32,8 +32,9 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerOp
     workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
     workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     workerConfiguration->numWorkerThreads = numWorkerThreads;
-    workerConfiguration->numberOfBuffersInGlobalBufferManager = numWorkerThreads * 10240;
-    workerConfiguration->numberOfBuffersInSourceLocalBufferPool = numWorkerThreads * 512;
+    workerConfiguration->bufferSizeInBytes = DEFAULT_BUFFERSIZE;
+    workerConfiguration->numberOfBuffersInGlobalBufferManager = numWorkerThreads * DEFAULT_NO_BUFFERS_IN_GLOBAL_BM_PER_THREAD;
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool = numWorkerThreads * DEFAULT_NO_BUFFERS_IN_SOURCE_BM_PER_THREAD;
 
     auto defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);

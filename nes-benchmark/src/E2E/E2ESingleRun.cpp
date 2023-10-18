@@ -53,7 +53,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
 
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
-    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
+    coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;

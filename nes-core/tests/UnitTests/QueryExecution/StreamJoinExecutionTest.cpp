@@ -13,7 +13,6 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -27,7 +26,8 @@ namespace NES::Runtime::Execution {
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
-                                     public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
+                                     public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy,
+                                                                                     QueryCompilation::WindowingStrategy>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
@@ -40,11 +40,12 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
         Testing::BaseUnitTest::SetUp();
-        auto joinStrategy = NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam();
-        auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        const auto joinStrategy = std::get<0>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
+        const auto windowingStrategy = std::get<1>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
+        const auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         const auto numWorkerThreads = 1;
-        executionEngine =
-            std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode, numWorkerThreads, joinStrategy);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode, numWorkerThreads,
+                                                                         joinStrategy, windowingStrategy);
     }
 
     /* Will be called before a test is executed. */
@@ -92,6 +93,9 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
             }
         }
 
+        // Giving the execution engine time to process the tuples, so that we do not just test our terminate() implementation
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
         // Stopping query and waiting until the test sink has received the expected number of tuples
         NES_INFO("Stopping query now!!!");
         EXPECT_TRUE(executionEngine->stopQuery(queryPlan, Runtime::QueryTerminationType::Graceful));
@@ -107,9 +111,16 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
                                                  const WindowTypePtr& joinWindow) {
         // Getting the expected output tuples
         auto bufferManager = executionEngine->getBufferManager();
-        const auto expectedSinkBuffer =
-            TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
-        const auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
+
+        std::vector<ResultRecord> expectedSinkVector;
+        const auto expectedSinkBuffers =
+            TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager);
+
+        for (const auto& buf : expectedSinkBuffers) {
+            const auto tmpVec = TestUtils::createVecFromTupleBuffer<ResultRecord>(buf);
+            expectedSinkVector.insert(expectedSinkVector.end(), tmpVec.begin(), tmpVec.end());
+        }
+
 
         const auto testSink = executionEngine->createCollectSink<ResultRecord>(joinParams.outputSchema);
         const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -344,8 +355,7 @@ TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentNumberOfAttributesTumb
 /**
  * Test deploying join with different sources
  */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
+TEST_P(StreamJoinQueryExecutionTest, testJoinWithDifferentSourceSlidingWindow) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -384,11 +394,48 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithDifferentSourceSliding
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
+TEST_P(StreamJoinQueryExecutionTest, testJoinWithLargerWindowSizes) {
+    struct __attribute__((packed)) ResultRecord {
+        uint64_t window1window2Start;
+        uint64_t window1window2End;
+        uint64_t window1window2Key;
+        uint64_t window1value1;
+        uint64_t window1id1;
+        uint64_t window1timestamp;
+        uint64_t window2value2;
+        uint64_t window2id2;
+        uint64_t window2timestamp;
+        bool operator==(const ResultRecord& rhs) const {
+            return window1window2Start == rhs.window1window2Start && window1window2End == rhs.window1window2End
+                && window1window2Key == rhs.window1window2Key && window1value1 == rhs.window1value1
+                && window1id1 == rhs.window1id1 && window1timestamp == rhs.window1timestamp && window2value2 == rhs.window2value2
+                && window2id2 == rhs.window2id2 && window2timestamp == rhs.window2timestamp;
+        }
+    };
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("test1$value1", BasicType::UINT64)
+                                ->addField("test1$id1", BasicType::UINT64)
+                                ->addField("test1$timestamp", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("test2$value2", BasicType::UINT64)
+                                 ->addField("test2$id2", BasicType::UINT64)
+                                 ->addField("test2$timestamp", BasicType::UINT64);
+    const auto windowSize = Milliseconds(1000);
+    const auto windowSlide = Milliseconds(250);
+    const auto timestampFieldName = "timestamp";
+    const auto window = SlidingWindow::of(EventTime(Attribute(timestampFieldName)), windowSize, windowSlide);
+
+    // Running a single join query
+    TestUtils::CsvFileParams csvFileParams("window7.csv", "window7.csv", "window_sink7.csv");
+    TestUtils::JoinParams joinParams(leftSchema, rightSchema, "id1", "id2");
+    runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
+}
+
 /**
  * Test deploying join with different sources
  */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_testSlidingWindowDifferentAttributes) {
+TEST_P(StreamJoinQueryExecutionTest, testSlidingWindowDifferentAttributes) {
     struct __attribute__((packed)) ResultRecord {
         uint64_t window1window2Start;
         uint64_t window1window2End;
@@ -464,7 +511,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
-// TODO can be revisited once #3966 has been merged
+// TODO #3844 can be revisited once #3966 has been merged
 TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindows) {
     struct __attribute__((packed)) ResultRecord {
         int64_t test1test2$start;
@@ -572,13 +619,10 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                         StreamJoinQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-                        //TODO Enable the disabled test and fix them #3926
-                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-                        //QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+                        JOIN_STRATEGIES_WINDOW_STRATEGIES,
                         [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
+                            return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_" +
+                                std::string(magic_enum::enum_name(std::get<1>(info.param)));
                         });
 
 }// namespace NES::Runtime::Execution

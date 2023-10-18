@@ -17,10 +17,10 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+
 namespace NES::Runtime::Execution::Operators {
-class TimeFunction;
-using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
 * @brief NonKeyedBucketPreAggregation operator that performs the pre-aggregation step for a global window aggregation.

@@ -33,10 +33,11 @@ TestHarness::TestHarness(std::string queryWithoutSink,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSinkStr(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-      useNautilus(false), performDistributedWindowOptimization(false), useNewRequestExecutor(false),
-      memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
-      topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false),
-      topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
+      useNautilus(false), performDistributedWindowOptimization(false), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
+      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
+      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
+      windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
+      testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness::TestHarness(Query queryWithoutSink,
                          uint16_t restPort,
@@ -48,7 +49,8 @@ TestHarness::TestHarness(Query queryWithoutSink,
       coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort), useNautilus(false),
       performDistributedWindowOptimization(false), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
       memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
-      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN), validationDone(false), topologySetupDone(false),
+      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
+      windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
       testHarnessResourcePath(testHarnessResourcePath) {}
 
 TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema) {
@@ -74,6 +76,11 @@ TestHarness& TestHarness::enableNewRequestExecutor() {
 
 TestHarness& TestHarness::setJoinStrategy(QueryCompilation::StreamJoinStrategy& newJoinStrategy) {
     this->joinStrategy = newJoinStrategy;
+    return *this;
+}
+
+TestHarness& TestHarness::setWindowingStrategy(QueryCompilation::WindowingStrategy& newWindowingStrategy) {
+    this->windowingStrategy = newWindowingStrategy;
     return *this;
 }
 
@@ -297,12 +304,9 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
             QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode =
             QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
-        coordinatorConfiguration->worker.queryCompiler.joinStrategy = joinStrategy;
         coordinatorConfiguration->optimizer.performDistributedWindowOptimization = performDistributedWindowOptimization;
-
-        // Only this is currently supported in Nautilus
-        coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
+        coordinatorConfiguration->worker.queryCompiler.windowingStrategy = windowingStrategy;
+        coordinatorConfiguration->worker.queryCompiler.joinStrategy = joinStrategy;
     }
     crdConfigFunctor(coordinatorConfiguration);
 
@@ -321,10 +325,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
             workerConfiguration->queryCompiler.queryCompilerType =
                 QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
             workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
-
-            // Only this is currently supported in Nautilus
-            workerConfiguration->queryCompiler.windowingStrategy =
-                QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
+            workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
             workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
         }
 

@@ -82,7 +82,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     NES_INFO("KTMDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     QueryCompilerConfiguration queryCompilerConfiguration;
-    queryCompilerConfiguration.windowingStrategy = QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING;
+    queryCompilerConfiguration.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
     workerConfig1->queryCompiler = queryCompilerConfiguration;
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->queryCompiler.queryCompilerType =

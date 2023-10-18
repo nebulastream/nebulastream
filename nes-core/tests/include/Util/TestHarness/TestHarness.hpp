@@ -124,6 +124,13 @@ class TestHarness {
     TestHarness& setJoinStrategy(QueryCompilation::StreamJoinStrategy& newJoinStrategy);
 
     /**
+     * @brief Sets the join strategy
+     * @param joinStrategy
+     * @return Self
+     */
+    TestHarness& setWindowingStrategy(QueryCompilation::WindowingStrategy& newWindowingStrategy);
+
+    /**
          * @brief push a single element/tuple to specific source
          * @param element element of Record to push
          * @param workerId id of the worker whose source will produce the pushed element
@@ -407,6 +414,7 @@ class TestHarness {
     uint32_t physicalSourceCount;
     uint32_t topologyId;
     QueryCompilation::StreamJoinStrategy joinStrategy;
+    QueryCompilation::WindowingStrategy windowingStrategy;
     bool validationDone;
     bool topologySetupDone;
     std::filesystem::path testHarnessResourcePath;

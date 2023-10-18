@@ -25,16 +25,16 @@ class PhysicalOperatorPipeline {
      * @brief Sets the root operator of an pipeline.
      * @param rootOperator
      */
-    void setRootOperator(std::shared_ptr<Operators::Operator> rootOperator);
+    void setRootOperator(Operators::OperatorPtr rootOperator);
 
     /**
      * @brief Returns the root operator of an pipeline
      * @return operator
      */
-    std::shared_ptr<Operators::Operator> getRootOperator() const;
+    Operators::OperatorPtr getRootOperator() const;
 
   private:
-    std::shared_ptr<Operators::Operator> rootOperator;
+    Operators::OperatorPtr rootOperator;
 };
 
 }// namespace NES::Runtime::Execution

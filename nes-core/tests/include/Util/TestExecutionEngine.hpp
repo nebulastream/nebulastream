@@ -60,6 +60,13 @@ class NonRunnableDataSource;
 class TestSourceDescriptor;
 
 /**
+ * @brief Default values for the test execution engine, otherwise tests will not terminate, as not enough buffers are available
+ */
+constexpr auto DEFAULT_BUFFERSIZE = 8196;
+constexpr auto DEFAULT_NO_BUFFERS_IN_GLOBAL_BM_PER_THREAD = 10240;
+constexpr auto DEFAULT_NO_BUFFERS_IN_SOURCE_BM_PER_THREAD = 512;
+
+/**
  * @brief A simple stand alone query execution engine for testing.
  */
 class TestExecutionEngine {
@@ -69,8 +76,8 @@ class TestExecutionEngine {
         const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
         const uint64_t numWorkerThreads = 1,
         const QueryCompilation::StreamJoinStrategy& joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-        const QueryCompilation::QueryCompilerOptions::WindowingStrategy& windowingStrategy =
-            QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING);
+        const QueryCompilation::WindowingStrategy& windowingStrategy =
+            QueryCompilation::WindowingStrategy::SLICING);
 
     std::shared_ptr<TestSink> createDataSink(const SchemaPtr& outputSchema, uint32_t expectedBuffer = 1);
 

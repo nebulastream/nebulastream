@@ -77,8 +77,8 @@ void QueryCompilerOptions::setFilterProcessingStrategy(FilterProcessingStrategy 
 QueryCompilerOptions::FilterProcessingStrategy QueryCompilerOptions::getFilterProcessingStrategy() const {
     return filterProcessingStrategy;
 }
-QueryCompilerOptions::WindowingStrategy QueryCompilerOptions::getWindowingStrategy() const { return windowingStrategy; }
-void QueryCompilerOptions::setWindowingStrategy(QueryCompilerOptions::WindowingStrategy windowingStrategy) {
+WindowingStrategy QueryCompilerOptions::getWindowingStrategy() const { return windowingStrategy; }
+void QueryCompilerOptions::setWindowingStrategy(WindowingStrategy windowingStrategy) {
     QueryCompilerOptions::windowingStrategy = windowingStrategy;
 }
 QueryCompilerOptions::NautilusBackend QueryCompilerOptions::getNautilusBackend() const { return nautilusBackend; }

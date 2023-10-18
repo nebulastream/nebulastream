@@ -270,10 +270,10 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
     queryCompilationOptions->setOutputBufferOptimizationLevel(queryCompilerConfiguration.outputBufferOptimizationLevel);
 
     if (queryCompilerType == QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER
-        && queryCompilerConfiguration.windowingStrategy == QueryCompilation::QueryCompilerOptions::WindowingStrategy::LEGACY) {
+        && queryCompilerConfiguration.windowingStrategy == QueryCompilation::WindowingStrategy::LEGACY) {
         // sets SLICING windowing strategy as the default if nautilus is active.
         NES_WARNING("The LEGACY window strategy is not supported by Nautilus. Switch to SLICING!")
-        queryCompilationOptions->setWindowingStrategy(QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING);
+        queryCompilationOptions->setWindowingStrategy(QueryCompilation::WindowingStrategy::SLICING);
     } else {
         // sets the windowing strategy
         queryCompilationOptions->setWindowingStrategy(queryCompilerConfiguration.windowingStrategy);
