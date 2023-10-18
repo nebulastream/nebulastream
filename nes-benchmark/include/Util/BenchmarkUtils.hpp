@@ -21,8 +21,6 @@
 #include <Services/QueryService.hpp>
 #include <Util/Common.hpp>
 
-#include <chrono>
-
 namespace NES::Benchmark::Util {
 
 /**

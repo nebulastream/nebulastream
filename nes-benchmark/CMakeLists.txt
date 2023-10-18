@@ -39,6 +39,18 @@ get_source(nes-benchmark NES_BENCHMARK_SOURCE_FILES)
 # Add nes-benchmark library
 add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES})
 target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+target_include_directories(nes-benchmark PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+
+get_source(nes-unikernel-benchmark NES_UNIKERNEL_BENCHMARK_SOURCE_FILES)
+add_library(nes-unikernel-benchmark STATIC ${NES_UNIKERNEL_BENCHMARK_SOURCE_FILES})
+target_link_libraries(nes-unikernel-benchmark PUBLIC nes-unikernel-common nes-unikernel-runtime nes-unikernel-data-types)
+target_include_directories(nes-unikernel-benchmark PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+
+
 add_nes_benchmarks(e2e-benchmark-main "src/E2E/E2EBenchmarkMain.cpp")
 
 
