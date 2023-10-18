@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Exceptions/OperatorNotFoundException.hpp>
+#include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 
 namespace NES::Exceptions {
 OperatorNotFoundException::OperatorNotFoundException(const std::string& message)

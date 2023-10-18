@@ -17,7 +17,7 @@
 
 using namespace NES;
 
-constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class UnionQueryExecutionTest : public Testing::BaseUnitTest,
                                 public ::testing::WithParamInterface<QueryCompilation::QueryCompiler> {

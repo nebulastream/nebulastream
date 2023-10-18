@@ -25,7 +25,7 @@ using namespace NES;
 using Runtime::TupleBuffer;
 
 // Dump IR
-constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class MapPythonUDFQueryExecutionTest : public Testing::BaseUnitTest {
   public:

@@ -152,9 +152,7 @@ TestHarness& TestHarness::attachWorkerWithLambdaSourceToCoordinator(PhysicalSour
 
 TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(CSVSourceTypePtr csvSourceType, uint64_t parentId) {
     auto workerConfiguration = WorkerConfiguration::create();
-    auto physicalSource =
-        PhysicalSource::create(csvSourceType->getLogicalSourceName(), csvSourceType->getPhysicalSourceName(), csvSourceType);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(csvSourceType);
     workerConfiguration->parentId = parentId;
     uint32_t workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
@@ -221,31 +219,26 @@ TestHarness& TestHarness::validate() {
     return *this;
 }
 
-PhysicalSourcePtr TestHarness::createPhysicalSourceOfLambdaType(TestHarnessWorkerConfigurationPtr workerConf) {
-    // create and populate memory source
-    auto currentSourceNumOfRecords = workerConf->getRecords().size();
+PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfLambdaType(TestHarnessWorkerConfigurationPtr workerConf) {
 
+    bool found = false;
     auto logicalSourceName = workerConf->getLogicalSourceName();
-
-    SchemaPtr schema;
     for (const auto& logicalSource : logicalSources) {
         if (logicalSource->getLogicalSourceName() == logicalSourceName) {
-            schema = logicalSource->getSchema();
+            found = true;
         }
     }
 
-    if (!schema) {
+    if (!found) {
         throw Exceptions::RuntimeException("Unable to find logical source with name " + logicalSourceName
                                            + ". Make sure you are adding a logical source with the name to the test harness.");
     }
-
-    return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), workerConf->getPhysicalSourceType());
+    return workerConf->getPhysicalSourceType();
 };
 
-PhysicalSourcePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorkerConfigurationPtr workerConf) {
+PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorkerConfigurationPtr workerConf) {
     // create and populate memory source
     auto currentSourceNumOfRecords = workerConf->getRecords().size();
-
     auto logicalSourceName = workerConf->getLogicalSourceName();
 
     SchemaPtr schema;
@@ -274,9 +267,14 @@ PhysicalSourcePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessWorke
     NES_ASSERT2_FMT(bufferSize >= schema->getSchemaSizeInBytes() * currentSourceNumOfRecords,
                     "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                         << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
-    auto memorySourceType =
-        MemorySourceType::create(logicalSourceName, workerConf->getPhysicalSourceName(), memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, GatheringMode::INTERVAL_MODE);
-    return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
+    auto memorySourceType = MemorySourceType::create(logicalSourceName,
+                                                     workerConf->getPhysicalSourceName(),
+                                                     memArea,
+                                                     memAreaSize,
+                                                     memSrcNumBuffToProcess,
+                                                     memSrcFrequency,
+                                                     GatheringMode::INTERVAL_MODE);
+    return memorySourceType;
 };
 
 TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor) {
@@ -297,13 +295,11 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     if (useNautilus) {
         coordinatorConfiguration->worker.queryCompiler.queryCompilerType =
             QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-        coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode =
-            QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
+        coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
         coordinatorConfiguration->optimizer.performDistributedWindowOptimization = performDistributedWindowOptimization;
 
         // Only this is currently supported in Nautilus
-        coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
-            QueryCompilation::WindowingStrategy::SLICING;
+        coordinatorConfiguration->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
     }
     crdConfigFunctor(coordinatorConfiguration);
 
@@ -319,13 +315,11 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         //Fetch the worker configuration
         auto workerConfiguration = workerConf->getWorkerConfiguration();
         if (useNautilus) {
-            workerConfiguration->queryCompiler.queryCompilerType =
-                QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-            workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::CONSOLE;
+            workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+            workerConfiguration->queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
 
             // Only this is currently supported in Nautilus
-            workerConfiguration->queryCompiler.windowingStrategy =
-                QueryCompilation::WindowingStrategy::SLICING;
+            workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
             workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
         }
 

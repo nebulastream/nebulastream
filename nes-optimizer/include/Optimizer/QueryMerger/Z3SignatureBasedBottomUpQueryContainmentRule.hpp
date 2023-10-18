@@ -23,7 +23,12 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
-namespace NES::Optimizer {
+namespace NES {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace Optimizer {
 
 class SignatureContainmentCheck;
 using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
@@ -130,6 +135,6 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
 
     SignatureContainmentCheckPtr signatureContainmentUtil;
 };
-}// namespace NES::Optimizer
-
+}// namespace Optimizer
+}// namespace NES
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDBOTTOMUPQUERYCONTAINMENTRULE_HPP_

@@ -28,7 +28,7 @@ using namespace NES;
 using Runtime::TupleBuffer;
 
 // Dump IR
-constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class KeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
                                              public ::testing::WithParamInterface<QueryCompilation::WindowingStrategy> {

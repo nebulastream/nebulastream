@@ -17,6 +17,7 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
+#include <unordered_map>
 
 namespace NES {
 class QueryPlan;

@@ -30,7 +30,6 @@
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstring>
 #include <iterator>
 #include <utility>
 #include <z3++.h>

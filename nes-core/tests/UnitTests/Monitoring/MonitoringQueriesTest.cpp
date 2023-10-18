@@ -21,24 +21,24 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 //#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/AbstractMetricStore.hpp>
+#include <Util/MetricCollectorType.hpp>
 
-#include <Runtime/BufferManager.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Runtime/BufferManager.hpp>
 
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryService.hpp>
 #include <cstdint>
@@ -77,20 +77,18 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->enableMonitoring = true;
-        coordinatorConfig->worker.queryCompiler.queryCompilerType =
-            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+        coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
         return std::make_shared<NesCoordinator>(coordinatorConfig);
     }
 
-    NesWorkerPtr createWorker(PhysicalSourcePtr phSource) {
+    NesWorkerPtr createWorker(PhysicalSourceTypePtr phSource) {
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfSlots = (12);
         workerConfig->enableMonitoring = (true);
         workerConfig->physicalSourceTypes.add(phSource);
-        workerConfig->queryCompiler.queryCompilerType =
-            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+        workerConfig->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
         return std::make_shared<NesWorker>(std::move(workerConfig));
     }
 
@@ -110,7 +108,8 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
         Monitoring::MetricType retMetricType =
             Monitoring::MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
         ASSERT_EQ(retMetricType, expectedType);
-        MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(collectorType);
+        MonitoringSourceTypePtr sourceType =
+            MonitoringSourceType::create("logTestMetricStream", "physMetricSource", collectorType);
         std::string metricCollectorStr = std::string(magic_enum::enum_name(collectorType));
 
         NesCoordinatorPtr crd = createCoordinator();
@@ -123,7 +122,7 @@ class MonitoringQueriesTest : public Testing::BaseIntegrationTest {
 
         for (uint64_t i = 0; i < workerCnt; i++) {
             NES_DEBUG("MonitoringQueriesTest: Start worker 1");
-            NesWorkerPtr wrk = createWorker(PhysicalSource::create("logTestMetricStream", "physMetricSource", sourceType));
+            NesWorkerPtr wrk = createWorker(sourceType);
             bool retStart1 = wrk->start(/**blocking**/ false, /**withConnect**/ true);
             EXPECT_TRUE(retStart1);
             NES_INFO("MonitoringQueriesTest: Worker1 started successfully");

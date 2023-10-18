@@ -51,11 +51,13 @@
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -125,10 +127,9 @@ TEST_F(QueryCompilerTest, filterQuery) {
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, physicalSourceName);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -173,10 +174,9 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, physicalSourceName);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -230,10 +230,9 @@ TEST_F(QueryCompilerTest, mapQuery) {
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, physicalSourceName);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -277,10 +276,9 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, physicalSourceName);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -323,10 +321,9 @@ TEST_F(QueryCompilerTest, windowQuery) {
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, physicalSourceName);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -375,10 +372,9 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, physicalSourceName);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -390,7 +386,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from("logicalSourceName")
-                     .window(SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10), Seconds(2)))
+                     .window(SlidingWindow::of(TimeCharacteristic::createEventTime(FieldAccessExpressionNode::create("ts")), Seconds(10), Seconds(2)))
                      .byKey(Attribute("key"))
                      .apply(Sum(Attribute("value")))
                      .sink(NullOutputSinkDescriptor::create());
@@ -429,10 +425,9 @@ TEST_F(QueryCompilerTest, unionQuery) {
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, physicalSourceName);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -483,12 +478,11 @@ TEST_F(QueryCompilerTest, joinQuery) {
     const std::string rightSourceLogicalSourceName = "rightSource";
     sourceCatalog->addLogicalSource(leftSourceLogicalSourceName, schema);
     sourceCatalog->addLogicalSource(rightSourceLogicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf1 = PhysicalSource::create(leftSourceLogicalSourceName, "x1", defaultSourceType);
-    auto sourceConf2 = PhysicalSource::create(rightSourceLogicalSourceName, "x1", defaultSourceType);
+    auto defaultSourceType1 = DefaultSourceType::create(leftSourceLogicalSourceName, "x1");
+    auto defaultSourceType2 = DefaultSourceType::create(rightSourceLogicalSourceName, "x2");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf1);
-    workerConfiguration->physicalSourceTypes.add(sourceConf2);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType1);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType2);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
@@ -545,11 +539,9 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-
+    auto defaultSourceType = DefaultSourceType::create(logicalSourceName, physicalSourceName);
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 

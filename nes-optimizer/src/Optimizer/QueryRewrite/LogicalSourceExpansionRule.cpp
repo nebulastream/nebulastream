@@ -14,8 +14,7 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Exceptions/OperatorNotFoundException.hpp>
+#include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
@@ -29,9 +28,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <algorithm>
-
-#include <utility>
 
 namespace NES::Optimizer {
 

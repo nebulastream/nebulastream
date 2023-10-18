@@ -13,7 +13,6 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -25,7 +24,6 @@
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 

@@ -14,12 +14,17 @@
 
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
@@ -29,12 +34,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Windowing/Watermark/Watermark.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <utility>
 
 namespace NES::Optimizer {

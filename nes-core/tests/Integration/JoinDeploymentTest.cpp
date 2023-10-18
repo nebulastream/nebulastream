@@ -56,8 +56,8 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
     std::vector<ResultRecord> runJoinQueryTwoLogicalStreams(const Query& query,
                                                             const TestUtils::CsvFileParams& csvFileParams,
                                                             const TestUtils::JoinParams& joinParams) {
-        auto sourceConfig1 = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[0]);
-        auto sourceConfig2 = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[1]);
+        auto sourceConfig1 = TestUtils::createCsvSourceType("test1", "test1", csvFileParams.inputCsvFiles[0]);
+        auto sourceConfig2 = TestUtils::createCsvSourceType("test2", "test2", csvFileParams.inputCsvFiles[1]);
         auto expectedSinkBuffer =
             TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
         auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
@@ -69,8 +69,8 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
                                       .setWindowingStrategy(windowingStrategy)
                                       .addLogicalSource("test1", joinParams.inputSchemas[0])
                                       .addLogicalSource("test2", joinParams.inputSchemas[1])
-                                      .attachWorkerWithCSVSourceToCoordinator("test1", sourceConfig1)
-                                      .attachWorkerWithCSVSourceToCoordinator("test2", sourceConfig2)
+                                      .attachWorkerWithCSVSourceToCoordinator(sourceConfig1)
+                                      .attachWorkerWithCSVSourceToCoordinator(sourceConfig2)
                                       .validate()
                                       .setupTopology();
 

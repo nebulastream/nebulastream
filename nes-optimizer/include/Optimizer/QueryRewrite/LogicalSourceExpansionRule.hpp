@@ -22,6 +22,9 @@
 
 namespace NES {
 
+class Node;
+using NodePtr = std::shared_ptr<Node>;
+
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 

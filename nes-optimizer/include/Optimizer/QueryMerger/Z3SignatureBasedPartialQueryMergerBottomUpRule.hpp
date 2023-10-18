@@ -17,7 +17,12 @@
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
-namespace NES::Optimizer {
+namespace NES {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace Optimizer {
 
 class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
@@ -90,6 +95,6 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRule final : public BaseQueryMer
                                                                               const LogicalOperatorNodePtr& hostOperator);
     SignatureEqualityUtilPtr signatureEqualityUtil;
 };
-}// namespace NES::Optimizer
-
+}// namespace Optimizer
+}// namespace NES
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERBOTTOMUPRULE_HPP_

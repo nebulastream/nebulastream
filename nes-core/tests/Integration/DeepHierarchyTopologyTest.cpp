@@ -11,17 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Identifiers.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <Util/TestUtils.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -415,9 +414,13 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "testCSV.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    std::vector<CSVSourceTypePtr> csvSourceTypes;
+    for (uint64_t i = 0; i < 4; i++) {
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create("testStream", "testStream1");
+        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "testCSV.csv");
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+        csvSourceTypes.emplace_back(csvSourceType);
+    }
 
     auto query = Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3"));
 
@@ -432,10 +435,10 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
                                   .attachWorkerToWorkerWithId(5)// id=6
                                   .attachWorkerToWorkerWithId(5)// id=7
                                   // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId("testStream", csvSourceType, 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId("testStream", csvSourceType, 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId("testStream", csvSourceType, 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId("testStream", csvSourceType, 7)// id=11
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 3)// id=8
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), 4)// id=9
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), 6)// id=10
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), 7)// id=11
                                   .validate()
                                   .setupTopology();
 
@@ -498,10 +501,14 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType->setNumberOfBuffersToProduce(3);
+    std::vector<CSVSourceTypePtr> csvSourceTypes;
+    for (uint64_t i = 0; i < 4; i++) {
+        auto csvSourceType = CSVSourceType::create("window", "window" + std::to_string(i));
+        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+        csvSourceType->setNumberOfBuffersToProduce(3);
+        csvSourceTypes.emplace_back(csvSourceType);
+    }
 
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
@@ -517,10 +524,10 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
                                   .attachWorkerToWorkerWithId(5)// id=6
                                   .attachWorkerToWorkerWithId(5)// id=7
                                   // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 7)// id=11
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 3)// id=8
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), 4)// id=9
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), 6)// id=10
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), 7)// id=11
                                   .validate()
                                   .setupTopology(crdFunctor);
 
@@ -593,10 +600,14 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType->setNumberOfBuffersToProduce(3);
+    std::vector<CSVSourceTypePtr> csvSourceTypes;
+    for (uint64_t i = 0; i < 4; i++) {
+        auto csvSourceType = CSVSourceType::create("window", "window" + std::to_string(i));
+        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+        csvSourceType->setNumberOfBuffersToProduce(3);
+        csvSourceTypes.emplace_back(csvSourceType);
+    }
 
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](CoordinatorConfigurationPtr config) {
         config->optimizer.enableNemoPlacement.setValue(true);
@@ -625,10 +636,10 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
                                   .attachWorkerToWorkerWithId(5)// id=6
                                   .attachWorkerToWorkerWithId(5)// id=7
                                   // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 7)// id=11
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 3)// id=8
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), 4)// id=9
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), 6)// id=10
+                                  .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), 7)// id=11
                                   .validate()
                                   .setupTopology(crdFunctor);
 
@@ -775,10 +786,14 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(5);
-    csvSourceType->setNumberOfBuffersToProduce(3);
+    std::vector<CSVSourceTypePtr> csvSourceTypes;
+    for (uint64_t i = 0; i < 4; i++) {
+        auto csvSourceType = CSVSourceType::create("window", "window" + std::to_string(i));
+        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(5);
+        csvSourceType->setNumberOfBuffersToProduce(3);
+        csvSourceTypes.emplace_back(csvSourceType);
+    }
 
     auto query = Query::from("window")
                      .filter(Attribute("id") < 15)
@@ -795,12 +810,12 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerToCoordinator()                                        //2
-                           .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 2)//3
-                           .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 2)//4
-                           .attachWorkerToCoordinator()                                        //5
-                           .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 5)//6
-                           .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 5)//7
+                           .attachWorkerToCoordinator()                                     //2
+                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(0), 2)//3
+                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(1), 2)//4
+                           .attachWorkerToCoordinator()                                     //5
+                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(2), 5)//6
+                           .attachWorkerWithCSVSourceToWorkerWithId(csvSourceTypes.at(3), 5)//7
                            .validate()
                            .setupTopology();
 

@@ -19,7 +19,7 @@
 namespace NES::Testing {
 
 TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompiler& compiler,
-                                         const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode,
+                                         const QueryCompilation::DumpMode& dumpMode,
                                          const uint64_t numWorkerThreads,
                                          const QueryCompilation::StreamJoinStrategy& joinStrategy,
                                          const QueryCompilation::WindowingStrategy& windowingStrategy) {

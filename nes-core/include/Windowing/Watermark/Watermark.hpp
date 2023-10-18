@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <memory>
+
 namespace NES::Windowing {
 
 class Watermark {

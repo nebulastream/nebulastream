@@ -26,7 +26,7 @@
 #include <utility>
 
 // Dump IR
-constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
                                    public ::testing::WithParamInterface<QueryCompilation::QueryCompiler> {

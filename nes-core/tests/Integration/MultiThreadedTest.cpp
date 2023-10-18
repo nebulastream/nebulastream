@@ -32,7 +32,7 @@ class MultiThreadedTest : public Testing::BaseIntegrationTest,
   public:
     const uint64_t numTuplesPerBuffer = 1;
     static constexpr auto queryCompiler = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    static constexpr auto dumpNone = QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+    static constexpr auto dumpNone = QueryCompilation::DumpMode::NONE;
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 

@@ -24,7 +24,7 @@
 
 namespace NES::Runtime::Execution {
 
-constexpr auto queryCompilerDumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+constexpr auto queryCompilerDumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
                                      public ::testing::WithParamInterface<
