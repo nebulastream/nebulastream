@@ -514,27 +514,51 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
     return true;
 }
 
-bool AbstractQueryManager::addEpochPropagation(DataSourcePtr source, uint64_t queryId, uint64_t epochBarrier) {
-    std::unique_lock lock(queryMutex);
-    auto qeps = sourceToQEPMapping.find(source->getOperatorId());
-    if (qeps != sourceToQEPMapping.end()) {
-        //post reconfiguration message to the executable query plans with an epoch barrier to trim buffer storages
-        for (auto qep : qeps->second) {
-            auto sinks = qep->getSinks();
-            for (auto sink : sinks) {
-                if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
-                    auto newReconf = ReconfigurationMessage(queryId,
-                                                            qep->getQuerySubPlanId(),
-                                                            Runtime::ReconfigurationType::PropagateEpoch,
-                                                            sink,
-                                                            std::make_any<uint64_t>(epochBarrier));
-                    addReconfigurationMessage(queryId, qep->getQuerySubPlanId(), newReconf);
-                }
-            }
-            return true;
+bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId,
+                                                       uint64_t epochBarrier) {
+    std::unique_lock queryLock(queryMutex);
+    bool isPropagated = false;
+    auto queryId = getQueryId(querySubPlanId);
+    auto qep = getQueryExecutionPlan(querySubPlanId);
+    //post reconfiguration message to the executable query plan with an epoch barrier to trim buffer storages
+    auto sinks = qep->getSinks();
+    for (auto sink : sinks) {
+        if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
+            NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId= ", queryId, "punctuation= ", epochBarrier);
+            auto newReconf = ReconfigurationMessage(queryId,
+                                                    qep->getQuerySubPlanId(),
+                                                    Runtime::ReconfigurationType::PropagateEpoch,
+                                                    sink,
+                                                    std::make_any<EpochMessage>(epochBarrier));
+            addReconfigurationMessage(queryId, qep->getQuerySubPlanId(), newReconf);
+            isPropagated = true;
         }
-    } else {
-        NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no query execution plans were found");
+    }
+    if (isPropagated) {
+        return true;
+    }
+    return false;
+}
+
+bool AbstractQueryManager::propagateEpochBackwards(uint64_t querySubPlanId, uint64_t epochBarrier) {
+    std::unique_lock queryLock(queryMutex);
+    auto queryId = getQueryId(querySubPlanId);
+    auto qep = getQueryExecutionPlan(querySubPlanId);
+    auto sources = qep->getSources();
+    bool isPropagated = false;
+    for (auto source : sources) {
+        if (source->getType() == SourceType::NETWORK_SOURCE) {
+            auto newReconf = Runtime::ReconfigurationMessage(queryId,
+                                                             querySubPlanId,
+                                                             Runtime::ReconfigurationType::PropagateEpoch,
+                                                             source,
+                                                             std::make_any<EpochMessage>(epochBarrier));
+            addReconfigurationMessage(queryId, querySubPlanId, newReconf);
+            isPropagated = true;
+        }
+    }
+    if (isPropagated) {
+        return true;
     }
     return false;
 }

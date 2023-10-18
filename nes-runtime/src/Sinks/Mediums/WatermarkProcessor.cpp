@@ -41,4 +41,6 @@ void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequence
 
 WatermarkTs WatermarkProcessor::getCurrentWatermark() const { return currentWatermark; }
 
+bool WatermarkProcessor::isWatermarkSynchronized() const { return transactionLog.empty(); }
+
 }// namespace NES::Windowing

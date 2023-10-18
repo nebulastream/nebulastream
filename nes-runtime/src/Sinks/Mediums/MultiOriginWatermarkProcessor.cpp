@@ -39,6 +39,15 @@ void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumb
     localWatermarkProcessor[originId]->updateWatermark(ts, sequenceNumber);
 }
 
+bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) const {
+    std::unique_lock lock(watermarkLatch);
+    auto iter = localWatermarkProcessor.find(originId);
+    if (iter != localWatermarkProcessor.end()) {
+        return iter->second->isWatermarkSynchronized();
+    }
+    return false;
+}
+
 WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
     std::unique_lock lock(watermarkLatch);
     // check if we already registered each expected origin in the local watermark processor map

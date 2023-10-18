@@ -189,6 +189,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};
     std::recursive_mutex writeMutex;
+
+    bool isWaiting;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
