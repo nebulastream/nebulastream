@@ -29,9 +29,6 @@ add_nes_integration_test(location-controller-integration-tests "REST/Controller/
 ### Filter Push Down Test ###
 add_nes_integration_test(filter-push-down-test "Optimizer/FilterPushDownTest.cpp")
 
-# SimplePatternTest
-add_nes_integration_test(simple-pattern-test "SimplePatternTest.cpp")
-
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "MultiWorkerTest.cpp")
@@ -71,7 +68,7 @@ add_nes_integration_test(non-keyed-sliding-window-tests "Windowing/SlidingWindow
 
 
 ### MultipleWindowsTest ###
-add_nes_integration_test(multi-window-test "MultipleWindowsTest.cpp")
+add_nes_integration_test(multi-window-test "Windowing/MultipleWindowsTest.cpp")
 
 
 ### MultiJoinsTest ###
@@ -98,12 +95,8 @@ add_nes_integration_test(worker-coordinator-starter-tests "WorkerCoordinatorStar
 ### WorkerCoordinatorStarter Tests ###
 add_nes_integration_test(update-topology-remote-test "UpdateTopologyRemoteTest.cpp")
 
-
-
 # NetworkStackIntegrationTest
 add_nes_integration_test(network-stack-integration-test "NetworkStackIntegrationTest.cpp")
-
-
 
 # NemoIntegrationTest
 add_nes_integration_test(nemo-integration-test "NemoIntegrationTest.cpp")

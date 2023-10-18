@@ -99,7 +99,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      */
     BoolOption performDistributedWindowOptimization = {
         PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION,
-        true,// TODO this has to be set to true, otherwise the Nemo tests fail #4150
+        false,// TODO this has to be set to true, otherwise the Nemo tests fail #4150
         "Enables the distribution of window aggregations."};
 
     /**

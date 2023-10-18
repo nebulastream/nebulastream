@@ -320,6 +320,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
     auto start_timestamp = std::chrono::system_clock::now();
     uint64_t found = 0;
     uint64_t count = 0;
+    std::string content;
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
         found = 0;
@@ -328,7 +329,7 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
         std::ifstream ifs(outputFilePath);
         if (ifs.good() && ifs.is_open()) {
             std::vector<std::string> expectedlines = NES::Util::splitWithStringDelimiter<std::string>(expectedContent, "\n");
-            std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+            content = std::string((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
             count = std::count(content.begin(), content.end(), '\n');
             if (expectedlines.size() != count) {
                 NES_TRACE("checkoutputortimeout: number of expected lines {} not reached yet with {} lines content={} file={}",
@@ -357,9 +358,13 @@ checkFailedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalog
                 return true;
             }
             NES_TRACE("only {} lines found final content={}", found, content);
+            if (found > count) {
+                break;
+            }
         }
     }
     NES_ERROR("checkOutputOrTimeout: expected ({}) result not reached ({}) within set timeout content", count, found);
+    NES_ERROR("checkOutputOrTimeout: expected:\n {} \n but was:\n {}", expectedContent, content);
     return false;
 }
 
