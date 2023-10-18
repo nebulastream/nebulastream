@@ -17,3 +17,10 @@ add_source_files(nes-runtime
         PartitionManager.cpp
         detail/BaseNetworkChannel.cpp
         )
+
+add_source_files(nes-unikernel-runtime
+        NetworkChannel.cpp
+        ExchangeProtocol.cpp
+        PartitionManager.cpp
+        detail/BaseNetworkChannel.cpp
+        )

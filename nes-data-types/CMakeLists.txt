@@ -27,6 +27,16 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-data-types REUSE_FROM nes-common)
 endif ()
 
+# Add Library
+add_library(nes-unikernel-data-types STATIC ${NES_COMPILER_SOURCE_FILES})
+target_link_libraries(nes-unikernel-data-types PUBLIC nes-unikernel-common)
+target_include_directories(nes-unikernel-data-types PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+if (NES_ENABLE_PRECOMPILED_HEADERS)
+    target_precompile_headers(nes-unikernel-data-types REUSE_FROM nes-unikernel-common)
+endif ()
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)

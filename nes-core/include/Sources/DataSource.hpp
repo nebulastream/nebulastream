@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifndef UNIKERNEL_LIB
 #ifndef NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
 
@@ -350,3 +350,4 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
+#endif// UNIKERNEL_LIB

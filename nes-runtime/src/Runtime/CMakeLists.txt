@@ -12,6 +12,19 @@
 # limitations under the License.
 
 
+add_source_files(nes-unikernel-runtime
+        BufferStorage.cpp
+        BufferManager.cpp
+        FixedSizeBufferPool.cpp
+        TupleBuffer.cpp
+        WorkerContext.cpp
+        LocalBufferPool.cpp
+        HardwareManager.cpp
+        NesThread.cpp
+        BloomFilter.cpp
+        TaggedPointer.cpp
+        Allocator/NesDefaultMemoryAllocator.cpp
+)
 add_source_files(nes-runtime
         apex_memmove.cpp
         BufferStorage.cpp

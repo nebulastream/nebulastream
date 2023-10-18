@@ -45,23 +45,33 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        QueryId queryId,
-                        QuerySubPlanId querySubPlanId);
+    explicit SinkMedium(
+#ifndef UNIKERNEL_LIB
+        SinkFormatPtr sinkFormat,
+#endif
+#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
+        Runtime::NodeEnginePtr nodeEngine,
+#endif
+        uint32_t numOfProducers,
+        QueryId queryId,
+        QuerySubPlanId querySubPlanId);
 
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        QueryId queryId,
-                        QuerySubPlanId querySubPlanId,
-                        FaultToleranceType faultToleranceType,
-                        uint64_t numberOfOrigins,
-                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
+    explicit SinkMedium(
+#ifndef UNIKERNEL_LIB
+        SinkFormatPtr sinkFormat,
+#endif
+#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
+        Runtime::NodeEnginePtr nodeEngine,
+#endif
+        uint32_t numOfProducers,
+        QueryId queryId,
+        QuerySubPlanId querySubPlanId,
+        FaultToleranceType faultToleranceType,
+        uint64_t numberOfOrigins,
+        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
 
     /**
      * @brief virtual method to setup sink
@@ -114,6 +124,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     virtual std::string toString() const = 0;
 
+#if !(!defined(UNIKERNEL_SUPPORT_LIB) && defined(UNIKERNEL_LIB))
     /**
    * @brief method to return the current schema of the sink
    * @return schema description of the sink
@@ -125,6 +136,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @return format as string
      */
     std::string getSinkFormat();
+#endif
 
     /**
      * @brief method passes current safe to trim timestamp to coordinator via RPC
@@ -171,12 +183,15 @@ class SinkMedium : public Runtime::Reconfigurable {
     void updateWatermark(Runtime::TupleBuffer& inputBuffer);
 
   protected:
+#ifndef UNIKERNEL_LIB
     SinkFormatPtr sinkFormat;
+#endif
     uint32_t bufferCount;
     uint32_t buffersPerEpoch;
     bool schemaWritten;
-
+#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
     Runtime::NodeEnginePtr nodeEngine;
+#endif
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
     QueryId queryId;

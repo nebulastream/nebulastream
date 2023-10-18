@@ -24,7 +24,11 @@ namespace NES::Runtime::Execution {
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler : public Reconfigurable {
+class OperatorHandler
+#ifndef UNIKERNEL_LIB
+    : public Reconfigurable
+#endif
+{
   public:
     /**
      * @brief Default constructor
@@ -45,10 +49,12 @@ class OperatorHandler : public Reconfigurable {
      */
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 
+#ifndef UNIKERNEL_LIB
     /**
      * @brief Default deconstructor
      */
     ~OperatorHandler() override = default;
+#endif
 
     /**
      * @brief Checks if the current operator handler is of type OperatorHandlerType
@@ -63,6 +69,7 @@ class OperatorHandler : public Reconfigurable {
         return false;
     };
 
+#ifndef UNIKERNEL_LIB
     /**
     * @brief Dynamically casts the node to a OperatorHandlerType
     * @tparam OperatorHandlerType
@@ -76,6 +83,7 @@ class OperatorHandler : public Reconfigurable {
         throw Exceptions::RuntimeException("OperatorHandler:: we performed an invalid cast of operator to type "
                                            + std::string(typeid(OperatorHandlerType).name()));
     }
+#endif
 };
 
 }// namespace NES::Runtime::Execution

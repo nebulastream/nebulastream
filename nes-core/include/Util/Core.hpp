@@ -62,14 +62,14 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace Catalogs
 
 namespace Util {
-
+#ifndef UNIKERNEL_LIB
 /**
 * @brief Outputs a tuple buffer in text format
 * @param buffer the tuple buffer
 * @return string of tuple buffer
 */
 std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
-
+#endif
 /**
  * @brief create CSV lines from the tuples
  * @param tbuffer the tuple buffer
@@ -77,14 +77,6 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
  * @return a full string stream as string
  */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
-
-/**
-* @brief Returns the physical types of all fields of the schema
-* @param schema
-* @return PhysicalTypes of the schema's field
-*/
-std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
-
 /**
  * @brief method to get the schema as a csv string
  * @param schema
@@ -120,6 +112,8 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
                                                                             Runtime::BufferManagerPtr bufferManager,
                                                                             const std::string& timeStampFieldName,
                                                                             uint64_t lastTimeStamp);
+#endif
+
 /**
  * @brief Trim leading and trailing whitespace characters from a string.
  *

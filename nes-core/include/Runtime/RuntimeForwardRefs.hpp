@@ -20,6 +20,12 @@
 #include <variant>
 
 namespace NES {
+#ifdef UNIKERNEL_LIB
+namespace Unikernel {
+class UnikernelPipelineExecutionContextBase;
+}
+#endif
+
 class AbstractQueryStatusListener;
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 
@@ -45,7 +51,11 @@ class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
 class DataEmitter;
+#ifndef UNIKERNEL_LIB
 using DataEmitterPtr = std::shared_ptr<DataEmitter>;
+#else
+using DataEmitterPtr = DataEmitter*;
+#endif
 
 namespace Runtime {
 
@@ -116,9 +126,13 @@ using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, st
 class ExecutablePipelineStage;
 using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 
+#ifndef UNIKERNEL_LIB
 class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
-
+#else
+using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContextBase;
+using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContextBase*;
+#endif
 }// namespace Execution
 
 namespace MemoryLayouts {
