@@ -98,7 +98,7 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::mi
     exclusiveBuffers.pop_front();
     lock.unlock();
     if (memSegment->controlBlock->prepare()) {
-        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     NES_THROW_RUNTIME_ERROR(
         "[FixedSizeBufferPool] got buffer with invalid reference counter: " << memSegment->controlBlock->getReferenceCount());
@@ -130,7 +130,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
     NES_VERIFY(memSegment, "null memory segment");
     exclusiveBuffers.pop_front();
     if (memSegment->controlBlock->prepare()) {
-        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
                             << memSegment->controlBlock->getReferenceCount());
