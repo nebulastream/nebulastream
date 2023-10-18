@@ -38,6 +38,8 @@ if __name__ == "__main__":
                      'rte_memory.h',
                      'JNI.hpp',
                      'JNI.cpp',
+                     "base64.h",
+                     "base64.cpp",
                      'apex_memmove.cpp',
                      'HyperLogLog.hpp',
                      'digestible.h']
