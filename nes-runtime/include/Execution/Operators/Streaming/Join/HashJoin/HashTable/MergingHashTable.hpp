@@ -15,12 +15,12 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_MERGINGHASHTABLE_HPP_
 
 #include <API/Schema.hpp>
-#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Runtime/BloomFilter.hpp>
-#include <folly/Synchronized.h>
 #include <atomic>
+#include <folly/Synchronized.h>
 #include <vector>
 
 namespace NES::Runtime::Execution::Operators {
@@ -30,7 +30,7 @@ namespace NES::Runtime::Execution::Operators {
  * consisting of a linked list of FixedPages
  */
 class MergingHashTable {
-   public:
+  public:
     /**
      * @brief Constructor for a hash table that supports insertion simultaneously  of multiple threads
      * @param numBuckets

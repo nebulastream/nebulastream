@@ -55,13 +55,13 @@ class NLJOperatorHandlerBucketing : public NLJOperatorHandler, public StreamJoin
      * @return NLJOperatorHandlerPtr
      */
     static NLJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
-                                                          const OriginId outputOriginId,
-                                                          const uint64_t windowSize,
-                                                          const uint64_t windowSlide,
-                                                          uint64_t sizeOfRecordLeft,
-                                                          uint64_t sizeOfRecordRight,
-                                                          const uint64_t pageSizeLeft,
-                                                          const uint64_t pageSizeRight);
+                                        const OriginId outputOriginId,
+                                        const uint64_t windowSize,
+                                        const uint64_t windowSlide,
+                                        uint64_t sizeOfRecordLeft,
+                                        uint64_t sizeOfRecordRight,
+                                        const uint64_t pageSizeLeft,
+                                        const uint64_t pageSizeRight);
 };
 }// namespace NES::Runtime::Execution::Operators
 

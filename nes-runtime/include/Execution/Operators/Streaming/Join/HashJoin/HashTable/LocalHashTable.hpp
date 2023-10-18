@@ -17,11 +17,11 @@
 
 #include <atomic>
 
-#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 

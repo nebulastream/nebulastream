@@ -70,7 +70,6 @@ struct SlicesAndState {
     WindowInfoState windowState;
 };
 
-
 namespace Operators {
 struct __attribute__((packed)) JoinPartitionIdSliceIdWindow {
     uint64_t partitionId;
@@ -109,7 +108,7 @@ struct BufferMetaData {
 
     std::string toString() const {
         std::ostringstream oss;
-        oss <<"waterMarkTs: " << watermarkTs << ","
+        oss << "waterMarkTs: " << watermarkTs << ","
             << "seqNumber: " << seqNumber << ","
             << "originId: " << originId;
         return oss.str();
@@ -144,9 +143,9 @@ struct WindowMetaData {
         : windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName),
           windowKeyFieldName(windowKeyFieldName) {}
 
-    std::string  windowStartFieldName;
-    std::string  windowEndFieldName;
-    std::string  windowKeyFieldName;
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
+    std::string windowKeyFieldName;
 };
 
 }// namespace Operators

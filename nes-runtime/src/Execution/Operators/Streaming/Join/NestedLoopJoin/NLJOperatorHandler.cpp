@@ -17,7 +17,9 @@
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft, StreamSlice& sliceRight, const WindowInfo& windowInfo,
+void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
+                                             StreamSlice& sliceRight,
+                                             const WindowInfo& windowInfo,
                                              PipelineExecutionContext* pipelineCtx) {
     if (sliceLeft.getNumberOfTuplesLeft() > 0 && sliceRight.getNumberOfTuplesRight() > 0) {
         dynamic_cast<NLJSlice&>(sliceLeft).combinePagedVectors();
@@ -38,7 +40,8 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft, StreamSlice
         tupleBuffer.setWatermark(std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart()));
 
         pipelineCtx->dispatchBuffer(tupleBuffer);
-        NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples {} and no. right tuples {}",
+        NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
+                 "{} and no. right tuples {}",
                  bufferMemory->leftSliceIdentifier,
                  bufferMemory->rightSliceIdentifier,
                  tupleBuffer.getWatermark(),
@@ -67,7 +70,7 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
                                        const uint64_t sizeOfRecordRight,
                                        const uint64_t pageSizeLeft,
                                        const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide,sizeOfRecordLeft, sizeOfRecordRight),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight),
       pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
 
 void* getNLJPagedVectorProxy(void* ptrNljSlice, uint64_t workerId, uint64_t joinBuildSideInt) {

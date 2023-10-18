@@ -32,6 +32,6 @@ class JoinOperatorHandlerInterfaceBucketing {
      */
     virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) = 0;
 };
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_INTERFACES_JOINOPERATORHANDLERINTERFACEBUCKETING_HPP_

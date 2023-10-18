@@ -115,7 +115,7 @@ TEST_P(MemoryAccessCompilationTest, memEqualFunctionTest) {
     memRefLHS.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     memRefRHS.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&memRefLHS, &memRefRHS]() {
-       return checkEqualityMemRefs(memRefLHS, memRefRHS);
+        return checkEqualityMemRefs(memRefLHS, memRefRHS);
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<bool, void*, void*>("execute");

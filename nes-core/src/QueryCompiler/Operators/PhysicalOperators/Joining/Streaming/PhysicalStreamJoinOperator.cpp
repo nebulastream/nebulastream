@@ -19,8 +19,8 @@ namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalStreamJoinOperator::PhysicalStreamJoinOperator(
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& joinOperatorHandler,
     QueryCompilation::StreamJoinStrategy joinStrategy,
-    QueryCompilation::WindowingStrategy windowingStrategy) : streamJoinOperator(joinStrategy, windowingStrategy),
-                                                             joinOperatorHandler(joinOperatorHandler) {}
+    QueryCompilation::WindowingStrategy windowingStrategy)
+    : streamJoinOperator(joinStrategy, windowingStrategy), joinOperatorHandler(joinOperatorHandler) {}
 
 StreamJoinStrategy PhysicalStreamJoinOperator::getJoinStrategy() const { return streamJoinOperator.joinStrategy; }
 
@@ -30,4 +30,4 @@ const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& PhysicalStrea
     return joinOperatorHandler;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators

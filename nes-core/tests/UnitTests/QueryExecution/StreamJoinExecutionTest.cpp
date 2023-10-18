@@ -26,8 +26,8 @@ namespace NES::Runtime::Execution {
 constexpr auto queryCompilerDumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
-                                     public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy,
-                                                                                     QueryCompilation::WindowingStrategy>> {
+                                     public ::testing::WithParamInterface<
+                                         std::tuple<QueryCompilation::StreamJoinStrategy, QueryCompilation::WindowingStrategy>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
@@ -44,8 +44,11 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
         const auto windowingStrategy = std::get<1>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
         const auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         const auto numWorkerThreads = 1;
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, queryCompilerDumpMode, numWorkerThreads,
-                                                                         joinStrategy, windowingStrategy);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler,
+                                                                         queryCompilerDumpMode,
+                                                                         numWorkerThreads,
+                                                                         joinStrategy,
+                                                                         windowingStrategy);
     }
 
     /* Will be called before a test is executed. */
@@ -120,7 +123,6 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
             const auto tmpVec = TestUtils::createVecFromTupleBuffer<ResultRecord>(buf);
             expectedSinkVector.insert(expectedSinkVector.end(), tmpVec.begin(), tmpVec.end());
         }
-
 
         const auto testSink = executionEngine->createCollectSink<ResultRecord>(joinParams.outputSchema);
         const auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -621,8 +623,8 @@ INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                         StreamJoinQueryExecutionTest,
                         JOIN_STRATEGIES_WINDOW_STRATEGIES,
                         [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_" +
-                                std::string(magic_enum::enum_name(std::get<1>(info.param)));
+                            return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_"
+                                + std::string(magic_enum::enum_name(std::get<1>(info.param)));
                         });
 
 }// namespace NES::Runtime::Execution

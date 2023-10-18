@@ -17,8 +17,6 @@
 namespace NES::Runtime::Execution {
 Operators::OperatorPtr PhysicalOperatorPipeline::getRootOperator() const { return rootOperator; }
 
-void PhysicalOperatorPipeline::setRootOperator(Operators::OperatorPtr rootOperator) {
-    this->rootOperator = rootOperator;
-}
+void PhysicalOperatorPipeline::setRootOperator(Operators::OperatorPtr rootOperator) { this->rootOperator = rootOperator; }
 
 }// namespace NES::Runtime::Execution

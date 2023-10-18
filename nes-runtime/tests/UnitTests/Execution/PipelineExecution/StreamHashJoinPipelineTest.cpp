@@ -164,7 +164,9 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft));
+        Operators::JoinSchema joinSchemaStruct(leftSchema,
+                                               rightSchema,
+                                               Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft));
         Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName);
 
         auto joinProbe = std::make_shared<Operators::HJProbe>(handlerIndex,
@@ -191,9 +193,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
                                                         NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE,
                                                         NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
 
-
         // Building the pipeline
-            auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
+        auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
         auto pipelineBuildRight = std::make_shared<PhysicalOperatorPipeline>();
         auto pipelineProbe = std::make_shared<PhysicalOperatorPipeline>();
 
@@ -233,7 +234,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         hashJoinWorks = hashJoinWorks && (executablePipelineRight->stop(pipelineExecCtxRight) == 0);
 
         // Assure that at least one buffer has been emitted
-        hashJoinWorks = hashJoinWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
+        hashJoinWorks =
+            hashJoinWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
         // Executing sink buffers
         std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
@@ -250,8 +252,8 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         NES_DEBUG("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));
 
         hashJoinWorks = hashJoinWorks && (resultBuffer.getNumberOfTuples() == expectedSinkBuffers[0].getNumberOfTuples());
-        hashJoinWorks =
-            hashJoinWorks && (Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffers[0], joinSchema->getSchemaSizeInBytes()));
+        hashJoinWorks = hashJoinWorks
+            && (Util::checkIfBuffersAreEqual(resultBuffer, expectedSinkBuffers[0], joinSchema->getSchemaSizeInBytes()));
         return hashJoinWorks;
     }
 };

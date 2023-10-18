@@ -159,7 +159,9 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft));
+        Operators::JoinSchema joinSchemaStruct(leftSchema,
+                                               rightSchema,
+                                               Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft));
         Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName);
 
         auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,

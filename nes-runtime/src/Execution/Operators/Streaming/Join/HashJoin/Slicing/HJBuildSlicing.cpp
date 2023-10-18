@@ -87,8 +87,14 @@ HJBuildSlicing::HJBuildSlicing(const uint64_t operatorHandlerIndex,
                                TimeFunctionPtr timeFunction,
                                QueryCompilation::StreamJoinStrategy joinStrategy,
                                QueryCompilation::WindowingStrategy windowingStrategy)
-    : StreamJoinBuild(operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction),
-                      joinStrategy, windowingStrategy) {}
+    : StreamJoinBuild(operatorHandlerIndex,
+                      schema,
+                      joinFieldName,
+                      joinBuildSide,
+                      entrySize,
+                      std::move(timeFunction),
+                      joinStrategy,
+                      windowingStrategy) {}
 
 void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalJoinState*>(ctx.getLocalState(this));
@@ -98,10 +104,8 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     //check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
         //we need a new slice
-        joinState->sliceReference = Nautilus::FunctionCall("getHJSliceProxy",
-                                                            getHJSliceProxy,
-                                                            operatorHandlerMemRef,
-                                                            Value<UInt64>(tsValue));
+        joinState->sliceReference =
+            Nautilus::FunctionCall("getHJSliceProxy", getHJSliceProxy, operatorHandlerMemRef, Value<UInt64>(tsValue));
 
         joinState->hashTableReference = Nautilus::FunctionCall("getLocalHashTableProxy",
                                                                getLocalHashTableProxy,

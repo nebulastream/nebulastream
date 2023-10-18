@@ -15,14 +15,14 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKING_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_DATASTRUCTURE_GLOBALHASHTABLELOCKING_HPP_
 
-#include <atomic>
-#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
+#include <atomic>
 
 namespace NES::Runtime::Execution::Operators {
 

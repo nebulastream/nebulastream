@@ -62,7 +62,7 @@ uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSid
     }
 }
 
-void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const  {
+void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // As this operator functions as a scan, we have to set the execution context for this pipeline
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
@@ -72,10 +72,16 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const  {
     // Getting all needed info from the recordBuffer
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto nljWindowTriggerTaskRef = recordBuffer.getBuffer();
-    const Value<UInt64> sliceIdLeft = Nautilus::FunctionCall("getSliceIdNLJProxy", getSliceIdNLJProxy, nljWindowTriggerTaskRef,
-                                                             Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    const Value<UInt64> sliceIdRight = Nautilus::FunctionCall("getSliceIdNLJProxy", getSliceIdNLJProxy, nljWindowTriggerTaskRef,
-                                                              Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+    const Value<UInt64> sliceIdLeft =
+        Nautilus::FunctionCall("getSliceIdNLJProxy",
+                               getSliceIdNLJProxy,
+                               nljWindowTriggerTaskRef,
+                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+    const Value<UInt64> sliceIdRight =
+        Nautilus::FunctionCall("getSliceIdNLJProxy",
+                               getSliceIdNLJProxy,
+                               nljWindowTriggerTaskRef,
+                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
     const auto windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, nljWindowTriggerTaskRef);
     const auto windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, nljWindowTriggerTaskRef);
 
@@ -83,20 +89,22 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const  {
     const Value<UInt64> workerIdForPagedVectors(0_u64);
 
     // Getting the left and right paged vector
-    const auto sliceRefLeft = Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef,
-                                                     sliceIdLeft);
-    const auto sliceRefRight = Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef,
-                                                      sliceIdRight);
-    const auto leftPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
-                                                           getNLJPagedVectorProxy,
-                                                           sliceRefLeft,
-                                                           workerIdForPagedVectors,
-                                                           Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    const auto rightPagedVectorRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
-                                                            getNLJPagedVectorProxy,
-                                                            sliceRefRight,
-                                                            workerIdForPagedVectors,
-                                                            Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+    const auto sliceRefLeft =
+        Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdLeft);
+    const auto sliceRefRight =
+        Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdRight);
+    const auto leftPagedVectorRef =
+        Nautilus::FunctionCall("getNLJPagedVectorProxy",
+                               getNLJPagedVectorProxy,
+                               sliceRefLeft,
+                               workerIdForPagedVectors,
+                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+    const auto rightPagedVectorRef =
+        Nautilus::FunctionCall("getNLJPagedVectorProxy",
+                               getNLJPagedVectorProxy,
+                               sliceRefRight,
+                               workerIdForPagedVectors,
+                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     Nautilus::Interface::PagedVectorRef leftPagedVector(leftPagedVectorRef, leftEntrySize);
     Nautilus::Interface::PagedVectorRef rightPagedVector(rightPagedVectorRef, rightEntrySize);
@@ -139,7 +147,9 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                       withDeletion),
       leftEntrySize(leftEntrySize), rightEntrySize(rightEntrySize),
       // As we are only ever reading a single record, we do not care about the buffer size
-      leftMemProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.leftSchema)),
-      rightMemProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.rightSchema)) {}
+      leftMemProvider(
+          Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.leftSchema)),
+      rightMemProvider(
+          Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.rightSchema)) {}
 
-}; // namespace NES::Runtime::Execution::Operators
+};// namespace NES::Runtime::Execution::Operators

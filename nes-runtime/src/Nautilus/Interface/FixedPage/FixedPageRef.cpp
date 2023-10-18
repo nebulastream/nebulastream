@@ -15,12 +15,11 @@
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Interface {
-FixedPageRef::FixedPageRef(const Value<MemRef>& fixedPageRef)
-    : fixedPageRef(fixedPageRef) {}
+FixedPageRef::FixedPageRef(const Value<MemRef>& fixedPageRef) : fixedPageRef(fixedPageRef) {}
 
 void addHashToBloomFilterProxy(void* fixedPagePtr, uint64_t hash) {
     auto* fixedPage = (FixedPage*) fixedPagePtr;
@@ -43,25 +42,15 @@ Value<MemRef> FixedPageRef::allocateEntry(const Value<UInt64>& hash) {
     return entry;
 }
 
-Value<UInt64> FixedPageRef::getSizeOfRecord() {
-    return getMember(fixedPageRef, FixedPage, sizeOfRecord).load<UInt64>();
-}
+Value<UInt64> FixedPageRef::getSizeOfRecord() { return getMember(fixedPageRef, FixedPage, sizeOfRecord).load<UInt64>(); }
 
-Value<MemRef> FixedPageRef::getDataPtr() {
-    return getMember(fixedPageRef, FixedPage, data).load<MemRef>();
-}
+Value<MemRef> FixedPageRef::getDataPtr() { return getMember(fixedPageRef, FixedPage, data).load<MemRef>(); }
 
-Value<UInt64> FixedPageRef::getCurrentPos() {
-    return getMember(fixedPageRef, FixedPage, currentPos).load<UInt64>();
-}
+Value<UInt64> FixedPageRef::getCurrentPos() { return getMember(fixedPageRef, FixedPage, currentPos).load<UInt64>(); }
 
-Value<UInt64> FixedPageRef::getCapacity() {
-    return getMember(fixedPageRef, FixedPage, capacity).load<UInt64>();
-}
+Value<UInt64> FixedPageRef::getCapacity() { return getMember(fixedPageRef, FixedPage, capacity).load<UInt64>(); }
 
-void FixedPageRef::setCurrentPos(const Value<>& pos) {
-    getMember(fixedPageRef, FixedPage, currentPos).store(pos);
-}
+void FixedPageRef::setCurrentPos(const Value<>& pos) { getMember(fixedPageRef, FixedPage, currentPos).store(pos); }
 
 FixedPageRefIter FixedPageRef::begin() { return at(0_u64); }
 
@@ -81,8 +70,7 @@ bool FixedPageRef::operator==(const FixedPageRef& other) const {
     return fixedPageRef == other.fixedPageRef;
 }
 
-FixedPageRefIter::FixedPageRefIter(FixedPageRef& fixedPageRef)
-    : addr(fixedPageRef.getDataPtr()), fixedPageRef(fixedPageRef) {}
+FixedPageRefIter::FixedPageRefIter(FixedPageRef& fixedPageRef) : addr(fixedPageRef.getDataPtr()), fixedPageRef(fixedPageRef) {}
 
 FixedPageRefIter::FixedPageRefIter(const FixedPageRefIter& it) : addr(it.addr), fixedPageRef(it.fixedPageRef) {}
 

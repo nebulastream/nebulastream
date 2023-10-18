@@ -53,7 +53,6 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
                       uint64_t pageSize,
                       uint64_t numPartitions);
 
-
     StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
     void emitSliceIdsToProbe(StreamSlice& sliceLeft,
                              StreamSlice& sliceRight,

@@ -105,7 +105,9 @@ void BufferManager::initialize(uint32_t withAlignment) {
 
     uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
     double percentage = (100.0 * requiredMemorySpace) / memorySizeInBytes;
-    NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes,
+    NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes",
+              requiredMemorySpace,
+              memorySizeInBytes,
               percentage);
 
     //    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);

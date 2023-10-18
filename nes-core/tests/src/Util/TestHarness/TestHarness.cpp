@@ -33,9 +33,9 @@ TestHarness::TestHarness(std::string queryWithoutSink,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
     : queryWithoutSinkStr(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-      useNautilus(false), performDistributedWindowOptimization(false), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
-      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
-      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
+      useNautilus(false), performDistributedWindowOptimization(false), useNewRequestExecutor(false),
+      memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
+      topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
       windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
       testHarnessResourcePath(testHarnessResourcePath) {}
 

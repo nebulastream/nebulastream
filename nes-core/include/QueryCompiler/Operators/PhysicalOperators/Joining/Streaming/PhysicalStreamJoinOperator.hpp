@@ -15,8 +15,8 @@
 #ifndef NES_NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_
 #define NES_NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_
 
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -53,5 +53,5 @@ class PhysicalStreamJoinOperator {
     Runtime::Execution::Operators::StreamJoinOperator streamJoinOperator;
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr joinOperatorHandler;
 };
-}
+}// namespace NES::QueryCompilation::PhysicalOperators
 #endif//NES_NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_

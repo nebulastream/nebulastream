@@ -34,7 +34,7 @@ class NLJBuildSlicing : public StreamJoinBuild {
                                  const Value<MemRef>& sliceReference,
                                  Nautilus::Interface::PagedVectorRef pagedVectorRef)
             : joinOperatorHandler(operatorHandler), sliceReference(sliceReference), pagedVectorRef(std::move(pagedVectorRef)),
-              sliceStart(0_u64), sliceEnd(0_u64) {};
+              sliceStart(0_u64), sliceEnd(0_u64){};
         Value<MemRef> joinOperatorHandler;
         Value<MemRef> sliceReference;
         Nautilus::Interface::PagedVectorRef pagedVectorRef;

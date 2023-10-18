@@ -17,16 +17,16 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
-#include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -166,9 +166,10 @@ class LowerPhysicalToNautilusOperators {
      * @param timeFunction
      * @return ExecutableOperatorPtr
      */
-    Runtime::Execution::Operators::ExecutableOperatorPtr lowerHJSlicing(
-        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> hashJoinBuildOperator,
-        uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerHJSlicing(std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> hashJoinBuildOperator,
+                   uint64_t operatorHandlerIndex,
+                   Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
 
     /**
      * @brief Lowers a hash join bucketing build operator
@@ -179,11 +180,12 @@ class LowerPhysicalToNautilusOperators {
      * @param windowSlide
      * @return ExecutableOperatorPtr
      */
-    Runtime::Execution::Operators::ExecutableOperatorPtr lowerHJBucketing(
-        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> hashJoinBuildOperator,
-        uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-        uint64_t windowSize,
-        uint64_t windowSlide);
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerHJBucketing(std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> hashJoinBuildOperator,
+                     uint64_t operatorHandlerIndex,
+                     Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+                     uint64_t windowSize,
+                     uint64_t windowSlide);
 
     /**
      * @brief Lowers a hash join slicing build operator
@@ -192,9 +194,10 @@ class LowerPhysicalToNautilusOperators {
      * @param timeFunction
      * @return ExecutableOperatorPtr
      */
-    Runtime::Execution::Operators::ExecutableOperatorPtr lowerNLJSlicing(
-        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
-        uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerNLJSlicing(std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
+                    uint64_t operatorHandlerIndex,
+                    Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
 
     /**
      * @brief Lowers a hash join slicing build operator
@@ -205,11 +208,12 @@ class LowerPhysicalToNautilusOperators {
      * @param windowSlide
      * @return ExecutableOperatorPtr
      */
-    Runtime::Execution::Operators::ExecutableOperatorPtr lowerNLJBucketing(
-        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
-        uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-        uint64_t windowSize,
-        uint64_t windowSlide);
+    Runtime::Execution::Operators::ExecutableOperatorPtr
+    lowerNLJBucketing(std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
+                      uint64_t operatorHandlerIndex,
+                      Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+                      uint64_t windowSize,
+                      uint64_t windowSlide);
 
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;

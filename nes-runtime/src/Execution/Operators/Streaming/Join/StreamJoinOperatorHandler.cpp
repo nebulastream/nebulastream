@@ -17,7 +17,7 @@ namespace NES::Runtime::Execution::Operators {
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
     NES_INFO("Started StreamJoinOperatorHandler!");
 }
-void StreamJoinOperatorHandler::stop(QueryTerminationType , PipelineExecutionContextPtr) {
+void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_INFO("Stopped StreamJoinOperatorHandler!");
 }
 
@@ -50,13 +50,13 @@ std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifi
     return std::nullopt;
 }
 
-
 void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipelineCtx) {
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
         for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
             switch (slicesAndStateForWindow.windowState) {
-                case WindowInfoState::BOTH_SIDES_FILLING: slicesAndStateForWindow.windowState = WindowInfoState::ONCE_SEEN_DURING_TERMINATION;
+                case WindowInfoState::BOTH_SIDES_FILLING:
+                    slicesAndStateForWindow.windowState = WindowInfoState::ONCE_SEEN_DURING_TERMINATION;
                 case WindowInfoState::EMITTED_TO_PROBE: continue;
                 case WindowInfoState::ONCE_SEEN_DURING_TERMINATION: {
                     slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
@@ -74,24 +74,23 @@ void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipel
     }
 }
 
-void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx) {
+void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData,
+                                                       PipelineExecutionContext* pipelineCtx) {
     // The watermark processor handles the minimal watermark across both streams
-    uint64_t newGlobalWatermark = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs,
-                                                                           bufferMetaData.seqNumber,
-                                                                           bufferMetaData.originId);
+    uint64_t newGlobalWatermark =
+        watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
 
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
         for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
-            if (windowInfo.windowEnd > newGlobalWatermark ||
-                slicesAndStateForWindow.windowState == WindowInfoState::EMITTED_TO_PROBE) {
+            if (windowInfo.windowEnd > newGlobalWatermark
+                || slicesAndStateForWindow.windowState == WindowInfoState::EMITTED_TO_PROBE) {
                 // This window can not be triggered yet or has already been triggered
                 continue;
             }
             slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
             NES_INFO("Emitting all slices for window {}", windowInfo.toString());
-
 
             // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
             // For bucketing, this should be only done once
@@ -105,9 +104,8 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
 }
 
 void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaData) {
-    uint64_t newGlobalWaterMarkProbe = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs,
-                                                                                bufferMetaData.seqNumber,
-                                                                                bufferMetaData.originId);
+    uint64_t newGlobalWaterMarkProbe =
+        watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     NES_DEBUG("newGlobalWaterMarkProbe {} bufferMetaData {}", newGlobalWaterMarkProbe, bufferMetaData.toString());
 
     auto slicesLocked = slices.wlock();
@@ -116,7 +114,9 @@ void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaDat
         if (curSlice->getSliceStart() + windowSize < newGlobalWaterMarkProbe) {
             // We can delete this slice/window
             NES_DEBUG("Deleting slice: {} as sliceStart+windowSize {} is smaller then watermark {}",
-                      curSlice->toString(), curSlice->getSliceStart() + windowSize, newGlobalWaterMarkProbe);
+                      curSlice->toString(),
+                      curSlice->getSliceStart() + windowSize,
+                      newGlobalWaterMarkProbe);
             it = slicesLocked->erase(it);
         }
     }
@@ -177,6 +177,7 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
     : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSlide), windowSize(windowSize), windowSlide(windowSlide),
       watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)),
       watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector<OriginId>(1, outputOriginId))),
-      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(sizeOfRecordLeft), sizeOfRecordRight(sizeOfRecordRight) {}
+      outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(sizeOfRecordLeft),
+      sizeOfRecordRight(sizeOfRecordRight) {}
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

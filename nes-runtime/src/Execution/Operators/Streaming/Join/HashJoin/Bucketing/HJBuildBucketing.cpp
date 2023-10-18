@@ -15,7 +15,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJBuildBucketing.hpp>
@@ -34,11 +33,17 @@ void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, uint64_t worke
     return nljWindow->getHashTable(joinBuildSide, workerId);
 }
 
-void HJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex,
-                                             Value<UInt64>& workerId, Record& record) const {
+void HJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill,
+                                             Value<UInt64>& curIndex,
+                                             Value<UInt64>& workerId,
+                                             Record& record) const {
 
-    auto hashTableReference = Nautilus::FunctionCall("getHashTableRefProxy", getHashTableRefProxy, allWindowsToFill,
-                                                     curIndex, workerId, Value<UInt64>(to_underlying(joinBuildSide)));
+    auto hashTableReference = Nautilus::FunctionCall("getHashTableRefProxy",
+                                                     getHashTableRefProxy,
+                                                     allWindowsToFill,
+                                                     curIndex,
+                                                     workerId,
+                                                     Value<UInt64>(to_underlying(joinBuildSide)));
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
@@ -66,7 +71,15 @@ HJBuildBucketing::HJBuildBucketing(const uint64_t operatorHandlerIndex,
                                    QueryCompilation::WindowingStrategy windowingStrategy,
                                    const uint64_t windowSize,
                                    const uint64_t windowSlide)
-    : StreamJoinBuildBucketing(operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction),
-                               joinStrategy, windowingStrategy, windowSize, windowSlide) {}
+    : StreamJoinBuildBucketing(operatorHandlerIndex,
+                               schema,
+                               joinFieldName,
+                               joinBuildSide,
+                               entrySize,
+                               std::move(timeFunction),
+                               joinStrategy,
+                               windowingStrategy,
+                               windowSize,
+                               windowSlide) {}
 
 }// namespace NES::Runtime::Execution::Operators

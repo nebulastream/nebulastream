@@ -72,4 +72,4 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(
 
     return allWindows;
 }
-}// namespace namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

@@ -18,8 +18,8 @@
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>

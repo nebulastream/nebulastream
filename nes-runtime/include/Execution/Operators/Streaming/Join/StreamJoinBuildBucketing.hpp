@@ -67,7 +67,10 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param ts
      * @param workerId
      */
-    void updateLocalState(LocalStateBucketing* localStateBucketing, Value<MemRef>& opHandlerMemRef, Value<UInt64>& ts, Value<UInt64>& workerId) const;
+    void updateLocalState(LocalStateBucketing* localStateBucketing,
+                          Value<MemRef>& opHandlerMemRef,
+                          Value<UInt64>& ts,
+                          Value<UInt64>& workerId) const;
 
     /**
      * @brief Checks if the current local hash join state is up-to-date, meaning the correct windows are stored
@@ -102,8 +105,10 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param workerId
      * @param record
      */
-    virtual void insertRecordForWindow(Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex,
-                                       Value<UInt64>& workerId, Record& record) const = 0;
+    virtual void insertRecordForWindow(Value<MemRef>& allWindowsToFill,
+                                       Value<UInt64>& curIndex,
+                                       Value<UInt64>& workerId,
+                                       Record& record) const = 0;
 
   private:
     /**
@@ -123,5 +128,5 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
     uint64_t windowSize;
     uint64_t windowSlide;
 };
-}
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILDBUCKETING_HPP_

@@ -293,8 +293,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @return StreamJoinOperatorHandlerPtr
      */
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
-                                const StreamJoinConfigs& streamJoinConfig);
+    lowerStreamingHashJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes, const StreamJoinConfigs& streamJoinConfig);
 
     /**
      * @brief Lowers the stream nested loop join
@@ -304,7 +303,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      */
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
     lowerStreamingNestedLoopJoin(const StreamJoinOperatorNodes& streamJoinOperatorNodes,
-                                      const StreamJoinConfigs& streamJoinConfig);
+                                 const StreamJoinConfigs& streamJoinConfig);
 };
 
 }// namespace NES::QueryCompilation

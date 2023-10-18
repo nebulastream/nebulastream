@@ -32,6 +32,6 @@ class JoinOperatorHandlerInterfaceSlicing {
      */
     virtual StreamSlice* getCurrentSliceOrCreate() = 0;
 };
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_INTERFACES_JOINOPERATORHANDLERINTERFACESLICING_HPP_

@@ -20,8 +20,8 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
@@ -69,10 +69,10 @@ class NLJProbePiplineExecutionContext : public PipelineExecutionContext {
             nullptr,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {
-//                emittedBuffers.emplace_back(std::move(buffer));
+                //                emittedBuffers.emplace_back(std::move(buffer));
             },
             [](TupleBuffer&) {
-//                emittedBuffers.emplace_back(std::move(buffer));
+                //                emittedBuffers.emplace_back(std::move(buffer));
             },
             {nljOperatorHandler}) {}
 };
@@ -122,15 +122,14 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         leftEntrySize = leftSchema->getSchemaSizeInBytes();
         rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
-        nljOperatorHandler =
-            Operators::NLJOperatorHandlerSlicing::create({0},
-                                                         1,
-                                                         windowSize,
-                                                         windowSize,
-                                                         leftEntrySize,
-                                                         rightEntrySize,
-                                                         leftPageSize,
-                                                         rightPageSize);
+        nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({0},
+                                                                          1,
+                                                                          windowSize,
+                                                                          windowSize,
+                                                                          leftEntrySize,
+                                                                          rightEntrySize,
+                                                                          leftPageSize,
+                                                                          rightPageSize);
         bm = std::make_shared<BufferManager>(8196, 5000);
     }
 

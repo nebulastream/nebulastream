@@ -68,16 +68,16 @@ class HJOperatorHandlerSlicing : public HJOperatorHandler, public StreamJoinOper
      * @return HJOperatorHandlerPtr
      */
     static HJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
-                                    const OriginId outputOriginId,
-                                    const uint64_t windowSize,
-                                    const uint64_t windowSlide,
-                                    const uint64_t sizeOfRecordLeft,
-                                    const uint64_t sizeOfRecordRight,
-                                    const QueryCompilation::StreamJoinStrategy joinStrategy,
-                                    const uint64_t totalSizeForDataStructures,
-                                    const uint64_t preAllocPageSizeCnt,
-                                    const uint64_t pageSize,
-                                    const uint64_t numPartitions);
+                                       const OriginId outputOriginId,
+                                       const uint64_t windowSize,
+                                       const uint64_t windowSlide,
+                                       const uint64_t sizeOfRecordLeft,
+                                       const uint64_t sizeOfRecordRight,
+                                       const QueryCompilation::StreamJoinStrategy joinStrategy,
+                                       const uint64_t totalSizeForDataStructures,
+                                       const uint64_t preAllocPageSizeCnt,
+                                       const uint64_t pageSize,
+                                       const uint64_t numPartitions);
 };
 }// namespace NES::Runtime::Execution::Operators
 

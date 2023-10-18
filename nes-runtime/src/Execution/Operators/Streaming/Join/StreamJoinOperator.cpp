@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -21,4 +20,4 @@ StreamJoinOperator::StreamJoinOperator(QueryCompilation::StreamJoinStrategy join
                                        QueryCompilation::WindowingStrategy windowingStrategy)
     : joinStrategy(joinStrategy), windowingStrategy(windowingStrategy) {}
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

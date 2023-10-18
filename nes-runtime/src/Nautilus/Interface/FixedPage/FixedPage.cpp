@@ -25,7 +25,8 @@ namespace NES::Nautilus::Interface {
 
 FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, double bloomFalsePosRate)
     : sizeOfRecord(sizeOfRecord), data(dataPtr), capacity(pageSize / sizeOfRecord), bloomFalsePosRate(bloomFalsePosRate) {
-    NES_ASSERT2_FMT(0 < capacity, "Capacity is zero for pageSize " + std::to_string(pageSize) + " and sizeOfRecord "
+    NES_ASSERT2_FMT(0 < capacity,
+                    "Capacity is zero for pageSize " + std::to_string(pageSize) + " and sizeOfRecord "
                         + std::to_string(pageSize));
 
     bloomFilter = std::make_unique<Runtime::BloomFilter>(capacity, bloomFalsePosRate);
@@ -73,9 +74,7 @@ std::string FixedPage::getContentAsString(SchemaPtr schema) const {
     return ss.str();
 }
 
-bool FixedPage::bloomFilterCheck(const uint64_t hash) const {
-    return bloomFilter->checkContains(hash);
-}
+bool FixedPage::bloomFilterCheck(const uint64_t hash) const { return bloomFilter->checkContains(hash); }
 
 uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeOfRecord]); }
 

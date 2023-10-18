@@ -38,7 +38,7 @@ void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
     if (sliceLeft.getNumberOfTuplesLeft() > 0 && sliceRight.getNumberOfTuplesRight() > 0) {
         dynamic_cast<HJSlice&>(sliceLeft).mergeLocalToGlobalHashTable();
         dynamic_cast<HJSlice&>(sliceRight).mergeLocalToGlobalHashTable();
-        
+
         for (auto i = 0UL; i < getNumPartitions(); ++i) {
 
             //create task for current window and current partition
@@ -64,7 +64,8 @@ void HJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
             buffer.setWatermark(watermark);
 
             pipelineCtx->dispatchBuffer(buffer);
-            NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples {} and no. right tuples {}",
+            NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left "
+                     "tuples {} and no. right tuples {}",
                      bufferAs->sliceIdentifierLeft,
                      bufferAs->sliceIdentifierRight,
                      buffer.getWatermark(),
@@ -95,12 +96,7 @@ HJOperatorHandler::HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                      uint64_t preAllocPageSizeCnt,
                                      uint64_t pageSize,
                                      uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins,
-                                outputOriginId,
-                                windowSize,
-                                windowSlide,
-                                sizeOfRecordLeft,
-                                sizeOfRecordRight),
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight),
       joinStrategy(joinStrategy), totalSizeForDataStructures(totalSizeForDataStructures),
       preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize), numPartitions(numPartitions) {}
 

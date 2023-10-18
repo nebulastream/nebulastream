@@ -16,16 +16,15 @@
 #define NES_NES_RUNTIME_SRC_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_
 
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-
 
 /**
  * @brief This class acts as the parent class for our stream join. It stores the join strategy and the window strategy.
@@ -34,8 +33,7 @@ namespace NES::Runtime::Execution::Operators {
  */
 class StreamJoinOperator {
   public:
-    StreamJoinOperator(QueryCompilation::StreamJoinStrategy joinStrategy,
-                       QueryCompilation::WindowingStrategy windowingStrategy);
+    StreamJoinOperator(QueryCompilation::StreamJoinStrategy joinStrategy, QueryCompilation::WindowingStrategy windowingStrategy);
 
     /**
      * @brief This method casts from a void* pointer depending on the join and window strategy to the correct derived class
@@ -47,9 +45,7 @@ class StreamJoinOperator {
      * @return OutputClass*
      */
     template<typename OutputClass = StreamJoinOperatorHandler>
-    static OutputClass* getSpecificOperatorHandler(void* ptrOpHandler,
-                                                   uint64_t joinStrategyInt,
-                                                   uint64_t windowingStrategyInt) {
+    static OutputClass* getSpecificOperatorHandler(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
 
         auto joinStrategy = magic_enum::enum_value<QueryCompilation::StreamJoinStrategy>(joinStrategyInt);
         auto windowingStrategy = magic_enum::enum_value<QueryCompilation::WindowingStrategy>(windowingStrategyInt);
@@ -83,7 +79,6 @@ class StreamJoinOperator {
 
     QueryCompilation::StreamJoinStrategy joinStrategy;
     QueryCompilation::WindowingStrategy windowingStrategy;
-
 };
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_RUNTIME_SRC_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_

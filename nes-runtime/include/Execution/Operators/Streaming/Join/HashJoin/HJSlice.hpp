@@ -104,7 +104,6 @@ class HJSlice : public StreamSlice {
      */
     void mergeLocalToGlobalHashTable();
 
-
   protected:
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableLeftSide;
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;

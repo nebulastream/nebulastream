@@ -64,7 +64,6 @@ void HJSlice::mergeLocalToGlobalHashTable() {
             mergingHashTableRightSide.insertBucket(bucketPos, workerHashTableRight->getBucketLinkedList(bucketPos));
         }
     }
-
 }
 
 HJSlice::HJSlice(size_t numberOfWorker,
