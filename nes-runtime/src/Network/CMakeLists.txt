@@ -24,3 +24,10 @@ add_source_files(nes-runtime
         NetworkSink.cpp
         NetworkSource.cpp
 )
+
+add_source_files(nes-unikernel-runtime
+        NetworkChannel.cpp
+        ExchangeProtocol.cpp
+        PartitionManager.cpp
+        detail/BaseNetworkChannel.cpp
+        )

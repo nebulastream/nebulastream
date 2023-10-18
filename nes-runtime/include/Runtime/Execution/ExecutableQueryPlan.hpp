@@ -69,7 +69,9 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
                                  std::vector<DataSourcePtr>&& sources,
                                  std::vector<DataSinkPtr>&& sinks,
                                  std::vector<ExecutablePipelinePtr>&& pipelines,
+#ifndef UNIKERNEL_LIB
                                  QueryManagerPtr&& queryManager,
+#endif
                                  BufferManagerPtr&& bufferManager);
 
     /**
@@ -87,7 +89,9 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
                                          std::vector<DataSourcePtr> sources,
                                          std::vector<DataSinkPtr> sinks,
                                          std::vector<ExecutablePipelinePtr> pipelines,
+#ifndef UNIKERNEL_LIB
                                          QueryManagerPtr queryManager,
+#endif
                                          BufferManagerPtr bufferManager);
     ~ExecutableQueryPlan() override;
 
@@ -155,11 +159,13 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     const std::vector<ExecutablePipelinePtr>& getPipelines() const;
 
+#ifndef UNIKERNEL_LIB
     /**
      * @brief Returns a reference to the query manager
      * @return QueryManagerPtr
      */
     QueryManagerPtr getQueryManager();
+#endif
 
     /**
      * @brief Returns a reference to the buffer manager
@@ -217,7 +223,9 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;
+#ifndef UNIKERNEL_LIB
     QueryManagerPtr queryManager;
+#endif
     BufferManagerPtr bufferManager;
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
     /// number of producers that provide data to this qep

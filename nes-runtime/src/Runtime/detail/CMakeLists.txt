@@ -14,3 +14,6 @@ add_source_files(nes-runtime
         TupleBufferImpl.cpp
         RuntimeSignalHandling.cpp
         )
+add_source_files(nes-unikernel-runtime
+        TupleBufferImpl.cpp
+)

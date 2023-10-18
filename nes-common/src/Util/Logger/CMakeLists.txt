@@ -10,6 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(nes-unikernel-common
+        NesLogger.cpp
+        LogLevel.cpp
+)
 add_source_files(nes-common
         NesLogger.cpp
         LogLevel.cpp

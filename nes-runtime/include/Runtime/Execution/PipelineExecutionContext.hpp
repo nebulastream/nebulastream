@@ -25,7 +25,9 @@
 #include <map>
 #include <memory>
 #include <vector>
-
+#ifdef UNIKERNEL_LIB
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.h>
+#else
 namespace NES::Runtime::Execution {
 
 /**
@@ -193,4 +195,5 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
 };
 
 }// namespace NES::Runtime::Execution
+#endif
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_

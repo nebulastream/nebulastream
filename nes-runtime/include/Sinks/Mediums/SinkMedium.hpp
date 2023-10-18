@@ -44,21 +44,31 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        SharedQueryId sharedQueryId,
-                        DecomposedQueryPlanId decomposedQueryPlanId);
+    explicit SinkMedium(
+#ifndef UNIKERNEL_LIB
+        SinkFormatPtr sinkFormat,
+#endif
+#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
+        Runtime::NodeEnginePtr nodeEngine,
+#endif
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        SharedQueryId sharedQueryId,
-                        DecomposedQueryPlanId decomposedQueryPlanId,
-                        uint64_t numberOfOrigins);
+    explicit SinkMedium(
+#ifndef UNIKERNEL_LIB
+        SinkFormatPtr sinkFormat,
+#endif
+#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
+        Runtime::NodeEnginePtr nodeEngine,
+#endif
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins);
 
     /**
      * @brief virtual method to setup sink
@@ -111,6 +121,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     virtual std::string toString() const = 0;
 
+#if !(!defined(UNIKERNEL_SUPPORT_LIB) && defined(UNIKERNEL_LIB))
     /**
    * @brief method to return the current schema of the sink
    * @return schema description of the sink
@@ -122,6 +133,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @return format as string
      */
     std::string getSinkFormat();
+#endif
 
     /**
       * @brief method to return the type of medium
@@ -149,9 +161,13 @@ class SinkMedium : public Runtime::Reconfigurable {
     OperatorId getOperatorId() const;
 
   protected:
+#ifndef UNIKERNEL_LIB
     SinkFormatPtr sinkFormat;
+#endif
     bool schemaWritten;
+#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
     Runtime::NodeEnginePtr nodeEngine;
+#endif
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
     SharedQueryId sharedQueryId;

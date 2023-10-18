@@ -17,3 +17,8 @@ add_source_files(nes-runtime
 
 add_subdirectory(Gauge)
 add_subdirectory(Wrapper)
+
+add_source_files(nes-unikernel-core
+        ZmqServer.cpp
+        NetworkManager.cpp
+)

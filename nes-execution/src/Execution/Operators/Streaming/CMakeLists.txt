@@ -20,4 +20,10 @@ add_source_files(nes-execution
         EventTimeWatermarkAssignment.cpp
         IngestionTimeWatermarkAssignment.cpp
         TimeFunction.cpp
+)
+
+add_source_files(nes-unikernel-core
+        Watermark.cpp
+        WatermarkProcessor.cpp
+        MultiOriginWatermarkProcessor.cpp
         )
