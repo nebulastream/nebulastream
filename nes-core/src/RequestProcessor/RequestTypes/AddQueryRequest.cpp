@@ -24,7 +24,7 @@
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
-#include <Exceptions/OperatorNotFoundException.hpp>
+#include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>

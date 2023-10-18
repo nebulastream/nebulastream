@@ -14,11 +14,11 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>
@@ -192,10 +192,8 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
-    workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfiguration->physicalSourceTypes.add(DefaultSourceType::create("default_logical", "default_physical"));
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -233,10 +231,8 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
-    workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfiguration->physicalSourceTypes.add(DefaultSourceType::create("default_logical", "default_physical"));
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -310,10 +306,8 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
-    workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfiguration->physicalSourceTypes.add(DefaultSourceType::create("default_logical", "default_physical"));
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -369,10 +363,8 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
-    workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfiguration->physicalSourceTypes.add(DefaultSourceType::create("default_logical", "default_physical"));
+    workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -433,10 +425,8 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
-    workerConfiguration->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfiguration->physicalSourceTypes.add(DefaultSourceType::create("default_logical", "default_physical"));
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);

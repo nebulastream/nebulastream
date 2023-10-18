@@ -64,10 +64,12 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
                                       .setWindowingStrategy(windowingStrategy);
 
         for (auto i = 0_u64; i < joinParams.inputSchemas.size(); ++i) {
-            auto sourceConfig = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[i]);
             std::string logicalSourceName = "window" + std::to_string(i + 1);
+            std::string physicalSourceName = "windowPhysical" + std::to_string(i + 1);
+            auto csvSourceType =
+                TestUtils::createCsvSourceType(logicalSourceName, physicalSourceName, csvFileParams.inputCsvFiles[i]);
             testHarness.addLogicalSource(logicalSourceName, joinParams.inputSchemas[i])
-                .attachWorkerWithCSVSourceToCoordinator(logicalSourceName, sourceConfig);
+                .attachWorkerWithCSVSourceToCoordinator(csvSourceType);
         }
 
         auto actualResult = testHarness.validate().setupTopology().getOutput<ResultRecord>(expectedRecords.size());

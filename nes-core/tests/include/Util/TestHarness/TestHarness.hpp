@@ -16,10 +16,10 @@
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
 #include <API/Query.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
@@ -256,9 +256,10 @@ class TestHarness {
 
     TestHarness& validate();
 
-    PhysicalSourcePtr createPhysicalSourceOfLambdaType(TestHarnessWorkerConfigurationPtr workerConf);
+    PhysicalSourceTypePtr createPhysicalSourceOfLambdaType(TestHarnessWorkerConfigurationPtr workerConf);
 
-    PhysicalSourcePtr createPhysicalSourceOfMemoryType(TestHarnessWorkerConfigurationPtr workerConf);
+    PhysicalSourceTypePtr createPhysicalSourceOfMemoryType(TestHarnessWorkerConfigurationPtr workerConf);
+
     /**
      * @brief Method to setup the topology
      * @param crdConfigFunctor A function pointer to specify the config changes of the CoordinatorConfiguration

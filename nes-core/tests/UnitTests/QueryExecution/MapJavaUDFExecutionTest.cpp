@@ -30,7 +30,7 @@ using namespace NES;
 using Runtime::TupleBuffer;
 
 // Dump IR
-constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class MapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
   public:

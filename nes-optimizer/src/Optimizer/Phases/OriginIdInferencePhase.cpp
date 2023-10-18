@@ -16,6 +16,7 @@
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Optimizer {
 

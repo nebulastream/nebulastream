@@ -18,7 +18,6 @@
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -28,13 +27,16 @@
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Optimizer/Exceptions/SignatureComputationException.hpp>
 #include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/QuerySignatures/ExpressionToZ3ExprUtil.hpp>

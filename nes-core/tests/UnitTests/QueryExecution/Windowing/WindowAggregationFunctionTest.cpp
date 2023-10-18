@@ -31,7 +31,7 @@ const static uint64_t windowSize = 10;
 const static uint64_t recordsPerBuffer = 100;
 
 // Dump IR
-constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class WindowAggregationFunctionTest
     : public Testing::BaseUnitTest,

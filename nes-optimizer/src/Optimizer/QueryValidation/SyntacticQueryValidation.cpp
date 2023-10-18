@@ -18,6 +18,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>
+
 namespace NES::Optimizer {
 
 SyntacticQueryValidation::SyntacticQueryValidation(QueryParsingServicePtr queryParsingService)

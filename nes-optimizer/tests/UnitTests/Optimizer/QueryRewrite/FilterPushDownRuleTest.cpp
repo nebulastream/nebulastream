@@ -69,8 +69,8 @@ void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& s
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-    auto csvSourceType = CSVSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
+    auto csvSourceType = CSVSourceType::create("example", "test_stream");
+    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
     Catalogs::Source::SourceCatalogEntryPtr sce1 =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
@@ -855,8 +855,8 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowThreeMapsWithOneFieldSubsti
     NES_INFO("Setup FilterPushDownTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
-    auto csvSourceType = CSVSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("example", "test_stream", csvSourceType);
+    auto csvSourceType = CSVSourceType::create("example", "test_stream");
+    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("example", Schema::create());
     Catalogs::Source::SourceCatalogEntryPtr sce1 =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
@@ -932,8 +932,8 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowTwoMapsWithTwoFieldSubstitu
     NES_INFO("Setup FilterPushDownTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
-    auto csvSourceType = CSVSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("example", "test_stream", csvSourceType);
+    auto csvSourceType = CSVSourceType::create("example", "test_stream");
+    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("example", Schema::create());
     Catalogs::Source::SourceCatalogEntryPtr sce1 =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
@@ -1345,7 +1345,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindow) {
     Query query = Query::from("vehicles")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(10)))
                       .byKey(Attribute("type"))
-                      .apply(Count()->as(Attribute("count_value")))
+                      .apply(Count()->as(FieldAccessExpressionNode::create("count_value")))
                       .filter(Attribute("type") == 1)
                       .sink(printSinkDescriptor);
 
@@ -1393,7 +1393,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindowNotPossible) {
     Query query = Query::from("vehicles")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(10)))
                       .byKey(Attribute("type"))
-                      .apply(Count()->as(Attribute("count_value")))
+                      .apply(Count()->as(FieldAccessExpressionNode::create("count_value")))
                       .filter(Attribute("size") > 5)
                       .sink(printSinkDescriptor);
 
@@ -1441,7 +1441,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowWindowNotPossibleMultipl
     Query query = Query::from("vehicles")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(10)))
                       .byKey(Attribute("type"))
-                      .apply(Count()->as(Attribute("count_value")))
+                      .apply(Count()->as(FieldAccessExpressionNode::create("count_value")))
                       .filter(Attribute("type") == 1 && Attribute("size") > 5)
                       .sink(printSinkDescriptor);
 

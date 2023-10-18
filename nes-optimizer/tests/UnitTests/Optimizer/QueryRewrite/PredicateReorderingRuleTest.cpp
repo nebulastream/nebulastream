@@ -19,8 +19,9 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -29,9 +30,8 @@
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -60,8 +60,8 @@ void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& s
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-    auto csvSourceType = CSVSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
+    auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
+    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
     Catalogs::Source::SourceCatalogEntryPtr sce1 =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);

@@ -17,7 +17,12 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 
-namespace NES::Optimizer {
+namespace NES {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+namespace Optimizer {
 
 class OriginIdInferencePhase;
 using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
@@ -48,5 +53,6 @@ class OriginIdInferencePhase {
   private:
     explicit OriginIdInferencePhase();
 };
-}// namespace NES::Optimizer
+}// namespace Optimizer
+}// namespace NES
 #endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_

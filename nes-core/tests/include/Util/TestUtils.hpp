@@ -792,10 +792,12 @@ inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
 
 /**
  * @brief Creates a csv source that produces as many buffers as the csv file contains
+ * @param logicalSourceName
+ * @param physicalSourceName
  * @param fileName
  * @return CSVSourceTypePtr
  */
-CSVSourceTypePtr createSourceConfig(const std::string& fileName);
+CSVSourceTypePtr createCsvSourceType(const string& logicalSourceName, const string& physicalSourceName, const string& fileName);
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 };// namespace TestUtils

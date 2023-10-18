@@ -60,7 +60,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConf->worker.queryCompiler.queryCompilerDumpMode =
-        QueryCompilation::QueryCompilerOptions::DumpMode::FILE_AND_CONSOLE;
+        QueryCompilation::DumpMode::FILE_AND_CONSOLE;
     coordinatorConf->worker.queryCompiler.nautilusBackend =
         QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
 

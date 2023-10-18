@@ -13,7 +13,6 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -91,7 +90,7 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
                 auto containerSourceNames = Util::splitWithStringDelimiter<std::string>(fieldName, "$")[0];
                 auto watermarkStrategyDescriptor =
                     watermarkOperator->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
-                watermarkStrategyDescriptor->setOnField(Attribute(containerSourceNames + "$start").getExpressionNode());
+                watermarkStrategyDescriptor->setOnField(FieldAccessExpressionNode::create(containerSourceNames + "$start"));
                 watermarkStrategyDescriptor->setTimeUnit(containerTimeBasedWindow->getTimeCharacteristic()->getTimeUnit());
             } else {
                 return {};
