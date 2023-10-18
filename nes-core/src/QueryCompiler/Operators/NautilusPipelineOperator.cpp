@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
+#include <Util/Core.hpp>
 #include <utility>
 
 namespace NES {
@@ -20,10 +21,11 @@ namespace QueryCompilation {
 OperatorNodePtr NautilusPipelineOperator::create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
                                                  std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
     return std::make_shared<NautilusPipelineOperator>(
-        NautilusPipelineOperator(std::move(nautilusPipeline), std::move(operatorHandlers)));
+        NautilusPipelineOperator(NES::Util::getNextOperatorId(), std::move(nautilusPipeline), std::move(operatorHandlers)));
 }
 
-NautilusPipelineOperator::NautilusPipelineOperator(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+NautilusPipelineOperator::NautilusPipelineOperator(OperatorId id,
+                                                   std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
                                                    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
     : OperatorNode(id), UnaryOperatorNode(id), nautilusPipeline(std::move(nautilusPipeline)),
       operatorHandlers(std::move(operatorHandlers)) {}
