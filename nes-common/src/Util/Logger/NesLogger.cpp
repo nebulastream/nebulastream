@@ -66,24 +66,26 @@ auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> {
     return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
 }
 
-Logger::Logger(const std::string& logFileName, LogLevel level) {
+Logger::Logger(const std::string* logFileName, LogLevel level) {
     static constexpr auto QUEUE_SIZE = 8 * 1024;
     static constexpr auto THREADS = 1;
     loggerThreadPool = std::make_shared<spdlog::details::thread_pool>(QUEUE_SIZE, THREADS);
 
-    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
-
     auto spdlogLevel = toSpdlogLevel(level);
+    std::vector<spdlog::sink_ptr> sinks;
 
+    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     consoleSink->set_level(spdlogLevel);
     consoleSink->set_color_mode(spdlog::color_mode::always);
-    fileSink->set_level(spdlogLevel);
-
     consoleSink->set_pattern(SPDLOG_PATTERN);
-    fileSink->set_pattern(SPDLOG_PATTERN);
+    sinks.push_back(consoleSink);
 
-    std::vector<spdlog::sink_ptr> sinks = {consoleSink, fileSink};
+    if (logFileName) {
+        auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(*logFileName, true);
+        fileSink->set_level(spdlogLevel);
+        fileSink->set_pattern(SPDLOG_PATTERN);
+        sinks.push_back(fileSink);
+    }
 
     impl = std::make_shared<spdlog::async_logger>(SPDLOG_NES_LOGGER_NAME,
                                                   sinks.begin(),
@@ -148,7 +150,12 @@ namespace Logger {
 static detail::LoggerHolder helper;
 
 void setupLogging(const std::string& logFileName, LogLevel level) {
-    auto newLogger = std::make_shared<detail::Logger>(logFileName, level);
+    auto newLogger = std::make_shared<detail::Logger>(&logFileName, level);
+    std::swap(detail::LoggerHolder::singleton, newLogger);
+}
+
+void setupLogging(LogLevel level) {
+    auto newLogger = std::make_shared<detail::Logger>(nullptr, level);
     std::swap(detail::LoggerHolder::singleton, newLogger);
 }
 
