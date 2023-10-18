@@ -48,6 +48,7 @@ class PagedVectorTest : public Testing::BaseUnitTest {
                       const uint64_t pageSize,
                       const std::vector<Item>& allItems,
                       uint64_t expectedNumberOfEntries) {
+        ASSERT_EQ(entrySize, sizeof(Item));
         const uint64_t capacityPerPage = pageSize / entrySize;
         const uint64_t numberOfPages = std::ceil((double) expectedNumberOfEntries / capacityPerPage);
         auto pagedVectorRef = PagedVectorRef(Value<MemRef>((int8_t*) &pagedVector), entrySize);
@@ -151,7 +152,7 @@ TEST_F(PagedVectorTest, storeAndRetrieveValuesWithCustomItems) {
         int32_t val1;
         double val2;
     };
-    const auto entrySize = sizeof(uint64_t);
+    const auto entrySize = sizeof(CustomClass);
     const auto pageSize = PagedVector::PAGE_SIZE;
     const auto numItems = 12349_u64;
     std::vector<CustomClass> allItems;

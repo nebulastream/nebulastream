@@ -34,7 +34,8 @@ static SchemaPtr createValueIdTimeStamp() {
 }
 
 class JoinDeploymentTest : public Testing::BaseIntegrationTest,
-                           public ::testing::WithParamInterface<QueryCompilation::StreamJoinStrategy> {
+                           public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy,
+                                                                           QueryCompilation::WindowingStrategy>> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("JoinDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
@@ -46,24 +47,26 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         NES_INFO("QueryExecutionTest: Setup JoinDeploymentTest test class.");
         BaseIntegrationTest::SetUp();
 
-        joinStrategy = NES::Runtime::Execution::JoinDeploymentTest::GetParam();
+        joinStrategy = std::get<0>(NES::Runtime::Execution::JoinDeploymentTest::GetParam());
+        windowingStrategy = std::get<1>(NES::Runtime::Execution::JoinDeploymentTest::GetParam());
         bufferManager = std::make_shared<BufferManager>();
     }
 
     template<typename ResultRecord>
-    void runJoinQueryTwoLogicalStreams(const Query& query,
-                                       const TestUtils::CsvFileParams& csvFileParams,
-                                       const TestUtils::JoinParams& joinParams) {
+    std::vector<ResultRecord> runJoinQueryTwoLogicalStreams(const Query& query,
+                                                            const TestUtils::CsvFileParams& csvFileParams,
+                                                            const TestUtils::JoinParams& joinParams) {
         auto sourceConfig1 = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[0]);
         auto sourceConfig2 = TestUtils::createSourceConfig(csvFileParams.inputCsvFiles[1]);
         auto expectedSinkBuffer =
             TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
         auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
-        ASSERT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
+        EXPECT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                       .enableNautilus()
                                       .setJoinStrategy(joinStrategy)
+                                      .setWindowingStrategy(windowingStrategy)
                                       .addLogicalSource("test1", joinParams.inputSchemas[0])
                                       .addLogicalSource("test2", joinParams.inputSchemas[1])
                                       .attachWorkerWithCSVSourceToCoordinator("test1", sourceConfig1)
@@ -73,12 +76,15 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
 
         auto actualResult = testHarness.getOutput<ResultRecord>(expectedSinkBuffer.getNumberOfTuples());
 
-        ASSERT_EQ(actualResult.size(), expectedSinkBuffer.getNumberOfTuples());
+        EXPECT_EQ(actualResult.size(), expectedSinkBuffer.getNumberOfTuples());
         EXPECT_THAT(actualResult, ::testing::UnorderedElementsAreArray(expectedSinkVector));
+
+        return actualResult;
     }
 
     BufferManagerPtr bufferManager;
     QueryCompilation::StreamJoinStrategy joinStrategy;
+    QueryCompilation::WindowingStrategy windowingStrategy;
 };
 
 /**
@@ -240,8 +246,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
 /**
  * Test deploying join with different sources
  */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
+TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
     struct ResultRecord {
         uint64_t test1test2Start;
         uint64_t test1test2End;
@@ -268,8 +273,8 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
     auto query =
         Query::from("test1")
             .joinWith(Query::from("test2"))
-            .where(Attribute("id1"))
-            .equalsTo(Attribute("id2"))
+            .where(Attribute("id"))
+            .equalsTo(Attribute("id"))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
     runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
@@ -278,8 +283,7 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithDifferentSourceSlidingWindow) {
 /**
  * Test deploying join with different sources
  */
-// TODO this test can be enabled once #3353 is merged
-TEST_P(JoinDeploymentTest, DISABLED_testSlidingWindowDifferentAttributes) {
+TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     struct ResultRecord {
         uint64_t test1test2Start;
         uint64_t test1test2End;
@@ -361,12 +365,9 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
 INSTANTIATE_TEST_CASE_P(
     testJoinQueries,
     JoinDeploymentTest,
-    ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
-    //                                          TODO Enable the disabled test and fix them #3926
-    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,
-    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,
-    //                                          QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL),
+    JOIN_STRATEGIES_WINDOW_STRATEGIES,
     [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
-        return std::string(magic_enum::enum_name(info.param));
+        return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_" +
+               std::string(magic_enum::enum_name(std::get<1>(info.param)));
     });
 }// namespace NES::Runtime::Execution

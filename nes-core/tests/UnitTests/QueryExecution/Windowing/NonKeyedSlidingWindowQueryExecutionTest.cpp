@@ -32,7 +32,7 @@ constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode:
 
 class NonKeyedSlidingWindowQueryExecutionTest
     : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::WindowingStrategy> {
+      public ::testing::WithParamInterface<QueryCompilation::WindowingStrategy> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NonKeyedTumblingWindowQueryExecutionTest.cpp.log", NES::LogLevel::LOG_DEBUG);
@@ -73,7 +73,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(30);
 }
 
-TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
+TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
@@ -108,8 +108,8 @@ TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSlidingWindow) {
 
 INSTANTIATE_TEST_CASE_P(testNonKeyedSlidingWindow,
                         NonKeyedSlidingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::WindowingStrategy::SLICING,
-                                          QueryCompilation::QueryCompilerOptions::WindowingStrategy::BUCKETING),
+                        ::testing::Values(QueryCompilation::WindowingStrategy::SLICING,
+                                          QueryCompilation::WindowingStrategy::BUCKETING),
                         [](const testing::TestParamInfo<NonKeyedSlidingWindowQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

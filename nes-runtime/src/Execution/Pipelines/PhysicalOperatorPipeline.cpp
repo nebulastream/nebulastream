@@ -15,9 +15,9 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 
 namespace NES::Runtime::Execution {
-std::shared_ptr<Operators::Operator> PhysicalOperatorPipeline::getRootOperator() const { return rootOperator; }
+Operators::OperatorPtr PhysicalOperatorPipeline::getRootOperator() const { return rootOperator; }
 
-void PhysicalOperatorPipeline::setRootOperator(std::shared_ptr<Operators::Operator> rootOperator) {
+void PhysicalOperatorPipeline::setRootOperator(Operators::OperatorPtr rootOperator) {
     this->rootOperator = rootOperator;
 }
 

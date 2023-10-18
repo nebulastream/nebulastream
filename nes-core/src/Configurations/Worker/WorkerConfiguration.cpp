@@ -34,7 +34,7 @@ template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::QueryComp
 template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::CompilationStrategy>;
 template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::PipeliningStrategy>;
 template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel>;
-template class EnumOption<NES::QueryCompilation::QueryCompilerOptions::WindowingStrategy>;
+template class EnumOption<NES::QueryCompilation::WindowingStrategy>;
 template class EnumOption<NES::Runtime::QueryExecutionMode>;
 template class EnumOption<NES::Spatial::Mobility::Experimental::LocationProviderType>;
 template class EnumOption<NES::Optimizer::QueryMergerRule>;

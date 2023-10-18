@@ -18,12 +18,15 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamHashJoin/StreamHashJoinOperatorHandler.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -155,19 +158,59 @@ class LowerPhysicalToNautilusOperators {
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 
-#ifdef TFDEF
-    /**
-     * @brief Creates an executable operator for an inference operation
-     * @param physicalOperator
-     * @param operatorHandlers
-     * @return A shared pointer to an ExecutableOperator object that represents the infer model
-     */
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerInferModelOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                            std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
-#endif
-
   private:
+    /**
+     * @brief Lowers a hash join slicing build operator
+     * @param hashJoinBuildOperator
+     * @param operatorHandlerIndex
+     * @param timeFunction
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr lowerHJSlicing(
+        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> hashJoinBuildOperator,
+        uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
+
+    /**
+     * @brief Lowers a hash join bucketing build operator
+     * @param hashJoinBuildOperator
+     * @param operatorHandlerIndex
+     * @param timeFunction
+     * @param windowSize
+     * @param windowSlide
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr lowerHJBucketing(
+        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> hashJoinBuildOperator,
+        uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+        uint64_t windowSize,
+        uint64_t windowSlide);
+
+    /**
+     * @brief Lowers a hash join slicing build operator
+     * @param nestedLoopJoinBuildOperator
+     * @param operatorHandlerIndex
+     * @param timeFunction
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr lowerNLJSlicing(
+        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
+        uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
+
+    /**
+     * @brief Lowers a hash join slicing build operator
+     * @param nestedLoopJoinBuildOperator
+     * @param operatorHandlerIndex
+     * @param timeFunction
+     * @param windowSize
+     * @param windowSlide
+     * @return ExecutableOperatorPtr
+     */
+    Runtime::Execution::Operators::ExecutableOperatorPtr lowerNLJBucketing(
+        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
+        uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+        uint64_t windowSize,
+        uint64_t windowSlide);
+
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };

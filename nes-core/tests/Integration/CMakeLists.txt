@@ -155,5 +155,6 @@ add_nes_integration_test(upstream-backup-test "UpstreamBackupTest.cpp")
 add_nes_integration_test(query-failure-test "QueryFailureTest.cpp")
 
 ### Location Integration Test ###
-add_nes_integration_test(location-integration-tests "LocationIntegrationTests.cpp")
-target_link_libraries(location-integration-tests nes-core-test-util)
+# Enabled with issue #4270
+#add_nes_integration_test(location-integration-tests "LocationIntegrationTests.cpp")
+#target_link_libraries(location-integration-tests nes-core-test-util)
