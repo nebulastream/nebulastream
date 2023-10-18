@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.5.225](https://github.com/nebulastream/nebulastream/tree/v0.5.225) (2023-10-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.224...v0.5.225)
+
+**Implemented enhancements:**
+
+- \[TASK\]  Replace windowStart, windowEnd, windowKey with strings in StreamHashJoin [\#4152](https://github.com/nebulastream/nebulastream/issues/4152)
+- \[TASK\] Add bucketing for stream join [\#4146](https://github.com/nebulastream/nebulastream/issues/4146)
+
+### Bug Fixes 🐛
+
+- \[TASK\] Bug in StreamJoin Multithreaded [\#4209](https://github.com/nebulastream/nebulastream/issues/4209)
+
 ## [v0.5.224](https://github.com/nebulastream/nebulastream/tree/v0.5.224) (2023-10-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.223...v0.5.224)
