@@ -25,7 +25,7 @@
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowHandler/AbstractBatchJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join::Experimental {

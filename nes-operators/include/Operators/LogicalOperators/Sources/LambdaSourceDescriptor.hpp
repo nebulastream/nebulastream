@@ -16,11 +16,15 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sources/DataSource.hpp>
+#include <Util/GatheringMode.hpp>
 #include <functional>
 
 namespace NES {
+
+namespace Runtime {
+class TupleBuffer;
+}
+
 /**
  * @brief Descriptor defining properties used for creating physical memory source
  */

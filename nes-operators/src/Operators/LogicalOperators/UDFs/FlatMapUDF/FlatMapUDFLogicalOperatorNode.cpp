@@ -14,7 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <Operators/LogicalOperators/FlatMapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 

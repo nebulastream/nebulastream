@@ -34,7 +34,7 @@
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Exceptions/SignatureComputationException.hpp>
-#include <Optimizer/Exceptions/TypeInferenceException.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>

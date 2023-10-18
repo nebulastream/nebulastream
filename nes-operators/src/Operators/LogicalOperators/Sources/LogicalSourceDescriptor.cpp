@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <utility>
+
 namespace NES {
 
 LogicalSourceDescriptor::LogicalSourceDescriptor(std::string logicalSourceName)

@@ -14,19 +14,28 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Optimizer/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
+#include <Optimizer/Exceptions/SignatureComputationException.hpp>
 #include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
@@ -36,20 +45,15 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/WindowTypes/ContentBasedWindowType.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
+
+namespace Utils {
+QuerySignaturePtr createQuerySignatureForOperator(const z3::ContextPtr& context, const OperatorNodePtr& operatorNode) {
+    return QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
+}
+}// namespace Utils
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::ContextPtr& context,
                                                                       const OperatorNodePtr& operatorNode) {
@@ -242,7 +246,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
         auto outoutfields = inferModelOperator->getInputFields();
 
         for (auto in_field : inputfields) {
-            auto fieldname = in_field->getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();
+            auto fieldname = in_field->as<FieldAccessExpressionNode>()->getFieldName();
         }
 
         for (auto& field : outputSchema->fields) {

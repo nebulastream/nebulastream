@@ -19,7 +19,7 @@ get_source(nes-operators NES_OPERATORS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-operators SHARED ${NES_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-operators PUBLIC nes-data-types)
+target_link_libraries(nes-operators PUBLIC nes-data-types nes-grpc)
 target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

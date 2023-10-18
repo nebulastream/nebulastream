@@ -13,29 +13,27 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Expressions/Expressions.hpp>
+
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <utility>
 
 namespace NES::Windowing {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(const ExpressionItem& onField,
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(const ExpressionNodePtr& onField,
                                                                            TimeMeasure allowedLateness,
                                                                            TimeUnit unit)
-    : onField(onField.getExpressionNode()), unit(std::move(unit)), allowedLateness(std::move(allowedLateness)) {}
+    : onField(onField), unit(std::move(unit)), allowedLateness(std::move(allowedLateness)) {}
 
 WatermarkStrategyDescriptorPtr
-EventTimeWatermarkStrategyDescriptor::create(const ExpressionItem& onField, TimeMeasure allowedLateness, TimeUnit unit) {
+EventTimeWatermarkStrategyDescriptor::create(const ExpressionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit) {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
-        Windowing::EventTimeWatermarkStrategyDescriptor(onField.getExpressionNode(),
-                                                        std::move(allowedLateness),
-                                                        std::move(unit)));
+        Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(allowedLateness), std::move(unit)));
 }
 
 ExpressionNodePtr EventTimeWatermarkStrategyDescriptor::getOnField() const { return onField; }

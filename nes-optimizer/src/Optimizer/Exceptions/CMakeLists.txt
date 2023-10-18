@@ -16,6 +16,4 @@ add_source_files(nes-core
         GlobalQueryPlanUpdateException.cpp
         QueryPlacementException.cpp
         SharedQueryPlanNotFoundException.cpp
-        SignatureComputationException.cpp
-        TypeInferenceException.cpp
-)
+        SignatureComputationException.cpp)

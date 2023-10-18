@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES::Windowing {

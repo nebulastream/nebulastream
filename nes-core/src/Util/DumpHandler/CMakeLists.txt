@@ -14,6 +14,5 @@
 add_source_files(nes-core
         DumpHandler.cpp
         ConsoleDumpHandler.cpp
-        VizDumpHandler.cpp
         DumpContext.cpp
 )

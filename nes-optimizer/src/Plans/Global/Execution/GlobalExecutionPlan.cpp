@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Utils/QueryConsoleDumpHandler.hpp>
 #include <algorithm>
 
 namespace NES {
@@ -158,7 +157,7 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getRootNodes() {
 std::string GlobalExecutionPlan::getAsString() {
     NES_DEBUG("GlobalExecutionPlan: Get Execution plan as string");
     std::stringstream ss;
-    auto dumpHandler = ConsoleDumpHandler::create(ss);
+    auto dumpHandler = QueryConsoleDumpHandler::create(ss);
     for (const auto& rootNode : rootNodes) {
         dumpHandler->multilineDump(rootNode);
     }

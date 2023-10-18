@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <Util/magicenum/magic_enum.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES {
 
 AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy)
-    : queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy) {
-}
+    : queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy) {}
 
 AddQueryRequestPtr AddQueryRequest::create(QueryPlanPtr queryPlan, Optimizer::PlacementStrategy queryPlacementStrategy) {
     return std::make_shared<AddQueryRequest>(AddQueryRequest(std::move(queryPlan), queryPlacementStrategy));

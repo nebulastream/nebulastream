@@ -28,7 +28,7 @@ class MedianAggregationDescriptor : public WindowAggregationDescriptor {
     * @brief Factory method to creates a median aggregation on a particular field.
     * @param onField field on which the aggregation should be performed
     */
-    static WindowAggregationPtr on(ExpressionItem onField);
+    static WindowAggregationPtr on(const ExpressionNodePtr& onField);
 
     /**
      * @brief Factory method to creates a median aggregation on a particular field.

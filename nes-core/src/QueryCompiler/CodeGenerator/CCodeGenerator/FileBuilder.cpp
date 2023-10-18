@@ -23,7 +23,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
 
     builder.declations << "#include <API/Schema.hpp>\n"
-                          "#include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>\n"
+                          "#include QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>\n"
                           "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n";
 #ifdef TFDEF

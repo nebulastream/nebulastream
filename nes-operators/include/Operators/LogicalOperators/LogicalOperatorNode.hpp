@@ -31,8 +31,13 @@ using ContextPtr = std::shared_ptr<context>;
 
 namespace NES::Optimizer {
 class TypeInferencePhaseContext;
+
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
+
+namespace Utils {
+QuerySignaturePtr createQuerySignatureForOperator(const z3::ContextPtr& context, const OperatorNodePtr& operatorNode);
+}
 }// namespace NES::Optimizer
 
 namespace NES {

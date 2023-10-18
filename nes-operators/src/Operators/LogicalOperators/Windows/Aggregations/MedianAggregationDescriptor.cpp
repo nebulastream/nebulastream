@@ -11,13 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/Expressions/Expressions.hpp>
+
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/WindowAggregations/MedianAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 
 namespace NES::Windowing {
 
@@ -35,8 +34,7 @@ WindowAggregationPtr MedianAggregationDescriptor::create(FieldAccessExpressionNo
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr MedianAggregationDescriptor::on(ExpressionItem onField) {
-    auto keyExpression = onField.getExpressionNode();
+WindowAggregationPtr MedianAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }

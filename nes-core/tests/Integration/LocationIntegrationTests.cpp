@@ -34,8 +34,8 @@
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/LocationProviders/LocationProviderCSV.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Catalogs/Topology/Topology.hpp>

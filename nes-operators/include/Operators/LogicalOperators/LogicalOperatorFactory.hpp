@@ -21,7 +21,6 @@
 #include <Operators/OperatorNode.hpp>
 
 namespace NES {
-class ExpressionItem;
 
 class LogicalOperatorFactory {
   public:
@@ -91,8 +90,8 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createInferModelOperator(std::string model,
-                                                                std::vector<ExpressionItemPtr> inputFields,
-                                                                std::vector<ExpressionItemPtr> outputFields,
+                                                                std::vector<ExpressionNodePtr> inputFields,
+                                                                std::vector<ExpressionNodePtr> outputFields,
                                                                 OperatorId id = getNextOperatorId());
 
     /**

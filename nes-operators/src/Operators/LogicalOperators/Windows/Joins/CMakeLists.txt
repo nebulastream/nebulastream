@@ -13,4 +13,5 @@
 
 add_source_files(nes-operators
         LogicalJoinDefinition.cpp
+        JoinLogicalOperatorNode.cpp
 )

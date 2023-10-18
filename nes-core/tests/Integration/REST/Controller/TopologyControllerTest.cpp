@@ -14,10 +14,7 @@
 
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
-#include <REST/ServerTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>

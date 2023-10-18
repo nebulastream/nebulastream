@@ -16,14 +16,16 @@
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
-#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/SliceAggregationTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Optimizer {
 
 DistributedWindowRule::DistributedWindowRule(Configurations::OptimizerConfiguration configuration)

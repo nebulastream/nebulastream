@@ -20,12 +20,10 @@ add_source_files(nes-operators
         UnionLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp
-        JoinLogicalOperatorNode.cpp
         BatchJoinLogicalOperatorNode.cpp
         RenameSourceOperatorNode.cpp
         LogicalBinaryOperatorNode.cpp
         LogicalUnaryOperatorNode.cpp
-        InferModelOperatorHandler.cpp
         OpenCLLogicalOperatorNode.cpp
         LimitLogicalOperatorNode.cpp
         LogicalBatchJoinDefinition.cpp

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -20,6 +21,7 @@
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <utility>
+
 namespace NES::Join {
 
 LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType,

@@ -21,4 +21,3 @@ add_source_files(nes-core
         HealthCheckRPCServer.cpp
 )
 
-add_subdirectory(Serialization)

@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <utility>
+
 namespace NES {
 
 SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string udfs)

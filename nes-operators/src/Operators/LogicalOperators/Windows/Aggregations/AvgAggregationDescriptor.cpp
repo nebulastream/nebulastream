@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/Expressions/Expressions.hpp>
+
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES::Windowing {
@@ -36,8 +36,7 @@ WindowAggregationPtr AvgAggregationDescriptor::create(FieldAccessExpressionNodeP
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr AvgAggregationDescriptor::on(ExpressionItem onField) {
-    auto keyExpression = onField.getExpressionNode();
+WindowAggregationPtr AvgAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }

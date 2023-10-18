@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES::Windowing {
@@ -36,8 +35,7 @@ WindowAggregationPtr MinAggregationDescriptor::create(FieldAccessExpressionNodeP
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr MinAggregationDescriptor::on(ExpressionItem onField) {
-    auto keyExpression = onField.getExpressionNode();
+WindowAggregationPtr MinAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }

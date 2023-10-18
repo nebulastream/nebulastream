@@ -12,5 +12,5 @@
     limitations under the License.
 */
 
-#include <Nodes/Util/DumpHandler.hpp>
+#include <Util/DumpHandler/DumpHandler.hpp>
 namespace NES {}

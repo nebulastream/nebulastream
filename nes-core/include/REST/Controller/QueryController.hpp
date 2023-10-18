@@ -16,7 +16,7 @@
 
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>

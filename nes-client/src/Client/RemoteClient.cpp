@@ -13,13 +13,12 @@
 */
 
 #include <API/Query.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Client/ClientException.hpp>
 #include <Client/QueryConfig.hpp>
 #include <Client/RemoteClient.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>

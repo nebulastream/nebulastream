@@ -18,7 +18,9 @@
 #include <Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
+#include <map>
 #include <mutex>
+#include <vector>
 
 namespace NES {
 

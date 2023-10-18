@@ -18,7 +18,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <SerializableOperator.pb.h>

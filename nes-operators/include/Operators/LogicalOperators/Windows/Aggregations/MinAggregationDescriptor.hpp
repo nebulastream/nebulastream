@@ -27,7 +27,7 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
     /**
    * Factory method to creates a MinAggregationDescriptor aggregation on a particular field.
    */
-    static WindowAggregationPtr on(ExpressionItem onField);
+    static WindowAggregationPtr on(const ExpressionNodePtr& onField);
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 

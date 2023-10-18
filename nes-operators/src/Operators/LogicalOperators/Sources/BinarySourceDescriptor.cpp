@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <utility>
+
 namespace NES {
 
 BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string filePath)

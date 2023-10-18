@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+
 namespace NES::Windowing {
 /**
  * @brief
@@ -28,7 +29,7 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
     /**
     * Factory method to creates a sum aggregation on a particular field.
     */
-    static WindowAggregationPtr on(ExpressionItem onField);
+    static WindowAggregationPtr on(const ExpressionNodePtr& onField);
 
     static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 

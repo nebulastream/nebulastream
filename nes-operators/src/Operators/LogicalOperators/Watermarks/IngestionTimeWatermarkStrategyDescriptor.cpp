@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <string>
 

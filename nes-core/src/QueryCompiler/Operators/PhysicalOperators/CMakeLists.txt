@@ -12,6 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-core
+        InferModelOperatorHandler.cpp
         PhysicalOperator.cpp
         PhysicalUnaryOperator.cpp
         PhysicalBinaryOperator.cpp

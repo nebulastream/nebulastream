@@ -29,7 +29,7 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Windowing/Runtime/WindowState.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>

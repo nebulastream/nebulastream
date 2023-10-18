@@ -24,7 +24,7 @@
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>

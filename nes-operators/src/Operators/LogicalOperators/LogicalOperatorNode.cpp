@@ -14,8 +14,6 @@
 
 #include <Exceptions/InvalidOperatorStateException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/QuerySignatures/QuerySignature.hpp>
-#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/OperatorState.hpp>
 #include <utility>
@@ -39,7 +37,7 @@ void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferZ3Signature(context);
     }
-    z3Signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
+    z3Signature = Optimizer::Utils::createQuerySignatureForOperator(context, operatorNode);
 }
 
 void LogicalOperatorNode::setZ3Signature(Optimizer::QuerySignaturePtr signature) { this->z3Signature = std::move(signature); }

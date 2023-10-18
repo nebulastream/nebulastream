@@ -12,12 +12,10 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES::Windowing {
@@ -36,8 +34,7 @@ WindowAggregationPtr SumAggregationDescriptor::create(FieldAccessExpressionNodeP
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr SumAggregationDescriptor::on(ExpressionItem onField) {
-    auto keyExpression = onField.getExpressionNode();
+WindowAggregationPtr SumAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }

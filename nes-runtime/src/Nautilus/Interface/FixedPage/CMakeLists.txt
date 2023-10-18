@@ -12,4 +12,5 @@
 
 add_source_files(nes-runtime
         FixedPage.cpp
-        FixedPageRef.cpp)
+        FixedPageRef.cpp
+)

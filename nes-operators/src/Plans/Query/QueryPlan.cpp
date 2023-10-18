@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <Nodes/Node.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Utils/QueryConsoleDumpHandler.hpp>
 #include <algorithm>
 #include <set>
 #include <stack>
@@ -106,7 +106,7 @@ void QueryPlan::prependOperatorAsLeafNode(const OperatorNodePtr& operatorNode) {
 
 std::string QueryPlan::toString() {
     std::stringstream ss;
-    auto dumpHandler = ConsoleDumpHandler::create(ss);
+    auto dumpHandler = QueryConsoleDumpHandler::create(ss);
     for (const auto& rootOperator : rootOperators) {
         dumpHandler->dump(rootOperator);
     }

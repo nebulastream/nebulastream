@@ -13,7 +13,7 @@
 */
 
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <utility>
 
 namespace NES::Join::Experimental {

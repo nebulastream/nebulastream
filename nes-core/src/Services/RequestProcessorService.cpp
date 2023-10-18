@@ -22,7 +22,7 @@
 #include <Exceptions/QueryDeploymentException.hpp>
 #include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
-#include  <Optimizer/Exceptions/TypeInferenceException.hpp>
+#include  <Exceptions/TypeInferenceException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>

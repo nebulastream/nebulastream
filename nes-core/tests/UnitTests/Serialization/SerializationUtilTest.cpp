@@ -20,11 +20,11 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
-#include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
-#include <GRPC/Serialization/OperatorSerializationUtil.hpp>
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Serialization/DataTypeSerializationUtil.hpp>
+#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
+#include <Operators/Serialization/OperatorSerializationUtil.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -43,7 +43,7 @@
 #include <Operators/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Operators/Expressions/WhenExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
