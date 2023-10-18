@@ -46,6 +46,7 @@ class DumpHelper {
      * @brief get outputPath
      */
     const std::string& getOutputPath() const;
+    void change_prefix(std::string prefix);
 
   private:
     explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath);
@@ -53,6 +54,7 @@ class DumpHelper {
     const bool dumpToConsole;
     const bool dumpToFile;
     const std::string outputPath;
+    std::string filePrefix;
 };
 }// namespace NES
 

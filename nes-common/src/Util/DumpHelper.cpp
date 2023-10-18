@@ -44,7 +44,7 @@ void DumpHelper::dump(const std::string_view& name, const std::string_view& outp
         NES_INFO("{}", output);
     }
     if (this->dumpToFile) {
-        auto fileName = std::string{name};
+        auto fileName = filePrefix + std::string{name};
         std::replace(fileName.begin(), fileName.end(), ' ', '_');
         auto path = std::string{outputPath} + std::filesystem::path::preferred_separator + fileName;
 
@@ -62,5 +62,7 @@ const std::string& DumpHelper::getOutputPath() const { return outputPath; };
 DumpHelper::DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath)
     : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), dumpToFile(dumpToFile),
       outputPath(std::move(outputPath)) {}
+
+void DumpHelper::change_prefix(std::string prefix) { this->filePrefix = std::move(prefix); }
 
 }// namespace NES
