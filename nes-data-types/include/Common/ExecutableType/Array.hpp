@@ -405,7 +405,7 @@ namespace fmt {
 template<std::size_t size>
 struct formatter<NES::ExecutableTypes::Array<char, size>> : formatter<std::string> {
     auto format(const NES::ExecutableTypes::Array<char, size> executable_type_array, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{}", executable_type_array);
+        return fmt::format_to(ctx.out(), "{}", executable_type_array);
     }
 };
 }//namespace fmt
