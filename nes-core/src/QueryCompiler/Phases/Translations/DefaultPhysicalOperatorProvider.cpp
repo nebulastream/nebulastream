@@ -493,25 +493,6 @@ DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<
     }
 }
 
-
-OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
-    const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
-    SchemaPtr outputSchema,
-    std::vector<OperatorNodePtr> children) {
-    NES_ASSERT(!children.empty(), "There should be children for operator " << batchJoinOperator->toString());
-    if (children.size() > 1) {
-        auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(std::move(outputSchema));
-        demultiplexOperator->setOutputSchema(batchJoinOperator->getOutputSchema());
-        demultiplexOperator->addParent(batchJoinOperator);
-        for (const auto& child : children) {
-            child->removeParent(batchJoinOperator);
-            child->addParent(demultiplexOperator);
-        }
-        return demultiplexOperator;
-    }
-    return children[0];
-}
-
 void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const QueryPlanPtr&,
                                                                        const LogicalOperatorNodePtr& operatorNode) {
     auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
