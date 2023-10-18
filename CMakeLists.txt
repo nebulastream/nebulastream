@@ -694,6 +694,7 @@ add_subdirectory(nes-client)
 add_subdirectory(nes-plugins)
 
 add_subdirectory(nes-unikernel-export)
+add_subdirectory(nes-unikernel-generator)
 add_subdirectory(nes-unikernel-source)
 add_subdirectory(nes-unikernel-sink)
 add_subdirectory(nes-unikernel)
