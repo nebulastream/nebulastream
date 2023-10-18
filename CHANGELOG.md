@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.227](https://github.com/nebulastream/nebulastream/tree/v0.5.227) (2023-10-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.226...v0.5.227)
+
+### Bug Fixes 🐛
+
+- \[BUG\] MacOSX fails building on CI [\#4271](https://github.com/nebulastream/nebulastream/issues/4271)
+
+## [v0.5.226](https://github.com/nebulastream/nebulastream/tree/v0.5.226) (2023-10-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.225...v0.5.226)
+
 ## [v0.5.225](https://github.com/nebulastream/nebulastream/tree/v0.5.225) (2023-10-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.224...v0.5.225)
