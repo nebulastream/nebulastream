@@ -17,6 +17,7 @@
 #include <Network/NetworkSource.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/EpochMessage.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -145,20 +146,7 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     return true;
 }
 
-void NetworkSource::onEvent(Runtime::BaseEvent& event) {
-    NES_DEBUG("NetworkSource: received an event");
-    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
-        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
-        auto epochBarrier = epochEvent->timestampValue();
-        auto queryId = epochEvent->queryIdValue();
-        auto success = queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
-        if (success) {
-            NES_DEBUG("NetworkSource::onEvent: epoch {} queryId {} propagated", epochBarrier, queryId);
-        } else {
-            NES_ERROR("NetworkSource::onEvent:: could not propagate epoch {} queryId {}", epochBarrier, queryId);
-        }
-    }
-}
+void NetworkSource::onEvent(Runtime::BaseEvent&) { NES_DEBUG("NetworkSource: received an event"); }
 
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSource: reconfigure() called {}", nesPartition.toString());
@@ -206,6 +194,17 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
             isTermination = true;
+            break;
+        }
+        case Runtime::ReconfigurationType::PropagateEpoch: {
+            auto* channel = workerContext.getEventOnlyNetworkChannel(nesPartition.getOperatorId());
+            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
+            auto epochMessage = task.getUserData<EpochMessage>();
+            NES_DEBUG("Executing PropagateEpoch punctuation= ", epochMessage.getTimestamp());
+            if (channel) {
+                channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent,
+                                                                 epochMessage.getTimestamp());
+            }
             break;
         }
         default: {

@@ -51,6 +51,12 @@ class WatermarkProcessor {
      */
     WatermarkTs getCurrentWatermark() const;
 
+    /**
+     * @brief Returns success if there are no tuples with smaller sequence number that haven't arrived yet than current seen last tuple
+     * @return Success
+     */
+    bool isWatermarkSynchronized() const;
+
   private:
     struct WatermarkBarrierComparator {
         bool operator()(std::tuple<WatermarkTs, SequenceNumber> const& wb1, std::tuple<WatermarkTs, SequenceNumber> const& wb2) {

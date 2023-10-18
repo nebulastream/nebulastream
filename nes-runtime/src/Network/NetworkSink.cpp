@@ -57,8 +57,13 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
+        deleteFromStorageCallback = [this](EpochMessage epochMessage, Runtime::WorkerContext& workerContext) {
+            workerContext.trimStorage(this->nesPartition, epochMessage.getTimestamp());
+        };
     } else {
         insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
+        };
+        deleteFromStorageCallback = [](EpochMessage, Runtime::WorkerContext&) {
         };
     }
 }
@@ -182,34 +187,16 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::ReconfigurationType::PropagateEpoch: {
-            auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            auto timestamp = task.getUserData<uint64_t>();
-            NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={}", queryId, timestamp);
-            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
-            workerContext.trimStorage(nesPartition, timestamp);
+            auto epochMessage = task.getUserData<EpochMessage>();
+            deleteFromStorageCallback(epochMessage, workerContext);
             break;
         }
-        case Runtime::ReconfigurationType::ConnectToNewReceiver: {
-            //retrieve information about which source to connect to
-            auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
-            if (newReceiverLocation == receiverLocation && newPartition == nesPartition) {
-                NES_THROW_RUNTIME_ERROR("Attempting reconnect but the new source descriptor equals the old one");
-            }
-
-            if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
-            }
-
-            clearOldAndConnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition);
-            break;
-        }
-        case Runtime::ReconfigurationType::ConnectionEstablished: {
-            //if the callback was triggered by the channel for another thread becoming ready, we cannot do anything
-            if (!workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-                NES_DEBUG("NetworkSink: reconfigure() No network channel future found for operator {} Thread {}",
-                          nesPartition.toString(),
-                          Runtime::NesThread::getId());
+        case Runtime::ReconfigurationType::StopBuffering: {
+            //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
+            //todo #3014: make reconnect buffering and fault tolerance buffering compatible
+            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
+                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
                 break;
             }
             retrieveNewChannelAndUnbuffer(workerContext);
@@ -303,6 +290,21 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
 
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         // todo jm continue here. how to obtain local worker context?
+    } else if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
+        if (success) {
+            NES_DEBUG("NetworkSink::onEvent: epoch" , epochBarrier , " queryId " , queryId , " trimmed");
+            success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
+            if (success) {
+                NES_DEBUG("NetworkSink::onEvent: epoch", epochBarrier, " queryId ", queryId, " sent further");
+            } else {
+                NES_INFO("NetworkSink::onEvent:: end of propagation " , epochBarrier , " queryId " , queryId);
+            }
+        } else {
+            NES_ERROR("NetworkSink::onEvent:: could not trim " , epochBarrier , " queryId " , queryId);
+        }
     }
 }
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {

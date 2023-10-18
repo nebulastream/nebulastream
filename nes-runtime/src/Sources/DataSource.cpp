@@ -468,11 +468,6 @@ void DataSource::runningRoutineWithGatheringInterval() {
     NES_DEBUG("DataSource {} end running", operatorId);
 }
 
-bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) {
-    NES_DEBUG("DataSource::injectEpochBarrier received timestamp  {} with queryId  {}", epochBarrier, queryId);
-    return queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
-}
-
 // debugging
 uint64_t DataSource::getNumberOfGeneratedTuples() const { return generatedTuples; };
 uint64_t DataSource::getNumberOfGeneratedBuffers() const { return generatedBuffers; };

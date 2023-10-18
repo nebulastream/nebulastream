@@ -65,10 +65,14 @@ uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
 void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
-    if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
+    bool isSync = watermarkProcessor->isWatermarkSynchronized(inputBuffer.getOriginId());
+    if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
         auto timestamp = watermarkProcessor->getCurrentWatermark();
-        if (timestamp) {
+        if (isSync && timestamp) {
             notifyEpochTermination(timestamp);
+            isWaiting = false;
+        } else {
+            isWaiting = true;
         }
     }
     bufferCount++;
@@ -88,13 +92,9 @@ QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 QueryId SinkMedium::getQueryId() const { return queryId; }
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
-    uint64_t queryId = nodeEngine->getQueryManager()->getQueryId(querySubPlanId);
-    NES_ASSERT(queryId >= 0, "SinkMedium: no queryId found for querySubPlanId");
-    if (auto listener = nodeEngine->getQueryStatusListener(); listener) {
-        bool success = listener->notifyEpochTermination(epochBarrier, queryId);
-        if (success) {
-            return true;
-        }
+    auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
+    if (nodeEngine->getQueryManager()->propagateEpochBackwards(querySubPlanId, epochBarrier)) {
+        return true;
     }
     return false;
 }
