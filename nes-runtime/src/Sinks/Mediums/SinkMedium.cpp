@@ -22,14 +22,22 @@
 namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
+#ifndef UNIKERNEL_SUPPORT_LIB
                        Runtime::NodeEnginePtr nodeEngine,
+#endif
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
                        DecomposedQueryPlanId decomposedQueryPlanId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, 1) {}
+    : SinkMedium(sinkFormat,
+#ifndef UNIKERNEL_SUPPORT_LIB
+                 nodeEngine,
+#endif
+                 numOfProducers, sharedQueryId, decomposedQueryPlanId, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
+#ifndef UNIKERNEL_SUPPORT_LIB
                        Runtime::NodeEnginePtr nodeEngine,
+#endif
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
                        DecomposedQueryPlanId decomposedQueryPlanId,
@@ -89,9 +97,11 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         NES_DEBUG("Got EoS on Sink  {}", toString());
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
+#ifndef UNIKERNEL_SUPPORT_LIB
             nodeEngine->getQueryManager()->notifySinkCompletion(decomposedQueryPlanId,
                                                                 std::static_pointer_cast<SinkMedium>(shared_from_this()),
                                                                 terminationType);
+#endif
             NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);
         }
     }

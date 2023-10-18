@@ -25,3 +25,4 @@ endif ()
 
 add_subdirectory(FormatIterators)
 add_subdirectory(StatisticCollection)
+add_source_files(nes-unikernel-support-core CsvFormat.cpp SinkFormat.cpp NesFormat.cpp)

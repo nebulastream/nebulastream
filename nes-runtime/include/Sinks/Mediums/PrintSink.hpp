@@ -35,7 +35,9 @@ class PrintSink : public SinkMedium {
      * @Note the default output will be written to cout
      */
     PrintSink(SinkFormatPtr format,
+#ifndef UNIKERNEL_SUPPORT_LIB
               Runtime::NodeEnginePtr nodeEngine,
+#endif
               uint32_t numOfProducers,
               SharedQueryId sharedQueryId,
               DecomposedQueryPlanId decomposedQueryPlanId,

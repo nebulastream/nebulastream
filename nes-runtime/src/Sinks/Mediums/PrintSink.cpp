@@ -21,13 +21,21 @@
 
 namespace NES {
 PrintSink::PrintSink(SinkFormatPtr format,
+#ifndef UNIKERNEL_SUPPORT_LIB
                      Runtime::NodeEnginePtr nodeEngine,
+#endif
                      uint32_t numOfProducers,
                      SharedQueryId sharedQueryId,
                      DecomposedQueryPlanId decomposedQueryPlanId,
                      std::ostream& pOutputStream,
                      uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
+    : SinkMedium(std::move(format),
+#ifndef UNIKERNEL_SUPPORT_LIB
+                 std::move(nodeEngine),
+#endif
+                 numOfProducers,
+                 sharedQueryId, decomposedQueryPlanId,
+                 numberOfOrigins),
       outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;

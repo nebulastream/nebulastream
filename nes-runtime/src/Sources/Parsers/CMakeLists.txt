@@ -16,3 +16,8 @@ add_source_files(nes-runtime
         CSVParser.cpp
         NESBinaryParser.cpp
 )
+add_source_files(nes-unikernel-support-core
+        Parser.cpp
+        CSVParser.cpp
+        NESBinaryParser.cpp
+        )

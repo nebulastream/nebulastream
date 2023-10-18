@@ -22,3 +22,6 @@ if (NES_USE_MQTT)
             MQTTClientWrapper.cpp
     )
 endif ()
+add_source_files(nes-unikernel-support-core
+        Core.cpp
+)

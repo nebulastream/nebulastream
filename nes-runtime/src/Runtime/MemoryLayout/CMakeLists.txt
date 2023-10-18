@@ -17,3 +17,12 @@ add_source_files(nes-runtime
         MemoryLayout.cpp
         BufferAccessException.cpp
 )
+
+add_source_files(nes-unikernel-support-runtime
+        ColumnLayout.cpp
+        MemoryLayoutTupleBuffer.cpp
+        RowLayout.cpp
+        MemoryLayout.cpp
+        DynamicTupleBuffer.cpp
+        BufferAccessException.cpp
+        )

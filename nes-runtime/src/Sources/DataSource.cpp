@@ -52,7 +52,11 @@ void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::Success
 
 DataSource::DataSource(SchemaPtr pSchema,
                        Runtime::BufferManagerPtr bufferManager,
+#ifndef UNIKERNEL_SUPPORT_LIB
                        Runtime::QueryManagerPtr queryManager,
+#else
+                        NES::Runtime::WorkerContextPtr workerContext,
+#endif
                        OperatorId operatorId,
                        OriginId originId,
                        StatisticId statisticId,
@@ -62,14 +66,21 @@ DataSource::DataSource(SchemaPtr pSchema,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
                        uint64_t taskQueueId)
-    : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
+    : Runtime::Reconfigurable(), DataEmitter(),
+#ifndef UNIKERNEL_SUPPORT_LIB
+      queryManager(std::move(queryManager)),
+#else
+      workerContext(std::move(workerContext)),
+#endif
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
       originId(originId), statisticId(statisticId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId),
       physicalSourceName(physicalSourceName) {
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
+#ifndef UNIKERNEL_SUPPORT_LIB
     NES_ASSERT(this->queryManager, "Invalid query manager");
+#endif
     // TODO #4094: enable this exception -- currently many UTs are designed to assume empty executableSuccessors
     //    if (this->executableSuccessors.empty()) {
     //        throw Exceptions::RuntimeException("empty executable successors");
@@ -105,7 +116,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
                   buffer.isLastChunk(),
                   buffer.getStatisticId());
     }
-
+#ifndef UNIKERNEL_SUPPORT_LIB
     uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors) {
         //find the queue to which this sources pushes
@@ -116,6 +127,13 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
             queryManager->addWorkForNextPipeline(buffer, successor, queueId);
         }
     }
+#else
+    uint64_t queueId = 0;
+    for (const auto& successor : executableSuccessors) {
+        NES_ASSERT(std::get<DataSinkPtr>(successor) != nullptr, "No Sink");
+        std::get<DataSinkPtr>(successor)->writeData(buffer, *workerContext);
+    }
+#endif
 }
 
 OperatorId DataSource::getOperatorId() const { return operatorId; }
@@ -183,9 +201,11 @@ bool DataSource::fail() {
         auto self = shared_from_base<DataSource>();
         NES_DEBUG("Source {} has already injected failure? {}", operatorId, (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
         if (!this->endOfStreamSent) {
+#ifndef UNIKERNEL_SUPPORT_LIB
             endOfStreamSent = queryManager->addEndOfStream(self, Runtime::QueryTerminationType::Failure);
             queryManager->notifySourceCompletion(self, Runtime::QueryTerminationType::Failure);
             NES_DEBUG("Source {} injecting failure  {}", operatorId, (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
+#endif
         }
         return isStopped && endOfStreamSent;
     }
@@ -259,7 +279,9 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
             // here we do not need to call notifySourceFailure because it is done from the main thread
             // the only reason to call notifySourceFailure is when the main thread was not stated
             if (!wasStarted) {
+#ifndef UNIKERNEL_SUPPORT_LIB
                 queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
+#endif
             }
             return true;
         }
@@ -267,9 +289,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
 
     return false;
 }
-
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
-
 void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
 
 void DataSource::close() {
@@ -279,15 +299,24 @@ void DataSource::close() {
         queryTerminationType = this->wasGracefullyStopped;
     }
     if (queryTerminationType != Runtime::QueryTerminationType::Graceful
-        || queryManager->canTriggerEndOfStream(shared_from_base<DataSource>(), queryTerminationType)) {
+#ifndef UNIKERNEL_SUPPORT_LIB
+        || queryManager->canTriggerEndOfStream(shared_from_base<DataSource>(), queryTerminationType)
+#endif
+    ) {
         // inject reconfiguration task containing end of stream
         std::unique_lock lock(startStopMutex);
         NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
         NES_DEBUG("DataSource {} : Data Source add end of stream. Gracefully={}", operatorId, queryTerminationType);
+#ifndef UNIKERNEL_SUPPORT_LIB
         endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), queryTerminationType);
         NES_ASSERT2_FMT(endOfStreamSent, "Cannot send eos for source " << toString());
+#endif
+
         bufferManager->destroy();
+
+#ifndef UNIKERNEL_SUPPORT_LIB
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), queryTerminationType);
+#endif
     }
 }
 
@@ -302,8 +331,11 @@ void DataSource::runningRoutine() {
             NES_NOT_IMPLEMENTED();
         }
         completedPromise.set_value(true);
+
     } catch (std::exception const& exception) {
+#ifndef UNIKERNEL_SUPPORT_LIB
         queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception.what());
+#endif
         completedPromise.set_exception(std::make_exception_ptr(exception));
     } catch (...) {
         try {
@@ -313,7 +345,9 @@ void DataSource::runningRoutine() {
                 std::rethrow_exception(expPtr);
             }
         } catch (std::exception const& exception) {
+#ifndef UNIKERNEL_SUPPORT_LIB
             queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception.what());
+#endif
         }
     }
     NES_DEBUG("DataSource {} end runningRoutine", operatorId);
@@ -468,10 +502,12 @@ void DataSource::runningRoutineWithGatheringInterval() {
         }
         NES_TRACE("DataSource {} : Data Source finished processing iteration {}", operatorId, numberOfBuffersProduced);
 
+#ifndef UNIKERNEL_EXPORT
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
             std::this_thread::sleep_for(gatheringInterval);
         }
+#endif
     }
     NES_DEBUG("DataSource {} call close", operatorId);
     close();
