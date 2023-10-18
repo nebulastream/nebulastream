@@ -76,8 +76,7 @@ class TestExecutionEngine {
         const QueryCompilation::QueryCompilerOptions::DumpMode& dumpMode = QueryCompilation::QueryCompilerOptions::DumpMode::NONE,
         const uint64_t numWorkerThreads = 1,
         const QueryCompilation::StreamJoinStrategy& joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-        const QueryCompilation::WindowingStrategy& windowingStrategy =
-            QueryCompilation::WindowingStrategy::SLICING);
+        const QueryCompilation::WindowingStrategy& windowingStrategy = QueryCompilation::WindowingStrategy::SLICING);
 
     std::shared_ptr<TestSink> createDataSink(const SchemaPtr& outputSchema, uint32_t expectedBuffer = 1);
 

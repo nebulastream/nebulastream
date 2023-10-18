@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators {

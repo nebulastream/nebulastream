@@ -53,5 +53,5 @@ class NLJProbe : public StreamJoinProbe {
     const MemoryProvider::MemoryProviderPtr leftMemProvider;
     const MemoryProvider::MemoryProviderPtr rightMemProvider;
 };
-}; // namespace NES::Runtime::Execution::Operators
+};    // namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJPROBE_HPP_

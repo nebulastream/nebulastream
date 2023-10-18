@@ -92,17 +92,17 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      * @param operatorHandler
      */
     PhysicalStreamJoinProbeOperator(OperatorId id,
-                                  const SchemaPtr& leftSchema,
-                                  const SchemaPtr& rightSchema,
-                                  const SchemaPtr& outputSchema,
-                                  const std::string& joinFieldNameLeft,
-                                  const std::string& joinFieldNameRight,
-                                  const std::string& windowStartFieldName,
-                                  const std::string& windowEndFieldName,
-                                  const std::string& windowKeyFieldName,
-                                  const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                  QueryCompilation::StreamJoinStrategy joinStrategy,
-                                  QueryCompilation::WindowingStrategy windowingStrategy);
+                                    const SchemaPtr& leftSchema,
+                                    const SchemaPtr& rightSchema,
+                                    const SchemaPtr& outputSchema,
+                                    const std::string& joinFieldNameLeft,
+                                    const std::string& joinFieldNameRight,
+                                    const std::string& windowStartFieldName,
+                                    const std::string& windowEndFieldName,
+                                    const std::string& windowKeyFieldName,
+                                    const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
+                                    QueryCompilation::StreamJoinStrategy joinStrategy,
+                                    QueryCompilation::WindowingStrategy windowingStrategy);
 
     /**
      * @brief Creates a string containing the name of this physical operator
@@ -145,5 +145,5 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
     const std::string joinFieldNameRight;
     const Runtime::Execution::Operators::WindowMetaData windowMetaData;
 };
-}
+}// namespace NES::QueryCompilation::PhysicalOperators
 #endif//NES_NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINPROBEOPERATOR_HPP_

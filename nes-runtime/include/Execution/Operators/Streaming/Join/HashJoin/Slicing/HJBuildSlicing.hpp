@@ -52,7 +52,6 @@ class HJBuildSlicing : public StreamJoinBuild {
     void execute(ExecutionContext& ctx, Record& record) const override;
 };
 
-
 }// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJBUILDSLICING_HPP_

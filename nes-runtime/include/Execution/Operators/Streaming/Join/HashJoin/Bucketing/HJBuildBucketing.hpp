@@ -50,8 +50,10 @@ class HJBuildBucketing : public StreamJoinBuildBucketing {
                      const uint64_t windowSize,
                      const uint64_t windowSlide);
 
-    void insertRecordForWindow(Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex,
-                                      Value<UInt64>& workerId, Record& record) const override;
+    void insertRecordForWindow(Value<MemRef>& allWindowsToFill,
+                               Value<UInt64>& curIndex,
+                               Value<UInt64>& workerId,
+                               Record& record) const override;
 };
 }// namespace NES::Runtime::Execution::Operators
 

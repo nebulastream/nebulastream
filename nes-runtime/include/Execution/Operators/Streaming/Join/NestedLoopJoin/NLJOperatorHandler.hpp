@@ -47,7 +47,9 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
 
     StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
 
-    void emitSliceIdsToProbe(StreamSlice& sliceLeft, StreamSlice& sliceRight, const WindowInfo& windowInfo,
+    void emitSliceIdsToProbe(StreamSlice& sliceLeft,
+                             StreamSlice& sliceRight,
+                             const WindowInfo& windowInfo,
                              PipelineExecutionContext* pipelineCtx) override;
 
   protected:
@@ -64,7 +66,5 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
  */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, uint64_t workerId, uint64_t joinBuildSideInt);
 
-
-
-}; // namespace NES::Runtime::Execution::Operators
+};    // namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

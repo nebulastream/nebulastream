@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Common.hpp>
 
@@ -234,12 +234,12 @@ TEST_F(FixedPageTest, bloomFilterCheckTest) {
     auto dataPtr = reinterpret_cast<uint8_t*>(allocator->allocate(pageSize));
     FixedPage fixedPage(dataPtr, sizeOfRecord, pageSize);
 
-    for (uint64_t i = 0; i < (pageSize / sizeOfRecord) ; ++i) {
+    for (uint64_t i = 0; i < (pageSize / sizeOfRecord); ++i) {
         uint64_t hash = Util::murmurHash(i);
         fixedPage.append(hash);
     }
 
-    for (uint64_t i = 0; i < (pageSize / sizeOfRecord) ; ++i) {
+    for (uint64_t i = 0; i < (pageSize / sizeOfRecord); ++i) {
         uint64_t hash = Util::murmurHash(i);
         ASSERT_TRUE(fixedPage.bloomFilterCheck(hash));
     }

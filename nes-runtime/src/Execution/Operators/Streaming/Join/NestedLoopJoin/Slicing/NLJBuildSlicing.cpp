@@ -93,12 +93,10 @@ void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinSt
                                                        localJoinState->sliceReference,
                                                        workerId,
                                                        Value<UInt64>(to_underlying(joinBuildSide)));
-    localJoinState->
-        pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
+    localJoinState->pagedVectorRef = Nautilus::Interface::PagedVectorRef(nljPagedVectorMemRef, entrySize);
     localJoinState->sliceStart =
         Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, localJoinState->sliceReference);
-    localJoinState->sliceEnd =
-        Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
+    localJoinState->sliceEnd = Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
 }
 
 void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const {
@@ -117,8 +115,7 @@ void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const {
     // Getting the current slice start and end
     localJoinState->sliceStart =
         Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, localJoinState->sliceReference);
-    localJoinState->sliceEnd =
-        Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
+    localJoinState->sliceEnd = Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
 
     // Storing the local state
     ctx.setLocalOperatorState(this, std::move(localJoinState));
@@ -132,6 +129,12 @@ NLJBuildSlicing::NLJBuildSlicing(const uint64_t operatorHandlerIndex,
                                  TimeFunctionPtr timeFunction,
                                  QueryCompilation::StreamJoinStrategy joinStrategy,
                                  QueryCompilation::WindowingStrategy windowingStrategy)
-    : StreamJoinBuild(operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction),
-                      joinStrategy, windowingStrategy) {}
-} // namespace NES::Runtime::Execution::Operators
+    : StreamJoinBuild(operatorHandlerIndex,
+                      schema,
+                      joinFieldName,
+                      joinBuildSide,
+                      entrySize,
+                      std::move(timeFunction),
+                      joinStrategy,
+                      windowingStrategy) {}
+}// namespace NES::Runtime::Execution::Operators

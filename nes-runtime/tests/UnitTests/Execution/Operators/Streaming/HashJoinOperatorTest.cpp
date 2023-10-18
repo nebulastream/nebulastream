@@ -19,8 +19,8 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
@@ -236,18 +236,17 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
     auto inputOriginIds = std::vector<::OriginId>({1, 2});
     OriginId outputOriginId = 3;
-    auto hashJoinOpHandler =
-        Operators::HJOperatorHandlerSlicing::create(inputOriginIds,
-                                                    outputOriginId,
-                                                    hashJoinProbeHelper.windowSize,
-                                                    hashJoinProbeHelper.windowSize,
-                                                    hashJoinProbeHelper.leftSchema->getSchemaSizeInBytes(),
-                                                    hashJoinProbeHelper.rightSchema->getSchemaSizeInBytes(),
-                                                    QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                    hashJoinProbeHelper.joinSizeInByte,
-                                                    hashJoinProbeHelper.preAllocPageCnt,
-                                                    hashJoinProbeHelper.pageSize,
-                                                    hashJoinProbeHelper.numPartitions);
+    auto hashJoinOpHandler = Operators::HJOperatorHandlerSlicing::create(inputOriginIds,
+                                                                         outputOriginId,
+                                                                         hashJoinProbeHelper.windowSize,
+                                                                         hashJoinProbeHelper.windowSize,
+                                                                         hashJoinProbeHelper.leftSchema->getSchemaSizeInBytes(),
+                                                                         hashJoinProbeHelper.rightSchema->getSchemaSizeInBytes(),
+                                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+                                                                         hashJoinProbeHelper.joinSizeInByte,
+                                                                         hashJoinProbeHelper.preAllocPageCnt,
+                                                                         hashJoinProbeHelper.pageSize,
+                                                                         hashJoinProbeHelper.numPartitions);
 
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -289,7 +288,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING);
 
-    Operators::JoinSchema joinSchema(hashJoinProbeHelper.leftSchema, hashJoinProbeHelper.rightSchema,
+    Operators::JoinSchema joinSchema(hashJoinProbeHelper.leftSchema,
+                                     hashJoinProbeHelper.rightSchema,
                                      Util::createJoinSchema(hashJoinProbeHelper.leftSchema,
                                                             hashJoinProbeHelper.rightSchema,
                                                             hashJoinProbeHelper.joinFieldNameLeft));
@@ -389,7 +389,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         executionContext.setCurrentTs(rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight).as<UInt64>());
         executionContext.setOrigin(inputOriginIds[1]);
         executionContext.setSequenceNumber(uint64_t(i + 1));
-        NES_DEBUG("trigger right with ts={}", rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight)->toString());
+        NES_DEBUG("trigger right with ts={}",
+                  rightRecords[i][size - 1].read(hashJoinProbeHelper.timeStampFieldRight)->toString());
         hashJoinBuildRight->close(executionContext, recordBufferRight);
     }
 
@@ -694,8 +695,14 @@ TEST_F(HashJoinOperatorTest, joinProbeTestMultipleBuckets) {
 
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    HashJoinProbeHelper
-        hashJoinProbeHelper("left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+    HashJoinProbeHelper hashJoinProbeHelper("left$f2_left",
+                                            "right$f2_right",
+                                            bm,
+                                            leftSchema,
+                                            rightSchema,
+                                            "left$timestamp",
+                                            "right$timestamp",
+                                            this);
     hashJoinProbeHelper.windowSize = 10;
 
     ASSERT_TRUE(hashJoinProbeAndCheck(hashJoinProbeHelper));

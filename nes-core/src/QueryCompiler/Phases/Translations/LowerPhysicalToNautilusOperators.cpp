@@ -55,12 +55,12 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
@@ -74,6 +74,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
@@ -81,7 +82,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
@@ -356,26 +356,28 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             case StreamJoinStrategy::HASH_JOIN_LOCAL:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
-                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::HJProbe>(handlerIndex,
-                                                                                             probeOperator->getJoinSchema(),
-                                                                                             probeOperator->getJoinFieldNameLeft(),
-                                                                                             probeOperator->getJoinFieldNameRight(),
-                                                                                             probeOperator->getWindowMetaData(),
-                                                                                             probeOperator->getJoinStrategy(),
-                                                                                             probeOperator->getWindowingStrategy());
+                joinProbeNautilus =
+                    std::make_shared<Runtime::Execution::Operators::HJProbe>(handlerIndex,
+                                                                             probeOperator->getJoinSchema(),
+                                                                             probeOperator->getJoinFieldNameLeft(),
+                                                                             probeOperator->getJoinFieldNameRight(),
+                                                                             probeOperator->getWindowMetaData(),
+                                                                             probeOperator->getJoinStrategy(),
+                                                                             probeOperator->getWindowingStrategy());
                 break;
             case StreamJoinStrategy::NESTED_LOOP_JOIN:
                 const auto leftEntrySize = probeOperator->getLeftInputSchema()->getSchemaSizeInBytes();
                 const auto rightEntrySize = probeOperator->getRightInputSchema()->getSchemaSizeInBytes();
-                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
-                                                                                              probeOperator->getJoinSchema(),
-                                                                                              probeOperator->getJoinFieldNameLeft(),
-                                                                                              probeOperator->getJoinFieldNameRight(),
-                                                                                              probeOperator->getWindowMetaData(),
-                                                                                              leftEntrySize,
-                                                                                              rightEntrySize,
-                                                                                              probeOperator->getJoinStrategy(),
-                                                                                              probeOperator->getWindowingStrategy());
+                joinProbeNautilus =
+                    std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
+                                                                              probeOperator->getJoinSchema(),
+                                                                              probeOperator->getJoinFieldNameLeft(),
+                                                                              probeOperator->getJoinFieldNameRight(),
+                                                                              probeOperator->getWindowMetaData(),
+                                                                              leftEntrySize,
+                                                                              rightEntrySize,
+                                                                              probeOperator->getJoinStrategy(),
+                                                                              probeOperator->getWindowingStrategy());
                 break;
         }
         pipeline.setRootOperator(joinProbeNautilus);
@@ -394,7 +396,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         auto timeStampFieldRecord =
             std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(buildOperator->getTimeStampFieldName());
-        Operators::TimeFunctionPtr timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
+        Operators::TimeFunctionPtr timeFunction =
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(timeStampFieldRecord);
         if (buildOperator->getTimeStampFieldName() == "IngestionTime") {
             timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
         }
@@ -407,10 +410,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                 switch (buildOperator->getWindowingStrategy()) {
                     case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
                     case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction)); break;
+                        joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
+                        break;
                     case WindowingStrategy::BUCKETING:
-                        joinBuildNautilus = lowerHJBucketing(buildOperator, handlerIndex, std::move(timeFunction),
-                                                             windowSize, windowSlide); break;
+                        joinBuildNautilus =
+                            lowerHJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
+                        break;
                 }
                 break;
             };
@@ -418,10 +423,12 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                 switch (buildOperator->getWindowingStrategy()) {
                     case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
                     case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction)); break;
+                        joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
+                        break;
                     case WindowingStrategy::BUCKETING:
-                        joinBuildNautilus = lowerNLJBucketing(buildOperator, handlerIndex, std::move(timeFunction),
-                                                              windowSize, windowSlide); break;
+                        joinBuildNautilus =
+                            lowerNLJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
+                        break;
                 }
                 break;
             };
@@ -447,14 +454,15 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
     uint64_t operatorHandlerIndex,
     Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
-    return std::make_shared<Runtime::Execution::Operators::NLJBuildSlicing>(operatorHandlerIndex,
-                                                                            buildOperator->getInputSchema(),
-                                                                            buildOperator->getJoinFieldName(),
-                                                                            buildOperator->getBuildSide(),
-                                                                            buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-                                                                            std::move(timeFunction),
-                                                                            buildOperator->getJoinStrategy(),
-                                                                            buildOperator->getWindowingStrategy());
+    return std::make_shared<Runtime::Execution::Operators::NLJBuildSlicing>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy(),
+        buildOperator->getWindowingStrategy());
 }
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJBucketing(
     std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
@@ -462,46 +470,51 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
     uint64_t windowSize,
     uint64_t windowSlide) {
-    return std::make_shared<Runtime::Execution::Operators::NLJBuildBucketing>(operatorHandlerIndex,
-                                                                              buildOperator->getInputSchema(),
-                                                                              buildOperator->getJoinFieldName(),
-                                                                              buildOperator->getBuildSide(),
-                                                                              buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-                                                                              std::move(timeFunction),
-                                                                              buildOperator->getJoinStrategy(),
-                                                                              buildOperator->getWindowingStrategy(),
-                                                                              windowSize,
-                                                                              windowSlide);
+    return std::make_shared<Runtime::Execution::Operators::NLJBuildBucketing>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy(),
+        buildOperator->getWindowingStrategy(),
+        windowSize,
+        windowSlide);
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJSlicing(
     std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
-    uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
-    return std::make_shared<Runtime::Execution::Operators::HJBuildSlicing>(operatorHandlerIndex,
-                                                                           buildOperator->getInputSchema(),
-                                                                           buildOperator->getJoinFieldName(),
-                                                                           buildOperator->getBuildSide(),
-                                                                           buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-                                                                           std::move(timeFunction),
-                                                                           buildOperator->getJoinStrategy(),
-                                                                           buildOperator->getWindowingStrategy());
+    uint64_t operatorHandlerIndex,
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
+    return std::make_shared<Runtime::Execution::Operators::HJBuildSlicing>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy(),
+        buildOperator->getWindowingStrategy());
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJBucketing(
     std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
-    uint64_t operatorHandlerIndex, Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+    uint64_t operatorHandlerIndex,
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
     uint64_t windowSize,
     uint64_t windowSlide) {
-    return std::make_shared<Runtime::Execution::Operators::HJBuildBucketing>(operatorHandlerIndex,
-                                                                             buildOperator->getInputSchema(),
-                                                                             buildOperator->getJoinFieldName(),
-                                                                             buildOperator->getBuildSide(),
-                                                                             buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-                                                                             std::move(timeFunction),
-                                                                             buildOperator->getJoinStrategy(),
-                                                                             buildOperator->getWindowingStrategy(),
-                                                                             windowSize,
-                                                                             windowSlide);
+    return std::make_shared<Runtime::Execution::Operators::HJBuildBucketing>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy(),
+        buildOperator->getWindowingStrategy(),
+        windowSize,
+        windowSlide);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerKeyedSlidingWindowSinkOperator(

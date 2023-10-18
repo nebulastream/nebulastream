@@ -40,7 +40,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr & operatorHandler,
+                                      const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       const JoinBuildSideType buildSide,
                                       const std::string& timeStampFieldName,
                                       const std::string& joinFieldName,
@@ -78,14 +78,14 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
      * @param joinFieldName
      */
     explicit PhysicalStreamJoinBuildOperator(const OperatorId id,
-                                           const SchemaPtr& inputSchema,
-                                           const SchemaPtr& outputSchema,
-                                           const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                           const JoinBuildSideType buildSide,
-                                           const std::string& timeStampFieldName,
-                                           const std::string& joinFieldName,
-                                           QueryCompilation::StreamJoinStrategy joinStrategy,
-                                           QueryCompilation::WindowingStrategy windowingStrategy);
+                                             const SchemaPtr& inputSchema,
+                                             const SchemaPtr& outputSchema,
+                                             const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
+                                             const JoinBuildSideType buildSide,
+                                             const std::string& timeStampFieldName,
+                                             const std::string& joinFieldName,
+                                             QueryCompilation::StreamJoinStrategy joinStrategy,
+                                             QueryCompilation::WindowingStrategy windowingStrategy);
 
     /**
      * @brief Deconstructor
@@ -127,5 +127,5 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator,
     std::string joinFieldName;
     JoinBuildSideType buildSide;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators
 #endif//NES_NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINBUILDOPERATOR_HPP_

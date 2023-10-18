@@ -30,9 +30,8 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class KeyedSlidingWindowQueryExecutionTest
-    : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<QueryCompilation::WindowingStrategy> {
+class KeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
+                                             public ::testing::WithParamInterface<QueryCompilation::WindowingStrategy> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("KeyedSlidingWindowQueryExecutionTest.cpp.log", NES::LogLevel::LOG_DEBUG);

@@ -25,7 +25,6 @@ void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(uint64_t numbe
     for (auto i = 0_u64; i < numberOfWorkerThreads; ++i) {
         windowsToFill.emplace_back(std::vector<StreamSlice*>());
     }
-
 }
 
 std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t ts, uint64_t workerId) {

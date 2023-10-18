@@ -49,8 +49,12 @@ void NLJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill,
                                               Value<UInt64>& curIndex,
                                               Value<UInt64>& workerId,
                                               Record& record) const {
-    auto curPagedVectorRef = Nautilus::FunctionCall("getPagedVectorRefProxy", getPagedVectorRefProxy, allWindowsToFill,
-                                                    curIndex, workerId, Value<UInt64>(to_underlying(joinBuildSide)));
+    auto curPagedVectorRef = Nautilus::FunctionCall("getPagedVectorRefProxy",
+                                                    getPagedVectorRefProxy,
+                                                    allWindowsToFill,
+                                                    curIndex,
+                                                    workerId,
+                                                    Value<UInt64>(to_underlying(joinBuildSide)));
     auto pagedVectorRef = Nautilus::Interface::PagedVectorRef(curPagedVectorRef, entrySize);
 
     // Get the memRef to the new entry
@@ -77,8 +81,15 @@ NLJBuildBucketing::NLJBuildBucketing(const uint64_t operatorHandlerIndex,
                                      QueryCompilation::WindowingStrategy windowingStrategy,
                                      const uint64_t windowSize,
                                      const uint64_t windowSlide)
-    : StreamJoinBuildBucketing(operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction),
-                               joinStrategy, windowingStrategy, windowSize, windowSlide) {}
-
+    : StreamJoinBuildBucketing(operatorHandlerIndex,
+                               schema,
+                               joinFieldName,
+                               joinBuildSide,
+                               entrySize,
+                               std::move(timeFunction),
+                               joinStrategy,
+                               windowingStrategy,
+                               windowSize,
+                               windowSlide) {}
 
 }// namespace NES::Runtime::Execution::Operators

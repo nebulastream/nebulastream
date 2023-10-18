@@ -19,13 +19,12 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/OperatorState.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
 #include <utility>
-
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -49,8 +48,8 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
      */
     StreamJoinProbe(const uint64_t operatorHandlerIndex,
                     const JoinSchema& joinSchema,
-                    std::string  joinFieldNameLeft,
-                    std::string  joinFieldNameRight,
+                    std::string joinFieldNameLeft,
+                    std::string joinFieldNameRight,
                     const WindowMetaData& windowMetaData,
                     QueryCompilation::StreamJoinStrategy joinStrategy,
                     QueryCompilation::WindowingStrategy windowingStrategy,
@@ -71,8 +70,11 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
      * @param windowStart
      * @param windowEnd
      */
-    void createJoinedRecord(Record& joinedRecord, Record& leftRecord, Record& rightRecord,
-                            const Value<UInt64>& windowStart, const Value<UInt64>& windowEnd) const;
+    void createJoinedRecord(Record& joinedRecord,
+                            Record& leftRecord,
+                            Record& rightRecord,
+                            const Value<UInt64>& windowStart,
+                            const Value<UInt64>& windowEnd) const;
 
   protected:
     const uint64_t operatorHandlerIndex;

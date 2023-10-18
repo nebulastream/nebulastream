@@ -54,13 +54,13 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
      * @return NLJOperatorHandlerPtr
      */
     static NLJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
-                              const OriginId outputOriginId,
-                              const uint64_t windowSize,
-                              const uint64_t windowSlide,
-                              const uint64_t sizeOfRecordLeft,
-                              const uint64_t sizeOfRecordRight,
-                              const uint64_t pageSizeLeft,
-                              const uint64_t pageSizeRight);
+                                        const OriginId outputOriginId,
+                                        const uint64_t windowSize,
+                                        const uint64_t windowSlide,
+                                        const uint64_t sizeOfRecordLeft,
+                                        const uint64_t sizeOfRecordRight,
+                                        const uint64_t pageSizeLeft,
+                                        const uint64_t pageSizeRight);
 
     ~NLJOperatorHandlerSlicing() override = default;
 };

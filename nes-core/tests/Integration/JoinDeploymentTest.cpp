@@ -34,8 +34,8 @@ static SchemaPtr createValueIdTimeStamp() {
 }
 
 class JoinDeploymentTest : public Testing::BaseIntegrationTest,
-                           public ::testing::WithParamInterface<std::tuple<QueryCompilation::StreamJoinStrategy,
-                                                                           QueryCompilation::WindowingStrategy>> {
+                           public ::testing::WithParamInterface<
+                               std::tuple<QueryCompilation::StreamJoinStrategy, QueryCompilation::WindowingStrategy>> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("JoinDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
@@ -362,12 +362,11 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
     runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
 }
 
-INSTANTIATE_TEST_CASE_P(
-    testJoinQueries,
-    JoinDeploymentTest,
-    JOIN_STRATEGIES_WINDOW_STRATEGIES,
-    [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
-        return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_" +
-               std::string(magic_enum::enum_name(std::get<1>(info.param)));
-    });
+INSTANTIATE_TEST_CASE_P(testJoinQueries,
+                        JoinDeploymentTest,
+                        JOIN_STRATEGIES_WINDOW_STRATEGIES,
+                        [](const testing::TestParamInfo<JoinDeploymentTest::ParamType>& info) {
+                            return std::string(magic_enum::enum_name(std::get<0>(info.param))) + "_"
+                                + std::string(magic_enum::enum_name(std::get<1>(info.param)));
+                        });
 }// namespace NES::Runtime::Execution

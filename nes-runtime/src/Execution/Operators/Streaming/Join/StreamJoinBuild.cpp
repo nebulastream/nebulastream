@@ -59,7 +59,10 @@ void triggerAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx, uint64_t j
     opHandler->triggerAllSlices(pipelineCtx);
 }
 
-void setNumberOfWorkerThreadsProxy(void* ptrOpHandler, void* ptrPipelineContext, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+void setNumberOfWorkerThreadsProxy(void* ptrOpHandler,
+                                   void* ptrPipelineContext,
+                                   uint64_t joinStrategyInt,
+                                   uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineContext != nullptr, "pipeline context should not be null!");
 
@@ -112,9 +115,7 @@ StreamJoinBuild::StreamJoinBuild(const uint64_t operatorHandlerIndex,
                                  TimeFunctionPtr timeFunction,
                                  QueryCompilation::StreamJoinStrategy joinStrategy,
                                  QueryCompilation::WindowingStrategy windowingStrategy)
-    : StreamJoinOperator(joinStrategy, windowingStrategy),
-      operatorHandlerIndex(operatorHandlerIndex), schema(schema), joinFieldName(joinFieldName), joinBuildSide(joinBuildSide),
-      entrySize(entrySize), timeFunction(std::move(timeFunction)) {}
+    : StreamJoinOperator(joinStrategy, windowingStrategy), operatorHandlerIndex(operatorHandlerIndex), schema(schema),
+      joinFieldName(joinFieldName), joinBuildSide(joinBuildSide), entrySize(entrySize), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators
-

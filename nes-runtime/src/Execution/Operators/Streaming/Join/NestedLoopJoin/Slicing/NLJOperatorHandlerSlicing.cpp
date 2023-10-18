@@ -33,13 +33,13 @@ NLJOperatorHandlerSlicing::NLJOperatorHandlerSlicing(const std::vector<OriginId>
                          pageSizeLeft,
                          pageSizeRight) {}
 NLJOperatorHandlerPtr NLJOperatorHandlerSlicing::create(const std::vector<OriginId>& inputOrigins,
-                                                     const OriginId outputOriginId,
-                                                     const uint64_t windowSize,
-                                                     const uint64_t windowSlide,
-                                                     const uint64_t sizeOfRecordLeft,
-                                                     const uint64_t sizeOfRecordRight,
-                                                     const uint64_t pageSizeLeft,
-                                                     const uint64_t pageSizeRight) {
+                                                        const OriginId outputOriginId,
+                                                        const uint64_t windowSize,
+                                                        const uint64_t windowSlide,
+                                                        const uint64_t sizeOfRecordLeft,
+                                                        const uint64_t sizeOfRecordRight,
+                                                        const uint64_t pageSizeLeft,
+                                                        const uint64_t pageSizeRight) {
     return std::make_shared<NLJOperatorHandlerSlicing>(inputOrigins,
                                                        outputOriginId,
                                                        windowSize,

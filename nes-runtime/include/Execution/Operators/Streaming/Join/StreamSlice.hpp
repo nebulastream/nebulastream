@@ -27,7 +27,6 @@ namespace NES::Runtime::Execution {
  */
 class StreamSlice {
   public:
-
     /**
      * @brief Constructor for creating a slice
      * @param sliceStart: Start timestamp of this slice

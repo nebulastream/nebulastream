@@ -28,8 +28,12 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief Deletes all slices that are not valid anymore
  */
-void deleteAllSlicesProxy(void* ptrOpHandler, uint64_t watermarkTs, uint64_t sequenceNumber, OriginId originId,
-                          uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+void deleteAllSlicesProxy(void* ptrOpHandler,
+                          uint64_t watermarkTs,
+                          uint64_t sequenceNumber,
+                          OriginId originId,
+                          uint64_t joinStrategyInt,
+                          uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
     BufferMetaData bufferMetaData(watermarkTs, sequenceNumber, originId);
@@ -54,8 +58,11 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
     Operator::close(ctx, recordBuffer);
 }
 
-void StreamJoinProbe::createJoinedRecord(Record& joinedRecord, Record& leftRecord, Record& rightRecord,
-                                         const Value<UInt64>& windowStart, const Value<UInt64>& windowEnd) const {
+void StreamJoinProbe::createJoinedRecord(Record& joinedRecord,
+                                         Record& leftRecord,
+                                         Record& rightRecord,
+                                         const Value<UInt64>& windowStart,
+                                         const Value<UInt64>& windowEnd) const {
     // Writing the window start, end, and key field
     joinedRecord.write(windowMetaData.windowStartFieldName, windowStart);
     joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd);
@@ -74,16 +81,14 @@ void StreamJoinProbe::createJoinedRecord(Record& joinedRecord, Record& leftRecor
 
 StreamJoinProbe::StreamJoinProbe(const uint64_t operatorHandlerIndex,
                                  const JoinSchema& joinSchema,
-                                 std::string  joinFieldNameLeft,
-                                 std::string  joinFieldNameRight,
+                                 std::string joinFieldNameLeft,
+                                 std::string joinFieldNameRight,
                                  const WindowMetaData& windowMetaData,
                                  QueryCompilation::StreamJoinStrategy joinStrategy,
                                  QueryCompilation::WindowingStrategy windowingStrategy,
                                  bool withDeletion)
-    : StreamJoinOperator(joinStrategy, windowingStrategy),
-      operatorHandlerIndex(operatorHandlerIndex), joinSchema(joinSchema),
-      withDeletion(withDeletion), joinFieldNameLeft(std::move(joinFieldNameLeft)), joinFieldNameRight(std::move(joinFieldNameRight)),
-      windowMetaData(windowMetaData) {
-}
+    : StreamJoinOperator(joinStrategy, windowingStrategy), operatorHandlerIndex(operatorHandlerIndex), joinSchema(joinSchema),
+      withDeletion(withDeletion), joinFieldNameLeft(std::move(joinFieldNameLeft)),
+      joinFieldNameRight(std::move(joinFieldNameRight)), windowMetaData(windowMetaData) {}
 
 }// namespace NES::Runtime::Execution::Operators

@@ -14,7 +14,6 @@
 
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
 
-
 namespace NES::Runtime::Execution::Operators {
 
 HJOperatorHandlerBucketing::HJOperatorHandlerBucketing(const std::vector<OriginId>& inputOrigins,

@@ -36,7 +36,6 @@ using RLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::RLockedPtr
  */
 class StreamJoinOperatorHandler : public virtual OperatorHandler {
   public:
-
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
      * @param inputOrigins
@@ -55,9 +54,9 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
 
     ~StreamJoinOperatorHandler() override = default;
 
-
-
-    void start(PipelineExecutionContextPtr pipelineExecutionContext, StateManagerPtr stateManager, uint32_t localStateVariableId) override;
+    void start(PipelineExecutionContextPtr pipelineExecutionContext,
+               StateManagerPtr stateManager,
+               uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
@@ -123,7 +122,9 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @param windowInfo
      * @param pipelineCtx
      */
-    virtual void emitSliceIdsToProbe(StreamSlice& sliceLeft, StreamSlice& sliceRight, const WindowInfo& windowInfo,
+    virtual void emitSliceIdsToProbe(StreamSlice& sliceLeft,
+                                     StreamSlice& sliceRight,
+                                     const WindowInfo& windowInfo,
                                      PipelineExecutionContext* pipelineCtx) = 0;
 
     /**

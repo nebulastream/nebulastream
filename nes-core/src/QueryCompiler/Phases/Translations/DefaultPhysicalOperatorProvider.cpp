@@ -343,8 +343,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
     const auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
     const auto& windowSize = windowType->getSize().getTime();
     const auto& windowSlide = windowType->getSlide().getTime();
-    NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW ||
-               windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW,
+    NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
+                   || windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW,
                "Only a tumbling or sliding window is currently supported for StreamJoin");
 
     const auto [timeStampFieldNameLeft, timeStampFieldNameRight] = getTimestampLeftAndRight(joinOperator, windowType);
@@ -425,22 +425,22 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
     Operators::NLJOperatorHandlerPtr joinOperatorHandler;
     if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
         return Operators::NLJOperatorHandlerSlicing::create(joinOperator->getAllInputOriginIds(),
-                                                         joinOperator->getOutputOriginIds()[0],
-                                                         streamJoinConfig.windowSize,
-                                                         streamJoinConfig.windowSlide,
-                                                  joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                  joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
-                                                  Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                                  Nautilus::Interface::PagedVector::PAGE_SIZE);
+                                                            joinOperator->getOutputOriginIds()[0],
+                                                            streamJoinConfig.windowSize,
+                                                            streamJoinConfig.windowSlide,
+                                                            joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                            joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                            Nautilus::Interface::PagedVector::PAGE_SIZE,
+                                                            Nautilus::Interface::PagedVector::PAGE_SIZE);
     } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::NLJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
-                                                                             joinOperator->getOutputOriginIds()[0],
-                                                                             streamJoinConfig.windowSize,
-                                                                             streamJoinConfig.windowSlide,
-                                                                             joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                                             joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
-                                                                             Nautilus::Interface::PagedVector::PAGE_SIZE,
-                                                                             Nautilus::Interface::PagedVector::PAGE_SIZE);
+                                                              joinOperator->getOutputOriginIds()[0],
+                                                              streamJoinConfig.windowSize,
+                                                              streamJoinConfig.windowSlide,
+                                                              joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                              joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                              Nautilus::Interface::PagedVector::PAGE_SIZE,
+                                                              Nautilus::Interface::PagedVector::PAGE_SIZE);
     } else {
         NES_NOT_IMPLEMENTED();
     }
@@ -454,28 +454,28 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
     Operators::HJOperatorHandlerPtr joinOperatorHandler;
     if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
         return Operators::HJOperatorHandlerSlicing::create(joinOperator->getAllInputOriginIds(),
-                                                        joinOperator->getOutputOriginIds()[0],
-                                                        streamJoinConfig.windowSize,
-                                                        streamJoinConfig.windowSlide,
-                                                        joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                        joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
-                                                        streamJoinConfig.joinStrategy,
-                                                        options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-                                                        options->getHashJoinOptions()->getPreAllocPageCnt(),
-                                                        options->getHashJoinOptions()->getPageSize(),
-                                                        options->getHashJoinOptions()->getNumberOfPartitions());
+                                                           joinOperator->getOutputOriginIds()[0],
+                                                           streamJoinConfig.windowSize,
+                                                           streamJoinConfig.windowSlide,
+                                                           joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                           joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                           streamJoinConfig.joinStrategy,
+                                                           options->getHashJoinOptions()->getTotalSizeForDataStructures(),
+                                                           options->getHashJoinOptions()->getPreAllocPageCnt(),
+                                                           options->getHashJoinOptions()->getPageSize(),
+                                                           options->getHashJoinOptions()->getNumberOfPartitions());
     } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::HJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
-                                                                            joinOperator->getOutputOriginIds()[0],
-                                                                            streamJoinConfig.windowSize,
-                                                                            streamJoinConfig.windowSlide,
-                                                                            joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
-                                                                            joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
-                                                                            streamJoinConfig.joinStrategy,
-                                                                            options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-                                                                            options->getHashJoinOptions()->getPreAllocPageCnt(),
-                                                                            options->getHashJoinOptions()->getPageSize(),
-                                                                            options->getHashJoinOptions()->getNumberOfPartitions());
+                                                             joinOperator->getOutputOriginIds()[0],
+                                                             streamJoinConfig.windowSize,
+                                                             streamJoinConfig.windowSlide,
+                                                             joinOperator->getLeftInputSchema()->getSchemaSizeInBytes(),
+                                                             joinOperator->getRightInputSchema()->getSchemaSizeInBytes(),
+                                                             streamJoinConfig.joinStrategy,
+                                                             options->getHashJoinOptions()->getTotalSizeForDataStructures(),
+                                                             options->getHashJoinOptions()->getPreAllocPageCnt(),
+                                                             options->getHashJoinOptions()->getPageSize(),
+                                                             options->getHashJoinOptions()->getNumberOfPartitions());
     } else {
         NES_NOT_IMPLEMENTED();
     }

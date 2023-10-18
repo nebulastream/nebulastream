@@ -34,20 +34,20 @@ NLJOperatorHandlerBucketing::NLJOperatorHandlerBucketing(const std::vector<Origi
                          pageSizeRight) {}
 
 NLJOperatorHandlerPtr NLJOperatorHandlerBucketing::create(const std::vector<OriginId>& inputOrigins,
-                                                       const OriginId outputOriginId,
-                                                       const uint64_t windowSize,
-                                                       const uint64_t windowSlide,
-                                                       uint64_t sizeOfRecordLeft,
-                                                       uint64_t sizeOfRecordRight,
-                                                       const uint64_t pageSizeLeft,
-                                                       const uint64_t pageSizeRight) {
+                                                          const OriginId outputOriginId,
+                                                          const uint64_t windowSize,
+                                                          const uint64_t windowSlide,
+                                                          uint64_t sizeOfRecordLeft,
+                                                          uint64_t sizeOfRecordRight,
+                                                          const uint64_t pageSizeLeft,
+                                                          const uint64_t pageSizeRight) {
     return std::make_shared<NLJOperatorHandlerBucketing>(inputOrigins,
-                                                       outputOriginId,
-                                                       windowSize,
-                                                       windowSlide,
-                                                       sizeOfRecordLeft,
-                                                       sizeOfRecordRight,
-                                                       pageSizeLeft,
-                                                       pageSizeRight);
+                                                         outputOriginId,
+                                                         windowSize,
+                                                         windowSlide,
+                                                         sizeOfRecordLeft,
+                                                         sizeOfRecordRight,
+                                                         pageSizeLeft,
+                                                         pageSizeRight);
 }
 }// namespace NES::Runtime::Execution::Operators

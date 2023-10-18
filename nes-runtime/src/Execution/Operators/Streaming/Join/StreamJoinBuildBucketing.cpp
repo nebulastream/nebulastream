@@ -19,7 +19,10 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getAllWindowsToFillProxy(void* ptrOpHandler, uint64_t ts, uint64_t workerId, uint64_t joinStrategyInt,
+void* getAllWindowsToFillProxy(void* ptrOpHandler,
+                               uint64_t ts,
+                               uint64_t workerId,
+                               uint64_t joinStrategyInt,
                                uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler<StreamJoinOperatorHandlerBucketing>(ptrOpHandler,
@@ -45,7 +48,11 @@ uint64_t calcNumWindowsProxy(uint64_t ts, uint64_t windowSize, uint64_t windowSl
 }
 
 Value<UInt64> StreamJoinBuildBucketing::calcNumWindows(Value<UInt64>& ts) const {
-    return Nautilus::FunctionCall("calcNumWindowsProxy", calcNumWindowsProxy, ts, Value<UInt64>(windowSize),Value<UInt64>(windowSlide));
+    return Nautilus::FunctionCall("calcNumWindowsProxy",
+                                  calcNumWindowsProxy,
+                                  ts,
+                                  Value<UInt64>(windowSize),
+                                  Value<UInt64>(windowSlide));
 }
 
 Value<UInt64> StreamJoinBuildBucketing::calcLastStartForTs(Value<UInt64>& ts) const {
@@ -66,7 +73,8 @@ Value<UInt64> StreamJoinBuildBucketing::getMaxWindowStartForTs(Value<UInt64>& ts
     return (lastStart + windowSize).as<UInt64>();
 }
 
-Value<Boolean> StreamJoinBuildBucketing::checkIfLocalStateUpToDate(Value<UInt64>& ts, LocalStateBucketing* localStateBucketing) const {
+Value<Boolean> StreamJoinBuildBucketing::checkIfLocalStateUpToDate(Value<UInt64>& ts,
+                                                                   LocalStateBucketing* localStateBucketing) const {
     Value<UInt64> newMinWindowStart = getMinWindowStartForTs(ts);
     Value<UInt64> newMaxWindowEnd = getMaxWindowStartForTs(ts);
 
@@ -100,13 +108,19 @@ void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) co
     }
 }
 
-void StreamJoinBuildBucketing::updateLocalState(LocalStateBucketing* localStateBucketing, Value<MemRef>& opHandlerMemRef,
-                                                Value<UInt64>& ts, Value<UInt64>& workerId) const {
+void StreamJoinBuildBucketing::updateLocalState(LocalStateBucketing* localStateBucketing,
+                                                Value<MemRef>& opHandlerMemRef,
+                                                Value<UInt64>& ts,
+                                                Value<UInt64>& workerId) const {
     localStateBucketing->numWindowsToFill = calcNumWindows(ts);
-    localStateBucketing->allWindowsToFill = Nautilus::FunctionCall("getAllWindowsToFillProxy", getAllWindowsToFillProxy,
-                                                            opHandlerMemRef, ts, workerId,
-                                                            Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                                                            Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    localStateBucketing->allWindowsToFill =
+        Nautilus::FunctionCall("getAllWindowsToFillProxy",
+                               getAllWindowsToFillProxy,
+                               opHandlerMemRef,
+                               ts,
+                               workerId,
+                               Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                               Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     localStateBucketing->minWindowStart = getMinWindowStartForTs(ts);
     localStateBucketing->maxWindowEnd = getMaxWindowStartForTs(ts);
 }
@@ -131,4 +145,4 @@ StreamJoinBuildBucketing::StreamJoinBuildBucketing(const uint64_t operatorHandle
                       windowingStrategy),
       windowSize(windowSize), windowSlide(windowSlide) {}
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

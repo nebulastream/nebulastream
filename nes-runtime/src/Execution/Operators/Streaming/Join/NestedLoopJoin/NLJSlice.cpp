@@ -97,4 +97,4 @@ void NLJSlice::combinePagedVectors() {
         rightTuples.erase(rightTuples.begin() + 1, rightTuples.end());
     }
 }
-}; // namespace NES::Runtime::Execution
+};// namespace NES::Runtime::Execution
