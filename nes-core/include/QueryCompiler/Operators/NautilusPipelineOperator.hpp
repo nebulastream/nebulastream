@@ -43,7 +43,8 @@ class NautilusPipelineOperator : public UnaryOperatorNode {
     std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
 
   private:
-    NautilusPipelineOperator(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+    NautilusPipelineOperator(OperatorId id,
+                             std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
                              std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
