@@ -66,6 +66,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     using inherited1 = Reconfigurable;
     enum class QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
 
+#ifndef UNIKERNEL_EXPORT
     AbstractQueryManager() = delete;
     AbstractQueryManager(const AbstractQueryManager&) = delete;
     AbstractQueryManager& operator=(const AbstractQueryManager&) = delete;
@@ -83,6 +84,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                   std::vector<uint64_t> workerToCoreMapping = {});
 
     virtual ~AbstractQueryManager() NES_NOEXCEPT(false) override;
+#else
+    /**
+    * @brief
+    * @param bufferManager
+    */
+    explicit AbstractQueryManager() = default;
+    virtual ~AbstractQueryManager() NES_NOEXCEPT(false) = default;
+#endif
 
     /**
     * @brief register a query by extracting sources, windows and sink and add them to
@@ -394,6 +403,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::atomic_uint64_t taskIdCounter = 0;
     std::vector<BufferManagerPtr> bufferManagers;
 
+#ifndef UNIKERNEL_EXPORT
+
     uint16_t numThreads;
 
     HardwareManagerPtr hardwareManager;
@@ -426,6 +437,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     uint64_t numberOfBuffersPerEpoch;
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
+
+#endif
 #endif
 };
 

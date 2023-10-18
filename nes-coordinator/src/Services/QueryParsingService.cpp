@@ -128,6 +128,7 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
     }
 }
 
+#ifndef UNIKERNEL_EXPORT
 QueryPlanPtr QueryParsingService::createPatternFromCodeString(const std::string& queryCodeSnippet) {
     // we hand over all auto-generated files (tokens, lexer, etc.) to ANTLR to create the AST
     if (queryCodeSnippet.empty() || queryCodeSnippet.size() < 15) {
@@ -150,5 +151,6 @@ QueryPlanPtr QueryParsingService::createPatternFromCodeString(const std::string&
         return queryPlan;
     }
 }
+#endif
 
 }// namespace NES

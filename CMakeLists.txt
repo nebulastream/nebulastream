@@ -648,6 +648,10 @@ add_subdirectory(nes-window-types)
 # Add targets for plugins
 add_subdirectory(nes-plugins)
 
+add_subdirectory(nes-unikernel-export)
+add_subdirectory(nes-unikernel-source)
+add_subdirectory(nes-unikernel-sink)
+add_subdirectory(nes-unikernel)
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)

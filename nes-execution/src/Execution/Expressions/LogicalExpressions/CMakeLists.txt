@@ -10,6 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        EqualsExpression.cpp
+        AndExpression.cpp
+        LessThanExpression.cpp
+        GreaterThanExpression.cpp
+        NegateExpression.cpp
+        OrExpression.cpp
+        LessEqualsExpression.cpp
+        GreaterEqualsExpression.cpp
+)
 add_source_files(nes-execution
         EqualsExpression.cpp
         AndExpression.cpp

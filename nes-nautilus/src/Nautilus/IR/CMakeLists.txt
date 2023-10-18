@@ -15,4 +15,5 @@ add_subdirectory(Operations)
 add_subdirectory(Phases)
 add_subdirectory(Types)
 
+add_source_files(unikernel-export IRGraph.cpp)
 add_source_files(nes-nautilus IRGraph.cpp)

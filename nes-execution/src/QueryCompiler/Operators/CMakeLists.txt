@@ -18,5 +18,12 @@ add_source_files(nes-execution
         NautilusPipelineOperator.cpp
 )
 
+add_source_files(unikernel-export
+        OperatorPipeline.cpp
+        PipelineQueryPlan.cpp
+        ExecutableOperator.cpp
+        PipelineQueryPlanIterator.cpp
+        NautilusPipelineOperator.cpp
+)
 add_subdirectory(PhysicalOperators)
 

@@ -45,11 +45,13 @@ class LogicalOperator : public virtual Operator {
   public:
     explicit LogicalOperator(OperatorId id);
 
+#ifndef UNIKERNEL_EXPORT
     /**
      * @brief Get the First Order Logic formula representation by the Z3 expression
      * @param context: the shared pointer to the z3::context
      */
     void inferZ3Signature(const Optimizer::QuerySignatureContext& context);
+#endif
 
     /**
      * @brief Set the Z3 signature for the logical operator

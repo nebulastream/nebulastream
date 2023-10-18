@@ -23,6 +23,7 @@
 namespace NES {
 
 enum class SourceType : uint8_t {
+#ifndef UNIKERNEL_EXPORT
     OPC_SOURCE,
     ZMQ_SOURCE,
     CSV_SOURCE,
@@ -41,7 +42,10 @@ enum class SourceType : uint8_t {
     BENCHMARK_SOURCE,
     STATIC_DATA_SOURCE,
     TCP_SOURCE,
-    ARROW_SOURCE
+    ARROW_SOURCE,
+#else
+    NOOP_SOURCE
+#endif//UNIKERNEL_EXPORT
 };
 
 class PhysicalSourceType;

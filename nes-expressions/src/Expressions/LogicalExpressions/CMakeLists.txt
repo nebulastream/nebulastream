@@ -10,6 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        LogicalBinaryExpressionNode.cpp
+        LessEqualsExpressionNode.cpp
+        LessExpressionNode.cpp
+        GreaterExpressionNode.cpp
+        GreaterEqualsExpressionNode.cpp
+        EqualsExpressionNode.cpp
+        AndExpressionNode.cpp
+        OrExpressionNode.cpp
+        LogicalUnaryExpressionNode.cpp
+        NegateExpressionNode.cpp
+)
 add_source_files(nes-expressions
         LogicalBinaryExpressionNode.cpp
         LessEqualsExpressionNode.cpp

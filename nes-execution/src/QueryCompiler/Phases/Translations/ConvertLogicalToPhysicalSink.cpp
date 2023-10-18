@@ -41,6 +41,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     NES_DEBUG("Convert sink  {}", operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");
     NES_ASSERT(pipelineQueryPlan, "Invalid query sub-plan");
+#ifndef UNIKERNEL_EXPORT
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
@@ -51,7 +52,9 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                   numOfProducers,
                                   std::cout,
                                   printSinkDescriptor->getNumberOfOrigins());
-    } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
+    }
+#endif
+    if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink {}", schema->toString());
         return createNullOutputSink(pipelineQueryPlan->getQueryId(),
@@ -59,6 +62,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     nodeEngine,
                                     numOfProducers,
                                     nullOutputSinkDescriptor->getNumberOfOrigins());
+#ifndef UNIKERNEL_EXPORT
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
@@ -194,6 +198,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    statisticSinkDescriptor->getNumberOfOrigins(),
                                    statisticSinkDescriptor->getSinkFormatType(),
                                    statisticSinkDescriptor->getSinkDataCodec());
+#endif
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

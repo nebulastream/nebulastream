@@ -40,6 +40,7 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     return ss.str();
 }
 
+#ifndef UNIKERNEL_EXPORT
 std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -87,6 +88,7 @@ std::string Util::toCSVString(const SchemaPtr& schema) {
     ss << std::endl;
     return ss.str();
 }
+#endif
 
 Runtime::MemoryLayouts::MemoryLayoutPtr Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize) {
     switch (schema->getLayoutType()) {
@@ -125,8 +127,8 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
 
     return true;
 }
-
 #endif// UNIKERNEL_SUPPORT_LIB
+#ifndef UNIKERNEL_EXPORT
 std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::string& csvFile,
                                                                  const SchemaPtr& schema,
                                                                  Runtime::BufferManagerPtr bufferManager,
@@ -186,6 +188,8 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema) {
     }
     return retVector;
 }
+#endif
+
 
 #ifdef WRAP_READ_CALL
 // If NES is build with NES_ENABLES_TESTS the linker is instructed to wrap the read function

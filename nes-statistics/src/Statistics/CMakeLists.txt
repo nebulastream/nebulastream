@@ -12,6 +12,13 @@
 
 add_subdirectory(Synopses)
 
+add_source_files(unikernel-export
+        ShapeExpressionNode.cpp
+        CircleExpressionNode.cpp
+        PointExpressionNode.cpp
+        PolygonExpressionNode.cpp
+        RectangleExpressionNode.cpp
+)
 add_source_files(nes-statistics
         Statistic.cpp
         StatisticValue.cpp

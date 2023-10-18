@@ -45,6 +45,7 @@ class WorkerContext {
     using WorkerContextBufferProvider = WorkerContextBufferProviderPtr::element_type;
     using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
 
+#ifndef UNIKERNEL_EXPORT
     /// the id of this worker context (unique per thread).
     WorkerThreadId workerId;
     /// object reference counters
@@ -66,14 +67,20 @@ class WorkerContext {
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
     std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+#endif
 
   public:
+#ifndef UNIKERNEL_EXPORT
     explicit WorkerContext(WorkerThreadId workerId,
                            const BufferManagerPtr& bufferManager,
                            uint64_t numberOfBuffersPerWorker,
                            uint32_t queueId = 0);
 
     ~WorkerContext();
+#else
+    explicit WorkerContext() = default;
+    ~WorkerContext() = default;
+#endif
 
     /**
      * @brief Allocates a new tuple buffer.

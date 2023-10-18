@@ -14,6 +14,9 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#ifdef UNIKERNEL_EXPORT
+#include <OperatorHandlerTracer.hpp>
+#endif
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -82,6 +85,21 @@ class OperatorHandler
         }
         throw Exceptions::RuntimeException("OperatorHandler:: we performed an invalid cast of operator to type "
                                            + std::string(typeid(OperatorHandlerType).name()));
+    }
+#endif
+#ifdef UNIKERNEL_EXPORT
+    NES::Runtime::Unikernel::OperatorHandlerDescriptor getDescriptor() const { return descriptor.value(); }
+
+  protected:
+    std::optional<NES::Runtime::Unikernel::OperatorHandlerDescriptor> descriptor;
+    template<typename... Args>
+    void trace(std::string&& className, std::string&& headerPath, size_t classSize, size_t alignment, Args&&... args) {
+        this->descriptor.emplace(className,
+                                 headerPath,
+                                 classSize,
+                                 alignment,
+                                 std::vector<Unikernel::OperatorHandlerParameterDescriptor>{
+                                     Unikernel::OperatorHandlerParameterDescriptor::of(std::forward<Args>(args))...});
     }
 #endif
 };

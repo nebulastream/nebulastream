@@ -10,6 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        HashFunction.cpp
+        MurMur3HashFunction.cpp
+        H3Hash.cpp
+)
 add_source_files(nes-nautilus
         HashFunction.cpp
         MurMur3HashFunction.cpp

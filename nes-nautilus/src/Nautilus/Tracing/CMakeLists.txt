@@ -11,6 +11,11 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        ValueRef.cpp
+        TraceContext.cpp
+        TraceUtil.cpp
+)
 add_source_files(nes-nautilus
         ValueRef.cpp
         TraceContext.cpp

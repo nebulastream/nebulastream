@@ -11,6 +11,10 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        Tag.cpp
+        TagRecorder.cpp
+)
 add_source_files(nes-nautilus
         Tag.cpp
         TagRecorder.cpp

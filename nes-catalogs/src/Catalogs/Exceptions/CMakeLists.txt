@@ -10,6 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        InvalidQueryException.cpp
+        InvalidQueryStateException.cpp
+        LogicalSourceNotFoundException.cpp
+        PhysicalSourceNotFoundException.cpp
+        QueryNotFoundException.cpp
+)
 add_source_files(nes-catalogs
         InvalidQueryException.cpp
         InvalidQueryStateException.cpp

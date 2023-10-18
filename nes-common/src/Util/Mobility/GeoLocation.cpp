@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#ifndef UNIKERNEL_EXPORT
 #include <CoordinatorRPCService.pb.h>
+#endif
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
@@ -35,8 +37,10 @@ GeoLocation::GeoLocation(double latitude, double longitude) {
     this->longitude = longitude;
 }
 
+#ifndef UNIKERNEL_EXPORT
 GeoLocation::GeoLocation(const NES::Spatial::Protobuf::GeoLocation& geoLocation)
     : GeoLocation(geoLocation.lat(), geoLocation.lng()) {}
+#endif
 
 GeoLocation GeoLocation::fromString(const std::string& coordinates) {
     if (coordinates.empty()) {

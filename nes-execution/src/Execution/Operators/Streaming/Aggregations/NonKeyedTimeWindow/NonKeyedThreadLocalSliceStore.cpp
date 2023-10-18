@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {

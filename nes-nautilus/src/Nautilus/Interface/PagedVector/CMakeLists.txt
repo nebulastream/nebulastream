@@ -11,6 +11,12 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        PagedVector.cpp
+        PagedVectorRef.cpp
+        PagedVectorVarSized.cpp
+        PagedVectorVarSizedRef.cpp
+)
 add_source_files(nes-nautilus
         PagedVector.cpp
         PagedVectorRef.cpp

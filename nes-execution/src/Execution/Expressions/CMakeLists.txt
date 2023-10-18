@@ -10,6 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        Expression.cpp
+        ReadFieldExpression.cpp
+        WriteFieldExpression.cpp
+        ConstantValueExpression.cpp
+)
 add_source_files(nes-execution
         ReadFieldExpression.cpp
         WriteFieldExpression.cpp

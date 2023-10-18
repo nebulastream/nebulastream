@@ -11,6 +11,10 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        Fixed2DArray.cpp
+        Fixed2DArrayRef.cpp
+)
 add_source_files(nes-nautilus
         Fixed2DArray.cpp
         Fixed2DArrayRef.cpp

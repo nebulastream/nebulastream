@@ -10,6 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        AddScanAndEmitPhase.cpp
+        NautilusCompilationPhase.cpp
+)
 add_source_files(nes-execution
         AddScanAndEmitPhase.cpp
         DefaultPhaseFactory.cpp

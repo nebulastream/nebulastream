@@ -202,4 +202,6 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>
       outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(leftSchema->getSchemaSizeInBytes()),
       sizeOfRecordRight(rightSchema->getSchemaSizeInBytes()), leftSchema(leftSchema), rightSchema(rightSchema) {}
 
+std::string StreamJoinOperatorHandler::toString() const { return "StreamJoinOperatorHandler"; }
+
 }// namespace NES::Runtime::Execution::Operators

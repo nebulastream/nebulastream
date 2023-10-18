@@ -10,6 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(unikernel-export
+        InvalidFieldException.cpp
+        InvalidLogicalOperatorNodeException.cpp
+        InvalidOperatorStateException.cpp
+        SignatureComputationException.cpp
+        TypeInferenceException.cpp
+        UDFException.cpp
+)
 add_source_files(nes-operators
         InvalidLogicalOperatorException.cpp
         InvalidOperatorStateException.cpp

@@ -11,6 +11,11 @@
 # limitations under the License.
 
 
+add_source_files(unikernel-export
+        CastUtils.cpp
+        IRDumpHandler.cpp
+        CompilationOptions.cpp
+)
 add_source_files(nes-nautilus
         CastUtils.cpp
         IRDumpHandler.cpp
