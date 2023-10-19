@@ -76,8 +76,10 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     return nullptr;
                 }
             }
-            NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
-
+            //TODO: Why does this happen?
+            if (!optRecvStatus.has_value()) {
+                continue;
+            }
             auto* recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
 
             if (recvHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
