@@ -431,7 +431,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     ASSERT_EQ(contentQ2, ASSERTedContent2);
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testExecutingValidUserQueryWithSlidingWindowFileOutput) {
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult2.txt";

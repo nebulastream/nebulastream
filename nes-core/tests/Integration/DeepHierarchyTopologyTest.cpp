@@ -59,7 +59,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    std::string query = R"(Query::from("test"))";
+    auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
                            .addLogicalSource("test", testSchema)
