@@ -14,34 +14,33 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Mobility/LocationProviders/LocationProvider.hpp>
+#include <Mobility/LocationProviders/LocationProviderCSV.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Mobility/WorkerMobilityHandler.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include<Util/Mobility/GeoLocation.hpp>
-#include <Util/Mobility/Waypoint.hpp>
-#include <Catalogs/Topology/Index/LocationIndex.hpp>
-#include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
-#include <Mobility/LocationProviders/LocationProviderCSV.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
-#include <Spatial/Mobility/WorkerMobilityHandler.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Util/Experimental/S2Utilities.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/S2Utilities.hpp>
+#include <Util/Mobility/SpatialType.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <gtest/gtest.h>
@@ -69,6 +68,8 @@ class LocationIntegrationTests : public Testing::BaseIntegrationTest {
 
         std::string singleLocationPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv";
         remove(singleLocationPath.c_str());
+        waypoints.clear();
+
         writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
 
 #ifdef S2DEF
@@ -1072,13 +1073,12 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
-    auto stype = CSVSourceType::create();
+    auto stype = CSVSourceType::create("seq", "test_stream");
     stype->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv");
     stype->setNumberOfBuffersToProduce(1000);
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
-    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSourceTypes.add(sequenceSource);
+    wrkConf1->physicalSourceTypes.add(stype);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -1173,13 +1173,12 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 
     wrkConf1->numWorkerThreads.setValue(4);
 
-    auto stype = CSVSourceType::create();
+    auto stype = CSVSourceType::create("seq", "test_stream");
     stype->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv");
     stype->setNumberOfBuffersToProduce(1000);
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
-    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSourceTypes.add(sequenceSource);
+    wrkConf1->physicalSourceTypes.add(stype);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -1353,19 +1352,18 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     }
     ASSERT_TRUE(waitForNodes(5, 61, topology));
     string singleLocStart = "52.55227464714949, 13.351743136322877";
-    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+    crd->getSourceCatalog()->addLogicalSource("seq", Schema::create()->addField(createField("value", BasicType::UINT64)));
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
-    auto stype = CSVSourceType::create();
+    auto stype = CSVSourceType::create("seq", "test_stream");
     stype->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "sequence_long.csv");
     stype->setNumberOfBuffersToProduce(1000);
     stype->setNumberOfTuplesToProducePerBuffer(10);
     stype->setGatheringInterval(1);
-    auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
-    wrkConf1->physicalSourceTypes.add(sequenceSource);
+    wrkConf1->physicalSourceTypes.add(stype);
 
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);

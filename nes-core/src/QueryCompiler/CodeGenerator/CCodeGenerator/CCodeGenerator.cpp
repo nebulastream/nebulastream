@@ -52,7 +52,13 @@
 #endif//TFDEF
 
 #include <API/Expressions/Expressions.hpp>
-#include QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
@@ -63,24 +69,18 @@
 #include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 namespace NES::QueryCompilation {
 CCodeGenerator::CCodeGenerator() {}
@@ -388,11 +388,11 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
  * @return flag if the generation was successful.
  */
 bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
-                                               std::vector<ExpressionItemPtr> inputFields,
-                                               std::vector<ExpressionItemPtr> outputFields) {
+                                               std::vector<ExpressionNodePtr> inputFields,
+                                               std::vector<ExpressionNodePtr> outputFields) {
 
     for (auto f : inputFields) {
-        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto field = f->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
     }
 
@@ -423,7 +423,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     bool firstIter = false;
     std::shared_ptr<DataType> commonStamp;
     for (auto f : inputFields) {
-        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto field = f->as<FieldAccessExpressionNode>();
         if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
             NES_ERROR("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: {}",
                       field->getStamp()->toString());
@@ -463,7 +463,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
         Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
 
     for (auto f : inputFields) {
-        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto field = f->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
         if (commonStamp->isInteger()) {
             auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createInt64(), attrField->getName());
@@ -488,7 +488,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     code->currentCodeInsertionPoint->addStatement(generateTensorFlowInferCall);
 
     for (unsigned long i = 0; i < outputFields.size(); ++i) {
-        auto field = outputFields.at(i)->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto field = outputFields.at(i)->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
 
         auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
@@ -4456,9 +4456,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 }
 
 Runtime::Execution::ExecutablePipelineStagePtr
-CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
-                        PipelineContextPtr code,
-                        QueryCompilerOptions::CompilationStrategy compilationStrategy) {
+CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler, PipelineContextPtr code, CompilationStrategy compilationStrategy) {
     std::string src = generateCode(code);
     auto sourceCode = std::make_unique<Compiler::SourceCode>(Compiler::Language::CPP, src);
     auto enableDebugCompilation = compilationStrategy == CompilationStrategy::DEBUG;

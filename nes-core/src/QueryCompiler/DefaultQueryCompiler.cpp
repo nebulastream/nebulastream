@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/DumpHandler/DumpContext.hpp>
-#include <Nodes/Util/VizDumpHandler.hpp>
+
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -68,7 +69,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         // create new context for handling debug output
         auto dumpContext = DumpContext::create("QueryCompilation-" + std::to_string(queryId) + "-" + std::to_string(subPlanId));
         if (request->isDumpEnabled()) {
-            dumpContext->registerDumpHandler(VizDumpHandler::create());
+            dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
         }
 
         timer.start();

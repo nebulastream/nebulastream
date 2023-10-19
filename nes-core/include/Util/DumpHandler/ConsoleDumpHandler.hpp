@@ -15,16 +15,26 @@
 #ifndef NES_CORE_INCLUDE_NODES_UTIL_CONSOLEDUMPHANDLER_HPP_
 #define NES_CORE_INCLUDE_NODES_UTIL_CONSOLEDUMPHANDLER_HPP_
 
-#include <Nodes/Util/DumpHandler.hpp>
+
 #include <memory>
+
 namespace NES {
+
+namespace QueryCompilation {
+class PipelineQueryPlan;
+using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
+}// namespace QueryCompilation
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
 /**
  * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
  */
-class ConsoleDumpHandler : public DumpHandler {
+class ConsoleDumpHandler {
 
   public:
     virtual ~ConsoleDumpHandler() = default;
@@ -33,7 +43,7 @@ class ConsoleDumpHandler : public DumpHandler {
     /**
     * Dump the specific node and its children.
     */
-    void dump(NodePtr node) override;
+    void dump(NodePtr node);
 
     /**
     * Dump the specific node and its children with details in multiple lines.
@@ -41,12 +51,12 @@ class ConsoleDumpHandler : public DumpHandler {
     void multilineDump(NodePtr const& node);
 
     /**
-     * @brief Dump a query plan with a specific context and scope.
+     * @brief Dump a pipeline query plan with a specific context and scope.
      * @param context the context
      * @param scope the scope
      * @param plan the query plan
      */
-    void dump(std::string context, std::string scope, QueryPlanPtr plan) override;
+    void dump(std::string context, std::string scope, QueryPlanPtr queryPlan);
 
     /**
      * @brief Dump a pipeline query plan with a specific context and scope.
@@ -54,7 +64,7 @@ class ConsoleDumpHandler : public DumpHandler {
      * @param scope the scope
      * @param plan the query plan
      */
-    void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) override;
+    void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan);
 
   private:
     std::ostream& out;

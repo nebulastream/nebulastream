@@ -24,7 +24,7 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
-#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <QueryValidation/SemanticQueryValidation.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>

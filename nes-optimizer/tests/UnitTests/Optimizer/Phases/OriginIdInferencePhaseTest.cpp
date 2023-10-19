@@ -23,26 +23,24 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <iostream>
 
 using namespace NES;
 using namespace Configurations;
@@ -85,12 +83,12 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         sourceCatalog->addLogicalSource("A", schemaA);
         LogicalSourcePtr logicalSourceA = sourceCatalog->getLogicalSource("A");
 
-        PhysicalSourcePtr physicalSourceA1 = PhysicalSource::create("A", "A1", DefaultSourceType::create());
+        PhysicalSourcePtr physicalSourceA1 = PhysicalSource::create(DefaultSourceType::create("A", "A1"));
         Catalogs::Source::SourceCatalogEntryPtr sceA1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA1, logicalSourceA, physicalNode);
         sourceCatalog->addPhysicalSource("A", sceA1);
 
-        PhysicalSourcePtr physicalSourceA2 = PhysicalSource::create("A", "A2", DefaultSourceType::create());
+        PhysicalSourcePtr physicalSourceA2 = PhysicalSource::create(DefaultSourceType::create("A", "A2"));
         Catalogs::Source::SourceCatalogEntryPtr sceA2 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA2, logicalSourceA, physicalNode);
         sourceCatalog->addPhysicalSource("A", sceA2);
@@ -99,7 +97,7 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         sourceCatalog->addLogicalSource("B", schemaB);
         LogicalSourcePtr logicalSourceB = sourceCatalog->getLogicalSource("B");
 
-        PhysicalSourcePtr physicalSourceB1 = PhysicalSource::create("B", "B1", DefaultSourceType::create());
+        PhysicalSourcePtr physicalSourceB1 = PhysicalSource::create(DefaultSourceType::create("B", "B1"));
         Catalogs::Source::SourceCatalogEntryPtr sceB1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceB1, logicalSourceB, physicalNode);
         sourceCatalog->addPhysicalSource("B", sceB1);

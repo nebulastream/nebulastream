@@ -14,16 +14,16 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
+#include <Identifiers.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
@@ -50,21 +50,20 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
     NES_DEBUG("QueryFailureTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("test", "physical_test");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "malformed_csv_test.csv");
     csvSourceType->setGatheringInterval(1);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
     csvSourceType->setNumberOfBuffersToProduce(6);
     csvSourceType->setSkipHeader(false);
     workerConfig1->coordinatorPort = port;
-    auto physicalSource1 = PhysicalSource::create("test", "physical_test", csvSourceType);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -99,24 +98,22 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
     NES_DEBUG("QueryFailureTest: Start worker 1");
     auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    auto csvSourceType = CSVSourceType::create();
+    auto csvSourceType = CSVSourceType::create("test", "physical_test");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "malformed_csv_test.csv");
     csvSourceType->setGatheringInterval(1);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
     csvSourceType->setNumberOfBuffersToProduce(6);
     csvSourceType->setSkipHeader(false);
-    auto physicalSource1 = PhysicalSource::create("test", "physical_test", csvSourceType);
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource2 = PhysicalSource::create("default_logical", "default_source", defaultSourceType);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
-    workerConfig1->physicalSourceTypes.add(physicalSource2);
+    auto defaultSourceType = DefaultSourceType::create("default_logical", "default_source");
+    workerConfig1->physicalSourceTypes.add(csvSourceType);
+    workerConfig1->physicalSourceTypes.add(defaultSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -188,17 +185,16 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
 
     NES_DEBUG("QueryFailureTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    auto defaultSourceType = DefaultSourceType::create();
+    auto defaultSourceType = DefaultSourceType::create("default_logical", "default_source");
     defaultSourceType->setNumberOfBuffersToProduce(1000);
-    auto physicalSource = PhysicalSource::create("default_logical", "default_source", defaultSourceType);
-    workerConfig1->physicalSourceTypes.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(defaultSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

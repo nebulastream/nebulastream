@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <REST/ServerTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>

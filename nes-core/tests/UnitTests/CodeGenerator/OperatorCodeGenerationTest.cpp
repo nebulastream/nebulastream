@@ -17,14 +17,19 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
@@ -32,6 +37,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -48,19 +54,13 @@
 #include <Sources/DefaultSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -407,11 +407,10 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -458,11 +457,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -517,11 +515,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -533,8 +530,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
 
     /* compile code to pipeline stage */
-    auto stage1 =
-        codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
 }
 
 /**
@@ -542,11 +538,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -559,7 +554,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
 
     auto trigger = Windowing::OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = Windowing::SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+    auto sum = Windowing::SumAggregationDescriptor::on(
+        FieldAccessExpressionNode::create(DataTypeFactory::createUInt64(), "window$value"));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = Windowing::LogicalWindowDefinition::create(
         {Attribute("window$key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
@@ -574,14 +570,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     codeGenerator->generateCodeForWatermarkAssigner(strategy, context1);
 
     /* compile code to pipeline stage */
-    auto stage1 =
-        codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "1";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 =
-        codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
 }
 
 /**
@@ -589,11 +583,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -606,7 +599,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(FieldAccessExpressionNode::create(DataTypeFactory::createUInt64(), "window$value"));
     auto windowDefinition = LogicalWindowDefinition::create(
         {Attribute("window$key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {sum},
@@ -620,14 +613,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
-    auto stage1 =
-        codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 =
-        codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("_$start", BasicType::UINT64))
@@ -668,11 +659,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
@@ -689,7 +679,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     codeGenerator->generateCodeForScan(schema, schema, context1);
     auto trigger = OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(FieldAccessExpressionNode::create(DataTypeFactory::createUInt64(), "value"));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition = LogicalWindowDefinition::create(
@@ -705,14 +695,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
-    auto stage1 =
-        codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(schema, schema, context2);
-    auto stage2 =
-        codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("window$start", BasicType::UINT64))
@@ -827,11 +815,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
@@ -848,7 +835,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     codeGenerator->generateCodeForScan(schema, schema, context1);
     auto trigger = OnRecordTriggerPolicyDescription::create();
 
-    auto sum = SumAggregationDescriptor::on(Attribute("value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(FieldAccessExpressionNode::create(DataTypeFactory::createUInt64(), "value"));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition = LogicalWindowDefinition::create(
@@ -873,11 +860,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
  * @brief This test generates a predicate with string comparision
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
@@ -931,11 +917,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates an infer model operator
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
@@ -965,10 +950,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
                             ->addField("valueChar", DataTypeFactory::createChar())
                             ->addField("text", DataTypeFactory::createFixedChar(12));
 
-    auto valF = std::make_shared<ExpressionItem>(Attribute("valueFloat", NES::BasicType::FLOAT32));
-    auto prediction0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
-    auto prediction1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
-    auto predection2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
+    auto valF = FieldAccessExpressionNode::create(DataTypeFactory::createUInt64(), "valueFloat");
+    auto prediction0 = FieldAccessExpressionNode::create("iris0");
+    auto prediction1 = FieldAccessExpressionNode::create("iris1");
+    auto predection2 = FieldAccessExpressionNode::create("iris2");
     auto op = LogicalOperatorFactory::createInferModelOperator(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite",
                                                                {valF, valF, valF, valF},
                                                                {prediction0, prediction1, predection2});
@@ -1006,11 +991,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
@@ -1086,11 +1070,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
  * This one with a column layout for both input and output schema
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
@@ -1167,11 +1150,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
  * This one with a column layout for input and row for output schema
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
@@ -1247,11 +1229,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
  * This one with a row layout for input and column for output schema
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
@@ -1327,11 +1308,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
@@ -1410,11 +1390,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -1460,14 +1439,12 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     codeGenerator->generateCodeForJoin(joinDef, pipelineContext1, index);
 
     /* compile code to pipeline stage */
-    auto stage1 =
-        codeGenerator->compile(jitCompiler, pipelineContext1, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage1 = codeGenerator->compile(jitCompiler, pipelineContext1, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     context2->pipelineName = "2";
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 =
-        codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), joinOperatorHandler);
     auto context3 = QueryCompilation::PipelineContext::create();
@@ -1477,8 +1454,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context3);
     codeGenerator->generateJoinSetup(joinDef, context3, 1);
     codeGenerator->generateCodeForJoin(joinDef, context3, 0);
-    auto stage3 =
-        codeGenerator->compile(jitCompiler, context3, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage3 = codeGenerator->compile(jitCompiler, context3, QueryCompilation::CompilationStrategy::DEBUG);
     stage3->setup(*executionContext);
 
     /* prepare input tuple buffer */
@@ -1544,11 +1520,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
 
     try {
         /* prepare objects for test */
-        auto defaultSourceType = DefaultSourceType::create();
-        auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+        auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
-        workerConfiguration->physicalSourceTypes.add(physicalSource);
+        workerConfiguration->physicalSourceTypes.add(defaultSourceType);
         auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
         Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
@@ -1561,7 +1536,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
         WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
-        auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+        auto sum =
+            SumAggregationDescriptor::on(FieldAccessExpressionNode::create(DataTypeFactory::createUInt64(), "window$value"));
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition = LogicalWindowDefinition::create(
             {Attribute("window$key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
@@ -1575,14 +1551,12 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
         /* compile code to pipeline stage */
-        auto stage1 =
-            codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
+        auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
 
         auto context2 = QueryCompilation::PipelineContext::create();
         context2->pipelineName = "1";
         codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-        auto stage2 =
-            codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
+        auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
 
         auto windowOutputSchema = Schema::create()
                                       ->addField(createField("_$start", BasicType::UINT64))
@@ -1650,11 +1624,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
  */
 TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTime) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
@@ -1667,12 +1640,12 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(FieldAccessExpressionNode::create(DataTypeFactory::createUInt64(), "window$value"));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
         {Attribute("window$key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {sum},
-        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value")), Seconds(10)),
+        TumblingWindow::of(TimeCharacteristic::createEventTime(FieldAccessExpressionNode::create("window$value")), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
         trigger,
         triggerAction,
@@ -1681,13 +1654,11 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
-    auto stage1 =
-        codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 =
-        codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("_$start", BasicType::UINT64))
@@ -1742,11 +1713,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
  */
 TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTimeWithTimeUnit) {
     /* prepare objects for test */
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
@@ -1759,12 +1729,13 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
 
-    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+    auto sum = SumAggregationDescriptor::on(FieldAccessExpressionNode::create(DataTypeFactory::createUInt64(), "window$value"));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
         {Attribute("window$key", BasicType::UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
         {sum},
-        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value"), Seconds()), Seconds(10)),
+        TumblingWindow::of(TimeCharacteristic::createEventTime(FieldAccessExpressionNode::create("window$value"), Seconds()),
+                           Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
         trigger,
         triggerAction,
@@ -1773,13 +1744,11 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
-    auto stage1 =
-        codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage1 = codeGenerator->compile(jitCompiler, context1, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto context2 = QueryCompilation::PipelineContext::create();
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 =
-        codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
+    auto stage2 = codeGenerator->compile(jitCompiler, context2, QueryCompilation::CompilationStrategy::DEBUG);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("_$start", BasicType::UINT64))
@@ -1817,11 +1786,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
  * @brief This test checks the correctness of the current CEPiteration OP
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};

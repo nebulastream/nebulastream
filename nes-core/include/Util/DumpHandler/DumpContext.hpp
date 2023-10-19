@@ -24,8 +24,8 @@ namespace NES {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class DumpHandler;
-using DebugDumpHandlerPtr = std::shared_ptr<DumpHandler>;
+class ConsoleDumpHandler;
+using DebugDumpHandlerPtr = std::shared_ptr<ConsoleDumpHandler>;
 
 class DumpContext;
 using DumpContextPtr = std::shared_ptr<DumpContext>;

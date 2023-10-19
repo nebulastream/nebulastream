@@ -14,9 +14,10 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -28,7 +29,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Catalogs/Topology/Topology.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <cstring>

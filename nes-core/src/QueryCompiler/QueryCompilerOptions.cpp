@@ -13,6 +13,7 @@
 */
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 
 namespace NES::QueryCompilation {
 OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const {
@@ -40,10 +41,10 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     options.setNautilusBackend(NautilusBackend::MLIR_COMPILER_BACKEND);
 
     QueryCompilerOptions::StreamHashJoinOptionsPtr hashOptions = std::make_shared<QueryCompilerOptions::StreamHashJoinOptions>();
-    hashOptions->setNumberOfPartitions(NES::Runtime::Execution::DEFAULT_HASH_NUM_PARTITIONS);
-    hashOptions->setPageSize(NES::Runtime::Execution::DEFAULT_HASH_PAGE_SIZE);
-    hashOptions->setPreAllocPageCnt(NES::Runtime::Execution::DEFAULT_HASH_PREALLOC_PAGE_COUNT);
-    hashOptions->setTotalSizeForDataStructures(NES::Runtime::Execution::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
+    hashOptions->setNumberOfPartitions(NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
+    hashOptions->setPageSize(NES::Configurations::DEFAULT_HASH_PAGE_SIZE);
+    hashOptions->setPreAllocPageCnt(NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT);
+    hashOptions->setTotalSizeForDataStructures(NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE);
     options.setStreamJoinStratgy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
     options.setHashJoinOptions(hashOptions);
     return std::make_shared<QueryCompilerOptions>(options);
@@ -85,7 +86,7 @@ void QueryCompilerOptions::setWindowingStrategy(WindowingStrategy windowingStrat
     QueryCompilerOptions::windowingStrategy = windowingStrategy;
 }
 
-QueryCompilerOptions::NautilusBackend QueryCompilerOptions::getNautilusBackend() const { return nautilusBackend; }
+NautilusBackend QueryCompilerOptions::getNautilusBackend() const { return nautilusBackend; }
 
 void QueryCompilerOptions::setNautilusBackend(const NautilusBackend nautilusBackend) {
     QueryCompilerOptions::nautilusBackend = nautilusBackend;
@@ -97,9 +98,9 @@ QueryCompilation::StreamJoinStrategy QueryCompilerOptions::getStreamJoinStratgy(
 
 QueryCompilerOptions::StreamHashJoinOptionsPtr QueryCompilerOptions::getHashJoinOptions() { return hashJoinOptions; }
 
-const QueryCompilerOptions::DumpMode& QueryCompilerOptions::getDumpMode() const { return dumpMode; }
+const DumpMode& QueryCompilerOptions::getDumpMode() const { return dumpMode; }
 
-void QueryCompilerOptions::setDumpMode(QueryCompilerOptions::DumpMode dumpMode) { QueryCompilerOptions::dumpMode = dumpMode; }
+void QueryCompilerOptions::setDumpMode(DumpMode dumpMode) { QueryCompilerOptions::dumpMode = dumpMode; }
 
 uint64_t QueryCompilerOptions::StreamHashJoinOptions::getNumberOfPartitions() const { return numberOfPartitions; }
 

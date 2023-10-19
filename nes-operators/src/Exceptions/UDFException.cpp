@@ -12,5 +12,13 @@
     limitations under the License.
 */
 
-#include <Util/DumpHandler/DumpHandler.hpp>
-namespace NES {}
+#include <Exceptions/UDFException.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES {
+
+UDFException::UDFException(const std::string& message) : Exceptions::RequestExecutionException(message), message(message) {
+    NES_ERROR("{}", message);
+}
+
+}// namespace NES

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
-#include <Catalogs/Exceptions/UDFException.hpp>
 #include <sstream>
 
 namespace NES::Catalogs::UDF {

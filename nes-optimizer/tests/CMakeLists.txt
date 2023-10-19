@@ -18,8 +18,8 @@ add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_da
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
 
-# Type inference test
-add_nes_unit_test(nes-optimizer-test "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp"
+# Optimizer Unit Tests
+add_nes_unit_test(optimizer-unit-tests "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/FilterMergeRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/PredicateReorderingRuleTest.cpp"
@@ -27,7 +27,6 @@ add_nes_unit_test(nes-optimizer-test "UnitTests/Optimizer/Phases/TypeInferencePh
         "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp"
         "UnitTests/Optimizer/Phases/OriginIdInferencePhaseTest.cpp"
         "UnitTests/Optimizer/Phases/MemoryLayoutSelectionPhaseTest.cpp"
-        "UnitTests/Optimizer/Phases/GlobalQueryPlanUpdatePhaseTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/LogicalSourceExpansionRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRuleTest.cpp"
         "UnitTests/Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRuleTest.cpp"
@@ -35,8 +34,6 @@ add_nes_unit_test(nes-optimizer-test "UnitTests/Optimizer/Phases/TypeInferencePh
         "UnitTests/Optimizer/QueryPlacement/QueryPlacementTest.cpp"
         "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp"
         "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp"
-        "UnitTests/Optimizer/QueryValidation/SyntacticQueryValidationTest.cpp"
-        "UnitTests/Optimizer/QueryValidation/SemanticQueryValidationTest.cpp"
         "UnitTests/Optimizer/QuerySignatures/QuerySignatureUtilTests.cpp"
         "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp"
         "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRuleTest.cpp"
@@ -49,12 +46,8 @@ add_nes_unit_test(nes-optimizer-test "UnitTests/Optimizer/Phases/TypeInferencePh
         "UnitTests/Optimizer/QueryRewrite/AttributeSortRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/RenameSourceToProjectOperatorRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRuleTest.cpp"
-        "UnitTests/Optimizer/QueryRewrite/BinaryOperatorSortRuleTest.cpp"
-)
-
-target_link_libraries(nes-optimizer-test nes-client)
+        "UnitTests/Optimizer/QueryRewrite/BinaryOperatorSortRuleTest.cpp")
 
 if (NES_USE_TF)
     add_nes_unit_test(ml-heuristic-placement-test "UnitTests/Optimizer/QueryPlacement/MlHeuristicPlacementTest.cpp")
-    target_link_libraries(ml-heuristic-placement-test nes-client)
 endif ()

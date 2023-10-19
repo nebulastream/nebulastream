@@ -27,7 +27,7 @@ add_source_files(nes-operators
         OpenCLLogicalOperatorNode.cpp
         LimitLogicalOperatorNode.cpp
         LogicalBatchJoinDefinition.cpp
-        )
+)
 
 add_subdirectory(CEP)
 add_subdirectory(Sinks)
@@ -35,3 +35,4 @@ add_subdirectory(Sources)
 add_subdirectory(Watermarks)
 add_subdirectory(Windows)
 add_subdirectory(Network)
+add_subdirectory(UDFs)

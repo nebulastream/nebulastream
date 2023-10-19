@@ -69,8 +69,8 @@ class CCodeGenerator : public CodeGenerator {
      * @return flag if the generation was successful.
      */
     bool generateCodeForInferModel(PipelineContextPtr context,
-                                   std::vector<ExpressionItemPtr> inputFields,
-                                   std::vector<ExpressionItemPtr> outputFields) override;
+                                   std::vector<ExpressionNodePtr> inputFields,
+                                   std::vector<ExpressionNodePtr> outputFields) override;
 
     /**
     * @brief Code generation for a (branchless) predicated filter operator.
@@ -371,9 +371,7 @@ class CCodeGenerator : public CodeGenerator {
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
     Runtime::Execution::ExecutablePipelineStagePtr
-    compile(Compiler::JITCompilerPtr jitCompiler,
-            PipelineContextPtr context,
-            QueryCompilerOptions::CompilationStrategy compilationStrategy) override;
+    compile(Compiler::JITCompilerPtr jitCompiler, PipelineContextPtr context, CompilationStrategy compilationStrategy) override;
 
     std::string generateCode(PipelineContextPtr context) override;
 

@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Optimizer/RequestTypes/Request.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <WorkQueues/RequestTypes/Request.hpp>
-#include <algorithm>
 
 namespace NES {
 

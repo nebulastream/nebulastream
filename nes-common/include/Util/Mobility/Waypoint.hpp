@@ -13,6 +13,7 @@
 */
 #ifndef NES_CORE_INCLUDE_SPATIAL_DATATYPES_WAYPOINT_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_DATATYPES_WAYPOINT_HPP_
+
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>

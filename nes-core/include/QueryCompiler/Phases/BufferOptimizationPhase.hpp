@@ -33,12 +33,12 @@ class BufferOptimizationPhase {
     /**
      * @brief Constructor to create a BufferOptimizationPhase
      */
-    explicit BufferOptimizationPhase(QueryCompilerOptions::OutputBufferOptimizationLevel level);
+    explicit BufferOptimizationPhase(OutputBufferOptimizationLevel level);
 
     /**
      * @brief Create a BufferOptimizationPhase
      */
-    static BufferOptimizationPhasePtr create(QueryCompilerOptions::OutputBufferOptimizationLevel level);
+    static BufferOptimizationPhasePtr create(OutputBufferOptimizationLevel level);
 
     /**
      * @brief Applies the phase on a pipelined query plan. Analyzes every pipeline to see if buffer optimization can be applied.
@@ -55,7 +55,7 @@ class BufferOptimizationPhase {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
-    QueryCompilerOptions::OutputBufferOptimizationLevel level;
+    OutputBufferOptimizationLevel level;
     /**
      * @brief Indicates if the input of this pipeline is read only.
      * For instance, if the input is shared by a sibling pipeline.

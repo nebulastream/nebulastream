@@ -31,12 +31,12 @@ namespace NES::QueryCompilation {
 
 CodeGenerationPhase::CodeGenerationPhase(CodeGeneratorPtr codeGenerator,
                                          Compiler::JITCompilerPtr jitCompiler,
-                                         QueryCompilerOptions::CompilationStrategy compilationStrategy)
+                                         CompilationStrategy compilationStrategy)
     : codeGenerator(std::move(codeGenerator)), jitCompiler(std::move(jitCompiler)), compilationStrategy(compilationStrategy) {}
 
 CodeGenerationPhasePtr CodeGenerationPhase::create(CodeGeneratorPtr codeGenerator,
                                                    Compiler::JITCompilerPtr jitCompiler,
-                                                   QueryCompilerOptions::CompilationStrategy compilationStrategy) {
+                                                   CompilationStrategy compilationStrategy) {
     return std::make_shared<CodeGenerationPhase>(codeGenerator, jitCompiler, compilationStrategy);
 }
 

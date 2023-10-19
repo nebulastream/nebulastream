@@ -18,7 +18,7 @@
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <Catalogs/Exceptions/UDFException.hpp>
+#include <Exceptions/UDFException.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>

@@ -18,10 +18,10 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/PartitionManager.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -38,7 +38,7 @@
 
 namespace NES::Runtime {
 
-NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        HardwareManagerPtr&& hardwareManager,
                        std::vector<BufferManagerPtr>&& bufferManagers,
                        QueryManagerPtr&& queryManager,
@@ -537,7 +537,7 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 #endif
 }
 
-const std::vector<PhysicalSourcePtr>& NodeEngine::getPhysicalSources() const { return physicalSources; }
+const std::vector<PhysicalSourceTypePtr>& NodeEngine::getPhysicalSources() const { return physicalSources; }
 
 std::shared_ptr<const Execution::ExecutableQueryPlan> NodeEngine::getExecutableQueryPlan(uint64_t querySubPlanId) const {
     std::unique_lock lock(engineMutex);
@@ -670,7 +670,7 @@ void NodeEngine::setMetricStore(Monitoring::MetricStorePtr metricStore) {
 TopologyNodeId NodeEngine::getNodeId() const { return nodeId; }
 void NodeEngine::setNodeId(const TopologyNodeId NodeId) { nodeId = NodeId; }
 
-void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
+void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources) {
     this->physicalSources = std::move(physicalSources);
 }
 

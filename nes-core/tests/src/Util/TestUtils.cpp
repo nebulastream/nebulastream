@@ -13,22 +13,17 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Identifiers.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Util/Mobility/Waypoint.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <chrono>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
@@ -784,7 +779,7 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
  * @param csvPath path to the output file
  * @param waypoints a vector of waypoints to be written to the file
  */
-void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints) {
+void writeWaypointsToCsv(const std::string& csvPath, const std::vector<NES::Spatial::DataTypes::Experimental::Waypoint>& waypoints) {
     remove(csvPath.c_str());
     std::ofstream outFile(csvPath);
     for (auto& point : waypoints) {

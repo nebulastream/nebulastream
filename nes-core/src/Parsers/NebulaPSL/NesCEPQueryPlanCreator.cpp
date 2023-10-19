@@ -425,8 +425,8 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
 
             leftQueryPlan = QueryPlanBuilder::addJoin(leftQueryPlan,
                                                       rightQueryPlan,
-                                                      onLeftKey,
-                                                      onRightKey,
+                                                      leftKeyFieldAccess,
+                                                      rightKeyFieldAccess,
                                                       windowType,
                                                       Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT);
 

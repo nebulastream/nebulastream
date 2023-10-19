@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 
 namespace NES::Spatial::DataTypes::Experimental {

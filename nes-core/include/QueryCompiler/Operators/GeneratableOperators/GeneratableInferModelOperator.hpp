@@ -15,8 +15,8 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEINFERMODELOPERATOR_HPP_
 
 #include <Operators/Expressions/ExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
-#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -30,15 +30,15 @@ class GeneratableInferModelOperator : public GeneratableOperator {
     static GeneratableOperatorPtr create(SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          std::string model,
-                                         std::vector<ExpressionItemPtr> inputFields,
-                                         std::vector<ExpressionItemPtr> outputFields,
+                                         std::vector<ExpressionNodePtr> inputFields,
+                                         std::vector<ExpressionNodePtr> outputFields,
                                          InferModel::InferModelOperatorHandlerPtr operatorHandler);
     static GeneratableOperatorPtr create(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          std::string model,
-                                         std::vector<ExpressionItemPtr> inputFields,
-                                         std::vector<ExpressionItemPtr> outputFields,
+                                         std::vector<ExpressionNodePtr> inputFields,
+                                         std::vector<ExpressionNodePtr> outputFields,
                                          InferModel::InferModelOperatorHandlerPtr operatorHandler);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
@@ -50,12 +50,12 @@ class GeneratableInferModelOperator : public GeneratableOperator {
                                   SchemaPtr inputSchema,
                                   SchemaPtr outputSchema,
                                   std::string model,
-                                  std::vector<ExpressionItemPtr> inputFields,
-                                  std::vector<ExpressionItemPtr> outputFields,
+                                  std::vector<ExpressionNodePtr> inputFields,
+                                  std::vector<ExpressionNodePtr> outputFields,
                                   InferModel::InferModelOperatorHandlerPtr operatorHandler);
     const std::string model;
-    const std::vector<ExpressionItemPtr> inputFields;
-    const std::vector<ExpressionItemPtr> outputFields;
+    const std::vector<ExpressionNodePtr> inputFields;
+    const std::vector<ExpressionNodePtr> outputFields;
     InferModel::InferModelOperatorHandlerPtr operatorHandler;
 };
 }// namespace GeneratableOperators

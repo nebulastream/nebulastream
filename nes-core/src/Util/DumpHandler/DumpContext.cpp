@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/DumpHandler/DumpContext.hpp>
-#include <Nodes/Util/DumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <iomanip>

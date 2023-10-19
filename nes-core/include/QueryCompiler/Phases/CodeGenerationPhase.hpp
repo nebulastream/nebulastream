@@ -27,7 +27,7 @@ class CodeGenerationPhase {
   public:
     CodeGenerationPhase(CodeGeneratorPtr codeGenerator,
                         Compiler::JITCompilerPtr jitCompiler,
-                        QueryCompilerOptions::CompilationStrategy compilationStrategy);
+                        CompilationStrategy compilationStrategy);
 
     /**
      * @brief Creates the code generation phase.
@@ -35,7 +35,7 @@ class CodeGenerationPhase {
      */
     static CodeGenerationPhasePtr create(CodeGeneratorPtr codeGenerator,
                                          Compiler::JITCompilerPtr jitCompiler,
-                                         QueryCompilerOptions::CompilationStrategy compilationStrategy);
+                                         CompilationStrategy compilationStrategy);
 
     /**
      * @brief Generates code for all pipelines in a pipelined query plan.
@@ -54,7 +54,7 @@ class CodeGenerationPhase {
   private:
     CodeGeneratorPtr codeGenerator;
     Compiler::JITCompilerPtr jitCompiler;
-    QueryCompilerOptions::CompilationStrategy compilationStrategy;
+    CompilationStrategy compilationStrategy;
     static void generate(const OperatorNodePtr& rootOperator,
                          const std::function<void(GeneratableOperators::GeneratableOperatorPtr)>& applyFunction);
 };

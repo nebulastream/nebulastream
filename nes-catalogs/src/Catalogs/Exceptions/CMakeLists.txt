@@ -17,5 +17,4 @@ add_source_files(nes-catalogs
         LogicalSourceNotFoundException.cpp
         PhysicalSourceNotFoundException.cpp
         QueryNotFoundException.cpp
-        UDFException.cpp
 )

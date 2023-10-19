@@ -17,7 +17,7 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 #include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Utils/PlanJsonGenerator.hpp>
+#include <Util/PlanJsonGenerator.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
@@ -25,6 +25,7 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <utility>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 

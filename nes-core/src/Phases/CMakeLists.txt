@@ -16,4 +16,6 @@ add_source_files(nes-core
         ConvertLogicalToPhysicalSink.cpp
         QueryDeploymentPhase.cpp
         QueryUndeploymentPhase.cpp
+        SampleCodeGenerationPhase.cpp
+        GlobalQueryPlanUpdatePhase.cpp
 )

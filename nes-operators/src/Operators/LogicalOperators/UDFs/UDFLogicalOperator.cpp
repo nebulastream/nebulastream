@@ -14,10 +14,10 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <Catalogs/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Util/Logger/Logger.hpp>
