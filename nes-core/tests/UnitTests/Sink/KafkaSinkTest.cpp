@@ -27,6 +27,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -57,10 +58,10 @@ class KafkaSinkTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         dataPort = Testing::BaseIntegrationTest::getAvailablePort();
         NES_DEBUG("Setup KafkaSinkTest test case.");
-        PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+        auto sourceType = DefaultSourceType::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
-        workerConfiguration->physicalSourceTypes.add(conf);
+        workerConfiguration->physicalSourceTypes.add(sourceType);
         workerConfiguration->bufferSizeInBytes = 1024;
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())

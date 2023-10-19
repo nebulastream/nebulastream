@@ -14,8 +14,8 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -101,16 +101,17 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
     if (enabled) {
         for (auto metricType : monitoringPlan->getMetricTypes()) {
             // auto generate the specifics
-            MonitoringSourceTypePtr sourceType =
-                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType),
-                                             std::chrono::milliseconds(workerConfig->monitoringWaitTime.getValue()));
             std::string metricTypeString = std::string(magic_enum::enum_name(metricType));
+            MonitoringSourceTypePtr sourceType =
+                MonitoringSourceType::create(metricTypeString,
+                                             metricTypeString + "_ph",
+                                             MetricUtils::createCollectorTypeFromMetricType(metricType),
+                                             std::chrono::milliseconds(workerConfig->monitoringWaitTime.getValue()));
 
             NES_INFO("MonitoringAgent: Adding physical source to config {} _ph with wait time {}",
                      metricTypeString,
                      workerConfig->monitoringWaitTime.getValue());
-            auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
-            workerConfig->physicalSourceTypes.add(source);
+            workerConfig->physicalSourceTypes.add(sourceType);
         }
         return true;
     }

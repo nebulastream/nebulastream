@@ -56,13 +56,13 @@ class SourceCatalogTest : public Testing::BaseUnitTest {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     }
 };
 
 TEST_F(SourceCatalogTest, testAddGetLogSource) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
 
     sourceCatalog->addLogicalSource("test_stream", Schema::create());
     SchemaPtr sPtr = sourceCatalog->getSchemaForLogicalSource("test_stream");
@@ -97,7 +97,7 @@ TEST_F(SourceCatalogTest, testAddRemoveLogSource) {
 
 TEST_F(SourceCatalogTest, testGetNotExistingKey) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
 
     EXPECT_THROW(sourceCatalog->getSchemaForLogicalSource("test_stream22"), MapEntryNotFoundException);
 }

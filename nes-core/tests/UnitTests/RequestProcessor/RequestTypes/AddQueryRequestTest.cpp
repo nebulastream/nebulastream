@@ -79,7 +79,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         auto physicalSource = PhysicalSource::create("test2", "test_source", defaultSourceType);
         auto logicalSource = LogicalSource::create("test2", Schema::create());
         // add source to source catalog
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
         Catalogs::Source::SourceCatalogEntryPtr sce =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);

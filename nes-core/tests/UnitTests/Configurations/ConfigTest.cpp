@@ -99,9 +99,9 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY)
                                                            + "coordinatorLogicalSourceAndSchema.yaml");
-    EXPECT_FALSE(coordinatorConfigPtr->logicalSources.empty());
-    EXPECT_EQ(coordinatorConfigPtr->logicalSources.size(), 3);
-    auto logicalSources = coordinatorConfigPtr->logicalSources.getValues();
+    EXPECT_FALSE(coordinatorConfigPtr->logicalSourceTypes.empty());
+    EXPECT_EQ(coordinatorConfigPtr->logicalSourceTypes.size(), 3);
+    auto logicalSources = coordinatorConfigPtr->logicalSourceTypes.getValues();
     EXPECT_EQ(logicalSources[0].getValue()->getLogicalSourceName(), "lsn1");
     EXPECT_EQ(logicalSources[1].getValue()->getLogicalSourceName(), "lsn2");
     EXPECT_EQ(logicalSources[2].getValue()->getLogicalSourceName(), "lsn3");

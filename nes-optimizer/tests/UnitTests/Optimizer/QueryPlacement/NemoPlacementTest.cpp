@@ -131,7 +131,7 @@ class NemoPlacementTest : public Testing::BaseUnitTest {
                           ->addField("timestamp", DataTypeFactory::createUInt64());
         const std::string sourceName = "car";
 
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 

@@ -88,7 +88,7 @@ bool isFilterAndHasCorrectPredicate(NodePtr filter, ExpressionNodePtr expectedPr
 
 TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -131,7 +131,7 @@ TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
 
 TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -179,7 +179,7 @@ TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
 
 TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -265,7 +265,7 @@ TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
 
 TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -314,7 +314,7 @@ TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween) {
 
 TEST_F(FilterMergeRuleTest, testMergeNotPossibleOneFilter) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare

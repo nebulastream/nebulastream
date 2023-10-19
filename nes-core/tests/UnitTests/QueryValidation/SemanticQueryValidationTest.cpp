@@ -58,7 +58,7 @@ class SemanticQueryValidationTest : public Testing::BaseUnitTest {
 
     void CallValidation(const std::string& queryString) {
         PrintQString(queryString);
-        Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         std::string logicalSourceName = "default_logical";
         auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
         auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
@@ -180,7 +180,7 @@ TEST_F(SemanticQueryValidationTest, invalidAsOperatorTest) {
 TEST_F(SemanticQueryValidationTest, validProjectionTest) {
     NES_INFO("Valid projection test");
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "default_logical";
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
@@ -205,7 +205,7 @@ TEST_F(SemanticQueryValidationTest, validProjectionTest) {
 TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
     NES_INFO("Invalid projection test");
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "default_logical";
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
@@ -234,7 +234,7 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
 TEST_F(SemanticQueryValidationTest, validMLInferenceOperatorTest) {
     NES_INFO("Valid ML inference operator test");
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "irisData";
     auto irisSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -271,7 +271,7 @@ TEST_F(SemanticQueryValidationTest, validMLInferenceOperatorTest) {
 TEST_F(SemanticQueryValidationTest, invalidMixedInputMLInferenceOperatorTest) {
     NES_INFO("Invalid projection test");
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "irisData";
     auto irisSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -310,7 +310,7 @@ TEST_F(SemanticQueryValidationTest, invalidMixedInputMLInferenceOperatorTest) {
 TEST_F(SemanticQueryValidationTest, invalidInputMLInferenceOperatorTest) {
     NES_INFO("Invalid projection test");
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "irisData";
     auto irisSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -346,7 +346,7 @@ TEST_F(SemanticQueryValidationTest, invalidInputMLInferenceOperatorTest) {
 TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
     NES_INFO("Invalid projection test");
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto subQuery = Query::from("default_logical");

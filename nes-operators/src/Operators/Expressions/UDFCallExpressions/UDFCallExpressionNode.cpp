@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Catalogs/Exceptions/UDFException.hpp>
+#include <Exceptions/UDFException.hpp>
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <sstream>
 #include <utility>
 

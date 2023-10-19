@@ -15,11 +15,11 @@
 #ifndef NES_CORE_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define NES_CORE_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
-#include <Identifiers.hpp>
+#include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
 #include <string>
@@ -53,6 +53,9 @@ using QueryRequestProcessorServicePtr = std::shared_ptr<RequestProcessorService>
 
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
+
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
 class ReplicationService;
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
@@ -249,6 +252,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;
+    QueryParsingServicePtr queryParsingService;
     ReplicationServicePtr replicationService;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;

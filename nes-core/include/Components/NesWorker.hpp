@@ -255,10 +255,10 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
   private:
     /**
      * @brief method to register physical source with the coordinator
-     * @param physicalSources: physical sources containing relevant information
+     * @param physicalSourceTypes: physical sources containing relevant information
      * @return bool indicating success
      */
-    bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+    bool registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes);
 
     /**
      * @brief this method will start the GRPC Worker server which is responsible for reacting to calls

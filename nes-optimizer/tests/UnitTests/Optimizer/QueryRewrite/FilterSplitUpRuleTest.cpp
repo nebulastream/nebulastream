@@ -94,7 +94,7 @@ bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> a
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithOneAnd) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -132,7 +132,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithOneAnd) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithThreeAnd) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -182,7 +182,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithThreeAnd) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOr) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -227,7 +227,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOr) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOrImpossible) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -268,7 +268,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOrImpossible) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleNotAnd) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -305,7 +305,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleNotAnd) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotOr) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -347,7 +347,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotOr) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterOrImpossible) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -380,7 +380,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterOrImpossible) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotTwoOrs) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -428,7 +428,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotTwoOrs) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleAndOrNot) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -463,7 +463,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleAndOrNot) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterAndOrNot) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -507,7 +507,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterAndOrNot) {
 
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterDoubleNot) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -542,7 +542,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterDoubleNot) {
 //filter(!(!e1) || (!e2)) translates temporarily to filter( !(!(e1)) && !(!(e2)) ) which translates to filter(e1)->filter(e2)
 TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotNegatedOr) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare

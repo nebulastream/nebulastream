@@ -123,7 +123,7 @@ class QueryCompilerTest : public Testing::BaseUnitTest {
 TEST_F(QueryCompilerTest, filterQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
@@ -170,7 +170,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
 TEST_F(QueryCompilerTest, inferModelQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
@@ -226,7 +226,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
 TEST_F(QueryCompilerTest, mapQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
@@ -272,7 +272,7 @@ TEST_F(QueryCompilerTest, mapQuery) {
 TEST_F(QueryCompilerTest, filterQueryBitmask) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
@@ -317,7 +317,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", BasicType::INT32);
     schema->addField("value", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
@@ -368,7 +368,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     schema->addField("key", BasicType::INT32);
     schema->addField("ts", BasicType::INT64);
     schema->addField("value", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
@@ -421,7 +421,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", BasicType::INT32);
     schema->addField("value", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
@@ -473,7 +473,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", BasicType::INT32);
     schema->addField("value", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     const std::string leftSourceLogicalSourceName = "leftSource";
     const std::string rightSourceLogicalSourceName = "rightSource";
     sourceCatalog->addLogicalSource(leftSourceLogicalSourceName, schema);
@@ -535,7 +535,7 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
 TEST_F(QueryCompilerTest, externalOperatorTest) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", BasicType::INT32);
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);

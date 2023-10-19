@@ -275,7 +275,7 @@ std::vector<std::string> Schema::getFieldNames() const {
 
 bool Schema::empty() { return fields.empty(); }
 
-DataTypePtr Schema::stringToFieldType(std::string fieldNodeType, std::string fieldNodeLength) {
+DataTypePtr Schema::stringToFieldType(const std::string& fieldNodeType, const std::string& fieldNodeLength) {
     if (fieldNodeType == "CHAR") {
         if (fieldNodeLength.empty() || fieldNodeLength == "\n" || fieldNodeLength == "0") {
             NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length properly.");
@@ -335,7 +335,7 @@ DataTypePtr Schema::stringToFieldType(std::string fieldNodeType, std::string fie
                                                                            << " is not a proper Schema Field Type.");
 }
 
-SchemaPtr Schema::createFromSchemaType(Configurations::SchemaTypePtr schemaType, Schema::MemoryLayoutType layoutType) {
+SchemaPtr Schema::createFromSchemaType(const Configurations::SchemaTypePtr& schemaType, Schema::MemoryLayoutType layoutType) {
     auto schema = Schema::create(layoutType);
     for (const auto& schemaFieldDetail : schemaType->getSchemaFieldDetails()) {
         schema->addField(schemaFieldDetail.fieldName,

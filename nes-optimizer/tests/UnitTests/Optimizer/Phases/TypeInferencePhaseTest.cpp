@@ -77,7 +77,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f2", BasicType::INT8);
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -121,7 +121,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
                      .sink(FileSinkDescriptor::create(""));
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
@@ -148,7 +148,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     plan->appendOperatorAsNewRoot(sink);
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
@@ -162,7 +162,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     auto plan = query.getQueryPlan();
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
@@ -190,7 +190,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
     auto plan = query.getQueryPlan();
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
@@ -223,7 +223,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
@@ -257,7 +257,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
@@ -288,7 +288,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
     plan->appendOperatorAsNewRoot(sink);
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
     phase->execute(plan);
@@ -306,7 +306,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -354,7 +354,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
     inputSchema->addField("f2", BasicType::FLOAT64);
     inputSchema->addField("f3", BasicType::INT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -419,7 +419,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -473,7 +473,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSource) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -527,7 +527,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProject) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -588,7 +588,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -635,7 +635,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -696,7 +696,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -764,7 +764,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -839,7 +839,7 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -951,7 +951,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
                      .sink(FileSinkDescriptor::create(""));
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
@@ -986,7 +986,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     sourceCatalog->removeLogicalSource("default_logical");
@@ -1031,7 +1031,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
 
     SchemaPtr schemaProbeSide =
@@ -1102,7 +1102,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
  */
 TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
 
     SchemaPtr schemaProbeSide =
@@ -1151,7 +1151,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
@@ -1297,7 +1297,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
  */
 TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
     Catalogs::Source::SourceCatalogPtr streamCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                            ->addField(createField("timestamp", BasicType::UINT64))
@@ -1337,7 +1337,7 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
     Catalogs::Source::SourceCatalogPtr streamCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                            ->addField(createField("timestamp", BasicType::UINT64))
@@ -1392,7 +1392,7 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
     Catalogs::Source::SourceCatalogPtr streamCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                            ->addField(createField("timestamp", BasicType::UINT64))
@@ -1447,7 +1447,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
     Catalogs::Source::SourceCatalogPtr streamCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                            ->addField(createField("timestamp", BasicType::UINT64))
@@ -1493,7 +1493,7 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
     Catalogs::Source::SourceCatalogPtr streamCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                            ->addField(createField("timestamp", BasicType::UINT64))
@@ -1532,7 +1532,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
  */
 TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
     Catalogs::Source::SourceCatalogPtr streamCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                            ->addField(createField("timestamp", BasicType::UINT64))
@@ -1580,7 +1580,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
  */
 TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) {
     Catalogs::Source::SourceCatalogPtr streamCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                            ->addField(createField("timestamp", BasicType::UINT64))

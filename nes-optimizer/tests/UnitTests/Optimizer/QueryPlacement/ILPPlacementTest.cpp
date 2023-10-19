@@ -117,7 +117,7 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         const std::string sourceName = "car";
 
-        sourceCatalogForILP = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalogForILP = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalogForILP->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalogForILP->getLogicalSource(sourceName);
         CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");

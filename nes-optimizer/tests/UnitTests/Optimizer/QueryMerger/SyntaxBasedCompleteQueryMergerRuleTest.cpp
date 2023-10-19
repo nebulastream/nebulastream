@@ -19,10 +19,12 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -36,10 +38,8 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -66,7 +66,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
                      ->addField("value", BasicType::UINT64)
                      ->addField("type", BasicType::UINT64)
                      ->addField("ts", BasicType::UINT64);
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
@@ -78,19 +78,19 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
-        auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
+        auto physicalSourceCar = PhysicalSource::create(DefaultSourceType::create("car", "testCar"));
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
 
         auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
-        auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
+        auto physicalSourceBike = PhysicalSource::create(DefaultSourceType::create("bike", "testBike"));
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry2);
 
         auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
-        auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
+        auto physicalSourceTruck = PhysicalSource::create(DefaultSourceType::create("truck", "testTruck"));
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry3 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);

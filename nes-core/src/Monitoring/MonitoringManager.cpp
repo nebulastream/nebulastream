@@ -12,37 +12,28 @@
     limitations under the License.
 */
 
-#include <Monitoring/MonitoringManager.hpp>
-#include <Util/Logger/Logger.hpp>
-
-#include <Components/NesCoordinator.hpp>
-
 #include <API/Schema.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/NodeEngine.hpp>
-
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
-
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Core.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/QueryState.hpp>
+#include <nlohmann/json.hpp>
 #include <regex>
 #include <utility>
-
-#include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
 MonitoringManager::MonitoringManager(TopologyPtr topology,
@@ -162,7 +153,7 @@ void MonitoringManager::removeMonitoringNode(uint64_t nodeId) {
     metricStore->removeMetrics(nodeId);
 }
 
-MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
+MonitoringPlanPtr MonitoringManager::getMonitoringPlan(TopologyNodeId nodeId) {
     if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {
         TopologyNodePtr node = topology->findNodeWithId(nodeId);
         if (node) {
@@ -187,7 +178,7 @@ bool MonitoringManager::registerLogicalMonitoringStreams(const NES::Configuratio
             std::string logicalSourceName = std::string(magic_enum::enum_name(metricType));
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO("MonitoringManager: Creating logical source {}", logicalSourceName);
-            config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));
+            config->logicalSourceTypes.add(LogicalSource::create(logicalSourceName, metricSchema));
         }
         return true;
     }

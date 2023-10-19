@@ -123,7 +123,7 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         //                                   ->addField(createField("SpeciesCode", BasicType::UINT64))
         //                                   ->addField(createField("CreationTime", BasicType::UINT64));
 
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource(streamName, irisSchema);
         auto logicalSource = sourceCatalog->getLogicalSource(streamName);
 

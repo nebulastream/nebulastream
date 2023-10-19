@@ -146,7 +146,7 @@ void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& s
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -171,7 +171,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalogTwoNodes(sourceCatalog);
 
     // Prepare
@@ -203,7 +203,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalogFiveNodes(sourceCatalog);
 
     // Prepare

@@ -12,21 +12,22 @@
     limitations under the License.
 */
 
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Services/LocationService.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
-#include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <utility>
 
 using namespace NES;
@@ -37,11 +38,12 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            ReplicationServicePtr replicationService,
-                                           LocationServicePtr locationService)
+                                           LocationServicePtr locationService,
+                                           QueryParsingServicePtr queryParsingService)
     : queryService(std::move(queryService)), topologyManagerService(std::move(topologyManagerService)),
       sourceCatalogService(std::move(sourceCatalogService)), queryCatalogService(std::move(queryCatalogService)),
       monitoringManager(std::move(monitoringManager)), replicationService(std::move(replicationService)),
-      locationService(std::move(locationService)){};
+      locationService(std::move(locationService)), queryParsingService(std::move(queryParsingService)){};
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,
@@ -120,7 +122,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     RegisterPhysicalSourcesReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
-    for (const auto& physicalSourceDefinition : request->physicalsources()) {
+    for (const auto& physicalSourceDefinition : request->physicalsourcetypes()) {
         bool success = sourceCatalogService->registerPhysicalSource(physicalNode,
                                                                     physicalSourceDefinition.physicalsourcename(),
                                                                     physicalSourceDefinition.logicalsourcename());
@@ -159,7 +161,8 @@ Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
                                                    RegisterLogicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request = {}", request->DebugString());
 
-    bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), request->sourceschema());
+    auto schema = queryParsingService->createSchemaFromCode(request->sourceschema());
+    bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), schema);
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource success");

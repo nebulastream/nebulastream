@@ -11,6 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(nes-configurations
+        BaseConfiguration.cpp
+        BaseOption.cpp
+        ConfigurationException.cpp
+        EnumConfOption.cpp
+        ScalarOption.cpp
+        TypedBaseOption.cpp
+)
+
 add_subdirectory(Coordinator)
 add_subdirectory(Enums)
 add_subdirectory(Worker)

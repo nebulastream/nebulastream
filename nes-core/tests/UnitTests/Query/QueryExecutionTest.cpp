@@ -99,7 +99,7 @@ class QueryExecutionTest : public Testing::BaseUnitTest {
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
         Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 

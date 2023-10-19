@@ -70,7 +70,7 @@ class SourceCatalogServiceTest : public Testing::BaseIntegrationTest {
 
 TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     std::string logicalSourceName = "testStream";
@@ -93,7 +93,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
 
 TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyPtr topology = Topology::create();
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();

@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 #define NES_CORE_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
-#include <Identifiers.hpp>
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <grpcpp/grpcpp.h>
@@ -28,8 +28,8 @@ using grpc::ClientContext;
 using grpc::Status;
 
 namespace NES {
-class PhysicalSource;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+class PhysicalSourceType;
+using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
 namespace Monitoring {
 class RegistrationMetrics;
@@ -65,7 +65,7 @@ class CoordinatorRPCClient {
      * @param physicalSources list of physical sources to register
      * @return bool indicating success
      */
-    bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+    bool registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources);
 
     /**
      * @brief this method registers logical source via the coordinator

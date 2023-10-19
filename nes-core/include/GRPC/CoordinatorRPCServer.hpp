@@ -29,6 +29,9 @@ namespace NES {
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
 
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
+
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
@@ -69,7 +72,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   QueryCatalogServicePtr queryCatalogService,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   ReplicationServicePtr replicationService,
-                                  LocationServicePtr locationService);
+                                  LocationServicePtr locationService,
+                                  QueryParsingServicePtr queryParsingService);
     /**
      * @brief RPC Call to register a node
      * @param context: the server context
@@ -266,6 +270,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Monitoring::MonitoringManagerPtr monitoringManager;
     ReplicationServicePtr replicationService;
     LocationServicePtr locationService;
+    QueryParsingServicePtr queryParsingService;
 };
 }// namespace NES
 

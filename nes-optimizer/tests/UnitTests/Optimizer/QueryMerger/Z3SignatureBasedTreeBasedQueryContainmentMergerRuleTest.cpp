@@ -87,7 +87,7 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
                                ->addField("value2", BasicType::FLOAT64)
                                ->addField("value3", BasicType::UINT64);
 
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource("windTurbines", schema);
         sourceCatalog->addLogicalSource("solarPanels1", schema);
         sourceCatalog->addLogicalSource("solarPanels2", schema);

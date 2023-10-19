@@ -20,6 +20,10 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/HealthCheckRPCServer.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
+#include <Mobility/LocationProviders/LocationProvider.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Mobility/WorkerMobilityHandler.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -29,13 +33,9 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
-#include <Util/Mobility/Waypoint.hpp>
-#include <Mobility/LocationProviders/LocationProvider.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
-#include <Mobility/WorkerMobilityHandler.hpp>
-#include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <csignal>
@@ -370,14 +370,14 @@ bool NesWorker::connect() {
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
 
-        auto configPhysicalSources = workerConfig->physicalSourceTypes.getValues();
-        if (!configPhysicalSources.empty()) {
-            std::vector<PhysicalSourcePtr> physicalSources;
-            for (auto& physicalSource : configPhysicalSources) {
-                physicalSources.push_back(physicalSource);
+        auto configPhysicalSourceTypes = workerConfig->physicalSourceTypes.getValues();
+        if (!configPhysicalSourceTypes.empty()) {
+            std::vector<PhysicalSourceTypePtr> physicalSourceTypes;
+            for (auto& physicalSourceType : configPhysicalSourceTypes) {
+                physicalSourceTypes.push_back(physicalSourceType);
             }
             NES_DEBUG("NesWorker: start with register source");
-            bool success = registerPhysicalSources(physicalSources);
+            bool success = registerPhysicalSources(physicalSourceTypes);
             NES_DEBUG("registered= {}", success);
             NES_ASSERT(success, "cannot register");
         }
@@ -411,12 +411,12 @@ bool NesWorker::unregisterPhysicalSource(std::string logicalName, std::string ph
 
 const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const { return workerConfig; }
 
-bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
-    NES_ASSERT(!physicalSources.empty(), "invalid physical sources");
+bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes) {
+    NES_ASSERT(!physicalSourceTypes.empty(), "invalid physical sources");
     bool con = waitForConnect();
 
     NES_ASSERT(con, "cannot connect");
-    bool success = coordinatorRpcClient->registerPhysicalSources(physicalSources);
+    bool success = coordinatorRpcClient->registerPhysicalSources(physicalSourceTypes);
     NES_ASSERT(success, "failed to register source");
     NES_DEBUG("NesWorker::registerPhysicalSources success={}", success);
     return success;

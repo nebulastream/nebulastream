@@ -52,7 +52,7 @@ class LogicalOperatorNodeTest : public Testing::BaseUnitTest {
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         Catalogs::Source::SourceCatalogPtr sourceCatalog =
-            std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+            std::make_shared<Catalogs::Source::SourceCatalog>();
         logicalSource = sourceCatalog->getLogicalSourceOrThrowException("default_logical");
         SchemaPtr schema = logicalSource->getSchema();
         auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0);
