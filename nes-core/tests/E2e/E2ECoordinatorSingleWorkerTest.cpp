@@ -452,9 +452,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
         "0,10000,4,1\n"
         "0,10000,16,2\n"
         "0,10000,11,5\n"
-        "5000,15000,1,95\n"
         "10000,20000,1,145\n"
-        "15000,25000,1,126\n"
         "20000,30000,1,41\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 }

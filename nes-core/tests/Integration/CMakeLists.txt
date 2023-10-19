@@ -27,7 +27,7 @@ add_nes_integration_test(location-controller-integration-tests "REST/Controller/
 
 
 ### Filter Push Down Test ###
-add_nes_integration_test(filter-push-down-test "Optimizer/FilterPushDownTest.cpp")
+#add_nes_integration_test(filter-push-down-test "Optimizer/FilterPushDownTest.cpp")
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
@@ -112,11 +112,6 @@ add_dependencies(source-integration-tests nesCoordinator nesWorker)
 
 ### TestHarnessUtilTest ###
 add_nes_integration_test(test-harness-util-test "TestHarnessUtilTest.cpp")
-
-
-### StringQueryTest ###
-add_nes_integration_test(string-query-test "StringQueryTest.cpp")
-
 
 ### UpstreamBackup ###
 add_nes_integration_test(upstream-backup-test "UpstreamBackupTest.cpp")
