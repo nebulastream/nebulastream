@@ -1,0 +1,28 @@
+query: |
+  Query::from("test_source")
+    .window(TumblingWindow::of(EventTime(Attribute("time")), Milliseconds(4)))
+    .apply(Sum(Attribute("value"))->as(Attribute("sum")))
+    .sink(NullOutputSinkDescriptor::create());  
+topology:
+  sink:
+    ip: "127.0.0.1"
+    port: 8082
+    resources: 1
+  workers:
+    - ip: 127.0.0.1
+      port: 8080
+      resources: 5
+      links: [ sink ]
+    - ip: "127.0.0.1"
+      port: 8081
+      sources:
+        - name: "test_source"
+          schema:
+            - name: id
+              type: INT64
+            - name: value
+              type: FLOAT32
+            - name: time
+              type: INT64
+      resources: 1
+      links: [ 2 ]
