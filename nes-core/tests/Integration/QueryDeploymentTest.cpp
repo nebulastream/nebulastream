@@ -149,7 +149,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
 
@@ -190,7 +190,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
 
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
     for (int i = 0; i < 10; ++i) {
@@ -226,7 +226,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
 
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test") //2
                                   .attachWorkerWithMemorySourceToCoordinator("test");//3
@@ -638,7 +638,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
 
     string query = R"(Query::from("test"))";
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test") //2
                            .attachWorkerWithMemorySourceToCoordinator("test");//3
@@ -681,7 +681,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 
     string query = R"(Query::from("test").filter(Attribute("id") < 5))";
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test");
 
@@ -898,7 +898,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 
     string query = R"(Query::from("test").project(Attribute("id")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
 
@@ -1404,7 +1404,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
         R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
     Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window", testSchema)
                                   .addLogicalSource("window2", testSchema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
@@ -1572,7 +1572,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
         R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window", windowSchema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()
@@ -1655,7 +1655,7 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType1)
@@ -1744,7 +1744,7 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType1)
@@ -1845,7 +1845,7 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType1_1)

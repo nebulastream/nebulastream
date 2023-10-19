@@ -59,16 +59,6 @@ TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName,
     return *this;
 }
 
-TestHarness& TestHarness::enableNautilus() {
-    useNautilus = true;
-    return *this;
-}
-
-TestHarness& TestHarness::enableDistributedWindowOptimization() {
-    performDistributedWindowOptimization = true;
-    return *this;
-}
-
 TestHarness& TestHarness::enableNewRequestExecutor() {
     useNewRequestExecutor = true;
     return *this;

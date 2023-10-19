@@ -251,7 +251,7 @@ TEST_F(KeyedTumblingWindowTests, testSimpleWindowEventTime) {
     csvSourceType->setNumberOfBuffersToProduce(3);
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window", testSchema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()
@@ -288,7 +288,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowSingleBuffer) {
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
@@ -317,7 +317,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowMultiBuffer) {
                      .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
@@ -342,7 +342,7 @@ TEST_F(KeyedTumblingWindowTests, testMultipleTumblingWindowMultiBuffer) {
                      .apply(Sum(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
@@ -383,7 +383,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys
                      .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100, 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
@@ -414,7 +414,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowCount) {
                      .apply(Count());
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
@@ -455,7 +455,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin) {
                      .apply(Min(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
@@ -503,7 +503,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
                                        .byKey(Attribute("key"))
                                        .apply(Min(Attribute("value")));
     TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -535,7 +535,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMax) {
                      .apply(Max(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
@@ -576,7 +576,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowAVG) {
                      .apply(Avg(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
@@ -619,7 +619,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleMultiKeyTumblingWindow) {
                      .apply(Sum(Attribute("value")));
     auto dg = DataGeneratorMultiKey("window", "window1", 1, 102);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
@@ -651,7 +651,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
                             Avg(Attribute("value"))->as(Attribute("avg_value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                           .enableNautilus()
+
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 

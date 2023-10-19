@@ -64,7 +64,7 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         EXPECT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                      .enableNautilus()
+
                                       .setJoinStrategy(joinStrategy)
                                       .setWindowingStrategy(windowingStrategy)
                                       .addLogicalSource("test1", joinParams.inputSchemas[0])

@@ -75,7 +75,7 @@ TEST_F(DistributedWindowDeploymentTest,
                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1)))
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).enableNautilus();
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -625,7 +625,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeySlidingWin
                      .apply(Sum(Attribute("value")));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window", testSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
                                   .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
@@ -667,7 +667,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                      .apply(Sum(Attribute("value")));
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).enableNautilus();
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -719,7 +719,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDeployOneWorkerDistributedS
     sourceConfig->setNumberOfBuffersToProduce(1);
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
+
                                   .addLogicalSource("window", testSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
                                   .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)

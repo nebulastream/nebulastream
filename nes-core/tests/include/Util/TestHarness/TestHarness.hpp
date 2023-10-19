@@ -101,17 +101,6 @@ class TestHarness {
                          uint64_t memSrcNumBuffToProcess = 1);
 
     /**
-     * @brief Enable using nautilus compiler
-     * @return self
-     */
-    TestHarness& enableNautilus();
-
-    /**
-     * @brief Enables the distributed window optimization
-     */
-    TestHarness& enableDistributedWindowOptimization();
-
-    /**
      * @brief Enable new request executor
      * @return self
      */
