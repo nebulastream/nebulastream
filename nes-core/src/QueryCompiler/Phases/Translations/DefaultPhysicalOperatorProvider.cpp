@@ -27,26 +27,33 @@
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
@@ -93,16 +100,9 @@
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSliceMergingOperatorHandler.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/NonKeyedTimeWindow/NonKeyedThreadLocalPreAggregationOperatorHandler.hpp>
-#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -323,9 +323,9 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
 }
 
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
-    if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
+    if (options->getQueryCompiler() == QueryCompilerType::DEFAULT_QUERY_COMPILER) {
         lowerOldDefaultQueryCompilerJoin(operatorNode);
-    } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
+    } else if (options->getQueryCompiler() == QueryCompilerType::NAUTILUS_QUERY_COMPILER) {
         lowerNautilusJoin(operatorNode);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -621,7 +621,7 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
     auto& windowDefinition = windowOperatorProperties.windowDefinition;
     KeyedOperatorHandlers keyedOperatorHandlers;
 
-    if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
+    if (options->getQueryCompiler() == QueryCompilerType::DEFAULT_QUERY_COMPILER) {
         auto smOperatorHandler = std::make_shared<Windowing::Experimental::KeyedSliceMergingOperatorHandler>(windowDefinition);
 
         keyedOperatorHandlers.preAggregationWindowHandler =
@@ -631,7 +631,7 @@ DefaultPhysicalOperatorProvider::createKeyedOperatorHandlers(WindowOperatorPrope
                 smOperatorHandler->getSliceStagingPtr());
 
         keyedOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
-    } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
+    } else if (options->getQueryCompiler() == QueryCompilerType::NAUTILUS_QUERY_COMPILER) {
         keyedOperatorHandlers.sliceMergingOperatorHandler =
             std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
 
@@ -664,7 +664,7 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
     auto& windowDefinition = windowOperatorProperties.windowDefinition;
     GlobalOperatorHandlers globalOperatorHandlers;
 
-    if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
+    if (options->getQueryCompiler() == QueryCompilerType::DEFAULT_QUERY_COMPILER) {
         auto smOperatorHandler = std::make_shared<Windowing::Experimental::NonKeyedSliceMergingOperatorHandler>(windowDefinition);
 
         globalOperatorHandlers.preAggregationWindowHandler =
@@ -674,7 +674,7 @@ DefaultPhysicalOperatorProvider::createGlobalOperatorHandlers(WindowOperatorProp
                 smOperatorHandler->getSliceStagingPtr());
 
         globalOperatorHandlers.sliceMergingOperatorHandler = smOperatorHandler;
-    } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
+    } else if (options->getQueryCompiler() == QueryCompilerType::NAUTILUS_QUERY_COMPILER) {
 
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
         timeBasedWindowType->getTimeBasedSubWindowType();

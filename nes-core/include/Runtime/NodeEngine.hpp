@@ -39,8 +39,8 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class PhysicalSource;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+class PhysicalSourceType;
+using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
 namespace Monitoring {
 class AbstractMetricStore;
@@ -290,7 +290,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Get physical sources configured
      * @return list of physical sources
      */
-    const std::vector<PhysicalSourcePtr>& getPhysicalSources() const;
+    const std::vector<PhysicalSourceTypePtr>& getPhysicalSources() const;
 
     /**
      * @brief finds executable query plan for a given sub query id
@@ -334,14 +334,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Updates the physical sources on the node engine
      * @param physicalSources
      */
-    void updatePhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+    void updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources);
 
   public:
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+    explicit NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                         HardwareManagerPtr&&,
                         std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,
@@ -359,7 +359,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
   private:
     TopologyNodeId nodeId;
-    std::vector<PhysicalSourcePtr> physicalSources;
+    std::vector<PhysicalSourceTypePtr> physicalSources;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     HardwareManagerPtr hardwareManager;

@@ -24,7 +24,7 @@
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include  <Exceptions/TypeInferenceException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>

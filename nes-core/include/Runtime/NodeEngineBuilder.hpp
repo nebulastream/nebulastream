@@ -14,6 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+
 #include <Network/NetworkForwardRefs.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -30,8 +31,11 @@ class MaterializedViewManager;
 using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
 }// namespace Experimental::MaterializedView
 
-}// namespace NES
-namespace NES::Runtime {
+namespace Configurations {
+class QueryCompilerConfiguration;
+}
+
+namespace Runtime {
 /**
  * This class is used to create instances of NodeEngine using the builder pattern.
  */
@@ -159,5 +163,6 @@ class NodeEngineBuilder {
      */
     static uint64_t getNextNodeEngineId();
 };
-}// namespace NES::Runtime
+}// namespace Runtime
+}// namespace NES
 #endif// NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

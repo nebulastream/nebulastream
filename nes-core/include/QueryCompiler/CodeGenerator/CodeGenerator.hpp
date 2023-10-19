@@ -25,6 +25,9 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
@@ -32,9 +35,6 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -91,8 +91,8 @@ class CodeGenerator {
      * @return flag if the generation was successful.
      */
     virtual bool generateCodeForInferModel(PipelineContextPtr context,
-                                           std::vector<ExpressionItemPtr> inputFields,
-                                           std::vector<ExpressionItemPtr> outputFields) = 0;
+                                           std::vector<ExpressionNodePtr> inputFields,
+                                           std::vector<ExpressionNodePtr> outputFields) = 0;
 
     /**
      * @brief Code generation for a map operator, which depends on a particular map predicate.
@@ -504,10 +504,9 @@ class CodeGenerator {
      * @return ExecutablePipelinePtr returns the compiled and executable pipeline.
      */
 
-    virtual Runtime::Execution::ExecutablePipelineStagePtr
-    compile(Compiler::JITCompilerPtr jitCompiler,
-            PipelineContextPtr pipelineContext,
-            QueryCompilerOptions::CompilationStrategy compilationStrategy) = 0;
+    virtual Runtime::Execution::ExecutablePipelineStagePtr compile(Compiler::JITCompilerPtr jitCompiler,
+                                                                   PipelineContextPtr pipelineContext,
+                                                                   CompilationStrategy compilationStrategy) = 0;
 
     virtual std::string generateCode(PipelineContextPtr pipelineContext) = 0;
 

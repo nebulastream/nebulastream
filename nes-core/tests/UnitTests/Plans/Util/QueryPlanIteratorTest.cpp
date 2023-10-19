@@ -14,25 +14,21 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -49,8 +45,6 @@ class QueryPlanIteratorTest : public Testing::BaseUnitTest {
 
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        dumpContext = DumpContext::create();
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));

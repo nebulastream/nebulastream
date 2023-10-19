@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <Catalogs/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
+#include <Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <memory>

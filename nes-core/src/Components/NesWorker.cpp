@@ -30,10 +30,10 @@
 #include <Runtime/QueryStatistics.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Mobility/Waypoint.hpp>
-#include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
+#include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
-#include <Spatial/Mobility/WorkerMobilityHandler.hpp>
+#include <Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>

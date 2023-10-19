@@ -69,7 +69,7 @@ void ConsoleDumpHandler::dump(const NodePtr node) { multilineDumpHelper(node, /*
 void ConsoleDumpHandler::multilineDump(NodePtr const& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
 void ConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr queryPlan) {
-    out << "Dumping queryPlan: " << queryPlan->toString() << std::endl;
+    out << "Dumping pipelineQueryPlan: " << queryPlan->toString() << std::endl;
 }
 
 void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) {

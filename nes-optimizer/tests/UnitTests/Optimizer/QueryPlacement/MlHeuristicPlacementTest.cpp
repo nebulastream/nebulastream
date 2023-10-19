@@ -15,12 +15,14 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -33,10 +35,9 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <z3++.h>
@@ -104,12 +105,13 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
             }
         }
 
-        std::string irisSchema = R"(Schema::create()->addField(createField("id", BasicType::UINT64))
-                           ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
-                           ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
-                           ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
-                           ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
-                           ->addField(createField("SpeciesCode", BasicType::UINT64));)";
+        auto irisSchema = Schema::create()
+                              ->addField(createField("id", BasicType::UINT64))
+                              ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+                              ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+                              ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+                              ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+                              ->addField(createField("SpeciesCode", BasicType::UINT64));
 
         const std::string streamName = "iris";
         //        SchemaPtr irisSchema = Schema::create()
@@ -125,10 +127,10 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         sourceCatalog->addLogicalSource(streamName, irisSchema);
         auto logicalSource = sourceCatalog->getLogicalSource(streamName);
 
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create(streamName, "test2");
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+        auto physicalSource = PhysicalSource::create(csvSourceType);
 
         for (int source : sources) {
             Catalogs::Source::SourceCatalogEntryPtr streamCatalogEntry =

@@ -11,7 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/LanguageCompiler.hpp>
@@ -22,6 +24,7 @@
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -191,8 +194,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
         queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
         QueryCompilation::QueryCompilerPtr compiler;
-        if (workerConfiguration->queryCompiler.queryCompilerType
-            == QueryCompilation::QueryCompiler::DEFAULT_QUERY_COMPILER) {
+        if (workerConfiguration->queryCompiler.queryCompilerType == QueryCompilerType::DEFAULT_QUERY_COMPILER) {
             auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
             auto jitCompiler = (!this->jitCompiler)
                 ? Compiler::JITCompilerBuilder()
@@ -215,7 +217,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler",
                                                NES::collectAndPrintStacktrace());
         }
-        std::vector<PhysicalSourcePtr> physicalSources;
+        std::vector<PhysicalSourceTypePtr> physicalSources;
         for (auto entry : workerConfiguration->physicalSourceTypes.getValues()) {
             physicalSources.push_back(entry.getValue());
         }

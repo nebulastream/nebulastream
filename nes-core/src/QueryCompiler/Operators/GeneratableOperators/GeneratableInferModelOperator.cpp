@@ -27,8 +27,8 @@ GeneratableInferModelOperator::GeneratableInferModelOperator(OperatorId id,
                                                              SchemaPtr inputSchema,
                                                              SchemaPtr outputSchema,
                                                              std::string model,
-                                                             std::vector<ExpressionItemPtr> inputFields,
-                                                             std::vector<ExpressionItemPtr> outputFields,
+                                                             std::vector<ExpressionNodePtr> inputFields,
+                                                             std::vector<ExpressionNodePtr> outputFields,
                                                              InferModel::InferModelOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields),
       outputFields(outputFields), operatorHandler(operatorHandler) {}
@@ -36,8 +36,8 @@ GeneratableInferModelOperator::GeneratableInferModelOperator(OperatorId id,
 GeneratableOperatorPtr GeneratableInferModelOperator::create(SchemaPtr inputSchema,
                                                              SchemaPtr outputSchema,
                                                              std::string model,
-                                                             std::vector<ExpressionItemPtr> inputFields,
-                                                             std::vector<ExpressionItemPtr> outputFields,
+                                                             std::vector<ExpressionNodePtr> inputFields,
+                                                             std::vector<ExpressionNodePtr> outputFields,
                                                              InferModel::InferModelOperatorHandlerPtr operatorHandler) {
     return create(getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
 }
@@ -46,8 +46,8 @@ GeneratableOperatorPtr GeneratableInferModelOperator::create(OperatorId id,
                                                              SchemaPtr inputSchema,
                                                              SchemaPtr outputSchema,
                                                              std::string model,
-                                                             std::vector<ExpressionItemPtr> inputFields,
-                                                             std::vector<ExpressionItemPtr> outputFields,
+                                                             std::vector<ExpressionNodePtr> inputFields,
+                                                             std::vector<ExpressionNodePtr> outputFields,
                                                              InferModel::InferModelOperatorHandlerPtr operatorHandler) {
     return std::make_shared<GeneratableInferModelOperator>(
         GeneratableInferModelOperator(id, inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler));

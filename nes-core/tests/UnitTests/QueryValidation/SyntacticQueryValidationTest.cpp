@@ -16,7 +16,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
-#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>

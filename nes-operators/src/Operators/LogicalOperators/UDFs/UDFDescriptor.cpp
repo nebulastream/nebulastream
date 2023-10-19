@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <Catalogs/Exceptions/UDFException.hpp>
 
 namespace NES::Catalogs::UDF {
 

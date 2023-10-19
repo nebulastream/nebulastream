@@ -17,12 +17,10 @@ add_source_files(nes-optimizer
         TopologySpecificQueryRewritePhase.cpp
         QueryMergerPhase.cpp
         QueryPlacementRefinementPhase.cpp
-        GlobalQueryPlanUpdatePhase.cpp
         TypeInferencePhase.cpp
         QueryPlacementPhase.cpp
         QueryRewritePhase.cpp
         MemoryLayoutSelectionPhase.cpp
         OriginIdInferencePhase.cpp
         TypeInferencePhaseContext.cpp
-        SampleCodeGenerationPhase.cpp
 )

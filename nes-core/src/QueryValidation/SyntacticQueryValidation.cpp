@@ -14,7 +14,7 @@
 
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>

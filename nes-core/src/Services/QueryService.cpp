@@ -19,8 +19,8 @@
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
-#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
-#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include <QueryValidation/SemanticQueryValidation.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>

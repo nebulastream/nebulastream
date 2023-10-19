@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Catalogs/Exceptions/UDFException.hpp>
 #include <algorithm>
 #include <numeric>
 #include <sstream>

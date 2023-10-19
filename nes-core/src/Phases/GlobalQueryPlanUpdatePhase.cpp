@@ -23,12 +23,12 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
+#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>

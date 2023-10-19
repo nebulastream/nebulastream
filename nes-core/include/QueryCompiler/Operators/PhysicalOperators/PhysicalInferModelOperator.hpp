@@ -30,36 +30,36 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
                                SchemaPtr inputSchema,
                                SchemaPtr outputSchema,
                                std::string model,
-                               std::vector<ExpressionItemPtr> inputFields,
-                               std::vector<ExpressionItemPtr> outputFields,
+                               std::vector<ExpressionNodePtr> inputFields,
+                               std::vector<ExpressionNodePtr> outputFields,
                                InferModel::InferModelOperatorHandlerPtr operatorHandler);
 
     static PhysicalOperatorPtr create(OperatorId id,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
                                       std::string model,
-                                      std::vector<ExpressionItemPtr> inputFields,
-                                      std::vector<ExpressionItemPtr> outputFields,
+                                      std::vector<ExpressionNodePtr> inputFields,
+                                      std::vector<ExpressionNodePtr> outputFields,
                                       InferModel::InferModelOperatorHandlerPtr operatorHandler);
 
     static PhysicalOperatorPtr create(SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
                                       std::string model,
-                                      std::vector<ExpressionItemPtr> inputFields,
-                                      std::vector<ExpressionItemPtr> outputFields,
+                                      std::vector<ExpressionNodePtr> inputFields,
+                                      std::vector<ExpressionNodePtr> outputFields,
                                       InferModel::InferModelOperatorHandlerPtr operatorHandler);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
     const std::string& getModel() const;
-    const std::vector<ExpressionItemPtr>& getInputFields() const;
-    const std::vector<ExpressionItemPtr>& getOutputFields() const;
+    const std::vector<ExpressionNodePtr>& getInputFields() const;
+    const std::vector<ExpressionNodePtr>& getOutputFields() const;
     InferModel::InferModelOperatorHandlerPtr getInferModelHandler();
 
   protected:
     const std::string model;
-    const std::vector<ExpressionItemPtr> inputFields;
-    const std::vector<ExpressionItemPtr> outputFields;
+    const std::vector<ExpressionNodePtr> inputFields;
+    const std::vector<ExpressionNodePtr> outputFields;
     InferModel::InferModelOperatorHandlerPtr operatorHandler;
 };
 }// namespace PhysicalOperators

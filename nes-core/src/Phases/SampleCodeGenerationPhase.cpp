@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
-#include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
+#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>

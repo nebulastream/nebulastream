@@ -21,8 +21,8 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(OperatorId id,
                                                        SchemaPtr inputSchema,
                                                        SchemaPtr outputSchema,
                                                        std::string model,
-                                                       std::vector<ExpressionItemPtr> inputFields,
-                                                       std::vector<ExpressionItemPtr> outputFields,
+                                                       std::vector<ExpressionNodePtr> inputFields,
+                                                       std::vector<ExpressionNodePtr> outputFields,
                                                        InferModel::InferModelOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields),
       outputFields(outputFields), operatorHandler(operatorHandler) {}
@@ -31,8 +31,8 @@ PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
                                                        SchemaPtr inputSchema,
                                                        SchemaPtr outputSchema,
                                                        std::string model,
-                                                       std::vector<ExpressionItemPtr> inputFields,
-                                                       std::vector<ExpressionItemPtr> outputFields,
+                                                       std::vector<ExpressionNodePtr> inputFields,
+                                                       std::vector<ExpressionNodePtr> outputFields,
                                                        InferModel::InferModelOperatorHandlerPtr operatorHandler) {
     return std::make_shared<PhysicalInferModelOperator>(id,
                                                         inputSchema,
@@ -46,8 +46,8 @@ PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
 PhysicalOperatorPtr PhysicalInferModelOperator::create(SchemaPtr inputSchema,
                                                        SchemaPtr outputSchema,
                                                        std::string model,
-                                                       std::vector<ExpressionItemPtr> inputFields,
-                                                       std::vector<ExpressionItemPtr> outputFields,
+                                                       std::vector<ExpressionNodePtr> inputFields,
+                                                       std::vector<ExpressionNodePtr> outputFields,
                                                        InferModel::InferModelOperatorHandlerPtr operatorHandler) {
     return create(getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
 }
@@ -61,8 +61,8 @@ OperatorNodePtr PhysicalInferModelOperator::copy() {
 }
 
 const std::string& PhysicalInferModelOperator::getModel() const { return model; }
-const std::vector<ExpressionItemPtr>& PhysicalInferModelOperator::getInputFields() const { return inputFields; }
-const std::vector<ExpressionItemPtr>& PhysicalInferModelOperator::getOutputFields() const { return outputFields; }
+const std::vector<ExpressionNodePtr>& PhysicalInferModelOperator::getInputFields() const { return inputFields; }
+const std::vector<ExpressionNodePtr>& PhysicalInferModelOperator::getOutputFields() const { return outputFields; }
 
 InferModel::InferModelOperatorHandlerPtr PhysicalInferModelOperator::getInferModelHandler() { return operatorHandler; }
 

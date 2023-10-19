@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <Util/Mobility/Waypoint.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <unordered_map>
 #ifdef S2DEF
