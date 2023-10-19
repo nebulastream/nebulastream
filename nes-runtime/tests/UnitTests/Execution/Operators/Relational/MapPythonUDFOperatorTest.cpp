@@ -43,7 +43,7 @@ std::string method = "map";
 SchemaPtr inputSchema, outputSchema;
 std::string function, functionName;
 std::map<std::string, std::string> modulesToImport;
-std::string pythonCompiler = "default"; // use default compiler
+std::string pythonCompiler = "cython"; // use default compiler
 
 /**
 * @brief Test simple UDF with integer objects as input and output
@@ -56,8 +56,8 @@ TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest) {
     functionName = "integer_test";
 
     int32_t initialValue = 42;
-    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, "numba", inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -79,7 +79,7 @@ TEST_F(MapPythonUdfOperatorTest, LongUDFTest) {
 
     int64_t initialValue = 42;
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -101,7 +101,7 @@ TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest) {
 
     double initialValue = 42.0;
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -123,7 +123,7 @@ TEST_F(MapPythonUdfOperatorTest, FloatUDFTest) {
 
     float initialValue = 42.0;
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -145,7 +145,7 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
 
     auto initialValue = true;
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -169,7 +169,7 @@ TEST_F(MapPythonUdfOperatorTest, MathImportUDFTest) {
     int32_t x = 3;
     int32_t y = 2;
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -194,7 +194,7 @@ TEST_F(MapPythonUdfOperatorTest, MathImportWithAliasUDFTest) {
     int32_t x = 3;
     int32_t y = 2;
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -228,7 +228,7 @@ TEST_F(MapPythonUdfOperatorTest, NumpyImportWithAliasUDFTest) {
     int32_t y = 4;
     int32_t z = 2;
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -257,7 +257,7 @@ TEST_F(MapPythonUdfOperatorTest, StringUDFTest) {
     auto initialValue = "old_value";
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
 
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -316,7 +316,7 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     bool initialBool = true;
     auto initialString = "x";
     auto handler = std::make_shared<PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-    auto map = MapPythonUDF(0, inputSchema, outputSchema);
+    auto map = MapPythonUDF(0, inputSchema, outputSchema, pythonCompiler);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});

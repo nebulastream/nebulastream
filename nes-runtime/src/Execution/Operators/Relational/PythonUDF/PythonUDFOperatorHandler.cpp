@@ -121,7 +121,7 @@ void PythonUDFOperatorHandler::initPython() {
     }
 
     //choose python compiler, default is the CPython compiler
-    if (this->pythonCompiler == "numba"){
+    if (this->pythonCompiler == "numba") {
         // init globals and locals to be able to access the variables later when calling the function
         // they have to be a pyDict
         globals = PyDict_New();
@@ -136,58 +136,114 @@ void PythonUDFOperatorHandler::initPython() {
         std::string numbaSignature = this->getNumbaSignature();
         pythonCode += "import numba"
                       "\n"
-                      "@numba.cfunc(\"" + numbaSignature + "\", nopython=True)\n" +
-                      this->function +
-                      "\n" +
-                      this->functionName + "_address = " + this->functionName + ".address";
+                      "@numba.cfunc(\""
+            + numbaSignature + "\", nopython=True)\n" + this->function + "\n" + this->functionName
+            + "_address = " + this->functionName + ".address";
         //PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
     } else {
         // default, just using the CPython compiler
         pythonCode += this->function;
     }
-    // compile function string
-    compilePythonTimer.start();
-    PyObject* compiledPythonCode = Py_CompileString(pythonCode.c_str(), "", Py_file_input);
-    if (compiledPythonCode == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-            NES_THROW_RUNTIME_ERROR("Could not compile function string.");
-        }
-    }
-    compilePythonTimer.snapshot("compiledPythonCode");
-    compilePythonTimer.pause();
-    execPythonTimer.start();
-    // add python code into our module
-    this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), compiledPythonCode);
-    if (this->pythonModule == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-        NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
-    }
-    execPythonTimer.snapshot("addedCodeintoModule");
-    execPythonTimer.pause();
-    initPythonTimer.snapshot("init");
-    initPythonTimer.pause();
-    auto path = std::filesystem::current_path().string() + "/dump/initpython.txt";
-    std::ofstream outputFile;
-    outputFile.open(path, std::ios_base::app);
-    outputFile << initPythonTimer.getPrintTime() << "\n";
-    outputFile.close();
 
-    path = std::filesystem::current_path().string() + "/dump/initcompilepython.txt";
-    std::ofstream outputCompileFile;
-    outputCompileFile.open(path, std::ios_base::app);
-    outputCompileFile << compilePythonTimer.getPrintTime() << "\n";
-    outputCompileFile.close();
+    if (pythonCompiler == "cython") {
+        // create .pyx file
+        // add python code into that file
+        auto path = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "tmp";
+        if (!std::filesystem::is_directory(path)) {
+            std::filesystem::create_directory(path);
+        }
 
-    path = std::filesystem::current_path().string() + "/dump/initexecutepython.txt";
-    std::ofstream outputExecuteFile;
-    outputExecuteFile.open(path, std::ios_base::app);
-    outputExecuteFile << execPythonTimer.getPrintTime() << "\n";
-    outputExecuteFile.close();
+        // /home/phm98/nebulastream/nebulastream/cmake-build-debug/nes-runtime/tests/UnitTests/Execution/Operators/Relational/tmp
+        //path += + std::filesystem::path::preferred_separator;
+        auto file = path + std::filesystem::path::preferred_separator + this->functionName + ".pyx";
+        std::ofstream pyxFile;
+        pyxFile.open(file, std::ios_base::app);
+        pyxFile << pythonCode << "\n";
+        pyxFile.close();
+
+        // build cython module
+        // we generate a .c file with cython
+        // --embed option so that we dont have to do all the init stuff in CPython our own
+        // -3 means we're generating Python 3 syntax
+        // cython --embed -3 myownmodule.pyx
+        auto generateCFile = "cython --embed -3 " + file;
+        std::system(generateCFile.c_str());
+
+        std::string cFile = path + std::filesystem::path::preferred_separator + this->functionName + ".c";
+        std::string oFile = path + std::filesystem::path::preferred_separator + this->functionName + ".o";
+
+        // compile .c file
+        auto generateOFile = "gcc -pthread -fPIC -I/usr/include/python3.8 -g -c " + cFile +" -o " + oFile;
+        std::system(generateOFile.c_str());
+
+        // link file against the Python library
+        auto generateSOFile = "gcc " + oFile +" -fPIC -pthread -g -shared -o " + path + std::filesystem::path::preferred_separator + this->functionName +".so `python3-config --libs`";
+        std::system(generateSOFile.c_str());
+
+        // remove files we don't need anymore
+        std::remove(cFile.c_str());
+        std::remove(oFile.c_str());
+
+        // now we can use it like a normal module
+        // add path to PYTHONPATH
+        // do this: sys.path.append('/path/to/mod_directory')
+        auto addPath = "import sys\nsys.path.append(\"" + path +"\")\n";
+        PyRun_SimpleString(addPath.c_str());
+        // open module and use function
+        pythonModule = PyImport_ImportModule(this->functionName.c_str());
+
+        if (pythonModule == NULL) {
+            if (PyErr_Occurred()) {
+                PyErr_Print();
+                PyErr_Clear();
+                NES_THROW_RUNTIME_ERROR("Importing the module didn't work out");
+            }
+        }
+    } else {
+        // compile function string
+        compilePythonTimer.start();
+        PyObject* compiledPythonCode = Py_CompileString(pythonCode.c_str(), "", Py_file_input);
+        if (compiledPythonCode == NULL) {
+            if (PyErr_Occurred()) {
+                PyErr_Print();
+                PyErr_Clear();
+                NES_THROW_RUNTIME_ERROR("Could not compile function string.");
+            }
+        }
+        compilePythonTimer.snapshot("compiledPythonCode");
+        compilePythonTimer.pause();
+        execPythonTimer.start();
+        // add python code into our module
+        this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), compiledPythonCode);
+        if (this->pythonModule == NULL) {
+            if (PyErr_Occurred()) {
+                PyErr_Print();
+                PyErr_Clear();
+            }
+            NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
+        }
+        execPythonTimer.snapshot("addedCodeintoModule");
+        execPythonTimer.pause();
+        initPythonTimer.snapshot("init");
+        initPythonTimer.pause();
+        auto path = std::filesystem::current_path().string() + "/dump/initpython.txt";
+        std::ofstream outputFile;
+        outputFile.open(path, std::ios_base::app);
+        outputFile << initPythonTimer.getPrintTime() << "\n";
+        outputFile.close();
+
+        path = std::filesystem::current_path().string() + "/dump/initcompilepython.txt";
+        std::ofstream outputCompileFile;
+        outputCompileFile.open(path, std::ios_base::app);
+        outputCompileFile << compilePythonTimer.getPrintTime() << "\n";
+        outputCompileFile.close();
+
+        path = std::filesystem::current_path().string() + "/dump/initexecutepython.txt";
+        std::ofstream outputExecuteFile;
+        outputExecuteFile.open(path, std::ios_base::app);
+        outputExecuteFile << execPythonTimer.getPrintTime() << "\n";
+        outputExecuteFile.close();
+    }
 }
 
 void PythonUDFOperatorHandler::finalize() {
