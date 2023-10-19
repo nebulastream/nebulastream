@@ -26,8 +26,7 @@
 #include <string>
 #include <thread>
 
-namespace NES {
-namespace Configurations {
+namespace NES::Configurations {
 
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -110,7 +109,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Allows the configuration of logical sources at the coordinator.
      * @deprecated This is currently only used for testing and will be removed.
      */
-    SequenceOption<WrapOption<LogicalSourceTypePtr, LogicalSourceTypeFactory>> logicalSources = {LOGICAL_SOURCES,
+    SequenceOption<WrapOption<LogicalSourceTypePtr, LogicalSourceTypeFactory>> logicalSourceTypes = {LOGICAL_SOURCES,
                                                                                                  "Logical Sources"};
 
     /**
@@ -175,13 +174,12 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &worker,
                 &workerConfigPath,
                 &optimizer,
-                &logicalSources,
+                &logicalSourceTypes,
                 &coordinatorHealthCheckWaitTime,
                 &restServerCorsAllowedOrigin};
     }
 };
 
-}// namespace Configurations
-}// namespace NES
+}// namespace NES::Configurations
 
 #endif// NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_

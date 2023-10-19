@@ -77,7 +77,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::BaseUnitTest {
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
         //Setup source catalog
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
         //Setup topology
         topology = Topology::create();
@@ -478,7 +478,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleComplexQueryPlan
     }
 
     //Setup source catalog
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     NES::SchemaPtr schema = NES::Schema::create()
                                 ->addField("id", BasicType::UINT64)
                                 ->addField("val", BasicType::UINT64)

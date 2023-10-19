@@ -89,7 +89,7 @@ class NetworkStackIntegrationTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         dataPort1 = Testing::BaseIntegrationTest::getAvailablePort();
         dataPort2 = Testing::BaseIntegrationTest::getAvailablePort();
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 

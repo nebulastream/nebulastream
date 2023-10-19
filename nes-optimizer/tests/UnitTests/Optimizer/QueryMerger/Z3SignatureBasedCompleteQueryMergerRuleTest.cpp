@@ -62,7 +62,7 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);

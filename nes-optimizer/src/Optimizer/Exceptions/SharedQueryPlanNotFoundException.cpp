@@ -11,8 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/SharedQueryPlanNotFoundException.hpp>
-#include <utility>
+
+#include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
+
 namespace NES::Exceptions {
 SharedQueryPlanNotFoundException::SharedQueryPlanNotFoundException(const std::string& message, NES::SharedQueryId id)
     : RequestExecutionException(message), id(id) {}

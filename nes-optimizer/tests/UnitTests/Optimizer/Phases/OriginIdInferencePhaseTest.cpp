@@ -62,8 +62,7 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup OriginIdInferencePhaseTest test case.");
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
-        Catalogs::Source::SourceCatalogPtr sourceCatalog =
-            std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
         auto optimizerConfiguration = OptimizerConfiguration();

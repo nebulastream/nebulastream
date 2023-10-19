@@ -48,6 +48,7 @@ RestServer::RestServer(std::string host,
                        GlobalExecutionPlanPtr globalExecutionPlan,
                        QueryServicePtr queryService,
                        MonitoringServicePtr monitoringService,
+                       QueryParsingServicePtr queryParsingService,
                        GlobalQueryPlanPtr globalQueryPlan,
                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
@@ -58,7 +59,8 @@ RestServer::RestServer(std::string host,
       globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
       topologyManagerService(std::move(topologyManagerService)), udfCatalog(std::move(udfCatalog)),
       locationService(std::move(locationService)), monitoringService(std::move(monitoringService)),
-      bufferManager(std::move(bufferManager)), corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
+      queryParsingService(std::move(queryParsingService)), bufferManager(std::move(bufferManager)),
+      corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
 
 bool RestServer::start() {
     NES_INFO("Starting Oatpp Server on {}:{}", host, std::to_string(port));
@@ -122,8 +124,11 @@ void RestServer::run() {
                                                                      errorHandler);
     auto udfCatalogController =
         REST::Controller::UDFCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
-    auto sourceCatalogController =
-        REST::Controller::SourceCatalogController::create(objectMapper, sourceCatalogService, errorHandler, "/sourceCatalog");
+    auto sourceCatalogController = REST::Controller::SourceCatalogController::create(objectMapper,
+                                                                                     sourceCatalogService,
+                                                                                     queryParsingService,
+                                                                                     errorHandler,
+                                                                                     "/sourceCatalog");
     auto locationController =
         REST::Controller::LocationController::create(objectMapper, locationService, "/location", errorHandler);
     auto monitoringController = REST::Controller::MonitoringController::create(objectMapper,

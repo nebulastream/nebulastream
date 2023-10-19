@@ -85,7 +85,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
 
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");
@@ -115,7 +115,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
 
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");

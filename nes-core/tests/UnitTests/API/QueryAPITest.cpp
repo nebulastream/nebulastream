@@ -260,7 +260,7 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);

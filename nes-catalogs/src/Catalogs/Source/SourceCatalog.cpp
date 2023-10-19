@@ -24,6 +24,12 @@
 
 namespace NES::Catalogs::Source {
 
+SourceCatalog::SourceCatalog(){
+    NES_DEBUG("SourceCatalog: construct source catalog");
+    addDefaultSources();
+    NES_DEBUG("SourceCatalog: construct source catalog successfully");
+}
+
 void SourceCatalog::addDefaultSources() {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("Sourcecatalog addDefaultSources");
@@ -33,12 +39,6 @@ void SourceCatalog::addDefaultSources() {
         NES_ERROR("SourceCatalog::addDefaultSources: error while add default_logical");
         throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
     }
-}
-
-SourceCatalog::SourceCatalog(QueryParsingServicePtr queryParsingService) : queryParsingService(queryParsingService) {
-    NES_DEBUG("SourceCatalog: construct source catalog");
-    addDefaultSources();
-    NES_DEBUG("SourceCatalog: construct source catalog successfully");
 }
 
 bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr) {

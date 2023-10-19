@@ -149,11 +149,11 @@ void LowerToExecutableQueryPlanPhase::processSource(
         auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
         //Iterate over all available physical sources
         bool foundPhysicalSource = false;
-        for (const auto& physicalSource : nodeEngine->getPhysicalSources()) {
+        for (const auto& physicalSourceType : nodeEngine->getPhysicalSourceTypes()) {
             //Check if logical and physical source name matches with any of the physical source provided by the node
-            if (physicalSource->getLogicalSourceName() == logicalSourceName
-                && physicalSource->getPhysicalSourceName() == physicalSourceName) {
-                sourceDescriptor = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSource);
+            if (physicalSourceType->getLogicalSourceName() == logicalSourceName
+                && physicalSourceType->getPhysicalSourceName() == physicalSourceName) {
+                sourceDescriptor = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSourceType);
                 foundPhysicalSource = true;
                 break;
             }
@@ -297,13 +297,13 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     return executablePipeline;
 }
 
-SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource) {
-    auto logicalSourceName = physicalSource->getLogicalSourceName();
-    auto physicalSourceName = physicalSource->getPhysicalSourceName();
-    auto physicalSourceType = physicalSource->getPhysicalSourceType();
+SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema,
+                                                                            PhysicalSourceTypePtr physicalSourceType) {
+    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
+    auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
     auto sourceType = physicalSourceType->getSourceType();
     NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-              physicalSource->toString(),
+              physicalSourceType->toString(),
               magic_enum::enum_name(sourceType));
 
     switch (sourceType) {

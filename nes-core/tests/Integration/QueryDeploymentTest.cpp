@@ -264,7 +264,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
                       ->addField(createField("timestamp", BasicType::UINT64));
 
     auto logicalSource = LogicalSource::create("window1", schema);
-    coordinatorConfig->logicalSources.add(logicalSource);
+    coordinatorConfig->logicalSourceTypes.add(logicalSource);
 
     coordinatorConfig->worker.enableSourceSharing = true;
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
@@ -456,7 +456,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
                       ->addField(createField("timestamp", BasicType::UINT64));
 
     auto logicalSource = LogicalSource::create("window1", schema);
-    coordinatorConfig->logicalSources.add(logicalSource);
+    coordinatorConfig->logicalSourceTypes.add(logicalSource);
 
     coordinatorConfig->worker.enableSourceSharing = true;
     coordinatorConfig->worker.bufferSizeInBytes = 1024;

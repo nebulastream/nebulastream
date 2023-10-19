@@ -102,7 +102,7 @@ void E2ESingleRun::createSources() {
         auto schema = dataGenerator->getSchema();
 
         auto logicalSource = LogicalSource::create(logicalSourceName, schema);
-        coordinatorConf->logicalSources.add(logicalSource);
+        coordinatorConf->logicalSourceTypes.add(logicalSource);
 
         auto numberOfPhysicalSrc = configPerRun.logicalSrcToNoPhysicalSrc[logicalSource->getLogicalSourceName()];
         auto numberOfTotalBuffers = configOverAllRuns.numberOfPreAllocatedBuffer->getValue() * numberOfPhysicalSrc;

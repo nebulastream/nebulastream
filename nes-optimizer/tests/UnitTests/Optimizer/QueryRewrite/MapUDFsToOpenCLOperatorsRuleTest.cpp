@@ -88,7 +88,7 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingSingleSourceRenameOperator) {
 
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -121,7 +121,7 @@ TEST_F(MapUDFsToOpenCLOperatorsRuleTest, testAddingMultipleSourceRenameOperator)
 
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto javaUDFDescriptor =

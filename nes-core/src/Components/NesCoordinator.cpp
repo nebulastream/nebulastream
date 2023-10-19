@@ -16,12 +16,14 @@
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -31,10 +33,9 @@
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/LocationService.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
@@ -43,22 +44,20 @@
 #include <z3++.h>
 
 //GRPC Includes
+#include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Catalogs/Source/SourceCatalogService.hpp>
 
+#include <Catalogs/Topology/Topology.hpp>
 #include <GRPC/HealthCheckRPCServer.hpp>
 #include <Health.pb.h>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -85,11 +84,11 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto queryParsingService = QueryParsingService::create(jitCompiler);
+    queryParsingService = QueryParsingService::create(jitCompiler);
 
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
@@ -185,9 +184,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator:buildAndStartGRPCServer: ready");
 
     NES_DEBUG("NesCoordinator: Register Logical sources");
-    for (auto logicalSource : coordinatorConfiguration->logicalSources.getValues()) {
-        sourceCatalogService->registerLogicalSource(logicalSource.getValue()->getLogicalSourceName(),
-                                                    logicalSource.getValue()->getSchema());
+    for (const auto& logicalSourceType : coordinatorConfiguration->logicalSourceTypes.getValues()) {
+        auto schema = Schema::createFromSchemaType(logicalSourceType.getValue()->getSchemaType());
+        sourceCatalogService->registerLogicalSource(logicalSourceType.getValue()->getLogicalSourceName(), schema);
     }
     NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 
@@ -226,6 +225,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
+                                              queryParsingService,
                                               globalQueryPlan,
                                               udfCatalog,
                                               worker->getNodeEngine()->getBufferManager(),
@@ -336,7 +336,8 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
                                  queryCatalogService,
                                  monitoringService->getMonitoringManager(),
                                  this->replicationService,
-                                 locationService);
+                                 locationService,
+                                 queryParsingService);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());

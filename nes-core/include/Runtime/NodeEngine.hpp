@@ -290,7 +290,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Get physical sources configured
      * @return list of physical sources
      */
-    const std::vector<PhysicalSourceTypePtr>& getPhysicalSources() const;
+    const std::vector<PhysicalSourceTypePtr>& getPhysicalSourceTypes() const;
 
     /**
      * @brief finds executable query plan for a given sub query id

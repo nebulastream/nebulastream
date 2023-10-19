@@ -43,7 +43,7 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     auto queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto globalQueryPlan = GlobalQueryPlan::create();
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     auto serialAccessHandle = SerialStorageHandler::create({coordinatorConfiguration,
                                                             topology,

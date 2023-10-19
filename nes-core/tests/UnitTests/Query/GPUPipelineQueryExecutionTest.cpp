@@ -81,7 +81,7 @@ class GPUQueryExecutionTest : public Testing::BaseUnitTest {
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 

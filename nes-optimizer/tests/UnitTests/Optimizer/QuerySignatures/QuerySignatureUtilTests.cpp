@@ -63,7 +63,7 @@ class QuerySignatureUtilTests : public Testing::BaseUnitTest {
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         typeInferencePhaseContext = std::make_shared<Optimizer::TypeInferencePhaseContext>(
             Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));

@@ -31,7 +31,7 @@ constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class MapQueryExecutionTest
     : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<std::tuple<QueryCompilation::QueryCompiler,
+      public ::testing::WithParamInterface<std::tuple<QueryCompilation::QueryCompilerType,
                                                       std::string,
                                                       std::vector<string>,
                                                       std::vector<string>,

@@ -61,7 +61,7 @@ class Schema {
      * @brief Factory method to create a new SchemaPtr from schema type.
      * @return SchemaPtr
      */
-    SchemaPtr createFromSchemaType(Configurations::SchemaTypePtr schemaType, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
+    static SchemaPtr createFromSchemaType(const Configurations::SchemaTypePtr& schemaType, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
      * @brief Creates a copy of this schema.
@@ -249,7 +249,7 @@ class Schema {
      * @param fieldLength the length of the field from yaml
      * @return the appropriate DataTypePtr
      */
-    DataTypePtr stringToFieldType(std::string fieldType, std::string fieldLength);
+    static DataTypePtr stringToFieldType(const std::string& fieldType, const std::string& fieldLength);
 
     MemoryLayoutType layoutType;
 };

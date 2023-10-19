@@ -22,8 +22,8 @@
 
 namespace NES {
 
-class PhysicalSource;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+class PhysicalSourceType;
+using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
 namespace QueryCompilation {
 
@@ -76,10 +76,10 @@ class LowerToExecutableQueryPlanPhase {
     /**
      * @brief Create Actual Source descriptor from default source descriptor and Physical source properties
      * @param defaultSourceDescriptor: the default source descriptor
-     * @param physicalSource : the physical source
+     * @param physicalSourceType : the physical source
      * @return Shared pointer for actual source descriptor
      */
-    SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource);
+    SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType);
 };
 }// namespace QueryCompilation
 }// namespace NES

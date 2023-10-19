@@ -73,7 +73,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
             {Compiler::Language::CPP, Compiler::CPPCompiler::create()}};
         auto jitCompiler = std::make_shared<Compiler::JITCompiler>(compilerMap, false);
         auto queryParsingService = QueryParsingService::create(jitCompiler);
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         auto z3context = std::make_shared<z3::context>();
         const auto coordinatorConfig = CoordinatorConfiguration::createDefault();
         udfCatalog = std::shared_ptr<Catalogs::UDF::UDFCatalog>(Catalogs::UDF::UDFCatalog::create().release());

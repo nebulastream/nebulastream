@@ -28,9 +28,6 @@ namespace NES {
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
-class QueryParsingService;
-using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
-
 namespace Catalogs::Source {
 
 /**
@@ -155,19 +152,14 @@ class SourceCatalog {
      */
     bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr);
 
-    SourceCatalog(QueryParsingServicePtr queryParsingService);
+    SourceCatalog();
 
   private:
-    QueryParsingServicePtr queryParsingService;
-
     std::recursive_mutex catalogMutex;
-
     //map logical source to schema
     std::map<std::string, SchemaPtr> logicalSourceNameToSchemaMapping;
-
     //map logical source to physical source
     std::map<std::string, std::vector<SourceCatalogEntryPtr>> logicalToPhysicalSourceMapping;
-
     void addDefaultSources();
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;

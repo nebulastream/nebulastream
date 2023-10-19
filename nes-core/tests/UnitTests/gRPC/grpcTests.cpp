@@ -14,14 +14,14 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Core.hpp>
@@ -51,9 +51,10 @@ class GrpcTests : public Testing::BaseIntegrationTest {
 */
 TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     // Setup Coordinator
-    std::string window =
-        R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
-                                            ->addField(createField("timestamp", BasicType::UINT64));)";
+    auto window = Schema::create()
+                      ->addField(createField("win", BasicType::UINT64))
+                      ->addField(createField("id1", BasicType::UINT64))
+                      ->addField(createField("timestamp", BasicType::UINT64));
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     NES_INFO("GrpcNotifyQueryFailureTest: Start coordinator");
@@ -65,12 +66,11 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
 
     NES_INFO("GrpcNotifyQueryFailureTest: Start worker");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    auto srcConf1 = CSVSourceType::create();
+    auto srcConf1 = CSVSourceType::create("Win1", "test_stream1");
     srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(0);
     srcConf1->setNumberOfBuffersToProduce(0);
-    auto windowSource = PhysicalSource::create("Win1", "test_stream1", srcConf1);
-    wrkConf->physicalSourceTypes.add(windowSource);
+    wrkConf->physicalSourceTypes.add(srcConf1);
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -117,9 +117,10 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
 TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
 
     // Setup Coordinator
-    std::string window =
-        R"(Schema::create()->addField(createField("win", BasicType::UINT64))->addField(createField("id1", BasicType::UINT64))
-                                            ->addField(createField("timestamp", BasicType::UINT64));)";
+    auto window = Schema::create()
+                      ->addField(createField("win", BasicType::UINT64))
+                      ->addField(createField("id1", BasicType::UINT64))
+                      ->addField(createField("timestamp", BasicType::UINT64));
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -135,12 +136,11 @@ TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
     NES_INFO("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    auto srcConf1 = CSVSourceType::create();
+    auto srcConf1 = CSVSourceType::create("Win1", "test_stream1");
     srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(0);
     srcConf1->setNumberOfBuffersToProduce(0);
-    auto windowSource = PhysicalSource::create("Win1", "test_stream1", srcConf1);
-    workerConfig1->physicalSourceTypes.add(windowSource);
+    workerConfig1->physicalSourceTypes.add(srcConf1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

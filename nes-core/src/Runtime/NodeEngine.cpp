@@ -537,7 +537,7 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 #endif
 }
 
-const std::vector<PhysicalSourceTypePtr>& NodeEngine::getPhysicalSources() const { return physicalSources; }
+const std::vector<PhysicalSourceTypePtr>& NodeEngine::getPhysicalSourceTypes() const { return physicalSources; }
 
 std::shared_ptr<const Execution::ExecutableQueryPlan> NodeEngine::getExecutableQueryPlan(uint64_t querySubPlanId) const {
     std::unique_lock lock(engineMutex);

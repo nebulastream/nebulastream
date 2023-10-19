@@ -18,7 +18,7 @@
 
 namespace NES::Testing {
 
-TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompiler& compiler,
+TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerType& compiler,
                                          const QueryCompilation::DumpMode& dumpMode,
                                          const uint64_t numWorkerThreads,
                                          const QueryCompilation::StreamJoinStrategy& joinStrategy,
@@ -27,7 +27,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompiler& 
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
     workerConfiguration->queryCompiler.queryCompilerType = compiler;
-    workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
+    workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
     workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
     workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
     workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::CompilationStrategy::DEBUG;
@@ -36,9 +36,8 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompiler& 
     workerConfiguration->numberOfBuffersInGlobalBufferManager = numWorkerThreads * DEFAULT_NO_BUFFERS_IN_GLOBAL_BM_PER_THREAD;
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool = numWorkerThreads * DEFAULT_NO_BUFFERS_IN_SOURCE_BM_PER_THREAD;
 
-    auto defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
-    workerConfiguration->physicalSourceTypes.add(sourceConf);
+    auto defaultSourceType = DefaultSourceType::create("default", "default1");
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     auto phaseProvider = std::make_shared<TestUtils::TestPhaseProvider>();
     nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                      .setPhaseFactory(phaseProvider)
@@ -56,7 +55,7 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompiler& 
     // Initialize the typeInferencePhase with a dummy SourceCatalog & UDFCatalog
     Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
     // We inject an invalid query parsing service as it is not used in the tests.
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 }
 

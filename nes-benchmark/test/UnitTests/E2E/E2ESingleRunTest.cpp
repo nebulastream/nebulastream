@@ -102,10 +102,10 @@ namespace NES::Benchmark {
             singleRun.createSources();
 
             auto coordinatorConf = singleRun.getCoordinatorConf();
-            ASSERT_EQ(coordinatorConf->logicalSources.size(), 2);
+            ASSERT_EQ(coordinatorConf->logicalSourceTypes.size(), 2);
 
-            ASSERT_EQ(coordinatorConf->logicalSources[0].getValue()->getLogicalSourceName(), defaultDataGeneratorName);
-            ASSERT_EQ(coordinatorConf->logicalSources[1].getValue()->getLogicalSourceName(), zipfianDataGeneratorName);
+            ASSERT_EQ(coordinatorConf->logicalSourceTypes[0].getValue()->getLogicalSourceName(), defaultDataGeneratorName);
+            ASSERT_EQ(coordinatorConf->logicalSourceTypes[1].getValue()->getLogicalSourceName(), zipfianDataGeneratorName);
             ASSERT_EQ(coordinatorConf->worker.physicalSourceTypes.size(), cnt + 1 + cnt + 2);
 
             std::map<std::string, uint64_t> tmpMap{{defaultDataGeneratorName, 0},

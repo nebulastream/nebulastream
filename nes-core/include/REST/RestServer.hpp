@@ -51,6 +51,9 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
+
 namespace Catalogs {
 
 namespace Source {
@@ -72,12 +75,12 @@ class RestServer {
 
   public:
     /**
-    * @brief constructor for rest server
-    * @param host as string
-    * @param port as uint
-    * @param handle to coordinator
-     *
-   * */
+      * @brief constructor for rest server
+      * @param host as string
+      * @param port as uint
+      * @param handle to coordinator
+      *
+      * */
     RestServer(std::string host,
                uint16_t port,
                NesCoordinatorWeakPtr coordinator,
@@ -87,6 +90,7 @@ class RestServer {
                GlobalExecutionPlanPtr globalExecutionPlan,
                QueryServicePtr queryService,
                MonitoringServicePtr monitoringService,
+               QueryParsingServicePtr queryParsingService,
                GlobalQueryPlanPtr globalQueryPlan,
                Catalogs::UDF::UDFCatalogPtr udfCatalog,
                Runtime::BufferManagerPtr bufferManager,
@@ -94,21 +98,21 @@ class RestServer {
                std::optional<std::string> corsAllowedOrigin);
 
     /**
-   * @brief method to start the rest server, calls run() internally
-   * @return bool indicating success
-   */
+     * @brief method to start the rest server, calls run() internally
+     * @return bool indicating success
+     */
     bool start();
 
     /**
-   * @brief method called within start()
-   * starts the server after initializing controllers, endpoints and necessary components like connection handler, router.
-   */
+     * @brief method called within start()
+     * starts the server after initializing controllers, endpoints and necessary components like connection handler, router.
+     */
     void run();
 
     /**
-   * @brief method to stop rest server
-   * @return bool indicating sucesss
-   */
+     * @brief method to stop rest server
+     * @return bool indicating sucesss
+     */
     bool stop();
 
   private:
@@ -124,8 +128,9 @@ class RestServer {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     LocationServicePtr locationService;
     MonitoringServicePtr monitoringService;
+    QueryParsingServicePtr queryParsingService;
     Runtime::BufferManagerPtr bufferManager;
-    std::condition_variable cvar;
+    std::condition_variable conditionVariable;
     std::mutex mutex;
     std::optional<std::string> corsAllowedOrigin;
     bool stopRequested{false};

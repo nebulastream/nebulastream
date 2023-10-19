@@ -13,11 +13,11 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
@@ -194,7 +194,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
         queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
         QueryCompilation::QueryCompilerPtr compiler;
-        if (workerConfiguration->queryCompiler.queryCompilerType == QueryCompilerType::DEFAULT_QUERY_COMPILER) {
+        if (workerConfiguration->queryCompiler.queryCompilerType == QueryCompilation::QueryCompilerType::DEFAULT_QUERY_COMPILER) {
             auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
             auto jitCompiler = (!this->jitCompiler)
                 ? Compiler::JITCompilerBuilder()

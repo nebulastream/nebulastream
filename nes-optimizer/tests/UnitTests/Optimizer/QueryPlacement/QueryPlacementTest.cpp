@@ -53,7 +53,6 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <fstream>
@@ -68,7 +67,6 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
-    QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
@@ -85,7 +83,6 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
         NES_DEBUG("Setup QueryPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        queryParsingService = QueryParsingService::create(jitCompiler);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
@@ -111,7 +108,7 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
         auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         const std::string sourceName = "car";
 
-        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         sourceCatalog->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
@@ -1038,7 +1035,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
@@ -1174,7 +1171,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
@@ -1321,7 +1318,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
                       ->addField("timestamp", BasicType::UINT64);
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
@@ -1442,7 +1439,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
                       ->addField("timestamp", BasicType::UINT64);
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
