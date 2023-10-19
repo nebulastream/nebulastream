@@ -368,11 +368,11 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     string expectedContent =
         "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
         "0,10000,1,102\n"
-        "10000,20000,1,290\n"
+        "0,10000,12,2\n"
         "0,10000,4,2\n"
         "0,10000,11,10\n"
-        "0,10000,12,2\n"
-        "0,10000,16,4\n";
+        "0,10000,16,4\n"
+        "10000,20000,1,290\n";
 
     NES_INFO("content={}", content);
     NES_INFO("expContent={}", expectedContent);

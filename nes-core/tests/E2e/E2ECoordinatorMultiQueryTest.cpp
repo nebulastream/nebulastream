@@ -401,18 +401,19 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     string ASSERTedContent1 = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),"
                               "window$value:INTEGER(64 bits)\n"
                               "0,10000,1,51\n"
-                              "10000,20000,1,145\n"
+                              "0,10000,12,1\n"
                               "0,10000,4,1\n"
                               "0,10000,11,5\n"
-                              "0,10000,12,1\n"
-                              "0,10000,16,2\n";
+                              "0,10000,16,2\n"
+                              "10000,20000,1,145\n"
+                              "20000,30000,1,41\n";
 
     string ASSERTedContent2 = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),"
                               "window$value:INTEGER(64 bits)\n"
                               "0,20000,1,196\n"
+                              "0,20000,12,1\n"
                               "0,20000,4,1\n"
                               "0,20000,11,5\n"
-                              "0,20000,12,1\n"
                               "0,20000,16,2\n";
 
     std::ifstream ifsQ1(outputFilePath.c_str());
