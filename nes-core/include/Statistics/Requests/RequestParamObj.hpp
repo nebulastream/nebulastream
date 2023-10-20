@@ -19,6 +19,8 @@
 #include <memory>
 #include <vector>
 
+#include <Statistics/StatCollectors/StatCollectorType.hpp>
+
 namespace NES {
 
 namespace Experimental::Statistics {
@@ -29,8 +31,8 @@ class RequestParamObj {
   public:
     RequestParamObj(const std::string& logicalSourceName,
                     const std::string& fieldName,
-                    const std::string& createExpression)
-        : logicalSourceName(logicalSourceName), fieldName(fieldName), createExpression(createExpression) {}
+                    const StatCollectorType statCollectorType)
+        : logicalSourceName(logicalSourceName), fieldName(fieldName), statCollectorType(statCollectorType) {}
 
     /**
      * @return returns the logicalStreamName of the request
@@ -47,17 +49,17 @@ class RequestParamObj {
     }
 
     /**
-     * @return returns the expression, defining which stats to create, probe/query, or delete
+     * @return returns the type of StatCollector with which the statistic is to be generated
      */
-    std::string getCreateExpression() const {
-        return createExpression;
+    StatCollectorType getCreateExpression() const {
+        return statCollectorType;
     }
 
   private:
     std::string logicalSourceName;
     std::vector<std::string> physicalSourceNames;
     std::string fieldName;
-    std::string createExpression;
+    StatCollectorType statCollectorType;
 };
 }
 

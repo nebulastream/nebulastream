@@ -18,7 +18,9 @@
 #include <string>
 #include <memory>
 #include <vector>
+
 #include <Statistics/Requests/RequestParamObj.hpp>
+#include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES {
 
@@ -31,9 +33,9 @@ class DeleteRequestParamObj : public RequestParamObj {
   public:
     DeleteRequestParamObj(const std::string &logicalSourceName,
                           const std::string &fieldName,
-                          const std::string &buildExpression,
+                          const StatCollectorType statCollectorType,
                           const time_t endTime)
-        : RequestParamObj(logicalSourceName, fieldName, buildExpression), endTime(endTime) {}
+        : RequestParamObj(logicalSourceName, fieldName, statCollectorType), endTime(endTime) {}
 
     /**
      * @return returns the latest possible time for which we wat to keep statCollectors.

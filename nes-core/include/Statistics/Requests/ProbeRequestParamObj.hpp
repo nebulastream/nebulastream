@@ -18,7 +18,9 @@
 #include <string>
 #include <memory>
 #include <vector>
+
 #include <Statistics/Requests/RequestParamObj.hpp>
+#include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES {
 
@@ -31,13 +33,13 @@ class ProbeRequestParamObj : public RequestParamObj {
   public:
     ProbeRequestParamObj(const std::string &logicalSourceName,
                          const std::string &fieldName,
-                         const std::string &buildExpression,
+                         const StatCollectorType statCollectorType,
                          const std::string &probeExpression,
                          const std::vector<std::string> &physicalSourceNames,
                          const time_t startTime,
                          const time_t endTime,
                          const bool merge = false)
-        : RequestParamObj(logicalSourceName, fieldName, buildExpression),
+        : RequestParamObj(logicalSourceName, fieldName, statCollectorType),
           probeExpression(probeExpression), physicalSourceNames(physicalSourceNames),
           startTime(startTime), endTime(endTime), merge(merge) {}
 

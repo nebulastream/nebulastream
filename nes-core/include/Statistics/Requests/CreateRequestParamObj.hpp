@@ -18,7 +18,9 @@
 #include <string>
 #include <memory>
 #include <vector>
+
 #include <Statistics/Requests/RequestParamObj.hpp>
+#include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES {
 namespace Experimental::Statistics {
@@ -30,8 +32,8 @@ class CreateRequestParamObj : public RequestParamObj {
   public:
     CreateRequestParamObj(const std::string& logicalSourceName,
                          const std::string& fieldName,
-                         const std::string& buildExpression)
-        : RequestParamObj(logicalSourceName, fieldName, buildExpression) {}
+                         const StatCollectorType statCollectorType)
+        : RequestParamObj(logicalSourceName, fieldName, statCollectorType) {}
 		};
 	}
 }
