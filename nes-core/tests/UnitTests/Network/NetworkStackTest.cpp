@@ -250,6 +250,112 @@ TEST_F(NetworkStackTest, startCloseChannel) {
     ASSERT_EQ(true, true);
 }
 
+TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
+    try {
+        // start zmqServer
+        std::promise<bool> completed;
+
+        class InternalListener : public Network::ExchangeProtocolListener {
+          public:
+            explicit InternalListener(std::promise<bool>& p) : completed(p) {}
+
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onChannelError(Messages::ErrorMessage) override {}
+
+          private:
+            std::promise<bool>& completed;
+        };
+
+        class DummyQueryManager : public Runtime::AbstractQueryManager {
+          public:
+            //todo: hardware manager cannot be null
+            explicit DummyQueryManager() : Runtime::AbstractQueryManager({}, {}, 1, 1, std::make_shared<Runtime::HardwareManager>(), {}, 1, {}) {};
+            ExecutionResult processNextTask(bool, Runtime::WorkerContext&) {return ExecutionResult::Error;};
+            virtual void
+            addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t = 0) {};
+            virtual void poisonWorkers() {};
+            virtual bool addReconfigurationMessage(QueryId ,
+                                                   QuerySubPlanId ,
+                                                   const Runtime::ReconfigurationMessage& ,
+                                                   bool  = false) { receivedCallback = true; return true;};
+            virtual bool addReconfigurationMessage(QueryId ,
+                                                   QuerySubPlanId ,
+                                                   TupleBuffer&& ,
+                                                   bool  = false) {return false;};
+
+            virtual uint64_t getNumberOfTasksInWorkerQueues() const {return 0;};
+            virtual bool startThreadPool(uint64_t ) {return false;};
+            virtual ExecutionResult terminateLoop(Runtime::WorkerContext&) {return ExecutionResult::Error;};
+            bool receivedCallback = false;
+        };
+
+        auto partMgr = std::make_shared<PartitionManager>();
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed));
+        auto netManager = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(ep), buffMgr);
+
+        auto nesPartition = NesPartition(0, 0, 0, 0);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
+        std::thread t([&netManager, &completed, &nesPartition] {
+          // register the incoming channel
+          auto cnt = netManager->registerSubpartitionConsumer(nesPartition,
+                                                              netManager->getServerLocation(),
+                                                              std::make_shared<DataEmitterImpl>());
+          NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt {}", cnt);
+          auto v = completed.get_future().get();
+          netManager->unregisterSubpartitionConsumer(nesPartition);
+          ASSERT_EQ(v, true);
+        });
+
+        NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
+        auto queryManager = std::make_shared<DummyQueryManager>();
+        auto reconf = Runtime::ReconfigurationMessage(1,
+                                                      1,
+                                                      Runtime::ReconfigurationType::ConnectionEstablished,
+                                                      {},
+                                                      std::make_any<uint32_t>(1));
+        //setting retry times to zero will let the channel keep attempting to connect indefinitely
+        auto senderChannelFuture =
+            netManager->registerSubpartitionProducerAsync(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 0, reconf, queryManager);
+        EXPECT_FALSE(queryManager->receivedCallback);
+        auto start_timestamp = std::chrono::system_clock::now();
+        auto timeOut = std::chrono::seconds(10);
+        while (senderChannelFuture.first.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
+                NES_DEBUG("Channel not created within timeout")
+                FAIL();
+            }
+            NES_DEBUG("Channel not yet created");
+        }
+        auto senderChannel = senderChannelFuture.first.get();
+
+        start_timestamp = std::chrono::system_clock::now();
+        while (!queryManager->receivedCallback) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
+                NES_DEBUG("Callback not recevied within timeout")
+                FAIL();
+            }
+            NES_DEBUG("Callback not yet received");
+        }
+        ASSERT_TRUE(queryManager->receivedCallback);
+        senderChannel->close(Runtime::QueryTerminationType::Graceful);
+        senderChannel.reset();
+        netManager->unregisterSubpartitionProducer(nesPartition);
+
+        t.join();
+    } catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(true, true);
+}
+
 TEST_F(NetworkStackTest, startCloseMaxChannel) {
     try {
         // start zmqServer

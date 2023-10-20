@@ -33,9 +33,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         int highWaterMark,
                                         std::chrono::milliseconds waitTime,
                                         uint8_t retryTimes, std::optional<std::future<bool>> abortConnection = std::nullopt) {
-    // TODO create issue to make the network channel allocation async
-    // TODO currently, we stall the worker threads
-    // TODO as a result, this kills performance of running queryIdAndCatalogEntryMapping if we submit a new query
+    NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0, "Cannot use indefinite retries without suppliying a future to abort connection");
     std::chrono::milliseconds backOffTime = waitTime;
     constexpr auto nameHelper = []() {
         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
@@ -65,7 +63,8 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         int i = 0;
         constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::EventOnlyChannel
                                                                    : Network::Messages::ChannelType::DataChannel;
-        while (i < retryTimes) {
+        //if retry times are set to 0, keep retrying indefinitely
+        while (i < retryTimes || retryTimes == 0) {
             //if the thread creater reqeusted to abort, retur nnullptr
             if (abortConnection.has_value() && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
                 NES_DEBUG("Aborting network channel connection process on caller request");

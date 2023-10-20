@@ -53,7 +53,6 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       receivedVersionDrainEvents(0), pendingReconfiguration(std::nullopt) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
-    //todo: what to do about this code?
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
@@ -332,6 +331,9 @@ Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
 void NetworkSink::reconfigureReceiver(NesPartition newPartition, NodeLocation newReceiverLocation) {
     std::pair newReceiverTuple = {newReceiverLocation, newPartition};
+    NES_ASSERT2_FMT(!pendingReconfiguration.has_value() || pendingReconfiguration.value() == newReceiverTuple,
+                    "Cannot reconfigure receiver to " << newPartition << " because a reconnect to "
+                                                      << pendingReconfiguration.value().second << " is already pending");
     //register event consumer for new source
     NES_ASSERT2_FMT(networkManager->registerSubpartitionEventConsumer(newReceiverLocation,
                                                                       newPartition,

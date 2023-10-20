@@ -218,12 +218,4 @@ void WorkerContext::abortConnectionProcess(NES::OperatorId ownerId) {
 bool WorkerContext::doesNetworkChannelExist(uint64_t sinkId) {
     return dataChannels.contains(sinkId);
 }
-
-void WorkerContext::storeNesPartition(uint64_t ownerId, Network::NesPartition partition) {
-    nesPartitions.insert({ownerId, partition});
-}
-
-Network::NesPartition WorkerContext::getNesPartition(uint64_t ownerId) {
-    return nesPartitions.at(ownerId);
-}
 }// namespace NES::Runtime
