@@ -273,6 +273,7 @@ QueryPlanPtr QueryPlan::copy() {
     newQueryPlan->setSourceConsumed(sourceConsumed);
     newQueryPlan->setPlacementStrategy(placementStrategy);
     newQueryPlan->setQueryState(currentState);
+    newQueryPlan->setQuerySubPlanId(querySubPlanId);
     return newQueryPlan;
 }
 
