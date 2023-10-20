@@ -14,11 +14,10 @@
 
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>
 #include <gtest/gtest.h>
@@ -50,8 +49,6 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
     mapUdfLogicalOperatorNode->addChild(std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, 2));
 
     // After calling inferSchema on the MapUdfLogicalOperatorNode, the input schema should be the schema of the source.
-    auto typeInferencePhaseContext =
-        Optimizer::TypeInferencePhaseContext{Catalogs::Source::SourceCatalogPtr(), Catalogs::UDF::UDFCatalogPtr()};
     mapUdfLogicalOperatorNode->inferSchema();
     ASSERT_TRUE(mapUdfLogicalOperatorNode->getInputSchema()->equals(inputSchema));
 

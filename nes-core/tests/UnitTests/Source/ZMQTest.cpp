@@ -48,7 +48,7 @@ class ZMQTest : public Testing::BaseIntegrationTest {
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("Setup ZMQTest test case.");
-        PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+        auto conf = CSVSourceType::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSourceTypes.add(conf);
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)

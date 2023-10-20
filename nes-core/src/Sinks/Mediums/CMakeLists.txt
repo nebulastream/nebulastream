@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-operators
+add_source_files(nes-core
         FileSink.cpp
         ZmqSink.cpp
         SinkMedium.cpp

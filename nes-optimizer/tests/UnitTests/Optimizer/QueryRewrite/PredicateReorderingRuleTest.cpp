@@ -51,22 +51,22 @@ class PredicateReorderingRuleTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
+
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+        NES_INFO("Setup FilterPushDownTest test case.");
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
+        PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
+        LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+        Catalogs::Source::SourceCatalogEntryPtr sce1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+        sourceCatalog->addPhysicalSource("default_logical", sce1);
+    }
 };
-
-void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup FilterPushDownTest test case.");
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-    auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
-    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
-    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    sourceCatalog->addPhysicalSource("default_logical", sce1);
-}
 
 TEST_F(PredicateReorderingRuleTest, testReorderingChain) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =

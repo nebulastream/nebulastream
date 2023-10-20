@@ -13,19 +13,22 @@
 # limitations under the License.
 
 add_source_files(nes-common
-        StacktraceLoader.cpp
-        ThreadNaming.cpp
+        Common.cpp
+        DumpHelper.cpp
         FileMutex.cpp
         NonBlockingMonotonicSeqQueue.cpp
         DumpHelper.cpp
         Common.cpp
         PluginLoader.cpp
         SpatialUtils.cpp
+        StacktraceLoader.cpp
+        ThreadNaming.cpp
+        TimeMeasurement.cpp
 )
-add_subdirectory(yaml)
 add_subdirectory(Logger)
-add_subdirectory(Subprocess)
 add_subdirectory(Mobility)
+add_subdirectory(Subprocess)
+add_subdirectory(yaml)
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_subdirectory(JNI)

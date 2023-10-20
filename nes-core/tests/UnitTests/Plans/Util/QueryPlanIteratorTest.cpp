@@ -69,7 +69,6 @@ class QueryPlanIteratorTest : public Testing::BaseUnitTest {
     }
 
   protected:
-    DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     LogicalOperatorNodePtr sourceOp1, sourceOp2;

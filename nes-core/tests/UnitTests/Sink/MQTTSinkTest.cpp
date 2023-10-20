@@ -68,7 +68,7 @@ class MQTTTSinkTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         dataPort = Testing::BaseIntegrationTest::getAvailablePort();
         NES_DEBUG("Setup MQTTTSinkTest test case.");
-        PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+        auto conf = CSVSourceType::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
         workerConfiguration->physicalSourceTypes.add(conf);

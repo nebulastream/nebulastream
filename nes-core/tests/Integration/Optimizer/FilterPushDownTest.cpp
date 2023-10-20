@@ -13,13 +13,13 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -36,7 +36,6 @@ using namespace Configurations;
 class FilterPushDownTest : public Testing::BaseIntegrationTest {
   public:
     CoordinatorConfigurationPtr coConf;
-    CSVSourceTypePtr srcConf1;
     SchemaPtr schema;
 
     static void SetUpTestCase() {
@@ -47,7 +46,6 @@ class FilterPushDownTest : public Testing::BaseIntegrationTest {
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         coConf = CoordinatorConfiguration::createDefault();
-        srcConf1 = CSVSourceType::create();
 
         coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;
@@ -79,6 +77,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
 
     NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps");
 
+    auto srcConf1 = CSVSourceType::create("QnV1", "PQnV1");
     srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
@@ -95,7 +94,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("QnV1", schema)
-                                  .attachWorkerWithCSVSourceToCoordinator("QnV1", srcConf1)
+                                  .attachWorkerWithCSVSourceToCoordinator(srcConf1)
                                   .validate()
                                   .setupTopology();
 
@@ -121,6 +120,7 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
 TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
     NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps");
 
+    auto srcConf1 = CSVSourceType::create("QnV1", "PQnV1");
     srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
@@ -136,7 +136,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("QnV1", schema)
-                                  .attachWorkerWithCSVSourceToCoordinator("QnV1", srcConf1)
+                                  .attachWorkerWithCSVSourceToCoordinator(srcConf1)
                                   .validate()
                                   .setupTopology();
 
@@ -161,6 +161,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
 TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
     NES_INFO("FilterPushDownTest: Start testSameResultsForPushDownBelowMapWithNewField");
 
+    auto srcConf1 = CSVSourceType::create("QnV1", "PQnV1");
     srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
@@ -176,7 +177,7 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("QnV1", schema)
-                                  .attachWorkerWithCSVSourceToCoordinator("QnV1", srcConf1)
+                                  .attachWorkerWithCSVSourceToCoordinator(srcConf1)
                                   .validate()
                                   .setupTopology();
 

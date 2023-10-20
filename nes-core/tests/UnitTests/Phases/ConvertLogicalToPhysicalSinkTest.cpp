@@ -40,12 +40,11 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::BaseIntegrationTest {
 
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
-        auto defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr physicalSource = PhysicalSource::create("default", "default1", defaultSourceType);
+        auto defaultSourceType = DefaultSourceType::create("default", "default1");
         auto workerConfiguration = WorkerConfiguration::create();
         port = getAvailablePort();
         workerConfiguration->dataPort = *port;
-        workerConfiguration->physicalSourceTypes.add(physicalSource);
+        workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())

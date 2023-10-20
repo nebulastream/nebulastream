@@ -27,7 +27,7 @@
 #include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
@@ -44,7 +44,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 

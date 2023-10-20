@@ -20,7 +20,7 @@ using namespace NES;
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class UnionQueryExecutionTest : public Testing::BaseUnitTest,
-                                public ::testing::WithParamInterface<QueryCompilation::QueryCompiler> {
+                                public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
   public:
     struct __attribute__((packed)) DefaultRecord {
         int64_t id;

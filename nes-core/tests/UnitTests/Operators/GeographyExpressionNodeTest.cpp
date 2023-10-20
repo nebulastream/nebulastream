@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-#include <memory>
-
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include  <Exceptions/TypeInferenceException.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
@@ -36,6 +35,7 @@
 #include <Operators/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <gtest/gtest.h>
+#include <memory>
 
 namespace NES {
 
@@ -109,10 +109,10 @@ TEST_F(GeographyExpressionNodeTest, testGeographyFieldAccessExpressionNode) {
     auto geographyExpressionNode1 =
         GeographyFieldsAccessExpressionNode::create(fieldAccessExpressionNode1, fieldAccessExpressionNode2);
     auto geographyFieldAccessExpressionNode1 = geographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    geographyFieldAccessExpressionNode1->inferStamp( schema);
+    geographyFieldAccessExpressionNode1->inferStamp(schema);
     auto copyGeographyExpressionNode1 = geographyFieldAccessExpressionNode1->copy();
     auto copyGeographyFieldAccessExpressionNode1 = copyGeographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    copyGeographyFieldAccessExpressionNode1->inferStamp( schema);
+    copyGeographyFieldAccessExpressionNode1->inferStamp(schema);
 
     // test accessor methods on both the original and the copy
     EXPECT_TRUE(geographyFieldAccessExpressionNode1->getStamp()->isFloat());
@@ -137,7 +137,7 @@ TEST_F(GeographyExpressionNodeTest, testGeographyFieldAccessExpressionNode) {
     // accessing children via various accessors should throw exception
     EXPECT_THROW(emptyGeographyExpression->getLatitude(), InvalidArgumentException);
     EXPECT_THROW(emptyGeographyExpression->getLongitude(), InvalidArgumentException);
-    EXPECT_THROW(emptyGeographyExpression->inferStamp( schema), InvalidArgumentException);
+    EXPECT_THROW(emptyGeographyExpression->inferStamp(schema), InvalidArgumentException);
     EXPECT_THROW(const auto str = emptyGeographyExpression->toString(), InvalidArgumentException);
 
     // set children of the geography field access expression node
@@ -148,7 +148,7 @@ TEST_F(GeographyExpressionNodeTest, testGeographyFieldAccessExpressionNode) {
     // children set expect no throw for accessor methods
     EXPECT_NO_THROW(emptyGeographyExpression->getLatitude());
     EXPECT_NO_THROW(emptyGeographyExpression->getLongitude());
-    EXPECT_NO_THROW(emptyGeographyExpression->inferStamp( schema));
+    EXPECT_NO_THROW(emptyGeographyExpression->inferStamp(schema));
     EXPECT_NO_THROW(const auto str = emptyGeographyExpression->toString());
 }
 
@@ -231,12 +231,12 @@ TEST_F(GeographyExpressionNodeTest, testSTDWithinExpressionNode) {
     auto geographyExpressionNode1 =
         GeographyFieldsAccessExpressionNode::create(fieldAccessExpressionNode1, fieldAccessExpressionNode2);
     auto geographyFieldAccessExpressionNode1 = geographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    geographyFieldAccessExpressionNode1->inferStamp( schema);
+    geographyFieldAccessExpressionNode1->inferStamp(schema);
 
     // create a STDWithinExpressionNode from the lat/lng fields from the schema
     auto expressionNode1 = STDWithinExpressionNode::create(geographyFieldAccessExpressionNode1, circle);
     auto stDWithinExpressionNode1 = expressionNode1->as<STDWithinExpressionNode>();
-    stDWithinExpressionNode1->inferStamp( schema);
+    stDWithinExpressionNode1->inferStamp(schema);
     auto copyExpressionNode1 = stDWithinExpressionNode1->copy();
     auto differentExpressionNode1 = STDWithinExpressionNode::create(geographyFieldAccessExpressionNode1, differentCircle);
 
@@ -333,12 +333,12 @@ TEST_F(GeographyExpressionNodeTest, testSTKnnExpressionNode) {
     auto geographyExpressionNode1 =
         GeographyFieldsAccessExpressionNode::create(fieldAccessExpressionNode1, fieldAccessExpressionNode2);
     auto geographyFieldAccessExpressionNode1 = geographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    geographyFieldAccessExpressionNode1->inferStamp( schema);
+    geographyFieldAccessExpressionNode1->inferStamp(schema);
 
     // create a STKnnExpressionNode from the lat/lng fields from the schema
     auto expressionNode1 = STKnnExpressionNode::create(geographyFieldAccessExpressionNode1, point, k);
     auto STKnnExpressionNode1 = expressionNode1->as<STKnnExpressionNode>();
-    STKnnExpressionNode1->inferStamp( schema);
+    STKnnExpressionNode1->inferStamp(schema);
     auto copyExpressionNode1 = STKnnExpressionNode1->copy();
     auto differentExpressionNode1 = STKnnExpressionNode::create(geographyFieldAccessExpressionNode1, differentPoint, k);
 
@@ -449,12 +449,12 @@ TEST_F(GeographyExpressionNodeTest, testSTWithinExpressionNode) {
     auto geographyExpressionNode1 =
         GeographyFieldsAccessExpressionNode::create(fieldAccessExpressionNode1, fieldAccessExpressionNode2);
     auto geographyFieldAccessExpressionNode1 = geographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    geographyFieldAccessExpressionNode1->inferStamp( schema);
+    geographyFieldAccessExpressionNode1->inferStamp(schema);
 
     // create a STWithinExpressionNode from the lat/lng fields from the schema
     auto expressionNode3 = STWithinExpressionNode::create(geographyFieldAccessExpressionNode1, polygon);
     auto stWithinExpressionNode3 = expressionNode3->as<STWithinExpressionNode>();
-    stWithinExpressionNode3->inferStamp( schema);
+    stWithinExpressionNode3->inferStamp(schema);
     auto copyExpressionNode3 = stWithinExpressionNode3->copy();
     auto differentExpressionNode1 = STWithinExpressionNode::create(geographyFieldAccessExpressionNode1, differentPolygon);
 

@@ -26,13 +26,14 @@
 #include <iostream>
 #include <string>
 
-#include <Identifiers.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
 
@@ -75,7 +76,6 @@ class MQTTSourceTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
-        mqttSourceType = MQTTSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -99,14 +99,13 @@ class MQTTSourceTest : public Testing::BaseIntegrationTest {
     Runtime::QueryManagerPtr queryManager;
     SchemaPtr test_schema;
     uint64_t buffer_size{};
-    MQTTSourceTypePtr mqttSourceType;
 };
 
 /**
  * Tests basic set up of MQTT source
  */
 TEST_F(MQTTSourceTest, MQTTSourceInit) {
-
+    auto mqttSourceType = MQTTSourceType::create("logical", "physical");
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
@@ -124,7 +123,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
  * Test if schema, MQTT server address, clientId, user, and topic are the same
  */
 TEST_F(MQTTSourceTest, MQTTSourcePrint) {
-
+    auto mqttSourceType = MQTTSourceType::create("logical", "physical");
     mqttSourceType->setUrl("tcp://127.0.0.1:1883");
     mqttSourceType->setCleanSession(false);
     mqttSourceType->setClientId("nes-mqtt-test-client");
@@ -158,7 +157,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
  * Tests if obtained value is valid.
  */
 TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
-
+    auto mqttSourceType = MQTTSourceType::create("logical", "physical");
     auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
@@ -195,21 +194,22 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string source =
-        R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
-                            ->addField(createField("hospitalId", BasicType::UINT64))
-                            ->addField(createField("stationId", BasicType::UINT64))
-                            ->addField(createField("patientId", BasicType::UINT64))
-                            ->addField(createField("time", BasicType::UINT64))
-                            ->addField(createField("healthStatus", BasicType::UINT8))
-                            ->addField(createField("healthStatusDuration", BasicType::UINT32))
-                            ->addField(createField("recovered", BasicType::BOOLEAN))
-                            ->addField(createField("dead", BasicType::BOOLEAN));)";
+    auto source = Schema::create()
+                      ->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
+                      ->addField(createField("hospitalId", BasicType::UINT64))
+                      ->addField(createField("stationId", BasicType::UINT64))
+                      ->addField(createField("patientId", BasicType::UINT64))
+                      ->addField(createField("time", BasicType::UINT64))
+                      ->addField(createField("healthStatus", BasicType::UINT8))
+                      ->addField(createField("healthStatusDuration", BasicType::UINT32))
+                      ->addField(createField("recovered", BasicType::BOOLEAN))
+                      ->addField(createField("dead", BasicType::BOOLEAN));
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
     wrkConf->coordinatorPort = port;
+    auto mqttSourceType = MQTTSourceType::create("stream", "test_stream");
     mqttSourceType->setUrl("ws://127.0.0.1:9002");
     mqttSourceType->setClientId("testClients");
     mqttSourceType->setUserName("testUser");
@@ -217,8 +217,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     mqttSourceType->setQos(2);
     mqttSourceType->setCleanSession(true);
     mqttSourceType->setFlushIntervalMS(2000);
-    auto physicalSource = PhysicalSource::create("stream", "test_stream", mqttSourceType);
-    wrkConf->physicalSourceTypes.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(mqttSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -265,18 +264,20 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical stream qnv
-    std::string stream = R"(Schema::create()->addField(createField("id", BasicType::UINT64))
-                                   ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
-                                   ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
-                                   ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
-                                   ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
-                                   ->addField(createField("SpeciesCode", BasicType::UINT64))
-                                   ->addField(createField("CreationTime", BasicType::UINT64));)";
+    auto stream = Schema::create()
+                      ->addField(createField("id", BasicType::UINT64))
+                      ->addField(createField("SepalLengthCm", BasicType::FLOAT32))
+                      ->addField(createField("SepalWidthCm", BasicType::FLOAT32))
+                      ->addField(createField("PetalLengthCm", BasicType::FLOAT32))
+                      ->addField(createField("PetalWidthCm", BasicType::FLOAT32))
+                      ->addField(createField("SpeciesCode", BasicType::UINT64))
+                      ->addField(createField("CreationTime", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("iris", stream);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
     wrkConf->coordinatorPort = port;
+    auto mqttSourceType = MQTTSourceType::create("iris", "iris_phys");
     mqttSourceType->setUrl("127.0.0.1:1883");
     mqttSourceType->setClientId("cpp-mqtt-iris");
     mqttSourceType->setUserName("emqx");
@@ -285,8 +286,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
     mqttSourceType->setCleanSession(true);
     mqttSourceType->setFlushIntervalMS(2000);
     mqttSourceType->setInputFormat("CSV");
-    auto physicalSource = PhysicalSource::create("iris", "iris_phys", mqttSourceType);
-    wrkConf->physicalSourceTypes.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(mqttSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

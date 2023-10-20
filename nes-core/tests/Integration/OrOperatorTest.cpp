@@ -14,10 +14,11 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Common.hpp>
@@ -64,8 +65,11 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     NES_INFO("OrOperatorTest: Coordinator started successfully");
 
     //register logical source qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
+    auto qnv = Schema::create()
+                   ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                   ->addField(createField("timestamp", BasicType::UINT64))
+                   ->addField(createField("velocity", BasicType::FLOAT32))
+                   ->addField(createField("quantity", BasicType::UINT64));
 
     auto sourceCatalogService = crd->getSourceCatalogService();
     sourceCatalogService->registerLogicalSource("QnV1", qnv);
@@ -75,13 +79,11 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType1 = CSVSourceType::create();
+    auto csvSourceType1 = CSVSourceType::create("QnV1", "test_stream_QnV1");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType1->setNumberOfBuffersToProduce(20);
-    //register physical source R2000070
-    PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
-    worker1Configuration->physicalSourceTypes.add(conf70);
+    worker1Configuration->physicalSourceTypes.add(csvSourceType1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -92,13 +94,11 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType2 = CSVSourceType::create();
+    auto csvSourceType2 = CSVSourceType::create("QnV2", "test_stream_QnV2");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType2->setNumberOfBuffersToProduce(20);
-    //register physical source R2000073
-    PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
-    worker2Configuration->physicalSourceTypes.add(conf73);
+    worker2Configuration->physicalSourceTypes.add(csvSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -155,8 +155,11 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
+    auto qnv = Schema::create()
+                   ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                   ->addField(createField("timestamp", BasicType::UINT64))
+                   ->addField(createField("velocity", BasicType::FLOAT32))
+                   ->addField(createField("quantity", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     NES_INFO("OrOperatorTest: Coordinator started successfully");
@@ -165,13 +168,11 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType1 = CSVSourceType::create();
+    auto csvSourceType1 = CSVSourceType::create("QnV1", "test_stream_QnV1");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(40);
     csvSourceType1->setNumberOfBuffersToProduce(2);
-    //register physical source R2000070
-    PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
-    worker1Configuration->physicalSourceTypes.add(conf70);
+    worker1Configuration->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -181,13 +182,11 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType2 = CSVSourceType::create();
+    auto csvSourceType2 = CSVSourceType::create("QnV2", "test_stream_QnV2");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(35);
     csvSourceType2->setNumberOfBuffersToProduce(2);
-    //register physical source R2000073
-    PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
-    worker2Configuration->physicalSourceTypes.add(conf73);
+    worker2Configuration->physicalSourceTypes.add(csvSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -249,8 +248,11 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
+    auto qnv = Schema::create()
+                   ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                   ->addField(createField("timestamp", BasicType::UINT64))
+                   ->addField(createField("velocity", BasicType::FLOAT32))
+                   ->addField(createField("quantity", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV3", qnv);
@@ -260,13 +262,11 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType1 = CSVSourceType::create();
+    auto csvSourceType1 = CSVSourceType::create("QnV1", "test_stream_QnV1");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(2);
     csvSourceType1->setNumberOfBuffersToProduce(35);
-    //register physical source R2000070
-    PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
-    worker1Configuration->physicalSourceTypes.add(conf70);
+    worker1Configuration->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -276,13 +276,11 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType2 = CSVSourceType::create();
+    auto csvSourceType2 = CSVSourceType::create("QnV2", "test_stream_QnV2");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(2);
     csvSourceType2->setNumberOfBuffersToProduce(35);
-    //register physical source R2000073
-    PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
-    worker2Configuration->physicalSourceTypes.add(conf73);
+    worker2Configuration->physicalSourceTypes.add(csvSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -292,13 +290,11 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     auto worker3Configuration = WorkerConfiguration::create();
     worker3Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType3 = CSVSourceType::create();
+    auto csvSourceType3 = CSVSourceType::create("QnV3", "test_stream_QnV3");
     csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(2);
     csvSourceType3->setNumberOfBuffersToProduce(35);
-    //register physical source R20000732
-    PhysicalSourcePtr conf732 = PhysicalSource::create("QnV3", "test_stream_QnV3", csvSourceType3);
-    worker3Configuration->physicalSourceTypes.add(conf732);
+    worker3Configuration->physicalSourceTypes.add(csvSourceType3);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(worker3Configuration));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
@@ -365,8 +361,11 @@ TEST_F(OrOperatorTest, DISABLED_testOrPatternFilter) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", BasicType::UINT64))->addField(createField("velocity", BasicType::FLOAT32))->addField(createField("quantity", BasicType::UINT64));)";
+    auto qnv = Schema::create()
+                   ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                   ->addField(createField("timestamp", BasicType::UINT64))
+                   ->addField(createField("velocity", BasicType::FLOAT32))
+                   ->addField(createField("quantity", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     NES_INFO("SimplePatternTest: Coordinator started successfully");
@@ -375,12 +374,10 @@ TEST_F(OrOperatorTest, DISABLED_testOrPatternFilter) {
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType1 = CSVSourceType::create();
+    auto csvSourceType1 = CSVSourceType::create("QnV", "test_stream_R2000070");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
-    //register physical source R2000070
-    PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream_R2000070", csvSourceType1);
-    worker1Configuration->physicalSourceTypes.add(conf70);
+    worker1Configuration->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -390,12 +387,10 @@ TEST_F(OrOperatorTest, DISABLED_testOrPatternFilter) {
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->coordinatorPort = (port);
     //Add Physical source
-    auto csvSourceType2 = CSVSourceType::create();
+    auto csvSourceType2 = CSVSourceType::create("QnV2", "test_stream_R2000073");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
-    //register physical source R2000073
-    PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_R2000073", csvSourceType2);
-    worker2Configuration->physicalSourceTypes.add(conf73);
+    worker2Configuration->physicalSourceTypes.add(csvSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);

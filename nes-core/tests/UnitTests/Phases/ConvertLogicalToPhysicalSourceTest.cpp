@@ -17,11 +17,11 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
@@ -47,7 +47,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
-        PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
+        auto physicalSource = CSVSourceType::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->physicalSourceTypes.add(physicalSource);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
@@ -68,7 +68,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::BaseUnitTest {
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    auto csvSourceType = CSVSourceType::create();
+    auto csvSourceType = CSVSourceType::create("logical", "physical");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     csvSourceType->setNumberOfBuffersToProduce(10);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
@@ -80,7 +80,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysica
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingTCPLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    auto tcpSourceType = TCPSourceType::create();
+    auto tcpSourceType = TCPSourceType::create("logical", "physical");
     SourceDescriptorPtr sourceDescriptor = TCPSourceDescriptor::create(schema, tcpSourceType);
     DataSourcePtr tcpSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
     EXPECT_EQ(tcpSource->getType(), SourceType::TCP_SOURCE);

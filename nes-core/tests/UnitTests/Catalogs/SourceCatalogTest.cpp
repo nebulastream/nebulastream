@@ -16,14 +16,14 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
-#include <Exceptions/MapEntryNotFoundException.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Exceptions/MapEntryNotFoundException.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -35,8 +35,8 @@
 using namespace std;
 using namespace NES;
 using namespace Configurations;
-std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                         "->addField(\"value\", BasicType::UINT64);";
+
+auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 const std::string defaultLogicalSourceName = "default_logical";
 
 /* - nesTopologyManager ---------------------------------------------------- */
@@ -61,8 +61,7 @@ class SourceCatalogTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(SourceCatalogTest, testAddGetLogSource) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
     sourceCatalog->addLogicalSource("test_stream", Schema::create());
     SchemaPtr sPtr = sourceCatalog->getSchemaForLogicalSource("test_stream");
@@ -96,8 +95,7 @@ TEST_F(SourceCatalogTest, testAddRemoveLogSource) {
 }
 
 TEST_F(SourceCatalogTest, testGetNotExistingKey) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
     EXPECT_THROW(sourceCatalog->getSchemaForLogicalSource("test_stream22"), MapEntryNotFoundException);
 }
@@ -113,8 +111,8 @@ TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create(logicalSource->getLogicalSourceName(), "physicalSource", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
+    auto physicalSource = PhysicalSource::create(defaultSourceType);
     Catalogs::Source::SourceCatalogEntryPtr sce =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
@@ -134,8 +132,8 @@ TEST_F(SourceCatalogTest, testAddRemovePhysicalSource) {
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create(logicalSource->getLogicalSourceName(), "physicalSource", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
+    auto physicalSource = PhysicalSource::create(defaultSourceType);
     Catalogs::Source::SourceCatalogEntryPtr sce =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
@@ -156,8 +154,8 @@ TEST_F(SourceCatalogTest, testAddPhysicalForNotExistingLogicalSource) {
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create(logicalSource->getLogicalSourceName(), "physicalSource", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
+    auto physicalSource = PhysicalSource::create(defaultSourceType);
     Catalogs::Source::SourceCatalogEntryPtr sce =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
@@ -191,8 +189,8 @@ TEST_F(SourceCatalogTest, testGetPhysicalSourceForLogicalSource) {
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create(logicalSource->getLogicalSourceName(), "physicalSource", defaultSourceType);
+    auto defaultSourceType = DefaultSourceType::create(logicalSource->getLogicalSourceName(), "physicalSource");
+    auto physicalSource = PhysicalSource::create(defaultSourceType);
     Catalogs::Source::SourceCatalogEntryPtr sce =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
@@ -209,7 +207,7 @@ TEST_F(SourceCatalogTest, testDeleteLogicalSource) {
 
 TEST_F(SourceCatalogTest, testUpdateLogicalSourceWithInvalidSourceName) {
     std::string logicalSourceName = "test";
-    std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
+    auto newSchema = Schema::create()->addField("id", BasicType::UINT32);
     bool success = sourceCatalog->updateLogicalSource(logicalSourceName, newSchema);
     EXPECT_FALSE(success);
 }
@@ -219,7 +217,7 @@ TEST_F(SourceCatalogTest, testUpdateLogicalSource) {
     bool success = sourceCatalog->addLogicalSource(logicalSourceName, testSchema);
     EXPECT_TRUE(success);
 
-    std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
+    auto newSchema = Schema::create()->addField("id", BasicType::UINT32);
     success = sourceCatalog->updateLogicalSource(logicalSourceName, newSchema);
     EXPECT_TRUE(success);
 }

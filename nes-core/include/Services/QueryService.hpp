@@ -36,6 +36,9 @@ class SemanticQueryValidation;
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 }// namespace Optimizer
 
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
 

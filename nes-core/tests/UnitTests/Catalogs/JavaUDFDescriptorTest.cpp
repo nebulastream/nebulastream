@@ -19,7 +19,7 @@ using namespace std::string_literals;
 
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Catalogs/Exceptions/UDFException.hpp>
+#include <Exceptions/UDFException.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 

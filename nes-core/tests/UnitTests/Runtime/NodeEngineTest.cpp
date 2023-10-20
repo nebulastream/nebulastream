@@ -14,9 +14,9 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkManager.hpp>
@@ -124,9 +124,8 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
             bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
         };
 
-        DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-        std::vector<PhysicalSourcePtr> physicalSources{physicalSource};
+        DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
+        std::vector<PhysicalSourceTypePtr> physicalSources{defaultSourceType};
 
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<BufferManagerPtr> bufferManager = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
@@ -334,10 +333,9 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& o
  *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
 TEST_F(NodeEngineTest, testStartStopEngineEmpty) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -347,10 +345,9 @@ TEST_F(NodeEngineTest, testStartStopEngineEmpty) {
 }
 
 TEST_F(NodeEngineTest, teststartDeployStop) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -367,10 +364,9 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
 }
 
 TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -390,10 +386,9 @@ TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
 }
 
 TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -415,10 +410,9 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
 }
 //
 TEST_F(NodeEngineTest, testParallelDifferentSource) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -484,10 +478,9 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
 }
 //
 TEST_F(NodeEngineTest, testParallelSameSource) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -551,10 +544,9 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
 }
 //
 TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not supported
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -620,10 +612,9 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
 }
 //
 TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -707,10 +698,9 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 }
 //
 TEST_F(NodeEngineTest, testStartStopStartStop) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -731,11 +721,10 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
 }
 
 TEST_F(NodeEngineTest, testBufferData) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -744,11 +733,10 @@ TEST_F(NodeEngineTest, testBufferData) {
 }
 
 TEST_F(NodeEngineTest, testReconfigureSink) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -764,7 +752,7 @@ void assertKiller() {
       public:
         using Runtime::NodeEngine::NodeEngine;
 
-        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+        explicit MockedNodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
@@ -810,7 +798,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public Runtime::NodeEngine {
       public:
         std::promise<bool> completedPromise;
-        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+        explicit MockedNodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
@@ -885,7 +873,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
       public:
         std::promise<bool> completedPromise;
 
-        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+        explicit MockedNodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
@@ -953,11 +941,10 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
 }
 
 TEST_F(NodeEngineTest, DISABLED_testFatalCrash) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("test", "test1");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
-    workerConfiguration->physicalSourceTypes.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
