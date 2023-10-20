@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Tensorflow/TensorflowInferenceOperatorHandler.hpp>
 #include <Execution/Operators/Tensorflow/TensorflowAdapter.hpp>
+#include <Execution/Operators/Tensorflow/TensorflowInferenceOperatorHandler.hpp>
 #include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-TensorflowInferenceOperatorHandlerPtr TensorflowInferenceOperatorHandler::create(const std::string& model) { return std::make_shared<TensorflowInferenceOperatorHandler>(model); }
+TensorflowInferenceOperatorHandlerPtr TensorflowInferenceOperatorHandler::create(const std::string& model) {
+    return std::make_shared<TensorflowInferenceOperatorHandler>(model);
+}
 
 TensorflowInferenceOperatorHandler::TensorflowInferenceOperatorHandler(const std::string& model) {
     this->model = model;

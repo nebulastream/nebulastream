@@ -41,14 +41,14 @@ class ArrowFileSink : public SinkMedium {
      * @param numberOfOrigins: number of origins of a given query
      */
     explicit ArrowFileSink(SinkFormatPtr format,
-                      Runtime::NodeEnginePtr nodeEngine,
-                      uint32_t numOfProducers,
-                      const std::string& filePath,
-                      bool append,
-                      QueryId queryId,
-                      QuerySubPlanId querySubPlanId,
-                      FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                      uint64_t numberOfOrigins = 1);
+                           Runtime::NodeEnginePtr nodeEngine,
+                           uint32_t numOfProducers,
+                           const std::string& filePath,
+                           bool append,
+                           QueryId queryId,
+                           QuerySubPlanId querySubPlanId,
+                           FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                           uint64_t numberOfOrigins = 1);
 
     /**
      * @brief dtor

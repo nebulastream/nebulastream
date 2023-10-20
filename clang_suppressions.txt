@@ -2,3 +2,5 @@
 */nes-common/include/Util/libcuckoo/*
 */nes-core/include/Util/jitify/*
 **/backward.hpp
+**/base64.h
+**/base64.cpp

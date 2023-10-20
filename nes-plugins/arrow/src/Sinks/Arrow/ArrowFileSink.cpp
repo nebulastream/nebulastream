@@ -14,8 +14,8 @@
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/Arrow/ArrowFormat.hpp>
 #include <Sinks/Arrow/ArrowFileSink.hpp>
+#include <Sinks/Arrow/ArrowFormat.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
@@ -29,14 +29,14 @@ namespace NES {
 SinkMediumTypes ArrowFileSink::getSinkMediumType() { return SinkMediumTypes::FILE_SINK; }
 
 ArrowFileSink::ArrowFileSink(SinkFormatPtr format,
-                   Runtime::NodeEnginePtr nodeEngine,
-                   uint32_t numOfProducers,
-                   const std::string& filePath,
-                   bool append,
-                   QueryId queryId,
-                   QuerySubPlanId querySubPlanId,
-                   FaultToleranceType faultToleranceType,
-                   uint64_t numberOfOrigins)
+                             Runtime::NodeEnginePtr nodeEngine,
+                             uint32_t numOfProducers,
+                             const std::string& filePath,
+                             bool append,
+                             QueryId queryId,
+                             QuerySubPlanId querySubPlanId,
+                             FaultToleranceType faultToleranceType,
+                             uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
@@ -142,8 +142,8 @@ bool ArrowFileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
 }
 
 arrow::Status ArrowFileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
-                                      std::shared_ptr<arrow::Schema> arrowSchema,
-                                      std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowRecordBatchWriter) {
+                                           std::shared_ptr<arrow::Schema> arrowSchema,
+                                           std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowRecordBatchWriter) {
     // the macros initialize the arrowFileOutputStream and arrowRecordBatchWriter
     // if everything goes well return status OK
     // else the macros return failure

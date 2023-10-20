@@ -28,9 +28,7 @@
 
 namespace NES {
 
-std::string ArrowFormat::getFormattedSchema() {
-
-    NES_NOT_IMPLEMENTED(); }
+std::string ArrowFormat::getFormattedSchema() { NES_NOT_IMPLEMENTED(); }
 
 ArrowFormat::ArrowFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {}
