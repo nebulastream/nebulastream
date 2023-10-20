@@ -13,6 +13,7 @@
 */
 
 #include <Components/NesWorker.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>

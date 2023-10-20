@@ -368,22 +368,6 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     return bufferManagers[bufferManagerIndex];
 }
 
-void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const {
-    std::unique_lock lock(engineMutex);
-    std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
-    for (auto& subQueryPlanId : subQueryPlanIds) {
-        NES_DEBUG("NodeEngine: Find sources for subQueryPlanId  {}", subQueryPlanId);
-        auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
-        for (auto& source : sources) {
-            if (source->injectEpochBarrier(timestamp, queryId)) {
-                NES_DEBUG("NodeEngine: Inject epoch barrier  {} to the query  {}", timestamp, queryId);
-            } else {
-                NES_ERROR("NodeEngine: Couldn't inject epoch barrier to the query {}", queryId);
-            }
-        }
-    }
-}
-
 uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }

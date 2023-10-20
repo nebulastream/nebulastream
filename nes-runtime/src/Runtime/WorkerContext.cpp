@@ -98,7 +98,9 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t tim
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
         this->storage[nesPartition]->trimBuffer(timestamp);
+        return true;
     }
+    return false;
 }
 
 std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {

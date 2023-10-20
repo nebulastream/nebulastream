@@ -29,6 +29,7 @@
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <chrono>
@@ -41,8 +42,8 @@ namespace NES {
 using namespace Configurations;
 const int timestamp = 1644426604;
 const uint64_t numberOfTupleBuffers = 4;
-const uint64_t numberOfBuffersToProduceInTuples = 1;
-const uint64_t ingestionRate = 1;
+const uint64_t numberOfBuffersToProduceInTuples = 1000000;
+const uint64_t ingestionRate = 20;
 
 class UpstreamBackupTest : public Testing::BaseIntegrationTest {
   public:
@@ -70,6 +71,7 @@ class UpstreamBackupTest : public Testing::BaseIntegrationTest {
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig->numWorkerThreads = 1;
 
         auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             struct Record {
@@ -226,7 +228,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
                                                                     Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE,
+                                                                    FaultToleranceType::AT_LEAST_ONCE,
                                                                     LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -244,15 +246,22 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
         }
     }
 
-//    auto currentTimestamp = crd->getReplicationService()->getCurrentEpochBarrier(queryId);
-//    while (currentTimestamp == -1) {
-//        NES_INFO("UpstreamBackupTest: current timestamp: {}", currentTimestamp);
-//        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-//        currentTimestamp = crd->getReplicationService()->getCurrentEpochBarrier(queryId);
-//    }
-//
-//    //check if the method was called
-//    EXPECT_TRUE(currentTimestamp == timestamp);
+    auto isTrimming = false;
+    querySubPlanIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryPlanId);
+    for (auto querySubPlanId : querySubPlanIds) {
+        auto sinks = wrk1->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
+        for (auto& sink : sinks) {
+            if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
+                while (!(isTrimming = std::dynamic_pointer_cast<Network::NetworkSink>(sink)->hasTrimmed())) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+            }
+        }
+
+    }
+
+    //check if the method was called
+    EXPECT_TRUE(isTrimming);
 
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);

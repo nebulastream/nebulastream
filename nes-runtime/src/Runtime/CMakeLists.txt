@@ -18,6 +18,7 @@ add_source_files(nes-runtime
         BufferManager.cpp
         FixedSizeBufferPool.cpp
         TupleBuffer.cpp
+        EpochMessage.cpp
         WorkerContext.cpp
         LocalBufferPool.cpp
         HardwareManager.cpp

@@ -65,9 +65,6 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
-class ReplicationService;
-using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
-
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
@@ -150,12 +147,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @return sourceCatalog
      */
     Catalogs::Source::SourceCatalogPtr getSourceCatalog() const;
-
-    /**
-     * @brief getter of replication service
-     * @return replication service
-     */
-    ReplicationServicePtr getReplicationService() const;
 
     /**
      * @brief get topology of coordinator
@@ -261,7 +252,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;
     QueryParsingServicePtr queryParsingService;
-    ReplicationServicePtr replicationService;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;

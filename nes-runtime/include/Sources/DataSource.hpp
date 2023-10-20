@@ -252,14 +252,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     virtual void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
 
-    /**
-     * @brief method injects epoch barrier to the data source
-     * @param epochBarrier current epoch barrier
-     * @param queryId currect query id
-     * @return success is the message was sent
-     */
-    virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId);
-
     [[nodiscard]] virtual bool fail();
 
     /**

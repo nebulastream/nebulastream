@@ -255,7 +255,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
 Catalogs::Source::SourceCatalogPtr NesCoordinator::getSourceCatalog() const { return sourceCatalog; }
 
-ReplicationServicePtr NesCoordinator::getReplicationService() const { return replicationService; }
 
 TopologyPtr NesCoordinator::getTopology() const { return topology; }
 
@@ -324,13 +323,12 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     grpc::ServerBuilder builder;
     NES_ASSERT(sourceCatalogService, "null sourceCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
-    this->replicationService = std::make_shared<ReplicationService>(this->inherited0::shared_from_this());
+
     CoordinatorRPCServer service(queryService,
                                  topologyManagerService,
                                  sourceCatalogService,
                                  queryCatalogService,
                                  monitoringService->getMonitoringManager(),
-                                 this->replicationService,
                                  locationService,
                                  queryParsingService);
 

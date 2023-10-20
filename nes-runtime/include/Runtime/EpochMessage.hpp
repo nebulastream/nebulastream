@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EPOCHMESSAGE_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EPOCHMESSAGE_HPP_
+
 #include <cstdint>
 
 namespace NES {
@@ -27,3 +30,5 @@ namespace NES {
         uint64_t timestamp;
     };
 }// namespace NES
+
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_EPOCHMESSAGE_HPP_
