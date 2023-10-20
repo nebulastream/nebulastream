@@ -465,8 +465,8 @@ double WorkerRPCClient::probeStat(const std::string& destAddress, Experimental::
 
     ClientContext context;
     ProbeStatRequest request;
-    auto GRPCProbeRequest = request.mutable_proberequestparamobj();
-    StatRequestUtil::serializeProbeRequest(probeRequest, GRPCProbeRequest);
+    auto grpcProbeRequest = request.mutable_proberequestparamobj();
+    StatRequestUtil::serializeProbeRequest(probeRequest, grpcProbeRequest);
 
     ProbeStatReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());
@@ -486,8 +486,8 @@ bool WorkerRPCClient::deleteStat(const std::string& destAddress, Experimental::S
 
     ClientContext context;
     DeleteStatRequest request;
-    auto GRPCDeleteRequest = request.mutable_deleterequestparamobj();
-    StatRequestUtil::serializeDeleteRequest(deleteRequest, GRPCDeleteRequest);
+    auto grpcDeleteRequest = request.mutable_deleterequestparamobj();
+    StatRequestUtil::serializeDeleteRequest(deleteRequest, grpcDeleteRequest);
 
     DeleteStatReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());
