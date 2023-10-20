@@ -269,6 +269,7 @@ QueryPlanPtr QueryPlan::copy() {
     newQueryPlan->setFaultToleranceType(faultToleranceType);
     newQueryPlan->setLineageType(lineageType);
     newQueryPlan->setPlacementStrategy(placementStrategy);
+    newQueryPlan->setQuerySubPlanId(querySubPlanId);
     return newQueryPlan;
 }
 
