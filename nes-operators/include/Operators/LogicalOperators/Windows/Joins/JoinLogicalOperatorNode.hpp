@@ -42,7 +42,7 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     //infer schema of two child operators
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;

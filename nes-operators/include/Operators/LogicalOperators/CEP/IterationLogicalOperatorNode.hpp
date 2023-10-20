@@ -55,7 +55,7 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     std::string toString() const override;
     void inferStringSignature() override;
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
     OperatorNodePtr copy() override;
 
   private:

@@ -16,5 +16,4 @@ add_source_files(nes-client
         ArithmeticExpressions.cpp
         LogicalExpressions.cpp
         GeographyExpressions.cpp
-        UdfExpressions.cpp
 )

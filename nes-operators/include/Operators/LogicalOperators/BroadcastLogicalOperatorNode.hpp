@@ -28,7 +28,7 @@ class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public Logical
     explicit BroadcastLogicalOperatorNode(OperatorId id);
     ~BroadcastLogicalOperatorNode() override = default;
 
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;

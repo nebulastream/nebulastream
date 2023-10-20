@@ -44,14 +44,14 @@ OperatorNodePtr BroadcastLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool BroadcastLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
+bool BroadcastLogicalOperatorNode::inferSchema() {
     // We assume that all children operators have the same output schema otherwise this plan is not valid
     if (children.empty()) {
         NES_THROW_RUNTIME_ERROR("ExchangeOperatorNode: this node should have at least one child operator");
     }
 
     for (const auto& child : children) {
-        if (!child->as<LogicalOperatorNode>()->inferSchema(typeInferencePhaseContext)) {
+        if (!child->as<LogicalOperatorNode>()->inferSchema()) {
             return false;
         }
     }

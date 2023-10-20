@@ -38,7 +38,7 @@ ExpressionNodePtr ConstantValueExpressionNode::create(ValueTypePtr const& consta
 
 ValueTypePtr ConstantValueExpressionNode::getConstantValue() const { return constantValue; }
 
-void ConstantValueExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr) {
+void ConstantValueExpressionNode::inferStamp( SchemaPtr) {
     // the stamp of constant value expressions is defined by the constant value type.
     // thus ut is already assigned correctly when the expression node is created.
 }

@@ -147,7 +147,7 @@ class LowerPhysicalToNautilusOperators {
                          uint64_t handlerIndex);
 
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
-    lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& functions);
+    lowerAggregations(const std::vector<Windowing::WindowAggregationDescriptorPtr>& functions);
 
     /**
      * Create a unique pointer of an aggregation value of the given aggregation function then return it

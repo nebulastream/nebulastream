@@ -22,5 +22,4 @@ add_source_files(nes-optimizer
         QueryRewritePhase.cpp
         MemoryLayoutSelectionPhase.cpp
         OriginIdInferencePhase.cpp
-        TypeInferencePhaseContext.cpp
 )

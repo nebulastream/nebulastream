@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
-
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <CoordinatorRPCService.pb.h>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -47,22 +47,25 @@ RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& 
     NES_DEBUG("RegistrationMetrics: Creating from serializable object.");
 }
 
-NES::SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
-    NES::SchemaPtr schema = NES::Schema::create(NES::Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField(prefix + "node_id", BasicType::UINT64)
+Configurations::SchemaTypePtr RegistrationMetrics::getSchemaType(const std::string& prefix) {
 
-                                ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)
-
-                                ->addField(prefix + "cpuCoreNum", BasicType::UINT64)
-                                ->addField(prefix + "totalCPUJiffies", BasicType::UINT64)
-                                ->addField(prefix + "cpuPeriodUS", BasicType::INT64)
-                                ->addField(prefix + "cpuQuotaUS", BasicType::INT64)
-
-                                ->addField(prefix + "isMoving", BasicType::BOOLEAN)
-                                ->addField(prefix + "hasBattery", BasicType::BOOLEAN);
-
-    return schema;
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    const char* length = "0";
+    const char* unsignedIntegerDataType = "UINT64";
+    const char* integerDataType = "INT64";
+    const char* booleanDataType = "BOOLEAN";
+    schemaFiledDetails.emplace_back(prefix + "node_id", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "totalMemoryBytes", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "cpuCoreNum", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "totalCPUJiffies", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "cpuPeriodUS", integerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "cpuQuotaUS", integerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "isMoving", booleanDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "hasBattery", booleanDataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
+
+SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
 
 void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RegistrationMetrics::getSchema(""), buf.getBufferSize());

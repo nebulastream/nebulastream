@@ -28,23 +28,23 @@ class MedianAggregationDescriptor : public WindowAggregationDescriptor {
     * @brief Factory method to creates a median aggregation on a particular field.
     * @param onField field on which the aggregation should be performed
     */
-    static WindowAggregationPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
 
     /**
      * @brief Factory method to creates a median aggregation on a particular field.
      * @param onField field on which the aggregation should be performed
      * @param asField expression describing how the aggregated field should be called
      */
-    static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
     /**
      * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
+    void inferStamp( SchemaPtr schema) override;
 
-    WindowAggregationPtr copy() override;
+    WindowAggregationDescriptorPtr copy() override;
 
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;

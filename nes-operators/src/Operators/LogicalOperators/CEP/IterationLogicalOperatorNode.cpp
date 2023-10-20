@@ -42,8 +42,8 @@ std::string IterationLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool IterationLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    return LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext);
+bool IterationLogicalOperatorNode::inferSchema() {
+    return LogicalUnaryOperatorNode::inferSchema();
 }
 
 OperatorNodePtr IterationLogicalOperatorNode::copy() {

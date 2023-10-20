@@ -31,7 +31,7 @@ class UnionLogicalOperatorNode : public LogicalBinaryOperatorNode {
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     std::string toString() const override;
     //infer schema of two child operators
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
     void inferInputOrigins() override;
     void inferStringSignature() override;
     OperatorNodePtr copy() override;

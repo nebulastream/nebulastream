@@ -26,10 +26,6 @@ TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristi
 
 bool TimeBasedWindowType::isTimeBasedWindowType() { return true; }
 
-bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema, const Optimizer::TypeInferencePhaseContext&) {
-    return inferStamp(schema);
-}
-
 bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
     if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime) {
         auto fieldName = timeCharacteristic->getField()->getName();

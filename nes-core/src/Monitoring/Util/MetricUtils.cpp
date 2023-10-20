@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
@@ -31,6 +32,7 @@
 #include <nlohmann/json.hpp>
 
 namespace NES::Monitoring {
+
 bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t i) {
     if (i >= bufferSchema->getSize()) {
         return false;
@@ -107,12 +109,12 @@ MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
     return nullptr;
 }
 
-SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
+Configurations::SchemaTypePtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
     switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getSchema("");
-        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getSchema("");
-        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getSchema("");
-        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchema("");
+        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getSchemaType("");
+        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getSchemaType("");
+        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getSchemaType("");
+        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchemaType("");
         default: {
             NES_FATAL_ERROR("MetricUtils: Collector type not supported {}", std::string(magic_enum::enum_name(type)));
         }

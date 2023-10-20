@@ -18,7 +18,14 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Monitoring {
+namespace NES {
+
+namespace Configurations {
+class SchemaType;
+using SchemaTypePtr = std::shared_ptr<SchemaType>;
+}// namespace Configurations
+
+namespace Monitoring {
 
 /**
  * @brief DiskMetrics class, that is responsible for collecting and managing disk metrics.
@@ -26,6 +33,13 @@ namespace NES::Monitoring {
 class DiskMetrics {
   public:
     DiskMetrics();
+
+    /**
+     * @brief Returns the schema of the class with a given prefix.
+     * @param prefix
+     * @return the schema
+     */
+    static Configurations::SchemaTypePtr getSchemaType(const std::string& prefix);
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -91,6 +105,6 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
  */
 nlohmann::json asJson(const DiskMetrics& metrics);
 
-}// namespace NES::Monitoring
-
+}// namespace Monitoring
+}// namespace NES
 #endif// NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_

@@ -48,7 +48,7 @@ std::string FieldAccessExpressionNode::toString() const {
     return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";
 }
 
-void FieldAccessExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr schema) {
+void FieldAccessExpressionNode::inferStamp( SchemaPtr schema) {
     // check if the access field is defined in the schema.
     auto existingField = schema->hasFieldName(fieldName);
     if (existingField) {

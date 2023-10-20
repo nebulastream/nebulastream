@@ -673,7 +673,7 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
 
     auto serializedWindowType = windowDetails.windowtype();
 
-    std::vector<Windowing::WindowAggregationPtr> aggregation;
+    std::vector<Windowing::WindowAggregationDescriptorPtr> aggregation;
     for (auto serializedWindowAggregation : serializedWindowAggregations) {
         auto onField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.onfield())
                            ->as<FieldAccessExpressionNode>();

@@ -29,11 +29,11 @@ ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(ArithmeticalUna
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
-void ArithmeticalUnaryExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+void ArithmeticalUnaryExpressionNode::inferStamp(
                                                  SchemaPtr schema) {
     // infer stamp of child
     auto child = this->child();
-    child->inferStamp(typeInferencePhaseContext, schema);
+    child->inferStamp( schema);
 
     // get stamp from child
     auto child_stamp = child->getStamp();

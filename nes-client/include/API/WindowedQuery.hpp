@@ -30,6 +30,11 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
+namespace API {
+class WindowAggregation;
+using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
+}// namespace API
+
 namespace WindowOperatorBuilder {
 
 class WindowedQuery;
@@ -54,8 +59,8 @@ class KeyedWindowedQuery {
     */
     template<class... WindowAggregations>
     [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
-        std::vector<Windowing::WindowAggregationPtr> windowAggregations;
-        (windowAggregations.emplace_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
+        std::vector<API::WindowAggregationPtr> windowAggregations;
+        (windowAggregations.emplace_back(std::forward<API::WindowAggregationPtr>(aggregations)), ...);
         return originalQuery.windowByKey(keys, windowType, windowAggregations);
     }
 
@@ -97,8 +102,8 @@ class WindowedQuery {
     */
     template<class... WindowAggregations>
     [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
-        std::vector<Windowing::WindowAggregationPtr> windowAggregations;
-        (windowAggregations.emplace_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
+        std::vector<API::WindowAggregationPtr> windowAggregations;
+        (windowAggregations.emplace_back(std::forward<API::WindowAggregationPtr>(aggregations)), ...);
         return originalQuery.window(windowType, windowAggregations);
     }
 

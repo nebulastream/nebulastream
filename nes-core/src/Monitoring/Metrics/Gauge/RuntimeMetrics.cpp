@@ -13,6 +13,7 @@
 */
 
 #include <API/AttributeField.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
@@ -31,21 +32,24 @@ RuntimeMetrics::RuntimeMetrics()
     NES_DEBUG("RuntimeMetrics: Default ctor");
 }
 
-SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) {
-    DataTypePtr intNameField = std::make_shared<FixedChar>(20);
+Configurations::SchemaTypePtr RuntimeMetrics::getSchemaType(const std::string& prefix) {
 
-    SchemaPtr schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                           ->addField(prefix + "node_id", BasicType::UINT64)
-                           ->addField(prefix + "wallTimeNs", BasicType::UINT64)
-                           ->addField(prefix + "memoryUsageInBytes", BasicType::UINT64)
-                           ->addField(prefix + "cpuLoadInJiffies", BasicType::UINT64)
-                           ->addField(prefix + "blkioBytesRead", BasicType::UINT64)
-                           ->addField(prefix + "blkioBytesWritten", BasicType::UINT64)
-                           ->addField(prefix + "batteryStatusInPercent", BasicType::UINT64)
-                           ->addField(prefix + "latCoord", BasicType::UINT64)
-                           ->addField(prefix + "longCoord", BasicType::UINT64);
-    return schema;
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    const char* length = "0";
+    const char* unsignedIntegerDataType = "UINT64";
+    schemaFiledDetails.emplace_back(prefix + "node_id", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "wallTimeNs", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "memoryUsageInBytes", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "cpuLoadInJiffies", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "blkioBytesRead", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "blkioBytesWritten", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "batteryStatusInPercent", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "latCoord", unsignedIntegerDataType, length);
+    schemaFiledDetails.emplace_back(prefix + "longCoord", unsignedIntegerDataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
+
+SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
 
 void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RuntimeMetrics::getSchema(""), buf.getBufferSize());

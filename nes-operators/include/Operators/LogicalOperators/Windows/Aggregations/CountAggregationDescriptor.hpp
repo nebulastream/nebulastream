@@ -27,9 +27,9 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
     /**
     * Factory method to creates a CountAggregationDescriptor aggregation on a particular field.
     */
-    static WindowAggregationPtr on();
+    static WindowAggregationDescriptorPtr on();
 
-    static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;
@@ -39,9 +39,9 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
+    void inferStamp( SchemaPtr schema) override;
 
-    WindowAggregationPtr copy() override;
+    WindowAggregationDescriptorPtr copy() override;
 
     virtual ~CountAggregationDescriptor() = default;
 

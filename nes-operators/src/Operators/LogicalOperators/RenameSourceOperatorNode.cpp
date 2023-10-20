@@ -40,8 +40,8 @@ std::string RenameSourceOperatorNode::toString() const {
     return ss.str();
 }
 
-bool RenameSourceOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
+bool RenameSourceOperatorNode::inferSchema() {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     //Update output schema by changing the qualifier and corresponding attribute names

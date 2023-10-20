@@ -19,7 +19,6 @@
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>
 #include <gtest/gtest.h>
@@ -53,7 +52,7 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
     // After calling inferSchema on the MapUdfLogicalOperatorNode, the input schema should be the schema of the source.
     auto typeInferencePhaseContext =
         Optimizer::TypeInferencePhaseContext{Catalogs::Source::SourceCatalogPtr(), Catalogs::UDF::UDFCatalogPtr()};
-    mapUdfLogicalOperatorNode->inferSchema(typeInferencePhaseContext);
+    mapUdfLogicalOperatorNode->inferSchema();
     ASSERT_TRUE(mapUdfLogicalOperatorNode->getInputSchema()->equals(inputSchema));
 
     // The output schema of the operator should be prefixed with source name.

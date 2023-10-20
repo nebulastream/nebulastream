@@ -29,12 +29,12 @@ SumAggregationDescriptor::SumAggregationDescriptor(ExpressionNodePtr field, Expr
     this->aggregationType = Type::Sum;
 }
 
-WindowAggregationPtr SumAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
+WindowAggregationDescriptorPtr SumAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                       FieldAccessExpressionNodePtr asField) {
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr SumAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
+WindowAggregationDescriptorPtr SumAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
@@ -42,10 +42,10 @@ WindowAggregationPtr SumAggregationDescriptor::on(const ExpressionNodePtr& keyEx
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
 }
 
-void SumAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+void SumAggregationDescriptor::inferStamp(
                                           SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(typeInferencePhaseContext, schema);
+    onField->inferStamp( schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("SumAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

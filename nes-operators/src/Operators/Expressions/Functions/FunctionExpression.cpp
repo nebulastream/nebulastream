@@ -31,10 +31,10 @@ ExpressionNodePtr FunctionExpression::create(const DataTypePtr& stamp,
     return expression;
 }
 
-void FunctionExpression::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void FunctionExpression::inferStamp( SchemaPtr schema) {
     std::vector<DataTypePtr> argumentTypes;
     for (const auto& input : getArguments()) {
-        input->inferStamp(typeInferencePhaseContext, schema);
+        input->inferStamp( schema);
         argumentTypes.emplace_back(input->getStamp());
     }
     auto resultStamp = function->inferStamp(argumentTypes);

@@ -15,6 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -29,34 +30,33 @@ NetworkMetrics::NetworkMetrics()
     : nodeId(0), timestamp(0), interfaceName(0), rBytes(0), rPackets(0), rErrs(0), rDrop(0), rFifo(0), rFrame(0), rCompressed(0),
       rMulticast(0), tBytes(0), tPackets(0), tErrs(0), tDrop(0), tFifo(0), tColls(0), tCarrier(0), tCompressed(0) {}
 
-NES::SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
-    DataTypePtr intNameField = std::make_shared<FixedChar>(20);
+Configurations::SchemaTypePtr NetworkMetrics::getSchemaType(const std::string& prefix) {
 
-    NES::SchemaPtr schema = NES::Schema::create(NES::Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField(prefix + "node_id", BasicType::UINT64)
-                                ->addField(prefix + "timestamp", BasicType::UINT64)
-
-                                ->addField(prefix + "name", BasicType::UINT64)
-                                ->addField(prefix + "rBytes", BasicType::UINT64)
-                                ->addField(prefix + "rPackets", BasicType::UINT64)
-                                ->addField(prefix + "rErrs", BasicType::UINT64)
-                                ->addField(prefix + "rDrop", BasicType::UINT64)
-                                ->addField(prefix + "rFifo", BasicType::UINT64)
-                                ->addField(prefix + "rFrame", BasicType::UINT64)
-                                ->addField(prefix + "rCompressed", BasicType::UINT64)
-                                ->addField(prefix + "rMulticast", BasicType::UINT64)
-
-                                ->addField(prefix + "tBytes", BasicType::UINT64)
-                                ->addField(prefix + "tPackets", BasicType::UINT64)
-                                ->addField(prefix + "tErrs", BasicType::UINT64)
-                                ->addField(prefix + "tDrop", BasicType::UINT64)
-                                ->addField(prefix + "tFifo", BasicType::UINT64)
-                                ->addField(prefix + "tColls", BasicType::UINT64)
-                                ->addField(prefix + "tCarrier", BasicType::UINT64)
-                                ->addField(prefix + "tCompressed", BasicType::UINT64);
-
-    return schema;
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    const char* length = "0";
+    const char* dataType = "UINT64";
+    schemaFiledDetails.emplace_back(prefix + "node_id", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "timestamp", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "name", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "rBytes", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "rPackets", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "rErrs", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "rDrop", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "rFifo", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "rFrame", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "rCompressed", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "rMulticast", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "tBytes", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "tPackets", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "tDrop", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "tFifo", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "tColls", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "tCarrier", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "tCompressed", dataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
+
+SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
 
 void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto totalSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes();

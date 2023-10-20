@@ -103,7 +103,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
      * @param typeInferencePhaseContext needed for stamp inferring
      * @return true if schema was correctly inferred
      */
-    virtual bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) = 0;
+    virtual bool inferSchema() = 0;
 
     /**
      * @brief Update state of the operator

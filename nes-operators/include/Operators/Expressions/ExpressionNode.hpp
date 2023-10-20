@@ -14,13 +14,11 @@
 
 #ifndef NES_CORE_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_
 #define NES_CORE_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_
+
 #include <Nodes/Node.hpp>
 #include <memory>
-namespace NES {
 
-namespace Optimizer {
-class TypeInferencePhaseContext;
-}
+namespace NES {
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -54,7 +52,7 @@ class ExpressionNode : public Node {
      * @param typeInferencePhaseContext
      * @param schema
      */
-    virtual void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema);
+    virtual void inferStamp(SchemaPtr schema);
 
     /**
      * @brief returns the stamp as the data type which is produced by this expression.

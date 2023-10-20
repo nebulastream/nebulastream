@@ -47,7 +47,7 @@ std::string SourceLogicalOperatorNode::toString() const {
 
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() const { return sourceDescriptor; }
 
-bool SourceLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext&) {
+bool SourceLogicalOperatorNode::inferSchema() {
     inputSchema = sourceDescriptor->getSchema();
     outputSchema = sourceDescriptor->getSchema();
     return true;

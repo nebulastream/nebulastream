@@ -33,9 +33,9 @@ ExpressionNodePtr AbsExpressionNode::create(const ExpressionNodePtr& child) {
     return absNode;
 }
 
-void AbsExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void AbsExpressionNode::inferStamp( SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(typeInferencePhaseContext, schema);
+    ArithmeticalUnaryExpressionNode::inferStamp( schema);
 
     // increase lower bound to 0
     stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0_s64);

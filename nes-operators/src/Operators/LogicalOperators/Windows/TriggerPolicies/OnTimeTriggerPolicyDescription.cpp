@@ -14,6 +14,7 @@
 
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <sstream>
+
 namespace NES::Windowing {
 
 WindowTriggerPolicyPtr OnTimeTriggerPolicyDescription::create(uint64_t triggerTimeInMs) {

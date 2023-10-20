@@ -22,21 +22,24 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
                                              FaultToleranceType faultToleranceType,
+                                             uint64_t uniqueNetworkSinkOperatorId,
                                              uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes) {}
+      waitTime(waitTime), retryTimes(retryTimes), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkOperatorId) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
                                                 FaultToleranceType faultToleranceType,
+                                                uint64_t uniqueNetworkSinkOperatorId,
                                                 uint64_t numberOfOrigins) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
                                                                          nesPartition,
                                                                          waitTime,
                                                                          retryTimes,
                                                                          faultToleranceType,
+                                                                         uniqueNetworkSinkOperatorId,
                                                                          numberOfOrigins));
 }
 
@@ -60,6 +63,8 @@ NesPartition NetworkSinkDescriptor::getNesPartition() const { return nesPartitio
 std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return waitTime; }
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
+
+uint64_t NetworkSinkDescriptor::getUniqueNetworkSinkDescriptorId() const { return uniqueNetworkSinkDescriptorId; }
 
 FaultToleranceType NetworkSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 

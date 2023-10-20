@@ -34,7 +34,7 @@ class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperato
     * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred
     */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
 
     /**
      * @brief infers the origin id from the child operator.

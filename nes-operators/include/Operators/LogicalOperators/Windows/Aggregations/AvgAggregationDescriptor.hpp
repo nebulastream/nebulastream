@@ -26,18 +26,18 @@ class AvgAggregationDescriptor : public WindowAggregationDescriptor {
     /**
     * Factory method to creates a avg aggregation on a particular field.
     */
-    static WindowAggregationPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
 
-    static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
     /**
      * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
+    void inferStamp( SchemaPtr schema) override;
 
-    WindowAggregationPtr copy() override;
+    WindowAggregationDescriptorPtr copy() override;
 
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;

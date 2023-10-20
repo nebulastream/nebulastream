@@ -59,8 +59,8 @@ OperatorNodePtr WindowComputationOperator::copy() {
     }
     return copy;
 }
-bool WindowComputationOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    if (!WindowOperatorNode::inferSchema(typeInferencePhaseContext)) {
+bool WindowComputationOperator::inferSchema() {
+    if (!WindowOperatorNode::inferSchema()) {
         return false;
     }
     // infer the default input and output schema
@@ -70,7 +70,7 @@ bool WindowComputationOperator::inferSchema(Optimizer::TypeInferencePhaseContext
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
     for (auto& agg : windowAggregation) {
-        agg->inferStamp(typeInferencePhaseContext, inputSchema);
+        agg->inferStamp( inputSchema);
     }
 
     //Construct output schema
@@ -85,7 +85,7 @@ bool WindowComputationOperator::inferSchema(Optimizer::TypeInferencePhaseContext
         // infer the data type of the key field.
         auto keyList = windowDefinition->getKeys();
         for (auto& key : keyList) {
-            key->inferStamp(typeInferencePhaseContext, inputSchema);
+            key->inferStamp( inputSchema);
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }

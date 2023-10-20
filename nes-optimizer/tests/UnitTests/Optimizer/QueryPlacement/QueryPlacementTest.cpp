@@ -55,7 +55,6 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -81,8 +80,6 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup QueryPlacementTest test case.");
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 

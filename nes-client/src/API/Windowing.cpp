@@ -14,30 +14,48 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Windowing.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::API {
 
-Windowing::WindowAggregationPtr Sum(const ExpressionItem& onField) { return Windowing::SumAggregationDescriptor::on(onField.getExpressionNode()); }
+WindowAggregation::WindowAggregation(const Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) :aggregation(windowAggregationDescriptor) {
 
-Windowing::WindowAggregationPtr Avg(const ExpressionItem& onField) { return Windowing::AvgAggregationDescriptor::on(onField.getExpressionNode()); }
+}
 
-Windowing::WindowAggregationPtr Min(const ExpressionItem& onField) { return Windowing::MinAggregationDescriptor::on(onField.getExpressionNode()); }
+API::WindowAggregationPtr WindowAggregation::as(const NES::ExpressionItem& asField) {
+    return std::make_shared<API::WindowAggregation>(aggregation->as(asField.getExpressionNode()));
+}
 
-Windowing::WindowAggregationPtr Max(const ExpressionItem& onField) { return Windowing::MaxAggregationDescriptor::on(onField.getExpressionNode()); }
+API::WindowAggregationPtr Sum(const ExpressionItem& onField) {
+    return std::make_shared<API::WindowAggregation>(Windowing::SumAggregationDescriptor::on(onField.getExpressionNode()));
+}
 
-Windowing::WindowAggregationPtr Count() { return Windowing::CountAggregationDescriptor::on(); }
+API::WindowAggregationPtr Avg(const ExpressionItem& onField) {
+    return std::make_shared<API::WindowAggregation>(Windowing::AvgAggregationDescriptor::on(onField.getExpressionNode()));
+}
 
-Windowing::WindowAggregationPtr Median(const ExpressionItem& onField) {
-    return Windowing::MedianAggregationDescriptor::on(onField.getExpressionNode());
+API::WindowAggregationPtr Min(const ExpressionItem& onField) {
+    return std::make_shared<API::WindowAggregation>(Windowing::MinAggregationDescriptor::on(onField.getExpressionNode()));
+}
+
+API::WindowAggregationPtr Max(const ExpressionItem& onField) {
+    return std::make_shared<API::WindowAggregation>(Windowing::MaxAggregationDescriptor::on(onField.getExpressionNode()));
+}
+
+API::WindowAggregationPtr Count() {
+    return std::make_shared<API::WindowAggregation>(Windowing::CountAggregationDescriptor::on());
+}
+
+API::WindowAggregationPtr Median(const ExpressionItem& onField) {
+    return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getExpressionNode()));
 }
 
 Windowing::TimeMeasure Milliseconds(uint64_t milliseconds) { return Windowing::TimeMeasure(milliseconds); }

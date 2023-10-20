@@ -28,9 +28,9 @@ ExpressionNodePtr CeilExpressionNode::create(ExpressionNodePtr const& child) {
     return ceilNode;
 }
 
-void CeilExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void CeilExpressionNode::inferStamp( SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(typeInferencePhaseContext, schema);
+    ArithmeticalUnaryExpressionNode::inferStamp( schema);
 
     // if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);

@@ -46,7 +46,6 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
@@ -62,7 +61,6 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
     z3::ContextPtr z3Context;
 
   public:
-    std::shared_ptr<QueryParsingService> queryParsingService;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     TopologyPtr topology;
     /* Will be called before any test in this class are executed. */
@@ -75,11 +73,7 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup ILPPlacementTest test case.");
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        queryParsingService = QueryParsingService::create(jitCompiler);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
-
         z3::config cfg;
         cfg.set("timeout", 50000);
         cfg.set("model", false);

@@ -15,6 +15,7 @@
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/Core.hpp>
@@ -26,25 +27,30 @@ MemoryMetrics::MemoryMetrics()
     : nodeId(0), timestamp(0), TOTAL_RAM(0), TOTAL_SWAP(0), FREE_RAM(0), SHARED_RAM(0), BUFFER_RAM(0), FREE_SWAP(0),
       TOTAL_HIGH(0), FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0) {}
 
-SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                      ->addField(prefix + "node_id", BasicType::UINT64)
-                      ->addField(prefix + "timestamp", BasicType::UINT64)
-                      ->addField(prefix + "TOTAL_RAM", BasicType::UINT64)
-                      ->addField(prefix + "TOTAL_SWAP", BasicType::UINT64)
-                      ->addField(prefix + "FREE_RAM", BasicType::UINT64)
-                      ->addField(prefix + "SHARED_RAM", BasicType::UINT64)
-                      ->addField(prefix + "BUFFER_RAM", BasicType::UINT64)
-                      ->addField(prefix + "FREE_SWAP", BasicType::UINT64)
-                      ->addField(prefix + "TOTAL_HIGH", BasicType::UINT64)
-                      ->addField(prefix + "FREE_HIGH", BasicType::UINT64)
-                      ->addField(prefix + "PROCS", BasicType::UINT64)
-                      ->addField(prefix + "MEM_UNIT", BasicType::UINT64)
-                      ->addField(prefix + "LOADS_1MIN", BasicType::UINT64)
-                      ->addField(prefix + "LOADS_5MIN", BasicType::UINT64)
-                      ->addField(prefix + "LOADS_15MIN", BasicType::UINT64);
-    return schema;
+Configurations::SchemaTypePtr MemoryMetrics::getSchemaType(const std::string& prefix) {
+
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    const char* length = "0";
+    const char* dataType = "UINT64";
+    schemaFiledDetails.emplace_back(prefix + "node_id", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "timestamp", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "TOTAL_RAM", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "TOTAL_SWAP", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "FREE_RAM", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "SHARED_RAM", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "BUFFER_RAM", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "FREE_SWAP", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "TOTAL_HIGH", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "FREE_HIGH", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "PROCS", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "MEM_UNIT", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "LOADS_1MIN", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "LOADS_5MIN", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "LOADS_15MIN", dataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
+
+SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
 
 void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());

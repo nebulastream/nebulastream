@@ -12,15 +12,14 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Exceptions/TypeInferenceException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
@@ -38,7 +37,6 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
 }
 
 QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
-    auto typeInferencePhaseContext = TypeInferencePhaseContext(sourceCatalog, udfCatalog);
 
     // first we have to check if all source operators have a correct source descriptors
     auto sources = queryPlan->getSourceOperators();
@@ -81,7 +79,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     // to this end we call at each sink the infer method to propagate the schemata across the whole query.
     auto sinks = queryPlan->getSinkOperators();
     for (auto& sink : sinks) {
-        if (!sink->inferSchema(typeInferencePhaseContext)) {
+        if (!sink->inferSchema()) {
             NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase.");
             auto queryId = queryPlan->getQueryId();
             throw TypeInferenceException(queryId, "TypeInferencePhase: Failed!");

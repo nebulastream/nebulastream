@@ -20,7 +20,14 @@
 #include <string>
 #include <vector>
 
-namespace NES::Monitoring {
+namespace NES {
+
+namespace Configurations {
+class SchemaType;
+using SchemaTypePtr = std::shared_ptr<SchemaType>;
+}// namespace Configurations
+
+namespace Monitoring {
 
 /**
  * @brief This class represents the metrics read from /proc/stat:
@@ -37,6 +44,13 @@ namespace NES::Monitoring {
 class CpuMetrics {
   public:
     CpuMetrics();
+
+    /**
+     * @brief Returns the schema of the class with a given prefix.
+     * @param prefix
+     * @return the schema
+     */
+    static Configurations::SchemaTypePtr getSchemaType(const std::string& prefix);
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -115,6 +129,6 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
  */
 nlohmann::json asJson(const CpuMetrics& metrics);
 
-}// namespace NES::Monitoring
-
+}// namespace Monitoring
+}// namespace NES
 #endif// NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_

@@ -80,7 +80,7 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
         throw std::bad_cast();
     }
 
-    virtual bool inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) = 0;
+    virtual bool inferStamp( SchemaPtr schema) = 0;
 };
 }// namespace NES::Windowing
 

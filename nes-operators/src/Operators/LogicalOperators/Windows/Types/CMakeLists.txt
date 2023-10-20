@@ -18,4 +18,5 @@ add_source_files(nes-operators
         WindowType.cpp
         SlidingWindow.cpp
         TumblingWindow.cpp
+        WindowState.cpp
 )

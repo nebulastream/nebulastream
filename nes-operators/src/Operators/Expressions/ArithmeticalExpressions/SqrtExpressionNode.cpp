@@ -32,9 +32,9 @@ ExpressionNodePtr SqrtExpressionNode::create(ExpressionNodePtr const& child) {
     return sqrtNode;
 }
 
-void SqrtExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void SqrtExpressionNode::inferStamp( SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp(typeInferencePhaseContext, schema);
+    ArithmeticalUnaryExpressionNode::inferStamp( schema);
 
     if ((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
         || (stamp->isFloat() && DataType::as<Float>(stamp)->upperBound <= 0)) {

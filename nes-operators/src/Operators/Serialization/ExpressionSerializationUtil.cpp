@@ -52,11 +52,8 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Operators/Expressions/WhenExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <SerializableExpression.pb.h>
-#include <SerializableOperator.pb.h>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -152,10 +149,6 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
         // serialize geography expression node
         serializeGeographyExpressions(expression, serializedExpression);
 
-    } else if (expression->instanceOf<UDFCallExpressionNode>()) {
-        // serialize udf call expression node
-        serializeUDFCallExpressions(expression, serializedExpression);
-
     } else {
         NES_FATAL_ERROR("ExpressionSerializationUtil: could not serialize this expression: {}", expression->toString());
     }
@@ -179,11 +172,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
     if (!expressionNodePtr) {
         expressionNodePtr = deserializeGeographyExpressions(serializedExpression);
     }
-    // 4. check if the serialized expression is a udf call expression
-    if (!expressionNodePtr) {
-        expressionNodePtr = deserializeUDFCallExpressions(serializedExpression);
-    }
-    // 5. if the expression was not de-serialized try remaining expression types
+    // 4. if the expression was not de-serialized try remaining expression types
     if (!expressionNodePtr) {
         if (serializedExpression.details().Is<SerializableExpression_ConstantValueExpression>()) {
             // de-serialize constant value expression node.
@@ -559,27 +548,6 @@ void ExpressionSerializationUtil::serializeGeographyFieldAccessExpressions(
                                                  serializedLongitudeFieldAccessExpression->mutable_type());
 }
 
-void ExpressionSerializationUtil::serializeUDFCallExpressions(const ExpressionNodePtr& expression,
-                                                              SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: serialize udf call expression");
-    auto udfCallExpressionNode = expression->as<UDFCallExpressionNode>();
-    auto serializedExpressionNode = SerializableExpression_UdfCallExpression();
-    auto udfNameExpression = udfCallExpressionNode->getUDFNameNode();
-    //serialize udf name
-    auto constantValueExpression = udfNameExpression->as<ConstantValueExpressionNode>();
-    auto constantValue = constantValueExpression->getConstantValue();
-    auto* serializedConstantValue = serializedExpressionNode.mutable_udfname();
-    DataTypeSerializationUtil::serializeDataValue(constantValue, serializedConstantValue->mutable_value());
-    //serialize function arguments
-    std::vector<ExpressionNodePtr> functionArguments = udfCallExpressionNode->getFunctionArguments();
-    for (const auto& functionArgument : functionArguments) {
-        auto* serializableExpression = new SerializableExpression();
-        serializeExpression(functionArgument, serializableExpression);
-        serializedExpressionNode.mutable_functionarguments()->AddAllocated(serializableExpression);
-    }
-    serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
-}
-
 ExpressionNodePtr
 ExpressionSerializationUtil::deserializeArithmeticalExpressions(const SerializableExpression& serializedExpression) {
     if (serializedExpression.details().Is<SerializableExpression_AddExpression>()) {
@@ -824,29 +792,6 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeGeographyFieldAccessEx
     auto longitudeFieldAccessExpression = longitudeExpression->as<FieldAccessExpressionNode>();
 
     return GeographyFieldsAccessExpressionNode::create(latitudeFieldAccessExpression, longitudeFieldAccessExpression);
-}
-
-ExpressionNodePtr ExpressionSerializationUtil::deserializeUDFCallExpressions(const SerializableExpression& serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: de-serialize udf call expression {}", serializedExpression.details().type_url());
-    if (serializedExpression.details().Is<SerializableExpression_UdfCallExpression>()) {
-        NES_TRACE("ExpressionSerializationUtil:: de-serialize udf call expression as UdfCallExpressionNode.");
-        std::vector<ExpressionNodePtr> functionArguments;
-        auto serializedExpressionNode = SerializableExpression_UdfCallExpression();
-        serializedExpression.details().UnpackTo(&serializedExpressionNode);
-        //de-serialize udf name
-        auto serializedUDFName = serializedExpressionNode.release_udfname();
-        auto valueType = DataTypeSerializationUtil::deserializeDataValue(serializedUDFName->value());
-        auto constantExpression = ConstantValueExpressionNode::create(valueType);
-        auto constantValueExpressionNode = constantExpression->as<ConstantValueExpressionNode>();
-        //de-serialize function arguments
-        auto serializedFunctionArguments = serializedExpressionNode.functionarguments();
-        for (auto serializedFunctionArgument : serializedFunctionArguments) {
-            auto functionArgument = deserializeExpression(serializedFunctionArgument);
-            functionArguments.push_back(functionArgument);
-        }
-        return UDFCallExpressionNode::create(constantValueExpressionNode, functionArguments);
-    }
-    return nullptr;
 }
 
 }// namespace NES

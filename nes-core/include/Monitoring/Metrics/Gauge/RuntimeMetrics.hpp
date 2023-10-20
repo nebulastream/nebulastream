@@ -18,7 +18,14 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Monitoring {
+namespace NES {
+
+namespace Configurations {
+class SchemaType;
+using SchemaTypePtr = std::shared_ptr<SchemaType>;
+}// namespace Configurations
+
+namespace Monitoring {
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about dynamically changing data represented in other metric classes.
@@ -32,7 +39,14 @@ class RuntimeMetrics {
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix = "");
+    static Configurations::SchemaTypePtr getSchemaType(const std::string& prefix = "");
+
+    /**
+     * @brief Returns the schema of the class with a given prefix.
+     * @param prefix
+     * @return the schema
+     */
+    static SchemaPtr getSchema(const std::string& prefix);
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -93,6 +107,6 @@ void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
  */
 nlohmann::json asJson(const RuntimeMetrics& metrics);
 
-}// namespace NES::Monitoring
-
+}// namespace Monitoring
+}// namespace NES
 #endif// NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_RUNTIMEMETRICS_HPP_

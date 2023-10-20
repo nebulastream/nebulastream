@@ -14,6 +14,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
+#include <API/Windowing.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -51,7 +52,7 @@ KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery,
 
 }//namespace WindowOperatorBuilder
 
-Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Windowing::WindowAggregationPtr> aggregation) {
+Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations) {
     NES_DEBUG("Query: add window operator");
     //we use a on time trigger as default that triggers on each change of the watermark
     auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
@@ -92,9 +93,16 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Win
     }
 
     auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
+    std::vector<Windowing::WindowAggregationDescriptorPtr> windowAggregationDescriptors;
+    std::transform(aggregations.begin(),
+                   aggregations.end(),
+                   windowAggregationDescriptors.begin(),
+                   [](API::WindowAggregationPtr apiAggregations) {
+                       return apiAggregations->aggregation;
+                   });
 
     auto windowDefinition =
-        Windowing::LogicalWindowDefinition::create(aggregation,
+        Windowing::LogicalWindowDefinition::create(windowAggregationDescriptors,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                    triggerPolicy,
@@ -108,7 +116,7 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Win
 
 Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
                           const Windowing::WindowTypePtr& windowType,
-                          std::vector<Windowing::WindowAggregationPtr> aggregation) {
+                          std::vector<API::WindowAggregationPtr> aggregations) {
     NES_DEBUG("Query: add keyed window operator");
     std::vector<FieldAccessExpressionNodePtr> expressionNodes;
     for (auto onKey : onKeys) {
@@ -160,9 +168,17 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
 
     auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
 
+    std::vector<Windowing::WindowAggregationDescriptorPtr> windowAggregationDescriptor;
+    std::transform(aggregations.begin(),
+                   aggregations.end(),
+                   windowAggregationDescriptor.begin(),
+                   [](API::WindowAggregationPtr apiAggregations) {
+                       return apiAggregations->aggregation;
+                   });
+
     auto windowDefinition =
         Windowing::LogicalWindowDefinition::create(expressionNodes,
-                                                   aggregation,
+                                                   windowAggregationDescriptor,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                    triggerPolicy,

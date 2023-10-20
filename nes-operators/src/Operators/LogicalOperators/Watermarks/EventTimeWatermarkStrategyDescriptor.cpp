@@ -60,7 +60,7 @@ std::string EventTimeWatermarkStrategyDescriptor::toString() {
     return ss.str();
 }
 
-bool EventTimeWatermarkStrategyDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr schema) {
+bool EventTimeWatermarkStrategyDescriptor::inferStamp( SchemaPtr schema) {
     auto fieldAccessExpression = onField->as<FieldAccessExpressionNode>();
     auto fieldName = fieldAccessExpression->getFieldName();
     //Check if the field exists in the schema

@@ -13,6 +13,5 @@
 
 add_source_files(nes-core
         WindowManager.cpp
-        WindowState.cpp
         SliceMetaData.cpp
 )

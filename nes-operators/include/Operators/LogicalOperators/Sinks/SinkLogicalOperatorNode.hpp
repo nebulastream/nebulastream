@@ -38,7 +38,7 @@ class SinkLogicalOperatorNode : public LogicalUnaryOperatorNode {
     SinkDescriptorPtr getSinkDescriptor() const;
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorNodePtr copy() override;
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
     void inferStringSignature() override;
 
   private:

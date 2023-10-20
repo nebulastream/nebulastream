@@ -931,7 +931,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
 }
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
-LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {
+LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationDescriptorPtr>& aggs) {
     NES_INFO("Lower Window Aggregations to Nautilus Operator");
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
     std::transform(aggs.cbegin(),

@@ -34,7 +34,6 @@
 #include <Operators/Expressions/GeographyExpressions/ShapeExpressions/PointExpressionNode.hpp>
 #include <Operators/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
 #include <Operators/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <gtest/gtest.h>
 
@@ -68,7 +67,6 @@ class GeographyExpressionNodeTest : public Testing::BaseUnitTest {
 
 // This tests the GeographyFieldsAccessExpressionNode
 TEST_F(GeographyExpressionNodeTest, testGeographyFieldAccessExpressionNode) {
-    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()->addField("test$latitude", BasicType::FLOAT64)->addField("test$longitude", BasicType::FLOAT64);
 
     auto fieldLatitude = FieldAccessExpressionNode::create(DataTypeFactory::createDouble(), "latitude");
@@ -111,10 +109,10 @@ TEST_F(GeographyExpressionNodeTest, testGeographyFieldAccessExpressionNode) {
     auto geographyExpressionNode1 =
         GeographyFieldsAccessExpressionNode::create(fieldAccessExpressionNode1, fieldAccessExpressionNode2);
     auto geographyFieldAccessExpressionNode1 = geographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    geographyFieldAccessExpressionNode1->inferStamp(typeInferencePhaseContext, schema);
+    geographyFieldAccessExpressionNode1->inferStamp( schema);
     auto copyGeographyExpressionNode1 = geographyFieldAccessExpressionNode1->copy();
     auto copyGeographyFieldAccessExpressionNode1 = copyGeographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    copyGeographyFieldAccessExpressionNode1->inferStamp(typeInferencePhaseContext, schema);
+    copyGeographyFieldAccessExpressionNode1->inferStamp( schema);
 
     // test accessor methods on both the original and the copy
     EXPECT_TRUE(geographyFieldAccessExpressionNode1->getStamp()->isFloat());
@@ -139,7 +137,7 @@ TEST_F(GeographyExpressionNodeTest, testGeographyFieldAccessExpressionNode) {
     // accessing children via various accessors should throw exception
     EXPECT_THROW(emptyGeographyExpression->getLatitude(), InvalidArgumentException);
     EXPECT_THROW(emptyGeographyExpression->getLongitude(), InvalidArgumentException);
-    EXPECT_THROW(emptyGeographyExpression->inferStamp(typeInferencePhaseContext, schema), InvalidArgumentException);
+    EXPECT_THROW(emptyGeographyExpression->inferStamp( schema), InvalidArgumentException);
     EXPECT_THROW(const auto str = emptyGeographyExpression->toString(), InvalidArgumentException);
 
     // set children of the geography field access expression node
@@ -150,13 +148,12 @@ TEST_F(GeographyExpressionNodeTest, testGeographyFieldAccessExpressionNode) {
     // children set expect no throw for accessor methods
     EXPECT_NO_THROW(emptyGeographyExpression->getLatitude());
     EXPECT_NO_THROW(emptyGeographyExpression->getLongitude());
-    EXPECT_NO_THROW(emptyGeographyExpression->inferStamp(typeInferencePhaseContext, schema));
+    EXPECT_NO_THROW(emptyGeographyExpression->inferStamp( schema));
     EXPECT_NO_THROW(const auto str = emptyGeographyExpression->toString());
 }
 
 // This tests the ST_DWithin expression node
 TEST_F(GeographyExpressionNodeTest, testSTDWithinExpressionNode) {
-    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()->addField("test$latitude", BasicType::FLOAT64)->addField("test$longitude", BasicType::FLOAT64);
 
     auto fieldLatitude = FieldAccessExpressionNode::create(DataTypeFactory::createDouble(), "latitude");
@@ -234,12 +231,12 @@ TEST_F(GeographyExpressionNodeTest, testSTDWithinExpressionNode) {
     auto geographyExpressionNode1 =
         GeographyFieldsAccessExpressionNode::create(fieldAccessExpressionNode1, fieldAccessExpressionNode2);
     auto geographyFieldAccessExpressionNode1 = geographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    geographyFieldAccessExpressionNode1->inferStamp(typeInferencePhaseContext, schema);
+    geographyFieldAccessExpressionNode1->inferStamp( schema);
 
     // create a STDWithinExpressionNode from the lat/lng fields from the schema
     auto expressionNode1 = STDWithinExpressionNode::create(geographyFieldAccessExpressionNode1, circle);
     auto stDWithinExpressionNode1 = expressionNode1->as<STDWithinExpressionNode>();
-    stDWithinExpressionNode1->inferStamp(typeInferencePhaseContext, schema);
+    stDWithinExpressionNode1->inferStamp( schema);
     auto copyExpressionNode1 = stDWithinExpressionNode1->copy();
     auto differentExpressionNode1 = STDWithinExpressionNode::create(geographyFieldAccessExpressionNode1, differentCircle);
 
@@ -250,7 +247,6 @@ TEST_F(GeographyExpressionNodeTest, testSTDWithinExpressionNode) {
 
 // This tests the STKnnExpression Node
 TEST_F(GeographyExpressionNodeTest, testSTKnnExpressionNode) {
-    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()->addField("test$latitude", BasicType::FLOAT64)->addField("test$longitude", BasicType::FLOAT64);
 
     auto fieldLatitude = FieldAccessExpressionNode::create(DataTypeFactory::createDouble(), "latitude");
@@ -337,12 +333,12 @@ TEST_F(GeographyExpressionNodeTest, testSTKnnExpressionNode) {
     auto geographyExpressionNode1 =
         GeographyFieldsAccessExpressionNode::create(fieldAccessExpressionNode1, fieldAccessExpressionNode2);
     auto geographyFieldAccessExpressionNode1 = geographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    geographyFieldAccessExpressionNode1->inferStamp(typeInferencePhaseContext, schema);
+    geographyFieldAccessExpressionNode1->inferStamp( schema);
 
     // create a STKnnExpressionNode from the lat/lng fields from the schema
     auto expressionNode1 = STKnnExpressionNode::create(geographyFieldAccessExpressionNode1, point, k);
     auto STKnnExpressionNode1 = expressionNode1->as<STKnnExpressionNode>();
-    STKnnExpressionNode1->inferStamp(typeInferencePhaseContext, schema);
+    STKnnExpressionNode1->inferStamp( schema);
     auto copyExpressionNode1 = STKnnExpressionNode1->copy();
     auto differentExpressionNode1 = STKnnExpressionNode::create(geographyFieldAccessExpressionNode1, differentPoint, k);
 
@@ -353,7 +349,6 @@ TEST_F(GeographyExpressionNodeTest, testSTKnnExpressionNode) {
 
 // This tests the STWithinExpressionNode
 TEST_F(GeographyExpressionNodeTest, testSTWithinExpressionNode) {
-    auto typeInferencePhaseContext = Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog);
     auto schema = Schema::create()->addField("test$latitude", BasicType::FLOAT64)->addField("test$longitude", BasicType::FLOAT64);
 
     auto fieldLatitude = FieldAccessExpressionNode::create(DataTypeFactory::createDouble(), "latitude");
@@ -454,12 +449,12 @@ TEST_F(GeographyExpressionNodeTest, testSTWithinExpressionNode) {
     auto geographyExpressionNode1 =
         GeographyFieldsAccessExpressionNode::create(fieldAccessExpressionNode1, fieldAccessExpressionNode2);
     auto geographyFieldAccessExpressionNode1 = geographyExpressionNode1->as<GeographyFieldsAccessExpressionNode>();
-    geographyFieldAccessExpressionNode1->inferStamp(typeInferencePhaseContext, schema);
+    geographyFieldAccessExpressionNode1->inferStamp( schema);
 
     // create a STWithinExpressionNode from the lat/lng fields from the schema
     auto expressionNode3 = STWithinExpressionNode::create(geographyFieldAccessExpressionNode1, polygon);
     auto stWithinExpressionNode3 = expressionNode3->as<STWithinExpressionNode>();
-    stWithinExpressionNode3->inferStamp(typeInferencePhaseContext, schema);
+    stWithinExpressionNode3->inferStamp( schema);
     auto copyExpressionNode3 = stWithinExpressionNode3->copy();
     auto differentExpressionNode1 = STWithinExpressionNode::create(geographyFieldAccessExpressionNode1, differentPolygon);
 
