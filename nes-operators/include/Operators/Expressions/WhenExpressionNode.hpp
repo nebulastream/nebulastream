@@ -35,7 +35,7 @@ class WhenExpressionNode final : public BinaryExpressionNode {
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
+    void inferStamp( SchemaPtr schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const final;

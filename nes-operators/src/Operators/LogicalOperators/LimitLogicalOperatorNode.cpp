@@ -41,8 +41,8 @@ std::string LimitLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool LimitLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
+bool LimitLogicalOperatorNode::inferSchema() {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     return true;

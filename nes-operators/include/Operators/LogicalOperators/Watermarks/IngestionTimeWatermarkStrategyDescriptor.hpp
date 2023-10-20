@@ -38,7 +38,7 @@ class IngestionTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescrip
      * @param schema : the schema to be used for inferring the types
      * @return true if success else false
      */
-    bool inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
+    bool inferStamp( SchemaPtr schema) override;
 
   private:
     explicit IngestionTimeWatermarkStrategyDescriptor();

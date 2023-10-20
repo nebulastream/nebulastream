@@ -31,7 +31,7 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
     * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred
     */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
 
     void inferInputOrigins() override;
 

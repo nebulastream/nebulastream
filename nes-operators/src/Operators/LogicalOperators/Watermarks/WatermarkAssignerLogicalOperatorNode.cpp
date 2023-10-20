@@ -57,11 +57,11 @@ OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool WatermarkAssignerLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
+bool WatermarkAssignerLogicalOperatorNode::inferSchema() {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
-    watermarkStrategyDescriptor->inferStamp(typeInferencePhaseContext, inputSchema);
+    watermarkStrategyDescriptor->inferStamp( inputSchema);
     return true;
 }
 

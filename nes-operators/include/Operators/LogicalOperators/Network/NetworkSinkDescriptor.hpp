@@ -22,8 +22,7 @@
 #include <chrono>
 #include <string>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 /**
  * @brief Descriptor defining properties used for creating physical zmq sink
@@ -44,6 +43,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
                                     FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                    uint64_t uniqueNetworkSinkOperatorId = 0,
                                     uint64_t numberOfOrigins = 1);
 
     /**
@@ -107,17 +107,18 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
                                    FaultToleranceType faultToleranceType,
+                                   uint64_t uniqueNetworkSinkOperatorId,
                                    uint64_t numberOfOrigins);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
+    uint64_t uniqueNetworkSinkDescriptorId;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_

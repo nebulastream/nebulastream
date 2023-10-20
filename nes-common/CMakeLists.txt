@@ -77,6 +77,10 @@ set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Identifiers.hpp Identifiers.hpp)
+register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/FaultToleranceType.hpp Util/FaultToleranceType.hpp)
+register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/MetricCollectorType.hpp Util/MetricCollectorType.hpp)
+register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/LineageType.hpp Util/LineageType.hpp)
+register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")

@@ -14,12 +14,12 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -513,7 +513,7 @@ class SourceTest : public Testing::BaseIntegrationTest {
   public:
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
-        PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
+        auto sourceConf = CSVSourceType::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSourceTypes.add(sourceConf);
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
@@ -1154,7 +1154,7 @@ TEST_F(SourceTest, testBinarySourceFillBufferContents) {
 }
 
 TEST_F(SourceTest, testCSVSourceGetType) {
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -1171,7 +1171,7 @@ TEST_F(SourceTest, testCSVSourceGetType) {
 }
 
 TEST_F(SourceTest, testCSVSourceWrongFilePath) {
-    auto csvSourceType = CSVSourceType::create();
+    auto csvSourceType = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     csvSourceType->setFilePath(this->wrong_filepath);
     csvSourceType->setNumberOfBuffersToProduce(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
@@ -1193,7 +1193,7 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
 }
 
 TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     csvSourceType->setFilePath(this->path_to_file);
     csvSourceType->setNumberOfBuffersToProduce(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
@@ -1210,7 +1210,7 @@ TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     csvSourceType->setFilePath(this->path_to_file);
     csvSourceType->setNumberOfBuffersToProduce(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
@@ -1233,7 +1233,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1259,7 +1259,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1285,7 +1285,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1318,7 +1318,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1351,7 +1351,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1377,7 +1377,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1407,7 +1407,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     // expectedNumberOfBuffers in c-tor, no looping
     uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -1445,7 +1445,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     // expectedNumberOfBuffers in c-tor, no looping
     uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -1491,7 +1491,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                ->addField("int8", BasicType::INT8);
 
     std::string path_to_int_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "every-int.csv";
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(path_to_int_file);
     sourceConfig->setNumberOfBuffersToProduce(1);// file not looping
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1551,7 +1551,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     // use custom schema and file, read once
     SchemaPtr float_schema = Schema::create()->addField("float64", BasicType::FLOAT64)->addField("float32", BasicType::FLOAT32);
     std::string path_to_float_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "every-float.csv";
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     sourceConfig->setFilePath(path_to_float_file);
     sourceConfig->setNumberOfBuffersToProduce(1);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1589,7 +1589,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 
     std::string path_to_bool_file = std::filesystem::path(TEST_DATA_DIRECTORY) / "every-boolean.csv";
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     csvSourceType->setFilePath(path_to_bool_file);
     csvSourceType->setNumberOfBuffersToProduce(1);// file is not going to loop
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
@@ -1616,7 +1616,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 }
 
 TEST_F(SourceTest, testCSVSourceCommaFloatingPoint) {
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("LogicalSourceName", "PhysicalSourceName");
     csvSourceType->setFilePath(this->path_to_decimals_file);
     csvSourceType->setDelimiter("*");
     csvSourceType->setSkipHeader(true);
@@ -1647,7 +1647,7 @@ TEST_F(SourceTest, testCSVSourceCommaFloatingPoint) {
  */
 TEST_F(SourceTest, TCPSourceInit) {
 
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create("LogicalSourceName", "PhysicalSourceName");
 
     TCPSourceProxy tcpDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
@@ -1664,7 +1664,7 @@ TEST_F(SourceTest, TCPSourceInit) {
  * Test if schema and TCP source information are the same
  */
 TEST_F(SourceTest, TCPSourcePrint) {
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create("LogicalSourceName", "PhysicalSourceName");
 
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketPort(5000);
@@ -1694,7 +1694,7 @@ TEST_F(SourceTest, TCPSourcePrint) {
  * Test if schema and TCP source information are the same
  */
 TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create();
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create("LogicalSourceName", "PhysicalSourceName");
 
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketPort(5000);
@@ -1874,8 +1874,10 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    std::string input =
-        R"(Schema::create()->addField(createField("id", BasicType::UINT64))->addField(createField("value", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
+    auto input = Schema::create()
+                     ->addField(createField("id", BasicType::UINT64))
+                     ->addField(createField("value", BasicType::UINT64))
+                     ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
     NES_DEBUG("E2EBase: Start worker 1");
@@ -1901,9 +1903,9 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
         calls++;
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("input1", "test_stream1", lambdaSourceType);
-    wrkConf->physicalSourceTypes.add(physicalSource);
+    auto lambdaSourceType =
+        LambdaSourceType::create("input1", "test_stream1", std::move(func1), 22, 11, GatheringMode::INTERVAL_MODE);
+    wrkConf->physicalSourceTypes.add(lambdaSourceType);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);

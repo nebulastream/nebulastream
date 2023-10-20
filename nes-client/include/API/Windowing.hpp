@@ -31,7 +31,7 @@ class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class WindowAggregationDescriptor;
-using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
+using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
 class TimeMeasure;
 class TimeCharacteristic;
@@ -46,45 +46,56 @@ using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescript
  */
 namespace NES::API {
 
+class WindowAggregation;
+using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
+
+class WindowAggregation {
+
+  public:
+    WindowAggregation(const Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
+    API::WindowAggregationPtr as(const ExpressionItem& asField);
+    const Windowing::WindowAggregationDescriptorPtr aggregation;
+};
+
 /**
  * @brief Defines a Sum Aggregation function on a particular field.
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Sum(const ExpressionItem& onField);
+API::WindowAggregationPtr Sum(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Min Aggregation function on a particular field.
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Min(const ExpressionItem& onField);
+API::WindowAggregationPtr Min(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Max Aggregation function on a particular field.
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Max(const ExpressionItem& onField);
+API::WindowAggregationPtr Max(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Count Aggregation function on a particular field.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Count();
+API::WindowAggregationPtr Count();
 
 /**
  * @brief Defines a Median Aggregation function on a particular field.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Median(const ExpressionItem& onField);
+API::WindowAggregationPtr Median(const ExpressionItem& onField);
 
 /**
  * @brief Defines a Agg Aggregation function on a particular field.
  * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-Windowing::WindowAggregationPtr Avg(const ExpressionItem& onField);
+API::WindowAggregationPtr Avg(const ExpressionItem& onField);
 
 /**
  * @brief Defines event time as a time characteristic for a window.

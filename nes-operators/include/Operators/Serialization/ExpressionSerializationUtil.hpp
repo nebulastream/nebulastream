@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_GRPC_SERIALIZATION_EXPRESSIONSERIALIZATIONUTIL_HPP_
 #define NES_CORE_INCLUDE_GRPC_SERIALIZATION_EXPRESSIONSERIALIZATIONUTIL_HPP_
 
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <memory>
 
 namespace NES {
@@ -63,13 +62,11 @@ class ExpressionSerializationUtil {
     static void
     serializeGeographyFieldAccessExpressions(const ExpressionNodePtr& expression,
                                              SerializableExpression_GeographyFieldsAccessExpression* serializedExpression);
-    static void serializeUDFCallExpressions(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression);
     static ExpressionNodePtr deserializeLogicalExpressions(const SerializableExpression& serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(const SerializableExpression& serializedExpression);
     static ExpressionNodePtr deserializeGeographyExpressions(const SerializableExpression& serializedExpression);
     static ExpressionNodePtr deserializeGeographyFieldAccessExpressions(
         const SerializableExpression_GeographyFieldsAccessExpression& serializedExpression);
-    static ExpressionNodePtr deserializeUDFCallExpressions(const SerializableExpression& serializedExpression);
 };
 }// namespace NES
 

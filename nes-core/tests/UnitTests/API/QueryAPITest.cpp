@@ -67,8 +67,8 @@ class QueryAPITest : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto defaultSourceType = DefaultSourceType::create();
-        physicalSource = PhysicalSource::create("test2", "test_source", defaultSourceType);
+        auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
+        physicalSource = PhysicalSource::create(defaultSourceType);
         logicalSource = LogicalSource::create("test2", Schema::create());
     }
 };
@@ -269,7 +269,7 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
     auto query = Query::from("default_logical")
                      .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
                      .byKey(Attribute("id", BasicType::INT64))
-                     .apply(Sum(Attribute("value", BasicType::INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(FieldAccessExpressionNode::create("MY_OUTPUT_FIELD_NAME")))
                      .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
                      .sink(PrintSinkDescriptor::create());
 

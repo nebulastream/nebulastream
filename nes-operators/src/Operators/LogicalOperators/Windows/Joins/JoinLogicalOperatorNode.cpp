@@ -40,9 +40,9 @@ std::string JoinLogicalOperatorNode::toString() const {
 
 Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() const { return joinDefinition; }
 
-bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
+bool JoinLogicalOperatorNode::inferSchema() {
 
-    if (!LogicalBinaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
+    if (!LogicalBinaryOperatorNode::inferSchema()) {
         return false;
     }
 
@@ -70,7 +70,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
 
             if (fieldExistsInSchema) {
                 inputSchema->copyFields(*itr);
-                joinKey.inferStamp(typeInferencePhaseContext, inputSchema);
+                joinKey.inferStamp( inputSchema);
                 distinctSchemas.erase(itr);
                 return true;
             }
@@ -121,7 +121,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
 
     //Infer stamp of window definition
     const auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
-    windowType->inferStamp(leftInputSchema, typeInferencePhaseContext);
+    windowType->inferStamp(leftInputSchema);
 
     //Reset output schema and add fields from left and right input schema
     outputSchema->clear();

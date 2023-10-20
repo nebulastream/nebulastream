@@ -20,6 +20,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
@@ -39,7 +40,7 @@ namespace NES::Monitoring {
 MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      QueryServicePtr queryService,
                                      QueryCatalogServicePtr queryCatalogService)
-    : MonitoringManager(topology, queryService, queryCatalogService, true) {}
+    : MonitoringManager(std::move(topology), std::move(queryService), std::move(queryCatalogService), true) {}
 
 MonitoringManager::MonitoringManager(TopologyPtr topology,
                                      QueryServicePtr queryService,
@@ -178,7 +179,7 @@ bool MonitoringManager::registerLogicalMonitoringStreams(const NES::Configuratio
             std::string logicalSourceName = std::string(magic_enum::enum_name(metricType));
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO("MonitoringManager: Creating logical source {}", logicalSourceName);
-            config->logicalSourceTypes.add(LogicalSource::create(logicalSourceName, metricSchema));
+            config->logicalSourceTypes.add(LogicalSourceType::create(logicalSourceName, metricSchema));
         }
         return true;
     }

@@ -23,14 +23,14 @@
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
-#include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
+#include <Plans/Query/QueryPlanBuilder.hpp>
 
 namespace NES::Parsers {
 
@@ -253,12 +253,12 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     auto distributionType = Windowing::DistributionCharacteristic::createCompleteWindowType();
                     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-                    std::vector<WindowAggregationPtr> windowAggs;
-                    std::shared_ptr<WindowAggregationDescriptor> sumAgg = API::Sum(Attribute("Count"));
+                    std::vector<WindowAggregationDescriptorPtr> windowAggs;
+                    WindowAggregationDescriptorPtr sumAgg = API::Sum(Attribute("Count"))->aggregation;
 
                     auto timeField =
                         WindowType::asTimeBasedWindowType(windowType)->getTimeCharacteristic()->getField()->getName();
-                    std::shared_ptr<WindowAggregationDescriptor> maxAggForTime = API::Max(Attribute(timeField));
+                    WindowAggregationDescriptorPtr maxAggForTime = API::Max(Attribute(timeField))->aggregation;
                     windowAggs.push_back(sumAgg);
                     windowAggs.push_back(maxAggForTime);
 

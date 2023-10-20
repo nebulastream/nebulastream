@@ -53,7 +53,7 @@ class UDFLogicalOperator : public LogicalUnaryOperatorNode {
      *
      * Sets the output schema contained in the UDFDescriptor as the output schema of the operator.
      */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
 
     /**
      * @see OperatorNode#copy

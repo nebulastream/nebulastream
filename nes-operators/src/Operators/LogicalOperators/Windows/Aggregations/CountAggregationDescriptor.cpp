@@ -29,17 +29,17 @@ CountAggregationDescriptor::CountAggregationDescriptor(ExpressionNodePtr field, 
     this->aggregationType = Type::Count;
 }
 
-WindowAggregationPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
+WindowAggregationDescriptorPtr CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                         FieldAccessExpressionNodePtr asField) {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr CountAggregationDescriptor::on() {
+WindowAggregationDescriptorPtr CountAggregationDescriptor::on() {
     auto countField = FieldAccessExpressionNode::create("count");
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
 }
 
-void CountAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr schema) {
+void CountAggregationDescriptor::inferStamp(SchemaPtr schema) {
 
     auto attributeNameResolver = schema->getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
@@ -56,7 +56,8 @@ void CountAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseC
     onField->setStamp(DataTypeFactory::createUInt64());
     asField->setStamp(onField->getStamp());
 }
-WindowAggregationPtr CountAggregationDescriptor::copy() {
+
+WindowAggregationDescriptorPtr CountAggregationDescriptor::copy() {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 DataTypePtr CountAggregationDescriptor::getInputStamp() { return DataTypeFactory::createUInt64(); }

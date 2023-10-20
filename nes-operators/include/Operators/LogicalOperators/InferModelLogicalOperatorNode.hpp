@@ -63,7 +63,7 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @param typeInferencePhaseContext
      * @return true on success, false otherwise
      */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
 
     /**
      * @brief infers the signature of this operator node

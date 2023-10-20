@@ -24,6 +24,13 @@ target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/Expressions/ExpressionNode.hpp Operators/Expressions/ExpressionNode.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/Expressions/FieldAccessExpressionNode.hpp Operators/Expressions/FieldAccessExpressionNode.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Plans/Query/QueryPlan.hpp Plans/Query/QueryPlan.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Network/NesPartition.hpp Operators/LogicalOperators/Network/NesPartition.hpp)
+register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
+register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sinks Operators/LogicalOperators/Sinks)
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)

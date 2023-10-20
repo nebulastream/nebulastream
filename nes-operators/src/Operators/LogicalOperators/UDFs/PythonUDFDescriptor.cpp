@@ -27,10 +27,12 @@ PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName,
         throw UDFException("Function String of Python UDF must not be empty");
     }
 }
+
 bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
     return functionString == other.functionString && getMethodName() == other.getMethodName()
         && getInputSchema()->equals(other.getInputSchema(), true) && getInputSchema()->equals(other.getInputSchema(), true);
 }
+
 std::stringstream PythonUDFDescriptor::generateInferStringSignature() {
     auto signatureStream = std::stringstream{};
     auto& functionName = getMethodName();

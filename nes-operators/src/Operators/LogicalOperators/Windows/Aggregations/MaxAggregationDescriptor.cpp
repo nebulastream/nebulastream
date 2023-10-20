@@ -31,12 +31,12 @@ MaxAggregationDescriptor::MaxAggregationDescriptor(ExpressionNodePtr field, Expr
     this->aggregationType = Type::Max;
 }
 
-WindowAggregationPtr MaxAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
+WindowAggregationDescriptorPtr MaxAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                       FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr MaxAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
+WindowAggregationDescriptorPtr MaxAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
@@ -44,10 +44,10 @@ WindowAggregationPtr MaxAggregationDescriptor::on(const ExpressionNodePtr& keyEx
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
-void MaxAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+void MaxAggregationDescriptor::inferStamp(
                                           SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(typeInferencePhaseContext, schema);
+    onField->inferStamp( schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MaxAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
@@ -67,7 +67,7 @@ void MaxAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseCon
     asField->setStamp(onField->getStamp());
 }
 
-WindowAggregationPtr MaxAggregationDescriptor::copy() {
+WindowAggregationDescriptorPtr MaxAggregationDescriptor::copy() {
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 

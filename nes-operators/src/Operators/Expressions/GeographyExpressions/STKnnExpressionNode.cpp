@@ -97,14 +97,14 @@ ExpressionNodePtr STKnnExpressionNode::getK() const {
     return children[2]->as<ConstantValueExpressionNode>();
 }
 
-void STKnnExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void STKnnExpressionNode::inferStamp( SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto point = getPoint();
     auto queryPoint = getQueryPoint();
     auto k = getK();
-    point->inferStamp(typeInferencePhaseContext, schema);
+    point->inferStamp( schema);
     auto shapeType = queryPoint->getShapeType();
-    k->inferStamp(typeInferencePhaseContext, schema);
+    k->inferStamp( schema);
 
     if (!point->getStamp()->isFloat() || shapeType != ShapeType::Point || !k->getStamp()->isNumeric()) {
         throw std::logic_error("ST_KnnExpressionNode: Error during stamp inference. Types need to be Float for AttributeAccess,"

@@ -46,7 +46,7 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public Origin
      * @param typeInferencePhaseContext needed for stamp inferring
      * @return true if schema was correctly inferred
      */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;

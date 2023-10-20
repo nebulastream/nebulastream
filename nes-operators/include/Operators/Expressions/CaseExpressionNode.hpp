@@ -53,7 +53,7 @@ class CaseExpressionNode : public ExpressionNode {
      * @brief Infers the stamp of this expression node.
      * @param schema the current schema.
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
+    void inferStamp( SchemaPtr schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const final;

@@ -60,12 +60,12 @@ class WindowAggregationDescriptor {
      * @param typeInferencePhaseContext
      * @param schema
      */
-    virtual void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) = 0;
+    virtual void inferStamp( SchemaPtr schema) = 0;
 
     /**
     * @brief Creates a deep copy of the window aggregation
     */
-    virtual WindowAggregationPtr copy() = 0;
+    virtual WindowAggregationDescriptorPtr copy() = 0;
 
     /**
      * @return the input type

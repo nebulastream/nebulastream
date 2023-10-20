@@ -31,7 +31,7 @@ class WindowComputationOperator : public WindowOperatorNode {
     [[nodiscard]] std::string toString() const override;
 
     OperatorNodePtr copy() override;
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
     void inferStringSignature() override;
 };
 

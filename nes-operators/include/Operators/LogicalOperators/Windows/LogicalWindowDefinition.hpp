@@ -39,7 +39,7 @@ class LogicalWindowDefinition {
      * @param allowedLateness
      */
     explicit LogicalWindowDefinition(std::vector<FieldAccessExpressionNodePtr> keys,
-                                     std::vector<WindowAggregationPtr> windowAggregations,
+                                     std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
                                      WindowTriggerPolicyPtr triggerPolicy,
@@ -56,7 +56,7 @@ class LogicalWindowDefinition {
      * @param allowedLateness
      * @return Window Definition
      */
-    static LogicalWindowDefinitionPtr create(std::vector<WindowAggregationPtr> windowAggregations,
+    static LogicalWindowDefinitionPtr create(std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
                                              const WindowTriggerPolicyPtr& triggerPolicy,
@@ -74,7 +74,7 @@ class LogicalWindowDefinition {
      * @return Window Definition
      */
     static LogicalWindowDefinitionPtr create(std::vector<FieldAccessExpressionNodePtr> keys,
-                                             std::vector<WindowAggregationPtr> windowAggregation,
+                                             std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
                                              const WindowTriggerPolicyPtr& triggerPolicy,
@@ -115,13 +115,13 @@ class LogicalWindowDefinition {
      * @brief Getter for the aggregation functions.
      * @return Vector of WindowAggregations.
      */
-    std::vector<WindowAggregationPtr> getWindowAggregation();
+    std::vector<WindowAggregationDescriptorPtr> getWindowAggregation();
 
     /**
      * @brief Sets the list of window aggregations.
      * @param windowAggregation
      */
-    void setWindowAggregation(std::vector<WindowAggregationPtr> windowAggregation);
+    void setWindowAggregation(std::vector<WindowAggregationDescriptorPtr> windowAggregation);
 
     /**
      * @brief Getter for the window type.
@@ -204,7 +204,7 @@ class LogicalWindowDefinition {
     bool equal(LogicalWindowDefinitionPtr otherWindowDefinition);
 
   private:
-    std::vector<WindowAggregationPtr> windowAggregation;
+    std::vector<WindowAggregationDescriptorPtr> windowAggregation;
     WindowTriggerPolicyPtr triggerPolicy;
     WindowActionDescriptorPtr triggerAction;
     WindowTypePtr windowType;

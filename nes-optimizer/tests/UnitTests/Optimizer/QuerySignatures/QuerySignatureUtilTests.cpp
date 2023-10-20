@@ -29,11 +29,10 @@
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
-#include <Services/QueryParsingService.hpp>
+
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -45,7 +44,6 @@ class QuerySignatureUtilTests : public Testing::BaseUnitTest {
 
   public:
     SchemaPtr schema;
-    std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
@@ -60,13 +58,11 @@ class QuerySignatureUtilTests : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto cppCompiler = Compiler::CPPCompiler::create();
+
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        typeInferencePhaseContext = std::make_shared<Optimizer::TypeInferencePhaseContext>(
-            Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));
         schema = Schema::create()->addField("test$id", BasicType::UINT32)->addField("test$value", BasicType::UINT64);
     }
 };
@@ -75,7 +71,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
     ExpressionNodePtr predicate = Attribute("value") == 40;
-    predicate->inferStamp(*typeInferencePhaseContext, schema);
+    predicate->inferStamp(schema);
 
     //Create Source
     auto descriptor = LogicalSourceDescriptor::create("car");

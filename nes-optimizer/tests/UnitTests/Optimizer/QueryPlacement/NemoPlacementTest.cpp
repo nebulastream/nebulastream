@@ -28,10 +28,11 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
@@ -44,7 +45,6 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <algorithm>
@@ -64,7 +64,6 @@ class NemoPlacementTest : public Testing::BaseUnitTest {
     SharedQueryPlanPtr sharedQueryPlan;
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
-    QueryParsingServicePtr queryParsingService;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -76,9 +75,7 @@ class NemoPlacementTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup NemoPlacementTest test case.");
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        queryParsingService = QueryParsingService::create(jitCompiler);
+
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
@@ -137,11 +134,11 @@ class NemoPlacementTest : public Testing::BaseUnitTest {
 
         uint64_t childIndex = nodes.size() - leafNodes;
         for (uint16_t i = childIndex; i < nodes.size(); i++) {
-            CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+            CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test" + std::to_string(i));
             csvSourceType->setGatheringInterval(0);
             csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
 
-            auto physicalSource = PhysicalSource::create(sourceName, "test" + std::to_string(i), csvSourceType);
+            auto physicalSource = PhysicalSource::create(csvSourceType);
             Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
                 std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, nodes[i]);
             sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
@@ -151,7 +148,7 @@ class NemoPlacementTest : public Testing::BaseUnitTest {
     void runNemoPlacement(OptimizerConfiguration optimizerConfig) {
         Query query = Query::from("car")
                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-                          .apply(Count()->as(Attribute("count_value")))
+                          .apply(Count()->as(FieldAccessExpressionNode::create("count_value")))
                           .sink(NullOutputSinkDescriptor::create());
         queryPlan = query.getQueryPlan();
         queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);

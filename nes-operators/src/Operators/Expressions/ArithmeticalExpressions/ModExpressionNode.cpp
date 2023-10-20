@@ -31,8 +31,8 @@ ExpressionNodePtr ModExpressionNode::create(const ExpressionNodePtr& left, const
     return addNode;
 }
 
-void ModExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
-    ArithmeticalBinaryExpressionNode::inferStamp(typeInferencePhaseContext, schema);
+void ModExpressionNode::inferStamp( SchemaPtr schema) {
+    ArithmeticalBinaryExpressionNode::inferStamp( schema);
 
     if (stamp->isInteger()) {
         // we know that both children must have been Integer, too

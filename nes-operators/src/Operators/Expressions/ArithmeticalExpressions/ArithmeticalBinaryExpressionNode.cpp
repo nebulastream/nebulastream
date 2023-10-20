@@ -30,13 +30,13 @@ ArithmeticalBinaryExpressionNode::ArithmeticalBinaryExpressionNode(ArithmeticalB
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
-void ArithmeticalBinaryExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+void ArithmeticalBinaryExpressionNode::inferStamp(
                                                   SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto left = getLeft();
     auto right = getRight();
-    left->inferStamp(typeInferencePhaseContext, schema);
-    right->inferStamp(typeInferencePhaseContext, schema);
+    left->inferStamp( schema);
+    right->inferStamp( schema);
 
     // both sub expressions have to be numerical
     if (!left->getStamp()->isNumeric() || !right->getStamp()->isNumeric()) {

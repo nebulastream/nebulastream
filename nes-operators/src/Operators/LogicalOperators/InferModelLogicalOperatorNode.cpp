@@ -78,8 +78,8 @@ void InferModelLogicalOperatorNode::updateToFullyQualifiedFieldName(FieldAccessE
     }
 }
 
-bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
+bool InferModelLogicalOperatorNode::inferSchema() {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
 
@@ -88,7 +88,7 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
     for (auto inputField : inputFields) {
         auto inputExpression = inputField->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(inputExpression);
-        inputExpression->inferStamp(typeInferencePhaseContext, inputSchema);
+        inputExpression->inferStamp( inputSchema);
         auto fieldName = inputExpression->getFieldName();
         inputSchema->replaceField(fieldName, inputExpression->getStamp());
     }

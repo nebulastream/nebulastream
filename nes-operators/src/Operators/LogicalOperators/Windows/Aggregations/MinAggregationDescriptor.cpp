@@ -30,12 +30,12 @@ MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, Expr
     this->aggregationType = Type::Min;
 }
 
-WindowAggregationPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
+WindowAggregationDescriptorPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                       FieldAccessExpressionNodePtr asField) {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr MinAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
+WindowAggregationDescriptorPtr MinAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
@@ -47,10 +47,10 @@ DataTypePtr MinAggregationDescriptor::getInputStamp() { return onField->getStamp
 DataTypePtr MinAggregationDescriptor::getPartialAggregateStamp() { return onField->getStamp(); }
 DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp() { return onField->getStamp(); }
 
-void MinAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+void MinAggregationDescriptor::inferStamp(
                                           SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(typeInferencePhaseContext, schema);
+    onField->inferStamp( schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
@@ -69,7 +69,7 @@ void MinAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseCon
     }
     asField->setStamp(onField->getStamp());
 }
-WindowAggregationPtr MinAggregationDescriptor::copy() {
+WindowAggregationDescriptorPtr MinAggregationDescriptor::copy() {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(this->onField->copy(), this->asField->copy()));
 }
 

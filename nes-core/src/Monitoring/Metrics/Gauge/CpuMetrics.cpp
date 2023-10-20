@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -30,23 +31,28 @@ CpuMetrics::CpuMetrics()
     : nodeId(0), timestamp(0), coreNum(0), user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), steal(0),
       guest(0), guestnice(0) {}
 
-SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
-    SchemaPtr schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                           ->addField(prefix + "node_id", BasicType::UINT64)
-                           ->addField(prefix + "timestamp", BasicType::UINT64)
-                           ->addField(prefix + "coreNum", BasicType::UINT64)
-                           ->addField(prefix + "user", BasicType::UINT64)
-                           ->addField(prefix + "nice", BasicType::UINT64)
-                           ->addField(prefix + "system", BasicType::UINT64)
-                           ->addField(prefix + "idle", BasicType::UINT64)
-                           ->addField(prefix + "iowait", BasicType::UINT64)
-                           ->addField(prefix + "irq", BasicType::UINT64)
-                           ->addField(prefix + "softirq", BasicType::UINT64)
-                           ->addField(prefix + "steal", BasicType::UINT64)
-                           ->addField(prefix + "guest", BasicType::UINT64)
-                           ->addField(prefix + "guestnice", BasicType::UINT64);
-    return schema;
+Configurations::SchemaTypePtr CpuMetrics::getSchemaType(const std::string& prefix) {
+
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    const char* length = "0";
+    const char* dataType = "UINT64";
+    schemaFiledDetails.emplace_back(prefix + "node_id", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "timestamp", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "coreNum", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "user", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "nice", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "system", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "idle", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "iowait", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "irq", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "softirq", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "steal", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "guest", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "guestnice", dataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
+
+SchemaPtr CpuMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
 
 void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());

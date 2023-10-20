@@ -68,8 +68,8 @@ void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& s
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
 
-    auto csvSourceType = CSVSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
+    auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
+    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
     Catalogs::Source::SourceCatalogEntryPtr sce1 =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);

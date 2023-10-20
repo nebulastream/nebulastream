@@ -48,7 +48,7 @@ class LimitLogicalOperatorNode : public LogicalUnaryOperatorNode {
     * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred
     */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
     OperatorNodePtr copy() override;
     void inferStringSignature() override;
 

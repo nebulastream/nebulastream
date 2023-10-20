@@ -16,14 +16,14 @@
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <z3++.h>
 
@@ -50,7 +50,8 @@ bool NonKeyedWindowOperator::equal(NodePtr const& rhs) const {
 }
 
 OperatorNodePtr NonKeyedWindowOperator::copy() {
-    auto copy = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition, id)->as<NonKeyedWindowOperator>();
+    auto copy =
+        LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition, id)->as<NonKeyedWindowOperator>();
     copy->setOriginId(originId);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -60,8 +61,8 @@ OperatorNodePtr NonKeyedWindowOperator::copy() {
     }
     return copy;
 }
-bool NonKeyedWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
-    if (!WindowOperatorNode::inferSchema(typeInferencePhaseContext)) {
+bool NonKeyedWindowOperator::inferSchema() {
+    if (!WindowOperatorNode::inferSchema()) {
         return false;
     }
     // infer the default input and output schema
@@ -71,17 +72,17 @@ bool NonKeyedWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& t
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
     for (auto& agg : windowAggregation) {
-        agg->inferStamp(typeInferencePhaseContext, inputSchema);
+        agg->inferStamp(inputSchema);
     }
 
     if (windowDefinition->getWindowType()->isContentBasedWindowType()) {
         auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
         if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
-            contentBasedWindowType->inferStamp(inputSchema, typeInferencePhaseContext);
+            contentBasedWindowType->inferStamp(inputSchema);
         }
     } else {
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-        timeBasedWindowType->inferStamp(inputSchema, typeInferencePhaseContext);
+        timeBasedWindowType->inferStamp(inputSchema);
     }
 
     //Construct output schema
@@ -101,7 +102,7 @@ bool NonKeyedWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& t
         // infer the data type of the key field.
         auto keyList = windowDefinition->getKeys();
         for (auto& key : keyList) {
-            key->inferStamp(typeInferencePhaseContext, inputSchema);
+            key->inferStamp(inputSchema);
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }

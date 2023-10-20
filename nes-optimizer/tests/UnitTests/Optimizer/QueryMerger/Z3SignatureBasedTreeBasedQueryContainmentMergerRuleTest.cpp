@@ -43,7 +43,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Services/QueryParsingService.hpp>
+
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
@@ -92,10 +92,6 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
         sourceCatalog->addLogicalSource("solarPanels1", schema);
         sourceCatalog->addLogicalSource("solarPanels2", schema);
         sourceCatalog->addLogicalSource("households", schemaHouseholds);
-        /*udfCatalog = Catalogs::UDF::UDFCatalog::create();
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(QueryParsingService::create(jitCompiler));*/
     }
 
     /* Will be called after a test is executed. */

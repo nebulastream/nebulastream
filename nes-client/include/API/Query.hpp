@@ -16,10 +16,10 @@
 #define NES_CORE_INCLUDE_API_QUERY_HPP_
 
 #include <API/Expressions/Expressions.hpp>
-#include <Util/FaultToleranceType.hpp>
-#include <Util/LineageType.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Util/FaultToleranceType.hpp>
+#include <Util/LineageType.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -48,6 +48,11 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+namespace API {
+class WindowAggregation;
+using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
+}// namespace API
+
 namespace Catalogs::UDF {
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
@@ -64,7 +69,7 @@ class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class WindowAggregationDescriptor;
-using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
+using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
@@ -564,10 +569,10 @@ class Query {
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
      * @brief: Creates a window aggregation.
      * @param windowType Window definition.
-     * @param aggregation Window aggregation function.
+     * @param aggregations Window aggregation function.
      * @return query.
      */
-    Query& window(Windowing::WindowTypePtr const& windowType, std::vector<Windowing::WindowAggregationPtr> aggregation);
+    Query& window(Windowing::WindowTypePtr const& windowType, std::vector<API::WindowAggregationPtr> aggregations);
 
     /**
       * @brief: Creates a keyed window aggregation.
@@ -578,7 +583,7 @@ class Query {
       */
     Query& windowByKey(std::vector<ExpressionNodePtr> keys,
                        Windowing::WindowTypePtr const& windowType,
-                       std::vector<Windowing::WindowAggregationPtr> aggregation);
+                       std::vector<API::WindowAggregationPtr> aggregations);
 };
 
 using QueryPtr = std::shared_ptr<Query>;

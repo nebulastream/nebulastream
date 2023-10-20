@@ -41,7 +41,7 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @param typeInferencePhaseContext needed for stamp inferring
      * @return true if inference was possible
      */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
+    bool inferSchema() override;
     void inferStringSignature() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;

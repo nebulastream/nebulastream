@@ -40,9 +40,9 @@ void UDFLogicalOperator::inferStringSignature() {
     hashBasedSignature[hashGenerator(signature)] = {signature};
 }
 
-bool UDFLogicalOperator::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
+bool UDFLogicalOperator::inferSchema() {
     // Set the input schema.
-    if (!LogicalUnaryOperatorNode::inferSchema(typeInferencePhaseContext)) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     // The output schema of this operation is determined by the UDF.

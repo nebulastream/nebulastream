@@ -18,15 +18,13 @@
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
-
-namespace Configurations {
+namespace NES::Configurations {
 
 LogicalSourceTypePtr LogicalSourceTypeFactory::createFromString(std::string,
                                                                 std::map<std::string, std::string>& commandLineParams) {
     std::string logicalSourceName, fieldNodeName, fieldNodeType, fieldNodeNesType, fieldNodeLength;
     std::vector<SchemaFieldDetail> schemaFieldDetails;
-    for (auto parameter : commandLineParams) {
+    for (const auto& parameter : commandLineParams) {
         if (parameter.first == LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG && !parameter.second.empty()) {
             logicalSourceName = parameter.second;
         }
@@ -86,5 +84,4 @@ LogicalSourceTypePtr LogicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlCo
     return LogicalSourceType::create(logicalSourceName, schemaType);
 }
 
-}// namespace Configurations
-}// namespace NES
+}// namespace NES::Configurations

@@ -27,9 +27,9 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
     /**
      * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
      */
-    static WindowAggregationPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
 
-    static WindowAggregationPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
 
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;
@@ -40,9 +40,9 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
+    void inferStamp( SchemaPtr schema) override;
 
-    WindowAggregationPtr copy() override;
+    WindowAggregationDescriptorPtr copy() override;
     MaxAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 
     virtual ~MaxAggregationDescriptor() = default;

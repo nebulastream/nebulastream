@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <mutex>
+#include <map>
 
 namespace NES {
 class TopologyNode;

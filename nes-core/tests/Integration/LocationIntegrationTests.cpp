@@ -68,9 +68,10 @@ class LocationIntegrationTests : public Testing::BaseIntegrationTest {
 
         std::string singleLocationPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "singleLocation.csv";
         remove(singleLocationPath.c_str());
-        waypoints.clear();
 
-        writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
+        std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> newWaypoints;
+        newWaypoints.push_back({{52.55227464714949, 13.351743136322877}, 0});
+        writeWaypointsToCsv(singleLocationPath, newWaypoints);
 
 #ifdef S2DEF
         auto interpolatedCsv = std::filesystem::path(TEST_DATA_DIRECTORY) / "path1.csv";

@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -26,17 +27,22 @@ namespace NES::Monitoring {
 
 DiskMetrics::DiskMetrics() : nodeId(0), timestamp(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0), fBavail(0) {}
 
-SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
-    SchemaPtr schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                           ->addField(prefix + "node_id", BasicType::UINT64)
-                           ->addField(prefix + "timestamp", BasicType::UINT64)
-                           ->addField(prefix + "F_BSIZE", BasicType::UINT64)
-                           ->addField(prefix + "F_FRSIZE", BasicType::UINT64)
-                           ->addField(prefix + "F_BLOCKS", BasicType::UINT64)
-                           ->addField(prefix + "F_BFREE", BasicType::UINT64)
-                           ->addField(prefix + "F_BAVAIL", BasicType::UINT64);
-    return schema;
+Configurations::SchemaTypePtr DiskMetrics::getSchemaType(const std::string& prefix) {
+
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    const char* length = "0";
+    const char* dataType = "UINT64";
+    schemaFiledDetails.emplace_back(prefix + "node_id", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "timestamp", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "F_BSIZE", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "F_FRSIZE", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "F_BLOCKS", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "F_BFREE", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "F_BAVAIL", dataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
+
+SchemaPtr DiskMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
 
 void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(DiskMetrics::getSchema(""), buf.getBufferSize());

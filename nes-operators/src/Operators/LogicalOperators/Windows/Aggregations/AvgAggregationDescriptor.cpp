@@ -31,12 +31,12 @@ AvgAggregationDescriptor::AvgAggregationDescriptor(ExpressionNodePtr field, Expr
     this->aggregationType = Type::Avg;
 }
 
-WindowAggregationPtr AvgAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
+WindowAggregationDescriptorPtr AvgAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,
                                                       FieldAccessExpressionNodePtr asField) {
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationPtr AvgAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
+WindowAggregationDescriptorPtr AvgAggregationDescriptor::on(const ExpressionNodePtr& keyExpression) {
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
@@ -44,10 +44,10 @@ WindowAggregationPtr AvgAggregationDescriptor::on(const ExpressionNodePtr& keyEx
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(fieldAccess));
 }
 
-void AvgAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext,
+void AvgAggregationDescriptor::inferStamp(
                                           SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(typeInferencePhaseContext, schema);
+    onField->inferStamp( schema);
     if (!onField->getStamp()->isNumeric()) {
         NES_FATAL_ERROR("AvgAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

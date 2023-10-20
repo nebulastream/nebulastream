@@ -35,18 +35,18 @@ ExpressionNodePtr CaseExpressionNode::create(std::vector<ExpressionNodePtr> cons
     return caseNode;
 }
 
-void CaseExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
+void CaseExpressionNode::inferStamp( SchemaPtr schema) {
 
     auto whenChildren = getWhenChildren();
     auto defaultExp = getDefaultExp();
-    defaultExp->inferStamp(typeInferencePhaseContext, schema);
+    defaultExp->inferStamp( schema);
     if (defaultExp->getStamp()->isUndefined()) {
         throw std::logic_error("CaseExpressionNode: Error during stamp inference. Right type must be defined, but was:"
                                + defaultExp->getStamp()->toString());
     }
 
     for (auto elem : whenChildren) {
-        elem->inferStamp(typeInferencePhaseContext, schema);
+        elem->inferStamp( schema);
         //all elements in whenChildren must be WhenExpressionNodes
         if (!elem->instanceOf<WhenExpressionNode>()) {
             throw std::logic_error("CaseExpressionNode: Error during stamp inference."

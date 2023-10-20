@@ -36,7 +36,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/QueryParsingService.hpp>
+
 #include <Services/QueryService.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/PlacementStrategy.hpp>
@@ -50,7 +50,6 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
-    QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
@@ -65,9 +64,8 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        queryParsingService = QueryParsingService::create(jitCompiler);
+
+
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
@@ -150,7 +148,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     Query query =
         Query::from("iris")
             .inferModel(
-                "../../../test_data/iris.tflite",
+                std::string(TEST_DATA_DIRECTORY) + "/iris.tflite",
                 {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
                 {Attribute("iris0", BasicType::FLOAT32),
                  Attribute("iris1", BasicType::FLOAT32),
