@@ -29,15 +29,14 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Services/QueryCatalogService.hpp>
 
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-
-#include <Services/SourceCatalogService.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-//#include <Catalogs/Source/SourceCatalog.hpp>
-//#include <Sources/
 
 namespace NES {
 
