@@ -25,7 +25,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Core.hpp>
-#include <Util/Logger//Logger.hpp>
 #include <iostream>
 #include <memory>
 #include <stack>

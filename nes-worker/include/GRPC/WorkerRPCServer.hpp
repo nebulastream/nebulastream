@@ -61,8 +61,6 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
-    Status InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) override;
-
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
 
     Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;

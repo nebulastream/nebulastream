@@ -35,6 +35,8 @@ namespace NES {
 
 class WorkerHealthCheckService;
 
+class WorkerHealthCheckService;
+
 namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;

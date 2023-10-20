@@ -46,9 +46,6 @@ class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace Monitoring
 
-class ReplicationService;
-using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
-
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 
@@ -64,14 +61,12 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param sourceCatalogService : the instance of the steam catalog service
      * @param queryCatalogService : the instance of monitoring service
      * @param monitoringService : the instance of monitoring service
-     * @param replicationService : the instance of monitoring service
      */
     explicit CoordinatorRPCServer(QueryServicePtr queryService,
                                   TopologyManagerServicePtr topologyManagerService,
                                   SourceCatalogServicePtr sourceCatalogService,
                                   QueryCatalogServicePtr queryCatalogService,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
-                                  ReplicationServicePtr replicationService,
                                   LocationServicePtr locationService,
                                   QueryParsingServicePtr queryParsingService);
     /**
@@ -177,17 +172,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                               QueryFailureNotificationReply* reply) override;
 
     /**
-      * @brief RPC Call to propagate timestamp
-      * @param context
-      * @param request that is sent from worker to the coordinator, contains timestamp and queryId
-      * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
-      * @return success
-      */
-    Status NotifyEpochTermination(ServerContext* context,
-                                  const EpochBarrierPropagationNotification* request,
-                                  EpochBarrierPropagationReply* reply) override;
-
-    /**
      * @brief RPC Call to get a list of field nodes within a defined radius around a geographical location
      * @param context: the server context
      * @param request: that is sent from worker to the coordinator containing the center of the query area and the radius
@@ -268,7 +252,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     SourceCatalogServicePtr sourceCatalogService;
     QueryCatalogServicePtr queryCatalogService;
     Monitoring::MonitoringManagerPtr monitoringManager;
-    ReplicationServicePtr replicationService;
     LocationServicePtr locationService;
     QueryParsingServicePtr queryParsingService;
 };

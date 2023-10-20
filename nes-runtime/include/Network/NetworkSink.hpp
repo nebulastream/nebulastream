@@ -126,6 +126,12 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     Runtime::NodeEnginePtr getNodeEngine();
 
     /**
+     * @brief method to check if network sink started trimming its buffer storages
+     * @return success if it is trimming
+     */
+    bool hasTrimmed();
+
+    /**
      * @brief schedule a reconfiguration which lets this sink reconnect to the specified source once it has been drained
      * @param newReceiverLocation the location of the node hosting the new source
      * @param newPartition the partition of the new source
@@ -188,6 +194,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::atomic<uint16_t> receivedVersionDrainEvents;
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
     std::function<void(EpochMessage, Runtime::WorkerContext& workerContext)> deleteFromStorageCallback;
+    std::function<bool(EpochMessage, Runtime::WorkerContext& workerContext)> deleteFromStorageCallback;
+    std::atomic<bool> isTrimming;
 };
 }// namespace NES::Network
 #endif// NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_

@@ -160,8 +160,9 @@ class WorkerContext {
       * @brief This method deletes a tuple buffer from the storage
       * @param nesPartition partition
       * @param timestamp timestamp
+      * @return success in the case something was trimmed
       */
-    void trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
+    bool trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
 
     /**
      * @brief get the oldest buffered tuple for the specified partition
