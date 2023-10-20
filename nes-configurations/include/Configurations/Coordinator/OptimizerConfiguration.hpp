@@ -97,10 +97,9 @@ class OptimizerConfiguration : public BaseConfiguration {
      * This optimization, will enable the distribution of window aggregation across multiple nodes.
      * To this end, the optimizer will create pre-aggregation operators that are located close to the data source.
      */
-    BoolOption performDistributedWindowOptimization = {
-        PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION,
-        false,// TODO this has to be set to true, otherwise the Nemo tests fail #4150
-        "Enables the distribution of window aggregations."};
+    BoolOption performDistributedWindowOptimization = {PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION,
+                                                       false,
+                                                       "Enables the distribution of window aggregations."};
 
     /**
      * @brief Indicated the number of child operators from, which a window operator is distributed.

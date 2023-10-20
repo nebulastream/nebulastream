@@ -97,7 +97,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     fillBuffer(buffer);
-    NES_DEBUG("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
+    NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
 
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
