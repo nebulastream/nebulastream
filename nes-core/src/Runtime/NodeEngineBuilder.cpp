@@ -70,11 +70,6 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setStateManager(StateManagerPtr stateManager) {
-    this->stateManager = stateManager;
-    return *this;
-}
-
 NodeEngineBuilder& NodeEngineBuilder::setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler) {
     this->languageCompiler = languageCompiler;
     return *this;
@@ -129,8 +124,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                NES::collectAndPrintStacktrace());
         }
 
-        auto stateManager = (!this->stateManager) ? std::make_shared<StateManager>(nodeEngineId) : this->stateManager;
-
         QueryManagerPtr queryManager{this->queryManager};
         if (!this->queryManager) {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration->numWorkerThreads.getValue());
@@ -144,7 +137,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                          nodeEngineId,
                                                                          numOfThreads,
                                                                          hardwareManager,
-                                                                         stateManager,
                                                                          numberOfBuffersPerEpoch,
                                                                          workerToCoreMappingVec);
                     break;
@@ -156,7 +148,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                  nodeEngineId,
                                                                  numOfThreads,
                                                                  hardwareManager,
-                                                                 stateManager,
                                                                  numberOfBuffersPerEpoch,
                                                                  workerToCoreMappingVec,
                                                                  workerConfiguration->numberOfQueues.getValue(),
@@ -176,11 +167,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         if (!queryManager) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating QueryManager");
             throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating QueryManager",
-                                               NES::collectAndPrintStacktrace());
-        }
-        if (!stateManager) {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating StateManager");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating StateManager",
                                                NES::collectAndPrintStacktrace());
         }
 
@@ -220,7 +206,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             },
             std::move(partitionManager),
             std::move(compiler),
-            std::move(stateManager),
             std::move(nesWorker),
             std::move(openCLManager),
             nodeEngineId,

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -23,6 +25,13 @@
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -31,25 +40,14 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <State/StateManager.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/ThreadBarrier.hpp>
-
-#include <BaseIntegrationTest.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryCompiler/NautilusQueryCompiler.hpp>
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/ThreadBarrier.hpp>
 #include <gtest/gtest.h>
 #include <random>
 #include <utility>

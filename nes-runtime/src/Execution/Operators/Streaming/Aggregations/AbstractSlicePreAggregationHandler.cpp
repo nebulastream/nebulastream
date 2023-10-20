@@ -106,7 +106,7 @@ SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThread
     return threadLocalSliceStores[index].get();
 }
 template<class SliceType, typename SliceStore>
-void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) {
+void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::start(PipelineExecutionContextPtr, uint32_t) {
     NES_DEBUG("start AbstractSlicePreAggregationHandler");
 }
 

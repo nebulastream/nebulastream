@@ -200,12 +200,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     BufferManagerPtr getBufferManager(uint32_t bufferManagerIndex = 0) const;
 
     /**
-    * @brief getter of state manager
-    * @return stateManager
-    */
-    StateManagerPtr getStateManager();
-
-    /**
     * @brief getter of node id
     * @return NodeEngineId
     */
@@ -348,7 +342,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
-                        StateManagerPtr&&,
                         std::weak_ptr<AbstractQueryStatusListener>&&,
                         OpenCLManagerPtr&&,
                         uint64_t nodeEngineId,
@@ -369,7 +362,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Monitoring::MetricStorePtr metricStore;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
-    StateManagerPtr stateManager;
     AbstractQueryStatusListenerPtr nesWorker;
     Network::NetworkManagerPtr networkManager;
     OpenCLManagerPtr openCLManager;

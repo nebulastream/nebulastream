@@ -116,10 +116,9 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
 
     /**
      * @brief Start the query plan, e.g., start window thread, passes stateManager further to the pipeline
-     * @param stateManager pointer to the current state manager
      * @return Success if the query plan started
      */
-    bool start(const StateManagerPtr& stateManager);
+    bool start();
 
     /**
      * @brief Stop the query plan and free all associated resources.

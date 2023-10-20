@@ -31,7 +31,7 @@ template<class Slice>
 class AppendToSliceStoreHandler : public OperatorHandler {
   public:
     AppendToSliceStoreHandler(uint64_t windowSize, uint64_t windowSlide);
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
+    void start(PipelineExecutionContextPtr, uint32_t) override {}
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
     void appendToGlobalSliceStore(std::unique_ptr<Slice> slice);
     void triggerSlidingWindows(Runtime::WorkerContext& wctx,

@@ -45,13 +45,11 @@ AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusLi
                                            uint64_t nodeEngineId,
                                            uint16_t numThreads,
                                            HardwareManagerPtr hardwareManager,
-                                           const StateManagerPtr& stateManager,
                                            uint64_t numberOfBuffersPerEpoch,
                                            std::vector<uint64_t> workerToCoreMapping)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
       hardwareManager(std::move(hardwareManager)), workerToCoreMapping(std::move(workerToCoreMapping)),
-      queryStatusListener(std::move(queryStatusListener)), stateManager(std::move(stateManager)),
-      numberOfBuffersPerEpoch(numberOfBuffersPerEpoch) {
+      queryStatusListener(std::move(queryStatusListener)), numberOfBuffersPerEpoch(numberOfBuffersPerEpoch) {
 
     tempCounterTasksCompleted.resize(numThreads);
 
@@ -63,7 +61,6 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                                          uint64_t nodeEngineId,
                                          uint16_t numThreads,
                                          HardwareManagerPtr hardwareManager,
-                                         const StateManagerPtr& stateManager,
                                          uint64_t numberOfBuffersPerEpoch,
                                          std::vector<uint64_t> workerToCoreMapping)
     : AbstractQueryManager(std::move(queryStatusListener),
@@ -71,7 +68,6 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                            nodeEngineId,
                            numThreads,
                            std::move(hardwareManager),
-                           stateManager,
                            numberOfBuffersPerEpoch,
                            std::move(workerToCoreMapping)),
       taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY)) {
@@ -83,7 +79,6 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                                                uint64_t nodeEngineId,
                                                uint16_t numThreads,
                                                HardwareManagerPtr hardwareManager,
-                                               const StateManagerPtr& stateManager,
                                                uint64_t numberOfBuffersPerEpoch,
                                                std::vector<uint64_t> workerToCoreMapping,
                                                uint64_t numberOfQueues,
@@ -93,7 +88,6 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                            nodeEngineId,
                            numThreads,
                            std::move(hardwareManager),
-                           stateManager,
                            numberOfBuffersPerEpoch,
                            std::move(workerToCoreMapping)),
       numberOfQueues(numberOfQueues), numberOfThreadsPerQueue(numberOfThreadsPerQueue) {

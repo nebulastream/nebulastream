@@ -71,7 +71,7 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState() {
 
 Nautilus::Interface::ChainedHashMap* BatchJoinHandler::getGlobalHashMap() { return globalMap.get(); }
 
-void BatchJoinHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
+void BatchJoinHandler::start(Runtime::Execution::PipelineExecutionContextPtr,  uint32_t) {
     NES_DEBUG("start BatchJoinHandler");
 }
 

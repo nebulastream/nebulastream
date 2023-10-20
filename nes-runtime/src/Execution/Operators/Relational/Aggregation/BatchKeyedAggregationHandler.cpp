@@ -41,7 +41,7 @@ void BatchKeyedAggregationHandler::setup(Runtime::Execution::PipelineExecutionCo
     }
 }
 
-void BatchKeyedAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
+void BatchKeyedAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr,  uint32_t) {
     NES_DEBUG("start GlobalSlicePreAggregationHandler");
 }
 

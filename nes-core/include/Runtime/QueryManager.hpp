@@ -27,7 +27,6 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Task.hpp>
 #include <Sources/DataSource.hpp>
-#include <State/StateManager.hpp>
 #include <Util/AtomicCounter.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -81,7 +80,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                   uint64_t nodeEngineId,
                                   uint16_t numThreads,
                                   HardwareManagerPtr hardwareManager,
-                                  const StateManagerPtr& stateManager,
                                   uint64_t numberOfBuffersPerEpoch,
                                   std::vector<uint64_t> workerToCoreMapping = {});
 
@@ -446,8 +444,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
-    StateManagerPtr stateManager;
-
     uint64_t numberOfBuffersPerEpoch;
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
@@ -461,7 +457,6 @@ class DynamicQueryManager : public AbstractQueryManager {
                                  uint64_t nodeEngineId,
                                  uint16_t numThreads,
                                  HardwareManagerPtr hardwareManager,
-                                 const StateManagerPtr& stateManager,
                                  uint64_t numberOfBuffersPerEpoch,
                                  std::vector<uint64_t> workerToCoreMapping = {});
 
@@ -569,7 +564,6 @@ class MultiQueueQueryManager : public AbstractQueryManager {
                                     uint64_t nodeEngineId,
                                     uint16_t numThreads,
                                     HardwareManagerPtr hardwareManager,
-                                    const StateManagerPtr& stateManager,
                                     uint64_t numberOfBuffersPerEpoch,
                                     std::vector<uint64_t> workerToCoreMapping = {},
                                     uint64_t numberOfQueues = 1,

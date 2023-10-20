@@ -151,7 +151,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      */
     jni::jmethodID getUDFMethodId() const;
 
-    void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override;
+    void start(PipelineExecutionContextPtr, uint32_t) override;
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override;
 
     ~JavaUDFOperatorHandler();

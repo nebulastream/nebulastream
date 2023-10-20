@@ -105,7 +105,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      * @param stateManager pointer to the current state manager
      * @return Success if pipeline stage started 
      */
-    bool start(const StateManagerPtr& stateManager);
+    bool start();
 
     /**
      * @brief Stops pipeline stage

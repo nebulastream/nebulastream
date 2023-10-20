@@ -135,10 +135,6 @@ add_nes_unit_test(row-memory-layout-tests "Runtime/MemoryLayouts/RowMemoryLayout
 ### Row Layout Tests ###
 add_nes_unit_test(columnar-memory-layout-tests "Runtime/MemoryLayouts/ColumnarMemoryLayoutTest.cpp")
 
-
-### Join Handler Tests ###
-add_nes_unit_test(join-handler-tests "JoinHandlerTest.cpp")
-
 ### Dynamic Memory Layout Tests ###
 add_nes_unit_test(dynamic-memory-layout-tests "Runtime/MemoryLayouts/DynamicMemoryLayoutTest.cpp")
 
@@ -245,9 +241,6 @@ add_nes_unit_test(buffer-manager-tests "Runtime/BufferManagerTest.cpp")
 
 ### Buffer Storage Test ###
 add_nes_unit_test(buffer-storage-tests "Runtime/BufferStorageTest.cpp")
-
-### State Manager Test ###
-add_nes_unit_test(state-manager-tests "State/StateTest.cpp")
 
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)
