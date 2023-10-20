@@ -111,7 +111,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
 
     void deployQuery() {
         //register source
-        sourceCatalog->addLogicalSource("test", "Schema::create()->addField(createField(\"value\", BasicType::UINT64));");
+        sourceCatalog->addLogicalSource("test", Schema::create()->addField(createField("value", BasicType::UINT64)));
         sourceCatalogService->registerPhysicalSource(worker2, "physical_test", "test");
 
         std::string outputFilePath = getTestResourceFolder() / "failQueryRequestTest.out";

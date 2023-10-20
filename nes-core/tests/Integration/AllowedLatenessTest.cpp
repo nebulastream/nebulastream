@@ -18,10 +18,10 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
@@ -46,14 +46,14 @@ class AllowedLatenessTest : public Testing::BaseIntegrationTest {
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         // window-out-of-order.csv contains 12 rows
-        outOfOrderConf = CSVSourceType::create();
+        outOfOrderConf = CSVSourceType::create("OutOfOrderStream", "OutOfOrderStream1");
         outOfOrderConf->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-out-of-order.csv");
         outOfOrderConf->setGatheringInterval(1);
         outOfOrderConf->setNumberOfTuplesToProducePerBuffer(2);
         outOfOrderConf->setNumberOfBuffersToProduce(6);
         outOfOrderConf->setSkipHeader(false);
 
-        inOrderConf = CSVSourceType::create();
+        inOrderConf = CSVSourceType::create("inOrderStream", "inOrderStream1");
         // window-out-of-order.csv contains 12 rows
         inOrderConf->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-in-order.csv");
         inOrderConf->setGatheringInterval(1);
@@ -103,7 +103,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_0ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -130,7 +130,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_10ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -157,7 +157,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_250ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -184,7 +184,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_0ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -210,7 +210,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_10ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -237,7 +237,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_250ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -264,9 +264,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_0ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -291,9 +291,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_10ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -320,9 +320,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_250ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("inOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(inOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -354,9 +354,9 @@ TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_FT_OO_0ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
                                   .validate()
                                   .setupTopology(crdFunctor);
 
@@ -387,9 +387,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_10ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
                                   .validate()
                                   .setupTopology(crdFunctor);
 
@@ -416,9 +416,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_250ms) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
-                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator(outOfOrderConf)
                                   .validate()
                                   .setupTopology();
 
@@ -456,10 +456,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_0ms) {
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 3)
                                   .validate()
                                   .setupTopology();
 
@@ -493,10 +493,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_10ms) {
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 3)
                                   .validate()
                                   .setupTopology();
 
@@ -535,10 +535,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_250ms) {
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 3)
                                   .validate()
                                   .setupTopology(crdFunctor);
 
@@ -577,10 +577,10 @@ TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_HT_OO_0ms) {
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 3)
                                   .validate()
                                   .setupTopology(crdFunctor);
 
@@ -618,10 +618,10 @@ TEST_F(AllowedLatenessTest, DISABLED_testAllowedLateness_MPS_HT_OO_10ms) {
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 3)
                                   .validate()
                                   .setupTopology(crdFunctor);
 
@@ -655,10 +655,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_250ms) {
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
-                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(outOfOrderConf, 3)
                                   .validate()
                                   .setupTopology();
 
