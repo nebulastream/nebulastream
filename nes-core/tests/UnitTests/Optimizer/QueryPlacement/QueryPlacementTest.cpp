@@ -27,12 +27,14 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
@@ -1738,6 +1740,159 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrains) {
                               ->getChildren()[0]
                               ->as<SourceLogicalOperatorNode>()
                               ->getId());
+            }
+            NES_INFO("Sub Plan: {}", querySubPlan->toString());
+        }
+    }
+}
+
+/**
+ * Test if BottomUp placement respects resources constrains with BinaryOperators
+ * Topology: sinkNode(1)--mid1(5)--srcNode1(A)(1)
+ *                             \ --srcNode2(B)(1)
+ *
+ * Query: SinkOp--join()--source(A)
+ *                     \--source(B)
+ *
+ *
+ */
+TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrainsInAJoin) {
+    // Setup the topology
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 1, properties);
+    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 5, properties);
+    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 1, properties);
+    auto srcNode2 = TopologyNode::create(3, "localhost", 4003, 5004, 1, properties);
+
+    TopologyPtr topology = Topology::create();
+    topology->setAsRoot(sinkNode);
+
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
+    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
+    topology->addNewTopologyNodeAsChild(midNode1, srcNode2);
+
+    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
+    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
+    ASSERT_TRUE(midNode1->containAsChild(srcNode2));
+
+    NES_INFO("Topology:\n{}", topology->toString());
+
+    NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
+
+    // Prepare the source and schema
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64)"
+                         "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
+
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    {
+        const std::string sourceName = "car1";
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+    }
+    {
+        const std::string sourceName = "car2";
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+    }
+
+    Query query = Query::from("car1")
+                      .joinWith(Query::from("car2"))
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                      .sink(NullOutputSinkDescriptor::create());
+
+    auto testQueryPlan = query.getQueryPlan();
+    testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+
+    // Prepare the placement
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+    // Execute optimization phases prior to placement
+    testQueryPlan = typeInferencePhase->execute(testQueryPlan);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    assignDataModificationFactor(testQueryPlan);
+
+    // Execute the placement
+    auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
+    auto sharedQueryId = sharedQueryPlan->getId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    queryPlacementPhase->execute(sharedQueryPlan);
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+
+    auto sink = testQueryPlan->getSinkOperators()[0]->as<SinkLogicalOperatorNode>();
+    auto join = sink->getChildren()[0]->as<JoinLogicalOperatorNode>();
+    auto watermark1 = join->getChildren()[0]->as<WatermarkAssignerLogicalOperatorNode>();
+    auto source1 = watermark1->getChildren()[0]->as<SourceLogicalOperatorNode>();
+    auto watermark2 = join->getChildren()[1]->as<WatermarkAssignerLogicalOperatorNode>();
+    auto source2 = watermark2->getChildren()[0]->as<SourceLogicalOperatorNode>();
+
+    EXPECT_EQ(executionNodes.size(), 4UL);
+    NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
+    for (const auto& executionNode : executionNodes) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
+            auto ops = querySubPlan->getRootOperators();
+            ASSERT_EQ(ops.size(), 1);
+            if (executionNode->getId() == 0) {
+                ASSERT_EQ(ops[0]->getId(), sink->getId());
+                ASSERT_EQ(ops[0]->getChildren().size(), 1);
+                EXPECT_TRUE(ops[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+            } else if (executionNode->getId() == 1) {
+                auto placedSink = ops[0];
+                ASSERT_TRUE(sink->instanceOf<SinkLogicalOperatorNode>());
+                auto placedJoin = placedSink->getChildren()[0];
+                ASSERT_TRUE(placedJoin->instanceOf<JoinLogicalOperatorNode>());
+                ASSERT_EQ(placedJoin->as<JoinLogicalOperatorNode>()->getId(), join->getId());
+                ASSERT_EQ(placedJoin->getChildren().size(), 2);
+                auto placedWatermark1 = placedJoin->getChildren()[0];
+                ASSERT_TRUE(placedWatermark1->instanceOf<WatermarkAssignerLogicalOperatorNode>());
+                ASSERT_EQ(placedWatermark1->as<WatermarkAssignerLogicalOperatorNode>()->getId(), watermark1->getId());
+
+                auto placedWatermark2 = placedJoin->getChildren()[1];
+                ASSERT_TRUE(placedWatermark2->instanceOf<WatermarkAssignerLogicalOperatorNode>());
+                ASSERT_EQ(placedWatermark2->as<WatermarkAssignerLogicalOperatorNode>()->getId(), watermark2->getId());
+            } else if (executionNode->getId() == 2) {
+                auto placedSink = ops[0];
+                ASSERT_TRUE(placedSink->instanceOf<SinkLogicalOperatorNode>());
+                auto placedSource = placedSink->getChildren()[0];
+                ASSERT_TRUE(placedSource->instanceOf<SourceLogicalOperatorNode>());
+                ASSERT_EQ(placedSource->as<SourceLogicalOperatorNode>()->getId(), source1->getId());
+            } else if (executionNode->getId() == 3) {
+                auto placedSink = ops[0];
+                ASSERT_TRUE(placedSink->instanceOf<SinkLogicalOperatorNode>());
+                auto placedSource = placedSink->getChildren()[0];
+                ASSERT_TRUE(placedSource->instanceOf<SourceLogicalOperatorNode>());
+                ASSERT_EQ(placedSource->as<SourceLogicalOperatorNode>()->getId(), source2->getId());
             }
             NES_INFO("Sub Plan: {}", querySubPlan->toString());
         }
