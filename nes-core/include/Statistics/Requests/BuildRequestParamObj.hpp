@@ -29,10 +29,9 @@ namespace Experimental::Statistics {
 class BuildRequestParamObj : public RequestParamObj {
   public:
     BuildRequestParamObj(const std::string& logicalSourceName,
-                         const std::vector<std::string>& physicalSourceNames,
                          const std::string& fieldName,
-                         const std::string& expression)
-        : RequestParamObj(logicalSourceName, physicalSourceNames, fieldName, expression) {}
+                         const std::string& buildExpression)
+        : RequestParamObj(logicalSourceName, fieldName, buildExpression) {}
 		};
 	}
 }

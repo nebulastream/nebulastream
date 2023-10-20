@@ -30,14 +30,30 @@ namespace Experimental::Statistics {
 class ProbeRequestParamObj : public RequestParamObj {
   public:
     ProbeRequestParamObj(const std::string &logicalSourceName,
-                         const std::vector<std::string> &physicalSourceNames,
                          const std::string &fieldName,
-                         const std::string &expression,
+                         const std::string &buildExpression,
+                         const std::string &probeExpression,
+                         const std::vector<std::string> &physicalSourceNames,
                          const time_t startTime,
                          const time_t endTime,
                          const bool merge = false)
-        : RequestParamObj(logicalSourceName, physicalSourceNames, fieldName, expression),
+        : RequestParamObj(logicalSourceName, fieldName, buildExpression),
+          probeExpression(probeExpression), physicalSourceNames(physicalSourceNames),
           startTime(startTime), endTime(endTime), merge(merge) {}
+
+    /**
+     * @return returns the expression that is used to define what stat(s) are to be queried
+     */
+    std::string getProbeExpression() const {
+        return probeExpression;
+    }
+
+    /**
+     * @return returns the physicalSourceNames over which the statCollectors were generated that we wish to probe/query
+     */
+    std::vector<std::string> getPhysicalSourceNames() {
+        return physicalSourceNames;
+    }
 
     /**
      * @return returns the first possibleTime for which we want to query/probe one or more statistics
@@ -62,6 +78,8 @@ class ProbeRequestParamObj : public RequestParamObj {
     }
 
   private:
+    std::string probeExpression;
+    std::vector<std::string> physicalSourceNames;
     time_t startTime;
     time_t endTime;
     bool merge;

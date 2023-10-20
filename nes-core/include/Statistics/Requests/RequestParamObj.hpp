@@ -28,23 +28,15 @@ namespace Experimental::Statistics {
 class RequestParamObj {
   public:
     RequestParamObj(const std::string& logicalSourceName,
-                    const std::vector<std::string>& physicalSourceNames,
                     const std::string& fieldName,
-                    const std::string& expression)
-        : logicalSourceName(logicalSourceName), physicalSourceNames(physicalSourceNames), fieldName(fieldName), expression(expression) {}
+                    const std::string& buildExpression)
+        : logicalSourceName(logicalSourceName), fieldName(fieldName), buildExpression(buildExpression) {}
 
     /**
      * @return returns the logicalStreamName of the request
      */
     std::string getLogicalSourceName() const {
         return logicalSourceName;
-    }
-
-    /**
-     * @return returns the physicalSourceName(s) of the request
-     */
-    const std::vector<std::string>& getPhysicalSourceNames() const {
-        return physicalSourceNames;
     }
 
     /**
@@ -58,14 +50,14 @@ class RequestParamObj {
      * @return returns the expression, defining which stats to create, probe/query, or delete
      */
     std::string getExpression() const {
-        return expression;
+        return buildExpression;
     }
 
   private:
     std::string logicalSourceName;
     std::vector<std::string> physicalSourceNames;
     std::string fieldName;
-    std::string expression;
+    std::string buildExpression;
 };
 }
 
