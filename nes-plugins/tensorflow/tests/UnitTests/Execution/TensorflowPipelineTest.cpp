@@ -18,8 +18,8 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Tensorflow/TensorflowInferenceOperatorHandler.hpp>
 #include <Execution/Operators/Tensorflow/TensorflowInferenceOperator.hpp>
+#include <Execution/Operators/Tensorflow/TensorflowInferenceOperatorHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -132,7 +132,8 @@ TEST_P(TensorflowPipelineTest, thresholdWindowWithSum) {
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto handler = std::make_shared<Operators::TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
+    auto handler = std::make_shared<Operators::TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY)
+                                                                                   / "iris_95acc.tflite");
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

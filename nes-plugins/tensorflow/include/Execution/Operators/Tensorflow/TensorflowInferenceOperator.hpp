@@ -32,8 +32,8 @@ class TensorflowInferenceOperator : public ExecutableOperator {
      * @param outputFieldNames names of output fields from the model inference
      */
     TensorflowInferenceOperator(const uint32_t inferModelHandlerIndex,
-                       const std::vector<std::string>& inputFieldNames,
-                       const std::vector<std::string>& outputFieldNames)
+                                const std::vector<std::string>& inputFieldNames,
+                                const std::vector<std::string>& outputFieldNames)
         : inferModelHandlerIndex(inferModelHandlerIndex), inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;

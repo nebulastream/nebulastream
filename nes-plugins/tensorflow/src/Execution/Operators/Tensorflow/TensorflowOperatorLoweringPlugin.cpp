@@ -26,9 +26,7 @@ namespace NES::Runtime::Execution::Operators {
 
 class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperatorLoweringPlugin {
   public:
-    TensorflowOperatorLoweringPlugin(){
-        NES_INFO("Load TensorflowOperatorLoweringPlugin");
-    }
+    TensorflowOperatorLoweringPlugin() { NES_INFO("Load TensorflowOperatorLoweringPlugin"); }
     std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
     lower(const QueryCompilation::PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) override {
