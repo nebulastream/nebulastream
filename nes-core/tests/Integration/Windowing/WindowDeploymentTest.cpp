@@ -14,17 +14,18 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
+
 using namespace std;
 
 namespace NES {
@@ -83,7 +84,7 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("window", "window1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
@@ -92,7 +93,7 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                                   .validate()
                                   .setupTopology();
 
@@ -126,7 +127,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("window", "window1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -135,7 +136,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                                   .validate()
                                   .setupTopology();
 
@@ -173,17 +174,23 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEv
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-    sourceConfig->setGatheringInterval(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
+    CSVSourceTypePtr sourceConfig1 = CSVSourceType::create("window", "window1");
+    sourceConfig1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    sourceConfig1->setGatheringInterval(0);
+    sourceConfig1->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig1->setNumberOfBuffersToProduce(3);
+
+    CSVSourceTypePtr sourceConfig2 = CSVSourceType::create("window", "window2");
+    sourceConfig2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig2->setGatheringInterval(0);
+    sourceConfig2->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig2->setNumberOfBuffersToProduce(3);
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-                                  .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig1)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig2)
                                   .validate()
                                   .setupTopology();
 
@@ -212,7 +219,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
@@ -221,7 +228,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                                   .validate()
                                   .setupTopology();
 
@@ -249,7 +256,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -258,7 +265,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                                   .validate()
                                   .setupTopology();
 
@@ -283,23 +290,20 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("windowSource", "test_stream");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(6);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    auto windowSource = PhysicalSource::create("windowSource", "test_stream", sourceConfig);
-    workerConfig->physicalSourceTypes.add(windowSource);
+    workerConfig->physicalSourceTypes.add(sourceConfig);
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     //register logical source qnv
     auto window = Schema::create()
@@ -773,7 +777,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
                                        .byKey(Attribute("id"))
                                        .apply(Max(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create("car", "car1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
@@ -783,7 +787,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("car", sourceConfig)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
                                   .validate()
                                   .setupTopology();
 
