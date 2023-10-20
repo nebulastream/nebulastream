@@ -678,7 +678,14 @@ BasePlacementStrategy::getTopologyNodesForChildrenOperators(const LogicalOperato
         }
         TopologyNodePtr childTopologyNode =
             topologyMap[std::any_cast<uint64_t>(child->as_if<LogicalOperatorNode>()->getProperty(PINNED_NODE_ID))];
-        childTopologyNodes.push_back(childTopologyNode);
+
+        auto existingNode =
+            std::find_if(childTopologyNodes.begin(), childTopologyNodes.end(), [&childTopologyNode](const auto& node) {
+                return node->getId() == childTopologyNode->getId();
+            });
+        if (existingNode == childTopologyNodes.end()) {
+            childTopologyNodes.emplace_back(childTopologyNode);
+        }
     }
     NES_DEBUG("BasePlacementStrategy: returning list of topology nodes where children operators are placed");
     return childTopologyNodes;
