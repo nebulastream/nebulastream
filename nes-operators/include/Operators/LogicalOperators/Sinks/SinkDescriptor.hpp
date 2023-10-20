@@ -79,6 +79,10 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
      */
     bool getAddTimestamp() const;
 
+    void setNumberOfInputSources(uint16_t numberOfSources);
+
+    uint16_t getNumberOfInputSources() const;
+
     /**
     * @brief Dynamically casts the node to a NodeType
     * @tparam NodeType
@@ -103,6 +107,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
     bool addTimestamp;
+    uint16_t numberOfInputSources;
 };
 
 }// namespace NES

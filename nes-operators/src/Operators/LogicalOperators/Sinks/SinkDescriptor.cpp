@@ -21,7 +21,7 @@ SinkDescriptor::SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t n
     : SinkDescriptor(faultToleranceType, numberOfOrigins, false) {}
 
 SinkDescriptor::SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins, bool addTimestamp)
-    : faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins), addTimestamp(addTimestamp) {}
+    : faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins), addTimestamp(addTimestamp), numberOfInputSources(0) {}
 
 FaultToleranceType SinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
@@ -30,5 +30,11 @@ void SinkDescriptor::setFaultToleranceType(FaultToleranceType faultTolerance) { 
 uint64_t SinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 
 bool SinkDescriptor::getAddTimestamp() const { return addTimestamp; }
+
+uint16_t SinkDescriptor::getNumberOfInputSources() const { return numberOfInputSources; }
+
+void SinkDescriptor::setNumberOfInputSources(uint16_t numberOfSources) {
+    this->numberOfInputSources = numberOfSources;
+}
 
 }// namespace NES

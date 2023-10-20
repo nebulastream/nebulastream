@@ -22,24 +22,22 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
                                              FaultToleranceType faultToleranceType,
-                                             uint64_t numberOfOrigins, uint16_t numberOfInputSources)
+                                             uint64_t numberOfOrigins)
     : SinkDescriptor(faultToleranceType, numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes), numberOfInputSources(numberOfInputSources) {}
+      waitTime(waitTime), retryTimes(retryTimes) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
                                                 FaultToleranceType faultToleranceType,
-                                                uint64_t numberOfOrigins,
-                                                uint16_t numberOfInputSources) {
+                                                uint64_t numberOfOrigins) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
                                                                          nesPartition,
                                                                          waitTime,
                                                                          retryTimes,
                                                                          faultToleranceType,
-                                                                         numberOfOrigins,
-                                                                         numberOfInputSources));
+                                                                         numberOfOrigins));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -63,12 +61,10 @@ std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return wa
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
-
 FaultToleranceType NetworkSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 void NetworkSinkDescriptor::setFaultToleranceType(FaultToleranceType faultToleranceType) {
     NetworkSinkDescriptor::faultToleranceType = faultToleranceType;
 }
-uint16_t NetworkSinkDescriptor::getNumberOfInputSources() { return numberOfInputSources; }
 
 }// namespace NES::Network
