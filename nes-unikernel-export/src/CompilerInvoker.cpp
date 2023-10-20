@@ -21,6 +21,7 @@ Result CompilerInvoker::compileToObject(const std::string& sourceCode, const std
     std::vector<std::string> args{"-x",
                                   "c++",
                                   "-",
+                                  "-DUNIKERNEL_LIB",
                                   "-DNES_COMPILE_TIME_LOG_LEVEL=1",
                                   "-c",
                                   "-std=c++20",
