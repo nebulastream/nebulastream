@@ -29,8 +29,8 @@ class RequestParamObj {
   public:
     RequestParamObj(const std::string& logicalSourceName,
                     const std::string& fieldName,
-                    const std::string& buildExpression)
-        : logicalSourceName(logicalSourceName), fieldName(fieldName), buildExpression(buildExpression) {}
+                    const std::string& createExpression)
+        : logicalSourceName(logicalSourceName), fieldName(fieldName), createExpression(createExpression) {}
 
     /**
      * @return returns the logicalStreamName of the request
@@ -49,15 +49,15 @@ class RequestParamObj {
     /**
      * @return returns the expression, defining which stats to create, probe/query, or delete
      */
-    std::string getExpression() const {
-        return buildExpression;
+    std::string getCreateExpression() const {
+        return createExpression;
     }
 
   private:
     std::string logicalSourceName;
     std::vector<std::string> physicalSourceNames;
     std::string fieldName;
-    std::string buildExpression;
+    std::string createExpression;
 };
 }
 
