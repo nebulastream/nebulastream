@@ -52,39 +52,39 @@ class FilterMergeRuleTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
-};
 
-void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup FilterMergeRule test case.");
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+        NES_INFO("Setup FilterMergeRule test case.");
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-    auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
-    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
-    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    sourceCatalog->addPhysicalSource("default_logical", sce1);
-}
-
-bool isFilterAndHasCorrectPredicate(NodePtr filter, ExpressionNodePtr expectedPredicate) {
-    if (!filter->instanceOf<FilterLogicalOperatorNode>()) {
-        return false;
+        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
+        PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
+        LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+        Catalogs::Source::SourceCatalogEntryPtr sce1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+        sourceCatalog->addPhysicalSource("default_logical", sce1);
     }
 
-    auto filterPredicates = filter->as<FilterLogicalOperatorNode>()->getPredicate()->getAndFlattenAllChildren(true);
-    auto expectedPredicates = expectedPredicate->getAndFlattenAllChildren(true);
-
-    for (unsigned int i = 0; i < filterPredicates.size(); i++) {
-        if (!filterPredicates.at(i)->equal(expectedPredicates.at(i))) {
+    bool isFilterAndHasCorrectPredicate(NodePtr filter, ExpressionNodePtr expectedPredicate) {
+        if (!filter->instanceOf<FilterLogicalOperatorNode>()) {
             return false;
         }
+
+        auto filterPredicates = filter->as<FilterLogicalOperatorNode>()->getPredicate()->getAndFlattenAllChildren(true);
+        auto expectedPredicates = expectedPredicate->getAndFlattenAllChildren(true);
+
+        for (unsigned int i = 0; i < filterPredicates.size(); i++) {
+            if (!filterPredicates.at(i)->equal(expectedPredicates.at(i))) {
+                return false;
+            }
+        }
+        auto filterPredicate = filter->as<FilterLogicalOperatorNode>()->getPredicate();
+        return true;
     }
-    auto filterPredicate = filter->as<FilterLogicalOperatorNode>()->getPredicate();
-    return true;
-}
+};
 
 TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =

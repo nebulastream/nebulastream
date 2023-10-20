@@ -42,7 +42,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <iostream>
+
 using namespace NES;
 using namespace Configurations;
 
@@ -70,79 +70,79 @@ class DistributeWindowRuleTest : public Testing::BaseUnitTest {
         distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
+
+    void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+        NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+        TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
+
+        auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
+        PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
+        LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+        Catalogs::Source::SourceCatalogEntryPtr sce1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+        Catalogs::Source::SourceCatalogEntryPtr sce2 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
+
+        sourceCatalog->addPhysicalSource("default_logical", sce1);
+        sourceCatalog->addPhysicalSource("default_logical", sce2);
+    }
+
+    void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+        NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+        TopologyPtr topology = Topology::create();
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+        TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode3 = TopologyNode::create(3, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode4 = TopologyNode::create(4, "localhost", 4000, 4002, 4, properties);
+        TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4, properties);
+
+        NES_DEBUG("topo={}", topology->toString());
+
+        auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
+        PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
+        LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+        Catalogs::Source::SourceCatalogEntryPtr sce1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+        Catalogs::Source::SourceCatalogEntryPtr sce2 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
+        Catalogs::Source::SourceCatalogEntryPtr sce3 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode3);
+        Catalogs::Source::SourceCatalogEntryPtr sce4 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode4);
+        Catalogs::Source::SourceCatalogEntryPtr sce5 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode5);
+
+        sourceCatalog->addPhysicalSource("default_logical", sce1);
+        sourceCatalog->addPhysicalSource("default_logical", sce2);
+        sourceCatalog->addPhysicalSource("default_logical", sce3);
+        sourceCatalog->addPhysicalSource("default_logical", sce4);
+        sourceCatalog->addPhysicalSource("default_logical", sce5);
+    }
+
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+        NES_INFO("Setup DistributeWindowRuleTest test case.");
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+
+        auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
+        PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
+        LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+        Catalogs::Source::SourceCatalogEntryPtr sce1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+
+        sourceCatalog->addPhysicalSource("default_logical", sce1);
+    }
 };
-
-void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-    TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
-
-    auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
-    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
-    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
-    Catalogs::Source::SourceCatalogEntryPtr sce2 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
-
-    sourceCatalog->addPhysicalSource("default_logical", sce1);
-    sourceCatalog->addPhysicalSource("default_logical", sce2);
-}
-
-void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
-    TopologyPtr topology = Topology::create();
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-
-    TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-    TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
-    TopologyNodePtr physicalNode3 = TopologyNode::create(3, "localhost", 4000, 4002, 4, properties);
-    TopologyNodePtr physicalNode4 = TopologyNode::create(4, "localhost", 4000, 4002, 4, properties);
-    TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4, properties);
-
-    NES_DEBUG("topo={}", topology->toString());
-
-    auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
-    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
-    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
-    Catalogs::Source::SourceCatalogEntryPtr sce2 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
-    Catalogs::Source::SourceCatalogEntryPtr sce3 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode3);
-    Catalogs::Source::SourceCatalogEntryPtr sce4 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode4);
-    Catalogs::Source::SourceCatalogEntryPtr sce5 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode5);
-
-    sourceCatalog->addPhysicalSource("default_logical", sce1);
-    sourceCatalog->addPhysicalSource("default_logical", sce2);
-    sourceCatalog->addPhysicalSource("default_logical", sce3);
-    sourceCatalog->addPhysicalSource("default_logical", sce4);
-    sourceCatalog->addPhysicalSource("default_logical", sce5);
-}
-
-void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup DistributeWindowRuleTest test case.");
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-
-    auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
-    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
-    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-
-    sourceCatalog->addPhysicalSource("default_logical", sce1);
-}
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =

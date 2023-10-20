@@ -29,7 +29,7 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
-                                     public ::testing::WithParamInterface<QueryCompilation::QueryCompiler> {
+                                     public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProjectionQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -137,7 +137,7 @@ TEST_P(ProjectionQueryExecutionTest, projectNonExistingFields) {
 
 INSTANTIATE_TEST_CASE_P(testProjectionQueries,
                         ProjectionQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompiler::DEFAULT_QUERY_COMPILER,
+                        ::testing::Values(QueryCompilation::QueryCompilerType::DEFAULT_QUERY_COMPILER,
                                           QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<ProjectionQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));

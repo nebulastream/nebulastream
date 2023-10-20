@@ -25,7 +25,7 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
-#include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -42,7 +42,7 @@
 #include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <WorkQueues/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <fstream>
 #include <iostream>
 #include <thread>

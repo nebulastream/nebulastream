@@ -14,20 +14,20 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalogService.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
-#include <Catalogs/Source/SourceCatalogService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Catalogs/Topology/Index/LocationIndex.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -74,7 +74,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     std::string logicalSourceName = "testStream";
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
+    auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
     bool successRegisterLogicalSource = sourceCatalogService->registerLogicalSource(logicalSourceName, testSchema);
     EXPECT_TRUE(successRegisterLogicalSource);
 
@@ -101,11 +101,11 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
 
     std::string physicalSourceName = "testStream";
 
-    auto csvSourceType = CSVSourceType::create();
+    auto csvSourceType = CSVSourceType::create("testStream", "physical_test");
     csvSourceType->setFilePath("testCSV.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType->setNumberOfBuffersToProduce(3);
-    auto physicalSource = PhysicalSource::create("testStream", "physical_test", csvSourceType);
+    auto physicalSource = PhysicalSource::create(csvSourceType);
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -115,7 +115,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     EXPECT_NE(nodeId, 0u);
 
     //setup test
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
+    auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
     bool successRegisterLogicalSource =
         sourceCatalogService->registerLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
     EXPECT_TRUE(successRegisterLogicalSource);

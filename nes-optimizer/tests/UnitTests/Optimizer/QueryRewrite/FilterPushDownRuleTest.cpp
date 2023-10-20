@@ -60,43 +60,43 @@ class FilterPushDownRuleTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
-};
 
-void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup FilterPushDownTest test case.");
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+        NES_INFO("Setup FilterPushDownTest test case.");
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-    auto csvSourceType = CSVSourceType::create("example", "test_stream");
-    PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
-    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-    Catalogs::Source::SourceCatalogEntryPtr sce1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    sourceCatalog->addPhysicalSource("default_logical", sce1);
-}
-
-bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> accessedFields) {
-    if (!filter->instanceOf<FilterLogicalOperatorNode>()) {
-        return false;
+        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+        auto csvSourceType = CSVSourceType::create("example", "test_stream");
+        PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
+        LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+        Catalogs::Source::SourceCatalogEntryPtr sce1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+        sourceCatalog->addPhysicalSource("default_logical", sce1);
     }
 
-    auto count = accessedFields.size();
-
-    DepthFirstNodeIterator depthFirstNodeIterator(filter->as<FilterLogicalOperatorNode>()->getPredicate());
-    for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
-        if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
-            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-            if (std::find(accessedFields.begin(), accessedFields.end(), accessExpressionNode->getFieldName())
-                == accessedFields.end()) {
-                return false;
-            }
-            count--;
+    bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> accessedFields) {
+        if (!filter->instanceOf<FilterLogicalOperatorNode>()) {
+            return false;
         }
+
+        auto count = accessedFields.size();
+
+        DepthFirstNodeIterator depthFirstNodeIterator(filter->as<FilterLogicalOperatorNode>()->getPredicate());
+        for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
+            if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
+                const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+                if (std::find(accessedFields.begin(), accessedFields.end(), accessExpressionNode->getFieldName())
+                    == accessedFields.end()) {
+                    return false;
+                }
+                count--;
+            }
+        }
+        return count == 0;
     }
-    return count == 0;
-}
+};
 
 TEST_F(FilterPushDownRuleTest, testPushingFilterBelowProjectionWithoutRename) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =

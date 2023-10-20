@@ -17,8 +17,12 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/ExecutableType/Array.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -26,11 +30,13 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
+#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
@@ -38,23 +44,14 @@
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
+#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <map>
 #include <utility>
 #include <vector>
-
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
-#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
-#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-
-#include <BaseIntegrationTest.hpp>
-#include <Common/ExecutableType/Array.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 using namespace NES::Windowing;
 namespace NES {
@@ -181,7 +178,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = Windowing::LogicalWindowDefinition::create({aggregation},
+    auto windowDef = Windowing::LogicalWindowDefinition::create({aggregation->aggregation},
                                                                 TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)),
                                                                 DistributionCharacteristic::createCompleteWindowType(),
                                                                 trigger,
@@ -224,15 +221,15 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+    auto csvSourceType = CSVSourceType::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSourceTypes.add(conf);
+    workerConfigurations->physicalSourceTypes.add(csvSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Avg(Attribute("id", BasicType::UINT64));
+    auto aggregation = Avg(Attribute("id", BasicType::UINT64))->aggregation;
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
@@ -316,15 +313,15 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+    auto csvSourceType = CSVSourceType::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSourceTypes.add(conf);
+    workerConfigurations->physicalSourceTypes.add(csvSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", BasicType::UINT64));
+    auto aggregation = Sum(Attribute("id", BasicType::UINT64))->aggregation;
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
@@ -412,15 +409,15 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+    auto csvSourceType = CSVSourceType::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSourceTypes.add(conf);
+    workerConfigurations->physicalSourceTypes.add(csvSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", BasicType::UINT64));
+    auto aggregation = Sum(Attribute("id", BasicType::UINT64))->aggregation;
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
@@ -498,15 +495,15 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+    auto csvSourceType = CSVSourceType::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSourceTypes.add(conf);
+    workerConfigurations->physicalSourceTypes.add(csvSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", BasicType::INT64));
+    auto aggregation = Sum(Attribute("id", BasicType::INT64))->aggregation;
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
@@ -580,15 +577,15 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+    auto csvSourceType = CSVSourceType::create("x", "x1");
     auto port = getAvailablePort();
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(*port);
-    workerConfigurations->physicalSourceTypes.add(conf);
+    workerConfigurations->physicalSourceTypes.add(csvSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
-    auto aggregation = Sum(Attribute("id", BasicType::INT64));
+    auto aggregation = Sum(Attribute("id", BasicType::INT64))->aggregation;
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
@@ -669,14 +666,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+    auto csvSourceType = CSVSourceType::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
-    workerConfigurations->physicalSourceTypes.add(conf);
+    workerConfigurations->physicalSourceTypes.add(csvSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", BasicType::UINT64));
+    auto aggregation = Sum(Attribute("id", BasicType::UINT64))->aggregation;
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
@@ -755,15 +752,15 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
+    auto csvSourceType = CSVSourceType::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
-    workerConfigurations->physicalSourceTypes.add(conf);
+    workerConfigurations->physicalSourceTypes.add(csvSourceType);
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                           .build();
 
-    auto aggregation = Sum(Attribute("id", BasicType::INT64));
+    auto aggregation = Sum(Attribute("id", BasicType::INT64))->aggregation;
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowInputSchema = Schema::create();

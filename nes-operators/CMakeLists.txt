@@ -26,6 +26,12 @@ target_include_directories(nes-operators PUBLIC
 
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/Expressions/ExpressionNode.hpp Operators/Expressions/ExpressionNode.hpp)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/Expressions/FieldAccessExpressionNode.hpp Operators/Expressions/FieldAccessExpressionNode.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/Measures/TimeUnit.hpp Operators/LogicalOperators/Windows/Measures/TimeUnit.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/Measures/WindowMeasure.hpp Operators/LogicalOperators/Windows/Measures/WindowMeasure.hpp)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Plans/Query/QueryPlan.hpp Plans/Query/QueryPlan.hpp)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Network/NesPartition.hpp Operators/LogicalOperators/Network/NesPartition.hpp)
 register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)

@@ -17,14 +17,11 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <API/Windowing.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Serialization/DataTypeSerializationUtil.hpp>
-#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
-#include <Operators/Serialization/OperatorSerializationUtil.hpp>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -34,18 +31,19 @@
 #include <Operators/Expressions/CaseExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/Expressions/UDFCallExpressions/UDFCallExpressionNode.hpp>
 #include <Operators/Expressions/WhenExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
@@ -53,33 +51,33 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <SerializableOperator.pb.h>
-#include <SerializableQueryPlan.pb.h>
-#include <Util/Logger/Logger.hpp>
-#include <google/protobuf/util/json_util.h>
-#include <gtest/gtest.h>
-#include <iostream>
-
-#include <API/QueryAPI.hpp>
-#include <API/Windowing.hpp>
-#include <Operators/Expressions/Functions/FunctionExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Util/JavaUDFDescriptorBuilder.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Windowing/Runtime/WindowManager.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/Serialization/DataTypeSerializationUtil.hpp>
+#include <Operators/Serialization/ExpressionSerializationUtil.hpp>
+#include <Operators/Serialization/OperatorSerializationUtil.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableQueryPlan.pb.h>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
+#include <google/protobuf/util/json_util.h>
+#include <gtest/gtest.h>
+#include <iostream>
 
 using namespace NES;
 using namespace Configurations;
@@ -228,7 +226,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        auto csvSourceType = CSVSourceType::create();
+        auto csvSourceType = CSVSourceType::create("testStream", "physical_test");
 
         csvSourceType->setFilePath("localhost");
         csvSourceType->setNumberOfBuffersToProduce(0);
@@ -282,7 +280,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        auto tcpSourceConfig = TCPSourceType::create();
+        auto tcpSourceConfig = TCPSourceType::create("testStream", "physical_test");
         auto tcpSource = TCPSourceDescriptor::create(schema, tcpSourceConfig);
         SerializableOperator_SourceDetails sourceDetails;
         OperatorSerializationUtil::serializeSourceDescriptor(*tcpSource, sourceDetails);
@@ -489,19 +487,6 @@ TEST_F(SerializationUtilTest, functionExpressionSerialization) {
     EXPECT_TRUE(expression->equal(deserializedExpression));
 }
 
-TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
-    auto udfName = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "udf"))
-                       ->as<ConstantValueExpressionNode>();
-    auto argument1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "1"));
-    auto argument2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
-    std::vector<ExpressionNodePtr> functionArguments = {argument1, argument2};
-    auto expression = UDFCallExpressionNode::create(udfName, functionArguments);
-
-    auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
-    auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(*serializedExpression);
-    EXPECT_TRUE(expression->equal(deserializedExpression));
-}
-
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
@@ -542,7 +527,10 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto f2_out = std::make_shared<ExpressionItem>(Attribute("f2_out", NES::BasicType::FLOAT32));
         auto f3_out = std::make_shared<ExpressionItem>(Attribute("f3_out", NES::BasicType::FLOAT32));
 
-        auto inferModel = LogicalOperatorFactory::createInferModelOperator("test.file", {f1_in, f2_in}, {f1_out, f2_out, f3_out});
+        auto inferModel = LogicalOperatorFactory::createInferModelOperator(
+            "test.file",
+            {f1_in->getExpressionNode(), f2_in->getExpressionNode()},
+            {f1_out->getExpressionNode(), f2_out->getExpressionNode(), f3_out->getExpressionNode()});
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(inferModel);
         auto inferModelOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(inferModel->equal(inferModelOperator));
@@ -630,7 +618,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
         auto watermarkAssignerDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
+            Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()).getExpressionNode(),
             API::Milliseconds(0),
             timeBasedWindowType->getTimeCharacteristic()->getTimeUnit());
 
@@ -653,7 +641,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                        triggerPolicy,
@@ -670,7 +658,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                        triggerPolicy,
@@ -688,7 +676,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                        triggerPolicy,
@@ -706,7 +694,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
-            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                        triggerPolicy,

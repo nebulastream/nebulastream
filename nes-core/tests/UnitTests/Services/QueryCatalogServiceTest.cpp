@@ -15,11 +15,12 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>

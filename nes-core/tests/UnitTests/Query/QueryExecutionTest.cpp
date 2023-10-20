@@ -16,16 +16,17 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
@@ -53,7 +54,6 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
 
@@ -78,10 +78,9 @@ class QueryExecutionTest : public Testing::BaseUnitTest {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
-        auto defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
+        auto defaultSourceType = DefaultSourceType::create("default", "default1");
         auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->physicalSourceTypes.add(sourceConf);
+        workerConfiguration->physicalSourceTypes.add(defaultSourceType);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -391,13 +390,12 @@ TEST_F(QueryExecutionTest, filterQuery) {
                             ->addField("test$value", BasicType::INT64);
 
     auto outputBufferOptimizationLevels = {
-        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ALL,
-        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO,
-        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
-        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::
-            REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,
-        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::REUSE_INPUT_BUFFER_NO_FALLBACK,
-        NES::QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::OMIT_OVERFLOW_CHECK_NO_FALLBACK};
+        NES::QueryCompilation::OutputBufferOptimizationLevel::ALL,
+        NES::QueryCompilation::OutputBufferOptimizationLevel::NO,
+        NES::QueryCompilation::OutputBufferOptimizationLevel::ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
+        NES::QueryCompilation::OutputBufferOptimizationLevel::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,
+        NES::QueryCompilation::OutputBufferOptimizationLevel::REUSE_INPUT_BUFFER_NO_FALLBACK,
+        NES::QueryCompilation::OutputBufferOptimizationLevel::OMIT_OVERFLOW_CHECK_NO_FALLBACK};
 
     auto filterProcessingStrategies = {NES::QueryCompilation::QueryCompilerOptions::FilterProcessingStrategy::BRANCHED,
                                        NES::QueryCompilation::QueryCompilerOptions::FilterProcessingStrategy::PREDICATION};
@@ -1032,7 +1030,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(5));
 
     // add a watermark assigner operator with the specified allowedLateness
-    query = query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+    query = query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("ts"),
                                                                                Milliseconds(millisecondOfallowedLateness),
                                                                                Milliseconds()));
 

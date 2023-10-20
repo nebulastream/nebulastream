@@ -32,7 +32,7 @@ constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class NonKeyedTumblingWindowQueryExecutionTest
     : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<QueryCompilation::QueryCompiler> {
+      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NonKeyedTumblingWindowQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);

@@ -46,21 +46,21 @@ class BinaryOperatorSortRuleTest : public Testing::BaseUnitTest {
         Testing::BaseUnitTest::SetUp();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
-};
 
-void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
-    NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
-    auto schema1 = Schema::create()
-                       ->addField("id", BasicType::UINT32)
-                       ->addField("value", BasicType::UINT64)
-                       ->addField("ts", BasicType::UINT64);
-    auto schema2 = Schema::create()
-                       ->addField("id", BasicType::UINT32)
-                       ->addField("value", BasicType::UINT64)
-                       ->addField("ts", BasicType::UINT64);
-    sourceCatalog->addLogicalSource("src1", schema1);
-    sourceCatalog->addLogicalSource("src2", schema2);
-}
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+        NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
+        auto schema1 = Schema::create()
+                           ->addField("id", BasicType::UINT32)
+                           ->addField("value", BasicType::UINT64)
+                           ->addField("ts", BasicType::UINT64);
+        auto schema2 = Schema::create()
+                           ->addField("id", BasicType::UINT32)
+                           ->addField("value", BasicType::UINT64)
+                           ->addField("ts", BasicType::UINT64);
+        sourceCatalog->addLogicalSource("src1", schema1);
+        sourceCatalog->addLogicalSource("src2", schema2);
+    }
+};
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSortedChildren) {
 

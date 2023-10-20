@@ -35,7 +35,7 @@ constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class WindowAggregationFunctionTest
     : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<QueryCompilation::QueryCompiler> {
+      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowAggregationFunctionTest.log", NES::LogLevel::LOG_DEBUG);

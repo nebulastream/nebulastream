@@ -14,10 +14,10 @@
 
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -93,13 +93,12 @@ class MillisecondIntervalTest : public Testing::BaseIntegrationTest {
 
         Testing::BaseIntegrationTest::SetUp();
 
-        csvSourceType = CSVSourceType::create();
+        csvSourceType = CSVSourceType::create("testStream", "physical_test");
         csvSourceType->setGatheringInterval(550);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
         csvSourceType->setNumberOfBuffersToProduce(3);
-        PhysicalSourcePtr sourceConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
         auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->physicalSourceTypes.add(sourceConf);
+        workerConfigurations->physicalSourceTypes.add(csvSourceType);
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                                .build();
@@ -186,7 +185,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     auto pipeline =
         ExecutablePipeline::create(0, queryId, queryId, this->nodeEngine->getQueryManager(), context, executableStage, 1, {sink});
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("testStream", "physical_test");
     csvSourceType->setFilePath(this->path_to_file);
     csvSourceType->setNumberOfBuffersToProduce(numberOfBuffers);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
@@ -233,7 +232,7 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     uint64_t numberOfBuffers = 1;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("testStream", "physical_test");
     csvSourceType->setFilePath(this->path_to_file);
     csvSourceType->setNumberOfBuffersToProduce(numberOfBuffers);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
@@ -276,16 +275,15 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0u);
     //register logical source
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", BasicType::UINT64));";
+    auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");
     wrkConf->coordinatorPort = port;
-    auto defaultSourceType = DefaultSourceType::create();
+    auto defaultSourceType = DefaultSourceType::create("testStream", "x1");
     defaultSourceType->setNumberOfBuffersToProduce(3);
-    auto physicalSource = PhysicalSource::create("testStream", "x1", defaultSourceType);
-    wrkConf->physicalSourceTypes.add(physicalSource);
+    wrkConf->physicalSourceTypes.add(defaultSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#include "Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp"
-#include "Operators/LogicalOperators/RenameSourceOperatorNode.hpp"
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>

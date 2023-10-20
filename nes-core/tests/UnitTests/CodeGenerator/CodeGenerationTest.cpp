@@ -16,7 +16,6 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CompilationRequest.hpp>
@@ -24,8 +23,10 @@
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/SourceCode.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Network/NetworkChannel.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
@@ -57,7 +58,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -75,11 +75,10 @@ class CodeGenerationTest : public Testing::BaseIntegrationTest {
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         dataPort = Testing::BaseIntegrationTest::getAvailablePort();
-        auto defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+        auto defaultSourceType = DefaultSourceType::create("default", "defaultPhysical");
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
-        workerConfiguration->physicalSourceTypes.add(sourceConf);
+        workerConfiguration->physicalSourceTypes.add(defaultSourceType);
         workerConfiguration->bufferSizeInBytes.setValue(4096);
         workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(1024);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);

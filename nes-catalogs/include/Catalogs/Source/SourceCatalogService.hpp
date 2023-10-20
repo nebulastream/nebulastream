@@ -15,9 +15,10 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_SOURCECATALOGSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_SOURCECATALOGSERVICE_HPP_
 
+#include <map>
 #include <memory>
 #include <mutex>
-#include <map>
+#include <vector>
 
 namespace NES {
 class TopologyNode;
