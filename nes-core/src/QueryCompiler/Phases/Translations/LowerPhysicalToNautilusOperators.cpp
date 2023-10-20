@@ -348,6 +348,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return watermarkOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
         auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
+
         auto projection =
             std::make_shared<Runtime::Execution::Operators::Project>(projectOperator->getInputSchema()->getFieldNames(),
                                                                      projectOperator->getOutputSchema()->getFieldNames());
