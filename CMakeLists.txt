@@ -698,6 +698,7 @@ add_subdirectory(nes-unikernel-generator)
 add_subdirectory(nes-unikernel-source)
 add_subdirectory(nes-unikernel-sink)
 add_subdirectory(nes-unikernel)
+add_subdirectory(nes-unikernel-common)
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
