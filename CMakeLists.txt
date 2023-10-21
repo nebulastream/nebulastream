@@ -460,13 +460,6 @@ if (NES_USE_KAFKA)
     endif ()
 endif ()
 
-# Library containing OPC client
-if (NES_USE_OPC)
-    find_package(open62541 CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} open62541::open62541)
-    add_compile_definitions(ENABLE_OPC_BUILD)
-endif (NES_USE_OPC)
-
 # Library containing MQTT client
 if (NES_USE_MQTT)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
