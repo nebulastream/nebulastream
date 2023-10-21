@@ -13,6 +13,7 @@
 */
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/Nextmark/NEAuctionDataGenerator.hpp>
 #include <DataGeneration/Nextmark/NexmarkCommon.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -90,6 +91,23 @@ std::string NEAuctionDataGenerator::toString() {
     std::ostringstream oss;
     oss << getName();
     return oss.str();
+}
+Configurations::SchemaTypePtr NEAuctionDataGenerator::getSchemaType() {
+    const char* length = "0";
+    const char* dataTypeUI64 = "UINT64";
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    schemaFiledDetails.emplace_back("id", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("itemName", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("itemNamePad", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("description", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("descriptionPad", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("initialBit", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("reserve", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("dateTime", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("seller", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("expires", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("category", dataTypeUI64, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
 }// namespace NES::Benchmark::DataGeneration

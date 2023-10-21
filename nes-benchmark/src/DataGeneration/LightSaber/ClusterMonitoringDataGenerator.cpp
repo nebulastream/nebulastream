@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/LightSaber/ClusterMonitoringDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -71,6 +72,7 @@ std::vector<Runtime::TupleBuffer> ClusterMonitoringDataGenerator::createData(siz
     }
     return buffers;
 }
+
 SchemaPtr ClusterMonitoringDataGenerator::getSchema() {
     return Schema::create()
         ->addField("creationTS", BasicType::INT64)
@@ -87,10 +89,30 @@ SchemaPtr ClusterMonitoringDataGenerator::getSchema() {
         ->addField("constraints", BasicType::INT16);
 }
 
+Configurations::SchemaTypePtr ClusterMonitoringDataGenerator::getSchemaType() {
+    const char* length = "0";
+    const char* dataTypeI64 = "INT64";
+    const char* dataTypeI16 = "INT16";
+    const char* dataTypeF32 = "FLOAT32";
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    schemaFiledDetails.emplace_back("creationTS", dataTypeI64, length);
+    schemaFiledDetails.emplace_back("jobId", dataTypeI64, length);
+    schemaFiledDetails.emplace_back("taskId", dataTypeI64, length);
+    schemaFiledDetails.emplace_back("machineId", dataTypeI64, length);
+    schemaFiledDetails.emplace_back("eventType", dataTypeI16, length);
+    schemaFiledDetails.emplace_back("userId", dataTypeI16, length);
+    schemaFiledDetails.emplace_back("category", dataTypeI16, length);
+    schemaFiledDetails.emplace_back("priority", dataTypeI16, length);
+    schemaFiledDetails.emplace_back("cpu", dataTypeF32, length);
+    schemaFiledDetails.emplace_back("ram", dataTypeF32, length);
+    schemaFiledDetails.emplace_back("disk", dataTypeF32, length);
+    schemaFiledDetails.emplace_back("constraints", dataTypeI16, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
+}
+
 std::string ClusterMonitoringDataGenerator::toString() {
     std::ostringstream oss;
     oss << getName();
     return oss.str();
 }
-
 }// namespace NES::Benchmark::DataGeneration
