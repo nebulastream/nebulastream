@@ -119,7 +119,7 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
                           std::vector<API::WindowAggregationPtr> aggregations) {
     NES_DEBUG("Query: add keyed window operator");
     std::vector<FieldAccessExpressionNodePtr> expressionNodes;
-    for (auto onKey : onKeys) {
+    for (const auto& onKey : onKeys) {
         if (!onKey->instanceOf<FieldAccessExpressionNode>()) {
             NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a {}", onKey->toString());
         }
@@ -169,12 +169,10 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
     auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
 
     std::vector<Windowing::WindowAggregationDescriptorPtr> windowAggregationDescriptor;
-    std::transform(aggregations.begin(),
-                   aggregations.end(),
-                   windowAggregationDescriptor.begin(),
-                   [](API::WindowAggregationPtr apiAggregations) {
-                       return apiAggregations->aggregation;
-                   });
+    windowAggregationDescriptor.reserve(aggregations.size());
+    for (auto const& agg : aggregations) {
+        windowAggregationDescriptor.emplace_back(agg->aggregation);
+    }
 
     auto windowDefinition =
         Windowing::LogicalWindowDefinition::create(expressionNodes,
