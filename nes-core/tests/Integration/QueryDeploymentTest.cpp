@@ -13,17 +13,17 @@
 */
 
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
+#include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -268,8 +268,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
 
     coordinatorConfig->worker.enableSourceSharing = true;
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
-    coordinatorConfig->worker.queryCompiler.outputBufferOptimizationLevel =
-        QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
+    coordinatorConfig->worker.queryCompiler.outputBufferOptimizationLevel = QueryCompilation::OutputBufferOptimizationLevel::NO;
 
     std::promise<bool> start;
     bool started = false;
@@ -294,9 +293,9 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
         }
     };
 
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
-    auto physicalSource1 = PhysicalSource::create("window1", "test_stream1", lambdaSourceType1);
-    coordinatorConfig->worker.physicalSourceTypes.add(physicalSource1);
+    auto lambdaSourceType1 =
+        LambdaSourceType::create("window1", "test_stream1", std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
+    coordinatorConfig->worker.physicalSourceTypes.add(lambdaSourceType1);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -460,8 +459,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
 
     coordinatorConfig->worker.enableSourceSharing = true;
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
-    coordinatorConfig->worker.queryCompiler.outputBufferOptimizationLevel =
-        QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
+    coordinatorConfig->worker.queryCompiler.outputBufferOptimizationLevel = QueryCompilation::OutputBufferOptimizationLevel::NO;
 
     std::promise<bool> start;
     bool started = false;
@@ -486,9 +484,9 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
         }
     };
 
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
-    auto physicalSource1 = PhysicalSource::create("window1", "test_stream1", lambdaSourceType1);
-    coordinatorConfig->worker.physicalSourceTypes.add(physicalSource1);
+    auto lambdaSourceType1 =
+        LambdaSourceType::create("window1", "test_stream1", std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
+    coordinatorConfig->worker.physicalSourceTypes.add(lambdaSourceType1);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -716,22 +714,23 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT64))
+                          ->addField(createField("id", BasicType::UINT64))
+                          ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("stream", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
     csvSourceType1->setSkipHeader(true);
-    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -775,8 +774,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
+    auto testSchema =
+        Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -833,22 +832,21 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
+    auto testSchema =
+        Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("stream", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
     csvSourceType1->setSkipHeader(true);
-    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

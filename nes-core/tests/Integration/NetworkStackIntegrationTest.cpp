@@ -187,8 +187,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
             bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
         };
         auto defaultSourceType = DefaultSourceType::create("default_logical", "default");
-        auto physicalSource = PhysicalSource::create(defaultSourceType);
-        std::vector<PhysicalSourcePtr> physicalSources{physicalSource};
+        std::vector<PhysicalSourceTypePtr> physicalSources{defaultSourceType};
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto stateManager = std::make_shared<Runtime::StateManager>(0);
         std::vector<Runtime::BufferManagerPtr> bufferManagers = {
@@ -254,7 +253,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         atomic<int> eosCnt = 0;
         atomic<int>& bufferCnt;
 
-        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+        explicit MockedNodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   NES::Runtime::QueryManagerPtr&& queryManager,
@@ -429,7 +428,7 @@ TEST_F(NetworkStackIntegrationTest, testReconnectBufferingSink) {
         atomic<int> eosCnt = 0;
         atomic<int>& bufferCnt;
 
-        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+        explicit MockedNodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   NES::Runtime::QueryManagerPtr&& queryManager,

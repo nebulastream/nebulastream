@@ -12,28 +12,28 @@
     limitations under the License.
 */
 
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Eigen/Dense>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger/Logger.hpp>
-
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Eigen/Dense>
-#include <gtest/gtest.h>
-
-#include <BaseIntegrationTest.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
+
 namespace NES {
 
 class AdaptiveKFTest : public Testing::BaseIntegrationTest {
   public:
     SchemaPtr schema;
-    PhysicalSourcePtr sourceConf;
+    DefaultSourceTypePtr defaultSourceType;
     Runtime::NodeEnginePtr nodeEngine;
     std::vector<double> measurements;
     float defaultEstimationErrorDivider = 2.9289684;
@@ -50,11 +50,11 @@ class AdaptiveKFTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         NES_INFO("Setup AdaptiveKFTest class.");
         dataPort = Testing::BaseIntegrationTest::getAvailablePort();
-        sourceConf = PhysicalSource::create("x", "x1");
+        defaultSourceType = DefaultSourceType::create("x", "x1");
         schema = Schema::create()->addField("temperature", BasicType::UINT32);
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
-        workerConfiguration->physicalSourceTypes.add(sourceConf);
+        workerConfiguration->physicalSourceTypes.add(defaultSourceType);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 

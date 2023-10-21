@@ -15,13 +15,14 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -85,16 +86,15 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     NES_DEBUG("VariableLengthIntegrationTest: Start worker 1");
 
     // setup csv sources
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("variable_length", "test_stream");
     csvSourceType->setFilePath(inputFilePath);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
     csvSourceType->setNumberOfBuffersToProduce(1);
-    auto physicalSource = PhysicalSource::create("variable_length", "test_stream", csvSourceType);
 
     // setup worker
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig1->physicalSourceTypes.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(csvSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
 

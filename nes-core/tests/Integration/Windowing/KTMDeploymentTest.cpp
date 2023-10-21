@@ -88,13 +88,12 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     workerConfig1->queryCompiler.queryCompilerType =
         QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     // create source
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("ktm", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "ktm.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(1);
-    auto physicalSource1 = PhysicalSource::create("ktm", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart2 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=3
     ASSERT_TRUE(retStart2);
