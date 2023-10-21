@@ -67,6 +67,7 @@ class ExpressionItem {
      * @brief Gets the expression node of this expression item.
      */
     ExpressionNodePtr getExpressionNode() const;
+    operator ExpressionNodePtr();
 
     /**
      * @brief Rename the expression item
