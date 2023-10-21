@@ -13,10 +13,10 @@
 */
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gmock/gmock-matchers.h>
@@ -543,7 +543,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     // 1,2,3
     // 1,2,4
     // 4,3,6
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("car", "car_p1");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "testCSV.csv");
     csvSourceType->setGatheringInterval(1);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
@@ -555,7 +555,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
                                   .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
-                                  .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()
                                   .setupTopology();
 
@@ -592,7 +592,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create("car", "car_p1");
     // Content ov testCSV.csv:
     // 1,2,3
     // 1,2,4
@@ -608,7 +608,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
                                   .enableNautilus()
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
-                                  .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)//2
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType)//2
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3
                                   // push two elements to the memory source

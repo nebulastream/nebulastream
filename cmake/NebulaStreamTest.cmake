@@ -2,6 +2,8 @@ include(GoogleTest)
 if (NES_CODE_COVERAGE)
     set(CODE_COVERAGE ON)
 endif ()
+# Target to build all integration tests
+add_custom_target(integration_tests)
 
 # This function registers a test with gtest_discover_tests
 function(add_nes_test)
@@ -42,6 +44,7 @@ function(add_nes_integration_test)
     # first param is TARGET_NAME
     add_executable(${ARGN})
     set(TARGET_NAME ${ARGV0})
+    add_dependencies(integration_tests ${TARGET_NAME})
     if (NES_ENABLE_PRECOMPILED_HEADERS)
         target_precompile_headers(${TARGET_NAME} REUSE_FROM nes-common)
     endif ()

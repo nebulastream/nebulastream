@@ -17,6 +17,7 @@
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/LocationProviderType.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <vector>

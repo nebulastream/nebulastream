@@ -87,12 +87,12 @@ class UpstreamBackupTest : public Testing::BaseIntegrationTest {
             }
         };
 
-        lambdaSource = LambdaSourceType::create(std::move(func1),
+        lambdaSource = LambdaSourceType::create("window", "x1", std::move(func1),
                                                 numberOfBuffersToProduceInTuples,
                                                 ingestionRate,
                                                 GatheringMode::INGESTION_RATE_MODE);
 
-        csvSourceTypeFinite = CSVSourceType::create();
+        csvSourceTypeFinite = CSVSourceType::create("window", "x1");
         csvSourceTypeFinite->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window-out-of-order.csv");
         csvSourceTypeFinite->setNumberOfTuplesToProducePerBuffer(numberOfTupleBuffers - 1);
         csvSourceTypeFinite->setNumberOfBuffersToProduce(numberOfTupleBuffers);
@@ -117,8 +117,7 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", lambdaSource);
-    workerConfig->physicalSourceTypes.add(physicalSource1);
+    workerConfig->physicalSourceTypes.add(lambdaSource);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -204,8 +203,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", lambdaSource);
-    workerConfig->physicalSourceTypes.add(physicalSource1);
+    workerConfig->physicalSourceTypes.add(lambdaSource);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -280,8 +278,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
-    workerConfig->physicalSourceTypes.add(physicalSource1);
+    workerConfig->physicalSourceTypes.add(csvSourceTypeFinite);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
