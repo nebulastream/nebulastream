@@ -30,7 +30,6 @@
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>

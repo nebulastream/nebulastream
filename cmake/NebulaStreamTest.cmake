@@ -4,6 +4,8 @@ if (NES_CODE_COVERAGE)
 endif ()
 # Target to build all integration tests
 add_custom_target(integration_tests)
+# Target to build all e2e tests
+add_custom_target(e2e_tests)
 
 # This function registers a test with gtest_discover_tests
 function(add_nes_test)
