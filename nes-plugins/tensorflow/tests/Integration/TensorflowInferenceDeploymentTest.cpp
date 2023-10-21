@@ -15,8 +15,8 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -140,7 +140,7 @@ TEST_F(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeploymentMi
                           ->addField("f4", DataTypeFactory::createInt64())
                           ->addField("target", DataTypeFactory::createUInt64());
 
-    auto csvSourceType = CSVSourceType::create();
+    auto csvSourceType = CSVSourceType::create("irisData", "irisDataP");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_short_bool.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType->setNumberOfBuffersToProduce(10);
@@ -157,7 +157,7 @@ TEST_F(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeploymentMi
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("irisData", irisSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()
                                   .setupTopology();
 
@@ -197,7 +197,7 @@ TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) 
 
     auto irisSchema = std::get<1>(GetParam());
 
-    auto csvSourceType = CSVSourceType::create();
+    auto csvSourceType = CSVSourceType::create("irisData","irisDataP");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / std::get<2>(GetParam()));
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType->setNumberOfBuffersToProduce(10);
@@ -214,7 +214,7 @@ TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("irisData", irisSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()
                                   .setupTopology();
 

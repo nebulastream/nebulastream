@@ -14,10 +14,10 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
@@ -43,8 +43,9 @@ class NemoIntegrationTest : public Testing::BaseIntegrationTest {
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
     }
 
-    static CSVSourceTypePtr createCSVSourceType(std::string inputPath) {
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    static CSVSourceTypePtr
+    createCSVSourceType(std::string logicalSourceNAme, std::string physicalSourceName, std::string inputPath) {
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create(logicalSourceNAme, physicalSourceName);
         csvSourceType->setFilePath(std::move(inputPath));
         csvSourceType->setNumberOfTuplesToProducePerBuffer(50);
         csvSourceType->setNumberOfBuffersToProduce(1);
@@ -102,9 +103,11 @@ class NemoIntegrationTest : public Testing::BaseIntegrationTest {
 
                     if (i == layers) {
                         leafNodes++;
-                        auto csvSource = createCSVSourceType(std::string(TEST_DATA_DIRECTORY) + "keyed_windows/window_"
-                                                             + std::to_string(cnt++) + ".csv");
-                        testHarness.attachWorkerWithCSVSourceToWorkerWithId("car", csvSource, parent);
+                        auto csvSource = createCSVSourceType("car",
+                                                             "car1",
+                                                             std::string(TEST_DATA_DIRECTORY) + "keyed_windows/window_"
+                                                                 + std::to_string(cnt++) + ".csv");
+                        testHarness.attachWorkerWithCSVSourceToWorkerWithId(csvSource, parent);
                         NES_DEBUG("NemoIntegrationTest: Adding CSV source for node:{}", nodeId);
                         continue;
                     }

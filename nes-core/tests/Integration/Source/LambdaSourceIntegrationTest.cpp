@@ -14,16 +14,17 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
 
@@ -42,8 +43,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
 
@@ -95,12 +95,12 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
         }
     };
 
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
-    auto physicalSource1 = PhysicalSource::create("input1", "test_stream1", lambdaSourceType1);
-    auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
-    auto physicalSource2 = PhysicalSource::create("input2", "test_stream2", lambdaSourceType2);
-    wrkConf->physicalSourceTypes.add(physicalSource1);
-    wrkConf->physicalSourceTypes.add(physicalSource2);
+    auto lambdaSourceType1 =
+        LambdaSourceType::create("input1", "test_stream1", std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType2 =
+        LambdaSourceType::create("input2", "test_stream2", std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
+    wrkConf->physicalSourceTypes.add(lambdaSourceType1);
+    wrkConf->physicalSourceTypes.add(lambdaSourceType2);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -137,8 +137,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::createDefault();
-    crdConf->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    crdConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -187,12 +186,12 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
         }
     };
 
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
-    auto physicalSource1 = PhysicalSource::create("input1", "test_stream", lambdaSourceType1);
-    auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
-    auto physicalSource2 = PhysicalSource::create("input2", "test_stream", lambdaSourceType2);
-    wrkConf->physicalSourceTypes.add(physicalSource1);
-    wrkConf->physicalSourceTypes.add(physicalSource2);
+    auto lambdaSourceType1 =
+        LambdaSourceType::create("input1", "test_stream", std::move(func1), 3, 10, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType2 =
+        LambdaSourceType::create("input2", "test_stream", std::move(func2), 3, 10, GatheringMode::INTERVAL_MODE);
+    wrkConf->physicalSourceTypes.add(lambdaSourceType1);
+    wrkConf->physicalSourceTypes.add(lambdaSourceType2);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
@@ -243,8 +242,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     //    coordinatorConfig->worker.setNumberOfBuffersPerWorker(124);
     //    coordinatorConfig->worker.bufferSizeInBytes=(524288);
     coordinatorConfig->worker.numWorkerThreads = 4;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     NES_DEBUG("E2EBase: Start coordinator");
 
@@ -278,9 +276,8 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
             return;
         };
 
-        auto lambdaSourceType1 = LambdaSourceType::create(std::move(func), 30, 0, GatheringMode::INTERVAL_MODE);
-        auto physicalSource1 = PhysicalSource::create("input", "test_stream" + std::to_string(i), lambdaSourceType1);
-        wrkConf->physicalSourceTypes.add(physicalSource1);
+        auto lambdaSourceType = LambdaSourceType::create("input", "test_stream" + std::to_string(i),std::move(func), 30, 0, GatheringMode::INTERVAL_MODE);
+        wrkConf->physicalSourceTypes.add(lambdaSourceType);
     }
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));

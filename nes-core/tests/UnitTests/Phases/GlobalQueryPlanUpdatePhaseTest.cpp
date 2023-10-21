@@ -13,6 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
@@ -45,10 +46,10 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <RequestTypes/QueryRequests/AddQueryRequest.hpp>
-#include <RequestTypes/QueryRequests/StopQueryRequest.hpp>
-#include <RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
-#include <RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
+#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
+#include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -120,13 +121,12 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::BaseUnitTest {
         sourceCatalog->addLogicalSource("source2", inputSchema);
 
         //Physical source1
-        auto defaultSourceType = DefaultSourceType::create();
-        auto physicalSource1 = PhysicalSource::create("source1", "physicalSource1", defaultSourceType);
+        auto physicalSource1 = PhysicalSource::create(DefaultSourceType::create("source1", "physicalSource1"));
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource1, sourceNode1);
 
         //Physical source2
-        auto physicalSource2 = PhysicalSource::create("source2", "physicalSource2", defaultSourceType);
+        auto physicalSource2 = PhysicalSource::create(DefaultSourceType::create("source2", "physicalSource2"));
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource2, sourceNode2);
 

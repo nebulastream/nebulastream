@@ -16,14 +16,14 @@
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,15 +52,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema =Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
@@ -68,12 +67,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create("car", "physical_car");
-    csvSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create( csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create("car", "physical_car");
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    workerConfig1->physicalSourceTypes.add(defaultSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -82,12 +79,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    workerConfig2->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
-    csvSourceType2->setNumberOfBuffersToProduce(3);
-    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create("truck", "physical_truck");
+    defaultSourceType2->setNumberOfBuffersToProduce(3);
+    workerConfig2->physicalSourceTypes.add(defaultSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -207,8 +202,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -223,12 +217,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
-    csvSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create("car", "physical_car");
+    defaultSourceType->setNumberOfBuffersToProduce(3);
+    workerConfig1->physicalSourceTypes.add(defaultSourceType);
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -237,12 +229,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    workerConfig2->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
-    csvSourceType2->setNumberOfBuffersToProduce(3);
-    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create("truck", "physical_truck");
+    defaultSourceType2->setNumberOfBuffersToProduce(3);
+    workerConfig2->physicalSourceTypes.add(defaultSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -362,15 +352,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
@@ -378,12 +367,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
-    csvSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create("car", "physical_car");
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    workerConfig1->physicalSourceTypes.add(defaultSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -392,12 +379,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    workerConfig2->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
-    csvSourceType2->setNumberOfBuffersToProduce(3);
-    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create("truck", "physical_truck");
+    defaultSourceType2->setNumberOfBuffersToProduce(3);
+    workerConfig2->physicalSourceTypes.add(defaultSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -516,15 +501,14 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
@@ -532,12 +516,10 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create("car", "physical_car");
     defaultSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create("car", "physical_car", defaultSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(defaultSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -546,12 +528,10 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    workerConfig2->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create("truck", "physical_truck");
     defaultSourceType2->setNumberOfBuffersToProduce(3);
-    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", defaultSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
+    workerConfig2->physicalSourceTypes.add(defaultSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -597,16 +577,17 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT32))
+                          ->addField(createField("id", BasicType::UINT32))
+                          ->addField(createField("timestamp", BasicType::INT32));
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
@@ -614,13 +595,11 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("ruby", "physical_ruby");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
-    auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -629,13 +608,11 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    workerConfig2->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create("diamond", "physical_diamond");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
-    auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
+    workerConfig2->physicalSourceTypes.add(csvSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -758,16 +735,17 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT32))
+                          ->addField(createField("id", BasicType::UINT32))
+                          ->addField(createField("timestamp", BasicType::INT32));
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
@@ -775,13 +753,11 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("ruby", "physical_ruby");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
-    auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -790,13 +766,11 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create("diamond", "physical_diamond");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
-    auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
-    workerConfig2->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig2->physicalSourceTypes.add(csvSourceType2);
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -886,16 +860,17 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT32))
+                          ->addField(createField("id", BasicType::UINT32))
+                          ->addField(createField("timestamp", BasicType::INT32));
     crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
@@ -904,13 +879,11 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("ruby", "physical_ruby");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
-    auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -919,13 +892,11 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create("diamond", "physical_diamond");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
-    auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
-    workerConfig2->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig2->physicalSourceTypes.add(csvSourceType2);
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
