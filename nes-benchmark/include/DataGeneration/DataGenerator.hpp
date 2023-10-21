@@ -19,6 +19,13 @@
 #include <Util/yaml/Yaml.hpp>
 #include <vector>
 
+namespace NES::Configurations {
+
+class SchemaType;
+using SchemaTypePtr = std::shared_ptr<SchemaType>;
+
+}// namespace NES::Configurations
+
 namespace NES::Benchmark::DataGeneration {
 
 class DataGenerator;
@@ -49,6 +56,12 @@ class DataGenerator {
      * @return schema
      */
     virtual SchemaPtr getSchema() = 0;
+
+    /**
+     * @brief overrides the schema from the abstract parent class
+     * @return schema from a DefaultDataGenerator
+     */
+    virtual Configurations::SchemaTypePtr getSchemaType() = 0;
 
     /**
      * @brief returns the name of the data generator

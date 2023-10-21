@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/LightSaber/ManufacturingEquipmentDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -87,6 +88,28 @@ std::string ManufacturingEquipmentDataGenerator::toString() {
     std::ostringstream oss;
     oss << getName();
     return oss.str();
+}
+
+Configurations::SchemaTypePtr ManufacturingEquipmentDataGenerator::getSchemaType() {
+    const char* length = "0";
+    const char* dataTypeUI64 = "UINT64";
+    const char* dataTypeUI16 = "UINT16";
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    schemaFiledDetails.emplace_back("creationTS", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("messageIndex", dataTypeUI64, length);
+    schemaFiledDetails.emplace_back("mf01", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("mf02", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("mf03", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("pc13", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("pc14", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("pc15", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("pc25", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("pc26", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("pc27", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("res", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("bm05", dataTypeUI16, length);
+    schemaFiledDetails.emplace_back("bm06", dataTypeUI16, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
 }// namespace NES::Benchmark::DataGeneration

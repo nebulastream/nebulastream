@@ -15,10 +15,10 @@
 #ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
-#include <utility>
-
+#include <Util/Logger/Logger.hpp>
 #include <open62541/client_config_default.h>
 #include <open62541/plugin/log_stdout.h>
+#include <utility>
 
 namespace NES {
 
@@ -67,7 +67,7 @@ const std::string OPCSourceDescriptor::getUser() const { return user; }
 
 const std::string OPCSourceDescriptor::getPassword() const { return password; }
 
-bool OPCSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool OPCSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
 
     if (!other->instanceOf<OPCSourceDescriptor>())
         return false;

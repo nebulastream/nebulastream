@@ -31,6 +31,7 @@
 #include <chrono>
 
 #ifdef ENABLE_OPC_BUILD
+#include <Sources/OPCSource.hpp>
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
@@ -400,6 +401,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                     std::string user,
                                     std::string password,
                                     OperatorId operatorId,
+                                    OriginId originId,
                                     size_t numSourceLocalBuffers,
                                     const std::string& physicalSourceName,
                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
@@ -408,9 +410,10 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                        queryManager,
                                        url,
                                        nodeId,
-                                       user,
                                        password,
+                                       user,
                                        operatorId,
+                                       originId,
                                        numSourceLocalBuffers,
                                        GatheringMode::INTERVAL_MODE,
                                        physicalSourceName,

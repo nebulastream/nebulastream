@@ -62,29 +62,29 @@ OPCSource::OPCSource(const SchemaPtr& schema,
       connected(false), url(url), nodeId(nodeId), user(std::move(std::move(user))), password(std::move(password)),
       retval(UA_STATUSCODE_GOOD), client(UA_Client_new()) {
 
-    NES_DEBUG("OPCSOURCE   {} : Init OPC Source to  {}  with user and password.", this, url);
+    NES_DEBUG("OPCSOURCE {} : Init OPC Source to  {}  with user and password.", this->toString(), url);
 }
 
 OPCSource::~OPCSource() {
     NES_DEBUG("OPCSource::~OPCSource()");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG("OPCSOURCE  {}: Destroy OPC Source", this);
+        NES_DEBUG("OPCSOURCE {}: Destroy OPC Source", this->toString());
     } else {
-        NES_FATAL_ERROR("OPCSOURCE  " << this << ": Destroy OPC Source failed cause it could not be disconnected");
+        NES_FATAL_ERROR("OPCSOURCE {} : Destroy OPC Source failed cause it could not be disconnected", this->toString());
     }
 }
 
 std::optional<Runtime::TupleBuffer> OPCSource::receiveData() {
 
-    NES_DEBUG("OPCSOURCE::receiveData()  {}: receiveData() ", this);
+    NES_DEBUG("OPCSOURCE::receiveData() {}: receiveData() ", this->toString());
     if (connect()) {
 
         auto* val = new UA_Variant;
         retval = UA_Client_readValueAttribute(client, nodeId, val);
         auto buffer = bufferManager->getBufferBlocking();
         buffer.setNumberOfTuples(1);
-        NES_DEBUG("OPCSOURCE::receiveData()  {}: got buffer ", this);
+        NES_DEBUG("OPCSOURCE::receiveData() {}: got buffer ", this->toString());
 
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
             NES_DEBUG("OPCSOURCE::receiveData() Value datatype is: {}", val->type->typeName);
@@ -125,7 +125,7 @@ bool OPCSource::connect() {
 
     if (!connected) {
 
-        NES_DEBUG("OPCSOURCE::connect(): was !conncect now connect {}: connected", this);
+        NES_DEBUG("OPCSOURCE::connect(): was !conncect now connect {}: connected", this->toString());
         retval = UA_Client_connect(client, url.c_str());
         NES_DEBUG("OPCSOURCE::connect(): connected without user or password");
         NES_DEBUG("OPCSOURCE::connect(): use address {}", url);
@@ -134,7 +134,9 @@ bool OPCSource::connect() {
 
             UA_Client_delete(client);
             connected = false;
-            NES_ERROR("OPCSOURCE::connect(): ERROR with Status Code: {} OPCSOURCE {}: set connected false", retval, this);
+            NES_ERROR("OPCSOURCE::connect(): ERROR with Status Code: {} OPCSOURCE {}: set connected false",
+                      retval,
+                      this->toString());
         } else {
 
             connected = true;
@@ -142,9 +144,9 @@ bool OPCSource::connect() {
     }
 
     if (connected) {
-        NES_DEBUG("OPCSOURCE::connect():  {}: connected", this);
+        NES_DEBUG("OPCSOURCE::connect():  {}: connected", this->toString());
     } else {
-        NES_DEBUG("Exception: OPCSOURCE::connect():  {}: NOT connected", this);
+        NES_DEBUG("Exception: OPCSOURCE::connect():  {}: NOT connected", this->toString());
     }
     return connected;
 }
@@ -160,9 +162,9 @@ bool OPCSource::disconnect() {
         connected = false;
     }
     if (!connected) {
-        NES_DEBUG("OPCSOURCE::disconnect()  {}: disconnected", this);
+        NES_DEBUG("OPCSOURCE::disconnect()  {}: disconnected", this->toString());
     } else {
-        NES_DEBUG("OPCSOURCE::disconnect()  {}: NOT disconnected", this);
+        NES_DEBUG("OPCSOURCE::disconnect()  {}: NOT disconnected", this->toString());
     }
     return !connected;
 }

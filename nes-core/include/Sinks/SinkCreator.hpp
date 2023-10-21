@@ -113,6 +113,7 @@ DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
 /**
  * @brief create a OPC test sink with a schema
  * @param schema of sink
+ * @param queryId
  * @param bufferManager
  * @param url to OPC server as string
  * @param nodeId to save data in
@@ -121,6 +122,7 @@ DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createOPCSink(SchemaPtr schema,
+                          QueryId queryId,
                           QuerySubPlanId querySubPlanId,
                           Runtime::NodeEnginePtr nodeEngine,
                           std::string url,

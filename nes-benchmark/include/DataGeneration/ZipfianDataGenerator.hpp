@@ -41,6 +41,8 @@ class ZipfianDataGenerator : public DataGenerator {
      */
     SchemaPtr getSchema() override;
 
+    Configurations::SchemaTypePtr getSchemaType() override;
+
     /**
      * @brief overrides the name from the abstract parent class
      * @return name

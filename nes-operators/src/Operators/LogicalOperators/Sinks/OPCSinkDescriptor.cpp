@@ -13,8 +13,8 @@
 */
 
 #ifdef ENABLE_OPC_BUILD
-#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 
+#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <open62541/client_config_default.h>
 #include <string>
@@ -24,7 +24,7 @@ namespace NES {
 OPCSinkDescriptor::OPCSinkDescriptor(std::string url, UA_NodeId nodeId, std::string user, std::string password)
     : url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)), password(std::move(password)) {
 
-    NES_DEBUG("OPCSINKDESCRIPTOR {} : Init OPC Sink descriptor.", this);
+    NES_DEBUG("OPCSINKDESCRIPTOR {} : Init OPC Sink descriptor.", this->toString());
 }
 
 const std::string OPCSinkDescriptor::getUrl() const { return url; }

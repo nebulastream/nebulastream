@@ -26,6 +26,8 @@ class YSBDataGenerator : public DataGenerator {
 
     SchemaPtr getSchema() override;
 
+    Configurations::SchemaTypePtr getSchemaType() override;
+
     std::string toString() override;
 };
 
