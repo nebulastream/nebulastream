@@ -3035,15 +3035,15 @@ NesCEPParser::MathExpressionContext* NesCEPParser::mathExpression() {
 NesCEPParser::AggregationContext::AggregationContext(ParserRuleContext* parent, size_t invokingState)
     : ParserRuleContext(parent, invokingState) {}
 
-tree::TerminalNode* NesCEPParser::AggregationContext::AVG() { return getToken(NesCEPParser::AVG, 0); }
+tree::TerminalNode* NesCEPParser::AggregationContext::AVGNode() { return getToken(NesCEPParser::AVG, 0); }
 
-tree::TerminalNode* NesCEPParser::AggregationContext::SUM() { return getToken(NesCEPParser::SUM, 0); }
+tree::TerminalNode* NesCEPParser::AggregationContext::SUMNode() { return getToken(NesCEPParser::SUM, 0); }
 
-tree::TerminalNode* NesCEPParser::AggregationContext::MIN() { return getToken(NesCEPParser::MIN, 0); }
+tree::TerminalNode* NesCEPParser::AggregationContext::MINNode() { return getToken(NesCEPParser::MIN, 0); }
 
-tree::TerminalNode* NesCEPParser::AggregationContext::MAX() { return getToken(NesCEPParser::MAX, 0); }
+tree::TerminalNode* NesCEPParser::AggregationContext::MAXNode() { return getToken(NesCEPParser::MAX, 0); }
 
-tree::TerminalNode* NesCEPParser::AggregationContext::COUNT() { return getToken(NesCEPParser::COUNT, 0); }
+tree::TerminalNode* NesCEPParser::AggregationContext::COUNTNode() { return getToken(NesCEPParser::COUNT, 0); }
 
 size_t NesCEPParser::AggregationContext::getRuleIndex() const { return NesCEPParser::RuleAggregation; }
 
