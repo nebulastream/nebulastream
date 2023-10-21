@@ -15,12 +15,12 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -41,8 +41,7 @@ class MemorySourceIntegrationTest : public Testing::BaseIntegrationTest {
 /// This test checks that a deployed MemorySource can write M records spanning exactly N records
 TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
@@ -85,9 +84,15 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect, 0, GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
-    wrkConf->physicalSourceTypes.add(physicalSource);
+    auto memorySourceType = MemorySourceType::create("memory_stream",
+                                                     "memory_stream_0",
+                                                     memArea,
+                                                     memAreaSize,
+                                                     buffersToExpect,
+                                                     0,
+                                                     GatheringMode::INTERVAL_MODE);
+
+    wrkConf->physicalSourceTypes.add(memorySourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -99,7 +104,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->addQueryRequest("",
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
@@ -144,8 +149,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
@@ -188,9 +192,9 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, 1, 0, GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
-    wrkConf->physicalSourceTypes.add(physicalSource);
+    auto memorySourceType =
+        MemorySourceType::create("memory_stream", "memory_stream_0", memArea, memAreaSize, 1, 0, GatheringMode::INTERVAL_MODE);
+    wrkConf->physicalSourceTypes.add(memorySourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -202,7 +206,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->addQueryRequest("",
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
@@ -249,8 +253,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 
 TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
@@ -294,9 +297,15 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect + 1, 0, GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
-    wrkConf->physicalSourceTypes.add(physicalSource);
+    auto memorySourceType = MemorySourceType::create("memory_stream",
+                                                     "memory_stream_0",
+                                                     memArea,
+                                                     memAreaSize,
+                                                     buffersToExpect + 1,
+                                                     0,
+                                                     GatheringMode::INTERVAL_MODE);
+
+    wrkConf->physicalSourceTypes.add(memorySourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -308,7 +317,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
 
     //register query
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->addQueryRequest("",
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,

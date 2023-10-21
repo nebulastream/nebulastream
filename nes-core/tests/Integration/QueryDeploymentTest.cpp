@@ -19,6 +19,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Coordinator/LogicalSourceType.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -258,12 +260,12 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
 
-    auto schema = Schema::create()
-                      ->addField(createField("id", BasicType::UINT64))
-                      ->addField(createField("value", BasicType::UINT64))
-                      ->addField(createField("timestamp", BasicType::UINT64));
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails = {{"id", "UINT64", "0"},
+                                                                         {"value", "UINT64", "0"},
+                                                                         {"timestamp", "UINT64", "0"}};
+    auto schemaType = Configurations::SchemaType::create(schemaFiledDetails);
 
-    auto logicalSource = LogicalSource::create("window1", schema);
+    auto logicalSource = Configurations::LogicalSourceType::create("window1", schemaType);
     coordinatorConfig->logicalSourceTypes.add(logicalSource);
 
     coordinatorConfig->worker.enableSourceSharing = true;
@@ -449,12 +451,13 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
 
-    auto schema = Schema::create()
-                      ->addField(createField("id", BasicType::UINT64))
-                      ->addField(createField("value", BasicType::UINT64))
-                      ->addField(createField("timestamp", BasicType::UINT64));
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails = {{"id", "UINT64", ""},
+                                                                         {"value", "UINT64", ""},
+                                                                         {"timestamp", "UINT64", ""}};
+    auto schemaType = Configurations::SchemaType::create(schemaFiledDetails);
 
-    auto logicalSource = LogicalSource::create("window1", schema);
+    auto logicalSource = Configurations::LogicalSourceType::create("window1", schemaType);
+
     coordinatorConfig->logicalSourceTypes.add(logicalSource);
 
     coordinatorConfig->worker.enableSourceSharing = true;
@@ -774,22 +777,23 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema =
-        Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT64))
+                          ->addField(createField("id", BasicType::UINT64))
+                          ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("stream", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
     csvSourceType1->setSkipHeader(true);
-    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -832,8 +836,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    auto testSchema =
-        Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT64))
+                          ->addField(createField("id", BasicType::UINT64))
+                          ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -930,10 +936,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create("default_logical", "physical_car");
     defaultSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(defaultSourceType1);
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->workerHealthCheckWaitTime = 1;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
@@ -978,9 +983,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     NES_INFO("QueryDeploymentTest: Start worker 1");
     auto wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort = (port);
-    auto defaultSource1 = DefaultSourceType::create();
-    auto physicalSource1 = PhysicalSource::create("default_logical", "x1", defaultSource1);
-    wrkConf1->physicalSourceTypes.add(physicalSource1);
+    auto defaultSource1 = DefaultSourceType::create("default_logical", "x1");
+    wrkConf1->physicalSourceTypes.add(defaultSource1);
     wrkConf1->enableStatisticOuput = true;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -990,9 +994,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     NES_INFO("QueryDeploymentTest: Start worker 2");
     auto wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = (port);
-    auto defaultSource2 = DefaultSourceType::create();
-    auto physicalSource2 = PhysicalSource::create("default_logical", "x2", defaultSource2);
-    wrkConf2->physicalSourceTypes.add(physicalSource2);
+    auto defaultSource2 = DefaultSourceType::create("default_logical", "x2");
+    wrkConf2->physicalSourceTypes.add(defaultSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -1083,8 +1086,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT64))
+                          ->addField(createField("id", BasicType::UINT64))
+                          ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1092,23 +1097,21 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("stream1", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1);
     csvSourceType1->setSkipHeader(true);
-    auto physicalSource1 = PhysicalSource::create("stream1", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
 
-    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create("stream2", "test_stream");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(1);
     csvSourceType2->setSkipHeader(true);
-    auto physicalSource2 = PhysicalSource::create("stream2", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource2);
+    workerConfig1->physicalSourceTypes.add(csvSourceType2);
 
     workerConfig1->sourcePinList = ("0,1");
     workerConfig1->queuePinList = ("0,1");
@@ -1178,8 +1181,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT64))
+                          ->addField(createField("id", BasicType::UINT64))
+                          ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1188,23 +1193,21 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("stream1", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(100);
     csvSourceType1->setSkipHeader(true);
-    auto physicalSource1 = PhysicalSource::create("stream1", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
 
-    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create("stream2", "test_stream");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(100);
     csvSourceType2->setSkipHeader(true);
-    auto physicalSource2 = PhysicalSource::create("stream2", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource2);
+    workerConfig1->physicalSourceTypes.add(csvSourceType2);
 
     workerConfig1->sourcePinList = ("0,1");
     workerConfig1->queuePinList = ("0,1");
@@ -1277,9 +1280,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
-    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create("default_logical", "physical_car");
+    workerConfig1->physicalSourceTypes.add(defaultSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -1288,9 +1290,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     NES_DEBUG("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
-    auto physicalSource2 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create("default_logical", "physical_car");
+    workerConfig2->physicalSourceTypes.add(defaultSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -1387,11 +1388,17 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    auto csvSourceType = CSVSourceType::create();
+    auto csvSourceType = CSVSourceType::create("window", "window_p1");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(2);
     csvSourceType->setSkipHeader(false);
+
+    auto csvSourceType2 = CSVSourceType::create("window2", "window_p2");
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(false);
 
     string query =
         R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
@@ -1400,8 +1407,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
                                   .enableNautilus()
                                   .addLogicalSource("window", testSchema)
                                   .addLogicalSource("window2", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
-                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType2)
                                   .validate()
                                   .setupTopology();
 
@@ -1449,8 +1456,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
-    std::string testSchema =
-        R"(Schema::create()->addField(createField("value", BasicType::UINT64))->addField(createField("id", BasicType::UINT64))->addField(createField("timestamp", BasicType::UINT64));)";
+    auto testSchema = Schema::create()
+                          ->addField(createField("value", BasicType::UINT64))
+                          ->addField(createField("id", BasicType::UINT64))
+                          ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
     crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
@@ -1459,23 +1468,21 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
-    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("stream1", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(100);
     csvSourceType1->setSkipHeader(true);
-    auto physicalSource1 = PhysicalSource::create("stream1", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource1);
+    workerConfig1->physicalSourceTypes.add(csvSourceType1);
 
-    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create("stream2", "test_stream");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(100);
     csvSourceType2->setSkipHeader(true);
-    auto physicalSource2 = PhysicalSource::create("stream2", "test_stream", csvSourceType1);
-    workerConfig1->physicalSourceTypes.add(physicalSource2);
+    workerConfig1->physicalSourceTypes.add(csvSourceType2);
 
     workerConfig1->sourcePinList = "0,1";
     workerConfig1->numWorkerThreads = 2;
@@ -1555,7 +1562,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
 
-    auto csvSourceType = CSVSourceType::create();
+    auto csvSourceType = CSVSourceType::create("window", "window_p1");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(2);
@@ -1567,7 +1574,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNautilus()
                                   .addLogicalSource("window", windowSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()
                                   .setupTopology();
 
@@ -1630,14 +1637,14 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
-    auto csvSourceType1 = CSVSourceType::create();
+    auto csvSourceType1 = CSVSourceType::create("window1", "window_p1");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     csvSourceType1->setGatheringInterval(0);
     csvSourceType1->setSkipHeader(false);
 
-    auto csvSourceType2 = CSVSourceType::create();
+    auto csvSourceType2 = CSVSourceType::create("window2", "window_p2");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
@@ -1651,8 +1658,8 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
                                   .enableNautilus()
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
-                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType2)
                                   .validate()
                                   .setupTopology();
 
@@ -1715,17 +1722,23 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
-    auto csvSourceType1 = CSVSourceType::create();
+    auto csvSourceType1 = CSVSourceType::create("window1", "window_p1");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     csvSourceType1->setSkipHeader(false);
 
-    auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
+    auto csvSourceType2 = CSVSourceType::create("window1", "window_p2");
+    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     csvSourceType2->setSkipHeader(false);
+
+    auto csvSourceType3 = CSVSourceType::create("window2", "window_p3");
+    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType3->setNumberOfBuffersToProduce(2);
+    csvSourceType3->setSkipHeader(false);
 
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
@@ -1734,9 +1747,9 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
                                   .enableNautilus()
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
-                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
-                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType2)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType3)
                                   .validate()
                                   .setupTopology();
 
@@ -1804,17 +1817,29 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
-    auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
-    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType1->setNumberOfBuffersToProduce(2);
-    csvSourceType1->setSkipHeader(false);
+    auto csvSourceType1_1 = CSVSourceType::create("window1", "window1_p1");
+    csvSourceType1_1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1_1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1_1->setNumberOfBuffersToProduce(2);
+    csvSourceType1_1->setSkipHeader(false);
 
-    auto csvSourceType2 = CSVSourceType::create();
-    csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
-    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType2->setNumberOfBuffersToProduce(2);
-    csvSourceType2->setSkipHeader(false);
+    auto csvSourceType1_2 = CSVSourceType::create("window1", "window1_p2");
+    csvSourceType1_2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    csvSourceType1_2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1_2->setNumberOfBuffersToProduce(2);
+    csvSourceType1_2->setSkipHeader(false);
+
+    auto csvSourceType2_1 = CSVSourceType::create("window2", "window2_p1");
+    csvSourceType2_1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2_1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2_1->setNumberOfBuffersToProduce(2);
+    csvSourceType2_1->setSkipHeader(false);
+
+    auto csvSourceType2_2 = CSVSourceType::create("window2", "window2_p2");
+    csvSourceType2_2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
+    csvSourceType2_2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2_2->setNumberOfBuffersToProduce(2);
+    csvSourceType2_2->setSkipHeader(false);
 
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
@@ -1823,10 +1848,10 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
                                   .enableNautilus()
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
-                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
-                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
-                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType1_1)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType1_2)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType2_1)
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType2_2)
                                   .validate()
                                   .setupTopology();
 
@@ -1883,16 +1908,22 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    auto window = Schema::create()
+                      ->addField(createField("win1", BasicType::UINT64))
+                      ->addField(createField("id1", BasicType::UINT64))
+                      ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
-    std::string window2 =
-        R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    auto window2 = Schema::create()
+                       ->addField(createField("win2", BasicType::UINT64))
+                       ->addField(createField("id2", BasicType::UINT64))
+                       ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
-    std::string window3 =
-        R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
+    auto window3 = Schema::create()
+                       ->addField(createField("win3", BasicType::UINT64))
+                       ->addField(createField("id3", BasicType::UINT64))
+                       ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -1907,12 +1938,11 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     NES_DEBUG("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
-    auto csvSourceType2 = CSVSourceType::create();
+    auto csvSourceType2 = CSVSourceType::create("window2", "test_stream");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
-    auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
+    workerConfig2->physicalSourceTypes.add(csvSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -1922,12 +1952,12 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     NES_DEBUG("QueryDeploymentTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = *rpcCoordinatorPort;
-    auto csvSourceType3 = CSVSourceType::create();
+    auto csvSourceType3 = CSVSourceType::create("window3", "test_stream");
     csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
-    auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
-    workerConfig3->physicalSourceTypes.add(physicalSource3);
+    workerConfig3->physicalSourceTypes.add(csvSourceType3);
+
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
@@ -1937,12 +1967,11 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
     NES_DEBUG("QueryDeploymentTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = *rpcCoordinatorPort;
-    auto csvSourceType4 = CSVSourceType::create();
+    auto csvSourceType4 = CSVSourceType::create("window3", "test_stream");
     csvSourceType4->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(2);
-    auto physicalSource4 = PhysicalSource::create("window3", "test_stream", csvSourceType4);
-    workerConfig4->physicalSourceTypes.add(physicalSource4);
+    workerConfig4->physicalSourceTypes.add(csvSourceType4);
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
@@ -2033,16 +2062,22 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    auto window = Schema::create()
+                      ->addField(createField("win1", BasicType::UINT64))
+                      ->addField(createField("id1", BasicType::UINT64))
+                      ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
-    std::string window2 =
-        R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    auto window2 = Schema::create()
+                       ->addField(createField("win2", BasicType::UINT64))
+                       ->addField(createField("id2", BasicType::UINT64))
+                       ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
-    std::string window3 =
-        R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
+    auto window3 = Schema::create()
+                       ->addField(createField("win3", BasicType::UINT64))
+                       ->addField(createField("id3", BasicType::UINT64))
+                       ->addField(createField("timestamp", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -2057,12 +2092,11 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     NES_DEBUG("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    auto csvSourceType2 = CSVSourceType::create();
+    auto csvSourceType2 = CSVSourceType::create("window2", "test_stream");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
-    auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
-    workerConfig2->physicalSourceTypes.add(physicalSource2);
+    workerConfig2->physicalSourceTypes.add(csvSourceType2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -2072,12 +2106,11 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     NES_DEBUG("QueryDeploymentTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
-    auto csvSourceType3 = CSVSourceType::create();
+    auto csvSourceType3 = CSVSourceType::create("window3", "test_stream");
     csvSourceType3->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
-    auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
-    workerConfig3->physicalSourceTypes.add(physicalSource3);
+    workerConfig3->physicalSourceTypes.add(csvSourceType3);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
@@ -2087,12 +2120,11 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     NES_DEBUG("QueryDeploymentTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->coordinatorPort = port;
-    auto csvSourceType4 = CSVSourceType::create();
+    auto csvSourceType4 = CSVSourceType::create("window3", "test_stream");
     csvSourceType4->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(2);
-    auto physicalSource4 = PhysicalSource::create("window3", "test_stream", csvSourceType4);
-    workerConfig4->physicalSourceTypes.add(physicalSource4);
+    workerConfig4->physicalSourceTypes.add(csvSourceType4);
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
