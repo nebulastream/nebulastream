@@ -121,4 +121,6 @@ ExpressionNodePtr CASE(std::vector<ExpressionNodePtr> whenExpressions, Expressio
 
 ExpressionNodePtr ExpressionItem::getExpressionNode() const { return expression; }
 
+ExpressionItem::operator ExpressionNodePtr() { return expression; }
+
 }// namespace NES
