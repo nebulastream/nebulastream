@@ -23,7 +23,7 @@ class NEBitDataGenerator : public DataGenerator {
 
     std::string getName() override;
     std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
-
+    Configurations::SchemaTypePtr getSchemaType() override;
     SchemaPtr getSchema() override;
     std::string toString() override;
 };
