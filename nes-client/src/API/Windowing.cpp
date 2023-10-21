@@ -23,12 +23,12 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <utility>
 
 namespace NES::API {
 
-WindowAggregation::WindowAggregation(const Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) :aggregation(windowAggregationDescriptor) {
-
-}
+WindowAggregation::WindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor)
+    : aggregation(std::move(windowAggregationDescriptor)) {}
 
 API::WindowAggregationPtr WindowAggregation::as(const NES::ExpressionItem& asField) {
     return std::make_shared<API::WindowAggregation>(aggregation->as(asField.getExpressionNode()));

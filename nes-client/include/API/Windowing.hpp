@@ -48,11 +48,9 @@ namespace NES::API {
 
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-
 class WindowAggregation {
-
   public:
-    WindowAggregation(const Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
+    WindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
     API::WindowAggregationPtr as(const ExpressionItem& asField);
     const Windowing::WindowAggregationDescriptorPtr aggregation;
 };
