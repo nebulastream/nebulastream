@@ -17,9 +17,16 @@ add_subdirectory(src)
 
 get_source(nes-operators NES_OPERATORS_SOURCE_FILES)
 
+# Library containing OPC client
+if (NES_USE_OPC)
+    find_package(open62541 CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} open62541::open62541)
+    add_compile_definitions(ENABLE_OPC_BUILD)
+endif (NES_USE_OPC)
+
 # Add Library
 add_library(nes-operators SHARED ${NES_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-operators PUBLIC nes-data-types nes-grpc)
+target_link_libraries(nes-operators PUBLIC nes-data-types nes-grpc ${LIBRARIES})
 target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
