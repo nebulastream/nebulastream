@@ -14,6 +14,7 @@
 
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <E2E/E2ESingleRun.hpp>
@@ -57,12 +58,9 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
-    coordinatorConf->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode =
-        QueryCompilation::DumpMode::FILE_AND_CONSOLE;
-    coordinatorConf->worker.queryCompiler.nautilusBackend =
-        QueryCompilation::QueryCompilerOptions::NautilusBackend::MLIR_COMPILER;
+    coordinatorConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConf->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::FILE_AND_CONSOLE;
+    coordinatorConf->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
 
     coordinatorConf->worker.queryCompiler.pageSize = configPerRun.pageSize->getValue();
     coordinatorConf->worker.queryCompiler.numberOfPartitions = configPerRun.numberOfPartitions->getValue();
@@ -99,9 +97,8 @@ void E2ESingleRun::createSources() {
     for (const auto& item : configOverAllRuns.sourceNameToDataGenerator) {
         auto logicalSourceName = item.first;
         auto dataGenerator = item.second.get();
-        auto schema = dataGenerator->getSchema();
 
-        auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+        auto logicalSource = LogicalSourceType::create(logicalSourceName, dataGenerator->getSchemaType());
         coordinatorConf->logicalSourceTypes.add(logicalSource);
 
         auto numberOfPhysicalSrc = configPerRun.logicalSrcToNoPhysicalSrc[logicalSource->getLogicalSourceName()];
@@ -122,9 +119,9 @@ void E2ESingleRun::createSources() {
             auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
                                                             configPerRun.bufferSizeInBytes->getValue());
 
-            auto sourceConfig = createPhysicalSourceType(createdBuffers, sourceCnt, i, generatorName);
-            auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
-            coordinatorConf->worker.physicalSourceTypes.add(physicalSource);
+            auto sourceConfig =
+                createPhysicalSourceType(logicalSourceName, physicalStreamName, createdBuffers, sourceCnt, i, generatorName);
+            coordinatorConf->worker.physicalSourceTypes.add(sourceConfig);
 
             sourceCnt++;
             NES_INFO("Created {} for {}", physicalStreamName, logicalSource->getLogicalSourceName());
@@ -387,7 +384,9 @@ bool E2ESingleRun::waitForQueryToStop(NES::QueryId queryId,
     return false;
 }
 
-PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::vector<Runtime::TupleBuffer>& createdBuffers,
+PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::string logicalSourceName,
+                                                             std::string physicalSourceName,
+                                                             std::vector<Runtime::TupleBuffer>& createdBuffers,
                                                              size_t sourceCnt,
                                                              uint64_t groupId,
                                                              std::string& generator) {
@@ -398,7 +397,7 @@ PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::vector<Runtime
         auto connectionStringVec =
             NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
 
-        auto kafkaSourceType = KafkaSourceType::create();
+        auto kafkaSourceType = KafkaSourceType::create(logicalSourceName, physicalSourceName);
         kafkaSourceType->setBrokers(connectionStringVec[0]);
         kafkaSourceType->setTopic(connectionStringVec[1]);
         kafkaSourceType->setConnectionTimeout(1000);
@@ -426,7 +425,9 @@ PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::vector<Runtime
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
         //TODO #3336: static query manager mode is currently not ported therefore only one queue
         size_t taskQueueId = 0;
-        LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
+        LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(logicalSourceName,
+                                                                    physicalSourceName,
+                                                                    dataProvidingFunc,
                                                                     configOverAllRuns.numberOfBuffersToProduce->getValue(),
                                                                     /* gatheringValue */ 0,
                                                                     GatheringMode::INTERVAL_MODE,

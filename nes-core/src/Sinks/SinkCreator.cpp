@@ -20,6 +20,7 @@
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MonitoringSink.hpp>
+#include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
@@ -293,7 +294,7 @@ DataSinkPtr createOPCSink(SchemaPtr schema,
                           std::string password) {
     NES_DEBUG("plz fix me {}", querySubPlanId);
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<OPCSink>(format, nodeEngine->getQueryManager(), url, nodeId, user, password, queryId, querySubPlanId);
+    return std::make_shared<OPCSink>(format, nodeEngine, url, nodeId, user, password, queryId, querySubPlanId);
 }
 #endif
 

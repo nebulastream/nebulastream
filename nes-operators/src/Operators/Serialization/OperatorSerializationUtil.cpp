@@ -1127,11 +1127,11 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
     }
 #endif
 #ifdef ENABLE_OPC_BUILD
-    else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {
+    else if (sourceDescriptor.instanceOf<OPCSourceDescriptor>()) {
         // serialize opc source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
-        auto opcSourceDescriptor = sourceDescriptor->as<OPCSourceDescriptor>();
+        auto opcSourceDescriptor = sourceDescriptor.as<const OPCSourceDescriptor>();
         auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
         char* ident = (char*) UA_malloc(sizeof(char) * opcSourceDescriptor->getNodeId().identifier.string.length + 1);
         memcpy(ident,
@@ -1147,7 +1147,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(opcSourceDescriptor->getSchema(),
                                                  opcSerializedSourceDescriptor.mutable_sourceschema());
-        sourceDetails->mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
+        sourceDetails.mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
     }
 #endif
     else if (sourceDescriptor.instanceOf<const TCPSourceDescriptor>()) {
@@ -1558,7 +1558,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         // serialize opc sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
                   "SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor");
-        auto opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
+        auto opcSinkDescriptor = sinkDescriptor.as<const OPCSinkDescriptor>();
         auto opcSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
         char* ident = (char*) UA_malloc(sizeof(char) * opcSinkDescriptor->getNodeId().identifier.string.length + 1);
         memcpy(ident,
@@ -1572,7 +1572,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         opcSerializedSinkDescriptor.set_identifiertype(opcSinkDescriptor->getNodeId().identifierType);
         opcSerializedSinkDescriptor.set_user(opcSinkDescriptor->getUser());
         opcSerializedSinkDescriptor.set_password(opcSinkDescriptor->getPassword());
-        sinkDetails->mutable_sinkdescriptor()->PackFrom(opcSerializedSinkDescriptor);
+        sinkDetails.mutable_sinkdescriptor()->PackFrom(opcSerializedSinkDescriptor);
     }
 #endif
     else if (sinkDescriptor.instanceOf<const MQTTSinkDescriptor>()) {

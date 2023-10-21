@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -83,6 +84,17 @@ NES::SchemaPtr DefaultDataGenerator::getSchema() {
         ->addField(createField("value", BasicType::UINT64))
         ->addField(createField("payload", BasicType::UINT64))
         ->addField(createField("timestamp", BasicType::UINT64));
+}
+
+Configurations::SchemaTypePtr DefaultDataGenerator::getSchemaType() {
+    const char* length = "0";
+    const char* dataType = "UINT64";
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    schemaFiledDetails.emplace_back("id", dataType, length);
+    schemaFiledDetails.emplace_back("value", dataType, length);
+    schemaFiledDetails.emplace_back("payload", dataType, length);
+    schemaFiledDetails.emplace_back("timestamp", dataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
 std::string DefaultDataGenerator::getName() { return "Uniform"; }

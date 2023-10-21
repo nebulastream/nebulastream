@@ -46,6 +46,12 @@ class DefaultDataGenerator : public DataGenerator {
     SchemaPtr getSchema() override;
 
     /**
+     * @brief overrides the schema from the abstract parent class
+     * @return schema from a DefaultDataGenerator
+     */
+    Configurations::SchemaTypePtr getSchemaType() override;
+
+    /**
      * @brief overrides the name from the abstract parent class
      * @return name
      */

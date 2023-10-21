@@ -41,7 +41,7 @@ class OPCSink : public SinkMedium {
      * @param password to access the server
      */
     explicit OPCSink(SinkFormatPtr format,
-                     Runtime::QueryManagerPtr queryManager,
+                     Runtime::NodeEnginePtr nodeEngine,
                      const std::string& url,
                      UA_NodeId nodeId,
                      std::string user,
@@ -52,7 +52,7 @@ class OPCSink : public SinkMedium {
     /**
      * @brief dtor
      */
-    ~OPCSink() NES_NOEXCEPT(false) override;
+    ~OPCSink() override;
 
     /**
      * @brief method to write a TupleBuffer

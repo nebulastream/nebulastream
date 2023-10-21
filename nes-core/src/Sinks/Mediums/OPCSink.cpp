@@ -13,53 +13,48 @@
 */
 
 #ifdef ENABLE_OPC_BUILD
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <cstring>
-#include <sstream>
-#include <string>
-
-#include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
-
+#include <cstring>
+#include <iostream>
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
-#include <open62541/client_subscriptions.h>
 #include <open62541/plugin/log_stdout.h>
-
-#include <iostream>
-#include <stdlib.h>
+#include <sstream>
+#include <string>
+#include <utility>
 
 namespace NES {
 
 OPCSink::OPCSink(SinkFormatPtr format,
-                 Runtime::QueryManagerPtr queryManager,
+                 Runtime::NodeEnginePtr nodeEngine,
                  const std::string& url,
                  UA_NodeId nodeId,
                  std::string user,
                  std::string password,
                  QueryId queryId,
                  QuerySubPlanId querySubPlanId)
-    : SinkMedium(std::move(format), queryManager, queryId, querySubPlanId), connected(false), url(url), nodeId(nodeId),
+    : SinkMedium(std::move(format), nodeEngine, 1, queryId, querySubPlanId), connected(false), url(url), nodeId(nodeId),
       user(std::move(std::move(user))), password(std::move(password)), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()) {
-    NES_DEBUG("OPCSINK   {} : Init OPC Sink to  {}  . {}", this, url);
+    NES_DEBUG("OPCSINK   {} : Init OPC Sink to  {}.", this->toString(), url);
 }
 
 OPCSink::~OPCSink() {
     NES_DEBUG("OPCSink::~OPCSink: destructor called");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG("OPCSink   {} : Destroy OPC Sink", this);
+        NES_DEBUG("OPCSink   {} : Destroy OPC Sink", this->toString());
     } else {
         NES_ASSERT2_FMT(false, "OPCSink  " << this << ": Destroy OPC Sink failed because it could not be disconnected");
     }
-    NES_DEBUG("OPCSink   {} : Destroy OPC Sink", this);
+    NES_DEBUG("OPCSink   {} : Destroy OPC Sink", this->toString());
 }
 
 bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     std::unique_lock lock(writeMutex);
-    NES_DEBUG("OPCSINK::writeData()   {}", this);
+    NES_DEBUG("OPCSINK::writeData()   {}", this->toString());
     NES_DEBUG("OPCSINK::writeData url:  {} .", url);
     if (connect()) {
 
@@ -105,8 +100,8 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         }
         UA_delete(var, var->type);
 
-        NES_DEBUG("OPCSOURCE::receiveData()   {} : got buffer ", this);
-        NES_DEBUG("OPCSINK::writeData() UA_StatusCode is:  {}", std::hex << retval);
+        NES_DEBUG("OPCSOURCE::receiveData()   {} : got buffer ", this->toString());
+        NES_DEBUG("OPCSINK::writeData() UA_StatusCode is:  {}", retval);
 
     } else {
         NES_ERROR("OPCSOURCE::receiveData(): Not connected!");
@@ -138,7 +133,7 @@ bool OPCSink::connect() {
 
     if (!connected) {
 
-        NES_DEBUG("OPCSINK::connect(): was !conncect now connect  {} : connected", this);
+        NES_DEBUG("OPCSINK::connect(): was !conncect now connect  {} : connected", this->toString());
         retval = UA_Client_connect(client, url.c_str());
         NES_DEBUG("OPCSINK::connect(): connected without user or password");
         NES_DEBUG("OPCSINK::connect(): use address  {}", url);
@@ -147,7 +142,7 @@ bool OPCSink::connect() {
 
             UA_Client_delete(client);
             connected = false;
-            NES_ERROR("OPCSINK::connect(): ERROR with Status Code: {} OPCSINK {}: set connected false", retval, this);
+            NES_ERROR("OPCSINK::connect(): ERROR with Status Code: {} OPCSINK {}: set connected false", retval, this->toString());
         } else {
 
             connected = true;
@@ -155,9 +150,9 @@ bool OPCSink::connect() {
     }
 
     if (connected) {
-        NES_DEBUG("OPCSINK::connect():   {} : connected", this);
+        NES_DEBUG("OPCSINK::connect():   {} : connected", this->toString());
     } else {
-        NES_DEBUG("Exception: OPCSINK::connect():   {} : NOT connected", this);
+        NES_DEBUG("Exception: OPCSINK::connect():   {} : NOT connected", this->toString());
     }
     return connected;
 }
@@ -173,9 +168,9 @@ bool OPCSink::disconnect() {
         connected = false;
     }
     if (!connected) {
-        NES_DEBUG("OPCSINK::disconnect()   {} : disconnected", this);
+        NES_DEBUG("OPCSINK::disconnect()   {} : disconnected", this->toString());
     } else {
-        NES_DEBUG("OPCSINK::disconnect()   {} : NOT disconnected", this);
+        NES_DEBUG("OPCSINK::disconnect()   {} : NOT disconnected", this->toString());
     }
     return !connected;
 }

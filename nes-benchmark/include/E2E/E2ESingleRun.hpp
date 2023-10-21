@@ -110,7 +110,9 @@ class E2ESingleRun {
      * @param generator
      * @return KafkaSourceType or LambdaSourceType
      */
-    PhysicalSourceTypePtr createPhysicalSourceType(std::vector<Runtime::TupleBuffer>& createdBuffers,
+    PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalSourceName,
+                                                   std::string physicalSourceName,
+                                                   std::vector<Runtime::TupleBuffer>& createdBuffers,
                                                    size_t sourceCnt,
                                                    uint64_t groupId,
                                                    std::string& generator);

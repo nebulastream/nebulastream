@@ -15,25 +15,27 @@
 #ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/PhysicalSourceConfig.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/TestUtils.hpp>
 #include <cstring>
+#include <future>
 #include <gtest/gtest.h>
 #include <open62541/plugin/pki_default.h>
 #include <open62541/server.h>
 #include <open62541/server_config_default.h>
 #include <string>
 #include <thread>
-
-#include <future>
 
 const std::string& url = "opc.tcp://localhost:4840";
 //static const UA_NodeId baseDataVariableType = {0, UA_NODEIDTYPE_NUMERIC, {UA_NS0ID_BASEDATAVARIABLETYPE}};
@@ -55,9 +57,9 @@ class OPCSinkTest : public Testing::BaseUnitTest {
     void SetUp() {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
-        PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
-        auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->physicalSources.add(conf);
+        auto conf = DefaultSourceType::create("LogicalSourceName", "PhysicalSourceName");
+        auto workerConfiguration = Configurations::WorkerConfiguration::create();
+        workerConfiguration->physicalSourceTypes.add(conf);
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
@@ -65,7 +67,6 @@ class OPCSinkTest : public Testing::BaseUnitTest {
 
     /* Will be called after a test is executed. */
     void TearDown() {
-        nodeEngine->stop();
         nodeEngine.reset();
         NES_DEBUG("OPCSINKTEST::TearDown() Tear down OPCSourceTest");
     }
@@ -153,7 +154,7 @@ class OPCSinkTest : public Testing::BaseUnitTest {
  * Tests basic set up of OPC sink
  */
 TEST_F(OPCSinkTest, OPCSourceInit) {
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, 0, nodeEngine, url, nodeId, user, password);
     SUCCEED();
 }
 
@@ -161,7 +162,7 @@ TEST_F(OPCSinkTest, OPCSourceInit) {
  * Test if schema, OPC server url, and node index are the same
  */
 TEST_F(OPCSinkTest, OPCSourcePrint) {
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, 0, nodeEngine, url, nodeId, user, password);
     std::string expected =
         "OPC_SINK(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the answer. ";
     EXPECT_EQ(opcSink->toString(), expected);
@@ -181,30 +182,30 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     t1.detach();
     p.get_future().wait();
     auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId());
+    Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     Runtime::TupleBuffer write_buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     write_buffer.getBuffer<uint32_t>()[0] = 45;
     write_buffer.setNumberOfTuples(1);
-    auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
+    auto opcSink = createOPCSink(test_schema, 0, 0, nodeEngine, url, nodeId, user, password);
 
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, write_buffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, write_buffer);
-    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: {}", dynamicTupleBuffer);
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: {}", dynamicTupleBuffer.toString(test_schema));
 
-    opcSink->writeData(write_buffer, wctx);
+    opcSink->writeData(write_buffer, workerContext);
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();
 
-    auto nodeEngine1 = Runtime::create("127.0.0.1", 31338, PhysicalSourceConfig::createEmpty());
     auto opcSource = createOPCSource(test_schema,
-                                     nodeEngine1->getBufferManager(),
-                                     nodeEngine1->getQueryManager(),
+                                     nodeEngine->getBufferManager(),
+                                     nodeEngine->getQueryManager(),
                                      url,
                                      nodeId,
                                      user,
                                      password,
                                      1,
                                      12,
+                                     "physicalSource",
                                      {});
     opcSource->open();
     auto tuple_buffer = opcSource->receiveData();
@@ -216,7 +217,6 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) expected value is: {}. Received value is: {}", expected, value);
     EXPECT_EQ(value, expected);
     tuple_buffer->release();
-    nodeEngine1->stop();
     stopServer();
 }
 }// namespace NES

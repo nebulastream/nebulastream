@@ -44,6 +44,7 @@
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
@@ -51,6 +52,7 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
@@ -208,11 +210,11 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
 
 #if ENABLE_OPC_BUILD
     {
-        UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
+        UA_NodeId nodeId = UA_NODEID_STRING(1, (char*) "the.answer");
         auto source = OPCSourceDescriptor::create(schema, "localhost", nodeId, "", "");
-        auto serializedSourceDescriptor =
-            OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
+        SerializableOperator_SourceDetails sourceDetails;
+        OperatorSerializationUtil::serializeSourceDescriptor(*source, sourceDetails);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(sourceDetails);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 #endif
@@ -301,11 +303,11 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
 
 #if ENABLE_OPC_BUILD
     {
-        UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
+        UA_NodeId nodeId = UA_NODEID_STRING(1, (char*) "the.answer");
         auto sink = OPCSinkDescriptor::create("localhost", nodeId, "", "");
-        auto serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
-        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
+        SerializableOperator_SinkDetails sinkDescriptor;
+        OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, 0);
+        auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(sinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 #endif
@@ -776,7 +778,7 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
 
     auto schema = Schema::create();
     schema->addField("f1", BasicType::INT32);
-    UA_NodeId nodeId = UA_NODEID_STRING(1, "the.answer");
+    UA_NodeId nodeId = UA_NODEID_STRING(1, (char*) "the.answer");
     auto source = LogicalOperatorFactory::createSourceOperator(OPCSourceDescriptor::create(schema, "localhost", nodeId, "", ""));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
@@ -787,7 +789,8 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
 
     auto queryPlan = QueryPlan::create(1, 1, {sink});
 
-    auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    auto serializedQueryPlan = new SerializableQueryPlan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());

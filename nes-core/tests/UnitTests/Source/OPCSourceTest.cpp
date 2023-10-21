@@ -15,21 +15,21 @@
 #include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 #ifdef ENABLE_OPC_BUILD
-#include <Catalogs/PhysicalSourceConfig.hpp>
-#include <cstring>
-#include <future>
-#include <iostream>
-#include <string>
-
-#include <open62541/plugin/pki_default.h>
-#include <open62541/server.h>
-#include <open62541/server_config_default.h>
-
 #include <API/Schema.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <cstring>
+#include <future>
+#include <iostream>
+#include <open62541/plugin/pki_default.h>
+#include <open62541/server.h>
+#include <open62541/server_config_default.h>
+#include <string>
 #include <thread>
 
 const std::string& url = "opc.tcp://localhost:4840";
@@ -39,7 +39,7 @@ static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
-class OPCSourceTest : public Testing::BaseUnitTest {
+class OPCSourceTest : public Testing::BaseIntegrationTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -48,29 +48,25 @@ class OPCSourceTest : public Testing::BaseUnitTest {
     }
 
     void SetUp() {
+        Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("OPCSOURCETEST::SetUp() OPCSourceTest cases set up.");
-
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
-
-        PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
-        auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->physicalSources.add(conf);
+        auto workerConfigurations = Configurations::WorkerConfiguration::create();
+        auto defaultSourceType = DefaultSourceType::create("logical", "physical");
+        workerConfigurations->physicalSourceTypes.add(defaultSourceType);
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
-
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
-
         buffer_size = bufferManager->getBufferSize();
-
         ASSERT_GT(buffer_size, 0ULL);
     }
 
     /* Will be called after a test is executed. */
     void TearDown() {
-        nodeEngine->stop();
-        nodeEngine.reset();
+        Testing::BaseIntegrationTest::TearDown();
+        ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("OPCSOURCETEST::TearDown() Tear down OPCSourceTest");
     }
 
@@ -161,7 +157,7 @@ class OPCSourceTest : public Testing::BaseUnitTest {
  */
 TEST_F(OPCSourceTest, OPCSourceInit) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 0, 12, {});
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, "physicalSource", {});
 
     SUCCEED();
 }
@@ -171,7 +167,7 @@ TEST_F(OPCSourceTest, OPCSourceInit) {
  */
 TEST_F(OPCSourceTest, OPCSourcePrint) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 0, 12, {});
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, "physicalSource", {});
 
     std::string expected =
         "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
@@ -194,7 +190,8 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     });
     t1.detach();
     auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 0, 12, {});
+    auto opcSource =
+        createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, "physicalSource", {});
     opcSource->open();
 
     p.get_future().get();

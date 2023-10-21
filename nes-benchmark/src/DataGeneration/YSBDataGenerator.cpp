@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -56,6 +57,7 @@ std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBu
     NES_INFO("Created all buffers!");
     return createdBuffers;
 }
+
 std::string YSBDataGenerator::toString() {
     std::ostringstream oss;
 
@@ -76,6 +78,24 @@ SchemaPtr YSBDataGenerator::getSchema() {
         ->addField("d2", BasicType::UINT64)
         ->addField("d3", BasicType::UINT32)
         ->addField("d4", BasicType::UINT16);
+}
+
+Configurations::SchemaTypePtr YSBDataGenerator::getSchemaType() {
+    const char* length = "0";
+    const char* dataType = "UINT64";
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    schemaFiledDetails.emplace_back("user_id", dataType, length);
+    schemaFiledDetails.emplace_back("page_id", dataType, length);
+    schemaFiledDetails.emplace_back("campaign_id", dataType, length);
+    schemaFiledDetails.emplace_back("ad_type", dataType, length);
+    schemaFiledDetails.emplace_back("event_type", dataType, length);
+    schemaFiledDetails.emplace_back("current_ms", dataType, length);
+    schemaFiledDetails.emplace_back("ip", dataType, length);
+    schemaFiledDetails.emplace_back("d1", dataType, length);
+    schemaFiledDetails.emplace_back("d2", dataType, length);
+    schemaFiledDetails.emplace_back("d3", dataType, length);
+    schemaFiledDetails.emplace_back("d4", dataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
 }// namespace NES::Benchmark::DataGeneration

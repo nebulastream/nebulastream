@@ -13,9 +13,14 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -25,24 +30,20 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Catalogs/Topology/Index/LocationIndex.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/Core.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <fstream>
 #include <iostream>
 #include <thread>
@@ -80,7 +81,7 @@ class ErrorHandler : public Exceptions::ErrorListener {
 void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
 
     //Create source catalog service
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(nullptr);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     //register logical stream with different schema

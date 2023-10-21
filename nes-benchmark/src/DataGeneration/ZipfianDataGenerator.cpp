@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -30,6 +31,17 @@ NES::SchemaPtr ZipfianDataGenerator::getSchema() {
         ->addField(createField("value", BasicType::UINT64))
         ->addField(createField("payload", BasicType::UINT64))
         ->addField(createField("timestamp", BasicType::UINT64));
+}
+
+Configurations::SchemaTypePtr ZipfianDataGenerator::getSchemaType() {
+    const char* length = "0";
+    const char* dataType = "UINT64";
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
+    schemaFiledDetails.emplace_back("id", dataType, length);
+    schemaFiledDetails.emplace_back("value", dataType, length);
+    schemaFiledDetails.emplace_back("payload", dataType, length);
+    schemaFiledDetails.emplace_back("timestamp", dataType, length);
+    return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
 std::string ZipfianDataGenerator::getName() { return "Zipfian"; }
@@ -96,10 +108,10 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
     NES_INFO("Created all buffers!");
     return createdBuffers;
 }
+
 std::string ZipfianDataGenerator::toString() {
     std::ostringstream oss;
     oss << getName() << " (" << minValue << ", " << maxValue << ", " << alpha << ")";
     return oss.str();
 }
-
 }// namespace NES::Benchmark::DataGeneration
