@@ -55,7 +55,7 @@ PhysicalStreamJoinProbeOperator::create(const SchemaPtr& leftSchema,
                                         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                         QueryCompilation::StreamJoinStrategy joinStrategy,
                                         QueryCompilation::WindowingStrategy windowingStrategy) {
-    return create(Util::getNextOperatorId(),
+    return create(getNextOperatorId(),
                   leftSchema,
                   rightSchema,
                   outputSchema,

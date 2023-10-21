@@ -27,14 +27,6 @@ enum class StreamJoinStrategy : uint8_t {
     NESTED_LOOP_JOIN
 };
 
-enum class WindowingStrategy : uint8_t {
-    // This is the legacy window strategy from the old query compiler
-    LEGACY,
-    // Applies slicing window computations. This is the default on nautilus.
-    SLICING,
-    // Applies bucketing as an alternative to slicing.
-    BUCKETING
-};
 
 enum class JoinBuildSideType : uint8_t { Right, Left };
 template<typename E = JoinBuildSideType, typename Out = uint64_t>

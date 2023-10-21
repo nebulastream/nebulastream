@@ -24,7 +24,7 @@ using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 class SourceDescriptorPlugin {
   public:
     SourceDescriptorPlugin() = default;
-    virtual SourceDescriptorPtr create(SchemaPtr schema, PhysicalSourcePtr physicalSource) = 0;
+    virtual SourceDescriptorPtr create(SchemaPtr schema, PhysicalSourceTypePtr physicalSource) = 0;
 
     virtual ~SourceDescriptorPlugin() = default;
 };
