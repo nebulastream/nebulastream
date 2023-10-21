@@ -1547,20 +1547,21 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthThightResourcesConstrains) {
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
     // Prepare the source and schema
-    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                         "->addField(\"value\", BasicType::UINT64)"
-                         "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
+    auto schema = Schema::create()
+                      ->addField("id", BasicType::UINT32)
+                      ->addField("value", BasicType::UINT64)
+                      ->addField("timestamp", BasicType::UINT64);
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    auto physicalSourceCar = PhysicalSource::create(csvSourceType);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSource, srcNode1);
+     //   std::make_shared<Catalogs::Source::SourceCatalogEntry>(csvSourceType, logicalSource, srcNode1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car").filter(Attribute("value") > 1).sink(NullOutputSinkDescriptor::create());
@@ -1658,20 +1659,23 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrains) {
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
     // Prepare the source and schema
-    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                         "->addField(\"value\", BasicType::UINT64)"
-                         "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
+    auto schema = Schema::create()
+                      ->addField("id", BasicType::UINT32)
+                      ->addField("value", BasicType::UINT64)
+                      ->addField("timestamp", BasicType::UINT64);
     const std::string sourceName = "car";
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addLogicalSource(sourceName, schema);
     auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+
+    auto physicalSourceCar = PhysicalSource::create(csvSourceType);
     Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSource, srcNode1);
+
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car").filter(Attribute("value") > 1).sink(NullOutputSinkDescriptor::create());

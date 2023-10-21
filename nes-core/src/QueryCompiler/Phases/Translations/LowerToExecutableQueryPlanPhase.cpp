@@ -12,14 +12,12 @@
     limitations under the License.
 */
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
@@ -400,8 +398,8 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         }
         default: {
             // check if a plugin can create the correct source descriptor
-            for (const auto& plugin : SourceDescriptorPluginRegistry ::getPlugins()) {
-                auto descriptor = plugin->create(schema, physicalSource);
+            for (const auto& plugin : SourceDescriptorPluginRegistry::getPlugins()) {
+                auto descriptor = plugin->create(schema, physicalSourceType);
                 if (descriptor != nullptr) {
                     return descriptor;
                 }

@@ -2,7 +2,6 @@
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
-add_subdirectory(Optimizer)
 add_subdirectory(Catalogs)
 add_subdirectory(Topology)
 

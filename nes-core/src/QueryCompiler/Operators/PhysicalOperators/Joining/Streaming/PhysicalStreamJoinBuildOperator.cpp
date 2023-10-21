@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -45,7 +46,7 @@ PhysicalStreamJoinBuildOperator::create(const SchemaPtr& inputSchema,
                                         const std::string& joinFieldName,
                                         QueryCompilation::StreamJoinStrategy joinStrategy,
                                         QueryCompilation::WindowingStrategy windowingStrategy) {
-    return create(Util::getNextOperatorId(),
+    return create(getNextOperatorId(),
                   inputSchema,
                   outputSchema,
                   operatorHandler,

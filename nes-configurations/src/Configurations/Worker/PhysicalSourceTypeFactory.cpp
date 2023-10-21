@@ -14,7 +14,7 @@
 
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceFactoryPlugin.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -23,7 +23,9 @@
 #include <Configurations/Worker/PhysicalSourceTypes/OPCSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Configurations {
 
