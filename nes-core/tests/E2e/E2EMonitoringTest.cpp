@@ -16,16 +16,16 @@
 #include <gtest/gtest.h>
 
 #include <API/QueryAPI.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Services/QueryService.hpp>
 
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/MetricValidator.hpp>
 
-#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/MetricCollectorType.hpp>
 
 #include <Util/Logger/Logger.hpp>
 #include <memory>
@@ -209,8 +209,7 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
 
 TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->enableMonitoring = true;
     coordinatorConfig->optimizer.enableNemoPlacement = true;
 
@@ -224,8 +223,7 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->enableMonitoring = true;
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -244,7 +242,7 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
                      .apply(Sum(Attribute("tBytes")))
                      .sink(FileSinkDescriptor::create(outputFilePath, true));
 
-    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+    QueryId queryId = queryService->addQueryRequest("",
                                                     query.getQueryPlan(),
                                                     Optimizer::PlacementStrategy::BottomUp,
                                                     FaultToleranceType::NONE,
