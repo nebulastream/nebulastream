@@ -878,11 +878,11 @@ class NesCEPParser : public antlr4::Parser {
       public:
         AggregationContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
-        antlr4::tree::TerminalNode* AVG();
-        antlr4::tree::TerminalNode* SUM();
-        antlr4::tree::TerminalNode* MIN();
-        antlr4::tree::TerminalNode* MAX();
-        antlr4::tree::TerminalNode* COUNT();
+        antlr4::tree::TerminalNode* AVGNode();
+        antlr4::tree::TerminalNode* SUMNode();
+        antlr4::tree::TerminalNode* MINNode();
+        antlr4::tree::TerminalNode* MAXNode();
+        antlr4::tree::TerminalNode* COUNTNode();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
