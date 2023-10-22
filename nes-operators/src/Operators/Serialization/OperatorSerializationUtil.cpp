@@ -71,10 +71,7 @@
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -137,8 +134,8 @@
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #endif
 #ifdef ENABLE_MQTT_BUILD
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <fstream>
 
@@ -187,26 +184,12 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         serializeInferModelOperator(*operatorNode->as<InferModel::InferModelLogicalOperatorNode>(), serializedOperator);
 #endif// TFDEF
 
-    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
+    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // serialize window operator
-        serializeWindowOperator(*operatorNode->as<CentralWindowOperator>(), serializedOperator);
-
-    } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
-        // serialize window operator
-        serializeWindowOperator(*operatorNode->as<SliceCreationOperator>(), serializedOperator);
-
-    } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
-        // serialize slice merging operator
-        serializeWindowOperator(*operatorNode->as<SliceMergingOperator>(), serializedOperator);
-
-    } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
-        // serialize window operator
-        serializeWindowOperator(*operatorNode->as<WindowComputationOperator>(), serializedOperator);
-
+        serializeWindowOperator(*operatorNode->as<WindowLogicalOperatorNode>(), serializedOperator);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         // serialize streaming join operator
         serializeJoinOperator(*operatorNode->as<JoinLogicalOperatorNode>(), serializedOperator);
-
     } else if (operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>()) {
         // serialize batch join operator
         serializeBatchJoinOperator(*operatorNode->as<Experimental::BatchJoinLogicalOperatorNode>(), serializedOperator);
@@ -839,12 +822,12 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
                                                                 action,
                                                                 allowedLateness);
     windowDef->setOriginId(windowDetails.origin());
-
-    switch (distrChar.distr()) {
+    return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId);
+   /* switch (distrChar.distr()) {
         case SerializableOperator_DistributionCharacteristic_Distribution_Unset:
             return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)->as<WindowOperatorNode>();
         case SerializableOperator_DistributionCharacteristic_Distribution_Complete:
-            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
+            return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)
                 ->as<CentralWindowOperator>();
         case SerializableOperator_DistributionCharacteristic_Distribution_Combining:
             return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
@@ -856,7 +839,7 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
             return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef, operatorId)
                 ->as<SliceCreationOperator>();
         default: NES_NOT_IMPLEMENTED();
-    }
+    }*/
 }
 
 void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNode& joinOperator,

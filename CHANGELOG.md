@@ -908,7 +908,7 @@
 
 **Implemented enhancements:**
 
-- \[TASK\] Refactor DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator [\#3896](https://github.com/nebulastream/nebulastream/issues/3896)
+- \[TASK\] Refactor DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator [\#3896](https://github.com/nebulastream/nebulastream/issues/3896)
 
 ## [v0.5.132](https://github.com/nebulastream/nebulastream/tree/v0.5.132) (2023-07-05)
 

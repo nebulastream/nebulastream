@@ -65,7 +65,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
@@ -668,7 +667,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSliceCreationQuery) {
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSliceSinkOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalWindowSinkOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSlicePreAggregationOperator>());
     ++iterator;
@@ -703,7 +702,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSliceMergingQuery) {
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSliceSinkOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalWindowSinkOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSliceMergingOperator>());
     ++iterator;

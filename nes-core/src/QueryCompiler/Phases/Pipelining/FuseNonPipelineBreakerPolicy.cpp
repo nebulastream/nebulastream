@@ -19,12 +19,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperatorsForwardDeclaration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedTumblingWindowSink.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedTumblingWindowSink.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedWindowSliceStoreAppendOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
@@ -41,12 +36,8 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedTumblingWindowSink>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedThreadLocalPreAggregationOperator>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedTumblingWindowSink>()
-            || physicalOperator->instanceOf<PhysicalOperators::PhysicalNonKeyedWindowSliceStoreAppendOperator>());
+     //       || physicalOperator->instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>()
+       //     || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()
+                );
 }
 }// namespace NES::QueryCompilation

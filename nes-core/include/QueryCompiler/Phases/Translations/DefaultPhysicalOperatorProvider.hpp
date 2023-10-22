@@ -15,11 +15,6 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSliceMergingOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <vector>
@@ -33,22 +28,6 @@ struct WindowOperatorProperties {
     SchemaPtr windowInputSchema;
     SchemaPtr windowOutputSchema;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
-};
-
-/**
- * @brief Stores SliceMergingOperatorHandler and preAggregationOperator for keyed windows
- */
-struct KeyedOperatorHandlers {
-    PhysicalOperators::PhysicalKeyedSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
-    PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
-};
-
-/**
- * @brief Stores SliceMergingOperatorHandler and preAggregationOperator for global windows
- */
-struct GlobalOperatorHandlers {
-    PhysicalOperators::PhysicalNonKeyedSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
-    PhysicalOperators::PhysicalNonKeyedThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
 };
 
 /**
@@ -94,7 +73,7 @@ struct StreamJoinConfigs {
 class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
   public:
     DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options);
-    static PhysicalOperatorProviderPtr create(QueryCompilerOptionsPtr options);
+    static PhysicalOperatorProviderPtr create(const QueryCompilerOptionsPtr& options);
     void lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) override;
     virtual ~DefaultPhysicalOperatorProvider() noexcept = default;
 
@@ -189,7 +168,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    void lowerThreadLocalWindowOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+    void lowerTimeBasedWindowOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode);
 
     /**
     * @brief Lowers a watermark assignment operator
@@ -205,7 +184,6 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     */
     void lowerJoinOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
-
     /**
     * @brief Lowers a join build operator
     * @param queryPlan current plan
@@ -217,35 +195,12 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
 
   private:
     /**
-     * @brief creates preAggregationWindowHandler and sliceMergingOperatorHandler for keyed windows depending on the query compiler
-     * @param windowOperatorProperties
-     * @return GlobalOperatorHandlers
-     */
-    KeyedOperatorHandlers createKeyedOperatorHandlers(WindowOperatorProperties& windowOperatorProperties);
-
-    /**
-     * @brief creates preAggregationWindowHandler and sliceMergingOperatorHandler for global windows depending on the query compiler
-     * @param windowOperatorProperties
-     * @return GlobalOperatorHandlers
-     */
-    GlobalOperatorHandlers createGlobalOperatorHandlers(WindowOperatorProperties& windowOperatorProperties);
-
-    /**
      * @brief replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
      * @param windowOperatorProperties
      * @param operatorNode
      */
-    std::shared_ptr<Node> replaceOperatorNodeTimeBasedKeyedWindow(WindowOperatorProperties& windowOperatorProperties,
-                                                                  const LogicalOperatorNodePtr& operatorNode);
-
-    /**
-     * @brief replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for global windows
-     * @param windowOperatorProperties
-     * @param operatorNode
-     */
-    std::shared_ptr<Node> replaceOperatorNodeTimeBasedNonKeyedWindow(WindowOperatorProperties& windowOperatorProperties,
-                                                                     const LogicalOperatorNodePtr& operatorNode);
-
+    std::shared_ptr<Node> replaceOperatorNodeTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties,
+                                                             const LogicalOperatorNodePtr& operatorNode);
 
     /**
      * @brief Lowers a join operator for the nautilus query compiler

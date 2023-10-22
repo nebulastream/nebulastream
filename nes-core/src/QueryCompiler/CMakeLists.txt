@@ -19,6 +19,5 @@ add_source_files(nes-core
         NautilusQueryCompiler.cpp
         )
 add_subdirectory(Operators)
-add_subdirectory(Compiler)
 add_subdirectory(Phases)
 add_subdirectory(Exceptions)

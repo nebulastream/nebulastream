@@ -16,9 +16,7 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physical operator for all window sinks.
@@ -29,18 +27,12 @@ class PhysicalWindowOperator : public PhysicalUnaryOperator {
     PhysicalWindowOperator(OperatorId id,
                            SchemaPtr inputSchema,
                            SchemaPtr outputSchema,
-                           Windowing::WindowOperatorHandlerPtr operatorHandler);
-
-    /**
-    * @brief Gets the window handler of the window operator.
-    * @return WindowOperatorHandlerPtr
-    */
-    Windowing::WindowOperatorHandlerPtr getOperatorHandler() const;
+                           Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    const Windowing::LogicalWindowDefinitionPtr& getWindowDefinition() const;
 
   protected:
-    Windowing::WindowOperatorHandlerPtr operatorHandler;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
+
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWOPERATOR_HPP_
