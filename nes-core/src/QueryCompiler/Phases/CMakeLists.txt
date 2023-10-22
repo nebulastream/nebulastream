@@ -19,6 +19,7 @@ add_source_files(nes-core
         BufferOptimizationPhase.cpp
         PredicationOptimizationPhase.cpp
         NautilusCompilationPhase.cpp
+        SourceDescriptorAssignmentPhase.cpp
         )
 
 add_subdirectory(Pipelining)

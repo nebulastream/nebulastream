@@ -73,13 +73,7 @@ class LowerToExecutableQueryPlanPhase {
                             const PipelineQueryPlanPtr& pipelineQueryPlan,
                             std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
-    /**
-     * @brief Create Actual Source descriptor from default source descriptor and Physical source properties
-     * @param defaultSourceDescriptor: the default source descriptor
-     * @param physicalSource : the physical source
-     * @return Shared pointer for actual source descriptor
-     */
-    SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource);
+
 };
 }// namespace QueryCompilation
 }// namespace NES

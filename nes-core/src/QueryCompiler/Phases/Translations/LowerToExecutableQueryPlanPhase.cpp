@@ -142,24 +142,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>()) {
-        //Fetch logical and physical source name in the descriptor
-        auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
-        auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
-        //Iterate over all available physical sources
-        bool foundPhysicalSource = false;
-        for (const auto& physicalSource : nodeEngine->getPhysicalSources()) {
-            //Check if logical and physical source name matches with any of the physical source provided by the node
-            if (physicalSource->getLogicalSourceName() == logicalSourceName
-                && physicalSource->getPhysicalSourceName() == physicalSourceName) {
-                sourceDescriptor = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSource);
-                foundPhysicalSource = true;
-                break;
-            }
-        }
-        if (!foundPhysicalSource) {
-            throw QueryCompilationException("Unable to find the Physical source with logical source name " + logicalSourceName
-                                            + " and physical source name " + physicalSourceName);
-        }
+        throw QueryCompilationException("A logical source descriptor should have been replaced");
     }
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
@@ -293,121 +276,6 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
     executablePipelines.emplace_back(executablePipeline);
     return executablePipeline;
-}
-
-SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource) {
-    auto logicalSourceName = physicalSource->getLogicalSourceName();
-    auto physicalSourceName = physicalSource->getPhysicalSourceName();
-    auto physicalSourceType = physicalSource->getPhysicalSourceType();
-    auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-              physicalSource->toString(),
-              magic_enum::enum_name(sourceType));
-
-    switch (sourceType) {
-        case SourceType::DEFAULT_SOURCE: {
-            auto defaultSourceType = physicalSourceType->as<DefaultSourceType>();
-            return DefaultSourceDescriptor::create(
-                schema,
-                logicalSourceName,
-                defaultSourceType->getNumberOfBuffersToProduce()->getValue(),
-                std::chrono::milliseconds(defaultSourceType->getSourceGatheringInterval()->getValue()).count());
-        }
-#ifdef ENABLE_MQTT_BUILD
-        case SourceType::MQTT_SOURCE: {
-            auto mqttSourceType = physicalSourceType->as<MQTTSourceType>();
-            return MQTTSourceDescriptor::create(schema, mqttSourceType);
-        }
-#endif
-        case SourceType::CSV_SOURCE: {
-            auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            return CsvSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
-        }
-        case SourceType::SENSE_SOURCE: {
-            auto senseSourceType = physicalSourceType->as<SenseSourceType>();
-            return SenseSourceDescriptor::create(schema, logicalSourceName, senseSourceType->getUdfs()->getValue());
-        }
-        case SourceType::MEMORY_SOURCE: {
-            auto memorySourceType = physicalSourceType->as<MemorySourceType>();
-            return MemorySourceDescriptor::create(schema,
-                                                  memorySourceType->getMemoryArea(),
-                                                  memorySourceType->getMemoryAreaSize(),
-                                                  memorySourceType->getNumberOfBufferToProduce(),
-                                                  memorySourceType->getGatheringValue(),
-                                                  memorySourceType->getGatheringMode(),
-                                                  memorySourceType->getSourceAffinity(),
-                                                  memorySourceType->getTaskQueueId(),
-                                                  logicalSourceName,
-                                                  physicalSourceName);
-        }
-        case SourceType::MONITORING_SOURCE: {
-            auto monitoringSourceType = physicalSourceType->as<MonitoringSourceType>();
-            return MonitoringSourceDescriptor::create(
-                monitoringSourceType->getWaitTime(),
-                Monitoring::MetricCollectorType(monitoringSourceType->getMetricCollectorType()));
-        }
-        case SourceType::BENCHMARK_SOURCE: {
-            auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();
-            return BenchmarkSourceDescriptor::create(schema,
-                                                     benchmarkSourceType->getMemoryArea(),
-                                                     benchmarkSourceType->getMemoryAreaSize(),
-                                                     benchmarkSourceType->getNumberOfBuffersToProduce(),
-                                                     benchmarkSourceType->getGatheringValue(),
-                                                     benchmarkSourceType->getGatheringMode(),
-                                                     benchmarkSourceType->getSourceMode(),
-                                                     benchmarkSourceType->getSourceAffinity(),
-                                                     benchmarkSourceType->getTaskQueueId(),
-                                                     logicalSourceName,
-                                                     physicalSourceName);
-        }
-        case SourceType::STATIC_DATA_SOURCE: {
-            auto staticDataSourceType = physicalSourceType->as<NES::Experimental::StaticDataSourceType>();
-            return NES::Experimental::StaticDataSourceDescriptor::create(schema,
-                                                                         staticDataSourceType->getPathTableFile(),
-                                                                         staticDataSourceType->getLateStart());
-        }
-        case SourceType::LAMBDA_SOURCE: {
-            auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
-            return LambdaSourceDescriptor::create(schema,
-                                                  lambdaSourceType->getGenerationFunction(),
-                                                  lambdaSourceType->getNumBuffersToProduce(),
-                                                  lambdaSourceType->getGatheringValue(),
-                                                  lambdaSourceType->getGatheringMode(),
-                                                  lambdaSourceType->getSourceAffinity(),
-                                                  lambdaSourceType->getTaskQueueId(),
-                                                  logicalSourceName,
-                                                  physicalSourceName);
-        }
-        case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
-        }
-        case SourceType::KAFKA_SOURCE: {
-            auto kafkaSourceType = physicalSourceType->as<KafkaSourceType>();
-            return KafkaSourceDescriptor::create(schema,
-                                                 kafkaSourceType->getBrokers()->getValue(),
-                                                 logicalSourceName,
-                                                 kafkaSourceType->getTopic()->getValue(),
-                                                 kafkaSourceType->getGroupId()->getValue(),
-                                                 kafkaSourceType->getAutoCommit()->getValue(),
-                                                 kafkaSourceType->getConnectionTimeout()->getValue(),
-                                                 kafkaSourceType->getOffsetMode()->getValue(),
-                                                 kafkaSourceType,
-                                                 kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
-                                                 kafkaSourceType->getBatchSize()->getValue());
-        }
-        default: {
-            // check if a plugin can create the correct source descriptor
-            for (const auto& plugin : SourceDescriptorPluginRegistry ::getPlugins()) {
-                auto descriptor = plugin->create(schema, physicalSource);
-                if (descriptor != nullptr) {
-                    return descriptor;
-                }
-            }
-            throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()
-                                            + " not supported");
-        }
-    }
 }
 
 }// namespace NES::QueryCompilation

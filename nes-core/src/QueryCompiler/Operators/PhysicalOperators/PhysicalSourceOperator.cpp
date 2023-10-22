@@ -43,6 +43,10 @@ void PhysicalSourceOperator::setOriginId(OriginId originId) { this->originId = o
 
 SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourceDescriptor; }
 
+void PhysicalSourceOperator::setSourceDescriptor(NES::SourceDescriptorPtr sourceDescriptor) {
+    this->sourceDescriptor = sourceDescriptor;
+}
+
 std::string PhysicalSourceOperator::toString() const { return "PhysicalSourceOperator"; }
 
 OperatorNodePtr PhysicalSourceOperator::copy() {

@@ -23,6 +23,7 @@
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
+#include <QueryCompiler/Phases/SourceDescriptorAssignmentPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
@@ -79,11 +80,16 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
         dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
         timer.snapshot("AfterPipelinedQueryPlan");
+        auto nodeEngine = request->getNodeEngine();
+
+        // assign source descriptors
+        auto sourceDescriptorAssignmentPhase = SourceDescriptorAssignmentPhase::create();
+        pipelinedQueryPlan = sourceDescriptorAssignmentPhase->apply(pipelinedQueryPlan, nodeEngine->getPhysicalSources());
 
         addScanAndEmitPhase->apply(pipelinedQueryPlan);
         dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
         timer.snapshot("AfterAddScanAndEmitPhase");
-        auto nodeEngine = request->getNodeEngine();
+
         auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
         pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
         timer.snapshot("AfterToNautilusPlanPhase");

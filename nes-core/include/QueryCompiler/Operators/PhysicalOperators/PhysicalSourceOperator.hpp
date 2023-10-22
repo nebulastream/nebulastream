@@ -42,6 +42,7 @@ class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScan
      * @return SourceDescriptorPtr
      */
     SourceDescriptorPtr getSourceDescriptor();
+    void setSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
     /**
      * @brief Sets the origin id for this source operator
