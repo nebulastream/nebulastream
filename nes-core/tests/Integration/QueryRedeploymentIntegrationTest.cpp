@@ -1,5 +1,19 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -14,16 +28,11 @@
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Services/QueryService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-//TODO: to remove later
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <Runtime/ReconfigurationMessage.hpp>
-#include <Services/QueryService.hpp>
-#include <Util/TimeMeasurement.hpp>
+#include <atomic>
 
 namespace NES {
 
@@ -67,9 +76,9 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
 };
 
 /**
-     * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
-     * network channel to become available
-     */
+ * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
+ * network channel to become available
+ */
 TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     const uint64_t numBuffersToProduceBeforeCount = 20;
     const uint64_t numBuffersToProduceAfterCount = 20;
@@ -123,25 +132,23 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     std::atomic<uint64_t> bufferCount = 0;
     std::atomic<bool> countReached = false;
     auto lambdaSourceFunction = [&countReached, &bufferCount](NES::Runtime::TupleBuffer& buffer,
-                                                                                                        uint64_t numberOfTuplesToProduce) {
-      struct Record {
-          uint64_t value;
-      };
-      auto currentCount = ++bufferCount;
-      if (currentCount > numBuffersToProduceBeforeCount) {
-          //after sending the specified amount of tuples, wait until some tuples actually arrived
-          countReached.wait(false);
-      }
-      auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-      auto* records = buffer.getBuffer<Record>();
-      for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-          records[u].value = valCount + u;
-      }
+                                                              uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t value;
+        };
+        auto currentCount = ++bufferCount;
+        if (currentCount > numBuffersToProduceBeforeCount) {
+            //after sending the specified amount of tuples, wait until some tuples actually arrived
+            countReached.wait(false);
+        }
+        auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
+        auto* records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].value = valCount + u;
+        }
     };
-    auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction),
-                                                     numBuffersToProduce,
-                                                     10,
-                                                     GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType =
+        LambdaSourceType::create(std::move(lambdaSourceFunction), numBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
     wrkConf1->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
@@ -175,6 +182,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     ASSERT_TRUE(retStopCord);
 }
 
+/**
+ * @brief This tests the reconfiguration of a network sink to point to a new source.
+ */
 TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
@@ -213,35 +223,34 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     std::atomic<bool> waitForReconfig = false;
     std::atomic<bool> waitForReconnect = false;
     std::atomic<bool> waitForFinalCount = false;
-    auto lambdaSourceFunction = [&bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount](NES::Runtime::TupleBuffer& buffer,
-                                                                                                        uint64_t numberOfTuplesToProduce) {
-      struct Record {
-          uint64_t value;
-      };
-      auto currentCount = ++bufferCount;
-      if (currentCount > numBuffersToProduceBeforeReconnect) {
-          //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-          waitForReconfig.wait(false);
-      }
-      if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
-          //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
-          waitForReconnect = true;
-          waitForReconnect.notify_all();
-      }
-      if (currentCount
-          > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering) {
-          waitForFinalCount.wait(false);
-      }
-      auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-      auto* records = buffer.getBuffer<Record>();
-      for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-          records[u].value = valCount + u;
-      }
-    };
-    auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction),
-                                                     totalBuffersToProduce,
-                                                     10,
-                                                     GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceFunction =
+        [&bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount](NES::Runtime::TupleBuffer& buffer,
+                                                                                uint64_t numberOfTuplesToProduce) {
+            struct Record {
+                uint64_t value;
+            };
+            auto currentCount = ++bufferCount;
+            if (currentCount > numBuffersToProduceBeforeReconnect) {
+                //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
+                waitForReconfig.wait(false);
+            }
+            if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
+                //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
+                waitForReconnect = true;
+                waitForReconnect.notify_all();
+            }
+            if (currentCount
+                > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering) {
+                waitForFinalCount.wait(false);
+            }
+            auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
+            auto* records = buffer.getBuffer<Record>();
+            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                records[u].value = valCount + u;
+            }
+        };
+    auto lambdaSourceType =
+        LambdaSourceType::create(std::move(lambdaSourceFunction), totalBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
 
     NES_INFO("rest port = {}", *restPort);
@@ -498,14 +507,17 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     ASSERT_TRUE(retStopCord);
 }
 
+/**
+ * @brief This tests inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
+ */
 TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEvents) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     const uint64_t numBuffersToProduceAfterReconnect = 40;
     //these buffers are sent afte the final count, they make sure that no eos comes before the reconnect succeeded
     const uint64_t numBuffersToProduceAfterFinalCount = 20;
-    const uint64_t totalBuffersToProduce =
-        numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering + numBuffersToProduceAfterFinalCount;
+    const uint64_t totalBuffersToProduce = numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
+        + numBuffersToProduceWhileBuffering + numBuffersToProduceAfterFinalCount;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
     const uint32_t retryTimes = 10;
@@ -538,31 +550,32 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     std::atomic<bool> waitForReconfig = false;
     std::atomic<bool> waitForReconnect = false;
     std::atomic<bool> waitForFinalCount = false;
-    auto lambdaSourceFunction = [&bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount](NES::Runtime::TupleBuffer& buffer,
-                                                                                      uint64_t numberOfTuplesToProduce) {
-        struct Record {
-            uint64_t value;
+    auto lambdaSourceFunction =
+        [&bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount](NES::Runtime::TupleBuffer& buffer,
+                                                                                uint64_t numberOfTuplesToProduce) {
+            struct Record {
+                uint64_t value;
+            };
+            auto currentCount = ++bufferCount;
+            if (currentCount > numBuffersToProduceBeforeReconnect) {
+                //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
+                waitForReconfig.wait(false);
+            }
+            if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
+                //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
+                waitForReconnect = true;
+                waitForReconnect.notify_all();
+            }
+            if (currentCount
+                > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering) {
+                waitForFinalCount.wait(false);
+            }
+            auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
+            auto* records = buffer.getBuffer<Record>();
+            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                records[u].value = valCount + u;
+            }
         };
-        auto currentCount = ++bufferCount;
-        if (currentCount > numBuffersToProduceBeforeReconnect) {
-            //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-            waitForReconfig.wait(false);
-        }
-        if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
-            //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
-            waitForReconnect = true;
-            waitForReconnect.notify_all();
-        }
-        if (currentCount
-            > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering) {
-            waitForFinalCount.wait(false);
-        }
-        auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-        auto* records = buffer.getBuffer<Record>();
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-            records[u].value = valCount + u;
-        }
-    };
     auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction),
                                                      //numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect,
                                                      totalBuffersToProduce,
@@ -601,7 +614,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(GetParam());
     wrkConf1->connectSinksAsync.setValue(true);
-    wrkConf1->queryCompiler.queryCompilerType.setValue(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
+    wrkConf1->queryCompiler.queryCompilerType.setValue(
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
     wrkConf1->physicalSources.add(physicalSource);
@@ -620,7 +634,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     wrkConf2->dataPort = *wrk2DataPort;
     wrkConf2->numWorkerThreads.setValue(GetParam());
     wrkConf2->connectSinksAsync.setValue(true);
-    wrkConf2->queryCompiler.queryCompilerType.setValue(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
+    wrkConf2->queryCompiler.queryCompilerType.setValue(
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
@@ -634,7 +649,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     wrkConf3->dataPort = *wrk3DataPort;
     wrkConf3->numWorkerThreads.setValue(GetParam());
     wrkConf3->connectSinksAsync.setValue(true);
-    wrkConf3->queryCompiler.queryCompilerType.setValue(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
+    wrkConf3->queryCompiler.queryCompilerType.setValue(
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
@@ -749,16 +765,11 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     //retrieve data about running network sink at wrk1
     auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(
         wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front());
-    //todo: add new descriptor here
-    Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(),"localhost", *wrk3DataPort);
+    Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
     networkSink->addPendingReconfiguration(newNodeLocation, networkSourceWrk3Partition);
-    //todo: insert vde here instead of reconfig
-    auto message = Runtime::ReconfigurationMessage(sharedQueryId,
-                                                            subPlanIdWrk1,
-                                                            Runtime::ReconfigurationType::DrainVersion,
-                                                            networkSink);
-    //todo: get query manager and add it that way instead
+    auto message =
+        Runtime::ReconfigurationMessage(sharedQueryId, subPlanIdWrk1, Runtime::ReconfigurationType::DrainVersion, networkSink);
     wrk1->getNodeEngine()->getQueryManager()->addReconfigurationMessage(sharedQueryId, subPlanIdWrk1, message, true);
 
     //reconfig performed but new network source not started yet. tuples are buffered at wrk1
@@ -832,6 +843,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     ASSERT_TRUE(retStopCord);
 }
 
+/**
+ * @brief This tests multiple iterations of inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
+ */
 TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersionDrainEvents) {
     const uint64_t numberOfReconnectsToPerform = 3;
     const uint64_t numBuffersToProduceBeforeReconnect = 10;
@@ -840,9 +854,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
     //these buffers are sent afte the final count, they make sure that no eos comes before the reconnect succeeded
     //const uint64_t numBuffersToProduceAfterFinalCount = 10;
     const uint64_t buffersToProducePerReconnectCycle =
-        (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering /*+ numBuffersToProduceAfterFinalCount*/);
-    const uint64_t totalBuffersToProduce =
-        numberOfReconnectsToPerform * buffersToProducePerReconnectCycle;
+        (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
+         + numBuffersToProduceWhileBuffering /*+ numBuffersToProduceAfterFinalCount*/);
+    const uint64_t totalBuffersToProduce = numberOfReconnectsToPerform * buffersToProducePerReconnectCycle;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
     const uint32_t retryTimes = 10;
@@ -852,43 +866,41 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
     std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
     remove(testFile.c_str());
 
-
-
     std::atomic<uint64_t> bufferCount = 0;
     std::atomic<uint64_t> actualReconnects = 0;
     std::atomic<bool> waitForReconfig = false;
     std::atomic<bool> waitForReconnect = false;
     std::atomic<bool> waitForFinalCount = false;
-    auto lambdaSourceFunction = [&bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount, &actualReconnects](NES::Runtime::TupleBuffer& buffer,
-                                                                                                        uint64_t numberOfTuplesToProduce) {
-      struct Record {
-          uint64_t value;
-      };
-      auto currentCount = ++bufferCount;
-      if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle)) {
-          //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-          waitForReconfig.wait(false);
-      }
-      //if (currentCount > (numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) * (actualReconnects + 1)) {
-      if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
-          //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
-          waitForReconnect = true;
-          waitForReconnect.notify_all();
-      }
-      if (currentCount
-          > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
-          waitForFinalCount.wait(false);
-      }
-      auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-      auto* records = buffer.getBuffer<Record>();
-      for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-          records[u].value = valCount + u;
-      }
+    auto lambdaSourceFunction = [&bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount, &actualReconnects](
+                                    NES::Runtime::TupleBuffer& buffer,
+                                    uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t value;
+        };
+        auto currentCount = ++bufferCount;
+        if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle)) {
+            //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
+            waitForReconfig.wait(false);
+        }
+        //if (currentCount > (numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) * (actualReconnects + 1)) {
+        if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering
+                + (actualReconnects * buffersToProducePerReconnectCycle)) {
+            //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
+            waitForReconnect = true;
+            waitForReconnect.notify_all();
+        }
+        if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
+                + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
+            waitForFinalCount.wait(false);
+        }
+        auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
+        auto* records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].value = valCount + u;
+        }
     };
-    auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction),
-                                                     totalBuffersToProduce,
-                                                     10,
-                                                     GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType =
+        LambdaSourceType::create(std::move(lambdaSourceFunction), totalBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
 
     NES_INFO("rest port = {}", *restPort);
@@ -922,7 +934,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(GetParam());
     wrkConf1->connectSinksAsync.setValue(true);
-    wrkConf1->queryCompiler.queryCompilerType.setValue(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
+    wrkConf1->queryCompiler.queryCompilerType.setValue(
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
     wrkConf1->physicalSources.add(physicalSource);
@@ -941,13 +954,13 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
     wrkConf2->dataPort = *wrk2DataPort;
     wrkConf2->numWorkerThreads.setValue(GetParam());
     wrkConf2->connectSinksAsync.setValue(true);
-    wrkConf2->queryCompiler.queryCompilerType.setValue(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
+    wrkConf2->queryCompiler.queryCompilerType.setValue(
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart2);
     ASSERT_TRUE(waitForNodes(5, 3, topology));
-
 
     //start query
 
@@ -1043,7 +1056,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
     auto success_start = crd->getNesWorker()->getNodeEngine()->startQuery(sharedQueryId);
     ASSERT_TRUE(success_start);
 
-
     std::vector<NesWorkerPtr> reconnectParents;
     //reconfiguration
     auto subPlanIdWrk3 = 30;
@@ -1055,7 +1067,12 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
         std::ostringstream oss;
         oss << "value:INTEGER(64 bits)" << std::endl;
         //for (uint64_t i = 0; i < numBuffersToProduceBeforeReconnect * tuplesPerBuffer * (actualReconnects + 1); ++i) {
-        for (uint64_t i = 0; i < (numBuffersToProduceBeforeReconnect + (actualReconnects * (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering))) * tuplesPerBuffer; ++i) {
+        for (uint64_t i = 0; i < (numBuffersToProduceBeforeReconnect
+                                  + (actualReconnects
+                                     * (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
+                                        + numBuffersToProduceWhileBuffering)))
+                 * tuplesPerBuffer;
+             ++i) {
             oss << std::to_string(i) << std::endl;
         }
         compareStringBefore = oss.str();
@@ -1093,18 +1110,15 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
         //retrieve data about running network sink at wrk1
         auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(
             wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front());
-        //todo: add new descriptor here
         Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
         networkSrcWrk3Id += 10;
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
         networkSink->addPendingReconfiguration(newNodeLocation, networkSourceWrk3Partition);
-        //todo: insert vde here instead of reconfig
         auto message = Runtime::ReconfigurationMessage(sharedQueryId,
                                                        subPlanIdWrk1,
                                                        Runtime::ReconfigurationType::DrainVersion,
                                                        networkSink);
-        //todo: get query manager and add it that way instead
         wrk1->getNodeEngine()->getQueryManager()->addReconfigurationMessage(sharedQueryId, subPlanIdWrk1, message, true);
 
         //reconfig performed but new network source not started yet. tuples are buffered at wrk1
@@ -1152,7 +1166,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
         waitForFinalCount.notify_all();
     }
 
-
     //send the last tuples, after which the lambda source shuts down
 
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
@@ -1190,19 +1203,20 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
     bool retStopWrk2 = wrk2->stop(false);
     ASSERT_TRUE(retStopWrk2);
 
-
     cout << "stopping coordinator" << endl;
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
 
-//todo: reactivate when eos is guaranteed to come after last tuples
+/**
+ * @brief This test the reconfiguration of a network sink that is already buffering
+ */
+//todo #4272: reactivate when eos is guaranteed to come after last tuples
 TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     //const uint64_t numBuffersToProduceAfterReconnect = 40;
-    const uint64_t totalBuffersToProduce =
-        numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering;
+    const uint64_t totalBuffersToProduce = numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
     const uint32_t retryTimes = 50;
@@ -1223,10 +1237,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     std::string compareStringAfter;
     std::ostringstream ossAfter;
     ossAfter << "value:INTEGER(64 bits)" << std::endl;
-    for (uint64_t i = 0;
-         i < (numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering)
-             * tuplesPerBuffer;
-         ++i) {
+    for (uint64_t i = 0; i < (numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) * tuplesPerBuffer; ++i) {
         ossAfter << std::to_string(i) << std::endl;
     }
     compareStringAfter = ossAfter.str();
@@ -1235,25 +1246,25 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     std::atomic<bool> waitForReconfig = false;
     std::atomic<bool> waitForReconnect = false;
     auto lambdaSourceFunction = [&bufferCount, &waitForReconfig, &waitForReconnect](NES::Runtime::TupleBuffer& buffer,
-                                                                                                        uint64_t numberOfTuplesToProduce) {
-      struct Record {
-          uint64_t value;
-      };
-      auto currentCount = ++bufferCount;
-      if (currentCount > numBuffersToProduceBeforeReconnect) {
-          //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-          waitForReconfig.wait(false);
-      }
-      if (currentCount >= numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
-          //after writing all remaining tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
-          waitForReconnect = true;
-          waitForReconnect.notify_all();
-      }
-      auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
-      auto* records = buffer.getBuffer<Record>();
-      for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-          records[u].value = valCount + u;
-      }
+                                                                                    uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t value;
+        };
+        auto currentCount = ++bufferCount;
+        if (currentCount > numBuffersToProduceBeforeReconnect) {
+            //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
+            waitForReconfig.wait(false);
+        }
+        if (currentCount >= numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
+            //after writing all remaining tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
+            waitForReconnect = true;
+            waitForReconnect.notify_all();
+        }
+        auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
+        auto* records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].value = valCount + u;
+        }
     };
     auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction),
                                                      numBuffersToProduceBeforeReconnect,
@@ -1517,11 +1528,13 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     ASSERT_TRUE(retStopCord);
 }
 
+/**
+ * @brief This test the reconfiguration of a network sink that is already buffering
+ */
 TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
-    const uint64_t totalBuffersToProduce =
-        numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering;
+    const uint64_t totalBuffersToProduce = numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
     const uint32_t retryTimes = 50;
@@ -1542,10 +1555,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     std::string compareStringAfter;
     std::ostringstream ossAfter;
     ossAfter << "value:INTEGER(64 bits)" << std::endl;
-    for (uint64_t i = 0;
-         i < (numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering)
-             * tuplesPerBuffer;
-         ++i) {
+    for (uint64_t i = 0; i < (numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) * tuplesPerBuffer; ++i) {
         ossAfter << std::to_string(i) << std::endl;
     }
     compareStringAfter = ossAfter.str();

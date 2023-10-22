@@ -514,8 +514,6 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
     return true;
 }
 
-//todo: this is what we want to mirror for the vdes (but can we do that without risking tuples which are in the pipeline?)
-//todo: first mimic the query end events, later check if we can save work by skipping the pipeline
 bool AbstractQueryManager::addEpochPropagation(DataSourcePtr source, uint64_t queryId, uint64_t epochBarrier) {
     std::unique_lock lock(queryMutex);
     auto qeps = sourceToQEPMapping.find(source->getOperatorId());

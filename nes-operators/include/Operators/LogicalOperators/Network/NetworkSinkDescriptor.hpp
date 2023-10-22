@@ -94,7 +94,6 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      */
     void setFaultToleranceType(FaultToleranceType faultToleranceType);
 
-
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,

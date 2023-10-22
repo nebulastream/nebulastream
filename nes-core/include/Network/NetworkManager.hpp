@@ -139,11 +139,11 @@ class NetworkManager {
      * @param nodeLocation is the destination
      * @param nesPartition indicates the partition
      * @param waitTime time in seconds to wait until a retry is called
-     * @param retryTimes times to retry a connection
+     * @param retryTimes times to retry a connectio. Set this to zero to retry indefinitely.
      * @param reconfigurationMessage a message to be inserted into the query manager on completion, to inform the caller about
      * the completion of the operation
      * @param queryManager a pointer to the query manager which will hand over the reconfiguration message to the caller
-     * @return a future containing the data network channel on completion and a promise that aborts the connection process when
+     * @return a pair consisting of a future containing the data network channel on completion and a promise that aborts the connection process when
      * its value is set
      */
     std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,

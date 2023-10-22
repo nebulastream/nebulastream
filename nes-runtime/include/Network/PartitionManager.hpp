@@ -98,8 +98,16 @@ class PartitionManager {
          */
         [[nodiscard]] uint64_t count() const;
 
+        /**
+         * @brief returns the number of disconnects that have occurred for this partition
+         * @return number of disconnects that occurred
+         */
         [[nodiscard]] uint64_t getDisconnectCount() const;
 
+        /**
+         * @brief decrease the recorded number of disconnects that have occurred for the partition
+         * @param decreaseAmount the amount by which to decrease the disconnect count
+         */
         void decreaseDisconnectCountBy(uint64_t decreaseAmount);
 
         /**
@@ -160,9 +168,18 @@ class PartitionManager {
      */
     std::optional<uint64_t> getSubpartitionConsumerCounter(NesPartition partition);
 
-    //todo: rename all these
+    /**
+     * @brief returns the number of disconnects that have occurred for a given partition
+     * @param partition the partition
+     * @return number of disconnects that occurred
+     */
     std::optional<uint64_t> getSubpartitionConsumerDisconnectCount(NesPartition partition);
 
+    /**
+     * @brief decrease the recorded number of disconnects that have occurred for a given partition
+     * @param partition the partition
+     * @param decreaseAmount the amount by which to decrease the disconnect count
+     */
     void decreaseSubpartitionConsumerDisconnectCount(NesPartition partition, uint64_t decreaseAmount);
 
     /**

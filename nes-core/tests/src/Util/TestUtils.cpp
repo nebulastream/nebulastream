@@ -278,10 +278,10 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
     return false;
 }
 
-/**
+    /**
      * @brief Check if the query is been stopped successfully within the timeout.
      * @param queryId: Id of the query to be stopped
-     * @param queryCatalogService: the catalog containig the queries in the system
+     * @param worker: the worker which the query runs on
      * @return true if successful
      */
 [[nodiscard]] bool
@@ -291,15 +291,9 @@ checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono:
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for {}", queryId);
         if (worker->getNodeEngine()->getQueryStatus(queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
-            //if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() == QueryState::STOPPED) {
             NES_TRACE("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
-        /*
-        NES_DEBUG("checkStoppedOrTimeout: status not reached for {} as status is={}",
-                  queryId,
-                  queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
-                  */
         std::string status;
         switch (worker->getNodeEngine()->getQueryStatus(queryId)) {
             case Runtime::Execution::ExecutableQueryPlanStatus::Created: status = "created"; break;

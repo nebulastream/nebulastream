@@ -192,9 +192,7 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeGeoLocation(
 
 bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconnectionRoutine(uint64_t& currentParentId,
                                                                                              uint64_t newParentId) {
-    nodeEngine->bufferAllData();
-    //todo #3027: wait until all upstream operators have received data which has not been buffered
-    //todo #3027: trigger replacement and migration of operators
+    //todo #4283: trigger reconnecting of sinks
 
     bool success = coordinatorRpcClient->replaceParent(currentParentId, newParentId);
     if (success) {
@@ -208,8 +206,6 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconne
     }
 
     NES_DEBUG("NesWorker::replaceParent() success={}.", success);
-
-    nodeEngine->stopBufferingAllData();
 
     return success;
 }

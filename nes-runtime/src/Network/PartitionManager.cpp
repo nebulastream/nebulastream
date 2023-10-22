@@ -31,7 +31,7 @@ PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& 
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; /*totalConnections++;*/ }
+void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++;}
 
 void PartitionManager::PartitionConsumerEntry::unpin() { partitionCounter--;
     disconnectCount++; }
