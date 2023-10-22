@@ -54,8 +54,6 @@ class WorkerContext {
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
     std::unordered_map<NES::OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>> dataChannelFutures;
-    // nes partitions of the current channel of the channel to which a sink tries to connect
-    //std::unordered_map<NES::OperatorId, Network::NesPartition> nesPartitions;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool stored in tls

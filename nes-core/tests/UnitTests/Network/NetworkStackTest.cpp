@@ -271,31 +271,37 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
 
         class DummyQueryManager : public Runtime::AbstractQueryManager {
           public:
-            //todo: hardware manager cannot be null
             explicit DummyQueryManager() : Runtime::AbstractQueryManager({}, {}, 1, 1, std::make_shared<Runtime::HardwareManager>(), {}, 1, {}) {};
-            ExecutionResult processNextTask(bool, Runtime::WorkerContext&) {return ExecutionResult::Error;};
-            virtual void
-            addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t = 0) {};
-            virtual void poisonWorkers() {};
-            virtual bool addReconfigurationMessage(QueryId ,
-                                                   QuerySubPlanId ,
-                                                   const Runtime::ReconfigurationMessage& ,
-                                                   bool  = false) { receivedCallback = true; return true;};
-            virtual bool addReconfigurationMessage(QueryId ,
-                                                   QuerySubPlanId ,
-                                                   TupleBuffer&& ,
-                                                   bool  = false) {return false;};
+            ExecutionResult processNextTask(bool, Runtime::WorkerContext&) override {return ExecutionResult::Error;};
+            void
+            addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t) override {};
+            void poisonWorkers() override {};
+            bool addReconfigurationMessage(QueryId ,
+                                           QuerySubPlanId ,
+                                           const Runtime::ReconfigurationMessage& ,
+                                           bool) override { receivedCallback = true; return true;};
+            bool addReconfigurationMessage(QueryId ,
+                                           QuerySubPlanId ,
+                                           TupleBuffer&& ,
+                                           bool) override {return false;};
 
-            virtual uint64_t getNumberOfTasksInWorkerQueues() const {return 0;};
-            virtual bool startThreadPool(uint64_t ) {return false;};
-            virtual ExecutionResult terminateLoop(Runtime::WorkerContext&) {return ExecutionResult::Error;};
+            uint64_t getNumberOfTasksInWorkerQueues() const override {return 0;};
+            bool startThreadPool(uint64_t ) override {return false;};
+            ExecutionResult terminateLoop(Runtime::WorkerContext&) override {return ExecutionResult::Error;};
             bool receivedCallback = false;
         };
 
-        auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
-        auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed));
-        auto netManager = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(ep), buffMgr);
+        auto partMgrRecv = std::make_shared<PartitionManager>();
+        auto buffMgrRecv = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto receiveListener = std::make_shared<InternalListener>(completed);
+        auto ep = ExchangeProtocol(partMgrRecv, receiveListener);
+        auto netManagerReceiver = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(ep), buffMgrRecv, 4, 8);
+
+        auto partMgrSend = std::make_shared<PartitionManager>();
+        auto buffMgrSend = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto dummyProtocol = ExchangeProtocol(partMgrSend, std::make_shared<DummyExchangeProtocolListener>());
+        auto senderPort = getAvailablePort();
+        auto netManagerSender = NetworkManager::create(0, "127.0.0.1", *senderPort, std::move(dummyProtocol), buffMgrSend, 4, 2);
 
         auto nesPartition = NesPartition(0, 0, 0, 0);
 
@@ -303,14 +309,14 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
             void emitWork(TupleBuffer&) override {}
         };
 
-        std::thread t([&netManager, &completed, &nesPartition] {
+        std::thread t([&netManagerReceiver, &completed, &nesPartition] {
           // register the incoming channel
-          auto cnt = netManager->registerSubpartitionConsumer(nesPartition,
-                                                              netManager->getServerLocation(),
+          auto cnt = netManagerReceiver->registerSubpartitionConsumer(nesPartition,
+                                                              netManagerReceiver->getServerLocation(),
                                                               std::make_shared<DataEmitterImpl>());
           NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt {}", cnt);
           auto v = completed.get_future().get();
-          netManager->unregisterSubpartitionConsumer(nesPartition);
+          netManagerReceiver->unregisterSubpartitionConsumer(nesPartition);
           ASSERT_EQ(v, true);
         });
 
@@ -323,7 +329,7 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
                                                       std::make_any<uint32_t>(1));
         //setting retry times to zero will let the channel keep attempting to connect indefinitely
         auto senderChannelFuture =
-            netManager->registerSubpartitionProducerAsync(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 0, reconf, queryManager);
+            netManagerSender->registerSubpartitionProducerAsync(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 0, reconf, queryManager);
         EXPECT_FALSE(queryManager->receivedCallback);
         auto start_timestamp = std::chrono::system_clock::now();
         auto timeOut = std::chrono::seconds(10);
@@ -332,7 +338,6 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
                 NES_DEBUG("Channel not created within timeout")
                 FAIL();
             }
-            NES_DEBUG("Channel not yet created");
         }
         auto senderChannel = senderChannelFuture.first.get();
 
@@ -342,12 +347,11 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
                 NES_DEBUG("Callback not recevied within timeout")
                 FAIL();
             }
-            NES_DEBUG("Callback not yet received");
         }
         ASSERT_TRUE(queryManager->receivedCallback);
         senderChannel->close(Runtime::QueryTerminationType::Graceful);
         senderChannel.reset();
-        netManager->unregisterSubpartitionProducer(nesPartition);
+        netManagerSender->unregisterSubpartitionProducer(nesPartition);
 
         t.join();
     } catch (...) {
@@ -411,62 +415,21 @@ TEST_F(NetworkStackTest, testEosPropagation) {
                                                                      std::make_shared<DataEmitterImpl>()));
 
         //register and close one channel
-        auto senderChannel1 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
-        senderChannel1->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
-        netManagerSender->unregisterSubpartitionProducer(nesPartition);
-        auto start_timestamp = std::chrono::system_clock::now();
-        auto timeOut = std::chrono::seconds(10);
-        while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != 1) {
-            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
-                NES_DEBUG("No disconnect registered within timeout")
-                FAIL();
+        for (uint64_t i = 1; i <= 4; ++i) {
+            auto senderChannel1 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
+            senderChannel1->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
+            netManagerSender->unregisterSubpartitionProducer(nesPartition);
+            auto start_timestamp = std::chrono::system_clock::now();
+            auto timeOut = std::chrono::seconds(10);
+            while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != i) {
+                if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
+                    NES_DEBUG("No disconnect registered within timeout")
+                    FAIL();
+                }
             }
-            NES_DEBUG("Disconnect not yet registered")
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
+            ASSERT_EQ(receiveListener->numReceivedEoS, 0);
         }
-        ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 1);
-        ASSERT_EQ(receiveListener->numReceivedEoS, 0);
-
-        //register and close one channel
-        auto senderChannel2 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
-        senderChannel2->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
-        netManagerSender->unregisterSubpartitionProducer(nesPartition);
-        while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != 2) {
-            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
-                NES_DEBUG("No disconnect registered within timeout")
-                FAIL();
-            }
-            NES_DEBUG("Disconnect not yet registered")
-        }
-        ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 2);
-        ASSERT_EQ(receiveListener->numReceivedEoS, 0);
-
-        //register and close one channel
-        auto senderChannel3 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
-        senderChannel3->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
-        netManagerSender->unregisterSubpartitionProducer(nesPartition);
-        while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != 3) {
-            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
-                NES_DEBUG("No disconnect registered within timeout")
-                FAIL();
-            }
-            NES_DEBUG("Disconnect not yet registered")
-        }
-        ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 3);
-        ASSERT_EQ(receiveListener->numReceivedEoS, 0);
-
-        //register and close 4th channel, after receiving as many eos as the thread count indicates, the exchange protocol should
-        //propagate the eos
-        auto senderChannel4 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
-        senderChannel4->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
-        netManagerSender->unregisterSubpartitionProducer(nesPartition);
-        while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != 4) {
-            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
-                NES_DEBUG("No disconnect registered within timeout")
-                FAIL();
-            }
-            NES_DEBUG("Disconnect not yet registered")
-        }
-        ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 4);
 
         //received eos = numSendingThreads: check if the exchange protocol propagated the eos
         ASSERT_TRUE(completed.get_future().get());

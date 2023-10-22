@@ -151,22 +151,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId);
 
     /**
-     * @brief method to trigger the buffering of data on all NetworkSinks of this Node.
-     * This function has no effect any NetworkSinks faultToleranceType is set to AT_LEAST_ONCE as it might cause
-     * threading problems to allow reconnect buffering in this case.
-     * @return bool indicating succes
-     */
-    bool bufferAllData();
-
-    /**
-     * @brief unbuffer all tuples that were buffered since bufferAllData was called and write them to the respective sinks
-     * and stop buffering new incoming tuples. This might change the order in which tuples are sent over the network channel if
-     * new tuples are coming in while unbuffering is in process
-     * @return bool indicating success
-     */
-    bool stopBufferingAllData();
-
-    /**
      * @brief method to trigger the reconfiguration of a NetworkSink so that it points to a new downstream node.
      * @param newNodeId : the id of the new node
      * @param newHostname : the hostname of the new node

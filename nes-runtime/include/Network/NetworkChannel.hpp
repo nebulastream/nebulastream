@@ -63,7 +63,6 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     /**
      * @brief Closes the underlying network connection with a termination type
      */
-     //todo: remove default parameter
     void close(Runtime::QueryTerminationType, uint16_t numSendingThreads = 0);
 
     /**
@@ -75,7 +74,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
      * @param bufferManager the buffer manager
      * @param highWaterMark the max number of buffers the channel takes before blocking
      * @param waitTime the backoff time in case of failure when connecting
-     * @param retryTimes the number of retries before the methods will raise error
+     * @param retryTimes the number of retries before the methods will raise error. Set this to zero to retry indefinitely
      * @param abortConnection a future which which will be checked on every connection retry. By setting a value in the
      * corresponding promise, the calling thread can abort the connection process if the connection is performed asynchronously.
      * @return the network channel or nullptr on error

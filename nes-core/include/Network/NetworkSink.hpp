@@ -22,8 +22,7 @@
 #include <Util/FaultToleranceType.hpp>
 #include <string>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 /**
  * @brief This represent a sink operator that acts as a connecting API between query processing and network stack.
@@ -117,7 +116,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @brief method to return the network sinks descriptor id
      * @return id
      */
-    uint64_t getUniqueNetworkSinkDescriptorId();
+    uint64_t getUniqueNetworkSinkDescriptorId() const;
 
     /**
      * @brief method to return the node engine pointer
@@ -133,7 +132,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newNodeLocation the location of the node to which the connection is to be established
      * @param newNesPartition the partition of the source to which the connection is to be established
      */
-    void connectToChannelAsync(Runtime::WorkerContext& workerContext, NodeLocation newNodeLocation, NesPartition newNesPartition);
+    void connectToChannelAsync(Runtime::WorkerContext& workerContext, const NodeLocation& newNodeLocation, NesPartition newNesPartition);
 
     /**
      * @brief write all data from the reconnect buffer to the currently active network channel
@@ -146,11 +145,20 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newTargetNodeLocation the location of the node hosting the new source
      * @param newTargetSourcePartition the partition of the new source
      */
-    void addPendingReconfiguration(NodeLocation newTargetNodeLocation, NesPartition newTargetSourcePartition);
+    void addPendingReconfiguration(const NodeLocation& newTargetNodeLocation, NesPartition newTargetSourcePartition);
 
-    void reconfigureReceiver(NesPartition newPartition, NodeLocation newReceiverLocation);
+    /**
+     * @brief reconfigure this sink to point to another downstream network source
+     * @param newPartition the partition of the new downstram source
+     * @param newReceiverLocation the location of the node where the new downstream source is located
+     */
+    void reconfigureReceiver(NesPartition newPartition, const NodeLocation& newReceiverLocation);
 
-    uint16_t getNumberOfInputSources();
+    /**
+     * @brief returns the number of sources which produce data that is consumed by this sink
+     * @return the number of input sources
+     */
+    [[maybe_unused]] uint16_t getNumberOfInputSources() const;
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
@@ -170,8 +178,5 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::atomic<uint16_t> receivedVersionDrainEvents;
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
 };
-
-}// namespace Network
-}// namespace NES
-
+}// namespace NES::Network
 #endif// NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_
