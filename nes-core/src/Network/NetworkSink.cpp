@@ -397,4 +397,7 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
 void NetworkSink::addPendingReconfiguration(NodeLocation newTargetNodeLocation, NesPartition newTargetSourcePartition) {
     pendingReconfiguration = {newTargetNodeLocation, newTargetSourcePartition};
 }
+uint16_t NetworkSink::getNumberOfInputSources() {
+    return numberOfInputSources;
+}
 }// namespace NES::Network

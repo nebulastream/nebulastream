@@ -98,7 +98,9 @@ class PartitionManager {
          */
         [[nodiscard]] uint64_t count() const;
 
-        [[nodiscard]] uint64_t getTotalConnections() const;
+        [[nodiscard]] uint64_t getDisconnectCount() const;
+
+        void decreaseDisconnectCountBy(uint64_t decreaseAmount);
 
         /**
          * @brief increment ref cnt by 1
@@ -117,7 +119,7 @@ class PartitionManager {
 
       private:
         uint64_t partitionCounter{1};
-        uint64_t totalConnections{1};
+        uint64_t disconnectCount{0};
         NodeLocation senderLocation;
         DataEmitterPtr consumer{nullptr};
     };
@@ -158,7 +160,10 @@ class PartitionManager {
      */
     std::optional<uint64_t> getSubpartitionConsumerCounter(NesPartition partition);
 
-    std::optional<uint64_t> getSubpartitionConsumerTotalConnections(NesPartition partition);
+    //todo: rename all these
+    std::optional<uint64_t> getSubpartitionConsumerDisconnectCount(NesPartition partition);
+
+    void decreaseSubpartitionConsumerDisconnectCount(NesPartition partition, uint64_t decreaseAmount);
 
     /**
      * @brief checks if a partition is registered

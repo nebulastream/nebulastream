@@ -356,6 +356,129 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
     ASSERT_EQ(true, true);
 }
 
+TEST_F(NetworkStackTest, testEosPropagation) {
+    try {
+        // start zmqServer
+        std::promise<bool> completed;
+        std::promise<bool> connectionsReady;
+
+        class InternalListener : public Network::ExchangeProtocolListener {
+          public:
+            explicit InternalListener(std::promise<bool>& p, uint32_t maxExpectedConnections)
+                : numReceivedEoS(0), completed(p), maxExpectedConnections(maxExpectedConnections) {}
+
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage) override {
+                if (numReceivedEoS.fetch_add(1) == (maxExpectedConnections - 1)) {
+                    completed.set_value(true);
+                }
+            }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onChannelError(Messages::ErrorMessage) override {}
+            std::atomic<uint32_t> numReceivedEoS;
+
+          private:
+            std::promise<bool>& completed;
+            const uint32_t maxExpectedConnections;
+        };
+
+        //constexpr auto maxExpectedConnections = 1000;
+        constexpr auto maxExpectedConnections = 1;
+        constexpr auto numSendingThreads = 4;
+        auto partMgrRecv = std::make_shared<PartitionManager>();
+        auto buffMgrRecv = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto receiveListener = std::make_shared<InternalListener>(completed, maxExpectedConnections);
+        auto ep = ExchangeProtocol(partMgrRecv, receiveListener);
+        auto netManagerReceiver = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(ep), buffMgrRecv, 4, 8);
+
+        auto partMgrSend = std::make_shared<PartitionManager>();
+        auto buffMgrSend = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto dummyProtocol = ExchangeProtocol(partMgrSend, std::make_shared<DummyExchangeProtocolListener>());
+        auto senderPort = getAvailablePort();
+        auto netManagerSender = NetworkManager::create(0, "127.0.0.1", *senderPort, std::move(dummyProtocol), buffMgrSend, 4, 2);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
+        auto nesPartition = NesPartition(0, 0, 0, 0);
+        NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
+
+        //receiver side
+        ASSERT_TRUE(netManagerReceiver->registerSubpartitionConsumer(nesPartition,
+                                                                     netManagerSender->getServerLocation(),
+                                                                     std::make_shared<DataEmitterImpl>()));
+
+        //register and close one channel
+        auto senderChannel1 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
+        senderChannel1->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
+        netManagerSender->unregisterSubpartitionProducer(nesPartition);
+        auto start_timestamp = std::chrono::system_clock::now();
+        auto timeOut = std::chrono::seconds(10);
+        while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != 1) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
+                NES_DEBUG("No disconnect registered within timeout")
+                FAIL();
+            }
+            NES_DEBUG("Disconnect not yet registered")
+        }
+        ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 1);
+        ASSERT_EQ(receiveListener->numReceivedEoS, 0);
+
+        //register and close one channel
+        auto senderChannel2 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
+        senderChannel2->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
+        netManagerSender->unregisterSubpartitionProducer(nesPartition);
+        while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != 2) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
+                NES_DEBUG("No disconnect registered within timeout")
+                FAIL();
+            }
+            NES_DEBUG("Disconnect not yet registered")
+        }
+        ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 2);
+        ASSERT_EQ(receiveListener->numReceivedEoS, 0);
+
+        //register and close one channel
+        auto senderChannel3 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
+        senderChannel3->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
+        netManagerSender->unregisterSubpartitionProducer(nesPartition);
+        while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != 3) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
+                NES_DEBUG("No disconnect registered within timeout")
+                FAIL();
+            }
+            NES_DEBUG("Disconnect not yet registered")
+        }
+        ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 3);
+        ASSERT_EQ(receiveListener->numReceivedEoS, 0);
+
+        //register and close 4th channel, after receiving as many eos as the thread count indicates, the exchange protocol should
+        //propagate the eos
+        auto senderChannel4 = netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 3);
+        senderChannel4->close(Runtime::QueryTerminationType::Graceful, numSendingThreads);
+        netManagerSender->unregisterSubpartitionProducer(nesPartition);
+        while (partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition) != 4) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeOut) {
+                NES_DEBUG("No disconnect registered within timeout")
+                FAIL();
+            }
+            NES_DEBUG("Disconnect not yet registered")
+        }
+        ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 4);
+
+        //received eos = numSendingThreads: check if the exchange protocol propagated the eos
+        ASSERT_TRUE(completed.get_future().get());
+
+        //receiver side
+        netManagerReceiver->unregisterSubpartitionConsumer(nesPartition);
+    } catch (...) {
+        FAIL();
+    }
+    ASSERT_EQ(true, true);
+}
+
 TEST_F(NetworkStackTest, startCloseMaxChannel) {
     try {
         // start zmqServer

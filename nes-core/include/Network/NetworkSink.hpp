@@ -148,9 +148,11 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     void addPendingReconfiguration(NodeLocation newTargetNodeLocation, NesPartition newTargetSourcePartition);
 
-    friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
-
     void reconfigureReceiver(NesPartition newPartition, NodeLocation newReceiverLocation);
+
+    uint16_t getNumberOfInputSources();
+
+    friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
     uint64_t uniqueNetworkSinkDescriptorId;
