@@ -31,13 +31,19 @@ PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& 
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; totalConnections++; }
+void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; /*totalConnections++;*/ }
 
-void PartitionManager::PartitionConsumerEntry::unpin() { partitionCounter--; }
+void PartitionManager::PartitionConsumerEntry::unpin() { partitionCounter--;
+    disconnectCount++; }
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
-uint64_t PartitionManager::PartitionConsumerEntry::getTotalConnections() const { return totalConnections; }
+uint64_t PartitionManager::PartitionConsumerEntry::getDisconnectCount() const { return disconnectCount; }
+
+void PartitionManager::PartitionConsumerEntry::decreaseDisconnectCountBy(uint64_t decreaseAmount) {
+    NES_ASSERT2_FMT(decreaseAmount <= disconnectCount, "Trying to decrease disconnect count of value " << disconnectCount << " by " << decreaseAmount);
+    disconnectCount -= decreaseAmount;
+}
 
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
     : receiverLocation(std::move(senderLocation)) {
@@ -114,12 +120,19 @@ std::optional<uint64_t> PartitionManager::getSubpartitionConsumerCounter(NesPart
     return std::nullopt;
 }
 
-std::optional<uint64_t> PartitionManager::getSubpartitionConsumerTotalConnections(NesPartition partition) {
+std::optional<uint64_t> PartitionManager::getSubpartitionConsumerDisconnectCount(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        return it->second.getTotalConnections();
+        return it->second.getDisconnectCount();
     }
     return std::nullopt;
+}
+
+void PartitionManager::decreaseSubpartitionConsumerDisconnectCount(NesPartition partition, uint64_t decreaseAmount) {
+    std::unique_lock lock(consumerPartitionsMutex);
+    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
+        it->second.decreaseDisconnectCountBy(decreaseAmount);
+    }
 }
 
 DataEmitterPtr PartitionManager::getDataEmitter(NesPartition partition) {
