@@ -72,6 +72,7 @@
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -187,6 +188,10 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // serialize window operator
         serializeWindowOperator(*operatorNode->as<WindowLogicalOperatorNode>(), serializedOperator);
+    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
+        // serialize window operator
+        serializeWindowOperator(*operatorNode->as<CentralWindowOperator>(), serializedOperator);
+
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         // serialize streaming join operator
         serializeJoinOperator(*operatorNode->as<JoinLogicalOperatorNode>(), serializedOperator);
