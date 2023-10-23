@@ -139,7 +139,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
         auto currentCount = ++bufferCount;
         if (currentCount > numBuffersToProduceBeforeCount) {
             //after sending the specified amount of tuples, wait until some tuples actually arrived
-            countReached.wait(false);
+            while (!countReached);
         }
         auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
         auto* records = buffer.getBuffer<Record>();
@@ -167,7 +167,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBeforeCount, testFile));
     countReached = true;
-    countReached.notify_all();
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareString, testFile));
 
     int response = remove(testFile.c_str());
@@ -232,16 +231,15 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
             auto currentCount = ++bufferCount;
             if (currentCount > numBuffersToProduceBeforeReconnect) {
                 //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-                waitForReconfig.wait(false);
+                while (!waitForReconfig);
             }
             if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
                 //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
                 waitForReconnect = true;
-                waitForReconnect.notify_all();
             }
             if (currentCount
                 > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering) {
-                waitForFinalCount.wait(false);
+                while (!waitForFinalCount);
             }
             auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
             auto* records = buffer.getBuffer<Record>();
@@ -443,9 +441,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
 
     //notify lambda source that reconfig happened and make it release more tuples into the buffer
     waitForReconfig = true;
-    waitForReconfig.notify_all();
     //wait for tuples in order to make sure that the buffer is actually tested
-    waitForReconnect.wait(false);
+    while (!waitForReconnect);
 
     //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
 
@@ -476,10 +473,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     //check that all tuples arrived
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
     waitForFinalCount = true;
-    waitForFinalCount.notify_all();
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
-    //todo: once drain event propagation is implemented, wait for query to stop by itself on wrk2
+    //todo #4282: once drain event propagation is implemented, wait for query to stop by itself on wrk2
     ASSERT_TRUE(wrk2->getNodeEngine()->stopQuery(sharedQueryId));
     //worker at coordinator expects double number of threads to send soft stop because source reconfig is not implemented yet
     ASSERT_TRUE(crd->getNesWorker()->getNodeEngine()->stopQuery(sharedQueryId));
@@ -559,16 +555,15 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
             auto currentCount = ++bufferCount;
             if (currentCount > numBuffersToProduceBeforeReconnect) {
                 //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-                waitForReconfig.wait(false);
+                while(!waitForReconfig);
             }
             if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
                 //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
                 waitForReconnect = true;
-                waitForReconnect.notify_all();
             }
             if (currentCount
                 > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering) {
-                waitForFinalCount.wait(false);
+                while(!waitForFinalCount);
             }
             auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
             auto* records = buffer.getBuffer<Record>();
@@ -776,9 +771,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
 
     //notify lambda source that reconfig happened and make it release more tuples into the buffer
     waitForReconfig = true;
-    waitForReconfig.notify_all();
     //wait for tuples in order to make sure that the buffer is actually tested
-    waitForReconnect.wait(false);
+    while(!waitForReconnect);
 
     //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
 
@@ -809,7 +803,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
     //check that all tuples arrived
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
     waitForFinalCount = true;
-    waitForFinalCount.notify_all();
 
     //send the last tuples, after which the lambda source shuts down
 
@@ -880,18 +873,17 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
         auto currentCount = ++bufferCount;
         if (currentCount > numBuffersToProduceBeforeReconnect + (actualReconnects * buffersToProducePerReconnectCycle)) {
             //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-            waitForReconfig.wait(false);
+            while(!waitForReconfig);
         }
         //if (currentCount > (numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) * (actualReconnects + 1)) {
         if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering
                 + (actualReconnects * buffersToProducePerReconnectCycle)) {
             //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
             waitForReconnect = true;
-            waitForReconnect.notify_all();
         }
         if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
                 + numBuffersToProduceWhileBuffering + (actualReconnects * buffersToProducePerReconnectCycle)) {
-            waitForFinalCount.wait(false);
+            while(!waitForFinalCount);
         }
         auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
         auto* records = buffer.getBuffer<Record>();
@@ -1126,9 +1118,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
         waitForFinalCount = false;
         waitForReconfig = true;
-        waitForReconfig.notify_all();
         //wait for tuples in order to make sure that the buffer is actually tested
-        waitForReconnect.wait(false);
+        while(!waitForReconnect);
 
         //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
 
@@ -1163,7 +1154,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
         waitForReconnect = false;
         actualReconnects++;
         waitForFinalCount = true;
-        waitForFinalCount.notify_all();
     }
 
     //send the last tuples, after which the lambda source shuts down
@@ -1253,12 +1243,11 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
         auto currentCount = ++bufferCount;
         if (currentCount > numBuffersToProduceBeforeReconnect) {
             //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-            waitForReconfig.wait(false);
+            while(!waitForReconfig);
         }
         if (currentCount >= numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
             //after writing all remaining tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
             waitForReconnect = true;
-            waitForReconnect.notify_all();
         }
         auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
         auto* records = buffer.getBuffer<Record>();
@@ -1462,9 +1451,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
 
     //notify lambda source that reconfig happened and make it release more tuples into the buffer
     waitForReconfig = true;
-    waitForReconfig.notify_all();
     //wait for tuples in order to make sure that the buffer is actually tested
-    waitForReconnect.wait(false);
+    while(!waitForReconnect);
     //wait some more to make sure the eos reaches the sink
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -1571,12 +1559,11 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
         auto currentCount = ++bufferCount;
         if (currentCount > numBuffersToProduceBeforeReconnect) {
             //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
-            waitForReconfig.wait(false);
+            while(!waitForReconfig);
         }
         if (currentCount >= numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) {
             //after writing all remaining tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
             waitForReconnect = true;
-            waitForReconnect.notify_all();
         }
         auto valCount = (currentCount - 1) * (numberOfTuplesToProduce);
         auto* records = buffer.getBuffer<Record>();
@@ -1791,9 +1778,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
 
     //notify lambda source that reconfig happened and make it release more tuples into the buffer
     waitForReconfig = true;
-    waitForReconfig.notify_all();
     //wait for tuples in order to make sure that the buffer is actually tested
-    waitForReconnect.wait(false);
+    while(!waitForReconnect);
     //wait some more to make sure the eos reaches the sink
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
