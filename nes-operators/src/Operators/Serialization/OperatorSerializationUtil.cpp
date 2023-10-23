@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -80,13 +81,6 @@
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
-#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
@@ -102,33 +96,14 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
-
-#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/SliceAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
-
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
-#include <Operators/Serialization/UDFSerializationUtil.hpp>
-
+#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -191,6 +166,18 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
         serializeWindowOperator(*operatorNode->as<CentralWindowOperator>(), serializedOperator);
+
+    } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
+        // serialize window operator
+        serializeWindowOperator(*operatorNode->as<SliceCreationOperator>(), serializedOperator);
+
+    } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
+        // serialize slice merging operator
+        serializeWindowOperator(*operatorNode->as<SliceMergingOperator>(), serializedOperator);
+
+    } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
+        // serialize window operator
+        serializeWindowOperator(*operatorNode->as<WindowComputationOperator>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         // serialize streaming join operator
@@ -827,12 +814,12 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
                                                                 action,
                                                                 allowedLateness);
     windowDef->setOriginId(windowDetails.origin());
-    return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId);
-   /* switch (distrChar.distr()) {
+
+    switch (distrChar.distr()) {
         case SerializableOperator_DistributionCharacteristic_Distribution_Unset:
             return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)->as<WindowOperatorNode>();
         case SerializableOperator_DistributionCharacteristic_Distribution_Complete:
-            return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
                 ->as<CentralWindowOperator>();
         case SerializableOperator_DistributionCharacteristic_Distribution_Combining:
             return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
@@ -844,7 +831,7 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
             return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef, operatorId)
                 ->as<SliceCreationOperator>();
         default: NES_NOT_IMPLEMENTED();
-    }*/
+    }
 }
 
 void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNode& joinOperator,
