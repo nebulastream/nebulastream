@@ -257,6 +257,7 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runti
 }
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
     // propagate EOS to the locally running QEPs that use the network source
+    //todo #4088: take care of reconfiguring the event channel to the new upstream sink in case of redeployment
     NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
     if (Runtime::QueryTerminationType::Graceful == terminationType) {
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
