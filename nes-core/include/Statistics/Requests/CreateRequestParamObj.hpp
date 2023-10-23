@@ -18,7 +18,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-
 #include <Statistics/Requests/RequestParamObj.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
 
