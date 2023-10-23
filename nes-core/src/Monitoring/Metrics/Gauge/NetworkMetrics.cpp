@@ -48,6 +48,7 @@ Configurations::SchemaTypePtr NetworkMetrics::getSchemaType(const std::string& p
     schemaFiledDetails.emplace_back(prefix + "rMulticast", dataType, length);
     schemaFiledDetails.emplace_back(prefix + "tBytes", dataType, length);
     schemaFiledDetails.emplace_back(prefix + "tPackets", dataType, length);
+    schemaFiledDetails.emplace_back(prefix + "tErrs", dataType, length);
     schemaFiledDetails.emplace_back(prefix + "tDrop", dataType, length);
     schemaFiledDetails.emplace_back(prefix + "tFifo", dataType, length);
     schemaFiledDetails.emplace_back(prefix + "tColls", dataType, length);
