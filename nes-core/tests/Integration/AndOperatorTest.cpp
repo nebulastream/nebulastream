@@ -45,6 +45,7 @@ class AndOperatorTest : public Testing::BaseIntegrationTest {
         coConf = CoordinatorConfiguration::createDefault();
         coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;
+        coConf->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     }
 
     string removeRandomKey(string contentString) {
@@ -88,6 +89,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     NES_INFO("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     auto srcConf1 = CSVSourceType::create("Win1", "test_stream1");
     srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
@@ -102,6 +104,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     NES_INFO("AndOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     auto srcConf2 = CSVSourceType::create("Win2", "test_stream2");
     srcConf2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(5);
@@ -176,6 +179,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     NES_INFO("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     auto srcConf1 = CSVSourceType::create("QnV1", "test_stream_QnV1");
     srcConf1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
@@ -190,6 +194,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     NES_INFO("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
+    workerConfig2->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     auto srcConf2 = CSVSourceType::create("QnV2", "test_stream_QnV2");
     srcConf2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(5);
