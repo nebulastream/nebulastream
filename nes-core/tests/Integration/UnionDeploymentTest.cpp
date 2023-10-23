@@ -74,7 +74,7 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
 
     std::string testName = "UnionDeploymentTest";
 
-    // Without the packed attribute, the optimizer might use 64 bits for the uint32_t, causing an error.
+    // Without the packed attribute, Clang might use 64 bits for the uint32_t, causing an error.
     struct __attribute__((packed)) OutputCarTruck {
         uint32_t car$id;
         uint64_t car$value;
@@ -96,7 +96,7 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
 };
 
 /**
- * Test deploying unionWith query with source on two different worker node using bottom up strategy.
+ * Test deploying unionWith query with source on two different worker node using the bottom up strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
@@ -133,7 +133,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 }
 
 /**
- * Test deploying unionWith query with source on two different worker node using top up strategy.
+ * Test deploying unionWith query with source on two different worker node using the top down strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
