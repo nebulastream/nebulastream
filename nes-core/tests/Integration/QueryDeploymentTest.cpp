@@ -12,19 +12,16 @@
     limitations under the License.
 */
 
-#include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/D.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Coordinator/LogicalSourceType.hpp>
-#include <Configurations/Coordinator/SchemaType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
