@@ -22,10 +22,8 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <chrono>//for timing execution
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -97,6 +95,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     NES_DEBUG("SeqOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     auto csvSourceType1 = CSVSourceType::create("Win1", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
@@ -109,6 +108,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create("Win2", "test_stream");
     csvSourceType2->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
@@ -138,18 +138,18 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
                                                                     LineageType::IN_MEMORY);
 
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
     NES_INFO("SeqOperatorTest: Remove query");
 
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
