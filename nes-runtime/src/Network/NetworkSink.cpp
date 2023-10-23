@@ -208,7 +208,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
-        networkManager->unregisterSubpartitionProducer(nesPartition);
         //todo #3013: make sure buffers are kept if the device is currently buffering
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {

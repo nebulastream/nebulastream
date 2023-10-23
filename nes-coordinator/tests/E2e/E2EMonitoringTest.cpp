@@ -266,11 +266,18 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
     EXPECT_EQ(countOccurrences(",", content), 4 * lineCnt);
     EXPECT_EQ(countOccurrences("timestamp", content), 1);
 
-    bool retStopWrk = wrk1->stop(false);
-    ASSERT_TRUE(retStopWrk);
+    NES_INFO("ContinuousSourceTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    bool retStopCord = crd->stopCoordinator(false);
+    NES_INFO("ContinuousSourceTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("ContinuousSourceTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
+    NES_INFO("UpstreamBackupTest: Test finished");
 }
 
 }// namespace NES

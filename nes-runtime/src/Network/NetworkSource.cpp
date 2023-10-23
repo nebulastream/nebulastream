@@ -196,6 +196,11 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             isTermination = true;
             break;
         }
+        case Runtime::ReconfigurationType::FailEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::Failure;
+            isTermination = true;
+            break;
+        }
         case Runtime::ReconfigurationType::PropagateEpoch: {
             auto* channel = workerContext.getEventOnlyNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
@@ -212,14 +217,10 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         }
     }
     if (isTermination) {
-        networkManager->unregisterSubpartitionConsumer(nesPartition);
         workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
         NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
-    }
-    else {
-        workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
     }
 }
 
