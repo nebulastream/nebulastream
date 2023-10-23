@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.229](https://github.com/nebulastream/nebulastream/tree/v0.5.229) (2023-10-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.228...v0.5.229)
+
+### Bug Fixes 🐛
+
+- \[BUG\] BottomUp query placement places BinaryOperators incorrectly [\#4280](https://github.com/nebulastream/nebulastream/issues/4280)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Let mobile device emit StartedBuffering event and use it to schedule redeployment of downstream operators [\#3027](https://github.com/nebulastream/nebulastream/issues/3027)
+
 ## [v0.5.228](https://github.com/nebulastream/nebulastream/tree/v0.5.228) (2023-10-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.227...v0.5.228)
