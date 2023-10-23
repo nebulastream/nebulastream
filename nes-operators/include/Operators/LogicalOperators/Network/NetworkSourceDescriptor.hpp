@@ -90,7 +90,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
     uint32_t retryTimes;
 };
 
-using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
+using NetworkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
 
 }// namespace Network
 }// namespace NES
