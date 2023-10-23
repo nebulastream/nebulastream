@@ -123,7 +123,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       endOfStreamMessage.getChannelId().toString(),
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
         }  else if (partitionManager->getSubpartitionConsumerDisconnectCount(partition).value() < expectedTotalConnectionsInPartitionManager) {
-            NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total connections for "
+            NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total channel disconnects for "
                       "subpartition: {} has not been reached: {}/{}",
                       endOfStreamMessage.getChannelId().toString(),
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()),
