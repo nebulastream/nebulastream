@@ -107,6 +107,7 @@ bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
     }
 
     it->second.unpin();
+
     NES_INFO("PartitionManager: Unregistering Consumer {}; newCnt({})", partition.toString(), it->second.count());
     if (it->second.count() == 1) {
         NES_DEBUG("PartitionManager: Consumer {}, counter is at 1.", partition.toString());
@@ -231,6 +232,8 @@ bool PartitionManager::unregisterSubpartitionProducer(NesPartition partition) {
     }
 
     it->second.unpin();
+
+
     NES_INFO("PartitionManager: Unregistering Subpartition Producer {}; newCnt({})", partition.toString(), it->second.count());
     if (it->second.count() == 0) {
         NES_DEBUG("PartitionManager: Producer Partition {}, counter is at 0.", partition.toString());

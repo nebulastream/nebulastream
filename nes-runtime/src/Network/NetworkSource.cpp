@@ -152,7 +152,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     NES_DEBUG("NetworkSource: reconfigure() called {}", nesPartition.toString());
     NES::DataSource::reconfigure(task, workerContext);
     bool isTermination = false;
-    Runtime::QueryTerminationType terminationType;
+    Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Failure;;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
             // we need to check again because between the invocations of
@@ -161,6 +161,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Deleted) {
                 return;
             }
+
             auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
                                                                              nesPartition,
                                                                              localBufferManager,
@@ -188,6 +189,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
             isTermination = true;
+            break;
         }
         case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
@@ -210,12 +212,17 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         }
     }
     if (isTermination) {
+        networkManager->unregisterSubpartitionConsumer(nesPartition);
         workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
         NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
     }
+    else {
+        workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
+    }
 }
+
 
 void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     NES_DEBUG("NetworkSource: postReconfigurationCallback() called {}", nesPartition.toString());
