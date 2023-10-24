@@ -69,7 +69,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
     try {
         NES_ASSERT(serviceURL != EMPTY_STRING, "ELEGANT planner URL is not set in elegant.plannerServiceURL");
         nlohmann::json payload{};
-        prepareQueryPayload(pinnedDownStreamOperators, pinnedUpStreamOperators, payload);
+        prepareQueryPayload(pinnedUpStreamOperators, pinnedDownStreamOperators, payload);
         prepareTopologyPayload(payload);
         payload[TIME_WEIGHT_KEY] = timeWeight;
         NES_INFO("Sending placement request to ELEGANT planner with payload: url={}, payload={}", serviceURL, payload.dump());
