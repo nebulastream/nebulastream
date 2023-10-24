@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Exceptions/InvalidFieldException.hpp>
+#include <Operators/Exceptions/SignatureComputationException.hpp>
 
 namespace NES {
-InvalidFieldException::InvalidFieldException(const std::string& msg) : std::runtime_error(msg) {}
+SignatureComputationException::SignatureComputationException(const std::string& message) : std::runtime_error(message) {}
 }// namespace NES

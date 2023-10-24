@@ -27,9 +27,9 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
-#include <Optimizer/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
-#include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
+#include <Util/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
+#include <Util/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
+#include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <z3++.h>
 

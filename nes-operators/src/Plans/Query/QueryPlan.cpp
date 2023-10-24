@@ -19,7 +19,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Utils/QueryConsoleDumpHandler.hpp>
+#include <Util/QueryConsoleDumpHandler.hpp>
 #include <algorithm>
 #include <set>
 #include <stack>

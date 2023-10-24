@@ -12,9 +12,9 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        InvalidFieldException.cpp
-        InvalidLogicalOperatorNodeException.cpp
-        InvalidOperatorStateException.cpp
-        TypeInferenceException.cpp
-        UDFException.cpp
+        DataTypeToZ3ExprUtil.cpp
+        ExpressionToZ3ExprUtil.cpp
+        QuerySignature.cpp
+        QuerySignatureUtil.cpp
+        Z3ExprAndFieldMap.cpp
 )

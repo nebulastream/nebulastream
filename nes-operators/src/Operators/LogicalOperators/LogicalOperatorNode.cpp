@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include <Exceptions/InvalidOperatorStateException.hpp>
+#include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/OperatorState.hpp>
+#include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <utility>
 
 namespace NES {
@@ -37,7 +38,7 @@ void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferZ3Signature(context);
     }
-    z3Signature = Optimizer::Utils::createQuerySignatureForOperator(context, operatorNode);
+    z3Signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
 }
 
 void LogicalOperatorNode::setZ3Signature(Optimizer::QuerySignaturePtr signature) { this->z3Signature = std::move(signature); }

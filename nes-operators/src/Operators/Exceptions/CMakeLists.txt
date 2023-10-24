@@ -12,5 +12,10 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        QueryConsoleDumpHandler.cpp
+        InvalidFieldException.cpp
+        InvalidLogicalOperatorNodeException.cpp
+        InvalidOperatorStateException.cpp
+        SignatureComputationException.cpp
+        TypeInferenceException.cpp
+        UDFException.cpp
 )

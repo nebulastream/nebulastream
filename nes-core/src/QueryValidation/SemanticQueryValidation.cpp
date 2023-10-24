@@ -22,11 +22,11 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Exceptions/SignatureComputationException.hpp>
+#include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QuerySignatures/QuerySignature.hpp>
-#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
+#include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <Util/Logger/Logger.hpp>

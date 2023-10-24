@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_QUERYSIGNATURE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_QUERYSIGNATURE_HPP_
 
-#include <Optimizer/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
+#include <Util/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
 #include <map>
 #include <memory>
 #include <vector>

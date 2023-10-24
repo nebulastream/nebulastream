@@ -18,10 +18,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
-namespace NES::Optimizer {
-class TypeInferencePhaseContext;
-}
-
 namespace NES::Windowing {
 /**
  * Abstract class for window aggregations. All window aggregations operate on a field and output another field.

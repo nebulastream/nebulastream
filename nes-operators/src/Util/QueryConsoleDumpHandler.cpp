@@ -14,7 +14,7 @@
 
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Utils/QueryConsoleDumpHandler.hpp>
+#include <Util/QueryConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 

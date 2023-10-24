@@ -15,7 +15,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
-#include <Optimizer/QuerySignatures/QuerySignature.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>

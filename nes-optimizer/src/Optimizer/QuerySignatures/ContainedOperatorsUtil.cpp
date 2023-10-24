@@ -32,7 +32,7 @@
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/ContainedOperatorsUtil.hpp>
-#include <Optimizer/QuerySignatures/QuerySignature.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>

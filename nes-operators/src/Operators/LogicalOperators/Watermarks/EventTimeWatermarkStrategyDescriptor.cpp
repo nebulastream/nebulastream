@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
+#include <Operators/Exceptions/InvalidFieldException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>

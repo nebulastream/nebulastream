@@ -16,7 +16,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Utils/QueryConsoleDumpHandler.hpp>
+#include <Util/QueryConsoleDumpHandler.hpp>
 #include <algorithm>
 
 namespace NES {

@@ -32,8 +32,8 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Optimizer/QuerySignatures/QuerySignature.hpp>
-#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
+#include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <z3++.h>
@@ -47,7 +47,6 @@ class QuerySignatureUtilTests : public Testing::BaseUnitTest {
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
-    std::shared_ptr<Optimizer::TypeInferencePhaseContext> typeInferencePhaseContext;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Exceptions/InvalidLogicalOperatorException.hpp>
+#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
