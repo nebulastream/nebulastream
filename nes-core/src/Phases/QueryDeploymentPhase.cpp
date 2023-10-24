@@ -48,8 +48,8 @@ QueryDeploymentPhase::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
     return std::make_shared<QueryDeploymentPhase>(
         QueryDeploymentPhase(globalExecutionPlan,
                              catalogService,
-                             coordinatorConfiguration->elegantConfiguration.accelerateJavaUDFs,
-                             coordinatorConfiguration->elegantConfiguration.accelerationServiceURL));
+                             coordinatorConfiguration->elegant.accelerateJavaUDFs,
+                             coordinatorConfiguration->elegant.accelerationServiceURL));
 }
 
 void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
