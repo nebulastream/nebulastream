@@ -32,6 +32,7 @@
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -534,7 +535,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
-    if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<WindowLogicalOperatorNode>() || operatorNode->instanceOf<CentralWindowOperator>()) {
         // handle if threshold window
         //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
         if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isContentBasedWindowType()) {
