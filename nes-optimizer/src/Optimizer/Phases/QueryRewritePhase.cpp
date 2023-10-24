@@ -44,7 +44,7 @@ QueryRewritePhasePtr QueryRewritePhase::create(const Configurations::Coordinator
         || optimizerConfigurations.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule;
 
     //Check if Java UDF acceleration activated
-    bool accelerateJavaUDFs = coordinatorConfiguration->elegantConfiguration.accelerateJavaUDFs;
+    bool accelerateJavaUDFs = coordinatorConfiguration->elegant.accelerateJavaUDFs;
 
     return std::make_shared<QueryRewritePhase>(QueryRewritePhase(accelerateJavaUDFs, applyRulesImprovingSharingIdentification));
 }

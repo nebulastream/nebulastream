@@ -47,7 +47,7 @@ class ElegantConfigurations : public BaseConfiguration {
     StringOption accelerationServiceURL = {ACCELERATION_SERVICE_URL, "Complete URL for connecting with the ELEGANT planner."};
 
   private:
-    std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs}; }
+    std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs, &plannerServiceURL}; }
 };
 }// namespace NES::Configurations
 #endif// NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_

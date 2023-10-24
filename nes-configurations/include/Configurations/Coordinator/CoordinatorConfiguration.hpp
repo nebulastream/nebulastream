@@ -144,7 +144,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief ELEGANT related configuration parameters
      */
-    ElegantConfigurations elegantConfiguration = {ELEGANT, "Define ELEGANT configuration"};
+    ElegantConfigurations elegant = {ELEGANT, "Define ELEGANT configuration"};
 
     /**
      * @brief Create a default CoordinatorConfiguration object with default values.
@@ -176,7 +176,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &optimizer,
                 &logicalSourceTypes,
                 &coordinatorHealthCheckWaitTime,
-                &restServerCorsAllowedOrigin};
+                &restServerCorsAllowedOrigin,
+                &elegant};
     }
 };
 
