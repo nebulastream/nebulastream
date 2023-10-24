@@ -92,8 +92,9 @@ add_nes_integration_test(multi-join-test "MultipleJoinsTest.cpp")
 
 
 ### MultiThreadedTest ###
-add_nes_integration_test(multi-thread-test "MultiThreadedTest.cpp")
-
+if (NES_BUILD_MULTITHREADED)
+add_nes_integration_test(multi-thread-test "MultiThreadedTest.cpp" "JoinMultiThreadedTest.cpp")
+endif ()
 
 ### AssignWatermarkTest ###
 add_nes_integration_test(assignment-watermark-test "Windowing/AssignWatermarkTest.cpp")

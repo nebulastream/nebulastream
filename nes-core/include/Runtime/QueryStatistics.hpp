@@ -14,6 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
+#include <folly/Synchronized.h>
 
 #include <atomic>
 #include <map>
@@ -134,7 +135,7 @@ class QueryStatistics {
     /**
     * @brief get pipeline id task map
     */
-    std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>& getPipelineIdToTaskMap();
+    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>>& getPipelineIdToTaskMap();
 
     /**
      * @brief get sum of all latencies
@@ -215,7 +216,7 @@ class QueryStatistics {
      * get the ts to latency map which stores ts as key and latencies in vectors
      * @return
      */
-    std::map<uint64_t, std::vector<uint64_t>> getTsToLatencyMap();
+    folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>>& getTsToLatencyMap();
 
     /**
      * clear the content of the statistics
@@ -238,8 +239,8 @@ class QueryStatistics {
 
     std::atomic<uint64_t> queryId = 0;
     std::atomic<uint64_t> subQueryId = 0;
-    std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
-    std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>> pipelineIdToTaskThroughputMap;
+    folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>> tsToLatencyMap;
+    folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>> pipelineIdToTaskThroughputMap;
 };
 
 }// namespace NES::Runtime
