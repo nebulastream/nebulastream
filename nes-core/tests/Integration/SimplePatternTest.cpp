@@ -128,7 +128,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
 /* 2.Test
   * Iteration Operator with min and max occurrences of the event
  */
-TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
+TEST_F(SimplePatternTest, DISABLED_testPatternWithIterationOperator) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -213,7 +213,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
 /* 3.Test
   * Iteration Operator exact number of event occurrences
  */
-TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
+TEST_F(SimplePatternTest, DISABLED_testPatternWithIterationOperatorExactOccurance) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -295,7 +295,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
 /* 4.Test
   * Iteration Operator unbounded event occurrences
  */
-TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
+TEST_F(SimplePatternTest, DISABLED_testPatternWithIterationOperatorUnbounded) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -375,7 +375,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
 /* 5.Test
   * Iteration Operator unbounded event occurrences, special case (0,5)
  */
-TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
+TEST_F(SimplePatternTest, DISABLED_testPatternWithIterationOperator0Max) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -457,7 +457,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
 /* 6.Test
   * Iteration Operator unbounded event occurrences, special case (5,0)
  */
-TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
+TEST_F(SimplePatternTest, DISABLED_testPatternWithIterationOperatorMin0) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

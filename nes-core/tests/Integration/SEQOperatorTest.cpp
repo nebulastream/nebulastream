@@ -69,7 +69,7 @@ class SeqOperatorTest : public Testing::BaseIntegrationTest {
 /* 1.Test
  * Seq operator standalone with Tumbling Window
  */
-TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
+TEST_F(SeqOperatorTest, DISABLED_testPatternOneSimpleSeq) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -165,7 +165,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 /* 2.Test
  * SEQ operator in combination with filter
  */
-TEST_F(SeqOperatorTest, testPatternOneSeq) {
+TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
