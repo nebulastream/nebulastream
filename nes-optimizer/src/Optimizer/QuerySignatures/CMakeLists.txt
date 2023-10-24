@@ -12,13 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-optimizer
-        ExpressionToZ3ExprUtil.cpp
-        QuerySignatureUtil.cpp
-        DataTypeToZ3ExprUtil.cpp
-        Z3ExprAndFieldMap.cpp
         SignatureEqualityUtil.cpp
         SignatureContainmentCheck.cpp
-        QuerySignature.cpp
         ContainedOperatorsUtil.cpp
         ContainmentRelationshipAndOperatorChain.cpp
 )

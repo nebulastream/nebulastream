@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include <Optimizer/Exceptions/SignatureComputationException.hpp>
+#include  <Operators/Exceptions/TypeInferenceException.hpp>
 
 namespace NES {
-SignatureComputationException::SignatureComputationException(const std::string& message) : std::runtime_error(message) {}
+TypeInferenceException::TypeInferenceException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
+TypeInferenceException::TypeInferenceException(QueryId queryId, const std::string& message)
+    : Exceptions::RequestExecutionException(queryId, message) {}
 }// namespace NES

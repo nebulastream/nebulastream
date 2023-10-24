@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Exceptions/InvalidOperatorStateException.hpp>
+#include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <sstream>
 

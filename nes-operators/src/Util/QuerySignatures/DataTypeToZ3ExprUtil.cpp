@@ -14,8 +14,8 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
-#include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
+#include <Util/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
+#include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <z3++.h>

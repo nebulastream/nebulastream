@@ -18,10 +18,6 @@
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <vector>
 
-namespace NES::Optimizer {
-class TypeInferencePhaseContext;
-}
-
 namespace NES::Windowing {
 
 class WindowType {

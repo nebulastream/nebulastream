@@ -14,7 +14,7 @@
 
 #include <string>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Operators/Exceptions/UDFException.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Catalogs::UDF {

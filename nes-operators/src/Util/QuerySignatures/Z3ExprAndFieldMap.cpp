@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
+#include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <utility>
 
 namespace NES::Optimizer {

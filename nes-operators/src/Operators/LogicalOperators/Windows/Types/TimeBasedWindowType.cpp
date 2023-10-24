@@ -14,7 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
+#include <Operators/Exceptions/InvalidFieldException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>

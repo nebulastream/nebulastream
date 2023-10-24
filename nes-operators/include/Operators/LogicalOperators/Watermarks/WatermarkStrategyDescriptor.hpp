@@ -21,10 +21,6 @@ namespace NES {
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-namespace Optimizer {
-class TypeInferencePhaseContext;
-}
-
 }// namespace NES
 
 namespace NES::Windowing {

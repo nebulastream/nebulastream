@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/ContainedOperatorsUtil.hpp>
 #include <Optimizer/QuerySignatures/ContainmentRelationshipAndOperatorChain.hpp>
-#include <Optimizer/QuerySignatures/QuerySignature.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>

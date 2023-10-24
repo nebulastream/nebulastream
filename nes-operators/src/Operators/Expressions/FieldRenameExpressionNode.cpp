@@ -14,7 +14,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
+#include <Operators/Exceptions/InvalidFieldException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>

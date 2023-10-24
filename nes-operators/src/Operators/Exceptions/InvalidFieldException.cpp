@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-#include  <Exceptions/TypeInferenceException.hpp>
+#include <Operators/Exceptions/InvalidFieldException.hpp>
 
 namespace NES {
-TypeInferenceException::TypeInferenceException(const std::string& message) : Exceptions::RequestExecutionException(message) {}
-TypeInferenceException::TypeInferenceException(QueryId queryId, const std::string& message)
-    : Exceptions::RequestExecutionException(queryId, message) {}
+InvalidFieldException::InvalidFieldException(const std::string& msg) : std::runtime_error(msg) {}
 }// namespace NES

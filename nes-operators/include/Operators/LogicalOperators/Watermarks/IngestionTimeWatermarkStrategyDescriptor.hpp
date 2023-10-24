@@ -17,10 +17,6 @@
 
 #include<Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
-namespace NES::Optimizer {
-class TypeInferencePhaseContext;
-}
-
 namespace NES::Windowing {
 
 class IngestionTimeWatermarkStrategyDescriptor;
