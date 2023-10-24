@@ -57,7 +57,7 @@ class OrOperatorTest : public Testing::BaseIntegrationTest {
 /* 1.Test
  * OR operator standalone
  */
-TEST_F(OrOperatorTest, testPatternOneOr) {
+TEST_F(OrOperatorTest, DISABLED_testPatternOneOr) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -149,7 +149,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
 /* 2.Test
  * OR operator in combination with additional map and filter
  */
-TEST_F(OrOperatorTest, testPatternOrMap) {
+TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

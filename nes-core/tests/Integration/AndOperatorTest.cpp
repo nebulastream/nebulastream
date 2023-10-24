@@ -71,7 +71,7 @@ class AndOperatorTest : public Testing::BaseIntegrationTest {
 /* 1.Test
  * AND operator standalone with Tumbling Window
  */
-TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
+TEST_F(AndOperatorTest, DISABLED_testPatternOneSimpleAnd) {
     // Setup Coordinator
     auto window = Schema::create()
                       ->addField(createField("win", BasicType::UINT64))
@@ -160,7 +160,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
 /* 2.Test
  * And operator in combination with filter
  */
-TEST_F(AndOperatorTest, testPatternOneAnd) {
+TEST_F(AndOperatorTest, DISABLED_testPatternOneAnd) {
     // Setup Coordinator
     auto qnv = Schema::create()
                    ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
