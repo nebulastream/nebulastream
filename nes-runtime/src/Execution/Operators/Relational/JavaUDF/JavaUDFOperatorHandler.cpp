@@ -103,6 +103,10 @@ jmethodID JavaUDFOperatorHandler::getUDFMethodId() const { return udfMethodId; }
 
 void JavaUDFOperatorHandler::start(NES::Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {}
 void JavaUDFOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {}
-JavaUDFOperatorHandler::~JavaUDFOperatorHandler() { jni::freeObject(udfInstance); }
+JavaUDFOperatorHandler::~JavaUDFOperatorHandler() {
+    if (udfInstance) {
+        jni::freeObject(udfInstance);
+    }
+}
 
 }// namespace NES::Runtime::Execution::Operators
