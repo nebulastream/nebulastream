@@ -12,15 +12,8 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
-#include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Util/Logger/Logger.hpp>
