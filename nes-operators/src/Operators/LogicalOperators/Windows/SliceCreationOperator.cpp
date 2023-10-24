@@ -16,12 +16,12 @@
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <sstream>
 
 namespace NES {

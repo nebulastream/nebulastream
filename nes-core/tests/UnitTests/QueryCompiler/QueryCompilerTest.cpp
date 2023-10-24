@@ -479,7 +479,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     sourceCatalog->addLogicalSource(leftSourceLogicalSourceName, schema);
     sourceCatalog->addLogicalSource(rightSourceLogicalSourceName, schema);
     auto defaultSourceType1 = DefaultSourceType::create(leftSourceLogicalSourceName, "x1");
-    auto defaultSourceType2 = DefaultSourceType::create(rightSourceLogicalSourceName, "x2");
+    auto defaultSourceType2 = DefaultSourceType::create(rightSourceLogicalSourceName, "x1");
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSourceTypes.add(defaultSourceType1);
     workerConfiguration->physicalSourceTypes.add(defaultSourceType2);

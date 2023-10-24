@@ -17,8 +17,8 @@
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
@@ -43,7 +43,7 @@ std::string WindowLogicalOperatorNode::toString() const {
 }
 
 bool WindowLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
-    return equal(rhs) && (rhs->as<WindowLogicalOperatorNode>()->getId() == id) && !rhs->instanceOf<NonKeyedWindowOperator>();
+    return equal(rhs) && (rhs->as<WindowLogicalOperatorNode>()->getId() == id) && !rhs->instanceOf<CentralWindowOperator>();
 }
 
 bool WindowLogicalOperatorNode::equal(NodePtr const& rhs) const {

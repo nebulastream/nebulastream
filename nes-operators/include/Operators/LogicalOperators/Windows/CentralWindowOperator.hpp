@@ -19,9 +19,9 @@
 
 namespace NES {
 
-class NonKeyedWindowOperator : public WindowOperatorNode {
+class CentralWindowOperator : public WindowOperatorNode {
   public:
-    NonKeyedWindowOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
+    CentralWindowOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
