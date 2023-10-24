@@ -21,31 +21,40 @@ Visit our documentation at https://docs.nebula.stream
 
 The codebase is structured in the following components:
 
-| Component                        | Description                                                                                                                 |
-|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| [nes-common](nes-common)         | This component contains some base functionality that is used across all other components, e.g., for logging and exceptions. |
-| [nes-data-types](nes-data-types) | This component contains the basic data types of the system.                                                                 |
-| [nes-compiler](nes-compiler)     | This component contains functionalities to compile source code or intermediate representations to executable binaries.      |
-| [nes-runtime](nes-runtime)       | This component contains all runtime components for the network stack and the memory managment                               |
-| [nes-core](nes-core)             | This component contains the main aspects of the overall system.                                                             |
-| [nes-client](nes-client)         | This component contains the C++ client to interact with NebulaStream from C++ applications.                                 |
-| [nes-asp](nes-asp)               | This component contains all C++ code related to approximate stream processing                                               |
+| Component                                | Description                                                                                                                                               |
+|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [nes-benchmark](nes-benchmark)           | This component contains benchmarks for different components.                                                                                              |
+| [nes-catalogs](nes-catalogs)             | This component contains query, source, UDF, and topology catalogs and corresponding services.                                                             |
+| [nes-client](nes-client)                 | This component contains the C++ client to interact with NebulaStream from C++ applications.                                                               |
+| [nes-common](nes-common)                 | This component contains some base functionality that is used across all other components, e.g., for logging and exceptions.                               |
+| [nes-compiler](nes-compiler)             | This component contains functionalities to compile source code or intermediate representations to executable binaries.                                    |
+| [nes-configurations](nes-configurations) | This component contains all coordinator and worker specific configurations that the user can supply over command line or using a yaml file.               |
+| [nes-core](nes-core)                     | This component contains the main aspects of the overall system that uses the remaining component to start the system.                                     |
+| [nes-data-types](nes-data-types)         | This component contains the basic data types of the system.                                                                                               |
+| [nes-operators](nes-operators)           | This component contains definition of all logical operators supported by NebulaStream.                                                                    |
+| [nes-optimizer](nes-optimizer)           | This component contains query optimizer for NebulaStream that contains rewrite rules, placement optimizations, sharing identification optimizations, etc. |
+| [nes-plugins](nes-plugins)               | This component contains all external plugins that system supports, e.g., tensorflow, omnx, arrow, etc.                                                    |
+| [nes-runtime](nes-runtime)               | This component contains all runtime components for the network stack and the memory managment                                                             |
 
 
 ### Dependencies:
 
 ```mermaid
 graph TD;
-  common-->compiler;
-  common-->runtime;
-  common-->data-types;
-  compiler-->core;
-  data-types-->runtime;
-  data-types-->core;
-  runtime-->core;
-  common-->core;
-  core-->client;
-  asp-->core;
-  asp-->runtime;
-  common-->asp;
+  nes-core-->nes-benchmark;
+  nes-operators-->nes-catalogs;
+  nes-operators-->nes-client;
+  nes-grpc-->nes-common;
+  nes-common-->nes-compiler; 
+  nes-common-->nes-configurations;
+  nes-client-->nes-core;
+  nes-optimizer-->nes-core;
+  nes-runtime-->nes-core;
+  nes-compiler-->nes-core;
+  nes-configurations-->nes-data-types;
+  nes-grpc-->nes-operators;
+  nes-data-types-->nes-operators;
+  nes-catalogs-->nes-optimizer;
+  nes-core-->nes-plugin;
+  nes-operators-->nes-runtime;
 ```

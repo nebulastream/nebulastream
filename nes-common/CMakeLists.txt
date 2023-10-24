@@ -64,7 +64,7 @@ get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
 add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
-target_link_libraries(nes-common PUBLIC ${LIBRARIES} nes-grpc)
+target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES})
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
