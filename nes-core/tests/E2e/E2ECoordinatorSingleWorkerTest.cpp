@@ -312,6 +312,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::setDistributedWindowChildThreshold(1000),
+                                                    TestUtils::enableNautilusCoordinator(),
                                                     TestUtils::setDistributedWindowCombinerThreshold(1000)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
@@ -353,6 +354,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::logicalSourceName("ktm"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(3),
+                                          TestUtils::enableNautilusWorker(),
                                           TestUtils::sourceGatheringInterval(1),
                                           TestUtils::enableSlicingWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -732,6 +734,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::setDistributedWindowChildThreshold(1000),
+                                                    TestUtils::enableNautilusCoordinator(),
                                                     TestUtils::setDistributedWindowCombinerThreshold(1000)});
 
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
