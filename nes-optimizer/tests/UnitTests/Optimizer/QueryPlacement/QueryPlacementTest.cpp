@@ -29,14 +29,14 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -1560,8 +1560,9 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthThightResourcesConstrains) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSourceCar = PhysicalSource::create(csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSource, srcNode1);
-     //   std::make_shared<Catalogs::Source::SourceCatalogEntry>(csvSourceType, logicalSource, srcNode1);
+    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSource, srcNode1);
+    //   std::make_shared<Catalogs::Source::SourceCatalogEntry>(csvSourceType, logicalSource, srcNode1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car").filter(Attribute("value") > 1).sink(NullOutputSinkDescriptor::create());
@@ -1780,19 +1781,20 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrainsInAJ
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
     // Prepare the source and schema
-    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                         "->addField(\"value\", BasicType::UINT64)"
-                         "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
+    auto schema = Schema::create()
+                      ->addField("id", BasicType::UINT32)
+                      ->addField("value", BasicType::UINT64)
+                      ->addField("timestamp", BasicType::UINT64);
 
-    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     {
         const std::string sourceName = "car1";
         sourceCatalog->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+        auto physicalSource = PhysicalSource::create(csvSourceType);
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
@@ -1801,10 +1803,10 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrainsInAJ
         const std::string sourceName = "car2";
         sourceCatalog->addLogicalSource(sourceName, schema);
         auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+        auto physicalSource = PhysicalSource::create(csvSourceType);
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
