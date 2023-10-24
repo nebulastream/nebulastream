@@ -76,7 +76,9 @@ void QueryStatistics::incAvailableFixedBufferSum(uint64_t size) { this->availabl
 
 void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->processedBuffers = processedBuffers; }
 
-void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency) { (*tsToLatencyMap.wlock())[now].push_back(latency); }
+void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency) {
+    (*tsToLatencyMap.wlock())[now].push_back(latency);
+}
 
 folly::Synchronized<std::map<uint64_t, std::map<uint64_t, std::atomic<uint64_t>>>>& QueryStatistics::getPipelineIdToTaskMap() {
     return pipelineIdToTaskThroughputMap;
