@@ -53,7 +53,9 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
+option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(NES_USE_CCACHE "USE CCACHE" OFF)
+
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)

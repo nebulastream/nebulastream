@@ -34,13 +34,16 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, dou
 }
 
 uint8_t* FixedPage::append(const uint64_t hash) {
-    if (currentPos >= capacity) {
+    auto posToWriteTo = currentPos++;
+    if (posToWriteTo >= capacity) {
+        currentPos--;
         return nullptr;
     }
+
     addHashToBloomFilter(hash);
 
-    uint8_t* ptr = &data[currentPos * sizeOfRecord];
-    currentPos++;
+    uint8_t* ptr = &data[posToWriteTo * sizeOfRecord];
+    NES_DEBUG("Inserting tuple at pos {}", posToWriteTo);
     return ptr;
 }
 

@@ -231,18 +231,26 @@ TEST_F(FixedPageTest, storeAndRetrieveTooManyValuesForOnePageNonDefaultPageSizeA
 TEST_F(FixedPageTest, bloomFilterCheckTest) {
     const auto sizeOfRecord = sizeof(uint64_t);
     const auto pageSize = FixedPage::PAGE_SIZE;
+    const auto numItems = pageSize / sizeOfRecord;
     auto dataPtr = reinterpret_cast<uint8_t*>(allocator->allocate(pageSize));
     FixedPage fixedPage(dataPtr, sizeOfRecord, pageSize);
 
-    for (uint64_t i = 0; i < (pageSize / sizeOfRecord); ++i) {
+    for (uint64_t i = 0; i < numItems; ++i) {
         uint64_t hash = Util::murmurHash(i);
-        fixedPage.append(hash);
+        if (fixedPage.append(hash) == nullptr) {
+            NES_ERROR("Could not insert tuple and thus the hash {} for {} in the FixedPage and consequently, the BloomFilter!", hash, i);
+            ASSERT_TRUE(false);
+        }
     }
 
-    for (uint64_t i = 0; i < (pageSize / sizeOfRecord); ++i) {
+    for (uint64_t i = 0; i < numItems; ++i) {
         uint64_t hash = Util::murmurHash(i);
-        ASSERT_TRUE(fixedPage.bloomFilterCheck(hash));
+        if (!fixedPage.bloomFilterCheck(hash)) {
+            NES_ERROR("Could not find hash {} for {} in bloom filter!", hash, i);
+            ASSERT_TRUE(false);
+        }
     }
+
 }
 
 }// namespace NES::Nautilus::Interface

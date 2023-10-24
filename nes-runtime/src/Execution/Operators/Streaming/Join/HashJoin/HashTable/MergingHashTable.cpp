@@ -25,6 +25,7 @@ void MergingHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList
 
     for (auto&& page : pagesLinkedList->getPages()) {
         lockedBucketHeads->emplace_back(page);
+        numItems.fetch_add(page->size(), std::memory_order::seq_cst);
     }
 
     numPages.fetch_add(pagesLinkedList->getPages().size(), std::memory_order::seq_cst);
