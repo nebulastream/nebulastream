@@ -238,7 +238,9 @@ TEST_F(FixedPageTest, bloomFilterCheckTest) {
     for (uint64_t i = 0; i < numItems; ++i) {
         uint64_t hash = Util::murmurHash(i);
         if (fixedPage.append(hash) == nullptr) {
-            NES_ERROR("Could not insert tuple and thus the hash {} for {} in the FixedPage and consequently, the BloomFilter!", hash, i);
+            NES_ERROR("Could not insert tuple and thus the hash {} for {} in the FixedPage and consequently, the BloomFilter!",
+                      hash,
+                      i);
             ASSERT_TRUE(false);
         }
     }
@@ -250,7 +252,6 @@ TEST_F(FixedPageTest, bloomFilterCheckTest) {
             ASSERT_TRUE(false);
         }
     }
-
 }
 
 }// namespace NES::Nautilus::Interface
