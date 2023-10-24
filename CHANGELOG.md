@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.5.230](https://github.com/nebulastream/nebulastream/tree/v0.5.230) (2023-10-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.229...v0.5.230)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate if currentPos in FixedPage needs to be thread safe [\#4198](https://github.com/nebulastream/nebulastream/issues/4198)
+- \[TASK\] MultithreadedTest join randomly fails [\#4127](https://github.com/nebulastream/nebulastream/issues/4127)
+
+### Bug Fixes 🐛
+
+- \[BUG\] MultiThreadedTest: multiple test cases crash randomly [\#4254](https://github.com/nebulastream/nebulastream/issues/4254)
+
 ## [v0.5.229](https://github.com/nebulastream/nebulastream/tree/v0.5.229) (2023-10-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.228...v0.5.229)
