@@ -55,6 +55,6 @@ graph TD;
   nes-grpc-->nes-operators;
   nes-data-types-->nes-operators;
   nes-catalogs-->nes-optimizer;
-  nes-core-->nes-plugin;
+  nes-core-->nes-plugins;
   nes-operators-->nes-runtime;
 ```
