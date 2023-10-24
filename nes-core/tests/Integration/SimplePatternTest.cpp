@@ -46,17 +46,8 @@ class SimplePatternTest : public Testing::BaseIntegrationTest {
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
         coConf = CoordinatorConfiguration::createDefault();
-
         coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;
-    }
-
-    string removeRandomKey(string contentString) {
-        std::regex r1("cep_leftkey([0-9]+)");
-        std::regex r2("cep_rightkey([0-9]+)");
-        contentString = std::regex_replace(contentString, r1, "cep_leftkey");
-        contentString = std::regex_replace(contentString, r2, "cep_rightkey");
-        return contentString;
     }
 };
 
@@ -110,8 +101,6 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-
-    //    ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent = "+----------------------------------------------------+\n"
@@ -189,9 +178,6 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-
-    //    NES_INFO("SimplePatternTest: Remove query");
-    //    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -279,7 +265,6 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-    //    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -332,6 +317,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(35);
     csvSourceType1->setNumberOfBuffersToProduce(2);
+    worker1Configuration->physicalSourceTypes.add(csvSourceType1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -361,7 +347,6 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-    //    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -442,7 +427,6 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-    //    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -525,7 +509,6 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-    //    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =

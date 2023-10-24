@@ -122,4 +122,8 @@ SourceCatalogService::getPhysicalSources(const std::string& logicalSourceName) {
     return sourceCatalog->getPhysicalSources(logicalSourceName);
 }
 
+bool SourceCatalogService::reset() {
+    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    return sourceCatalog->reset();
+}
 }//namespace NES

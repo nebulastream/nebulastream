@@ -85,9 +85,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     queryParsingService = QueryParsingService::create(jitCompiler);
-
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
-
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -145,8 +143,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 NesCoordinator::~NesCoordinator() {
     stopCoordinator(true);
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
-    sourceCatalog->reset();
-    queryCatalog->clearQueries();
+    sourceCatalogService->reset();
+    queryCatalogService->clearQueries();
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }

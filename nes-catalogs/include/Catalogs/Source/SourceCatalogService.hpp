@@ -111,6 +111,12 @@ class SourceCatalogService {
      */
     std::vector<Catalogs::Source::SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
 
+    /**
+     * @brief Reset source catalog by clearing it from all physical and logical sources
+     * @return true if successful
+     */
+    bool reset();
+
   private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::mutex addRemoveLogicalSource;
