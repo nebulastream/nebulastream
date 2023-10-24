@@ -63,14 +63,15 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @param pinnedDownStreamOperators: pinned downstream operators of the plan to be placed
      * @return json representing the payload
      */
-    nlohmann::json prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                       const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+    void prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                       const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                       nlohmann::json&);
 
     /**
      * @brief: Prepare the topology payload for the external placement service
      * @return json representing the payload
      */
-    nlohmann::json prepareTopologyPayload();
+    void prepareTopologyPayload(nlohmann::json&);
 
     /**
      * @brief Add pinning information to the operators based on the response received from the external placement service
