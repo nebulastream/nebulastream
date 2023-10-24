@@ -35,18 +35,18 @@
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Exceptions/SignatureComputationException.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -211,8 +211,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
         auto semanticQueryValidation =
             Optimizer::SemanticQueryValidation::create(sourceCatalog,
-                                                       coordinatorConfiguration->optimizer.performAdvanceSemanticValidation,
-                                                       udfCatalog);
+                                                       udfCatalog,
+                                                       coordinatorConfiguration->optimizer.performAdvanceSemanticValidation);
 
         // Compile and perform syntactic check if necessary
         if (!queryString.empty() && !queryPlan) {

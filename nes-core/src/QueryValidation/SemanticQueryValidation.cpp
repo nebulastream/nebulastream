@@ -12,40 +12,40 @@
     limitations under the License.
 */
 
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
-#include <Optimizer/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/SignatureComputationException.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
-#include <QueryValidation/SemanticQueryValidation.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryValidation/SemanticQueryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iterator>
 #include <utility>
 #include <z3++.h>
 
 using namespace std::string_literals;
-namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                                 bool advanceChecks,
-                                                 Catalogs::UDF::UDFCatalogPtr udfCatalog)
-    : sourceCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks), udfCatalog(std::move(udfCatalog)) {}
+namespace NES::Optimizer {
+SemanticQueryValidation::SemanticQueryValidation(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                                 const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                                 bool advanceChecks)
+    : sourceCatalog(sourceCatalog), performAdvanceChecks(advanceChecks), udfCatalog(udfCatalog) {}
 
 SemanticQueryValidationPtr SemanticQueryValidation::create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                                           bool advanceChecks,
-                                                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog) {
-    return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks, udfCatalog);
+                                                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                                           bool advanceChecks) {
+    return std::make_shared<SemanticQueryValidation>(sourceCatalog, udfCatalog, advanceChecks);
 }
 
 void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {

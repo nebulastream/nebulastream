@@ -51,20 +51,22 @@ class SemanticQueryValidation {
     /**
      * @brief Constructor for the SemanticQueryValidation class
      * @param sourceCatalog: source catalog
+     * @param udfCatalog: udf catalog
      * @param advanceChecks: perform advance check
      */
-    explicit SemanticQueryValidation(Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                     bool advanceChecks,
-                                     Catalogs::UDF::UDFCatalogPtr udfCatalog);
+    explicit SemanticQueryValidation(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+                                     const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                     bool advanceChecks);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
      * @param sourceCatalog: source catalog
+     * @param udfCatalog: udf catalog
      * @param advanceChecks: perform advance check
      */
     static SemanticQueryValidationPtr create(const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                             bool advanceChecks,
-                                             const Catalogs::UDF::UDFCatalogPtr& udfCatalog);
+                                             const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+                                             bool advanceChecks);
 
   private:
     /**

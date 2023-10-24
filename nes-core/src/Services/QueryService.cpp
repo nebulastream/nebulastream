@@ -19,8 +19,6 @@
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
-#include <QueryValidation/SemanticQueryValidation.hpp>
-#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
@@ -28,6 +26,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryValidation/SemanticQueryValidation.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
@@ -55,8 +55,8 @@ QueryService::QueryService(bool enableNewRequestExecutor,
     NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(this->queryParsingService);
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog,
-                                                                         optimizerConfiguration.performAdvanceSemanticValidation,
-                                                                         udfCatalog);
+                                                                         udfCatalog,
+                                                                         optimizerConfiguration.performAdvanceSemanticValidation);
 }
 
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
