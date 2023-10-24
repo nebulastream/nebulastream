@@ -67,23 +67,12 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     try {
-
-        //1. Make rest call to get the external operator placement service.
-        //prepare request payload
+        NES_ASSERT(serviceURL != EMPTY_STRING, "ELEGANT planner URL is not set in elegant.plannerServiceURL");
         nlohmann::json payload{};
-
-        //1.a: Get query plan as json
-        auto queryGraph = prepareQueryPayload(pinnedDownStreamOperators, pinnedUpStreamOperators);
-        payload.push_back(queryGraph);
-
-        // 1.b: Get topology and network information as json
-        auto availableNodes = prepareTopologyPayload();
-        payload.push_back(availableNodes);
-
-        // 1.c: Optimization objective
+        prepareQueryPayload(pinnedDownStreamOperators, pinnedUpStreamOperators, payload);
+        prepareTopologyPayload(payload);
         payload[TIME_WEIGHT_KEY] = timeWeight;
-
-        //1.d: Make a rest call to elegant planner
+        NES_INFO("Sending placement request to ELEGANT planner with payload: url={}, payload={}", serviceURL, payload.dump());
         cpr::Response response = cpr::Post(cpr::Url{serviceURL},
                                            cpr::Header{{"Content-Type", "application/json"}},
                                            cpr::Body{payload.dump()},
@@ -148,12 +137,12 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
     }
 }
 
-nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                   nlohmann::json& payload) {
 
     NES_DEBUG("ElegantPlacementStrategy: Getting the json representation of the query plan");
 
-    nlohmann::json queryPlan{};
     std::vector<nlohmann::json> nodes{};
 
     std::set<OperatorNodePtr> visitedOperator;
@@ -173,7 +162,7 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Logi
             nlohmann::json node;
             node[OPERATOR_ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_NODE_ID);
-            node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::any_cast<std::string>(pinnedNodeId) : EMPTY_STRING;
+            node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::to_string(std::any_cast<TopologyNodeId>(pinnedNodeId)) : EMPTY_STRING;
             auto sourceCode = logicalOperator->getProperty(SOURCE_CODE);
             node[SOURCE_CODE] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             nodes.push_back(node);
@@ -197,13 +186,11 @@ nlohmann::json ElegantPlacementStrategy::prepareQueryPayload(const std::set<Logi
             node[CHILDREN_KEY] = upstreamOperatorIds;
         }
     }
-    queryPlan[OPERATOR_GRAPH_KEY] = nodes;
-    return queryPlan;
+    payload[OPERATOR_GRAPH_KEY] = nodes;
 }
 
-nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
+void ElegantPlacementStrategy::prepareTopologyPayload(nlohmann::json& payload) {
     NES_DEBUG("ElegantPlacementStrategy: Getting the json representation of available nodes");
-    nlohmann::json topologyJson{};
     auto root = topology->getRoot();
     std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
     std::deque<TopologyNodePtr> childToAdd;
@@ -242,9 +229,8 @@ nlohmann::json ElegantPlacementStrategy::prepareTopologyPayload() {
     }
     NES_INFO("ElegantPlacementStrategy: no more topology nodes to add");
 
-    topologyJson[AVAILABLE_NODES_KEY] = nodes;
-    topologyJson[NETWORK_DELAYS_KEY] = edges;
-    return topologyJson;
+    payload[AVAILABLE_NODES_KEY] = nodes;
+    payload[NETWORK_DELAYS_KEY] = edges;
 }
 
 }// namespace NES::Optimizer
