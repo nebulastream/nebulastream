@@ -17,9 +17,9 @@
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
@@ -29,29 +29,29 @@
 
 namespace NES {
 
-NonKeyedWindowOperator::NonKeyedWindowOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
+CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
     : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
     windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCompleteWindowType());
 }
 
-std::string NonKeyedWindowOperator::toString() const {
+std::string CentralWindowOperator::toString() const {
     std::stringstream ss;
-    ss << "NONKEYEDWINDOW(" << id << ")";
+    ss << "CENTRALWINDOW(" << id << ")";
     return ss.str();
 }
 
-bool NonKeyedWindowOperator::isIdentical(NodePtr const& rhs) const {
-    return equal(rhs) && rhs->as<NonKeyedWindowOperator>()->getId() == id;
+bool CentralWindowOperator::isIdentical(NodePtr const& rhs) const {
+    return equal(rhs) && rhs->as<CentralWindowOperator>()->getId() == id;
 }
 
-bool NonKeyedWindowOperator::equal(NodePtr const& rhs) const {
-    return rhs->instanceOf<NonKeyedWindowOperator>()
-        && rhs->as<NonKeyedWindowOperator>()->getWindowDefinition()->equal(this->getWindowDefinition());
+bool CentralWindowOperator::equal(NodePtr const& rhs) const {
+    return rhs->instanceOf<CentralWindowOperator>()
+        && rhs->as<CentralWindowOperator>()->getWindowDefinition()->equal(this->getWindowDefinition());
 }
 
-OperatorNodePtr NonKeyedWindowOperator::copy() {
+OperatorNodePtr CentralWindowOperator::copy() {
     auto copy =
-        LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition, id)->as<NonKeyedWindowOperator>();
+        LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition, id)->as<CentralWindowOperator>();
     copy->setOriginId(originId);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -61,7 +61,7 @@ OperatorNodePtr NonKeyedWindowOperator::copy() {
     }
     return copy;
 }
-bool NonKeyedWindowOperator::inferSchema() {
+bool CentralWindowOperator::inferSchema() {
     if (!WindowOperatorNode::inferSchema()) {
         return false;
     }
@@ -118,5 +118,5 @@ bool NonKeyedWindowOperator::inferSchema() {
     return true;
 }
 
-void NonKeyedWindowOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
+void CentralWindowOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

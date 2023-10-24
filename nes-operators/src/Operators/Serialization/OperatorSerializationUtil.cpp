@@ -41,10 +41,10 @@
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
@@ -149,9 +149,9 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         // serialize CEPIteration operator
         serializeCEPIterationOperator(*operatorNode->as<IterationLogicalOperatorNode>(), serializedOperator);
 
-    } else if (operatorNode->instanceOf<NonKeyedWindowOperator>()) {
+    } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
-        serializeWindowOperator(*operatorNode->as<NonKeyedWindowOperator>(), serializedOperator);
+        serializeWindowOperator(*operatorNode->as<CentralWindowOperator>(), serializedOperator);
 
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         // serialize window operator
@@ -814,7 +814,7 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
             return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)->as<WindowOperatorNode>();
         case SerializableOperator_DistributionCharacteristic_Distribution_Complete:
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
-                ->as<NonKeyedWindowOperator>();
+                ->as<CentralWindowOperator>();
         case SerializableOperator_DistributionCharacteristic_Distribution_Combining:
             return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
                 ->as<WindowComputationOperator>();

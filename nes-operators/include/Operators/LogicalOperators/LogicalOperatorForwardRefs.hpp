@@ -111,8 +111,8 @@ using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 class WatermarkAssignerLogicalOperatorNode;
 using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
 
-class NonKeyedWindowOperator;
-using CentralWindowOperatorPtr = std::shared_ptr<NonKeyedWindowOperator>;
+class CentralWindowOperator;
+using CentralWindowOperatorPtr = std::shared_ptr<CentralWindowOperator>;
 
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;

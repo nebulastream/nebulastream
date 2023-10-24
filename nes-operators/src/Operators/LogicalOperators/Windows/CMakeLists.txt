@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        NonKeyedWindowOperator.cpp
+        CentralWindowOperator.cpp
         DistributionCharacteristic.cpp
         LogicalWindowDefinition.cpp
         SliceCreationOperator.cpp

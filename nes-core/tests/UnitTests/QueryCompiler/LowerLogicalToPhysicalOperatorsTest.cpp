@@ -23,9 +23,9 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>

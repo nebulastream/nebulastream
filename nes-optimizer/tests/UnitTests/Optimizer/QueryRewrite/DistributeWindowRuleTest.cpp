@@ -29,8 +29,8 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
@@ -165,7 +165,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     const QueryPlanPtr updatedPlan = distributeWindowRule->apply(queryPlan);
 
     NES_DEBUG(" plan after={}", queryPlan->toString());
-    auto windowOps = queryPlan->getOperatorByType<NonKeyedWindowOperator>();
+    auto windowOps = queryPlan->getOperatorByType<CentralWindowOperator>();
     ASSERT_EQ(windowOps.size(), 1u);
 }
 

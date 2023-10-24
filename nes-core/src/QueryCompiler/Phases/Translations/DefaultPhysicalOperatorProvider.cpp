@@ -37,11 +37,11 @@
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/NonKeyedWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
@@ -859,7 +859,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
-    if (operatorNode->instanceOf<NonKeyedWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
         //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
         if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isContentBasedWindowType()) {
