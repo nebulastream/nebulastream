@@ -123,6 +123,9 @@ class PythonUDFOperatorHandler : public OperatorHandler {
 
     Backends::BC::Dyncall& getDynCall() const { return this->dyncall; }
 
+    void generatePythonFile(std::string path, std::string file, std::string pythonCode);
+    void importCompiledPythonModule(std::string path);
+
     /**
      * @brief Initializes the python udf in a module
      */

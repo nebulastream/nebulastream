@@ -87,6 +87,38 @@ std::string PythonUDFOperatorHandler::getNumbaSignature(){
     return numbaOutputSignatureString + numbaInputSignatureString;
 }
 
+void PythonUDFOperatorHandler::generatePythonFile(std::string path, std::string file, std::string pythonCode) {
+    // create .pyx file
+    // add python code into that file
+    if (!std::filesystem::is_directory(path)) {
+        std::filesystem::create_directory(path);
+    }
+
+    std::ofstream pyxFile;
+    pyxFile.open(file, std::ios_base::app);
+    pyxFile << pythonCode << "\n";
+    pyxFile.close();
+
+}
+
+void PythonUDFOperatorHandler::importCompiledPythonModule(std::string path) {
+    // now we can use it like a normal module
+    // add path to PYTHONPATH
+    // do this: sys.path.append('/path/to/mod_directory')
+    auto addPath = "import sys\nsys.path.append(\"" + path + "\")\n";
+    PyRun_SimpleString(addPath.c_str());
+    // open module and use function
+    this->pythonModule = PyImport_ImportModule(this->functionName.c_str());
+
+    if (this->pythonModule == NULL) {
+        if (PyErr_Occurred()) {
+            PyErr_Print();
+            PyErr_Clear();
+            NES_THROW_RUNTIME_ERROR("Importing the module didn't work out");
+        }
+    }
+}
+
 void PythonUDFOperatorHandler::initPython() {
     Timer initPythonTimer("Initialize Python Function");
     Timer execPythonTimer("Execute Python Code");
@@ -148,18 +180,9 @@ void PythonUDFOperatorHandler::initPython() {
     if (pythonCompiler == "cython") {
         // create .pyx file
         // add python code into that file
-        auto path = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "tmp";
-        if (!std::filesystem::is_directory(path)) {
-            std::filesystem::create_directory(path);
-        }
-
-        // /home/phm98/nebulastream/nebulastream/cmake-build-debug/nes-runtime/tests/UnitTests/Execution/Operators/Relational/tmp
-        //path += + std::filesystem::path::preferred_separator;
+        std::string path = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "tmp";
         auto file = path + std::filesystem::path::preferred_separator + this->functionName + ".pyx";
-        std::ofstream pyxFile;
-        pyxFile.open(file, std::ios_base::app);
-        pyxFile << pythonCode << "\n";
-        pyxFile.close();
+        this->generatePythonFile(path, file, pythonCode);
 
         // build cython module
         // we generate a .c file with cython
@@ -173,32 +196,31 @@ void PythonUDFOperatorHandler::initPython() {
         std::string oFile = path + std::filesystem::path::preferred_separator + this->functionName + ".o";
 
         // compile .c file
-        auto generateOFile = "gcc -pthread -fPIC -I/usr/include/python3.8 -g -c " + cFile +" -o " + oFile;
+        auto generateOFile = "gcc -pthread -fPIC -I/usr/include/python3.8 -g -c " + cFile + " -o " + oFile;
         std::system(generateOFile.c_str());
 
         // link file against the Python library
-        auto generateSOFile = "gcc " + oFile +" -fPIC -pthread -g -shared -o " + path + std::filesystem::path::preferred_separator + this->functionName +".so `python3-config --libs`";
+        auto generateSOFile = "gcc " + oFile + " -fPIC -pthread -g -shared -o " + path
+            + std::filesystem::path::preferred_separator + this->functionName + ".so `python3-config --libs`";
         std::system(generateSOFile.c_str());
 
         // remove files we don't need anymore
         std::remove(cFile.c_str());
         std::remove(oFile.c_str());
 
-        // now we can use it like a normal module
-        // add path to PYTHONPATH
-        // do this: sys.path.append('/path/to/mod_directory')
-        auto addPath = "import sys\nsys.path.append(\"" + path +"\")\n";
-        PyRun_SimpleString(addPath.c_str());
-        // open module and use function
-        pythonModule = PyImport_ImportModule(this->functionName.c_str());
+        this->importCompiledPythonModule(path);
+    } else if (pythonCompiler == "nuitka") {
+        // create .pyx file
+        // add python code into that file
+        auto path = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "tmp";
+        auto file = path + std::filesystem::path::preferred_separator + this->functionName + ".py";
+        this->generatePythonFile(path, file, pythonCode);
 
-        if (pythonModule == NULL) {
-            if (PyErr_Occurred()) {
-                PyErr_Print();
-                PyErr_Clear();
-                NES_THROW_RUNTIME_ERROR("Importing the module didn't work out");
-            }
-        }
+        // python3 -m nuitka --module some_module.py
+        auto generateSOFile = "python3 -m nuitka --module " + path + std::filesystem::path::preferred_separator + this->functionName + ".py";
+        std::system(generateSOFile.c_str());
+
+        this->importCompiledPythonModule(path);
     } else {
         // compile function string
         compilePythonTimer.start();

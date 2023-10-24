@@ -58,6 +58,8 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/PythonUDFTestData";
 };
 
+std::string compiler = "nuitka"; // use default compiler
+
 /**
  * Initializes a pipeline with a Scan of the input tuples, a MapPythonUDF operator, and a emit of the processed tuples.
  * @param schema Schema of the input and output tuples.
@@ -137,7 +139,6 @@ void checkBufferResult(std::string variableName, auto pipelineContext, auto memo
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
     auto variableName = "intVariable";
-    auto compiler = "numba";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT32);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
@@ -163,7 +164,6 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap) {
     auto variableName = "shortVariable";
-    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT16);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
@@ -188,7 +188,6 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap) {
     auto variableName = "byteVariable";
-    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT8);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
@@ -213,7 +212,6 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap) {
     auto variableName = "longVariable";
-    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
@@ -238,7 +236,6 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
     auto variableName = "DoubleVariable";
-    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::FLOAT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
@@ -263,7 +260,6 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto variableName = "BooleanVariable";
-    auto compiler = "numba";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::BOOLEAN);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
@@ -301,7 +297,6 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto variableName = "stringVariable";
-    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
@@ -348,7 +343,6 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
  * @brief Test a pipeline containing a scan, a python map with multiple types, and a emit operator
  */
 TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
-    auto compiler = "default";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("byteVariable", BasicType::INT8);
     schema->addField("shortVariable", BasicType::INT16);
