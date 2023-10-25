@@ -16,10 +16,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-#include <Statistics/Requests/RequestParamObj.hpp>
-#include <Statistics/Requests/BuildRequestParamObj.hpp>
-#include <Statistics/Requests/ProbeRequestParamObj.hpp>
+#include <Statistics/Requests/CreateRequestParamObj.hpp>
 #include <Statistics/Requests/DeleteRequestParamObj.hpp>
+#include <Statistics/Requests/ProbeRequestParamObj.hpp>
+#include <Statistics/Requests/RequestParamObj.hpp>
+#include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES {
 
@@ -38,45 +39,45 @@ TEST_F(StatisticsTest, requestsTest) {
     std::string defaultLogicalSourceName = "defaultLogicalSourceName";
     std::vector<std::string> physicalSourceNames(10, "defaultPhysicalSourceName");
     std::string defaultFieldName = "defaultFieldName";
-    std::string expression = "SELECTIVITIES";
-    std::string otherExpression = "x == 15";
+    Experimental::Statistics::StatCollectorType statCollectorType =
+        Experimental::Statistics::StatCollectorType::COUNT_MIN;
+    std::string probeExpression = "x == 15";
     time_t startTime = 100;
     time_t endTime = 10;
 
-
-
-    auto buildObj = Experimental::Statistics::BuildRequestParamObj(defaultLogicalSourceName,
-                                                                   physicalSourceNames,
-                                                                   defaultFieldName,
-                                                                   expression);
+    auto buildObj = Experimental::Statistics::CreateRequestParamObj(defaultLogicalSourceName,
+                                                                    defaultFieldName,
+                                                                    Experimental::Statistics::StatCollectorType::COUNT_MIN);
 
     auto probeObj = Experimental::Statistics::ProbeRequestParamObj(defaultLogicalSourceName,
-                                                                   physicalSourceNames,
                                                                    defaultFieldName,
-                                                                   otherExpression,
+                                                                   Experimental::Statistics::StatCollectorType::COUNT_MIN,
+                                                                   probeExpression,
+                                                                   physicalSourceNames,
                                                                    startTime,
                                                                    endTime);
 
     auto deleteObj = Experimental::Statistics::DeleteRequestParamObj(defaultLogicalSourceName,
-                                                                     physicalSourceNames,
                                                                      defaultFieldName,
-                                                                     expression,
+                                                                     Experimental::Statistics::StatCollectorType::COUNT_MIN,
                                                                      endTime);
 
-    EXPECT_TRUE(buildObj.getLogicalSourceName() == defaultLogicalSourceName);
-    EXPECT_TRUE(probeObj.getLogicalSourceName() == defaultLogicalSourceName);
-    EXPECT_TRUE(deleteObj.getLogicalSourceName() == defaultLogicalSourceName);
-    EXPECT_TRUE(buildObj.getPhysicalSourceNames() == physicalSourceNames);
-    EXPECT_TRUE(probeObj.getPhysicalSourceNames() == physicalSourceNames);
-    EXPECT_TRUE(deleteObj.getPhysicalSourceNames() == physicalSourceNames);
-    EXPECT_TRUE(buildObj.getFieldName() == defaultFieldName);
-    EXPECT_TRUE(probeObj.getFieldName() == defaultFieldName);
-    EXPECT_TRUE(deleteObj.getFieldName() == defaultFieldName);
-    EXPECT_TRUE(buildObj.getExpression() == expression);
-    EXPECT_TRUE(probeObj.getExpression() == otherExpression);
-    EXPECT_TRUE(deleteObj.getExpression() == expression);
-    EXPECT_TRUE(probeObj.getStartTime() == startTime);
-    EXPECT_TRUE(probeObj.getEndTime() == endTime);
-    EXPECT_TRUE(deleteObj.getEndTime() == endTime);
+    EXPECT_EQ(buildObj.getLogicalSourceName(), defaultLogicalSourceName);
+    EXPECT_EQ(probeObj.getLogicalSourceName(), defaultLogicalSourceName);
+    EXPECT_EQ(deleteObj.getLogicalSourceName(), defaultLogicalSourceName);
+    EXPECT_EQ(probeObj.getPhysicalSourceNames(), physicalSourceNames);
+    EXPECT_EQ(buildObj.getFieldName(), defaultFieldName);
+    EXPECT_EQ(probeObj.getFieldName(), defaultFieldName);
+    EXPECT_EQ(deleteObj.getFieldName(), defaultFieldName);
+    EXPECT_EQ(buildObj.getCreateExpression(),
+              Experimental::Statistics::StatCollectorType::COUNT_MIN);
+    EXPECT_EQ(probeObj.getCreateExpression(),
+              Experimental::Statistics::StatCollectorType::COUNT_MIN);
+    EXPECT_EQ(deleteObj.getCreateExpression(),
+              Experimental::Statistics::StatCollectorType::COUNT_MIN);
+    EXPECT_EQ(probeObj.getProbeExpression(), probeExpression);
+    EXPECT_EQ(probeObj.getStartTime(), startTime);
+    EXPECT_EQ(probeObj.getEndTime(), endTime);
+    EXPECT_EQ(deleteObj.getEndTime(), endTime);
 };
 }
