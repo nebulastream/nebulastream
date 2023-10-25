@@ -20,6 +20,7 @@
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <gmock/gmock-matchers.h>
+#include <ostream>
 
 namespace NES::Runtime::Execution {
 
@@ -513,8 +514,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window);
 }
 
-// TODO #3844 can be revisited once #3966 has been merged
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindows) {
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     struct __attribute__((packed)) ResultRecord {
         int64_t test1test2$start;
         int64_t test1test2$end;
@@ -522,27 +522,21 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
 
         int64_t test1$start;
         int64_t test1$end;
-        int64_t test1$cnt;
-        int64_t test1$f1_left;
         int64_t test1$f2_left;
-        int64_t test1$timestamp;
         int64_t test1$fieldForSum1;
 
         int64_t test2$start;
         int64_t test2$end;
-        int64_t test2$cnt;
-        int64_t test2$f1_right;
         int64_t test2$f2_right;
-        int64_t test2$timestamp;
         int64_t test2$fieldForSum2;
+
         bool operator==(const ResultRecord& rhs) const {
             return test1test2$start == rhs.test1test2$start && test1test2$end == rhs.test1test2$end
                 && test1test2$key == rhs.test1test2$key && test1$start == rhs.test1$start && test1$end == rhs.test1$end
-                && test1$cnt == rhs.test1$cnt && test1$f1_left == rhs.test1$f1_left && test1$f2_left == rhs.test1$f2_left
-                && test1$timestamp == rhs.test1$timestamp && test1$fieldForSum1 == rhs.test1$fieldForSum1
-                && test2$start == rhs.test2$start && test2$end == rhs.test2$end && test2$cnt == rhs.test2$cnt
-                && test2$f1_right == rhs.test2$f1_right && test2$f2_right == rhs.test2$f2_right
-                && test2$timestamp == rhs.test2$timestamp && test2$fieldForSum2 == rhs.test2$fieldForSum2;
+                && test1$f2_left == rhs.test1$f2_left && test1$fieldForSum1 == rhs.test1$fieldForSum1
+                && test2$start == rhs.test2$start && test2$end == rhs.test2$end
+                && test2$f2_right == rhs.test2$f2_right
+                && test2$fieldForSum2 == rhs.test2$fieldForSum2;
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -564,18 +558,12 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestWithWindow
 
                                 ->addField("test1$start", BasicType::INT64)
                                 ->addField("test1$end", BasicType::INT64)
-                                ->addField("test1$cnt", BasicType::INT64)
-                                ->addField("test1$f1_left", BasicType::INT64)
                                 ->addField("test1$f2_left", BasicType::INT64)
-                                ->addField("test1$timestamp", BasicType::INT64)
                                 ->addField("test1$fieldForSum1", BasicType::INT64)
 
                                 ->addField("test2$start", BasicType::INT64)
                                 ->addField("test2$end", BasicType::INT64)
-                                ->addField("test2$cnt", BasicType::INT64)
-                                ->addField("test2$f1_right", BasicType::INT64)
                                 ->addField("test2$f2_right", BasicType::INT64)
-                                ->addField("test2$timestamp", BasicType::INT64)
                                 ->addField("test2$fieldForSum2", BasicType::INT64);
     const auto timestampFieldName = "timestamp";
     const auto windowSize = 10UL;
