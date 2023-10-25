@@ -14,6 +14,7 @@
 
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -21,10 +22,9 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Core.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -123,15 +123,15 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
-          "|      "
+          "|  |  |--"
         + plan->getRootOperators()[0]->getChildren()[0]->getChildren()[0]->toString()
         + "\n"
-          "|      "
+          "|  |  |--"
         + plan->getRootOperators()[0]->getChildren()[0]->getChildren()[1]->toString() + "\n";
-
+    NES_INFO("\n {}", expectedPlan);
     ASSERT_EQ(expectedPlan, actualPlan);
 }
 
@@ -184,7 +184,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan1->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(queryId:"
@@ -193,7 +193,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan2->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan2->getRootOperators()[0]->getChildren()[0]->toString() + "\n";
 
     ASSERT_EQ(expectedPlan, actualPlan);
@@ -249,7 +249,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan1->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(queryId:"
@@ -258,7 +258,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan2->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan2->getRootOperators()[0]->getChildren()[0]->toString() + "\n";
 
     ASSERT_EQ(expectedPlan, actualPlan);
@@ -334,7 +334,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan11->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan11->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(queryId:"
@@ -343,7 +343,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan12->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan12->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(queryId:"
@@ -352,7 +352,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan21->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan21->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(queryId:"
@@ -361,7 +361,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
           "|  "
         + plan22->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan22->getRootOperators()[0]->getChildren()[0]->toString() + "\n";
     NES_INFO("Actual query plan \n{}", actualPlan);
 
@@ -429,7 +429,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
           "|  "
         + plan2->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan2->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "|--ExecutionNode(id:"
@@ -442,11 +442,12 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
           "|  |  "
         + plan1->getRootOperators()[0]->toString()
         + "\n"
-          "|  |    "
+          "|  |  |--"
         + plan1->getRootOperators()[0]->getChildren()[0]->toString() + "\n";
 
     ASSERT_EQ(expectedPlan, actualPlan);
 }
+
 /**
  * @brief This test is for validating behaviour for a global execution plan with nested execution node with one plan for different queryIdAndCatalogEntryMapping
  */
@@ -546,7 +547,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
           "|  "
         + plan4->getRootOperators()[0]->toString()
         + "\n"
-          "|    "
+          "|  |--"
         + plan4->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "|--ExecutionNode(id:"
@@ -559,7 +560,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
           "|  |  "
         + plan3->getRootOperators()[0]->toString()
         + "\n"
-          "|  |    "
+          "|  |  |--"
         + plan3->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "|  |--ExecutionNode(id:"
@@ -572,7 +573,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
           "|  |  |  "
         + plan2->getRootOperators()[0]->toString()
         + "\n"
-          "|  |  |    "
+          "|  |  |  |--"
         + plan2->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "|--ExecutionNode(id:"
@@ -585,7 +586,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
           "|  |  "
         + plan1->getRootOperators()[0]->toString()
         + "\n"
-          "|  |    "
+          "|  |  |--"
         + plan1->getRootOperators()[0]->getChildren()[0]->toString() + "\n";
 
     ASSERT_EQ(expectedPlan, actualPlan);
