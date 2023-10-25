@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.231](https://github.com/nebulastream/nebulastream/tree/v0.5.231) (2023-10-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.230...v0.5.231)
+
+### Bug Fixes 🐛
+
+- \[BUG\] StreamJoinQueryExecutionTest, DISABLED\_streamJoinExecutiontTestWithWindows [\#3844](https://github.com/nebulastream/nebulastream/issues/3844)
+
 ## [v0.5.230](https://github.com/nebulastream/nebulastream/tree/v0.5.230) (2023-10-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.229...v0.5.230)
