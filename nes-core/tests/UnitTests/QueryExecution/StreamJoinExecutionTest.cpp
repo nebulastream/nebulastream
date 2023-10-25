@@ -534,8 +534,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
             return test1test2$start == rhs.test1test2$start && test1test2$end == rhs.test1test2$end
                 && test1test2$key == rhs.test1test2$key && test1$start == rhs.test1$start && test1$end == rhs.test1$end
                 && test1$f2_left == rhs.test1$f2_left && test1$fieldForSum1 == rhs.test1$fieldForSum1
-                && test2$start == rhs.test2$start && test2$end == rhs.test2$end
-                && test2$f2_right == rhs.test2$f2_right
+                && test2$start == rhs.test2$start && test2$end == rhs.test2$end && test2$f2_right == rhs.test2$f2_right
                 && test2$fieldForSum2 == rhs.test2$fieldForSum2;
         }
     };
