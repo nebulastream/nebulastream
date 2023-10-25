@@ -15,18 +15,20 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <sstream>
+#include <utility>
 
 namespace NES {
 
 PhysicalSource::PhysicalSource(std::string logicalSourceName,
                                std::string physicalSourceName,
                                PhysicalSourceTypePtr physicalSourceType)
-    : logicalSourceName(logicalSourceName), physicalSourceName(physicalSourceName),
+    : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
       physicalSourceType(std::move(physicalSourceType)) {}
 
 PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType) {
-    return std::make_shared<PhysicalSource>(PhysicalSource(physicalSourceType->getLogicalSourceName(),
-                                                           physicalSourceType->getLogicalSourceName(),
+    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
+    auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
+    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, physicalSourceName,
                                                            std::move(physicalSourceType)));
 }
 
