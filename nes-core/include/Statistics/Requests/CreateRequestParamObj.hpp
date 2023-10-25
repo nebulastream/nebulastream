@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_BUILDREQUESTPARAMOBJ_HPP_
-#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_BUILDREQUESTPARAMOBJ_HPP_
+#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_CREATEREQUESTPARAMOBJ_HPP_
+#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_CREATEREQUESTPARAMOBJ_HPP_
 
 #include <string>
 #include <memory>
 #include <vector>
 #include <Statistics/Requests/RequestParamObj.hpp>
+#include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES {
 namespace Experimental::Statistics {
@@ -26,15 +27,14 @@ namespace Experimental::Statistics {
 /**
  * @brief the inherited class that defines what is needed to build Statistics
  */
-class BuildRequestParamObj : public RequestParamObj {
+class CreateRequestParamObj : public RequestParamObj {
   public:
-    BuildRequestParamObj(const std::string& logicalSourceName,
-                         const std::vector<std::string>& physicalSourceNames,
+    CreateRequestParamObj(const std::string& logicalSourceName,
                          const std::string& fieldName,
-                         const std::string& expression)
-        : RequestParamObj(logicalSourceName, physicalSourceNames, fieldName, expression) {}
+                         const StatCollectorType statCollectorType)
+        : RequestParamObj(logicalSourceName, fieldName, statCollectorType) {}
 		};
 	}
 }
 
-#endif //NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_BUILDREQUESTPARAMOBJ_HPP_
+#endif //NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_CREATEEQUESTPARAMOBJ_HPP_
