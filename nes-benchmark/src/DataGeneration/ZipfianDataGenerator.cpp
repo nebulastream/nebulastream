@@ -34,13 +34,12 @@ NES::SchemaPtr ZipfianDataGenerator::getSchema() {
 }
 
 Configurations::SchemaTypePtr ZipfianDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataType = "UINT64";
     std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("id", dataType, length);
-    schemaFiledDetails.emplace_back("value", dataType, length);
-    schemaFiledDetails.emplace_back("payload", dataType, length);
-    schemaFiledDetails.emplace_back("timestamp", dataType, length);
+    schemaFiledDetails.emplace_back("id", dataType);
+    schemaFiledDetails.emplace_back("value", dataType);
+    schemaFiledDetails.emplace_back("payload", dataType);
+    schemaFiledDetails.emplace_back("timestamp", dataType);
     return Configurations::SchemaType::create(schemaFiledDetails);
 }
 

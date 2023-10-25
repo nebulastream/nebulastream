@@ -104,6 +104,8 @@ class E2ESingleRun {
     /**
      * @brief Creates either KafkaSourceType or LambdaSourceType depending on the data generator.
      * Also creates a data provider for LambdaSourceType.
+     * @param logicalSourceName
+     * @param physicalSourceName
      * @param createdBuffers
      * @param sourceCnt
      * @param groupId

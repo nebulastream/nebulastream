@@ -15,16 +15,9 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_ARROWSOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_ARROWSOURCE_HPP_
 
-<<<<<<<< HEAD:nes-plugins/arrow/include/Sources/Arrow/ArrowSource.hpp
-========
-#ifdef ENABLE_ARROW_BUILD
-
 #include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
-#include <Operators/LogicalOperators/Sources/ArrowSourceDescriptor.hpp>
->>>>>>>> 845406f58c (#4246: refactored code to make optimizer phases compile):nes-core/include/Sources/ArrowSource.hpp
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/Arrow/ArrowSourceDescriptor.hpp>
-#include <Sources/Arrow/ArrowSourceType.hpp>
 #include <Sources/DataSource.hpp>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
@@ -44,16 +37,16 @@ using ArrowParserPtr = std::shared_ptr<ArrowParser>;
 class ArrowSource : public DataSource {
   public:
     /**
-   * @brief constructor of Arrow source
-   * @param schema of the source
-   * @param bufferManager the buffer manager
-   * @param queryManager the query manager
-   * @param arrowSourceType points to the current source configuration object, look at mqttSourceType for info
-   * @param operatorId current operator id
-   * @param numSourceLocalBuffers
-   * @param gatheringMode
-   * @param successors
-   */
+    * @brief constructor of Arrow source
+    * @param schema of the source
+    * @param bufferManager the buffer manager
+    * @param queryManager the query manager
+    * @param arrowSourceType points to the current source configuration object, look at mqttSourceType for info
+    * @param operatorId current operator id
+    * @param numSourceLocalBuffers
+    * @param gatheringMode
+    * @param successors
+    */
     explicit ArrowSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,

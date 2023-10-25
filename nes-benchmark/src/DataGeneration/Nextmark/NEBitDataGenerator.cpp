@@ -84,16 +84,15 @@ SchemaPtr NEBitDataGenerator::getSchema() {
 }
 
 Configurations::SchemaTypePtr NEBitDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataTypeUI64 = "UINT64";
     const char* dataTypeF64 = "FLOAT64";
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("creationTS", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("timestamp", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("auctionId", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("bidderId", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("price", dataTypeF64, length);
-    return Configurations::SchemaType::create(schemaFiledDetails);
+    std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
+    schemaFieldDetails.emplace_back("creationTS", dataTypeUI64);
+    schemaFieldDetails.emplace_back("timestamp", dataTypeUI64);
+    schemaFieldDetails.emplace_back("auctionId", dataTypeUI64);
+    schemaFieldDetails.emplace_back("bidderId", dataTypeUI64);
+    schemaFieldDetails.emplace_back("price", dataTypeF64);
+    return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
 std::string NEBitDataGenerator::toString() {

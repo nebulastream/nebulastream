@@ -339,7 +339,7 @@ SchemaPtr Schema::createFromSchemaType(const Configurations::SchemaTypePtr& sche
     auto schema = Schema::create(layoutType);
     for (const auto& schemaFieldDetail : schemaType->getSchemaFieldDetails()) {
         schema->addField(schemaFieldDetail.fieldName,
-                         stringToFieldType(schemaFieldDetail.fieldType, schemaFieldDetail.fieldLength));
+                         stringToFieldType(schemaFieldDetail.fieldType, schemaFieldDetail.variableLengthInBytes));
     };
     return schema;
 }

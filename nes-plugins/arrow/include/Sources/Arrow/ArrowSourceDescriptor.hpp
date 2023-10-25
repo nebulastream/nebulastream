@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_ARROWSOURCEDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_ARROWSOURCEDESCRIPTOR_HPP_
 
-#include <Sources/Arrow/ArrowSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES {

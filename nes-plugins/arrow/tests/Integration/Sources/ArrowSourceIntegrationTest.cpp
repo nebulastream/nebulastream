@@ -15,12 +15,13 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Sources/Arrow/ArrowSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -76,16 +77,15 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     NES_DEBUG("ArrowIntegrationTest: Start worker 1");
 
     // setup Arrow source
-    ArrowSourceTypePtr arrowSourceTypePtr = ArrowSourceType::create();
-    arrowSourceTypePtr->setFilePath(inputFilePath);
-    arrowSourceTypePtr->setNumberOfTuplesToProducePerBuffer(4);
-    arrowSourceTypePtr->setNumberOfBuffersToProduce(8);
-    auto physicalSource = PhysicalSource::create("arrow_data", "test_stream", arrowSourceTypePtr);
+    ArrowSourceTypePtr arrowSourceType = ArrowSourceType::create("arrow_data", "test_stream");
+    arrowSourceType->setFilePath(inputFilePath);
+    arrowSourceType->setNumberOfTuplesToProducePerBuffer(4);
+    arrowSourceType->setNumberOfBuffersToProduce(8);
 
     // setup worker
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig1->physicalSources.add(physicalSource);
+    workerConfig1->physicalSourceTypes.add(arrowSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
 

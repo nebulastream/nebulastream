@@ -15,5 +15,4 @@ add_source_files(nes-arrow
         ArrowSource.cpp
         ArrowSourceDescriptor.cpp
         ArrowSourcePlugin.cpp
-        ArrowSourceType.cpp
         )
