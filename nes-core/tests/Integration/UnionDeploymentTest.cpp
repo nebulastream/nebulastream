@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Util/TestUtils.hpp"
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -37,10 +38,10 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
 
         // Setup sources.
-        sourceCar = createCSVSource("car.csv", 40, 1);
-        sourceTruck = createCSVSource("truck.csv", 40, 1);
-        sourceRuby = createCSVSource("window.csv", 28, 1);
-        sourceDiamond = createCSVSource("window.csv", 28, 1);
+        sourceCar = TestUtils::createSourceConfig("car.csv", 1, 40, 1);
+        sourceTruck = TestUtils::createSourceConfig("truck.csv", 1, 40, 1);
+        sourceRuby = TestUtils::createSourceConfig("window.csv", 1, 28, 1);
+        sourceDiamond = TestUtils::createSourceConfig("window.csv", 1, 28, 1);
 
         // Setup schemas.
         schemaCarTruck = Schema::create()
@@ -50,26 +51,6 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
                         ->addField(createField("value", BasicType::UINT32))
                         ->addField(createField("id", BasicType::UINT32))
                         ->addField(createField("timestamp", BasicType::INT32));
-    }
-
-    /**
-     * @brief Utility function that creates a csv source.
-     * 
-     * @param sourcePath: Path to the csv source file.
-     * @param numTuplesPerBuffer: How many tuples are stored in one TupleBuffer.
-     * @param numBuffersToProduce: The number of TupleBuffers that are produced.
-     * @return CSVSourceTypePtr: The newly created CSV source.
-     */
-    CSVSourceTypePtr createCSVSource(const std::string& sourcePath, const uint64_t numTuplesPerBuffer, 
-                                     const uint64_t numBuffersToProduce) {
-        auto csvSource = CSVSourceType::create();
-        csvSource->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / sourcePath);
-        csvSource->setGatheringInterval(1);
-        csvSource->setNumberOfTuplesToProducePerBuffer(numTuplesPerBuffer);
-        csvSource->setNumberOfBuffersToProduce(numBuffersToProduce);
-        csvSource->setSkipHeader(false);
-
-        return csvSource;
     }
 
     std::string testName = "UnionDeploymentTest";
