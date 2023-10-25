@@ -139,7 +139,7 @@ TEST_F(PatternParsingServiceTest, DisjunctionPattern) {
     subQueryPlan->addRootOperator(source2);
     OperatorNodePtr unionOp = LogicalOperatorFactory::createUnionOperator();
     queryPlan->appendOperatorAsNewRoot(unionOp);
-    queryPlan->addRootOperator(subQueryPlan->getRootOperators()[0]);
+    unionOp->addChild(subQueryPlan->getRootOperators()[0]);
     LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 

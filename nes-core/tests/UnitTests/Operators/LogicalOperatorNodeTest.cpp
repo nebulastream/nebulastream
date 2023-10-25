@@ -14,12 +14,12 @@
 
 #include <BaseIntegrationTest.hpp>//
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -51,8 +51,7 @@ class LogicalOperatorNodeTest : public Testing::BaseUnitTest {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
-        Catalogs::Source::SourceCatalogPtr sourceCatalog =
-            std::make_shared<Catalogs::Source::SourceCatalog>();
+        Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         logicalSource = sourceCatalog->getLogicalSourceOrThrowException("default_logical");
         SchemaPtr schema = logicalSource->getSchema();
         auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0);
@@ -1030,10 +1029,10 @@ TEST_F(LogicalOperatorNodeTest, prettyPrint) {
 
     std::stringstream ss1;
     ss1 << std::string(0, ' ') << filterOp6->toString() << std::endl;
-    ss1 << std::string(2, ' ') << filterOp3->toString() << std::endl;
-    ss1 << std::string(2, ' ') << filterOp1->toString() << std::endl;
-    ss1 << std::string(4, ' ') << filterOp2->toString() << std::endl;
-    ss1 << std::string(4, ' ') << filterOp4->toString() << std::endl;
+    ss1 << "|--" << filterOp3->toString() << std::endl;
+    ss1 << "|--" << filterOp1->toString() << std::endl;
+    ss1 << "|  |--" << filterOp2->toString() << std::endl;
+    ss1 << "|  |--" << filterOp4->toString() << std::endl;
 
     std::stringstream ss;
     ConsoleDumpHandler::create(ss)->dump(filterOp6);
@@ -1092,9 +1091,9 @@ TEST_F(LogicalOperatorNodeTest, swap1) {
     filterOp6->swap(filterOp3, filterOp1);
     stringstream expected;
     expected << std::string(0, ' ') << filterOp6->toString() << std::endl;
-    expected << std::string(2, ' ') << filterOp3->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp2->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp5->toString() << std::endl;
+    expected << "|--" << filterOp3->toString() << std::endl;
+    expected << "|  |--" << filterOp2->toString() << std::endl;
+    expected << "|  |--" << filterOp5->toString() << std::endl;
 
     stringstream ss;
     ConsoleDumpHandler::create(ss)->dump(filterOp6);
@@ -1121,11 +1120,11 @@ TEST_F(LogicalOperatorNodeTest, swap2) {
     filterOp6->swap(filterOp3, filterOp4);
     stringstream expected;
     expected << std::string(0, ' ') << filterOp6->toString() << std::endl;
-    expected << std::string(2, ' ') << filterOp1->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp2->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp3->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp2->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
+    expected << "|--" << filterOp1->toString() << std::endl;
+    expected << "|  |--" << filterOp2->toString() << std::endl;
+    expected << "|  |--" << filterOp3->toString() << std::endl;
+    expected << "|  |  |--" << filterOp2->toString() << std::endl;
+    expected << "|  |  |--" << filterOp5->toString() << std::endl;
 
     stringstream ss;
     ConsoleDumpHandler::create(ss)->dump(filterOp6);
@@ -1153,15 +1152,15 @@ TEST_F(LogicalOperatorNodeTest, swap3) {
     filterOp6->swap(filterOp3, filterOp2);
     stringstream expected;
     expected << std::string(0, ' ') << filterOp6->toString() << std::endl;
-    expected << std::string(2, ' ') << filterOp1->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp3->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp7->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
+    expected << "|--" << filterOp1->toString() << std::endl;
+    expected << "|  |--" << filterOp3->toString() << std::endl;
+    expected << "|  |  |--" << filterOp7->toString() << std::endl;
+    expected << "|  |  |--" << filterOp5->toString() << std::endl;
 
-    expected << std::string(2, ' ') << filterOp4->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp3->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp7->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
+    expected << "|--"<< filterOp4->toString() << std::endl;
+    expected << "|  |--"<< filterOp3->toString() << std::endl;
+    expected << "|  |  |--" << filterOp7->toString() << std::endl;
+    expected << "|  |  |--" << filterOp5->toString() << std::endl;
 
     stringstream ss;
     ConsoleDumpHandler::create(ss)->dump(filterOp6);
@@ -1189,15 +1188,15 @@ TEST_F(LogicalOperatorNodeTest, swap4) {
     filterOp6->swap(filterOp3, filterOp2);
     stringstream expected;
     expected << std::string(0, ' ') << filterOp6->toString() << std::endl;
-    expected << std::string(2, ' ') << filterOp1->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp3->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp7->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
+    expected << "|--" << filterOp1->toString() << std::endl;
+    expected << "|  |--" << filterOp3->toString() << std::endl;
+    expected << "|  |  |--" << filterOp7->toString() << std::endl;
+    expected << "|  |  |--" << filterOp5->toString() << std::endl;
 
-    expected << std::string(2, ' ') << filterOp4->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp3->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp7->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
+    expected << "|--" << filterOp4->toString() << std::endl;
+    expected << "|  |--" << filterOp3->toString() << std::endl;
+    expected << "|  |  |--" << filterOp7->toString() << std::endl;
+    expected << "|  |  |--" << filterOp5->toString() << std::endl;
 
     stringstream ss;
     ConsoleDumpHandler::create(ss)->dump(filterOp6);
@@ -1225,15 +1224,15 @@ TEST_F(LogicalOperatorNodeTest, swap5) {
     filterOp6->swap(filterOp3, filterOp2);
     stringstream expected;
     expected << std::string(0, ' ') << filterOp6->toString() << std::endl;
-    expected << std::string(2, ' ') << filterOp1->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp3->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp2->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
+    expected << "|--" << filterOp1->toString() << std::endl;
+    expected << "|  |--" << filterOp3->toString() << std::endl;
+    expected << "|  |  |--" << filterOp2->toString() << std::endl;
+    expected << "|  |  |--" << filterOp5->toString() << std::endl;
 
-    expected << std::string(2, ' ') << filterOp4->toString() << std::endl;
-    expected << std::string(4, ' ') << filterOp3->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp2->toString() << std::endl;
-    expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
+    expected << "|--" << filterOp4->toString() << std::endl;
+    expected << "|  |--" << filterOp3->toString() << std::endl;
+    expected << "|  |  |--" << filterOp2->toString() << std::endl;
+    expected << "|  |  |--" << filterOp5->toString() << std::endl;
 
     stringstream ss;
     ConsoleDumpHandler::create(ss)->dump(filterOp6);
