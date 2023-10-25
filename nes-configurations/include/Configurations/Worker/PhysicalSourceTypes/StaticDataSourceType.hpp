@@ -37,7 +37,7 @@ class StaticDataSourceType : public PhysicalSourceType {
      * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      * @return a constructed StaticDataSourceType
      */
-    static StaticDataSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,const std::string& pathTableFile,
+    static StaticDataSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName,const std::string& pathTableFile,
                                           uint64_t numBuffersToProcess,
                                           const std::string& gatheringMode,
                                           uint64_t taskQueueId,
@@ -69,7 +69,7 @@ class StaticDataSourceType : public PhysicalSourceType {
      * @param numBuffersToProcess
      * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      */
-    explicit StaticDataSourceType(std::string logicalSourceName, std::string physicalSourceName,const std::string& pathTableFile,
+    explicit StaticDataSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,const std::string& pathTableFile,
                                   uint64_t numBuffersToProcess,
                                   SourceMode sourceMode,
                                   uint64_t taskQueueId,

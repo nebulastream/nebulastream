@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Catalogs/Topology/Topology.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-#include <Catalogs/Topology/Topology.hpp>
 #include <memory>
 #include <utility>
 

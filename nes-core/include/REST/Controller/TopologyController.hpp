@@ -13,12 +13,12 @@
 */
 #ifndef NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #define NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Util/Mobility/Waypoint.hpp>
-#include <Catalogs/Topology/Topology.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>

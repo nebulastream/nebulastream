@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_REST_CONTROLLER_MONITORINGCONTROLLER_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Util/PlanJsonGenerator.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -24,6 +23,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanJsonGenerator.hpp>
 #include <memory>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>

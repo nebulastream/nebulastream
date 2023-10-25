@@ -39,21 +39,23 @@ class ArrowSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return ArrowSourceTypePtr
      */
-    static ArrowSourceTypePtr
-    create(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    static ArrowSourceTypePtr create(const std::string& logicalSourceName,
+                                     const std::string& physicalSourceName,
+                                     std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a ArrowSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return ArrowSourceTypePtr
      */
-    static ArrowSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
+    static ArrowSourceTypePtr
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, const Yaml::Node& yamlConfig);
 
     /**
      * @brief create a default ArrowSourceTypePtr object
      * @return ArrowSourceTypePtr
      */
-    static ArrowSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
+    static ArrowSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     /**
      * @brief creates a string representation of the source
@@ -130,19 +132,19 @@ class ArrowSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
      */
-    explicit ArrowSourceType(std::string logicalSourceName,
-                             std::string physicalSourceName,
+    explicit ArrowSourceType(const std::string& logicalSourceName,
+                             const std::string& physicalSourceName,
                              std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
      */
-    explicit ArrowSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
+    explicit ArrowSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Arrow source config object initialized with default values
      */
-    ArrowSourceType(std::string logicalSourceName, std::string physicalSourceName);
+    ArrowSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::StringConfigOption filePath;
     Configurations::IntConfigOption numberOfBuffersToProduce;

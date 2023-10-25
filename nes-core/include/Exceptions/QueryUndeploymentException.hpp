@@ -14,8 +14,8 @@
 #ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 #define NES_CORE_INCLUDE_EXCEPTIONS_QUERYUNDEPLOYMENTEXCEPTION_HPP_
 
-#include <Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
+#include <Identifiers.hpp>
 #include <optional>
 #include <stdexcept>
 #include <string>

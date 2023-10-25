@@ -38,20 +38,20 @@ class OPCSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
+    static OPCSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a OPCSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
+    static OPCSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName,const Yaml::Node& yamlConfig);
 
     /**
      * @brief create a OPCSourceConfigPtr object
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
+    static OPCSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     ~OPCSourceType() = default;
 
@@ -76,7 +76,7 @@ class OPCSourceType : public PhysicalSourceType {
     /**
      * @brief Set node identifier
      */
-    void setNodeIdentifier(std::string nodeIdentifier);
+    void setNodeIdentifier(const std::string& nodeIdentifier);
 
     /**
      * @brief Get userName
@@ -86,7 +86,7 @@ class OPCSourceType : public PhysicalSourceType {
     /**
      * @brief Set userName
      */
-    void setUserName(std::string userName);
+    void setUserName(const std::string& userName);
 
     /**
      * @brief Get password
@@ -96,23 +96,23 @@ class OPCSourceType : public PhysicalSourceType {
     /**
      * @brief Set password
      */
-    void setPassword(std::string password);
+    void setPassword(const std::string& password);
 
   private:
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceType(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
+    explicit OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceType(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
+    explicit OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with default values
      */
-    OPCSourceType(std::string logicalSourceName, std::string physicalSourceName);
+    OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::IntConfigOption namespaceIndex;
     Configurations::StringConfigOption nodeIdentifier;

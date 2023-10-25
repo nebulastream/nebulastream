@@ -14,11 +14,11 @@
 #ifndef NES_CORE_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
 #define NES_CORE_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
 #include <API/Schema.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
-#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>

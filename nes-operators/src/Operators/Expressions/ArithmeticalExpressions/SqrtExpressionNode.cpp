@@ -34,7 +34,7 @@ ExpressionNodePtr SqrtExpressionNode::create(ExpressionNodePtr const& child) {
 
 void SqrtExpressionNode::inferStamp( SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalUnaryExpressionNode::inferStamp( schema);
+    ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
     if ((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
         || (stamp->isFloat() && DataType::as<Float>(stamp)->upperBound <= 0)) {

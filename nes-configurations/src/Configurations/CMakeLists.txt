@@ -15,7 +15,6 @@ add_source_files(nes-configurations
         BaseConfiguration.cpp
         BaseOption.cpp
         ConfigurationException.cpp
-        EnumConfOption.cpp
         ScalarOption.cpp
         TypedBaseOption.cpp
 )

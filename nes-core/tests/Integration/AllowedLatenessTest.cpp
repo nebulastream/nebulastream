@@ -493,10 +493,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_10ms) {
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
-                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 3)
-                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 3)
                                   .validate()
                                   .setupTopology();
 
@@ -535,10 +535,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_250ms) {
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator()//idx 2
                                   .attachWorkerToCoordinator()//idx 3
-                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 2)
-                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 3)
-                                  .attachWorkerWithCSVSourceToWorkerWithId( inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId(inOrderConf, 3)
                                   .validate()
                                   .setupTopology(crdFunctor);
 

@@ -16,8 +16,8 @@
 #define NES_RUNTIME_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
-#include<Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Network/PartitionRegistrationStatus.hpp>
+#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <mutex>

@@ -28,10 +28,7 @@ std::shared_ptr<PhysicalNonKeyedTumblingWindowSink>
 PhysicalNonKeyedTumblingWindowSink::create(SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
                                            Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalNonKeyedTumblingWindowSink>(getNextOperatorId(),
-                                                                inputSchema,
-                                                                outputSchema,
-                                                                windowDefinition);
+    return std::make_shared<PhysicalNonKeyedTumblingWindowSink>(getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
 }
 
 Windowing::LogicalWindowDefinitionPtr PhysicalNonKeyedTumblingWindowSink::getWindowDefinition() { return windowDefinition; }

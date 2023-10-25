@@ -35,8 +35,8 @@ class MonitoringSourceType : public PhysicalSourceType {
      * @brief create a MonitoringSourceTypePtr object
      * @return MonitoringSourceTypePtr
      */
-    static MonitoringSourceTypePtr create(std::string logicalSourceName,
-                                          std::string physicalSourceName,
+    static MonitoringSourceTypePtr create(const std::string& logicalSourceName,
+                                          const std::string& physicalSourceName,
                                           Monitoring::MetricCollectorType metricCollectorType,
                                           std::chrono::milliseconds waitTimeInMs);
 
@@ -45,7 +45,7 @@ class MonitoringSourceType : public PhysicalSourceType {
      * @return MonitoringSourceTypePtr
      */
     static MonitoringSourceTypePtr
-    create(std::string logicalSourceName, std::string physicalSourceName, Monitoring::MetricCollectorType metricCollectorType);
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Monitoring::MetricCollectorType metricCollectorType);
 
     /**
      * @brief creates a string representation of the source
@@ -86,8 +86,8 @@ class MonitoringSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new source type with defaults.
      */
-    MonitoringSourceType(std::string logicalSourceName,
-                         std::string physicalSourceName,
+    MonitoringSourceType(const std::string& logicalSourceName,
+                         const std::string& physicalSourceName,
                          Monitoring::MetricCollectorType metricCollectorType,
                          std::chrono::milliseconds waitTime);
     Monitoring::MetricCollectorType metricCollectorType;

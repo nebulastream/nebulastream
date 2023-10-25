@@ -21,9 +21,10 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
-#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
+#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
+#include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
@@ -34,7 +35,6 @@
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
-#include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>

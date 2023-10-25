@@ -28,18 +28,18 @@ struct MemoryAreaDeleter {
 
 }// namespace detail
 
-MemorySourceType::MemorySourceType(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
+MemorySourceType::MemorySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
                                    size_t memoryAreaSize,
                                    uint64_t numBuffersToProduce,
                                    uint64_t gatheringValue,
                                    GatheringMode gatheringMode,
                                    uint64_t sourceAffinity,
                                    uint64_t taskQueueId)
-    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName),SourceType::MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+    : PhysicalSourceType(logicalSourceName, physicalSourceName,SourceType::MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
       memoryAreaSize(memoryAreaSize), numberOfBufferToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
-MemorySourceTypePtr MemorySourceType::create(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
+MemorySourceTypePtr MemorySourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
                                              size_t memoryAreaSize,
                                              uint64_t numBuffersToProcess,
                                              uint64_t gatheringValue,
@@ -47,7 +47,7 @@ MemorySourceTypePtr MemorySourceType::create(std::string logicalSourceName, std:
                                              uint64_t sourceAffinity,
                                              uint64_t taskQueueId) {
     NES_ASSERT(memoryArea, "invalid memory area");
-    return std::make_shared<MemorySourceType>(MemorySourceType(std::move(logicalSourceName), std::move(physicalSourceName),memoryArea,
+    return std::make_shared<MemorySourceType>(MemorySourceType(logicalSourceName, physicalSourceName,memoryArea,
                                                                memoryAreaSize,
                                                                numBuffersToProcess,
                                                                gatheringValue,

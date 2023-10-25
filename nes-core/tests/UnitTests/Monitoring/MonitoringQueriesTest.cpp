@@ -19,7 +19,6 @@
 #include <Util/MetricValidator.hpp>
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-//#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>

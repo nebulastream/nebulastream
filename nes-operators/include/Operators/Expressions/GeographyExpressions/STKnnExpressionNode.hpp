@@ -85,7 +85,7 @@ class STKnnExpressionNode : public ExpressionNode, public GeographyExpressionNod
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp( SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

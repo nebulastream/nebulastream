@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <BaseUnitTest.hpp>
-#include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::RequestProcessor::Experimental {

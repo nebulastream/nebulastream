@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
 
-#include<Operators/LogicalOperators/Network/NesPartition.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <fmt/core.h>
 
 namespace NES::Network {

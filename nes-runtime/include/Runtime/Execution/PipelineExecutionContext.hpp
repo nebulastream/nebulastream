@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 
-#include <Identifiers.hpp>
 #include <Exceptions/RuntimeException.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstdint>
 #include <functional>

@@ -34,20 +34,20 @@ class TCPSourceType : public PhysicalSourceType {
      * @return TCPSourceTypePtr
      */
     static TCPSourceTypePtr
-    create(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a TCPSourceTypePtr object
      * @param yamlConfig inputted config options
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
+    static TCPSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a TCPSourceTypePtr object with default values
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
+    static TCPSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     /**
      * @brief converts configs to string
@@ -71,7 +71,7 @@ class TCPSourceType : public PhysicalSourceType {
      * @brief set host
      * @param host new socket host
      */
-    void setSocketHost(std::string host);
+    void setSocketHost(const std::string& host);
 
     /**
      * @brief get host address
@@ -107,7 +107,7 @@ class TCPSourceType : public PhysicalSourceType {
      * @brief set the domain via string
      * @param domain string viable options: AF_INET IPv4 Internet protocols, AF_INET6 IPv6 Internet protocols
      */
-    void setSocketDomainViaString(std::string domain);
+    void setSocketDomainViaString(const std::string& domain);
 
     /**
      * @brief get the socket type
@@ -214,20 +214,20 @@ class TCPSourceType : public PhysicalSourceType {
      * @brief constructor to create a new TCP source type object initialized with values from sourceConfigMap
      * @param sourceConfigMap inputted config options
      */
-    explicit TCPSourceType(std::string logicalSourceName,
-                           std::string physicalSourceName,
+    explicit TCPSourceType(const std::string& logicalSourceName,
+                           const std::string& physicalSourceName,
                            std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new TCP source type object initialized with values from yamlConfig
      * @param yamlConfig inputted config options
      */
-    explicit TCPSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
+    explicit TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new TCP source type object initialized with default values
      */
-    TCPSourceType(std::string logicalSourceName, std::string physicalSourceName);
+    TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::StringConfigOption socketHost;
     Configurations::IntConfigOption socketPort;

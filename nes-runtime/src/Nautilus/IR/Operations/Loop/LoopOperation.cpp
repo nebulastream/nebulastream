@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp"
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <utility>

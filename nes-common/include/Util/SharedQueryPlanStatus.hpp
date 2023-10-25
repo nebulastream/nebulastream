@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
-#define NES_CORE_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
+#define NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
 
 #include <cinttypes>
 #include <stdint.h>
@@ -34,4 +34,4 @@ enum class SharedQueryPlanStatus : uint8_t { Created = 0, Deployed, Updated, Sto
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_

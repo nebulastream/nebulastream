@@ -29,10 +29,7 @@ PhysicalThresholdWindowOperator::create(SchemaPtr inputSchema,
                                         SchemaPtr outputSchema,
                                         Windowing::WindowOperatorHandlerPtr operatorHandler) {
 
-    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(),
-                                                             inputSchema,
-                                                             outputSchema,
-                                                             operatorHandler);
+    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
 }
 
 std::string PhysicalThresholdWindowOperator::toString() const { return "PhysicalThresholdWindowOperator"; }

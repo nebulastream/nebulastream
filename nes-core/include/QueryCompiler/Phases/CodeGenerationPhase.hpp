@@ -33,9 +33,8 @@ class CodeGenerationPhase {
      * @brief Creates the code generation phase.
      * @return CodeGenerationPhasePtr
      */
-    static CodeGenerationPhasePtr create(CodeGeneratorPtr codeGenerator,
-                                         Compiler::JITCompilerPtr jitCompiler,
-                                         CompilationStrategy compilationStrategy);
+    static CodeGenerationPhasePtr
+    create(CodeGeneratorPtr codeGenerator, Compiler::JITCompilerPtr jitCompiler, CompilationStrategy compilationStrategy);
 
     /**
      * @brief Generates code for all pipelines in a pipelined query plan.

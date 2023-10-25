@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_
-#define NES_NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_
+#define NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_
 #include <filesystem>
 #include <list>
 #include <string_view>
@@ -41,4 +41,4 @@ class PluginLoader {
 
 }// namespace NES::Util
 
-#endif//NES_NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_

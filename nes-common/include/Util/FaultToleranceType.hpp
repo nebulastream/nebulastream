@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
-#define NES_CORE_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
+#define NES_COMMON_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
@@ -28,4 +28,4 @@ enum class FaultToleranceType : uint8_t {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_

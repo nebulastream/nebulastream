@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_OPERATORSTATE_HPP_
-#define NES_CORE_INCLUDE_UTIL_OPERATORSTATE_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_
+#define NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_
 
 #include <cinttypes>
 #include <string>
@@ -33,4 +33,4 @@ enum class OperatorState : uint8_t { TO_BE_PLACED = 0, TO_BE_REMOVED, TO_BE_REPL
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_OPERATORSTATE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_

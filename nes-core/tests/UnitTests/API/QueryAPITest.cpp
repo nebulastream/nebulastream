@@ -16,9 +16,10 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -30,22 +31,21 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -259,19 +259,19 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
     Catalogs::Source::SourceCatalogEntryPtr sce =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     // create a query with "as" in the aggregation
-    auto query = Query::from("default_logical")
-                     .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
-                     .byKey(Attribute("id", BasicType::INT64))
-                     .apply(Sum(Attribute("value", BasicType::INT64))->as(FieldAccessExpressionNode::create("MY_OUTPUT_FIELD_NAME")))
-                     .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
-                     .sink(PrintSinkDescriptor::create());
+    auto query =
+        Query::from("default_logical")
+            .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
+            .byKey(Attribute("id", BasicType::INT64))
+            .apply(Sum(Attribute("value", BasicType::INT64))->as(FieldAccessExpressionNode::create("MY_OUTPUT_FIELD_NAME")))
+            .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
+            .sink(PrintSinkDescriptor::create());
 
     Catalogs::UDF::UDFCatalogPtr udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink

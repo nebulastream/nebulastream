@@ -14,12 +14,12 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_BASEEXECUTABLEWINDOWACTION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_BASEEXECUTABLEWINDOWACTION_HPP_
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>

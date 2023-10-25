@@ -132,9 +132,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
 TEST_F(AssignWatermarkTest, DISABLED_testWatermarkAssignmentDistributedTumblingWindow) {
     //Setup Coordinator
     auto window = Schema::create()
-                             ->addField(createField("value", BasicType::UINT64))
-                             ->addField(createField("id", BasicType::UINT64))
-                             ->addField(createField("timestamp", BasicType::UINT64));
+                      ->addField(createField("value", BasicType::UINT64))
+                      ->addField(createField("id", BasicType::UINT64))
+                      ->addField(createField("timestamp", BasicType::UINT64));
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

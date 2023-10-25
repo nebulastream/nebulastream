@@ -15,9 +15,9 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
-#include <Identifiers.hpp>
-#include<Util/Mobility/GeoLocation.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Identifiers.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>

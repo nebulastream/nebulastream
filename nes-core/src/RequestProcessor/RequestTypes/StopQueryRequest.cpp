@@ -12,23 +12,23 @@
     limitations under the License.
 */
 
-#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
-#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
-#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
-#include  <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Phases/QueryDeploymentPhase.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 #include <string>

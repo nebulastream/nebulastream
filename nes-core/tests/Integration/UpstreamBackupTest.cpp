@@ -13,14 +13,14 @@
 */
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -87,7 +87,9 @@ class UpstreamBackupTest : public Testing::BaseIntegrationTest {
             }
         };
 
-        lambdaSource = LambdaSourceType::create("window", "x1", std::move(func1),
+        lambdaSource = LambdaSourceType::create("window",
+                                                "x1",
+                                                std::move(func1),
                                                 numberOfBuffersToProduceInTuples,
                                                 ingestionRate,
                                                 GatheringMode::INGESTION_RATE_MODE);

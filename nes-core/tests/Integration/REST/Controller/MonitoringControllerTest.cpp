@@ -15,7 +15,6 @@
 #include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
@@ -23,6 +22,7 @@
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <Util/MetricValidator.hpp>
 #include <cpr/cpr.h>
 #include <cstdint>

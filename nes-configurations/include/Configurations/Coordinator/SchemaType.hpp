@@ -35,17 +35,19 @@ struct SchemaFieldDetail {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
 
+/**
+ * @brief This class is a wrapper for storing the schema related configurations supplied by user and then later using it to create the actual schema
+ */
 class SchemaType {
   public:
     static SchemaTypePtr create(std::vector<SchemaFieldDetail> schemaFieldDetails);
 
-    const std::vector<SchemaFieldDetail>& getSchemaFieldDetails() const;
+    [[nodiscard]] const std::vector<SchemaFieldDetail>& getSchemaFieldDetails() const;
 
     bool contains(const std::string& fieldName);
 
   private:
-    SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails);
-
+    explicit SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails);
     std::vector<SchemaFieldDetail> schemaFieldDetails;
 };
 }// namespace NES::Configurations

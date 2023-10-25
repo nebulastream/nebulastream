@@ -15,12 +15,12 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_ABSTRACTBATCHJOINHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_ABSTRACTBATCHJOINHANDLER_HPP_
 
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>

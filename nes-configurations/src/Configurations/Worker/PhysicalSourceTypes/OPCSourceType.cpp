@@ -19,26 +19,26 @@
 
 namespace NES {
 
-OPCSourceTypePtr OPCSourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, const Yaml::Node& yamlConfig) {
     return std::make_shared<OPCSourceType>(
-        OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(yamlConfig)));
+        OPCSourceType(logicalSourceName, physicalSourceName, yamlConfig));
 }
 
-OPCSourceTypePtr OPCSourceType::create(std::string logicalSourceName,
-                                       std::string physicalSourceName,
+OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName,
+                                       const std::string& physicalSourceName,
                                        std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<OPCSourceType>(
-        OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
+        OPCSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
-OPCSourceTypePtr OPCSourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
-    return std::make_shared<OPCSourceType>(OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+OPCSourceTypePtr OPCSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
+    return std::make_shared<OPCSourceType>(OPCSourceType(logicalSourceName, physicalSourceName));
 }
 
-OPCSourceType::OPCSourceType(std::string logicalSourceName,
-                             std::string physicalSourceName,
+OPCSourceType::OPCSourceType(const std::string& logicalSourceName,
+                             const std::string& physicalSourceName,
                              std::map<std::string, std::string> sourceConfigMap)
-    : OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
+    : OPCSourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("OPCSourceType: Init default OPC source config object with values from command line args.");
     auto enumNameString = std::string(magic_enum::enum_name(SourceType::OPC_SOURCE));
     if (sourceConfigMap.find(enumNameString) != sourceConfigMap.end()) {
@@ -59,8 +59,8 @@ OPCSourceType::OPCSourceType(std::string logicalSourceName,
     }
 }
 
-OPCSourceType::OPCSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig)
-    : OPCSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
+OPCSourceType::OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+    : OPCSourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("OPCSourceType: Init default OPC source config object with values from YAML file.");
     if (!yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>() != "\n") {
@@ -84,8 +84,8 @@ OPCSourceType::OPCSourceType(std::string logicalSourceName, std::string physical
     }
 }
 
-OPCSourceType::OPCSourceType(std::string logicalSourceName, std::string physicalSourceName)
-    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::OPC_SOURCE),
+OPCSourceType::OPCSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::OPC_SOURCE),
       namespaceIndex(Configurations::ConfigurationOption<uint32_t>::create(Configurations::NAME_SPACE_INDEX_CONFIG,
                                                                            1,
                                                                            "namespaceIndex for node, needed for: OPCSource")),
@@ -132,13 +132,13 @@ Configurations::StringConfigOption OPCSourceType::getPassword() const { return p
 
 void OPCSourceType::setNamespaceIndex(uint32_t namespaceIndexValue) { namespaceIndex->setValue(namespaceIndexValue); }
 
-void OPCSourceType::setNodeIdentifier(std::string nodeIdentifierValue) {
-    nodeIdentifier->setValue(std::move(nodeIdentifierValue));
+void OPCSourceType::setNodeIdentifier(const std::string& nodeIdentifierValue) {
+    nodeIdentifier->setValue(nodeIdentifierValue);
 }
 
-void OPCSourceType::setUserName(std::string userNameValue) { userName->setValue(userNameValue); }
+void OPCSourceType::setUserName(const std::string& userNameValue) { userName->setValue(userNameValue); }
 
-void OPCSourceType::setPassword(std::string passwordValue) { password->setValue(std::move(passwordValue)); }
+void OPCSourceType::setPassword(const std::string& passwordValue) { password->setValue(passwordValue); }
 
 void OPCSourceType::reset() {
     setNamespaceIndex(namespaceIndex->getDefaultValue());

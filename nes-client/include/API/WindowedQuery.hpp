@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_API_WINDOWEDQUERY_HPP_
-#define NES_CORE_INCLUDE_API_WINDOWEDQUERY_HPP_
+#ifndef NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_
+#define NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_
 
 #include <string>
 namespace NES {
@@ -115,4 +115,4 @@ class WindowedQuery {
 }// namespace WindowOperatorBuilder
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_API_WINDOWEDQUERY_HPP_
+#endif// NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_

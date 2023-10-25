@@ -13,8 +13,8 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include <Exceptions/InvalidArgumentException.hpp>
 #include <Common/Spatial/Point.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 

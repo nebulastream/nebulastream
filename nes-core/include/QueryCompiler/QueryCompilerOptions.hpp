@@ -14,15 +14,15 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 
-#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Configurations/Enums/WindowingStrategy.hpp>
-#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
-#include <Configurations/Enums/PipeliningStrategy.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
+#include <Configurations/Enums/PipeliningStrategy.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/Common.hpp>
 #include <cstdint>
 #include <string>

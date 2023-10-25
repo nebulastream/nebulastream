@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_
-#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_
+#ifndef NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
+#define NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_
 
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
@@ -144,4 +144,4 @@ class StorageHandler {
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES
-#endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_STORAGEHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEHANDLER_HPP_

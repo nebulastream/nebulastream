@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SPATIAL_DATATYPES_GEOLOCATION_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_DATATYPES_GEOLOCATION_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_
+#define NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_
 
 #include <string>
 
@@ -106,4 +106,4 @@ class GeoLocation {
 }// namespace DataTypes::Experimental
 }// namespace NES::Spatial
 
-#endif// NES_CORE_INCLUDE_SPATIAL_DATATYPES_GEOLOCATION_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_

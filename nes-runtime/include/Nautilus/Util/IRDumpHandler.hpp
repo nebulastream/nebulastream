@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
 
-#include "Nautilus/IR/BasicBlocks/BasicBlock.hpp"
-#include "Nautilus/IR/IRGraph.hpp"
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
 #include <memory>
 #include <unordered_set>
 

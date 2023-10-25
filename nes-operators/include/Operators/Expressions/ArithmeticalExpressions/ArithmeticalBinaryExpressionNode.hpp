@@ -28,7 +28,7 @@ class ArithmeticalBinaryExpressionNode : public BinaryExpressionNode, public Ari
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp( SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;

@@ -17,8 +17,8 @@
 
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkForwardRefs.hpp>
-#include<Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Network/PartitionRegistrationStatus.hpp>
+#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <chrono>
 #include <cstdint>

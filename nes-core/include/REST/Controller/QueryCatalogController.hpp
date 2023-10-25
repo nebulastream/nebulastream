@@ -13,19 +13,19 @@
 */
 #ifndef NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 #define NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Util/PlanJsonGenerator.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Runtime/QueryStatistics.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Util/PlanJsonGenerator.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <utility>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 

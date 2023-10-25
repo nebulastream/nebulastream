@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_API_QUERYAPI_HPP_
-#define NES_CORE_INCLUDE_API_QUERYAPI_HPP_
+#ifndef NES_CLIENT_INCLUDE_API_QUERYAPI_HPP_
+#define NES_CLIENT_INCLUDE_API_QUERYAPI_HPP_
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/GeographyExpressions.hpp>
@@ -44,4 +44,4 @@ using namespace NES;
 using namespace NES::API;
 using namespace NES::Windowing;
 
-#endif// NES_CORE_INCLUDE_API_QUERYAPI_HPP_
+#endif// NES_CLIENT_INCLUDE_API_QUERYAPI_HPP_

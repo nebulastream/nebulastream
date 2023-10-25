@@ -349,10 +349,10 @@ Query& Query::inferModel(const std::string model,
     auto outputFieldVector = std::vector(outputFields);
     std::vector<ExpressionNodePtr> inputFieldsPtr;
     std::vector<ExpressionNodePtr> outputFieldsPtr;
-    for (auto inputField : inputFieldVector) {
+    for (const auto& inputField : inputFieldVector) {
         inputFieldsPtr.push_back(inputField.getExpressionNode());
     }
-    for (auto outputField : outputFieldVector) {
+    for (const auto& outputField : outputFieldVector) {
         outputFieldsPtr.push_back(outputField.getExpressionNode());
     }
 

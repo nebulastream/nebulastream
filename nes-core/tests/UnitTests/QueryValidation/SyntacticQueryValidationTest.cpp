@@ -13,9 +13,9 @@
 */
 
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Core.hpp>

@@ -45,8 +45,7 @@ class NonKeyedTumblingWindowTests : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
-        workerConfiguration->queryCompiler.compilationStrategy =
-            QueryCompilation::CompilationStrategy::OPTIMIZE;
+        workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::CompilationStrategy::OPTIMIZE;
         this->numberOfGeneratedBuffers = 100;
     }
 
@@ -397,7 +396,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowCount) {
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
     auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Count());
-    auto dg = DataGenerator("window", "window1",100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
@@ -438,7 +437,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMin) {
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                      .apply(Min(Attribute("value")));
-    auto dg = DataGenerator("window", "window1",100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
@@ -479,7 +478,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMax) {
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                      .apply(Max(Attribute("value")));
-    auto dg = DataGenerator("window", "window1",100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
@@ -520,7 +519,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowAVG) {
     auto query = Query::from("window")
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                      .apply(Avg(Attribute("value")));
-    auto dg = DataGenerator("window", "window1",100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
@@ -565,7 +564,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
                             Min(Attribute("value"))->as(Attribute("min_value")),
                             Max(Attribute("value"))->as(Attribute("max_value")),
                             Avg(Attribute("value"))->as(Attribute("avg_value")));
-    auto dg = DataGenerator("window", "window1",100);
+    auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
@@ -618,7 +617,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
                             Avg(Attribute("value"))->as(Attribute("avg_value_2")),
                             Avg(Attribute("value"))->as(Attribute("avg_value_1")),
                             Count()->as(Attribute("count_value")));
-    auto dg = DataGenerator("window", "window1",this->numberOfGeneratedBuffers);
+    auto dg = DataGenerator("window", "window1", this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)
@@ -685,7 +684,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndC
                                                                      {10000, 11000, 1, 1, 1, 1000},
                                                                      {11000, 12000, 1, 1, 1, 1000},
                                                                      {12000, 13000, 1, 1, 1, 800}};
-    auto dg = DataGeneratorMultiValue("window", "window1",this->numberOfGeneratedBuffers);
+    auto dg = DataGeneratorMultiValue("window", "window1", this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .enableNautilus()
                            .addLogicalSource("window", testSchema)

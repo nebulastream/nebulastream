@@ -26,7 +26,7 @@ struct MemoryAreaDeleter {
 
 }// namespace detail
 
-BenchmarkSourceType::BenchmarkSourceType(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
+BenchmarkSourceType::BenchmarkSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
                                          size_t memoryAreaSize,
                                          uint64_t numBuffersToProduce,
                                          uint64_t gatheringValue,
@@ -34,11 +34,11 @@ BenchmarkSourceType::BenchmarkSourceType(std::string logicalSourceName, std::str
                                          SourceMode sourceMode,
                                          uint64_t sourceAffinity,
                                          uint64_t taskQueueId)
-    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName),SourceType::BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+    : PhysicalSourceType(logicalSourceName, physicalSourceName,SourceType::BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
       memoryAreaSize(memoryAreaSize), numberOfBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue),
       gatheringMode(gatheringMode), sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
-BenchmarkSourceTypePtr BenchmarkSourceType::create(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
+BenchmarkSourceTypePtr BenchmarkSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
                                                    size_t memoryAreaSize,
                                                    uint64_t numBuffersToProduce,
                                                    uint64_t gatheringValue,
@@ -47,7 +47,7 @@ BenchmarkSourceTypePtr BenchmarkSourceType::create(std::string logicalSourceName
                                                    uint64_t sourceAffinity,
                                                    uint64_t taskQueueId) {
     NES_ASSERT(memoryArea, "invalid memory area");
-    return std::make_shared<BenchmarkSourceType>(BenchmarkSourceType(std::move(logicalSourceName), std::move(physicalSourceName),memoryArea,
+    return std::make_shared<BenchmarkSourceType>(BenchmarkSourceType(logicalSourceName, physicalSourceName,memoryArea,
                                                                      memoryAreaSize,
                                                                      numBuffersToProduce,
                                                                      gatheringValue,

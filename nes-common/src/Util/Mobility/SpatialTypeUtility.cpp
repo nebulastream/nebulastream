@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Spatial::Util {
 

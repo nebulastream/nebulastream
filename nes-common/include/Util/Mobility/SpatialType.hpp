@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_SPATIALTYPE_HPP_
-#define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_SPATIALTYPE_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_MOBILITY_SPATIALTYPE_HPP_
+#define NES_COMMON_INCLUDE_UTIL_MOBILITY_SPATIALTYPE_HPP_
 
 #include <cstdint>
 #include <string>
@@ -30,4 +30,4 @@ enum class SpatialType : uint8_t {
 };
 }// namespace NES::Spatial::Experimental
 
-#endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_SPATIALTYPE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_SPATIALTYPE_HPP_

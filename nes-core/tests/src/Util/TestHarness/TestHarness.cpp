@@ -220,16 +220,13 @@ TestHarness& TestHarness::validate() {
 }
 
 PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfLambdaType(TestHarnessWorkerConfigurationPtr workerConf) {
-
-    bool found = false;
     auto logicalSourceName = workerConf->getLogicalSourceName();
-    for (const auto& logicalSource : logicalSources) {
-        if (logicalSource->getLogicalSourceName() == logicalSourceName) {
-            found = true;
-        }
-    }
+    auto found =
+        std::find_if(logicalSources.begin(), logicalSources.end(), [logicalSourceName](const LogicalSourcePtr& logicalSource) {
+            return logicalSource->getLogicalSourceName() == logicalSourceName;
+        });
 
-    if (!found) {
+    if (found == logicalSources.end()) {
         throw Exceptions::RuntimeException("Unable to find logical source with name " + logicalSourceName
                                            + ". Make sure you are adding a logical source with the name to the test harness.");
     }

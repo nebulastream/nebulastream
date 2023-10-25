@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
 
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Catalogs/Topology/AbstractHealthCheckService.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <stdint.h>
 

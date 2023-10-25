@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 

@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
+#ifndef NES_CORE_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
+#define NES_CORE_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
 
-#include <Util/Mobility/GeoLocation.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <vector>
@@ -56,4 +56,4 @@ class ReconnectSchedule {
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
-#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
+#endif// NES_CORE_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_

@@ -14,8 +14,8 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_
 
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 
 namespace NES {
 namespace QueryCompilation {

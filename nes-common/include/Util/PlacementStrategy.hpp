@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
-#define NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
+#define NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
 #include <cinttypes>
 #include <stdint.h>
 #include <string>
@@ -38,4 +38,4 @@ enum class PlacementStrategy : uint8_t {
     // HighAvailability
 };
 }// namespace NES::Optimizer
-#endif// NES_CORE_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

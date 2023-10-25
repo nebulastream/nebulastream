@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_FAILQUERYREQUEST_HPP_
-#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_FAILQUERYREQUEST_HPP_
+#ifndef NES_CORE_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_
+#define NES_CORE_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_
 
 #include <Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
@@ -98,4 +98,4 @@ class FailQueryRequest : public AbstractRequest {
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES
-#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_EXPERIMENTAL_FAILQUERYREQUEST_HPP_
+#endif// NES_CORE_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_

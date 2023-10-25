@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_BINARYSOURCETYPE_HPP_
 
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
@@ -38,20 +38,21 @@ class BinarySourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
+    static BinarySourceTypePtr
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a BinarySourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
+    static BinarySourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a BinarySourceTypePtr object with default values
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
+    static BinarySourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     ~BinarySourceType() = default;
 
@@ -75,17 +76,19 @@ class BinarySourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceType(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
+    explicit BinarySourceType(const std::string& logicalSourceName,
+                              const std::string& physicalSourceName,
+                              std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceType(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
+    explicit BinarySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with default values as set below
      */
-    BinarySourceType(std::string logicalSourceName, std::string physicalSourceName);
+    BinarySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::StringConfigOption filePath;
 };

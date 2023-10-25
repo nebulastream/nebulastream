@@ -16,9 +16,9 @@
 #define NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_
 
 #include <Identifiers.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <memory>
 
 namespace NES::Monitoring {

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Util/DumpHandler/DumpContext.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Listeners/QueryStatusListener.hpp>
@@ -35,6 +34,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>

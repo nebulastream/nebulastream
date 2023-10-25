@@ -15,7 +15,6 @@ add_source_files(nes-core
         QueryCompilerOptions.cpp
         PipelineContext.cpp
         CompilerTypeFactory.cpp
-        QueryCompiler.cpp
         DefaultQueryCompiler.cpp
         QueryCompilationRequest.cpp
         QueryCompilationResult.cpp

@@ -15,7 +15,7 @@
 #define NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
 
 #include <Identifiers.hpp>
-#include<Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <mutex>

@@ -237,10 +237,6 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    //    coordinatorConfig->worker.setNumberOfBuffersInGlobalBufferManager(3000);
-    //    coordinatorConfig->worker.setNumberOfBuffersInSourceLocalBufferPool(124);
-    //    coordinatorConfig->worker.setNumberOfBuffersPerWorker(124);
-    //    coordinatorConfig->worker.bufferSizeInBytes=(524288);
     coordinatorConfig->worker.numWorkerThreads = 4;
     coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
@@ -276,7 +272,12 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
             return;
         };
 
-        auto lambdaSourceType = LambdaSourceType::create("input", "test_stream" + std::to_string(i),std::move(func), 30, 0, GatheringMode::INTERVAL_MODE);
+        auto lambdaSourceType = LambdaSourceType::create("input",
+                                                         "test_stream" + std::to_string(i),
+                                                         std::move(func),
+                                                         30,
+                                                         0,
+                                                         GatheringMode::INTERVAL_MODE);
         wrkConf->physicalSourceTypes.add(lambdaSourceType);
     }
 

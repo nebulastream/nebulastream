@@ -254,11 +254,11 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
                     std::vector<WindowAggregationDescriptorPtr> windowAggs;
-                    WindowAggregationDescriptorPtr sumAgg = API::Sum(Attribute("Count"))->aggregation;
+                    auto sumAgg = API::Sum(Attribute("Count"))->aggregation;
 
                     auto timeField =
                         WindowType::asTimeBasedWindowType(windowType)->getTimeCharacteristic()->getField()->getName();
-                    WindowAggregationDescriptorPtr maxAggForTime = API::Max(Attribute(timeField))->aggregation;
+                    auto maxAggForTime = API::Max(Attribute(timeField))->aggregation;
                     windowAggs.push_back(sumAgg);
                     windowAggs.push_back(maxAggForTime);
 
@@ -269,7 +269,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                                                                                        triggerAction,
                                                                                        0);
 
-                    OperatorNodePtr op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
+                    auto op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
                     queryPlan->appendOperatorAsNewRoot(op);
 
                     int32_t min = operatorNode->second.getMinMax().first;
@@ -308,9 +308,9 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
 
     const std::vector<NES::OperatorNodePtr>& rootOperators = queryPlan->getRootOperators();
     // add the sinks to the query plan
-    for (SinkDescriptorPtr sinkDescriptor : pattern.getSinks()) {
+    for (const auto& sinkDescriptor : pattern.getSinks()) {
         auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
-        for (auto& rootOperator : rootOperators) {
+        for (const auto& rootOperator : rootOperators) {
             sinkOperator->addChild(rootOperator);
             queryPlan->removeAsRootOperator(rootOperator);
             queryPlan->addRootOperator(sinkOperator);

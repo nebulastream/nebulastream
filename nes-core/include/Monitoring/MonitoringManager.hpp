@@ -16,11 +16,11 @@
 #define NES_CORE_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 
 #include <Identifiers.hpp>
-#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <atomic>
 #include <chrono>
 #include <memory>

@@ -19,9 +19,7 @@ PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id, const Schem
     return std::make_shared<PhysicalMultiplexOperator>(id, schema);
 }
 
-PhysicalOperatorPtr PhysicalMultiplexOperator::create(SchemaPtr schema) {
-    return create(getNextOperatorId(), std::move(schema));
-}
+PhysicalOperatorPtr PhysicalMultiplexOperator::create(SchemaPtr schema) { return create(getNextOperatorId(), std::move(schema)); }
 
 PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id, const SchemaPtr& schema)
     : OperatorNode(id), PhysicalOperator(id), ExchangeOperatorNode(id) {

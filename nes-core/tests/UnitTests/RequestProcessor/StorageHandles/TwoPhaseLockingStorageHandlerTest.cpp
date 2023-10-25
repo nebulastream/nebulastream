@@ -13,7 +13,10 @@
 */
 #include <BaseUnitTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ResourceLockingException.hpp>
@@ -21,9 +24,6 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 class TwoPhaseLockingStorageHandlerTest : public Testing::BaseUnitTest {

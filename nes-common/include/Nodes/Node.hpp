@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_NODES_NODE_HPP_
-#define NES_CORE_INCLUDE_NODES_NODE_HPP_
+#ifndef NES_COMMON_INCLUDE_NODES_NODE_HPP_
+#define NES_COMMON_INCLUDE_NODES_NODE_HPP_
 
 #include <Util/Logger/Logger.hpp>
 #include <memory>
@@ -424,4 +424,4 @@ class Node : public std::enable_shared_from_this<Node> {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_NODES_NODE_HPP_
+#endif// NES_COMMON_INCLUDE_NODES_NODE_HPP_
