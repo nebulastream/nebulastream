@@ -90,24 +90,23 @@ SchemaPtr ClusterMonitoringDataGenerator::getSchema() {
 }
 
 Configurations::SchemaTypePtr ClusterMonitoringDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataTypeI64 = "INT64";
     const char* dataTypeI16 = "INT16";
     const char* dataTypeF32 = "FLOAT32";
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("creationTS", dataTypeI64, length);
-    schemaFiledDetails.emplace_back("jobId", dataTypeI64, length);
-    schemaFiledDetails.emplace_back("taskId", dataTypeI64, length);
-    schemaFiledDetails.emplace_back("machineId", dataTypeI64, length);
-    schemaFiledDetails.emplace_back("eventType", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("userId", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("category", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("priority", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("cpu", dataTypeF32, length);
-    schemaFiledDetails.emplace_back("ram", dataTypeF32, length);
-    schemaFiledDetails.emplace_back("disk", dataTypeF32, length);
-    schemaFiledDetails.emplace_back("constraints", dataTypeI16, length);
-    return Configurations::SchemaType::create(schemaFiledDetails);
+    std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
+    schemaFieldDetails.emplace_back("creationTS", dataTypeI64);
+    schemaFieldDetails.emplace_back("jobId", dataTypeI64);
+    schemaFieldDetails.emplace_back("taskId", dataTypeI64);
+    schemaFieldDetails.emplace_back("machineId", dataTypeI64);
+    schemaFieldDetails.emplace_back("eventType", dataTypeI16);
+    schemaFieldDetails.emplace_back("userId", dataTypeI16);
+    schemaFieldDetails.emplace_back("category", dataTypeI16);
+    schemaFieldDetails.emplace_back("priority", dataTypeI16);
+    schemaFieldDetails.emplace_back("cpu", dataTypeF32);
+    schemaFieldDetails.emplace_back("ram", dataTypeF32);
+    schemaFieldDetails.emplace_back("disk", dataTypeF32);
+    schemaFieldDetails.emplace_back("constraints", dataTypeI16);
+    return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
 std::string ClusterMonitoringDataGenerator::toString() {

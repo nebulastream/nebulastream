@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp>
 #include <Sources/Arrow/ArrowSourceDescriptor.hpp>
@@ -59,11 +59,10 @@ SourceDescriptorPtr ArrowSourceDescriptor::copy() {
 
 class ArrowSourceDescriptorPlugin : public SourceDescriptorPlugin {
   public:
-    SourceDescriptorPtr create(SchemaPtr schema, PhysicalSourcePtr physicalSource) override {
-        if (physicalSource->getPhysicalSourceType()->getSourceType() != SourceType::ARROW_SOURCE) {
+    SourceDescriptorPtr create(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType) override {
+        if (physicalSourceType->getSourceType() != SourceType::ARROW_SOURCE) {
             return nullptr;
         }
-        auto physicalSourceType = physicalSource->getPhysicalSourceType();
         auto arrowSourceType = physicalSourceType->as<ArrowSourceType>();
         return ArrowSourceDescriptor::create(schema, arrowSourceType);
     }

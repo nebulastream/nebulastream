@@ -91,26 +91,25 @@ std::string ManufacturingEquipmentDataGenerator::toString() {
 }
 
 Configurations::SchemaTypePtr ManufacturingEquipmentDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataTypeI64 = "INT64";
     const char* dataTypeI16 = "INT16";
     const char* dataTypeUI16 = "UINT16";
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("creationTS", dataTypeI64, length);
-    schemaFiledDetails.emplace_back("messageIndex", dataTypeI64, length);
-    schemaFiledDetails.emplace_back("mf01", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("mf02", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("mf03", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("pc13", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("pc14", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("pc15", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("pc25", dataTypeUI16, length);
-    schemaFiledDetails.emplace_back("pc26", dataTypeUI16, length);
-    schemaFiledDetails.emplace_back("pc27", dataTypeUI16, length);
-    schemaFiledDetails.emplace_back("res", dataTypeUI16, length);
-    schemaFiledDetails.emplace_back("bm05", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("bm06", dataTypeI16, length);
-    return Configurations::SchemaType::create(schemaFiledDetails);
+    std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
+    schemaFieldDetails.emplace_back("creationTS", dataTypeI64);
+    schemaFieldDetails.emplace_back("messageIndex", dataTypeI64);
+    schemaFieldDetails.emplace_back("mf01", dataTypeI16);
+    schemaFieldDetails.emplace_back("mf02", dataTypeI16);
+    schemaFieldDetails.emplace_back("mf03", dataTypeI16);
+    schemaFieldDetails.emplace_back("pc13", dataTypeI16);
+    schemaFieldDetails.emplace_back("pc14", dataTypeI16);
+    schemaFieldDetails.emplace_back("pc15", dataTypeI16);
+    schemaFieldDetails.emplace_back("pc25", dataTypeUI16);
+    schemaFieldDetails.emplace_back("pc26", dataTypeUI16);
+    schemaFieldDetails.emplace_back("pc27", dataTypeUI16);
+    schemaFieldDetails.emplace_back("res", dataTypeUI16);
+    schemaFieldDetails.emplace_back("bm05", dataTypeI16);
+    schemaFieldDetails.emplace_back("bm06", dataTypeI16);
+    return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
 }// namespace NES::Benchmark::DataGeneration

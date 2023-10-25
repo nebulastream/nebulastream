@@ -87,14 +87,13 @@ NES::SchemaPtr DefaultDataGenerator::getSchema() {
 }
 
 Configurations::SchemaTypePtr DefaultDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataType = "UINT64";
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("id", dataType, length);
-    schemaFiledDetails.emplace_back("value", dataType, length);
-    schemaFiledDetails.emplace_back("payload", dataType, length);
-    schemaFiledDetails.emplace_back("timestamp", dataType, length);
-    return Configurations::SchemaType::create(schemaFiledDetails);
+    std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
+    schemaFieldDetails.emplace_back("id", dataType);
+    schemaFieldDetails.emplace_back("value", dataType);
+    schemaFieldDetails.emplace_back("payload", dataType);
+    schemaFieldDetails.emplace_back("timestamp", dataType);
+    return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
 std::string DefaultDataGenerator::getName() { return "Uniform"; }

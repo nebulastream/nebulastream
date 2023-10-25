@@ -81,21 +81,20 @@ SchemaPtr YSBDataGenerator::getSchema() {
 }
 
 Configurations::SchemaTypePtr YSBDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataType = "UINT64";
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("user_id", dataType, length);
-    schemaFiledDetails.emplace_back("page_id", dataType, length);
-    schemaFiledDetails.emplace_back("campaign_id", dataType, length);
-    schemaFiledDetails.emplace_back("ad_type", dataType, length);
-    schemaFiledDetails.emplace_back("event_type", dataType, length);
-    schemaFiledDetails.emplace_back("current_ms", dataType, length);
-    schemaFiledDetails.emplace_back("ip", dataType, length);
-    schemaFiledDetails.emplace_back("d1", dataType, length);
-    schemaFiledDetails.emplace_back("d2", dataType, length);
-    schemaFiledDetails.emplace_back("d3", dataType, length);
-    schemaFiledDetails.emplace_back("d4", dataType, length);
-    return Configurations::SchemaType::create(schemaFiledDetails);
+    std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
+    schemaFieldDetails.emplace_back("user_id", dataType);
+    schemaFieldDetails.emplace_back("page_id", dataType);
+    schemaFieldDetails.emplace_back("campaign_id", dataType);
+    schemaFieldDetails.emplace_back("ad_type", dataType);
+    schemaFieldDetails.emplace_back("event_type", dataType);
+    schemaFieldDetails.emplace_back("current_ms", dataType);
+    schemaFieldDetails.emplace_back("ip", dataType);
+    schemaFieldDetails.emplace_back("d1", dataType);
+    schemaFieldDetails.emplace_back("d2", dataType);
+    schemaFieldDetails.emplace_back("d3", dataType);
+    schemaFieldDetails.emplace_back("d4", dataType);
+    return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
 }// namespace NES::Benchmark::DataGeneration

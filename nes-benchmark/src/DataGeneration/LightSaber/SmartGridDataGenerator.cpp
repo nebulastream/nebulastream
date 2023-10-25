@@ -75,18 +75,17 @@ SchemaPtr SmartGridDataGenerator::getSchema() {
 }
 
 Configurations::SchemaTypePtr SmartGridDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataTypeI64 = "INT64";
     const char* dataTypeF32 = "FLOAT32";
     const char* dataTypeI16 = "INT16";
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("creationTS", dataTypeI64, length);
-    schemaFiledDetails.emplace_back("value", dataTypeF32, length);
-    schemaFiledDetails.emplace_back("property", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("plug", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("household", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("house", dataTypeI16, length);
-    return Configurations::SchemaType::create(schemaFiledDetails);
+    std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
+    schemaFieldDetails.emplace_back("creationTS", dataTypeI64);
+    schemaFieldDetails.emplace_back("value", dataTypeF32);
+    schemaFieldDetails.emplace_back("property", dataTypeI16);
+    schemaFieldDetails.emplace_back("plug", dataTypeI16);
+    schemaFieldDetails.emplace_back("household", dataTypeI16);
+    schemaFieldDetails.emplace_back("house", dataTypeI16);
+    return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
 std::string SmartGridDataGenerator::toString() {

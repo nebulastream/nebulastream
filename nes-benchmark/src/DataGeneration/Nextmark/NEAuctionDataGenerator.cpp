@@ -93,21 +93,20 @@ std::string NEAuctionDataGenerator::toString() {
     return oss.str();
 }
 Configurations::SchemaTypePtr NEAuctionDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataTypeUI64 = "UINT64";
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("id", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("itemName", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("itemNamePad", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("description", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("descriptionPad", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("initialBit", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("reserve", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("dateTime", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("seller", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("expires", dataTypeUI64, length);
-    schemaFiledDetails.emplace_back("category", dataTypeUI64, length);
-    return Configurations::SchemaType::create(schemaFiledDetails);
+    std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
+    schemaFieldDetails.emplace_back("id", dataTypeUI64);
+    schemaFieldDetails.emplace_back("itemName", dataTypeUI64);
+    schemaFieldDetails.emplace_back("itemNamePad", dataTypeUI64);
+    schemaFieldDetails.emplace_back("description", dataTypeUI64);
+    schemaFieldDetails.emplace_back("descriptionPad", dataTypeUI64);
+    schemaFieldDetails.emplace_back("initialBit", dataTypeUI64);
+    schemaFieldDetails.emplace_back("reserve", dataTypeUI64);
+    schemaFieldDetails.emplace_back("dateTime", dataTypeUI64);
+    schemaFieldDetails.emplace_back("seller", dataTypeUI64);
+    schemaFieldDetails.emplace_back("expires", dataTypeUI64);
+    schemaFieldDetails.emplace_back("category", dataTypeUI64);
+    return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
 }// namespace NES::Benchmark::DataGeneration

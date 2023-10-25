@@ -75,19 +75,18 @@ SchemaPtr LinearRoadDataGenerator::getSchema() {
 }
 
 Configurations::SchemaTypePtr LinearRoadDataGenerator::getSchemaType() {
-    const char* length = "0";
     const char* dataTypeI64 = "INT64";
     const char* dataTypeI16 = "INT16";
     const char* dataTypeF64 = "FLOAT64";
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
-    schemaFiledDetails.emplace_back("creationTS", dataTypeI64, length);
-    schemaFiledDetails.emplace_back("vehicle", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("speed", dataTypeF64, length);
-    schemaFiledDetails.emplace_back("highway", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("lane", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("direction", dataTypeI16, length);
-    schemaFiledDetails.emplace_back("position", dataTypeI16, length);
-    return Configurations::SchemaType::create(schemaFiledDetails);
+    std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
+    schemaFieldDetails.emplace_back("creationTS", dataTypeI64);
+    schemaFieldDetails.emplace_back("vehicle", dataTypeI16);
+    schemaFieldDetails.emplace_back("speed", dataTypeF64);
+    schemaFieldDetails.emplace_back("highway", dataTypeI16);
+    schemaFieldDetails.emplace_back("lane", dataTypeI16);
+    schemaFieldDetails.emplace_back("direction", dataTypeI16);
+    schemaFieldDetails.emplace_back("position", dataTypeI16);
+    return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
 std::string LinearRoadDataGenerator::toString() {

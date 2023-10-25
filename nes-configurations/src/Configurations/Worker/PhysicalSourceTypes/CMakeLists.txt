@@ -12,6 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-configurations
+        ArrowSourceType.cpp
         PhysicalSourceType.cpp
         MemorySourceType.cpp
         LambdaSourceType.cpp

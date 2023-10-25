@@ -11,7 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Common/Identifiers.hpp>
+
+#include <API/Schema.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
