@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
@@ -21,8 +23,6 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <WorkerRPCService.grpc.pb.h>

@@ -14,19 +14,19 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINHANDLER_HPP_
+#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Util/Core.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
-#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowHandler/AbstractBatchJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join::Experimental {
 

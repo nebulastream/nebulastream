@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 
 namespace NES::QueryCompilation {
 OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const {

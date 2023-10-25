@@ -38,20 +38,20 @@ class SenseSourceType : public PhysicalSourceType {
      * @return SenseSourceConfigPtr
      */
     static SenseSourceTypePtr
-    create(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @param yamlConfig inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
+    static SenseSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
+    static SenseSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     ~SenseSourceType() = default;
 
@@ -67,7 +67,7 @@ class SenseSourceType : public PhysicalSourceType {
     /**
      * @brief Set udsf
      */
-    void setUdfs(std::string udfs);
+    void setUdfs(const std::string& udfs);
 
     void reset() override;
 
@@ -75,19 +75,19 @@ class SenseSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceType(std::string logicalSourceName,
-                    std::string physicalSourceName,
+    SenseSourceType(const std::string& logicalSourceName,
+                    const std::string& physicalSourceName,
                     std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
+    SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with default values
      */
-    SenseSourceType(std::string logicalSourceName, std::string physicalSourceName);
+    SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::StringConfigOption udfs;
 };

@@ -14,15 +14,15 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
-#include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Windowing/Runtime/SliceMetaData.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Windowing/Runtime/SliceMetaData.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
 
 namespace NES::Windowing {
 

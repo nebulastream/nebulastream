@@ -14,8 +14,8 @@
 
 #include <CoordinatorRPCService.pb.h>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
-#include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
 #include <cmath>
 
 namespace NES::Spatial::DataTypes::Experimental {

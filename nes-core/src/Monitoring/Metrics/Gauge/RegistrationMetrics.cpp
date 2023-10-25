@@ -65,7 +65,9 @@ Configurations::SchemaTypePtr RegistrationMetrics::getSchemaType(const std::stri
     return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
-SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
+SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
+    return Schema::createFromSchemaType(getSchemaType(prefix));
+}
 
 void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RegistrationMetrics::getSchema(""), buf.getBufferSize());

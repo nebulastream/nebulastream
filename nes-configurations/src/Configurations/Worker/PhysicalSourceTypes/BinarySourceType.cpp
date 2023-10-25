@@ -21,13 +21,13 @@
 namespace NES {
 
 BinarySourceTypePtr
-BinarySourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+BinarySourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
     return std::make_shared<BinarySourceType>(
-        BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName), yamlConfig));
+        BinarySourceType(logicalSourceName, physicalSourceName, yamlConfig));
 }
 
-BinarySourceType::BinarySourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig)
-    : BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
+BinarySourceType::BinarySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+    : BinarySourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>() != "\n") {
@@ -38,17 +38,17 @@ BinarySourceType::BinarySourceType(std::string logicalSourceName, std::string ph
     }
 }
 
-BinarySourceTypePtr BinarySourceType::create(std::string logicalSourceName,
-                                             std::string physicalSourceName,
+BinarySourceTypePtr BinarySourceType::create(const std::string& logicalSourceName,
+                                             const std::string& physicalSourceName,
                                              std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<BinarySourceType>(
-        BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
+        BinarySourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
-BinarySourceType::BinarySourceType(std::string logicalSourceName,
-                                   std::string physicalSourceName,
+BinarySourceType::BinarySourceType(const std::string& logicalSourceName,
+                                   const std::string& physicalSourceName,
                                    std::map<std::string, std::string> sourceConfigMap)
-    : BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
+    : BinarySourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from command line.");
     if (sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG)->second);
@@ -58,12 +58,12 @@ BinarySourceType::BinarySourceType(std::string logicalSourceName,
     }
 }
 
-BinarySourceTypePtr BinarySourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
-    return std::make_shared<BinarySourceType>(BinarySourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+BinarySourceTypePtr BinarySourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
+    return std::make_shared<BinarySourceType>(BinarySourceType(logicalSourceName, physicalSourceName));
 }
 
-BinarySourceType::BinarySourceType(std::string logicalSourceName, std::string physicalSourceName)
-    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::BINARY_SOURCE),
+BinarySourceType::BinarySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::BINARY_SOURCE),
       filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                         "",
                                                                         "file path, needed for: CSVSource, BinarySource")) {

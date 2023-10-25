@@ -144,8 +144,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             if (!reqJson.contains("schema")) {
                 return errorHandler->handleError(Status::CODE_400, "Request body must contain 'schema'");
             }
-            std::string logicalSourceName = reqJson["logicalSourceName"];
-            std::string schemaString = reqJson["schema"];
+            auto logicalSourceName = reqJson["logicalSourceName"];
+            auto schemaString = reqJson["schema"];
             NES_DEBUG("SourceCatalogController: addLogicalSource: Try to add new Logical Source {} and {}",
                       logicalSourceName,
                       schemaString);
@@ -187,7 +187,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Start trying to add new logical source");
             // decode protobuf message into c++ obj repr
             auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(protobufMessage->schema());
-            std::string sourceName = protobufMessage->sourcename();
+            auto sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
             bool added = sourceCatalogService->registerLogicalSource(sourceName, deserializedSchema);
@@ -230,8 +230,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             if (!reqJson.contains("schema")) {
                 return errorHandler->handleError(Status::CODE_400, "Request body must contain 'schema'");
             }
-            std::string sourceName = reqJson["logicalSourceName"];
-            std::string schemaString = reqJson["schema"];
+            auto sourceName = reqJson["logicalSourceName"];
+            auto schemaString = reqJson["schema"];
             NES_DEBUG("SourceCatalogController: updateLogicalSource: Try to update  Logical Source {} with schema {}",
                       sourceName,
                       schemaString);
@@ -278,7 +278,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: Start trying to update logical source");
             // decode protobuf message into c++ obj repr
             auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(protobufMessage->schema());
-            std::string sourceName = protobufMessage->sourcename();
+            auto sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
             bool updated = sourceCatalogService->updateLogicalSource(sourceName, deserializedSchema);

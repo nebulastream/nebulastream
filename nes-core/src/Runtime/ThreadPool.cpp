@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Runtime/QueryManager.hpp"
 #include <Exceptions/TaskExecutionException.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/Task.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>

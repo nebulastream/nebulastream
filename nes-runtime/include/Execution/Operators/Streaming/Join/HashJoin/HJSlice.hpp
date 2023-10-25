@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_HJSLICE_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_HJSLICE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICE_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICE_HPP_
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLockFree.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLocking.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/LocalHashTable.hpp>
@@ -116,4 +116,4 @@ class HJSlice : public StreamSlice {
 };
 }// namespace NES::Runtime::Execution
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMHASHJOIN_HJSLICE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICE_HPP_

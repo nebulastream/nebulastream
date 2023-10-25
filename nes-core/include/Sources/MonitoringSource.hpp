@@ -15,9 +15,9 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
 
-#include <Util/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Sources/DataSource.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <chrono>
 
 namespace NES {

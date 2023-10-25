@@ -779,7 +779,8 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
  * @param csvPath path to the output file
  * @param waypoints a vector of waypoints to be written to the file
  */
-void writeWaypointsToCsv(const std::string& csvPath, const std::vector<NES::Spatial::DataTypes::Experimental::Waypoint>& waypoints) {
+void writeWaypointsToCsv(const std::string& csvPath,
+                         const std::vector<NES::Spatial::DataTypes::Experimental::Waypoint>& waypoints) {
     remove(csvPath.c_str());
     std::ofstream outFile(csvPath);
     for (auto& point : waypoints) {

@@ -15,9 +15,9 @@
 #ifndef NES_CORE_INCLUDE_COMPONENTS_NESWORKER_HPP_
 #define NES_CORE_INCLUDE_COMPONENTS_NESWORKER_HPP_
 
-#include <Identifiers.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/ReplicationService.hpp>

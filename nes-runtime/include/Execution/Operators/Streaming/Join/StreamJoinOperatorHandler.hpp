@@ -15,10 +15,10 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
 #include <API/Schema.hpp>
-#include <Identifiers.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
@@ -190,4 +190,4 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_

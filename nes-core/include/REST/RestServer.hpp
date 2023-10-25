@@ -24,9 +24,6 @@
 
 namespace NES {
 
-class RestEngine;
-using RestEnginePtr = std::shared_ptr<RestEngine>;
-
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
@@ -75,12 +72,23 @@ class RestServer {
 
   public:
     /**
-      * @brief constructor for rest server
-      * @param host as string
-      * @param port as uint
-      * @param handle to coordinator
-      *
-      * */
+     * @brief constructor for rest server
+     * @param host
+     * @param port
+     * @param coordinator
+     * @param queryCatalogService
+     * @param sourceCatalogService
+     * @param topologyManagerService
+     * @param globalExecutionPlan
+     * @param queryService
+     * @param monitoringService
+     * @param queryParsingService
+     * @param globalQueryPlan
+     * @param udfCatalog
+     * @param bufferManager
+     * @param locationServicePtr
+     * @param corsAllowedOrigin
+     */
     RestServer(std::string host,
                uint16_t port,
                NesCoordinatorWeakPtr coordinator,

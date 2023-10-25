@@ -34,7 +34,7 @@ using namespace std;
 using namespace NES;
 using namespace Configurations;
 
-auto testSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+auto testSchema = Schema::create() -> addField("id", BasicType::UINT32) -> addField("value", BasicType::UINT64);
 const std::string defaultLogicalSourceName = "default_logical";
 
 /* - nesTopologyManager ---------------------------------------------------- */

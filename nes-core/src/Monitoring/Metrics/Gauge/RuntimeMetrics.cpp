@@ -13,9 +13,9 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Configurations/Coordinator/SchemaType.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>

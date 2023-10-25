@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_
 
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
@@ -38,20 +38,23 @@ class MQTTSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
+    static MQTTSourceTypePtr create(const std::string& logicalSourceName,
+                                    const std::string& physicalSourceName,
+                                    std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create an MQTTSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
+    static MQTTSourceTypePtr
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create an MQTTSourceTypePtr object with default values
      * @return MQTTSourceTypePtr
      */
-    static MQTTSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
+    static MQTTSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     std::string toString() override;
 
@@ -150,18 +153,20 @@ class MQTTSourceType : public PhysicalSourceType {
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
      * @param sourceConfigMap inputted config options
      */
-    explicit MQTTSourceType(std::string logicalSourceName, std::string physicalSourceName,std::map<std::string, std::string> sourceConfigMap);
+    explicit MQTTSourceType(const std::string& logicalSourceName,
+                            const std::string& physicalSourceName,
+                            std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from yamlConfig
      * @param yamlConfig inputted config options
      */
-    explicit MQTTSourceType(std::string logicalSourceName, std::string physicalSourceName,Yaml::Node yamlConfig);
+    explicit MQTTSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with default values as set below
      */
-    MQTTSourceType(std::string logicalSourceName, std::string physicalSourceName);
+    MQTTSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::StringConfigOption url;
     Configurations::StringConfigOption clientId;

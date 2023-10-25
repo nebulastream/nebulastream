@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWPOLICIES_BASEEXECUTABLEWINDOWTRIGGERPOLICY_HPP_
-#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
 

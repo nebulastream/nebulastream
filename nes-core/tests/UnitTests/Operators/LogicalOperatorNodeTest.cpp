@@ -1157,8 +1157,8 @@ TEST_F(LogicalOperatorNodeTest, swap3) {
     expected << "|  |  |--" << filterOp7->toString() << std::endl;
     expected << "|  |  |--" << filterOp5->toString() << std::endl;
 
-    expected << "|--"<< filterOp4->toString() << std::endl;
-    expected << "|  |--"<< filterOp3->toString() << std::endl;
+    expected << "|--" << filterOp4->toString() << std::endl;
+    expected << "|  |--" << filterOp3->toString() << std::endl;
     expected << "|  |  |--" << filterOp7->toString() << std::endl;
     expected << "|  |  |--" << filterOp5->toString() << std::endl;
 

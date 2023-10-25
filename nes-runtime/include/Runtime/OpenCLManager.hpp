@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPENCLMANAGER_H
-#define NES_OPENCLMANAGER_H
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_
 
 #include <array>
 #include <memory>
@@ -85,4 +85,4 @@ class OpenCLManager {
 
 }// namespace NES::Runtime
 
-#endif//NES_OPENCLMANAGER_H
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_

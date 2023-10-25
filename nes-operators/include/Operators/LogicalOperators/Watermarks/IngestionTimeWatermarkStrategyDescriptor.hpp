@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_WATERMARK_INGESTIONTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WATERMARK_INGESTIONTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_
 
-#include<Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing {
 

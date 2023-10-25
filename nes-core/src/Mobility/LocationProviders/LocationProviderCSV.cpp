@@ -13,11 +13,11 @@
 */
 
 #include <Exceptions/LocationProviderException.hpp>
-#include <Util/Mobility/GeoLocation.hpp>
-#include <Util/Mobility/Waypoint.hpp>
 #include <Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <fstream>
 

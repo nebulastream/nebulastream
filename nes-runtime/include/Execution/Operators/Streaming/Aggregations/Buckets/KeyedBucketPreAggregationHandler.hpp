@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
 
-#include <Identifiers.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/AbstractBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
 
@@ -54,4 +54,4 @@ class KeyedBucketPreAggregationHandler : public AbstractBucketPreAggregationHand
     ~KeyedBucketPreAggregationHandler() override;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_

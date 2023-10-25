@@ -15,12 +15,12 @@
 #ifndef NES_TESTS_UTIL_TEST_QUERY_HPP_
 #define NES_TESTS_UTIL_TEST_QUERY_HPP_
 
-#include "SchemaSourceDescriptor.hpp"
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/SchemaSourceDescriptor.hpp>
 #include <utility>
 namespace NES {
 

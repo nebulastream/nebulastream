@@ -15,12 +15,12 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <iostream>
 #include <utility>
 
@@ -41,12 +41,12 @@ class NonKeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         auto windowStrategy = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(
-            QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
-            dumpMode,
-            1,
-            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-            windowStrategy);
+        executionEngine =
+            std::make_shared<Testing::TestExecutionEngine>(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                                                           dumpMode,
+                                                           1,
+                                                           QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+                                                           windowStrategy);
     }
 
     /* Will be called before a test is executed. */

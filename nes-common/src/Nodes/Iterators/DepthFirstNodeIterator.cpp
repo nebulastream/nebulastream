@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nodes/Node.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 

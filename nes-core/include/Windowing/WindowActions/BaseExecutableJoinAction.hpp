@@ -14,10 +14,10 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_BASEEXECUTABLEJOINACTION_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_BASEEXECUTABLEJOINACTION_HPP_
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
 

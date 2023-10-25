@@ -157,7 +157,8 @@ class OPCSourceTest : public Testing::BaseIntegrationTest {
  */
 TEST_F(OPCSourceTest, OPCSourceInit) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, "physicalSource", {});
+    auto opcSource =
+        createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, "physicalSource", {});
 
     SUCCEED();
 }
@@ -167,7 +168,8 @@ TEST_F(OPCSourceTest, OPCSourceInit) {
  */
 TEST_F(OPCSourceTest, OPCSourcePrint) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, "physicalSource", {});
+    auto opcSource =
+        createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, "physicalSource", {});
 
     std::string expected =
         "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";

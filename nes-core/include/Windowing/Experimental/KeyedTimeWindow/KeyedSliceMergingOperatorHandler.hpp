@@ -14,8 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_KEYEDTIMEWINDOW_KEYEDSLICEMERGINGOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_KEYEDTIMEWINDOW_KEYEDSLICEMERGINGOPERATORHANDLER_HPP_
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <atomic>
 #include <ctype.h>
 #include <memory>

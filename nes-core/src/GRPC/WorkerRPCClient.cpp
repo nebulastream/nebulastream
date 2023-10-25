@@ -15,14 +15,14 @@
 #include <API/Schema.hpp>
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include<Util/Mobility/GeoLocation.hpp>
-#include <Util/Mobility/Waypoint.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {

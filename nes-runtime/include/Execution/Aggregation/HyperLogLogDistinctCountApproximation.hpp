@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HyperLogLogDistinctCountApproximation_HPP
-#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HyperLogLogDistinctCountApproximation_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HYPERLOGLOGDISTINCTCOUNTAPPROXIMATION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HYPERLOGLOGDISTINCTCOUNTAPPROXIMATION_HPP_
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
 
@@ -43,4 +43,4 @@ class HyperLogLogDistinctCountApproximation : public AggregationFunction {
 };
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif//NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HyperLogLogDistinctCountApproximation_HPP
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_HYPERLOGLOGDISTINCTCOUNTAPPROXIMATION_HPP_

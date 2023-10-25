@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include<Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>

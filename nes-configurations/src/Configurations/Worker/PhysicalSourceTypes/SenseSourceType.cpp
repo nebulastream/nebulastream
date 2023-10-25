@@ -19,26 +19,26 @@
 
 namespace NES {
 
-SenseSourceTypePtr SenseSourceType::create(std::string logicalSourceName,
-                                           std::string physicalSourceName,
+SenseSourceTypePtr SenseSourceType::create(const std::string& logicalSourceName,
+                                           const std::string& physicalSourceName,
                                            std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<SenseSourceType>(
-        SenseSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
+        SenseSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
-SenseSourceTypePtr SenseSourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+SenseSourceTypePtr SenseSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
     return std::make_shared<SenseSourceType>(
-        SenseSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(yamlConfig)));
+        SenseSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
 }
 
-SenseSourceTypePtr SenseSourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
-    return std::make_shared<SenseSourceType>(SenseSourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+SenseSourceTypePtr SenseSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
+    return std::make_shared<SenseSourceType>(SenseSourceType(logicalSourceName, physicalSourceName));
 }
 
-SenseSourceType::SenseSourceType(std::string logicalSourceName,
-                                 std::string physicalSourceName,
+SenseSourceType::SenseSourceType(const std::string& logicalSourceName,
+                                 const std::string& physicalSourceName,
                                  std::map<std::string, std::string> sourceConfigMap)
-    : SenseSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
+    : SenseSourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
     if (sourceConfigMap.find(Configurations::UDFS_CONFIG) != sourceConfigMap.end()) {
         udfs->setValue(sourceConfigMap.find(Configurations::UDFS_CONFIG)->second);
@@ -47,8 +47,8 @@ SenseSourceType::SenseSourceType(std::string logicalSourceName,
     }
 }
 
-SenseSourceType::SenseSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig)
-    : SenseSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
+SenseSourceType::SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+    : SenseSourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
     if (!yamlConfig[Configurations::UDFS_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::UDFS_CONFIG].As<std::string>() != "\n") {
@@ -58,8 +58,8 @@ SenseSourceType::SenseSourceType(std::string logicalSourceName, std::string phys
     }
 }
 
-SenseSourceType::SenseSourceType(std::string logicalSourceName, std::string physicalSourceName)
-    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::SENSE_SOURCE),
+SenseSourceType::SenseSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::SENSE_SOURCE),
       udfs(Configurations::ConfigurationOption<std::string>::create(Configurations::UDFS_CONFIG,
                                                                     "",
                                                                     "udfs, needed for: SenseSource")) {
@@ -85,7 +85,7 @@ bool SenseSourceType::equal(const PhysicalSourceTypePtr& other) {
 
 Configurations::StringConfigOption SenseSourceType::getUdfs() const { return udfs; }
 
-void SenseSourceType::setUdfs(std::string udfsValue) { udfs->setValue(udfsValue); }
+void SenseSourceType::setUdfs(const std::string& udfsValue) { udfs->setValue(udfsValue); }
 
 void SenseSourceType::reset() { setUdfs(udfs->getDefaultValue()); }
 

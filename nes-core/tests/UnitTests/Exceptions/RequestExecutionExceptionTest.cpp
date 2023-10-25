@@ -13,8 +13,8 @@
 */
 
 #include <BaseIntegrationTest.hpp>
-#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -519,9 +519,10 @@ TEST_F(ContinuousSourceTest, testTimestampCsvSink) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    auto testSchema = Schema::create()->addField(createField("val1", BasicType::UINT64))->
-                             addField(createField("val2", BasicType::UINT64))->
-                             addField(createField("val3", BasicType::UINT64));
+    auto testSchema = Schema::create()
+                          ->addField(createField("val1", BasicType::UINT64))
+                          ->addField(createField("val2", BasicType::UINT64))
+                          ->addField(createField("val3", BasicType::UINT64));
     crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 

@@ -1,5 +1,5 @@
-#ifndef _DIGESTIBLE_H_
-#define _DIGESTIBLE_H_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_UTIL_DIGESTIBLE_H_
+#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_UTIL_DIGESTIBLE_H_
 
 /*
  * Licensed to Ted Dunning under one or more
@@ -566,4 +566,4 @@ double tdigest<Values, Weight>::cumulative_distribution(Values x) const {
 
 }// namespace digestible
 
-#endif
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_UTIL_DIGESTIBLE_H_

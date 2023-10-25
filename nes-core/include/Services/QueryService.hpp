@@ -15,17 +15,17 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 
-#include <Identifiers.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Identifiers.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <future>
 
-namespace z3{
+namespace z3 {
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}
+}// namespace z3
 
 namespace NES {
 namespace Optimizer {

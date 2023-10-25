@@ -12,14 +12,14 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Catalogs/Topology/Prediction/Edge.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <Catalogs/Topology/Prediction/TopologyTimeline.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 

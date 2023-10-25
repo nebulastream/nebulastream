@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Util/Mobility/Waypoint.hpp>
 #include <Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <thread>

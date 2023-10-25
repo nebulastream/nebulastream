@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
-#include <Monitoring/MonitoringAgent.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Util/Mobility/Waypoint.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
 

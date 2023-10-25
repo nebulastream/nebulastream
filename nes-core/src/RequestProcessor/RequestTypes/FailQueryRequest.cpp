@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
@@ -22,7 +23,6 @@
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Util/RequestType.hpp>
 
 namespace NES::RequestProcessor::Experimental {

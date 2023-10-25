@@ -31,7 +31,7 @@ ExpressionNodePtr PowExpressionNode::create(ExpressionNodePtr const& left, Expre
 
 void PowExpressionNode::inferStamp( SchemaPtr schema) {
     // infer stamp of child, check if its numerical, assume same stamp
-    ArithmeticalBinaryExpressionNode::inferStamp( schema);
+    ArithmeticalBinaryExpressionNode::inferStamp(schema);
 
     // Extend range for POW operation:
     if (stamp->isInteger()) {

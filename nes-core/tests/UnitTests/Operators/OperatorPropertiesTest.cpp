@@ -15,10 +15,10 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

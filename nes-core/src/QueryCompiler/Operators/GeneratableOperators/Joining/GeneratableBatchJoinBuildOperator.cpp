@@ -36,10 +36,7 @@ GeneratableOperatorPtr
 GeneratableBatchJoinBuildOperator::create(SchemaPtr inputSchema,
                                           SchemaPtr outputSchema,
                                           Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
-    return create(getNextOperatorId(),
-                  std::move(inputSchema),
-                  std::move(outputSchema),
-                  std::move(batchJoinOperatorHandler));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler));
 }
 
 GeneratableBatchJoinBuildOperator::GeneratableBatchJoinBuildOperator(

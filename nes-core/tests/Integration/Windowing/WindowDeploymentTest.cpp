@@ -84,18 +84,18 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create("window", "window1");
+    auto sourceConfig = CSVSourceType::create("window", "window1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
-                                  .validate()
-                                  .setupTopology();
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
+                           .validate()
+                           .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -127,18 +127,18 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create("window", "window1");
+    auto sourceConfig = CSVSourceType::create("window", "window1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
 
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
-                                  .validate()
-                                  .setupTopology();
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
+                           .validate()
+                           .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -174,25 +174,25 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEv
                      .byKey(Attribute("id"))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig1 = CSVSourceType::create("window", "window1");
+    auto sourceConfig1 = CSVSourceType::create("window", "window1");
     sourceConfig1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig1->setGatheringInterval(0);
     sourceConfig1->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig1->setNumberOfBuffersToProduce(3);
 
-    CSVSourceTypePtr sourceConfig2 = CSVSourceType::create("window", "window2");
+    auto sourceConfig2 = CSVSourceType::create("window", "window2");
     sourceConfig2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig2->setGatheringInterval(0);
     sourceConfig2->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig2->setNumberOfBuffersToProduce(3);
 
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig1)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig2)
-                                  .validate()
-                                  .setupTopology();
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithCSVSourceToCoordinator(sourceConfig1)
+                           .attachWorkerWithCSVSourceToCoordinator(sourceConfig2)
+                           .validate()
+                           .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -219,18 +219,18 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create("window", "window2");
+    auto sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
-                                  .validate()
-                                  .setupTopology();
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
+                           .validate()
+                           .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -256,29 +256,24 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
                      .apply(Sum(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create("window", "window2");
+    auto sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
 
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("window", testSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
-                                  .validate()
-                                  .setupTopology();
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
+                           .validate()
+                           .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    std::vector<NonKeyedWindowOutput> expectedOutput = {{0, 10000, 60},
-                                                        {5000, 15000, 95},
-                                                        {10000, 20000, 145},
-                                                        {15000, 25000, 126},
-                                                        {20000, 30000, 41}};
+    auto expectedOutput = {{0, 10000, 60}, {5000, 15000, 95}, {10000, 20000, 145}, {15000, 25000, 126}, {20000, 30000, 41}};
 
-    std::vector<NonKeyedWindowOutput> actualOutput =
-        testHarness.getOutput<NonKeyedWindowOutput>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    auto actualOutput = testHarness.getOutput<NonKeyedWindowOutput>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -288,15 +283,15 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
  * @brief test central tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    auto coordinatorConfig = CoordinatorConfiguration::createDefault();
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create("windowSource", "test_stream");
+    auto sourceConfig = CSVSourceType::create("windowSource", "test_stream");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(6);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    auto workerConfig = WorkerConfiguration::create();
     workerConfig->physicalSourceTypes.add(sourceConfig);
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
     workerConfig->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
@@ -311,20 +306,20 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
                       ->addField(createField("id", BasicType::UINT64))
                       ->addField(createField("timestamp", BasicType::UINT64));
     NES_INFO("WindowDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    auto crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    auto wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryService = crd->getQueryService();
+    auto queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -341,7 +336,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
                                                     FaultToleranceType::NONE,
                                                     LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
@@ -378,10 +373,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
                                        .byKey(Attribute("key"))
                                        .apply(Sum(Attribute("value1")));
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -391,9 +386,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
 
     testHarness.validate().setupTopology();
 
-    std::vector<KeyedWindowOutput<double>> expectedOutput = {{1000, 2000, 1.2, 2}, {1000, 2000, 1.5, 4}, {2000, 3000, 1.7, 5}};
-    std::vector<KeyedWindowOutput<double>> actualOutput =
-        testHarness.getOutput<KeyedWindowOutput<double>>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    auto expectedOutput = {{1000, 2000, 1.2, 2}, {1000, 2000, 1.5, 4}, {2000, 3000, 1.7, 5}};
+    auto actualOutput = testHarness.getOutput<KeyedWindowOutput<double>>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -417,10 +411,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
                                        .byKey(Attribute("key"))
                                        .apply(Sum(Attribute("value1")));
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -459,10 +453,10 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
                                        .apply(Sum(Attribute("value2")))
                                        .project(Attribute("value2"));
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -479,8 +473,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
         bool operator==(Output const& rhs) const { return (value == rhs.value); }
     };
 
-    std::vector<Output> expectedOutput = {{2}, {4}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    auto expectedOutput = {{2}, {4}};
+    auto actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -511,9 +505,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
                                        .apply(Sum(Attribute("value2")))
                                        .project(Attribute("value2"));
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -560,9 +554,9 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar) {
                                        .byKey(Attribute("key"))
                                        .apply(Sum(Attribute("value")));
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     NES::ExecutableTypes::Array<char, 4> keyOne = "aaa";
     NES::ExecutableTypes::Array<char, 4> keyTwo = "bbb";
@@ -616,10 +610,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                                        .byKey(Attribute("key"))
                                        .apply(Avg(Attribute("value1")));
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -670,10 +664,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
                                        .byKey(Attribute("key"))
                                        .apply(Max(Attribute("value")));
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -723,10 +717,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                                        .byKey(Attribute("key"))
                                        .apply(Max(Attribute("value")));
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("car", carSchema)
-                                  .enableNautilus()
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("car", carSchema)
+                           .enableNautilus()
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -777,19 +771,19 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
                                        .byKey(Attribute("id"))
                                        .apply(Max(Attribute("value")));
 
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create("car", "car1");
+    auto sourceConfig = CSVSourceType::create("car", "car1");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setSkipHeader(false);
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
-                                  .validate()
-                                  .setupTopology();
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithCSVSourceToCoordinator(sourceConfig)
+                           .validate()
+                           .setupTopology();
 
     struct Output {
         uint64_t start;
@@ -838,10 +832,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                                        .byKey(Attribute("key"))
                                        .apply(Min(Attribute("value")));
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -893,10 +887,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                                        .byKey(Attribute("key"))
                                        .apply(Count());
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -950,10 +944,10 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregatio
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                                        .byKey(Attribute("key"))
                                        .apply(Median(Attribute("value")));
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1006,10 +1000,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
                                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
                                        .byKey(Attribute("key"))
                                        .apply(Count()->as(Attribute("Frequency")));
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNautilus()
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+    auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .enableNautilus()
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 

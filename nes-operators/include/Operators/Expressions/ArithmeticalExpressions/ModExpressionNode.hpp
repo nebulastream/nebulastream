@@ -37,7 +37,7 @@ class ModExpressionNode final : public ArithmeticalBinaryExpressionNode {
          * @param typeInferencePhaseContext
          * @param schema: the current schema.
          */
-    void inferStamp( SchemaPtr schema) final;
+    void inferStamp(SchemaPtr schema) final;
 
     /**
         * @brief Create a deep copy of this expression node.

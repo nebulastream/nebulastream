@@ -15,12 +15,12 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <iostream>
 #include <utility>
 
@@ -30,9 +30,8 @@ using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-class ThresholdWindowQueryExecutionTest
-    : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
+class ThresholdWindowQueryExecutionTest : public Testing::BaseUnitTest,
+                                          public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);

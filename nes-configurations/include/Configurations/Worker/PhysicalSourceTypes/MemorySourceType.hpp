@@ -39,7 +39,7 @@ class MemorySourceType : public PhysicalSourceType {
      * @param taskQueueId: taskQueueId
      * @return a constructed MemorySourceType
      */
-    static MemorySourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
+    static MemorySourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
                                       size_t memoryAreaSize,
                                       uint64_t numBuffersToProduce,
                                       uint64_t gatheringValue,
@@ -82,7 +82,7 @@ class MemorySourceType : public PhysicalSourceType {
      * @param sourceAffinity: sourceAffinity
      * @param taskQueueId: taskQueueId
      */
-    explicit MemorySourceType(std::string logicalSourceName, std::string physicalSourceName,uint8_t* memoryArea,
+    explicit MemorySourceType(const std::string& logicalSourceName, const std::string& physicalSourceName,uint8_t* memoryArea,
                               size_t memoryAreaSize,
                               uint64_t numBuffersToProduce,
                               uint64_t gatheringValue,

@@ -12,24 +12,24 @@
     limitations under the License.
 */
 
-#include "Common/DataTypes/DataTypeFactory.hpp"
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
-#include <QueryValidation/SemanticQueryValidation.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <QueryValidation/SemanticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

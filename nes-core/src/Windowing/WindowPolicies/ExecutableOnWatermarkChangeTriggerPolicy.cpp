@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/ThreadNaming.hpp>
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>

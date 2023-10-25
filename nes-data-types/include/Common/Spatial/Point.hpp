@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SPATIAL_DATATYPES_POINT_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_DATATYPES_POINT_HPP_
+#ifndef NES_DATA_TYPES_INCLUDE_COMMON_SPATIAL_POINT_HPP_
+#define NES_DATA_TYPES_INCLUDE_COMMON_SPATIAL_POINT_HPP_
 
 namespace NES {
 
@@ -70,4 +70,4 @@ class Point {
     double latitude, longitude;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SPATIAL_DATATYPES_POINT_HPP_
+#endif// NES_DATA_TYPES_INCLUDE_COMMON_SPATIAL_POINT_HPP_

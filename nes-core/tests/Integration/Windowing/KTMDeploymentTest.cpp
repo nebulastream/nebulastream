@@ -14,10 +14,10 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -43,8 +43,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     //register logical source qnv
     auto ktmSchema = Schema::create()
@@ -85,8 +84,7 @@ TEST_F(KTMDeploymentTest, ktmQuery) {
     queryCompilerConfiguration.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
     workerConfig1->queryCompiler = queryCompilerConfiguration;
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     // create source
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create("ktm", "test_stream");
     csvSourceType1->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "ktm.csv");

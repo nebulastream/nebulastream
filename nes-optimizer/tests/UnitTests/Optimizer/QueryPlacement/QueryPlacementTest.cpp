@@ -1562,7 +1562,6 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthThightResourcesConstrains) {
     auto physicalSourceCar = PhysicalSource::create(csvSourceType);
     Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
         Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSource, srcNode1);
-    //   std::make_shared<Catalogs::Source::SourceCatalogEntry>(csvSourceType, logicalSource, srcNode1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car").filter(Attribute("value") > 1).sink(NullOutputSinkDescriptor::create());

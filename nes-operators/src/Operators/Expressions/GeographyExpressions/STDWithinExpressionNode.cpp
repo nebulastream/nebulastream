@@ -81,12 +81,11 @@ ShapeExpressionNodePtr STDWithinExpressionNode::getCircle() const {
     return children[1]->as<CircleExpressionNode>();
 }
 
-void STDWithinExpressionNode::inferStamp(
-                                         SchemaPtr schema) {
+void STDWithinExpressionNode::inferStamp(SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto point = getPoint();
     auto circle = getCircle();
-    point->inferStamp( schema);
+    point->inferStamp(schema);
     auto shapeType = circle->getShapeType();
 
     if (!point->getStamp()->isFloat() || shapeType != ShapeType::Circle) {

@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_
+#ifndef NES_CORE_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
+#define NES_CORE_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 
-#include<Util/Mobility/GeoLocation.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <memory>
@@ -243,4 +243,4 @@ using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Spatial
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_WORKERMOBILITYHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_

@@ -17,6 +17,14 @@
 
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
@@ -28,17 +36,9 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <cstdint>
 #include <cstring>
 

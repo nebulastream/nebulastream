@@ -21,10 +21,10 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sources/DataSource.hpp>
@@ -261,10 +261,10 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
+    auto sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
     sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
@@ -284,8 +284,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryService = crd->getQueryService();
+    auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
@@ -357,10 +357,10 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
+    auto sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
     sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
@@ -380,8 +380,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryService = crd->getQueryService();
+    auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
@@ -435,11 +435,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Constant length
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("TCPSourceIntegrationTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    auto crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
@@ -453,10 +453,10 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
+    auto sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
     sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
@@ -476,8 +476,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryService = crd->getQueryService();
+    auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
@@ -531,7 +531,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Variable length
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("TCPSourceIntegrationTest: Start coordinator");
@@ -549,10 +549,10 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create( "tcpStream", "tcpStream");
+    auto sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
     sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
@@ -564,7 +564,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
 
     workerConfig1->physicalSourceTypes.add(sourceConfig);
     workerConfig1->bufferSizeInBytes = 50;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    auto wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
     NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
@@ -572,8 +572,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryService = crd->getQueryService();
+    auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));
@@ -627,11 +627,11 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
  * @brief tests TCPSource read of JSON data when obtaining the size of the data from the socket. Constant length
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("TCPSourceIntegrationTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    auto crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
@@ -645,10 +645,10 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
+    auto sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
     sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
@@ -660,7 +660,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
 
     workerConfig1->physicalSourceTypes.add(sourceConfig);
     workerConfig1->bufferSizeInBytes = 50;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    auto wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
     NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
@@ -723,7 +723,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Variable length
  */
 TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("TCPSourceIntegrationTest: Start coordinator");
@@ -741,10 +741,10 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
 
-    TCPSourceTypePtr sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
+    auto sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
     sourceConfig->setSocketPort(*tcpServerPort);
     sourceConfig->setSocketHost("127.0.0.1");
     sourceConfig->setSocketDomainViaString("AF_INET");
@@ -764,8 +764,8 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
     remove(filePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+    auto queryService = crd->getQueryService();
+    auto queryCatalogService = crd->getQueryCatalogService();
 
     //register query
     auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath));

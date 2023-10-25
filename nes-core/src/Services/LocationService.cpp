@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <Services/LocationService.hpp>
-#include<Util/Mobility/GeoLocation.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Services/LocationService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
 

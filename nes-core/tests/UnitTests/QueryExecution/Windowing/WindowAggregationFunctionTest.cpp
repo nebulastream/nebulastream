@@ -15,12 +15,12 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <iostream>
 #include <utility>
 
@@ -33,9 +33,8 @@ const static uint64_t recordsPerBuffer = 100;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-class WindowAggregationFunctionTest
-    : public Testing::BaseUnitTest,
-      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
+class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
+                                      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowAggregationFunctionTest.log", NES::LogLevel::LOG_DEBUG);

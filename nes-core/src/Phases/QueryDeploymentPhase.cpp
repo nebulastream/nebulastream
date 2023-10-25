@@ -12,19 +12,19 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>

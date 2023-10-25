@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_ASYNCREQUESTPROCESSOR_HPP
-#define NES_ASYNCREQUESTPROCESSOR_HPP
+#ifndef NES_CORE_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_
+#define NES_CORE_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_
 
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
-#include <limits.h>
 #include <deque>
+#include <limits.h>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -87,4 +87,4 @@ class AsyncRequestProcessor {
 
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 }// namespace NES::RequestProcessor::Experimental
-#endif//NES_ASYNCREQUESTPROCESSOR_HPP
+#endif// NES_CORE_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_

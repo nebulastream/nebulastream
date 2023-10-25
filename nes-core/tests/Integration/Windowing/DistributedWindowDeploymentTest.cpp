@@ -18,18 +18,18 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Identifiers.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -117,8 +117,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedTumblingWindowQu
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     //register logical source qnv
     auto window = Schema::create()
                       ->addField("id", BasicType::UINT64)
@@ -278,11 +277,9 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testMultipleAggregationFunction
 
     // given: Set up both workers to use ThreadLocal aggregation
     auto workerConfiguration1 = WorkerConfiguration::create();
-    workerConfiguration1->queryCompiler.windowingStrategy =
-        QueryCompilation::WindowingStrategy::THREAD_LOCAL;
+    workerConfiguration1->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::THREAD_LOCAL;
     auto workerConfiguration2 = WorkerConfiguration::create();
-    workerConfiguration2->queryCompiler.windowingStrategy =
-        QueryCompilation::WindowingStrategy::THREAD_LOCAL;
+    workerConfiguration2->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::THREAD_LOCAL;
     // given: Set up the input schema: a timestamp, a key, a value
     struct InputData {
         uint64_t timestamp;
@@ -318,8 +315,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testMultipleAggregationFunction
     testHarness.pushElement<InputData>({1300U, 3U, 8U}, 3);
     // given: The internal coordinator also uses THREAD_LOCAL aggregation and distributed window is disabled.
     testHarness.validate().setupTopology([](CoordinatorConfigurationPtr coordinatorConfiguration) {
-        coordinatorConfiguration->worker.queryCompiler.windowingStrategy =
-            QueryCompilation::WindowingStrategy::THREAD_LOCAL;
+        coordinatorConfiguration->worker.queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::THREAD_LOCAL;
         coordinatorConfiguration->optimizer.distributedWindowChildThreshold = 1000;
         coordinatorConfiguration->optimizer.distributedWindowCombinerThreshold = 1000;
     });
@@ -361,8 +357,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWi
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
 
@@ -442,8 +437,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testDistributedWindowIngestionT
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     //register logical source qnv
     auto window = Schema::create()
@@ -534,8 +528,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeI
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -562,8 +555,7 @@ TEST_F(DistributedWindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeI
 
     NES_DEBUG("DistributedWindowDeploymentTest: Start worker 1");
     workerConfig->coordinatorPort = port;
-    workerConfig->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

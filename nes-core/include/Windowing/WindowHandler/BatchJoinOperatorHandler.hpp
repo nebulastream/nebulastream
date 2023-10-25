@@ -14,11 +14,11 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_BATCHJOINOPERATORHANDLER_HPP_
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
-#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <atomic>
 
 namespace NES::Join::Experimental {

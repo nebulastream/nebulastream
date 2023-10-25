@@ -19,8 +19,8 @@
 
 using namespace std::string_literals;
 
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 
 namespace NES::Catalogs::UDF {
 

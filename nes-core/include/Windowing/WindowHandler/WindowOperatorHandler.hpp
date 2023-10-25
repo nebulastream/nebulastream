@@ -14,10 +14,10 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_
 
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
 
 /**

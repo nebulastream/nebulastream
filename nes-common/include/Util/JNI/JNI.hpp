@@ -33,8 +33,8 @@ Copyright (c) 2016 Mitchell Dowd
     limitations under the License.
 */
 
-#ifndef NES_NES_COMMON_INCLUDE_UTIL_JNI_JNI_HPP_
-#define NES_NES_COMMON_INCLUDE_UTIL_JNI_JNI_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_JNI_JNI_HPP_
+#define NES_COMMON_INCLUDE_UTIL_JNI_JNI_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
 #include <algorithm>
@@ -157,4 +157,4 @@ class InitializationException : public NES::Exceptions::RuntimeException {
 
 }// namespace NES::jni
 
-#endif//NES_NES_COMMON_INCLUDE_UTIL_JNI_JNI_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_JNI_JNI_HPP_

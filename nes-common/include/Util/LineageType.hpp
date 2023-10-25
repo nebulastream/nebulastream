@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
-#define NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#define NES_COMMON_INCLUDE_UTIL_LINEAGETYPE_HPP_
 
 namespace NES {
 
@@ -25,4 +25,4 @@ enum class LineageType : uint8_t {
     INVALID = 4
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_LINEAGETYPE_HPP_

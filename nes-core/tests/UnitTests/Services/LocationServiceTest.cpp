@@ -13,19 +13,19 @@
 */
 
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Services/LocationService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include<Util/Mobility/GeoLocation.hpp>
-#include <Util/Mobility/Waypoint.hpp>
-#include <Catalogs/Topology/Index/LocationIndex.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/SpatialType.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/TestUtils.hpp>
 #include <cmath>
 #include <gtest/gtest.h>

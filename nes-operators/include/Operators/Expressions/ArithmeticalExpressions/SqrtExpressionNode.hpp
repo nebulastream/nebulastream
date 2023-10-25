@@ -35,7 +35,7 @@ class SqrtExpressionNode final : public ArithmeticalUnaryExpressionNode {
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp( SchemaPtr schema) final;
+    void inferStamp(SchemaPtr schema) final;
 
     /**
     * @brief Create a deep copy of this expression node.

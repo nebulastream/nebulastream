@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NonKeyedBucketPreAggregationHandler_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NonKeyedBucketPreAggregationHandler_HPP_
-#include <Identifiers.hpp>
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
 #include <Execution/Operators/Streaming/Aggregations/Buckets/AbstractBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketStore.hpp>
@@ -24,6 +23,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -65,4 +65,4 @@ class NonKeyedBucketPreAggregationHandler : public AbstractBucketPreAggregationH
     std::unique_ptr<State> defaultState;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NonKeyedBucketPreAggregationHandler_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETPREAGGREGATIONHANDLER_HPP_

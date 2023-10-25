@@ -30,10 +30,7 @@ std::shared_ptr<PhysicalKeyedTumblingWindowSink>
 PhysicalKeyedTumblingWindowSink::create(SchemaPtr inputSchema,
                                         SchemaPtr outputSchema,
                                         Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalKeyedTumblingWindowSink>(getNextOperatorId(),
-                                                             inputSchema,
-                                                             outputSchema,
-                                                             windowDefinition);
+    return std::make_shared<PhysicalKeyedTumblingWindowSink>(getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
 }
 
 Windowing::LogicalWindowDefinitionPtr PhysicalKeyedTumblingWindowSink::getWindowDefinition() { return windowDefinition; }

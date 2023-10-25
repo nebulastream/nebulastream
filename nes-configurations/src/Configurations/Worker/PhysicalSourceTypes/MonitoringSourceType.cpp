@@ -19,25 +19,25 @@
 
 namespace NES {
 
-MonitoringSourceType::MonitoringSourceType(std::string logicalSourceName,
-                                           std::string physicalSourceName,
+MonitoringSourceType::MonitoringSourceType(const std::string& logicalSourceName,
+                                           const std::string& physicalSourceName,
                                            Monitoring::MetricCollectorType metricCollectorType,
                                            std::chrono::milliseconds waitTime)
-    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::MONITORING_SOURCE),
+    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::MONITORING_SOURCE),
       metricCollectorType(metricCollectorType), waitTime(waitTime) {}
 
-MonitoringSourceTypePtr MonitoringSourceType::create(std::string logicalSourceName,
-                                                     std::string physicalSourceName,
+MonitoringSourceTypePtr MonitoringSourceType::create(const std::string& logicalSourceName,
+                                                     const std::string& physicalSourceName,
                                                      Monitoring::MetricCollectorType metricCollectorType,
                                                      std::chrono::milliseconds waitTime) {
     return std::make_shared<MonitoringSourceType>(
-        MonitoringSourceType(std::move(logicalSourceName), std::move(physicalSourceName), metricCollectorType, waitTime));
+        MonitoringSourceType(logicalSourceName, physicalSourceName, metricCollectorType, waitTime));
 }
 
-MonitoringSourceTypePtr MonitoringSourceType::create(std::string logicalSourceName,
-                                                     std::string physicalSourceName,
+MonitoringSourceTypePtr MonitoringSourceType::create(const std::string& logicalSourceName,
+                                                     const std::string& physicalSourceName,
                                                      Monitoring::MetricCollectorType metricCollectorType) {
-    return create(std::move(logicalSourceName), std::move(physicalSourceName), metricCollectorType, DEFAULT_WAIT_TIME);
+    return create(logicalSourceName, physicalSourceName, metricCollectorType, DEFAULT_WAIT_TIME);
 }
 
 std::string MonitoringSourceType::toString() {

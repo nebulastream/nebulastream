@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_
-#define NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_
+#ifndef NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_
+#define NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_
 
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 
@@ -110,4 +110,4 @@ class SerialStorageHandler : public StorageHandler {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
 }// namespace NES::RequestProcessor::Experimental
-#endif// NES_CORE_INCLUDE_WORKQUEUES_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_
+#endif// NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_SERIALSTORAGEHANDLER_HPP_

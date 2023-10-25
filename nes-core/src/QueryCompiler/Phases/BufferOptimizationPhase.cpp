@@ -27,8 +27,7 @@
 
 namespace NES::QueryCompilation {
 
-BufferOptimizationPhasePtr
-BufferOptimizationPhase::BufferOptimizationPhase::create(OutputBufferOptimizationLevel level) {
+BufferOptimizationPhasePtr BufferOptimizationPhase::BufferOptimizationPhase::create(OutputBufferOptimizationLevel level) {
     return std::make_shared<BufferOptimizationPhase>(level);
 }
 

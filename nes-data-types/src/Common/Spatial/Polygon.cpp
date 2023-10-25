@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Exceptions/InvalidArgumentException.hpp>
 #include <Common/Spatial/Point.hpp>
 #include <Common/Spatial/Polygon.hpp>
 #include <Common/Spatial/Rectangle.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {

@@ -425,14 +425,14 @@ PhysicalSourceTypePtr E2ESingleRun::createPhysicalSourceType(std::string logical
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
         //TODO #3336: static query manager mode is currently not ported therefore only one queue
         size_t taskQueueId = 0;
-        LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(logicalSourceName,
-                                                                    physicalSourceName,
-                                                                    dataProvidingFunc,
-                                                                    configOverAllRuns.numberOfBuffersToProduce->getValue(),
-                                                                    /* gatheringValue */ 0,
-                                                                    GatheringMode::INTERVAL_MODE,
-                                                                    sourceAffinity,
-                                                                    taskQueueId);
+        auto sourceConfig = LambdaSourceType::create(logicalSourceName,
+                                                     physicalSourceName,
+                                                     dataProvidingFunc,
+                                                     configOverAllRuns.numberOfBuffersToProduce->getValue(),
+                                                     /* gatheringValue */ 0,
+                                                     GatheringMode::INTERVAL_MODE,
+                                                     sourceAffinity,
+                                                     taskQueueId);
 
         return sourceConfig;
     }

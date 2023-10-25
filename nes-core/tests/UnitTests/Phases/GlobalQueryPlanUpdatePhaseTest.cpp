@@ -13,20 +13,21 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -34,22 +35,21 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/ChangeLog/ChangeLog.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/StopQueryRequest.hpp>
 #include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyLinkRequest.hpp>
 #include <Optimizer/RequestTypes/TopologyRequests/RemoveTopologyNodeRequest.hpp>
+#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Plans/ChangeLog/ChangeLog.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 

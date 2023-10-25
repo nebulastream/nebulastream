@@ -13,8 +13,8 @@
 */
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGINGOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGINGOPERATORHANDLER_HPP_
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Windowing::Experimental {
 class SliceMergeTask;

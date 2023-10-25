@@ -13,7 +13,7 @@
 */
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Prediction/Edge.hpp>
-#include<Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
+#include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
 #include <gtest/gtest.h>
 

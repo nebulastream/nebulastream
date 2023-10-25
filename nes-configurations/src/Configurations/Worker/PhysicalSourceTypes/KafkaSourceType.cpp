@@ -20,26 +20,26 @@
 
 namespace NES {
 
-KafkaSourceTypePtr KafkaSourceType::create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig) {
+KafkaSourceTypePtr KafkaSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig) {
     return std::make_shared<KafkaSourceType>(
-        KafkaSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(yamlConfig)));
+        KafkaSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
 }
 
-KafkaSourceTypePtr KafkaSourceType::create(std::string logicalSourceName,
-                                           std::string physicalSourceName,
+KafkaSourceTypePtr KafkaSourceType::create(const std::string& logicalSourceName,
+                                           const std::string& physicalSourceName,
                                            std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<KafkaSourceType>(
-        KafkaSourceType(std::move(logicalSourceName), std::move(physicalSourceName), std::move(sourceConfigMap)));
+        KafkaSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
 }
 
-KafkaSourceTypePtr KafkaSourceType::create(std::string logicalSourceName, std::string physicalSourceName) {
-    return std::make_shared<KafkaSourceType>(KafkaSourceType(std::move(logicalSourceName), std::move(physicalSourceName)));
+KafkaSourceTypePtr KafkaSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName) {
+    return std::make_shared<KafkaSourceType>(KafkaSourceType(logicalSourceName, physicalSourceName));
 }
 
-KafkaSourceType::KafkaSourceType(std::string logicalSourceName,
-                                 std::string physicalSourceName,
+KafkaSourceType::KafkaSourceType(const std::string& logicalSourceName,
+                                 const std::string& physicalSourceName,
                                  std::map<std::string, std::string> sourceConfigMap)
-    : KafkaSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
+    : KafkaSourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("KafkaSourceType: Init default Kafka source config object with values from command line args.");
 
     if (sourceConfigMap.find(Configurations::BROKERS_CONFIG) != sourceConfigMap.end()) {
@@ -79,8 +79,8 @@ KafkaSourceType::KafkaSourceType(std::string logicalSourceName,
     }
 }
 
-KafkaSourceType::KafkaSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig)
-    : KafkaSourceType(std::move(logicalSourceName), std::move(physicalSourceName)) {
+KafkaSourceType::KafkaSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+    : KafkaSourceType(logicalSourceName, physicalSourceName) {
     NES_INFO("KafkaSourceType: Init default KAFKA source config object with values from YAML file.");
 
     if (!yamlConfig[Configurations::BROKERS_CONFIG].As<std::string>().empty()
@@ -129,8 +129,8 @@ KafkaSourceType::KafkaSourceType(std::string logicalSourceName, std::string phys
     }
 }
 
-KafkaSourceType::KafkaSourceType(std::string logicalSourceName, std::string physicalSourceName)
-    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::KAFKA_SOURCE),
+KafkaSourceType::KafkaSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
+    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::KAFKA_SOURCE),
       brokers(Configurations::ConfigurationOption<std::string>::create(Configurations::BROKERS_CONFIG, "", "brokers")),
 
       autoCommit(Configurations::ConfigurationOption<uint32_t>::create(

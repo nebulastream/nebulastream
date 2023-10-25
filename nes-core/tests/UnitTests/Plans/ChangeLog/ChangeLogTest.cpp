@@ -15,8 +15,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -24,6 +22,8 @@
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {

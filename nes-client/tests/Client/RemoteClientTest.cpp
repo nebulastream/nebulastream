@@ -59,7 +59,7 @@ class RemoteClientTest : public Testing::BaseIntegrationTest {
         ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 0));
 
         NES_DEBUG("RemoteClientTest: Start worker 1");
-        DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create("default_logical", "physical_car");
+        auto defaultSourceType1 = DefaultSourceType::create("default_logical", "physical_car");
         wrkConf->physicalSourceTypes.add(defaultSourceType1);
         wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool retStart1 = wrk->start(false, true);

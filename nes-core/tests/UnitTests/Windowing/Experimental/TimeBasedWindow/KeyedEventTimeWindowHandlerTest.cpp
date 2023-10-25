@@ -11,8 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Runtime/BufferManager.hpp"
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Util/Experimental/HashMap.hpp>
@@ -20,11 +24,7 @@
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <algorithm>
 #include <atomic>
 #include <gtest/gtest.h>

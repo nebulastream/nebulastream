@@ -17,18 +17,18 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalogService.hpp>
+#include <Catalogs/Topology/Index/LocationIndex.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
-#include <Catalogs/Source/SourceCatalogService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Catalogs/Topology/Index/LocationIndex.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <string>
 
 using namespace std;

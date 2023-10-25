@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_API_QUERY_HPP_
-#define NES_CORE_INCLUDE_API_QUERY_HPP_
+#ifndef NES_CLIENT_INCLUDE_API_QUERY_HPP_
+#define NES_CLIENT_INCLUDE_API_QUERY_HPP_
 
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
@@ -590,4 +590,4 @@ using QueryPtr = std::shared_ptr<Query>;
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_API_QUERY_HPP_
+#endif// NES_CLIENT_INCLUDE_API_QUERY_HPP_

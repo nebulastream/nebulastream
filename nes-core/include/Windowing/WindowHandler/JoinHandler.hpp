@@ -14,23 +14,23 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Util/Core.hpp>
-#include<Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
 template<class KeyType, class ValueTypeLeft, class ValueTypeRight>

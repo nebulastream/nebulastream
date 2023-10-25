@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
 
 namespace NES::Windowing {
 

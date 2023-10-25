@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_
 
-#include<Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <zmq.hpp>
 

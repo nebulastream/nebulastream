@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Util/MetricCollectorType.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <sstream>
 #include <string>
 

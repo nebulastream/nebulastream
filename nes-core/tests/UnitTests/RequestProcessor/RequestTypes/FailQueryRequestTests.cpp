@@ -13,38 +13,38 @@
 */
 
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Identifiers.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include  <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Identifiers.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryValidation/SyntacticQueryValidation.hpp>
+#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
+#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 

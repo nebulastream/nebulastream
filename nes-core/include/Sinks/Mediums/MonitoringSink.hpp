@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
 #define NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
 
-#include <Util/MetricCollectorType.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/MetricCollectorType.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>

@@ -14,8 +14,8 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -61,7 +61,7 @@ class KafkaSourceTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
-        kafkaSourceType = KafkaSourceType::create("Kafka","Kafka1");
+        kafkaSourceType = KafkaSourceType::create("Kafka", "Kafka1");
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())

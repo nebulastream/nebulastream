@@ -13,17 +13,17 @@
 */
 
 #include <API/Schema.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/ReplicationService.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <cstdint>
 
 namespace NES {

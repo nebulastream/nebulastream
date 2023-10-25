@@ -46,19 +46,19 @@ bool equal(const PhysicalSourceTypePtr& other) override;
 
 */
 
-StaticDataSourceType::StaticDataSourceType(std::string logicalSourceName,
-                                           std::string physicalSourceName,
+StaticDataSourceType::StaticDataSourceType(const std::string& logicalSourceName,
+                                           const std::string& physicalSourceName,
                                            const std::string& pathTableFile,
                                            uint64_t numBuffersToProcess,
                                            SourceMode sourceMode,
                                            uint64_t taskQueueId,
                                            bool lateStart)
-    : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::STATIC_DATA_SOURCE),
+    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::STATIC_DATA_SOURCE),
       pathTableFile(std::move(pathTableFile)), numBuffersToProcess(numBuffersToProcess), sourceMode(sourceMode),
       taskQueueId(taskQueueId), lateStart(lateStart) {}
 
-StaticDataSourceTypePtr StaticDataSourceType::create(std::string logicalSourceName,
-                                                     std::string physicalSourceName,
+StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& logicalSourceName,
+                                                     const std::string& physicalSourceName,
                                                      const std::string& pathTableFile,
                                                      uint64_t numBuffersToProcess,
                                                      const std::string& sourceMode,
@@ -66,8 +66,8 @@ StaticDataSourceTypePtr StaticDataSourceType::create(std::string logicalSourceNa
                                                      bool lateStart) {
     // todo check validity of path
     SourceMode sourceModeEnum = magic_enum::enum_cast<SourceMode>(sourceMode).value();
-    return std::make_shared<StaticDataSourceType>(std::move(logicalSourceName),
-                                                  std::move(physicalSourceName),
+    return std::make_shared<StaticDataSourceType>(logicalSourceName,
+                                                  physicalSourceName,
                                                   pathTableFile,
                                                   numBuffersToProcess,
                                                   sourceModeEnum,

@@ -84,8 +84,7 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE
                           || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
-    options.setProxyInlining(compilerOptions->getCompilationStrategy()
-                             == CompilationStrategy::PROXY_INLINING);
+    options.setProxyInlining(compilerOptions->getCompilationStrategy() == CompilationStrategy::PROXY_INLINING);
 
     options.setCUDASdkPath(compilerOptions->getCUDASdkPath());
 

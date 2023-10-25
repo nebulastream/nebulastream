@@ -43,7 +43,7 @@ class ConstantValueExpressionNode : public ExpressionNode {
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp( SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
      * @brief Creates a string of the value and the type.

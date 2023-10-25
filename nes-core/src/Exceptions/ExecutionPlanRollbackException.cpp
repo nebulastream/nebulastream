@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Exceptions/ExecutionPlanRollbackException.hpp"
+#include <Exceptions/ExecutionPlanRollbackException.hpp>
 
 namespace NES {
 ExecutionPlanRollbackException::ExecutionPlanRollbackException(const std::string& message) : std::runtime_error(message) {}

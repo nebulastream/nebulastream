@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
-#define NES_NES_CORE_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
+#ifndef NES_CORE_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
+#define NES_CORE_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
 #include <Util/PluginRegistry.hpp>
 #include <optional>
 namespace NES {
@@ -53,4 +53,4 @@ class DataSourcePlugin {
 using SourcePluginRegistry = Util::PluginRegistry<DataSourcePlugin>;
 }// namespace NES
 
-#endif//NES_NES_CORE_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_
+#endif// NES_CORE_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_

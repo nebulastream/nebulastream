@@ -13,14 +13,14 @@
 */
 
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
-#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
@@ -29,10 +29,7 @@ GeneratableOperatorPtr
 GeneratableWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(getNextOperatorId(),
-                  std::move(inputSchema),
-                  std::move(outputSchema),
-                  std::move(watermarkStrategyDescriptor));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }
 
 GeneratableOperatorPtr

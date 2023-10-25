@@ -13,8 +13,6 @@
 */
 
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -30,6 +28,8 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <utility>

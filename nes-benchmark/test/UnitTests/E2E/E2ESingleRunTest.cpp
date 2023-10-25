@@ -121,9 +121,9 @@ TEST_F(E2ESingleRunTest, createSources) {
 }
 
 /**
-     * @brief Testing if E2ESingleRun::getStringLogicalSourceToNumberOfPhysicalSources() is correct by comparing versus
-     * a hardcoded truth
-     */
+ * @brief Testing if E2ESingleRun::getStringLogicalSourceToNumberOfPhysicalSources() is correct by comparing versus
+ * a hardcoded truth
+ */
 TEST_F(E2ESingleRunTest, getNumberOfPhysicalSources) {
     auto defaultDataGenerator = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
     auto zipfianDataGenerator = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);

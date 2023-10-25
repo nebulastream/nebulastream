@@ -38,7 +38,7 @@ class FunctionExpression final : public ExpressionNode {
      * @param typeInferencePhaseContext TypeInferencePhaseContext
      * @param schema current logical schema
      */
-    void inferStamp( SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
      * @brief Creates a string representation of the function

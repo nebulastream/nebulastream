@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_SOURCES_SinkPlugin_HPP_
-#define NES_NES_CORE_INCLUDE_SOURCES_SinkPlugin_HPP_
+#ifndef NES_CORE_INCLUDE_SINKS_DATASINKPLUGIN_HPP_
+#define NES_CORE_INCLUDE_SINKS_DATASINKPLUGIN_HPP_
 #include <Util/PluginRegistry.hpp>
 #include <optional>
 namespace NES {
@@ -50,4 +50,4 @@ class DataSinkPlugin {
 using SinkPluginRegistry = Util::PluginRegistry<DataSinkPlugin>;
 }// namespace NES
 
-#endif//NES_NES_CORE_INCLUDE_SOURCES_SinkPlugin_HPP_
+#endif// NES_CORE_INCLUDE_SINKS_DATASINKPLUGIN_HPP_

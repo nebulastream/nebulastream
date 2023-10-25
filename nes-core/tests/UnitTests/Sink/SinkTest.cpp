@@ -16,8 +16,8 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Network/NetworkChannel.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>

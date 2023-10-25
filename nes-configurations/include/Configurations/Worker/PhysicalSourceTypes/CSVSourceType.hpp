@@ -40,20 +40,20 @@ class CSVSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a CSVSourceTypePtr object
      * @param sourceConfigMap inputted config options
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
+    static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a default CSVSourceTypePtr object
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(std::string logicalSourceName, std::string physicalSourceName);
+    static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     /**
      * @brief creates a string representation of the source
@@ -78,7 +78,7 @@ class CSVSourceType : public PhysicalSourceType {
     /**
      * @brief Set file path, needed for: CSVSource, BinarySource
      */
-    void setFilePath(std::string filePath);
+    void setFilePath(const std::string& filePath);
 
     /**
      * @brief gets a ConfigurationOption object with skipHeader
@@ -98,7 +98,7 @@ class CSVSourceType : public PhysicalSourceType {
     /**
      * @brief set the value for skipHeader with the appropriate data format
      */
-    void setDelimiter(std::string delimiter);
+    void setDelimiter(const std::string& delimiter);
 
     /**
      * @brief gets a ConfigurationOption object with sourceGatheringInterval
@@ -150,17 +150,17 @@ class CSVSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceType(std::string logicalSourceName, std::string physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    explicit CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceType(std::string logicalSourceName, std::string physicalSourceName, Yaml::Node yamlConfig);
+    explicit CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with default values
      */
-    CSVSourceType(std::string logicalSourceName, std::string physicalSourceName);
+    CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::StringConfigOption filePath;
     Configurations::BoolConfigOption skipHeader;

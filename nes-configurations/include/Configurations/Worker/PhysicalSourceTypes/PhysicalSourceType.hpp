@@ -53,7 +53,7 @@ using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceType> {
 
   public:
-    PhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, SourceType sourceType);
+    PhysicalSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, SourceType sourceType);
 
     virtual ~PhysicalSourceType() noexcept = default;
 
@@ -127,8 +127,8 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
     }
 
   private:
-    std::string logicalSourceName;
-    std::string physicalSourceName;
+    const std::string& logicalSourceName;
+    const std::string& physicalSourceName;
     SourceType sourceType;
 };
 

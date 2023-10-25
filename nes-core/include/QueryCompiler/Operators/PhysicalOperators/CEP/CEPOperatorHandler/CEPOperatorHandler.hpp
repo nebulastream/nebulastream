@@ -14,12 +14,12 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_CEP_CEPOPERATORHANDLER_CEPOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_CEP_CEPOPERATORHANDLER_CEPOPERATORHANDLER_HPP_
 
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/CEPForwardRefs.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::CEP {
 /**
