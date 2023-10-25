@@ -127,7 +127,7 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
             AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
     }
 
-    NES_TRACE("Outputschema for window={}", outputSchema->toString());
+    NES_DEBUG("Outputschema for window={}", outputSchema->toString());
 
     return true;
 }
