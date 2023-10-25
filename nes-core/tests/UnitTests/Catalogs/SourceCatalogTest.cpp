@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -22,15 +23,12 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Exceptions/MapEntryNotFoundException.hpp>
-#include <Services/QueryParsingService.hpp>
-#include <Util/Mobility/SpatialType.hpp>
-#include <gtest/gtest.h>
-#include <iostream>
-
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace NES;
@@ -83,7 +81,7 @@ TEST_F(SourceCatalogTest, testAddRemoveLogSource) {
 
     EXPECT_TRUE(sourceCatalog->removeLogicalSource("test_stream"));
 
-    EXPECT_THROW(sourceCatalog->getSchemaForLogicalSource("test_stream"), MapEntryNotFoundException);
+    EXPECT_THROW(sourceCatalog->getSchemaForLogicalSource("test_stream"), Exceptions::LogicalSourceNotFoundException);
 
     string exp = "logical stream name=default_logical schema: name=id UINT32 name=value UINT64\n\nlogical stream "
                  "name=test_stream schema:\n\n";
@@ -96,8 +94,7 @@ TEST_F(SourceCatalogTest, testAddRemoveLogSource) {
 
 TEST_F(SourceCatalogTest, testGetNotExistingKey) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-
-    EXPECT_THROW(sourceCatalog->getSchemaForLogicalSource("test_stream22"), MapEntryNotFoundException);
+    EXPECT_THROW(sourceCatalog->getSchemaForLogicalSource("test_stream22"), Exceptions::LogicalSourceNotFoundException);
 }
 
 TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
