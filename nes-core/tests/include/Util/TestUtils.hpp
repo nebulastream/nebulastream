@@ -17,14 +17,11 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -797,7 +794,9 @@ inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
  * @param fileName
  * @return CSVSourceTypePtr
  */
-CSVSourceTypePtr createCsvSourceType(const string& logicalSourceName, const string& physicalSourceName, const string& fileName);
+CSVSourceTypePtr createSourceConfig(const std::string& fileName, uint64_t gatheringInterval = 0, 
+                                    uint64_t numberOfTuplesToProduce = 0, 
+                                    uint64_t numberOfBuffersToProduce = 0, bool isSkipHeader = false);
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 };// namespace TestUtils
