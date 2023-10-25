@@ -271,9 +271,14 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    auto expectedOutput = {{0, 10000, 60}, {5000, 15000, 95}, {10000, 20000, 145}, {15000, 25000, 126}, {20000, 30000, 41}};
+    std::vector<NonKeyedWindowOutput> expectedOutput = {{0, 10000, 60},
+                                                        {5000, 15000, 95},
+                                                        {10000, 20000, 145},
+                                                        {15000, 25000, 126},
+                                                        {20000, 30000, 41}};
 
-    auto actualOutput = testHarness.getOutput<NonKeyedWindowOutput>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    std::vector<NonKeyedWindowOutput> actualOutput =
+        testHarness.getOutput<NonKeyedWindowOutput>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -386,8 +391,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
 
     testHarness.validate().setupTopology();
 
-    auto expectedOutput = {{1000, 2000, 1.2, 2}, {1000, 2000, 1.5, 4}, {2000, 3000, 1.7, 5}};
-    auto actualOutput = testHarness.getOutput<KeyedWindowOutput<double>>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    std::vector<KeyedWindowOutput<double>> expectedOutput = {{1000, 2000, 1.2, 2}, {1000, 2000, 1.5, 4}, {2000, 3000, 1.7, 5}};
+    std::vector<KeyedWindowOutput<double>> actualOutput =
+        testHarness.getOutput<KeyedWindowOutput<double>>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -473,8 +479,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
         bool operator==(Output const& rhs) const { return (value == rhs.value); }
     };
 
-    auto expectedOutput = {{2}, {4}};
-    auto actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    std::vector<Output> expectedOutput = {{2}, {4}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

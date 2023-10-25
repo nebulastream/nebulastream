@@ -19,6 +19,7 @@
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <vector>
 
