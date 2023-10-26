@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Util/TestUtils.hpp"
+#include <Util/TestUtils.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -38,10 +38,10 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
 
         // Setup sources.
-        sourceCar = TestUtils::createSourceConfig("car.csv", 1, 40, 1);
-        sourceTruck = TestUtils::createSourceConfig("truck.csv", 1, 40, 1);
-        sourceRuby = TestUtils::createSourceConfig("window.csv", 1, 28, 1);
-        sourceDiamond = TestUtils::createSourceConfig("window.csv", 1, 28, 1);
+        sourceCar = TestUtils::createSourceTypeCSV({"car.csv", 1, 40, 1});
+        sourceTruck = TestUtils::createSourceTypeCSV({"truck.csv", 1, 40, 1});
+        sourceRuby = TestUtils::createSourceTypeCSV({"window.csv", 1, 28, 1});
+        sourceDiamond = TestUtils::createSourceTypeCSV({"window.csv", 1, 28, 1});
 
         // Setup schemas.
         schemaCarTruck = Schema::create()
