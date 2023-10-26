@@ -14,12 +14,13 @@
 
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <utility>
 
 namespace NES::Configurations {
 
-SchemaType::SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails) : schemaFieldDetails(schemaFieldDetails) {}
+SchemaType::SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails) : schemaFieldDetails(std::move(schemaFieldDetails)) {}
 
-SchemaTypePtr SchemaType::create(std::vector<SchemaFieldDetail> schemaFieldDetails) {
+SchemaTypePtr SchemaType::create(const std::vector<SchemaFieldDetail>& schemaFieldDetails) {
     return std::make_shared<SchemaType>(SchemaType(schemaFieldDetails));
 }
 

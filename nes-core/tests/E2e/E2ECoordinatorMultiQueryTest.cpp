@@ -15,13 +15,13 @@
 #include <BaseIntegrationTest.hpp>
 #include <Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-#include <string>
-#include <unistd.h>
 #include <Util/TestUtils.hpp>
 #include <cstdio>
+#include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 #include <sstream>
+#include <string>
+#include <unistd.h>
 
 #define GetCurrentDir getcwd
 
@@ -52,11 +52,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::enableDebug(),
+                                                    TestUtils::enableNautilusCoordinator(),
                                                     TestUtils::numberOfSlots(8, true)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
+                                          TestUtils::enableNautilusWorker(),
                                           TestUtils::enableDebug(),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::numberOfSlots(8),
@@ -135,11 +137,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     remove(pathQuery2.c_str());
     remove(pathQuery3.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableNautilusCoordinator()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
+                                          TestUtils::enableNautilusWorker(),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
@@ -227,12 +231,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     remove(Qpath1.c_str());
     remove(Qpath2.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableNautilusCoordinator()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
-              "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
+              "DataTypeFactory::createText())->addField(createField(\\\"timestamp\\\", "
               "BasicType::UINT64))->addField(createField(\\\"velocity\\\", "
               "BasicType::FLOAT32))->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
@@ -242,6 +247,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     auto worker =
         TestUtils::startWorker({TestUtils::rpcPort(0),
                                 TestUtils::dataPort(0),
+                                TestUtils::enableNautilusWorker(),
                                 TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                 TestUtils::logicalSourceName("QnV"),
                                 TestUtils::sourceType(SourceType::CSV_SOURCE),
@@ -292,12 +298,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
     string ASSERTedContent1 =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+        "QnV$sensor_id:Text,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
         "R2000073,1543624020000,102.629631,8\n"
         "R2000070,1543625280000,108.166664,5\n";
 
     string ASSERTedContent2 =
-        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+        "QnV$sensor_id:Text,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
         "R2000073,1543622760000,63.277779,11\n"
         "R2000073,1543622940000,66.222221,12\n"
         "R2000073,1543623000000,74.666664,11\n"
@@ -438,6 +444,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
+                                                    TestUtils::enableNautilusCoordinator(),
                                                     TestUtils::setDistributedWindowChildThreshold(100),
                                                     TestUtils::setDistributedWindowCombinerThreshold(0)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -453,6 +460,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
+                                          TestUtils::enableNautilusWorker(),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalSourceName("window"),
                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
