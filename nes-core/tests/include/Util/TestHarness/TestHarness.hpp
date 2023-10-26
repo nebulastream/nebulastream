@@ -231,7 +231,7 @@ class TestHarness {
      * @param csvSourceType csv source type
      * @param parentId id of the parent to connect
      */
-    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(CSVSourceTypePtr csvSourceType, uint64_t parentId);
+    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const CSVSourceTypePtr& csvSourceType, uint64_t parentId);
 
     /**
       * @brief add a csv source to be used in the test

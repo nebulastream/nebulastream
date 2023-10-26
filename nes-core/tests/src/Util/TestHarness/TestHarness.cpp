@@ -150,7 +150,7 @@ TestHarness& TestHarness::attachWorkerWithLambdaSourceToCoordinator(PhysicalSour
     return *this;
 }
 
-TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(CSVSourceTypePtr csvSourceType, uint64_t parentId) {
+TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(const CSVSourceTypePtr& csvSourceType, uint64_t parentId) {
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSourceTypes.add(csvSourceType);
     workerConfiguration->parentId = parentId;
@@ -167,7 +167,7 @@ TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(CSVSourceTypeP
 
 TestHarness& TestHarness::attachWorkerWithCSVSourceToCoordinator(const CSVSourceTypePtr& csvSourceType) {
     //We are assuming coordinator will start with id 1
-    return attachWorkerWithCSVSourceToWorkerWithId(std::move(csvSourceType), 1);
+    return attachWorkerWithCSVSourceToWorkerWithId(csvSourceType, 1);
 }
 
 TestHarness& TestHarness::attachWorkerToWorkerWithId(uint32_t parentId) {

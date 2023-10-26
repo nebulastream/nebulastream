@@ -62,10 +62,10 @@ class CoordinatorRPCClient {
 
     /**
      * @brief this methods registers physical sources provided by the node at the coordinator
-     * @param physicalSources list of physical sources to register
+     * @param physicalSourceTypes list of physical sources to register
      * @return bool indicating success
      */
-    bool registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSources);
+    bool registerPhysicalSources(const std::vector<PhysicalSourceTypePtr>& physicalSourceTypes);
 
     /**
      * @brief this method registers logical source via the coordinator
