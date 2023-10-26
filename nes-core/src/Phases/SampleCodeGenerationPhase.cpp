@@ -107,7 +107,9 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
                     }
                 }
             }
-            return nullptr;
+            // The calling code is not interested in the executable plan
+            // but only in the exception that is returned in the catch block.
+            return QueryCompilationResult::create(nullptr, std::move(timer));
         } catch (const QueryCompilationException& exception) {
             auto currentException = std::current_exception();
             return QueryCompilationResult::create(currentException);
@@ -133,7 +135,10 @@ QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& plan) {
     // we append a property to "code" some operators
     auto request = QueryCompilation::QueryCompilationRequest::create(plan, nullptr);
     request->enableDump();
-    queryCompiler->compileQuery(request);
+    auto result = queryCompiler->compileQuery(request);
+    if (result->hasError()) {
+        std::rethrow_exception(result->getError());
+    }
     return plan;
 }
 
