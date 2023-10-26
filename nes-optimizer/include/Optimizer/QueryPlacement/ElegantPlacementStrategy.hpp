@@ -27,6 +27,11 @@ namespace NES::Optimizer {
  */
 class ElegantPlacementStrategy : public BasePlacementStrategy {
   public:
+    // Keys for information that is used during ELEGANT placement and stored in node properties.
+    // This key is also accessed in SampleCodeGenerationPhase.cpp.
+    const static std::string sourceCodeKey;
+
+  public:
     ~ElegantPlacementStrategy() override = default;
 
     /**

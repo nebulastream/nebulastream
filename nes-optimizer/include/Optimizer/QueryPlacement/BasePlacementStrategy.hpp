@@ -76,7 +76,6 @@ using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
 const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
-const std::string SOURCE_CODE = "SOURCE_CODE";
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
