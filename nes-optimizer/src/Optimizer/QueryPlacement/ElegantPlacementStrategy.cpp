@@ -29,6 +29,8 @@
 
 namespace NES::Optimizer {
 
+const std::string ElegantPlacementStrategy::sourceCodeKey = "code";
+
 std::unique_ptr<ElegantPlacementStrategy>
 ElegantPlacementStrategy::create(const std::string& serviceURL,
                                  PlacementStrategy placementStrategy,
@@ -163,8 +165,8 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             node[OPERATOR_ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_NODE_ID);
             node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::to_string(std::any_cast<TopologyNodeId>(pinnedNodeId)) : EMPTY_STRING;
-            auto sourceCode = logicalOperator->getProperty(SOURCE_CODE);
-            node[SOURCE_CODE] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
+            auto sourceCode = logicalOperator->getProperty(sourceCodeKey);
+            node[sourceCodeKey] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             nodes.push_back(node);
             node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
 
