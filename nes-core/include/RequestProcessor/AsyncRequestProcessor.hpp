@@ -34,6 +34,7 @@ class AsyncRequestProcessor {
       public:
         FlushRequest() : AbstractRequest({}, 0) {}
         std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override { return {}; }
+        //request type uses exception_ptr so it can set the exception state on its response promise without casting or slicing
         std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
 
       protected:

@@ -229,6 +229,10 @@ class AddQueryRequest : public AbstractRequest {
     LineageType lineage;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
+    void markAsFailedInQueryCatalog(RequestExecutionException& e);
+    void markAsFailedInQueryCatalog(std::exception& e, StorageHandlerPtr& storageHandler);
+    void markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler);
+    void removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler);
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

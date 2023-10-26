@@ -131,66 +131,57 @@ void AddQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
 std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] std::exception_ptr exception,
                                                           [[maybe_unused]] const StorageHandlerPtr& storageHandler) {
     try {
-        try{
-            std::rethrow_exception(exception);
-        } catch (Exceptions::RequestExecutionException& e) {
-            if (e.instanceOf<Exceptions::QueryNotFoundException>()) {
-                NES_ERROR("{}", e.what());
-            } else if (e.instanceOf<Exceptions::InvalidQueryStateException>()
-                       || e.instanceOf<MapEntryNotFoundException>() || e.instanceOf<TypeInferenceException>()
-                       || e.instanceOf<Exceptions::LogicalSourceNotFoundException>()
-                       || e.instanceOf<SignatureComputationException>()
-                       || e.instanceOf<Exceptions::PhysicalSourceNotFoundException>()
-                       || e.instanceOf<Exceptions::SharedQueryPlanNotFoundException>()
-                       || e.instanceOf<UDFException>() || e.instanceOf<Exceptions::OperatorNotFoundException>()
-                       || e.instanceOf<Exceptions::InvalidLogicalOperatorException>()
-                       || e.instanceOf<GlobalQueryPlanUpdateException>()) {
-                NES_ERROR("{}", e.what());
-                auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
-                queryCatalogService->updateQueryStatus(queryId,
-                                                       QueryState::FAILED,
-                                                       "Query failed due to " + std::string(e.what()));
-            } else if (e.instanceOf<Exceptions::QueryPlacementException>()
-                       || e.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
-                       || e.instanceOf<QueryDeploymentException>()) {
-                NES_ERROR("{}", e.what());
-                auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
-                globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
-                auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
-                queryCatalogService->updateQueryStatus(queryId,
-                                                       QueryState::FAILED,
-                                                       "Query failed due to " + std::string(e.what()));
-            } else {
-                NES_ERROR("Unknown exception: {}", e.what());
-                try {
-                    responsePromise.set_exception(exception);
-                } catch (std::future_error& e) {
-                    //rethrow exception if it did not occur because future was already satisfied
-                    if (e.code() != std::future_errc::promise_already_satisfied) {
-                        throw;
-                    }
-                    NES_INFO("Promise value was already set");
-                }
-            }
-        }
-    } catch (RequestExecutionException& exception) {
-        if (retry()) {
-            handleError(std::current_exception(), storageHandler);
-        } else {
-            NES_ERROR("StopQueryRequest: Final failure to rollback. No retries left. Error: {}", exception.what());
-        }
+        std::rethrow_exception(exception);
+    } catch (Exceptions::QueryNotFoundException& e) {
+    } catch (Exceptions::InvalidQueryStateException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (MapEntryNotFoundException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (TypeInferenceException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (Exceptions::LogicalSourceNotFoundException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (SignatureComputationException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (Exceptions::PhysicalSourceNotFoundException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (Exceptions::SharedQueryPlanNotFoundException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (UDFException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (Exceptions::OperatorNotFoundException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (Exceptions::InvalidLogicalOperatorException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (GlobalQueryPlanUpdateException& e) {
+        markAsFailedInQueryCatalog(e, storageHandler);
+    } catch (Exceptions::QueryPlacementException& e) {
+        //todo #4296: remove from global execution plan as well
+        removeFromGlobalQueryPlanAndMarkAsFailed(e, storageHandler);
+    } catch (Exceptions::ExecutionNodeNotFoundException& e) {
+        //todo #4296: remove from global execution plan as well
+        removeFromGlobalQueryPlanAndMarkAsFailed(e, storageHandler);
+    } catch (QueryDeploymentException& e) {
+        //todo #4296: remove from global execution plan as well
+        removeFromGlobalQueryPlanAndMarkAsFailed(e, storageHandler);
+    } catch (Exceptions::RequestExecutionException& e) {
+        setExceptionInPromiseOrRethrow(exception);
     }
 
     //make sure the promise is set before returning in case a the caller is waiting on it
-    try {
-        responsePromise.set_value(std::make_shared<AddQueryResponse>(INVALID_QUERY_ID));
-    } catch (std::future_error& e) {
-        if (e.code() != std::future_errc::promise_already_satisfied) {
-            throw;
-        }
-        NES_INFO("Promise value was already set");
-    }
+    trySetExceptionInPromise(std::make_exception_ptr<RequestExecutionException>(RequestExecutionException("No return value set in promise")));
     return {};
+}
+
+void AddQueryRequest::removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler) {
+    auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
+    globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
+    markAsFailedInQueryCatalog(e, storageHandler);
+}
+
+void AddQueryRequest::markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler) {
+    auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
+    queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, e.what());
 }
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr exception,

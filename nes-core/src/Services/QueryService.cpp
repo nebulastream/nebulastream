@@ -18,8 +18,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
-#include <Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/AddQueryRequest.hpp>
 #include <Optimizer/RequestTypes/QueryRequests/FailQueryRequest.hpp>
