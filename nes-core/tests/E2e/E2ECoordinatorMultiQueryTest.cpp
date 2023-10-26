@@ -18,11 +18,12 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <unistd.h>
-#define GetCurrentDir getcwd
 #include <Util/TestUtils.hpp>
 #include <cstdio>
 #include <nlohmann/json.hpp>
 #include <sstream>
+
+#define GetCurrentDir getcwd
 
 namespace NES {
 
