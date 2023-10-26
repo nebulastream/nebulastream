@@ -102,11 +102,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     const std::string INPUT_DATA_KEY = "inputData";
 
     //Topology payload constants
-    // TODO Remove unused constants
     const std::string DEVICE_ID_KEY = "deviceID";
-    //const std::string DEVICE_TYPE_KEY = "deviceType";
-    //const std::string DEVICE_NAME_KEY = "deviceName";
-    //const std::string MEMORY_KEY = "memory";
     const std::string DEVICES_KEY = "devices";
     const std::string NODE_ID_KEY = "nodeId";
     const std::string NODE_TYPE_KEY = "nodeType";
