@@ -32,7 +32,7 @@ using LogicalSourceTypePtr = std::shared_ptr<LogicalSourceType>;
 class LogicalSourceType {
 
   public:
-    static LogicalSourceTypePtr create(std::string logicalSourceName, SchemaTypePtr schemaType);
+    static LogicalSourceTypePtr create(const std::string& logicalSourceName, const SchemaTypePtr& schemaType);
 
     [[nodiscard]] const std::string& getLogicalSourceName() const;
 

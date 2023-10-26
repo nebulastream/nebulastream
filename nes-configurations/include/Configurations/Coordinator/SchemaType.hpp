@@ -24,7 +24,7 @@ namespace NES::Configurations {
 
 struct SchemaFieldDetail {
   public:
-    SchemaFieldDetail(std::string fieldName, std::string fieldType, std::string variableLengthInBytes = 0)
+    SchemaFieldDetail(std::string fieldName, std::string fieldType, std::string variableLengthInBytes = "0")
         : fieldName(std::move(fieldName)), fieldType(std::move(fieldType)),
           variableLengthInBytes(std::move(variableLengthInBytes)){};
     std::string fieldName;
@@ -40,7 +40,7 @@ using SchemaTypePtr = std::shared_ptr<SchemaType>;
  */
 class SchemaType {
   public:
-    static SchemaTypePtr create(std::vector<SchemaFieldDetail> schemaFieldDetails);
+    static SchemaTypePtr create(const std::vector<SchemaFieldDetail>& schemaFieldDetails);
 
     [[nodiscard]] const std::vector<SchemaFieldDetail>& getSchemaFieldDetails() const;
 
