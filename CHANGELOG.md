@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.232](https://github.com/nebulastream/nebulastream/tree/v0.5.232) (2023-10-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.231...v0.5.232)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move Optimizer code to its own module [\#4246](https://github.com/nebulastream/nebulastream/issues/4246)
+
 ## [v0.5.231](https://github.com/nebulastream/nebulastream/tree/v0.5.231) (2023-10-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.230...v0.5.231)
