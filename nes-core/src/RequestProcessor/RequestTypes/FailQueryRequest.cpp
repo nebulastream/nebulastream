@@ -46,19 +46,11 @@ void FailQueryRequest::preRollbackHandle(std::exception_ptr, const StorageHandle
 
 std::vector<AbstractRequestPtr> FailQueryRequest::rollBack(std::exception_ptr ex, const StorageHandlerPtr&) {
     //make sure the promise is set before returning in case a the caller is waiting on it
-    try {
-        responsePromise.set_exception(ex);
-    } catch (std::future_error& e) {
-        if (e.code() != std::future_errc::promise_already_satisfied) {
-            throw;
-        }
-        NES_INFO("Promise value was already set");
-    }
+    trySetExceptionInPromise(ex);
     return {};
 }
 
 void FailQueryRequest::postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) {
-
     //todo #3727: perform error handling
 }
 
@@ -99,6 +91,6 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
 
     //no follow up requests
     return {};
-    //todo: catch exceptions for error handling
+    //todo #3727: catch exceptions for error handling
 }
 }// namespace NES::RequestProcessor::Experimental

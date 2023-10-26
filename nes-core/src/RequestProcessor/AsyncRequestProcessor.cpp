@@ -61,14 +61,12 @@ RequestId AsyncRequestProcessor::runAsync(AbstractRequestPtr request) {
         return INVALID_REQUEST_ID;
     }
     RequestId requestId;
-    {
-        std::unique_lock lock(workMutex);
-        requestId = nextFreeRequestId;
-        request->setId(requestId);
-        nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
-        asyncRequestQueue.emplace_back(std::move(request));
-        cv.notify_all();
-    }
+    std::unique_lock lock(workMutex);
+    requestId = nextFreeRequestId;
+    request->setId(requestId);
+    nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
+    asyncRequestQueue.emplace_back(std::move(request));
+    cv.notify_all();
     return requestId;
 }
 

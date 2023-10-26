@@ -69,15 +69,19 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
-     * @param ex: The exception thrown during request execution.
+     * @param ex: The exception thrown during request execution. std::exception_ptr is used to be able to allow setting an
+     * exception state on the requests response promise without losing data to slicing in case the request cannot handle the
+     * exception itself
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     virtual std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) = 0;
 
     /**
-     * @brief Calls rollBack and executes additional error handling based on the exception if necessary
-     * @param ex: The exception thrown during request execution.
+     * @brief Calls rollBack and executes additional error handling based on the exception if necessary.
+     * @param ex: The exception thrown during request execution. std::exception_ptr is used to be able to allow setting an
+     * exception state on the requests response promise without losing data to slicing in case the request cannot handle the
+     * exception itself
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
@@ -136,14 +140,18 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
   protected:
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
-     * @param ex: The exception encountered
+     * @param ex: The exception thrown during request execution. std::exception_ptr is used to be able to allow setting an
+     * exception state on the requests response promise without losing data to slicing in case the request cannot handle the
+     * exception itself
      * @param storageHandle: The storage access handle used by the request
      */
     virtual void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) = 0;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
-     * @param ex: The exception encountered
+     * @param ex: The exception thrown during request execution. std::exception_ptr is used to be able to allow setting an
+     * exception state on the requests response promise without losing data to slicing in case the request cannot handle the
+     * exception itself
      * @param storageHandle: The storage access handle used by the request
      */
     virtual void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) = 0;
@@ -167,6 +175,20 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     virtual std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) = 0;
+
+    /**
+     * @brief if no exception or value has been set in this requests response promise yet, set the supplied exception. If a value has
+     * already been set, this method has no effect
+     * @param exception the exception to give to the promise
+     */
+    void trySetExceptionInPromise(std::exception_ptr exception);
+
+    /**
+     * @brief set and exception on the response promise if no value or exception has been set yet. If the promise already has a
+     * value or exception set, rethrow the exception in thsi thread
+     * @param exception the exception to give to the promise
+     */
+    void setExceptionInPromiseOrRethrow(std::exception_ptr exception);
 
   protected:
     RequestId requestId;
