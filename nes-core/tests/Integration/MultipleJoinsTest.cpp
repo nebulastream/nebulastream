@@ -63,6 +63,7 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
                                       .setWindowingStrategy(windowingStrategy);
 
         for (auto i = 0_u64; i < joinParams.inputSchemas.size(); ++i) {
+            auto sourceConfig = TestUtils::createSourceTypeCSV(TestUtils::SourceTypeConfigCSV{csvFileParams.inputCsvFiles[i]});
             std::string logicalSourceName = "window" + std::to_string(i + 1);
             std::string physicalSourceName = "windowPhysical" + std::to_string(i + 1);
             auto csvSourceType =

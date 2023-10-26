@@ -93,6 +93,14 @@ struct CsvFileParams {
     const std::string expectedFile;
 };
 
+struct SourceTypeConfigCSV {
+    std::string fileName;
+    uint64_t gatheringInterval = 0;
+    uint64_t numberOfTuplesToProduce = 0;
+    uint64_t numberOfBuffersToProduce = 0;
+    bool isSkipHeader = false;
+};
+
 /**
  * @brief Struct for storing all parameter for the join
  */
@@ -789,14 +797,10 @@ inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
 
 /**
  * @brief Creates a csv source that produces as many buffers as the csv file contains
- * @param logicalSourceName
- * @param physicalSourceName
- * @param fileName
+ * @param SourceTypeConfig: container for configuration parameters of a source type.
  * @return CSVSourceTypePtr
  */
-CSVSourceTypePtr createSourceConfig(const std::string& fileName, uint64_t gatheringInterval = 0, 
-                                    uint64_t numberOfTuplesToProduce = 0, 
-                                    uint64_t numberOfBuffersToProduce = 0, bool isSkipHeader = false);
+CSVSourceTypePtr createSourceTypeCSV(const SourceTypeConfigCSV& sourceConfig);
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
 };// namespace TestUtils

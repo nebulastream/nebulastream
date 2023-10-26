@@ -846,16 +846,14 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
     return allBuffers;
 }
 
-CSVSourceTypePtr TestUtils::createSourceConfig(const string& fileName, uint64_t gatheringInterval, 
-                                               uint64_t numberOfTuplesToProduce, 
-                                               uint64_t numberOfBuffersToProduce, bool isSkipHeader) {
-    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
-    sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / fileName);
-    sourceConfig->setGatheringInterval(gatheringInterval);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProduce);
-    sourceConfig->setNumberOfBuffersToProduce(numberOfBuffersToProduce);
-    sourceConfig->setSkipHeader(isSkipHeader);
-    return sourceConfig;
+CSVSourceTypePtr TestUtils::createSourceTypeCSV(const SourceTypeConfigCSV& sourceTypeConfig) {
+    CSVSourceTypePtr sourceType = CSVSourceType::create();
+    sourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / sourceTypeConfig.fileName);
+    sourceType->setGatheringInterval(sourceTypeConfig.gatheringInterval);
+    sourceType->setNumberOfTuplesToProducePerBuffer(sourceTypeConfig.numberOfTuplesToProduce);
+    sourceType->setNumberOfBuffersToProduce(sourceTypeConfig.numberOfBuffersToProduce);
+    sourceType->setSkipHeader(sourceTypeConfig.isSkipHeader);
+    return sourceType;
 }
 
 std::vector<PhysicalTypePtr> TestUtils::getPhysicalTypes(const SchemaPtr& schema) {
