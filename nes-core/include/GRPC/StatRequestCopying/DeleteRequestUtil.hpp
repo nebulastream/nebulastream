@@ -15,6 +15,20 @@
 #ifndef NES_NES_CORE_INCLUDE_GRPC_STATREQUESTCOPYING_DELETEREQUESTUTIL_HPP_
 #define NES_NES_CORE_INCLUDE_GRPC_STATREQUESTCOPYING_DELETEREQUESTUTIL_HPP_
 
-class DeleteRequestUtil {};
+namespace NES {
+
+namespace Experimental::Statistics {
+class DeleteRequestParamObj;
+}
+
+class DeleteStat;
+
+class DeleteRequestUtil {
+  public:
+    static void copyDeleteRequest(const Experimental::Statistics::DeleteRequestParamObj& deleteRequestParamObj,
+                                  DeleteStat* deleteRequest);
+};
+
+}
 
 #endif//NES_NES_CORE_INCLUDE_GRPC_STATREQUESTCOPYING_DELETEREQUESTUTIL_HPP_

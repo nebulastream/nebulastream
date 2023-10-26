@@ -21,14 +21,13 @@ namespace NES {
 
 namespace Experimental::Statistics {
 class ProbeRequestParamObj;
-using ProbeRequestParamObjPtr = std::unique_ptr<ProbeRequestParamObj>;
 }
 
 class ProbeStat;
 
 class ProbeRequestUtil {
   public:
-    static void copyProbeRequest(const Experimental::Statistics::ProbeRequestParamObjPtr& probeRequestParamObjPtr,
+    static void copyProbeRequest(const Experimental::Statistics::ProbeRequestParamObj& probeRequestParamObjPtr,
                                  ProbeStat* probeRequest);
 };
 }

@@ -12,4 +12,17 @@
     limitations under the License.
 */
 
-#include "../../../include/GRPC/StatRequestCopying/DeleteRequestUtil.hpp"
+#include <GRPC/StatRequestCopying/DeleteRequestUtil.hpp>
+#include <Statistics/Requests/DeleteRequestParamObj.hpp>
+#include <DeleteRequestParamObj.pb.h>
+
+namespace NES {
+
+void DeleteRequestUtil::copyDeleteRequest(const Experimental::Statistics::DeleteRequestParamObj& deleteRequestParamObj,
+                                          DeleteStat* probeRequest) {
+    probeRequest->set_logicalsourcename(deleteRequestParamObj.getLogicalSourceName());
+    probeRequest->set_fieldname(deleteRequestParamObj.getFieldName());
+    probeRequest->set_statcollectortype((uint32_t) deleteRequestParamObj.getStatCollectorType());
+    probeRequest->set_endtime(deleteRequestParamObj.getEndTime());
+}
+}
