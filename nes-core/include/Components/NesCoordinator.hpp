@@ -29,7 +29,6 @@
 namespace grpc {
 class Server;
 }
-
 namespace NES {
 
 using namespace Configurations;
