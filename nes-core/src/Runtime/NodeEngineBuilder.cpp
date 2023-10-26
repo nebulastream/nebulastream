@@ -20,6 +20,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>

@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp"
+#include "Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
@@ -21,7 +23,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
@@ -30,15 +31,19 @@
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/InferModelOperatorHandler.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
@@ -63,13 +68,6 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
-#include <Windowing/WindowTypes/ThresholdWindow.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -275,11 +273,7 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
 }
 
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
-    if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
-        lowerNautilusJoin(operatorNode);
-    } else {
-        NES_NOT_IMPLEMENTED();
-    }
+    lowerNautilusJoin(operatorNode);
 }
 
 void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNodePtr& operatorNode) {
@@ -500,7 +494,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const QueryPl
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
     windowDefinition->setInputOriginIds(windowOperator->getInputOriginIds());
 
-    auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(Util::getNextOperatorId(),
+    auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(getNextOperatorId(),
                                                                                                  windowInputSchema,
                                                                                                  windowOutputSchema,
                                                                                                  windowDefinition);
@@ -509,13 +503,13 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const QueryPl
     // if we have a sliding window and use slicing we have to create another slice merge operator
     if (windowType == Windowing::TimeBasedWindowType::SLIDINGWINDOW
         && options->getWindowingStrategy() == WindowingStrategy::SLICING) {
-        auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(Util::getNextOperatorId(),
+        auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(getNextOperatorId(),
                                                                                        windowInputSchema,
                                                                                        windowOutputSchema,
                                                                                        windowDefinition);
         operatorNode->insertBetweenThisAndChildNodes(mergingOperator);
     }
-    auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(Util::getNextOperatorId(),
+    auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(getNextOperatorId(),
                                                                             windowInputSchema,
                                                                             windowOutputSchema,
                                                                             windowDefinition);

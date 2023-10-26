@@ -13,7 +13,6 @@
 
 add_source_files(nes-core
         QueryCompilerOptions.cpp
-        QueryCompiler.cpp
         QueryCompilationRequest.cpp
         QueryCompilationResult.cpp
         NautilusQueryCompiler.cpp

@@ -117,7 +117,7 @@ TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
 INSTANTIATE_TEST_CASE_P(testFilterQueries,
                         FilterQueryExecutionTest,
                         ::testing::Values(
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                                          QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<FilterQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

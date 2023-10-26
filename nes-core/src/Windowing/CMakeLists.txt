@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Watermark)
+
 add_subdirectory(Runtime)
+add_subdirectory(Watermark)
 add_subdirectory(WindowPolicies)
-add_subdirectory(WindowTypes)

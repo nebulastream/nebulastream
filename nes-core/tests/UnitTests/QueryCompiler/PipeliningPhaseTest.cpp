@@ -357,8 +357,8 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
     auto windowAssignment =
         PhysicalWatermarkAssignmentOperator::create(SchemaPtr(), SchemaPtr(), WatermarkStrategyDescriptorPtr());
     auto slicePreAggregation =
-        PhysicalSlicePreAggregationOperator::create(Util::getNextOperatorId(), SchemaPtr(), SchemaPtr(), LogicalWindowDefinitionPtr());
-    auto windowSink = PhysicalWindowSinkOperator::create(Util::getNextOperatorId(), SchemaPtr(), SchemaPtr(), LogicalWindowDefinitionPtr());
+        PhysicalSlicePreAggregationOperator::create(getNextOperatorId(), SchemaPtr(), SchemaPtr(), LogicalWindowDefinitionPtr());
+    auto windowSink = PhysicalWindowSinkOperator::create(getNextOperatorId(), SchemaPtr(), SchemaPtr(), LogicalWindowDefinitionPtr());
     auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);

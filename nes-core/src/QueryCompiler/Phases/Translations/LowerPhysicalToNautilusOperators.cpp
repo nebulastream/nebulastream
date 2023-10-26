@@ -73,6 +73,9 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeUnit.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
@@ -99,17 +102,6 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowMeasures/TimeUnit.hpp>
-#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/ThresholdWindow.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <cstddef>
 #include <string_view>
 #include <utility>
