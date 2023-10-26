@@ -97,7 +97,6 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     const std::string OPERATOR_GRAPH_KEY = "operatorGraph";
     const std::string OPERATOR_ID_KEY = "operatorId";
     const std::string CHILDREN_KEY = "children";
-    const std::string SOURCE_CODE_KEY = "sourceCode";
     const std::string CONSTRAINT_KEY = "constraint";
     const std::string INPUT_DATA_KEY = "inputData";
 
@@ -116,7 +115,6 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     //Response payload constants
     const std::string AVAILABLE_NODES_KEY = "availNodes";
     const std::string PLACEMENT_KEY = "placement";
-    const std::string OPTIMIZATION_OBJECTIVES_KEY = "optimizationObjectives";
 
     const std::string EMPTY_STRING;
 };
