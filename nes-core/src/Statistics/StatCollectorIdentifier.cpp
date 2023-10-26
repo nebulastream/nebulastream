@@ -19,32 +19,25 @@ namespace NES {
 namespace Experimental::Statistics {
 
 StatCollectorIdentifier::StatCollectorIdentifier(const std::string& logicalSourceName,
-                                                 const std::string& physicalSourceName,
                                                  const std::string& fieldName,
-                                                 const std::string& expression)
-    : logicalSourceName(logicalSourceName), physicalSourceName(physicalSourceName),
-      fieldName(fieldName), expression(expression) {}
+                                                 const StatCollectorType statCollectorType)
+    : logicalSourceName(logicalSourceName), fieldName(fieldName), statCollectorType(statCollectorType) {}
 
 bool StatCollectorIdentifier::operator==(const StatCollectorIdentifier& statCollectorIdentifier) const {
     return logicalSourceName == statCollectorIdentifier.getLogicalSourceName()
-        && physicalSourceName == statCollectorIdentifier.getPhysicalSourceName()
-        && fieldName == statCollectorIdentifier.getFieldName() && expression == statCollectorIdentifier.getExpression();
+        && fieldName == statCollectorIdentifier.getFieldName()
+        && statCollectorType == statCollectorIdentifier.getStatCollectorType();
 }
-
 std::string StatCollectorIdentifier::getLogicalSourceName() const {
     return logicalSourceName;
-}
-
-std::string StatCollectorIdentifier::getPhysicalSourceName() const {
-    return physicalSourceName;
 }
 
 std::string StatCollectorIdentifier::getFieldName() const {
     return fieldName;
 }
 
-std::string StatCollectorIdentifier::getExpression() const {
-    return expression;
+StatCollectorType StatCollectorIdentifier::getStatCollectorType() const {
+    return statCollectorType;
 }
 
 }

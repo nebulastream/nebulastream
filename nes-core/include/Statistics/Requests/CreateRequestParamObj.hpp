@@ -30,8 +30,8 @@ namespace Experimental::Statistics {
 class CreateRequestParamObj : public RequestParamObj {
   public:
     CreateRequestParamObj(const std::string& logicalSourceName,
-                         const std::string& fieldName,
-                         const StatCollectorType statCollectorType)
+                          const std::string& fieldName,
+                          const StatCollectorType statCollectorType)
         : RequestParamObj(logicalSourceName, fieldName, statCollectorType) {}
 		};
 	}

@@ -18,16 +18,17 @@
 
 namespace NES {
 
-void ProbeRequestUtil::copyProbeRequest(const Experimental::Statistics::ProbeRequestParamObjPtr& probeRequestParamObjPtr,
+void ProbeRequestUtil::copyProbeRequest(const Experimental::Statistics::ProbeRequestParamObj& probeRequestParamObj,
                              ProbeStat* probeRequest) {
-    probeRequest->set_logicalsourcename(probeRequestParamObjPtr->getLogicalSourceName());
-    for (std::string physicalSourceName : probeRequestParamObjPtr->getPhysicalSourceNames()){
+    probeRequest->set_logicalsourcename(probeRequestParamObj.getLogicalSourceName());
+    probeRequest->set_fieldname(probeRequestParamObj.getFieldName());
+    probeRequest->set_statcollectortype((uint32_t) probeRequestParamObj.getStatCollectorType());
+    for (auto physicalSourceName : probeRequestParamObj.getPhysicalSourceNames()){
         probeRequest->add_physicalsourcenames(physicalSourceName);
     }
-    probeRequest->set_fieldname(probeRequestParamObjPtr->getFieldName());
-    probeRequest->set_expression(probeRequestParamObjPtr->getExpression());
-    probeRequest->set_starttime(probeRequestParamObjPtr->getStartTime());
-    probeRequest->set_endtime(probeRequestParamObjPtr->getEndTime());
-    probeRequest->set_merge(probeRequestParamObjPtr->getMerge());
+    probeRequest->set_expression(probeRequestParamObj.getProbeExpression());
+    probeRequest->set_starttime(probeRequestParamObj.getStartTime());
+    probeRequest->set_endtime(probeRequestParamObj.getEndTime());
+    probeRequest->set_merge(probeRequestParamObj.getMerge());
 }
 }

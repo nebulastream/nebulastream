@@ -53,7 +53,7 @@ class ProbeRequestParamObj : public RequestParamObj {
     /**
      * @return returns the physicalSourceNames over which the statCollectors were generated that we wish to probe/query
      */
-    std::vector<std::string> getPhysicalSourceNames() {
+    std::vector<std::string> getPhysicalSourceNames() const {
         return physicalSourceNames;
     }
 

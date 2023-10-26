@@ -51,13 +51,12 @@ class RequestParamObj {
     /**
      * @return returns the type of StatCollector with which the statistic is to be generated
      */
-    StatCollectorType getCreateExpression() const {
+    StatCollectorType getStatCollectorType() const {
         return statCollectorType;
     }
 
   private:
     std::string logicalSourceName;
-    std::vector<std::string> physicalSourceNames;
     std::string fieldName;
     StatCollectorType statCollectorType;
 };
