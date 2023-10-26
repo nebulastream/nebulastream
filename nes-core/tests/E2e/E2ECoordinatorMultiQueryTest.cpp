@@ -52,13 +52,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
                                                     TestUtils::enableDebug(),
-                                                    TestUtils::enableNautilusCoordinator(),
                                                     TestUtils::numberOfSlots(8, true)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
-                                          TestUtils::enableNautilusWorker(),
                                           TestUtils::enableDebug(),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::numberOfSlots(8),
@@ -143,7 +141,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
-                                          TestUtils::enableNautilusWorker(),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
                                           TestUtils::logicalSourceName("default_logical"),
@@ -247,7 +244,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     auto worker =
         TestUtils::startWorker({TestUtils::rpcPort(0),
                                 TestUtils::dataPort(0),
-                                TestUtils::enableNautilusWorker(),
                                 TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                 TestUtils::logicalSourceName("QnV"),
                                 TestUtils::sourceType(SourceType::CSV_SOURCE),
@@ -444,7 +440,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
-                                                    TestUtils::enableNautilusCoordinator(),
                                                     TestUtils::setDistributedWindowChildThreshold(100),
                                                     TestUtils::setDistributedWindowCombinerThreshold(0)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -460,7 +455,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
-                                          TestUtils::enableNautilusWorker(),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalSourceName("window"),
                                           TestUtils::sourceType(SourceType::CSV_SOURCE),
