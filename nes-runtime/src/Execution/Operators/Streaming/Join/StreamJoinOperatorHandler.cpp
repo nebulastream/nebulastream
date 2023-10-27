@@ -79,6 +79,8 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
         watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
 
+    std::vector<std::pair<WindowInfo, std::vector<StreamSlicePtr>>> toBeEmitted;
+
     {
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
         for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
@@ -87,15 +89,20 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
                 // This window can not be triggered yet or has already been triggered
                 continue;
             }
+
             slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
             NES_INFO("Emitting all slices for window {}", windowInfo.toString());
 
-            // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
-            // For bucketing, this should be only done once
-            for (auto& sliceLeft : slicesAndStateForWindow.slices) {
-                for (auto& sliceRight : slicesAndStateForWindow.slices) {
-                    emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
-                }
+            toBeEmitted.emplace_back(windowInfo, std::move(slicesAndStateForWindow.slices));
+        }
+    }
+
+    // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
+    // For bucketing, this should be only done once
+    for (const auto& [window, emittedSlices] : toBeEmitted) {
+        for (auto& sliceLeft : emittedSlices) {
+            for (auto& sliceRight : emittedSlices) {
+                emitSliceIdsToProbe(*sliceLeft, *sliceRight, window, pipelineCtx);
             }
         }
     }
