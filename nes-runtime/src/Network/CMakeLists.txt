@@ -17,3 +17,11 @@ add_source_files(nes-runtime
         PartitionManager.cpp
         detail/BaseNetworkChannel.cpp
         )
+
+
+add_source_files(nes-runtime
+        ZmqServer.cpp
+        NetworkManager.cpp
+        NetworkSink.cpp
+        NetworkSource.cpp
+)

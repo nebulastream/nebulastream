@@ -684,6 +684,9 @@ add_subdirectory(nes-configurations)
 add_subdirectory(nes-operators)
 # Add target for optimizer
 add_subdirectory(nes-optimizer)
+#
+add_subdirectory(nes-worker)
+
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
 # Add target for client

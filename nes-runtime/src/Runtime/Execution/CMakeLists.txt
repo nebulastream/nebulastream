@@ -15,4 +15,6 @@ add_source_files(nes-runtime
         ExecutablePipelineStage.cpp
         PipelineExecutionContext.cpp
         DiscardingExecutablePipelineStage.cpp
+        ExecutablePipeline.cpp
+        ExecutableQueryPlan.cpp
 )

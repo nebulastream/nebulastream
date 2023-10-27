@@ -12,6 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        NesWorker.cpp
         NesCoordinator.cpp
 )

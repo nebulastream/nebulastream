@@ -20,6 +20,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Services/ReplicationService.hpp>
 #include <Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>

@@ -12,8 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        ConvertLogicalToPhysicalSource.cpp
-        ConvertLogicalToPhysicalSink.cpp
         QueryDeploymentPhase.cpp
         QueryUndeploymentPhase.cpp
         SampleCodeGenerationPhase.cpp

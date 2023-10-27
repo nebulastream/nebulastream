@@ -13,7 +13,7 @@
 */
 #include <BaseIntegrationTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>
 #include <gtest/gtest.h>

@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
