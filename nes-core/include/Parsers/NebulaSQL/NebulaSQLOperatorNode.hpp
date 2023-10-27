@@ -29,33 +29,34 @@ namespace NES::Parsers {
 * and specific attributes of the specific operator in order to create the query (tree).
 */
 
-        class NebulaSQLOperatorNode {
-          public:
-            //Constructors
-            explicit NebulaSQLOperatorNode(int32_t id);
-            // Getter and Setter
-            int32_t getId() const;
-            void setId(int32_t id);
-            const std::string& getOperatorName() const;
-            void setOperatorName(const std::string& operatorName);
-            int32_t getRightChildId() const;
-            void setRightChildId(int32_t rightChildId);
-            int32_t getLeftChildId() const;
-            void setLeftChildId(int32_t leftChildId);
-            const std::pair<int, int>& getMinMax() const;
-            void setMinMax(const std::pair<int, int>& minMax);
-            int32_t getParentNodeId() const;
-            void setParentNodeId(int32_t parentNodeId);
+class NebulaSQLOperatorNode {
+  public:
+    // Constructor
+    explicit NebulaSQLOperatorNode(int32_t id);
 
-          private:
-            int32_t id;
-            std::string operatorName;
-            int32_t rightChildId = -1;
-            int32_t leftChildId = -1;
-            std::pair<int32_t, int32_t> minMax;
-            int32_t parentNodeId = -1;
-        };
+    // Getters and Setters
+    int32_t getId() const;
+    void setId(int32_t id);
 
+    const std::string& getOperatorName() const;
+    void setOperatorName(const std::string& operatorName);
+
+    const std::pair<int32_t, int32_t>& getMinMax() const;
+    void setMinMax(const std::pair<int32_t, int32_t>& minMax);
+
+    int32_t getParentNodeId() const;
+    void setParentNodeId(int32_t parentNodeId);
+
+    void addChild(std::shared_ptr<NebulaSQLOperatorNode> child);
+    std::vector<std::shared_ptr<NebulaSQLOperatorNode>>& getChildren();
+
+  private:
+    int32_t id;
+    std::string operatorName;
+    std::pair<int32_t, int32_t> minMax;
+    int32_t parentNodeId;
+    std::vector<std::shared_ptr<NebulaSQLOperatorNode>> children;
+};
     }// namespace NES::Parsers
 
 #endif// NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLOPERATORNODE_HPP_

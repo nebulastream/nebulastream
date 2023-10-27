@@ -49,6 +49,12 @@ namespace NES::Parsers {
             void addWhereClause(ExpressionNodePtr expression);
 
             const std::vector<ExpressionNodePtr>& getProjectionFields() const;
+
+            uint64_t getLimit() const;
+            const std::string& getNewName() const;
+            const FieldAssignmentExpressionNodePtr& getMapExpression() const;
+            const WatermarkStrategyDescriptorPtr& getWatermarkStrategieDescriptor() const;
+            const NES::Windowing::WindowTypePtr getWindowType() const;
         };
     }// namespace NES::Parsers
 
