@@ -5,12 +5,8 @@
 add_subdirectory(Catalogs)
 add_subdirectory(Topology)
 
-add_nes_unit_test(hashmap-test "Util/HashMapTest.cpp")
-
-
 ### Node Engine Tests ###
 add_nes_integration_test(node-engine-test "Runtime/NodeEngineTest.cpp")
-
 
 add_nes_unit_test(watermark-manager-test "Runtime/WatermarkManagerTest.cpp")
 
@@ -19,7 +15,6 @@ add_nes_unit_test(translate-physical-operator-tests "QueryCompiler/LowerLogicalT
 
 ### AddScanAndEmitPhase Test ###
 add_nes_unit_test(add-scan-and-emit-phase-tests "QueryCompiler/AddScanAndEmitPhaseTest.cpp")
-
 
 ### ArrayType Test ###
 add_nes_unit_test(array-type-tests "QueryCompiler/ArrayTypeTest.cpp")
@@ -60,10 +55,6 @@ add_nes_unit_test(config-test "Configurations/ConfigTest.cpp")
 
 ### Timer Tests ###
 #add_nes_unit_test(timer-test "Util/TimerTest.cpp")
-
-### Adaptive Source Tests ###
-add_nes_unit_test(adaptive-sensor-tests "Sensors/AdaptiveKFTest.cpp")
-
 
 ### Location Tests ###
 add_nes_unit_test(location-unit-tests "Spatial/DataTypes/LocationUnitTest.cpp")

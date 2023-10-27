@@ -43,7 +43,7 @@ class ReconfigurationMessage {
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      */
-    explicit ReconfigurationMessage(const QueryId queryId,
+    explicit  ReconfigurationMessage(const QueryId queryId,
                                     const QuerySubPlanId parentPlanId,
                                     ReconfigurationType type,
                                     ReconfigurablePtr instance = nullptr,

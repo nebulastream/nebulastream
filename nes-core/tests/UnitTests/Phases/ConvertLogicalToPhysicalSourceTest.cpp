@@ -25,7 +25,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Util/Logger/Logger.hpp>

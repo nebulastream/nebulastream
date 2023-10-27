@@ -12,14 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        MonitoringAgent.cpp
-        MonitoringCatalog.cpp
-        MonitoringManager.cpp
-        MonitoringPlan.cpp
+       MonitoringManager.cpp
 )
 
-add_subdirectory(MetricCollectors)
-add_subdirectory(Metrics)
-add_subdirectory(ResourcesReader)
-add_subdirectory(Storage)
-add_subdirectory(Util)

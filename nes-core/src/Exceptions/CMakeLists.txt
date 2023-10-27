@@ -14,13 +14,11 @@
 add_source_files(nes-core
         ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp
-        TaskExecutionException.cpp
         QueryDeploymentException.cpp
         QueryUndeploymentException.cpp
         WindowProcessingException.cpp
         InvalidCoordinateFormatException.cpp
         MapEntryNotFoundException.cpp
-        LocationProviderException.cpp
         ExecutionNodeNotFoundException.cpp
         RPCException.cpp
         RPCQueryUndeploymentException.cpp

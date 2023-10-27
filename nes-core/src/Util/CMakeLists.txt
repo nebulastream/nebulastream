@@ -12,9 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        Core.cpp
-        BufferSequenceNumber.cpp
-        KalmanFilter.cpp
         PlanJsonGenerator.cpp
         )
 if (NES_USE_MQTT)
@@ -22,5 +19,3 @@ if (NES_USE_MQTT)
             MQTTClientWrapper.cpp
             )
 endif ()
-add_subdirectory(Experimental)
-add_subdirectory(DumpHandler)

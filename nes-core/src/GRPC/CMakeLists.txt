@@ -13,11 +13,7 @@
 
 add_source_files(nes-core
         CoordinatorRPCServer.cpp
-        CoordinatorRPCClient.cpp
         WorkerRPCClient.cpp
-        WorkerRPCServer.cpp
         GrpcLibraryInizializer.cpp
-        CallData.cpp
-        HealthCheckRPCServer.cpp
 )
 
