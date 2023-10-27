@@ -11,15 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp"
-#include "Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp"
-#include "Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp"
-#include "Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp"
-#include "Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp"
-#include "Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp"
-#include "Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp"
-#include "Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp"
-#include "Operators/LogicalOperators/Windows/Types/WindowType.hpp"
+#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>

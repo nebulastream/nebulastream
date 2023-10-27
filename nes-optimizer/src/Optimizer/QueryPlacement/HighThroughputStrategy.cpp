@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Optimizer/QueryPlacement/HighThroughputStrategy.hpp"
+#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
 #include <API/Query.hpp>
 #include <Catalogs/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>

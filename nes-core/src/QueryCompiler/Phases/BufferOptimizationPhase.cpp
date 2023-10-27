@@ -51,8 +51,6 @@ bool BufferOptimizationPhase::isReadOnlyInput(OperatorPipelinePtr pipeline) {
 
 OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
   return operatorPipeline;
-
-
 }
 
 }// namespace NES::QueryCompilation

@@ -100,7 +100,6 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(const PipelineQueryP
                                                             const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // for pipeline breakers we create a new pipeline
     currentPipeline->prependOperator(currentOperator->as<PhysicalOperators::PhysicalOperator>()->copy());
-    registerPipelineWithOperatorHandlers(currentPipeline, currentOperator);
 
     for (const auto& node : currentOperator->getChildren()) {
         auto newPipeline = OperatorPipeline::create();
@@ -108,13 +107,6 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(const PipelineQueryP
         newPipeline->addSuccessor(currentPipeline);
         process(pipelinePlan, pipelineOperatorMap, newPipeline, node->as<PhysicalOperators::PhysicalOperator>());
     }
-}
-
-void DefaultPipeliningPhase::registerPipelineWithOperatorHandlers(const OperatorPipelinePtr&,
-                                                                  const PhysicalOperators::PhysicalOperatorPtr&) {
-    // this function can also be used to register with other types of operator handlers
-    // and may be called from other functions than the current processPipelineBreakerOperator().
-
 }
 
 void DefaultPipeliningPhase::processFusibleOperator(const PipelineQueryPlanPtr& pipelinePlan,

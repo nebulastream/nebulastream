@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "QueryCompiler/QueryCompilerOptions.hpp"
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>

@@ -14,7 +14,6 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_
-#include "Runtime/Execution/OperatorHandler.hpp"
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
