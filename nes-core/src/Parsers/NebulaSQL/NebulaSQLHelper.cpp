@@ -40,5 +40,12 @@ namespace NES::Parsers {
         }
         void NebulaSQLHelper::addProjectionField(ExpressionNodePtr expressionNode) { this->projectionFields.push_back(expressionNode); }
         const std::vector<ExpressionNodePtr>& NebulaSQLHelper::getProjectionFields() const { return this->projectionFields; }
+        uint64_t NebulaSQLHelper::getLimit() const { return 0; }
+        const std::string& NebulaSQLHelper::getNewName() const { return <#initializer #>; }
+        const FieldAssignmentExpressionNodePtr& NebulaSQLHelper::getMapExpression() const { return <#initializer #>; }
+        const WatermarkStrategyDescriptorPtr& NebulaSQLHelper::getWatermarkStrategieDescriptor() const {
+            return <#initializer #>;
+        }
+        const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const { return NES::Windowing::WindowTypePtr(); }
 
     }// namespace NES::Parsers

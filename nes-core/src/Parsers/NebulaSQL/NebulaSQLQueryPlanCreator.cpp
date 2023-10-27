@@ -35,14 +35,19 @@ namespace NES::Parsers {
             queryPlan = QueryPlanBuilder::createQueryPlan(helper.getSources().at(0));
             ExpressionNodePtr predicate = helper.getWhereClauses().at(0);
             queryPlan = QueryPlanBuilder::addFilter(predicate, queryPlan);
-            queryPlan = addProjections(queryPlan);
+            queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
+            queryPlan = QueryPlanBuilder::addLimit(helper.getLimit(), queryPlan);
+            queryPlan = QueryPlanBuilder::addRename(helper.getNewName(),queryPlan);
+            queryPlan = QueryPlanBuilder::addMap(helper.getMapExpression(),queryPlan);
+            /*
+            queryPlan = QueryPlanBuilder::addUnion(queryPlan,queryPlan);
+            queryPlan = QueryPlanBuilder::addJoin();
+            */
+            queryPlan = QueryPlanBuilder::assignWatermark(queryPlan,helper.getWatermarkStrategieDescriptor());
+            queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan,helper.getWindowType());
             queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinkDescriptor());
 
             return queryPlan;
-        }
-
-        QueryPlanPtr NebulaSQLQueryPlanCreator::addProjections(QueryPlanPtr queryPlan) const {
-            return QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
         }
 
         void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context) {
