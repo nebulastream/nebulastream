@@ -132,7 +132,7 @@ macro(project_enable_release)
                 COMMAND echo "Performing post tag release steps"
                 COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
                 COMMAND echo "Tag release completed"
-                )
+        )
 
         add_custom_target(minor_release COMMAND echo "Releasing Minor Version of NebulaStream")
         add_custom_command(TARGET minor_release
@@ -143,7 +143,7 @@ macro(project_enable_release)
                 COMMAND echo "Performing post tag release steps"
                 COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
                 COMMAND echo "Tag release completed"
-                )
+        )
 
         add_custom_target(major_release COMMAND echo "Releasing Major Version of NebulaStream")
         add_custom_command(TARGET major_release
@@ -154,7 +154,7 @@ macro(project_enable_release)
                 COMMAND echo "Performing post tag release steps"
                 COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
                 COMMAND echo "Tag release completed"
-                )
+        )
     else ()
         message(INFO " -- Disabled release target as currently not on master branch.")
     endif ()
@@ -252,25 +252,25 @@ endfunction()
 function(set_linux_musl_release_information)
     file(STRINGS "/etc/os-release" data_list REGEX "^(ID|VERSION_ID)=")
     # Look for lines like "ID="..." and VERSION_ID="..."
-    foreach(_var ${data_list})
-        if("${_var}" MATCHES "^(ID)=(.*)$")
+    foreach (_var ${data_list})
+        if ("${_var}" MATCHES "^(ID)=(.*)$")
             set(ID "${CMAKE_MATCH_2}" PARENT_SCOPE)
-        elseif("${_var}" MATCHES "^(VERSION_ID)=(.*)$")
+        elseif ("${_var}" MATCHES "^(VERSION_ID)=(.*)$")
             set(VERSION_ID "${CMAKE_MATCH_2}" PARENT_SCOPE)
-        endif()
-    endforeach()
+        endif ()
+    endforeach ()
 endfunction()
 
 function(is_host_musl)
     file(STRINGS "/etc/os-release" data_list REGEX "^(ID|VERSION_ID)=")
     # Look for lines like "ID="..." and VERSION_ID="..."
-    foreach(_var ${data_list})
-        if("${_var}" MATCHES "^(ID)=(.*)$")
-            if("${CMAKE_MATCH_2}" MATCHES "alpine")
+    foreach (_var ${data_list})
+        if ("${_var}" MATCHES "^(ID)=(.*)$")
+            if ("${CMAKE_MATCH_2}" MATCHES "alpine")
                 set(HOST_IS_MUSL TRUE PARENT_SCOPE)
-            else()
+            else ()
                 set(HOST_IS_MUSL FALSE PARENT_SCOPE)
-            endif()
-        endif()
-    endforeach()
+            endif ()
+        endif ()
+    endforeach ()
 endfunction()

@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYMERGER_HYBRIDCOMPLETEQUERYMERGERRULE_HPP_
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
+#include <Util/QuerySignatures/Z3QuerySignatureContext.hpp>
 
 namespace z3 {
 class context;
@@ -23,7 +24,8 @@ using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES::Optimizer {
-
+class QuerySignatureContext;
+using ContextPtr = std::shared_ptr<QuerySignatureContext>;
 class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 
@@ -81,7 +83,7 @@ class HybridCompleteQueryMergerRule final : public BaseQueryMergerRule {
   private:
     explicit HybridCompleteQueryMergerRule(z3::ContextPtr context);
     SignatureEqualityUtilPtr signatureEqualityUtil;
-    z3::ContextPtr context;
+    Z3QuerySignatureContext context;
 };
 }// namespace NES::Optimizer
 

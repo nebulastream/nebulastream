@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 
 namespace NES::Optimizer {

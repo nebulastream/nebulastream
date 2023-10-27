@@ -18,12 +18,23 @@ add_subdirectory(src)
 get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-optimizer SHARED ${NES_OPTIMIZER_SOURCE_FILES})
-target_link_libraries(nes-optimizer PUBLIC nes-catalogs ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
-
+add_library(nes-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
 target_include_directories(nes-optimizer PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+target_link_libraries(nes-optimizer PRIVATE nes-common  nes-data-types  nes-configurations nes-operators nes-catalogs)
+
+# CPR and CURL for Elegant optimizer
+target_link_libraries(nes-optimizer PRIVATE cpr::cpr ${CURL_LIBRARIES})
+
+# Z3 Solver for signature computation
+find_package(Z3 REQUIRED)
+if (NOT ${Z3_FOUND})
+    message(FATAL_ERROR "Unable to find Z3")
+endif ()
+target_link_libraries(nes-optimizer PRIVATE ${Z3_LIBRARIES})
+message(STATUS "Using z3: " ${Z3_LIBRARIES})
+
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-optimizer REUSE_FROM nes-common)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC

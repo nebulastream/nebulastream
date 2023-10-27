@@ -14,6 +14,7 @@
 
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <sstream>
 
 namespace NES::Windowing {

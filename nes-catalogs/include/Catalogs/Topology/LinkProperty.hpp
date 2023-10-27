@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_TOPOLOGY_LINKPROPERTY_HPP_
 
 #include <cstdint>
+#include <memory>
 
 /**
  * @brief class to store link properties between two topology nodes

@@ -16,7 +16,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/OperatorState.hpp>
-#include <Util/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/QuerySignatureContext.hpp>
 #include <utility>
 
 namespace NES {
@@ -26,7 +26,7 @@ LogicalOperatorNode::LogicalOperatorNode(uint64_t id)
 
 Optimizer::QuerySignaturePtr LogicalOperatorNode::getZ3Signature() { return z3Signature; }
 
-void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
+void LogicalOperatorNode::inferZ3Signature(const Optimizer::QuerySignatureContext& context) {
     if (z3Signature) {
         return;
     }
@@ -38,7 +38,7 @@ void LogicalOperatorNode::inferZ3Signature(const z3::ContextPtr& context) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferZ3Signature(context);
     }
-    z3Signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
+    z3Signature = context.createQuerySignatureForOperator(operatorNode);
 }
 
 void LogicalOperatorNode::setZ3Signature(Optimizer::QuerySignaturePtr signature) { this->z3Signature = std::move(signature); }

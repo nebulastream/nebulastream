@@ -15,7 +15,6 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <GRPC/CoordinatorRPCClient.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp>
 #include <Sources/Arrow/ArrowSourceDescriptor.hpp>
 

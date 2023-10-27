@@ -21,11 +21,7 @@ add_library(nes-onnx SHARED
 
 set(ONNX_VERSION 1.16.1)
 include(ImportONNX.cmake)
-target_link_libraries(nes-onnx
-        PRIVATE
-        nes
-        onnxruntime
-    )
+target_link_libraries(nes-onnx PRIVATE nes-common nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations onnxruntime)
 
 add_dependencies(build_all_plugins nes-onnx)
 

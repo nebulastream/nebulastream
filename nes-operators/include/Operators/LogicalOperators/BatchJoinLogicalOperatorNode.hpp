@@ -17,9 +17,7 @@
 
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
-
 #include <memory>
-#include <z3++.h>
 
 namespace NES::Experimental {
 

@@ -99,7 +99,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
     auto hashJoinOpHandler = std::dynamic_pointer_cast<Operators::HJOperatorHandlerSlicing>(
-        Operators::HJOperatorHandlerSlicing::create(std::vector<::OriginId>({1}),
+        Operators::HJOperatorHandlerSlicing::create(std::vector<OriginId>({1}),
                                                     outputOriginId,
                                                     buildHelper.windowSize,
                                                     buildHelper.windowSize,
@@ -234,7 +234,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
                                                          hashJoinProbeHelper.bufferManager,
                                                          hashJoinProbeHelper.numberOfBuffersPerWorker);
-    auto inputOriginIds = std::vector<::OriginId>({1, 2});
+    auto inputOriginIds = std::vector<OriginId>({1, 2});
     OriginId outputOriginId = 3;
     auto hashJoinOpHandler = Operators::HJOperatorHandlerSlicing::create(inputOriginIds,
                                                                          outputOriginId,

@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <sstream>
 #include <utility>
 
 namespace NES {

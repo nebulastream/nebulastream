@@ -32,10 +32,11 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
-#include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
+#include <Util/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/QuerySignatures/Z3QuerySignatureContext.hpp>
 #include <z3++.h>
 
 using namespace NES;
@@ -64,7 +65,7 @@ class QuerySignatureUtilTests : public Testing::BaseUnitTest {
 };
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Predicate
     ExpressionNodePtr predicate = Attribute("value") == 40;
     predicate->inferStamp(schema);
@@ -88,12 +89,12 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40;
@@ -120,12 +121,12 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
@@ -150,13 +151,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
@@ -183,13 +184,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 + 40 && Attribute("id") >= 40;
@@ -216,13 +217,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40;
@@ -249,13 +250,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
     ExpressionNodePtr predicate1 = Attribute("value") == 40 && Attribute("id") >= 40;
@@ -281,13 +282,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression = Attribute("value") = 40;
     expression->inferStamp(schema);
@@ -311,13 +312,13 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
     FieldAssignmentExpressionNodePtr expression2 = Attribute("id") = 40;
@@ -341,13 +342,13 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("id") = 40;
     FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = Attribute("id") + Attribute("value");
@@ -375,13 +376,13 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     auto sig2 = logicalOperator22->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("id") = 40;
     expression1->inferStamp(schema);
@@ -411,13 +412,13 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     auto sig2 = logicalOperator22->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
     expression1->inferStamp(schema);
@@ -443,13 +444,13 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSourceWithSameSourceName) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Predicate
     auto sourceDescriptor = LogicalSourceDescriptor::create("Car");
     sourceDescriptor->setSchema(schema);
@@ -466,13 +467,13 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameSourceName) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSourceWithDifferentSourceName) {
 
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Predicate
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -491,12 +492,12 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentSourceName) {
     auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -522,12 +523,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
     auto sig2 = projectionOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsButDifferentSources) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -553,12 +554,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
     auto sig2 = projectionOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperators) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -583,12 +584,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
     auto sig2 = projectionOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperator) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -618,12 +619,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermarkAssignerOperator) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -649,12 +650,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
     auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAssignerOperator) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -682,12 +683,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
     auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentLateness) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -717,12 +718,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentField) {
-    std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
+    auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
@@ -752,6 +753,6 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
-    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context.getContext());
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }

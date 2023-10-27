@@ -54,7 +54,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(NES_USE_CCACHE "USE CCACHE" OFF)
-
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
@@ -112,6 +112,8 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 # C++ Standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 # Set NES Flags
 set(NES_SPECIFIC_FLAGS)
@@ -227,6 +229,8 @@ if (ENABLE_IWYU)
     find_program(iwyu_path NAMES include-what-you-use iwyu)
     if (iwyu_path)
         message(STATUS "IWYU enabled and found! Suggestions will be printed to stderr.")
+        set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+        set(CMAKE_C_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
     else ()
         message(WARNING "IWYU is enabled but not found! You will not get any suggestions")
     endif ()
@@ -306,7 +310,7 @@ set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
 # spdlog
 find_package(spdlog REQUIRED)
-set(LIBRARIES ${LIBRARIES} spdlog::spdlog)
+set(LIBRARIES_SDP spdlog::spdlog)
 
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
@@ -368,7 +372,7 @@ find_package(ZeroMQ CONFIG REQUIRED)
 if (NOT ${ZeroMQ_FOUND})
     message(FATAL_ERROR "Unable to find libzmq")
 endif ()
-set(LIBRARIES ${LIBRARIES} libzmq libzmq-static)
+set(LIBRARIES_ZMQ ${LIBRARIES_ZMQ} libzmq libzmq-static)
 
 # CppZMQ
 message(STATUS "cppzmq")
@@ -378,14 +382,9 @@ if (NOT ${CPPZMQ_FOUND})
 endif ()
 set(LIBRARIES ${LIBRARIES} cppzmq cppzmq-static)
 
-# Z3 Solver
-message(STATUS "Z3")
-find_package(Z3 REQUIRED)
-if (NOT ${Z3_FOUND})
-    message(FATAL_ERROR "Unable to find Z3")
-endif ()
-set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
-message(STATUS "Using z3: " ${Z3_LIBRARIES})
+if (NES_USE_MQTT)
+    add_compile_definitions(ENABLE_MQTT_BUILD)
+endif (NES_USE_MQTT)
 
 # Backward
 include(cmake/BackwardConfig.cmake)
@@ -394,21 +393,8 @@ add_compile_definitions(${BACKWARD_DEFINITIONS})
 link_directories(${BACKWARD_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
 
-# folly
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    include(CMakeFindDependencyMacro)
-    find_dependency(gflags CONFIG REQUIRED) # required on macos
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
-    include_directories(${FOLLY_INCLUDE_DIR})
-endif ()
-
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
-
-#Oatpp
-find_package(oatpp REQUIRED)
-set(LIBRARIES ${LIBRARIES} oatpp::oatpp oatpp::oatpp-test)
 
 # CPR
 find_package(cpr REQUIRED)
@@ -421,10 +407,6 @@ endif ()
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
 
-# Eigen3 linear alg library
-find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
-set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
-
 # s2 Library
 if (NES_USE_S2)
     message(STATUS "s2 is enabled")
@@ -432,41 +414,20 @@ if (NES_USE_S2)
     if (NOT s2_FOUND)
         message(FATAL_ERROR "Unable to find s2 library")
     endif ()
-    set(LIBRARIES ${LIBRARIES} s2::s2)
+    set(LIBRARIES_S2 s2::s2)
     add_compile_definitions(S2DEF)
 else ()
     message(STATUS "s2 is disabled")
 endif ()
 
-# Library containing Kafka client
 if (NES_USE_KAFKA)
-    # TODO #3351 The commands should be moved into a separate CMake config file.
     if (NOT APPLE)
-        find_package(RdKafka CONFIG REQUIRED)
-        set(LIBRARIES ${LIBRARIES} RdKafka::rdkafka RdKafka::rdkafka++)
-
-        include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
         add_compile_definitions(ENABLE_KAFKA_BUILD)
-        add_library(cppkafka::cppkafka SHARED IMPORTED)
-        set_target_properties(cppkafka::cppkafka
-                PROPERTIES
-                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
-                INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
-        )
         message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
     else ()
         message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
     endif ()
 endif ()
-
-# Library containing MQTT client
-if (NES_USE_MQTT)
-    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
-    find_package(PahoMqttCpp CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3-static)
-    add_compile_definitions(ENABLE_MQTT_BUILD)
-endif (NES_USE_MQTT)
 
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
@@ -475,7 +436,7 @@ if (NES_USE_GPU)
         message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
     endif ()
     set(CMAKE_CUDA_STANDARD 17)
-    set(LIBRARIES ${LIBRARIES} CUDA::cudart CUDA::nvrtc)
+    set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
     message("CUDA dependencies OK")
 endif (NES_USE_GPU)
 
@@ -485,8 +446,6 @@ if (NES_USE_OPENCL)
         MESSAGE(STATUS "Found OpenCL ${OpenCL_VERSION_STRING}")
         MESSAGE(STATUS "OpenCL libraries: ${OpenCL_LIBRARIES}")
         MESSAGE(STATUS "OpenCL includes: ${OpenCL_INCLUDE_DIRS}")
-        set(LIBRARIES ${LIBRARIES} ${OpenCL_LIBRARIES})
-        include_directories(${OpenCL_INCLUDE_DIRS})
         add_compile_definitions(ENABLE_OPENCL)
     else ()
         message(FATAL_ERROR "Could not find OpenCL")
@@ -500,15 +459,6 @@ if (NES_ENABLES_TESTS)
     endif ()
     set(GTEST_LIBRARIES ${GTEST_LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 endif ()
-
-# Antlr
-# Currently antlr dose not come with an own cmake file
-message(STATUS Antlr ${NES_DEPENDENCIES_BINARY_ROOT})
-include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/antlr4-runtime)
-if (NOT APPLE)
-    set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libuuid.a)
-endif ()
-set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libantlr4-runtime.a)
 
 # PAPI
 if (CMAKE_USE_PAPI_PROFILER)
@@ -557,7 +507,7 @@ else ()
     message(FATAL_ERROR "Cannot find llvm. LLVM ${LLVM_VERSION} is required. Use self-hosted=1 or install it manually.")
 endif ()
 
-find_package(Clang CONFIG REQUIRED)
+find_package(Clang)
 if (Clang_FOUND)
     get_property(CLANG_FORMAT_EXECUTABLE TARGET clang-format PROPERTY LOCATION)
     get_property(CLANG_EXECUTABLE TARGET clang PROPERTY LOCATION)
@@ -574,7 +524,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
         message(STATUS "JNI found")
         message(STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
         message(STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
-        set(LIBRARIES ${LIBRARIES} ${JNI_LIBRARIES})
         include_directories(${JNI_INCLUDE_DIRS})
         add_compile_definitions(ENABLE_JNI)
     else ()
@@ -681,8 +630,10 @@ add_subdirectory(nes-configurations)
 add_subdirectory(nes-operators)
 # Add target for optimizer
 add_subdirectory(nes-optimizer)
-# Add target for core, which contains the nes lib
-add_subdirectory(nes-core)
+# Add target and executable for nes worker
+add_subdirectory(nes-worker)
+# Add target for for nes-coordinator
+add_subdirectory(nes-coordinator)
 # Add target for client
 add_subdirectory(nes-client)
 # Add targets for plugins
@@ -700,7 +651,8 @@ add_subdirectory(cmake/docs)
 
 # if the include what you use path is set configure it for the nes target.
 if (iwyu_path)
-    set_property(TARGET nes PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
+    set_property(TARGET nes-worker PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
+    set_property(TARGET nes-coordinator PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
 endif ()
 
 
@@ -718,7 +670,7 @@ include(CMakePackageConfigHelpers)
 # Create the Config.cmake files, which enables find_package(NebulaStream) from external CMAKE projects.
 configure_package_config_file(cmake/NebulaStreamConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
-        INSTALL_DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake)
+        INSTALL_DESTINATION NebulaStream/cmake)
 
 # Create Targets.cmake file, which exposes NebulaStream targets to external CMAKE projects
 export(EXPORT NebulaStreamTargets
@@ -744,7 +696,7 @@ install(EXPORT NebulaStreamTargets
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        DESTINATION ${LIB_INSTALL_DIR} ${ConfigPackageLocation})
+        DESTINATION ${ConfigPackageLocation})
 
 # Configure CPackage
 set(CPACK_GENERATOR "DEB")

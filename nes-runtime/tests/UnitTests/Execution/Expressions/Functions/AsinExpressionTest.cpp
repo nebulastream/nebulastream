@@ -33,20 +33,18 @@ class AsinExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down SinExpressionTest test class."); }
 };
 
-double calculateAsin(double x) { return std::asin(x); }
-
 TEST_F(AsinExpressionTest, evaluateSinExpressionFloat) {
     auto expression = UnaryExpressionWrapper<AsinExpression>();
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 1));
-        ASSERT_EQ(resultValue, (double) calculateAsin((float) 1));
+        ASSERT_EQ(resultValue, (double) std::asin((double) 1));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 1));
-        ASSERT_EQ(resultValue, (double) calculateAsin(1));
+        ASSERT_EQ(resultValue, (double) std::asin((double) 1));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }

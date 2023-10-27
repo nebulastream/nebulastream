@@ -14,4 +14,5 @@
 add_source_files(nes-operators
         NetworkSinkDescriptor.cpp
         NetworkSourceDescriptor.cpp
+        NesPartition.cpp
         )

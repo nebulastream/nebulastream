@@ -16,10 +16,8 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_JOINLOGICALOPERATORNODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <memory>
-#include <z3++.h>
 
 namespace NES {
 

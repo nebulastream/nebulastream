@@ -21,26 +21,79 @@ add_subdirectory(src)
 get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
-add_library(nes-runtime SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
+add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
 # if musl we cant use can't use backtrace for tracing
 if (HOST_IS_MUSL)
     target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
 endif ()
 
-target_link_libraries(nes-runtime PUBLIC nes-operators)
+target_link_libraries(nes-runtime PRIVATE nes-common nes-grpc nes-data-types nes-operators nes-configurations)
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+
+# folly
+if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    include(CMakeFindDependencyMacro)
+    find_dependency(gflags CONFIG REQUIRED) # required on macos
+    find_package(folly CONFIG REQUIRED)
+    target_link_libraries(nes-runtime PRIVATE Folly::folly)
+    target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
+endif ()
+
+# Library containing Kafka client
+if (NES_USE_KAFKA)
+    # TODO #3351 The commands should be moved into a separate CMake config file.
+    if (NOT APPLE)
+        find_package(cppkafka REQUIRED)
+        target_link_libraries(nes-runtime PRIVATE cppkafka::cppkafka )
+    else ()
+        message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
+    endif ()
+endif ()
+
+# Library containing MQTT client
+if (NES_USE_MQTT)
+    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+    find_package(PahoMqttCpp CONFIG REQUIRED)
+    target_link_libraries(nes-runtime PRIVATE PahoMqttCpp::paho-mqttpp3-static)
+endif (NES_USE_MQTT)
+
+
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-runtime REUSE_FROM nes-common)
 endif ()
 
-target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
+target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
+#target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
+
+
+# Add Private Dependencies
+target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ})
+
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
     target_link_libraries(nes-runtime PRIVATE nes-compiler)
 endif ()
+
+if (NES_USE_GPU)
+    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_CUDA})
+endif ()
+
+if (NES_USE_OPENCL)
+    find_package(OpenCL REQUIRED)
+    if (${OpenCL_FOUND})
+        MESSAGE(STATUS "Found OpenCL ${OpenCL_VERSION_STRING}")
+        MESSAGE(STATUS "OpenCL libraries: ${OpenCL_LIBRARIES}")
+        MESSAGE(STATUS "OpenCL includes: ${OpenCL_INCLUDE_DIRS}")
+        target_link_libraries(nes-runtime PRIVATE ${OpenCL_LIBRARIES})
+        target_include_directories(nes-runtime PRIVATE ${OpenCL_INCLUDE_DIRS})
+        target_compile_definitions(nes-runtime PRIVATE ENABLE_OPENCL)
+    else ()
+        message(FATAL_ERROR "Could not find OpenCL")
+    endif ()
+endif (NES_USE_OPENCL)
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
     message(STATUS "Enable dyncall")
@@ -61,7 +114,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
             BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a # Specify path to the library file that will be built
             INSTALL_DIR ${dyncall_dir} # Install dyncall to the specified directory
             UPDATE_DISCONNECTED 1
-            )
+    )
 
     # Create a static imported library for the external project
     add_library(dyncall STATIC IMPORTED)
@@ -127,7 +180,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
 
         get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
         get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
-        
+
         message(STATUS "CMAKE_CURRENT_SOURCE_DIR_EXECUTION: ${CMAKE_CURRENT_SOURCE_DIR}")
         message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
         message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
@@ -168,7 +221,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
             SOURCE_DIR "lib/flounder"
             BINARY_DIR "lib/flounder"
     )
-    set (flounder_BUILD_TESTING OFF CACHE INTERNAL "Turn off tests")
+    set(flounder_BUILD_TESTING OFF CACHE INTERNAL "Turn off tests")
     set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(flounder)
     target_compile_options(flounder PRIVATE -Wno-unqualified-std-cast-call)
@@ -191,6 +244,7 @@ else ()
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    target_link_libraries(nes-runtime PUBLIC ${JNI_LIBRARIES})
     # Define map java udf utils class file
     if (NES_JAVA_UDF_UTILS_PATH)
         # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
@@ -198,9 +252,10 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
 
         message(STATUS "Setting path of Java helpers to: ${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
 
+
         # Install Java deserialization helper.
         INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/stream/nebula/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH}/stream/nebula)
-    else()
+    else ()
         # Use Java helpers from test directory when working in CLion.
         target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")
     endif()

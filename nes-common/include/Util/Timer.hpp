@@ -16,7 +16,6 @@
 #define NES_COMMON_INCLUDE_UTIL_TIMER_HPP_
 
 #include <Util/Logger/Logger.hpp>
-
 #include <chrono>
 #include <string>
 #include <utility>
