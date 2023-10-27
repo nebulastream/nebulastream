@@ -14,14 +14,14 @@ limitations under the License.
 
 #include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
