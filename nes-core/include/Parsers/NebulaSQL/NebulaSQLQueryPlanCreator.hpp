@@ -80,7 +80,6 @@ namespace NES::Parsers {
             void enterWatermarkParameters(NebulaSQLParser::WatermarkParametersContext* context) override;
             void exitWatermarkClause(NebulaSQLParser::WatermarkClauseContext* context) override;
             void exitSingleStatement(NebulaSQLParser::SingleStatementContext* context) override;
-            QueryPlanPtr addProjections(QueryPlanPtr queryPlan) const;
         };
 
 
