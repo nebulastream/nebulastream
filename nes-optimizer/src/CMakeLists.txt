@@ -13,3 +13,4 @@
 
 add_subdirectory(Optimizer)
 add_subdirectory(Plans)
+add_subdirectory(Util)

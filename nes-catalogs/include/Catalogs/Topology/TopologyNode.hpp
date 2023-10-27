@@ -15,11 +15,12 @@
 #ifndef NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 #define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
-#include <Nodes/Node.hpp>
 #include <Catalogs/Topology/LinkProperty.hpp>
+#include <Nodes/Node.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <any>
+#include <fmt/core.h>
 #include <map>
 #include <optional>
 

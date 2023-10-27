@@ -16,51 +16,44 @@
 #define NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
 
 #include <Identifiers.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <string>
+#include <fmt/core.h>
 
 namespace NES::Network {
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
 
 class NesPartition {
   public:
-    explicit NesPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId)
-        : queryId(queryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId) {}
+    explicit NesPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId);
 
     /**
      * @brief getter for the queryId
      * @return the queryId
      */
-    [[nodiscard]] QueryId getQueryId() const { return queryId; }
+    [[nodiscard]] QueryId getQueryId() const;
 
     /**
      * @brief getter for the operatorId
      * @return the operatorId
      */
-    [[nodiscard]] OperatorId getOperatorId() const { return operatorId; }
+    [[nodiscard]] OperatorId getOperatorId() const;
 
     /**
      * @brief getter for the partitionId
      * @return the partitionId
      */
-    [[nodiscard]] PartitionId getPartitionId() const { return partitionId; }
+    [[nodiscard]] PartitionId getPartitionId() const;
 
     /**
      * @brief getter for the getSubpartitionId
      * @return the subpartitionId
      */
-    [[nodiscard]] SubpartitionId getSubpartitionId() const { return subpartitionId; }
+    [[nodiscard]] SubpartitionId getSubpartitionId() const;
 
-    [[nodiscard]] std::string toString() const {
-        return std::to_string(queryId) + "::" + std::to_string(operatorId) + "::" + std::to_string(partitionId)
-            + "::" + std::to_string(subpartitionId);
-    }
+    [[nodiscard]] std::string toString() const;
 
-    friend std::ostream& operator<<(std::ostream& os, const NesPartition& partition) {
-        os << partition.toString();
-        return os;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const NesPartition& partition);
 
     /**
      * @brief The equals operator for the NesPartition. It is not comparing threadIds
@@ -68,15 +61,9 @@ class NesPartition {
      * @param rhs
      * @return
      */
-    friend bool operator==(const NesPartition& lhs, const NesPartition& rhs) {
-        return lhs.queryId == rhs.queryId && lhs.operatorId == rhs.operatorId && lhs.partitionId == rhs.partitionId
-            && lhs.subpartitionId == rhs.subpartitionId;
-    }
+    friend bool operator==(const NesPartition& lhs, const NesPartition& rhs);
 
-    friend bool operator<(const NesPartition& lhs, const NesPartition& rhs) {
-        return lhs.queryId < rhs.queryId && lhs.operatorId < rhs.operatorId && lhs.partitionId < rhs.partitionId
-            && lhs.subpartitionId < rhs.subpartitionId;
-    }
+    friend bool operator<(const NesPartition& lhs, const NesPartition& rhs);
 
   private:
     QueryId queryId;
@@ -88,28 +75,15 @@ class NesPartition {
 namespace std {
 template<>
 struct hash<NES::Network::NesPartition> {
-    std::uint64_t operator()(const NES::Network::NesPartition& k) const {
-        using std::hash;
-
-        // Hash function for the NesPartition
-        // Compute individual hash values of the Ints and combine them using XOR and bit shifting:
-        return ((hash<uint64_t>()(k.getQueryId()) ^ (hash<uint64_t>()(k.getOperatorId()) << 1)) >> 1)
-            ^ ((hash<uint64_t>()(k.getPartitionId()) ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1)) >> 1);
-    }
+    std::uint64_t operator()(const NES::Network::NesPartition& k) const;
 };
+
 }// namespace std
 
 namespace fmt {
 template<>
 struct formatter<NES::Network::NesPartition> : formatter<std::string> {
-    auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out()) {
-        return fmt::format_to(ctx.out(),
-                              "query Id:{} OperatorId:{} PartitionId: {} SubpartitionID: {}",
-                              partition.getQueryId(),
-                              partition.getOperatorId(),
-                              partition.getPartitionId(),
-                              partition.getSubpartitionId());
-    }
+    auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out());
 };
 }//namespace fmt
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_

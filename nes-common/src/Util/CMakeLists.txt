@@ -30,7 +30,3 @@ add_subdirectory(Mobility)
 add_subdirectory(Subprocess)
 add_subdirectory(yaml)
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_subdirectory(JNI)
-endif ()
-

@@ -15,6 +15,6 @@
 include(ExternalProject)
 
 add_nes_unit_test(remote-client-test "Client/RemoteClientTest.cpp")
-target_link_libraries(remote-client-test nes-client nes)
+target_link_libraries(remote-client-test nes-client nes-coordinator nes-common)
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
 

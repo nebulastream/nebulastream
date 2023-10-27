@@ -18,12 +18,13 @@ add_subdirectory(src)
 get_source(nes-configurations NES_CONFIGURATIONS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-configurations SHARED ${NES_CONFIGURATIONS_SOURCE_FILES})
-target_link_libraries(nes-configurations PUBLIC nes-common)
+add_library(nes-configurations ${NES_CONFIGURATIONS_SOURCE_FILES})
+target_link_libraries(nes-configurations PRIVATE nes-common)
 
 target_include_directories(nes-configurations PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-configurations REUSE_FROM nes-common)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC

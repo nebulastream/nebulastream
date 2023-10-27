@@ -25,12 +25,30 @@ add_source_files(nes-runtime
         BloomFilter.cpp
         TaggedPointer.cpp
         OpenCLManager.cpp
-        )
+)
+
+
+add_source_files(nes-runtime
+        NodeEngine.cpp
+        AsyncTaskExecutor.cpp
+        QueryManager.cpp
+        QueryManagerLifecycle.cpp
+        QueryManagerTaskScheduler.cpp
+        QueryManagerStatusListener.cpp
+        ReconfigurationMessage.cpp
+        InMemoryLineageManager.cpp
+        ThreadPool.cpp
+        Task.cpp
+        QueryStatistics.cpp
+        NodeEngineBuilder.cpp
+)
+
+add_subdirectory(Profiler)
 
 add_source_files(nes-runtime
         Allocator/NumaRegionMemoryAllocator.cpp
         Allocator/NesDefaultMemoryAllocator.cpp
-        )
+)
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)
 add_subdirectory(detail)

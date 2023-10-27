@@ -48,8 +48,9 @@ macro(target_public_headers TARGET)
 endmacro()
 
 # Add nes-grpc library
-add_library(nes-grpc SHARED ${OUTPUT_SOURCES})
-target_link_libraries(nes-grpc PRIVATE ${GRPC_LIBRARIES})
+add_library(nes-grpc ${OUTPUT_SOURCES})
+target_link_libraries(nes-grpc PUBLIC ${GRPC_LIBRARIES})
+
 target_include_directories(nes-grpc PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -59,20 +60,20 @@ install(TARGETS nes-grpc
         COMPONENT nesLibrary
         DESTINATION lib)
 
-
 get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
-add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
-target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES})
+add_library(nes-common ${NES_COMMON_SOURCE_FILES})
+
+target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES_SDP})
+
+if (NES_USE_S2)
+    target_link_libraries(nes-common PUBLIC ${LIBRARIES_S2})
+endif ()
+
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-
-set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
-        $<BUILD_INTERFACE:${LIBRARIES}>
-        $<INSTALL_INTERFACE:>)
-
 
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
@@ -80,7 +81,6 @@ register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Ident
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/FaultToleranceType.hpp Util/FaultToleranceType.hpp)
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/MetricCollectorType.hpp Util/MetricCollectorType.hpp)
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/LineageType.hpp Util/LineageType.hpp)
-register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")

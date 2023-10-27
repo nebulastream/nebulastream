@@ -14,7 +14,7 @@ message(STATUS "Building benchmarks...")
 
 function(add_nes_benchmarks TARGET_NAME FILE_PATH)
     add_executable(${TARGET_NAME} ${FILE_PATH})
-    target_link_libraries(${TARGET_NAME} nes nes-benchmark ${GBENCHMARK_LIBRARIES} nes-core-test-util)
+    target_link_libraries(${TARGET_NAME} nes-coordinator  nes-benchmark ${GBENCHMARK_LIBRARIES} nes-core-test-util)
     message(STATUS "Added benchmark ${TARGET_NAME}")
 endfunction()
 
@@ -38,7 +38,8 @@ get_source(nes-benchmark NES_BENCHMARK_SOURCE_FILES)
 
 # Add nes-benchmark library
 add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES})
-target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+target_link_libraries(nes-benchmark PUBLIC ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+target_link_libraries(nes-benchmark  PUBLIC nes-common nes-data-types nes-operators nes-grpc nes-catalogs nes-optimizer nes-compiler nes-runtime nes-test-util nes-client nes-coordinator nes-worker nes-configurations)
 add_nes_benchmarks(e2e-benchmark-main "src/E2E/E2EBenchmarkMain.cpp")
 
 

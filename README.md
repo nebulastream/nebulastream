@@ -29,13 +29,13 @@ The codebase is structured in the following components:
 | [nes-common](nes-common)                 | This component contains some base functionality that is used across all other components, e.g., for logging and exceptions.                               |
 | [nes-compiler](nes-compiler)             | This component contains functionalities to compile source code or intermediate representations to executable binaries.                                    |
 | [nes-configurations](nes-configurations) | This component contains all coordinator and worker specific configurations that the user can supply over command line or using a yaml file.               |
-| [nes-core](nes-core)                     | This component contains the main aspects of the overall system that uses the remaining component to start the system.                                     |
 | [nes-data-types](nes-data-types)         | This component contains the basic data types of the system.                                                                                               |
 | [nes-operators](nes-operators)           | This component contains definition of all logical operators supported by NebulaStream.                                                                    |
 | [nes-optimizer](nes-optimizer)           | This component contains query optimizer for NebulaStream that contains rewrite rules, placement optimizations, sharing identification optimizations, etc. |
 | [nes-plugins](nes-plugins)               | This component contains all external plugins that system supports, e.g., tensorflow, omnx, arrow, etc.                                                    |
 | [nes-runtime](nes-runtime)               | This component contains all runtime components for the network stack and the memory managment                                                             |
-
+| [nes-coordinator](nes-coordinator)       | This component contains the coordinator and the executable.                                                                                               |
+| [nes-worker](nes-coordinator)            | This component contains the worker and the executable.                                                                                                    |
 
 ### Dependencies:
 
@@ -85,7 +85,6 @@ nes-optimizer-->nes-data-types
 nes-optimizer-->nes-configurations
 nes-optimizer-->nes-operators
 nes-optimizer-->nes-catalogs
-nes-plugins
 nes-runtime-->nes-common
 nes-runtime-->nes-grpc
 nes-runtime-->nes-data-types

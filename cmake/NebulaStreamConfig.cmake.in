@@ -1,5 +1,5 @@
 set(NebulaStream_VERSION x.y.z)
 @PACKAGE_INIT@
-include("${PACKAGE_PREFIX_DIR}/lib/NebulaStream/cmake/NebulaStreamTargets.cmake")
+include("${PACKAGE_PREFIX_DIR}/NebulaStream/cmake/NebulaStreamTargets.cmake")
 
 check_required_components(NebulaStream)

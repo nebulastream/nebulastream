@@ -26,7 +26,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "
     find_package(unofficial-brotli REQUIRED)
     if (unofficial-brotli_FOUND)
         message(STATUS "Brotli lib required by Arrow found.")
-        set(ARROW_LIBRARIES ${ARROW_LIBRARIES} unofficial::brotli::brotlienc-static unofficial::brotli::brotlidec-static unofficial::brotli::brotlicommon-static)
+        set(ARROW_LIBRARIES ${ARROW_LIBRARIES} unofficial::brotli::brotlienc-static unofficial::brotli::brotlidec-static unofficial::brotli::brotlicommon-static lz4)
+        set(ARROW_LIBRARIES ${ARROW_LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libutf8proc.a)
     else ()
         message(FATAL_ERROR "Brotli lib required by Arrow not found.")
     endif ()
@@ -35,6 +36,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "
 else ()
     message(FATAL_ERROR "Arrow plugin not supported on this platform")
 endif ()
+
 
 add_subdirectory(src)
 get_source(nes-arrow NES_COMPILER_SOURCE_FILES)
@@ -49,7 +51,7 @@ target_include_directories(nes-arrow PUBLIC
 set_target_properties(nes-arrow PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/nes-plugins/)
 
-target_link_libraries(nes-arrow PUBLIC nes ${ARROW_LIBRARIES} )
+target_link_libraries(nes-arrow PUBLIC nes-common nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations ${ARROW_LIBRARIES})
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -57,7 +59,7 @@ if (NES_ENABLES_TESTS)
 
     ### ArrowSourceIntegrationTest ###
     add_nes_integration_test(arrow-source-integration-test "tests/Integration/Sources/ArrowSourceIntegrationTest.cpp")
-    target_link_libraries(arrow-source-integration-test nes-arrow )
+    target_link_libraries(arrow-source-integration-test nes-arrow)
     add_subdirectory(tests/UnitTests)
 
     message(STATUS "Tests are enabled")

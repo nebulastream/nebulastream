@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/Expressions/Expressions.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ONNX/ONNXInferenceOperator.hpp>
 #include <Execution/Operators/ONNX/ONNXInferenceOperatorHandler.hpp>

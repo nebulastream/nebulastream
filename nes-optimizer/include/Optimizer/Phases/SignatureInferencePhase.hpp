@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_PHASES_SIGNATUREINFERENCEPHASE_HPP_
 
+#include <Util/QuerySignatures/Z3QuerySignatureContext.hpp>
 #include <Configurations/Enums/QueryMergerRule.hpp>
 #include <memory>
 
@@ -66,7 +67,7 @@ class SignatureInferencePhase {
      * @param queryMergerRule : query merger rule type
      */
     explicit SignatureInferencePhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule);
-    z3::ContextPtr context;
+    Z3QuerySignatureContext context;
     Optimizer::QueryMergerRule queryMergerRule;
 };
 }// namespace NES::Optimizer

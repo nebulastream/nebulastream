@@ -12,18 +12,12 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
+#ifndef NES_CORE_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
+#define NES_CORE_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
 
 #include <memory>
 #include <string>
 #include <variant>
-
-/**
- * @brief this alias represent a locally running query execution plan
- */
-using QuerySubPlanId = uint64_t;
-using OriginId = uint64_t;
 
 namespace NES {
 class AbstractQueryStatusListener;
@@ -55,7 +49,7 @@ using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 
 namespace Runtime {
 
-enum class NumaAwarenessFlag : uint8_t { ENABLED, DISABLED };
+enum class NumaAwarenessFlag : int8_t { ENABLED, DISABLED };
 
 class RuntimeEventListener;
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
@@ -77,6 +71,9 @@ class TupleBuffer;
 class HardwareManager;
 using HardwareManagerPtr = std::shared_ptr<HardwareManager>;
 
+class OpenCLManager;
+using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
+
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
@@ -88,16 +85,12 @@ using FixedSizeBufferPoolPtr = std::shared_ptr<FixedSizeBufferPool>;
 
 class WorkerContext;
 using WorkerContextRef = WorkerContext&;
-using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 class AbstractQueryManager;
 using QueryManagerPtr = std::shared_ptr<AbstractQueryManager>;
-
-class StateManager;
-using StateManagerPtr = std::shared_ptr<StateManager>;
 
 class QueryStatistics;
 using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
@@ -143,6 +136,10 @@ using RowLayoutPtr = std::shared_ptr<RowLayout>;
 
 }// namespace Runtime
 
+namespace Network {
+class NesPartition;
+}
+
 namespace QueryCompilation {
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
@@ -152,4 +149,4 @@ using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
+#endif// NES_CORE_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_

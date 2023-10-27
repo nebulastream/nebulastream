@@ -30,6 +30,7 @@ using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES::Optimizer {
+class QuerySignatureContext;
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 }// namespace NES::Optimizer
@@ -48,7 +49,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
      * @brief Get the First Order Logic formula representation by the Z3 expression
      * @param context: the shared pointer to the z3::context
      */
-    void inferZ3Signature(const z3::ContextPtr& context);
+    void inferZ3Signature(const Optimizer::QuerySignatureContext& context);
 
     /**
      * @brief Set the Z3 signature for the logical operator
