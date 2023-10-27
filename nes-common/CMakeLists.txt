@@ -49,7 +49,7 @@ endmacro()
 
 # Add nes-grpc library
 add_library(nes-grpc SHARED ${OUTPUT_SOURCES})
-target_link_libraries(nes-grpc PRIVATE ${GRPC_LIBRARIES})
+target_link_libraries(nes-grpc PUBLIC ${GRPC_LIBRARIES})
 target_include_directories(nes-grpc PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -64,14 +64,16 @@ get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
 add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
-target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES})
+target_link_libraries(nes-common PRIVATE nes-grpc)
+target_link_libraries(nes-common PUBLIC ${LIBRARIES_SDP})
+
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
-        $<BUILD_INTERFACE:${LIBRARIES}>
-        $<INSTALL_INTERFACE:>)
+#set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
+#        $<BUILD_INTERFACE:${LIBRARIES}>
+#        $<INSTALL_INTERFACE:>)
 
 
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)

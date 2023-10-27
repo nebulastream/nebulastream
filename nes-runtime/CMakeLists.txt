@@ -27,15 +27,60 @@ if (HOST_IS_MUSL)
     target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
 endif ()
 
-target_link_libraries(nes-runtime PUBLIC nes-operators nes-configurations)
+target_link_libraries(nes-runtime PRIVATE nes-common nes-grpc nes-data-types nes-operators nes-configurations )
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+
+# folly
+if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    include(CMakeFindDependencyMacro)
+    find_dependency(gflags CONFIG REQUIRED) # required on macos
+    find_package(folly CONFIG REQUIRED)
+    target_link_libraries(nes-runtime PRIVATE Folly::folly Folly::folly_deps)
+    target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
+endif ()
+
+# Library containing Kafka client
+if (NES_USE_KAFKA)
+    # TODO #3351 The commands should be moved into a separate CMake config file.
+    if (NOT APPLE)
+        find_package(RdKafka CONFIG REQUIRED)
+        target_link_libraries(nes-runtime PRIVATE  RdKafka::rdkafka RdKafka::rdkafka++)
+        target_include_directories(nes-runtime PRIVATE ${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
+        target_link_libraries(nes-runtime PRIVATE  ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
+        add_compile_definitions(ENABLE_KAFKA_BUILD)
+        add_library(cppkafka::cppkafka SHARED IMPORTED)
+        set_target_properties(cppkafka::cppkafka
+                PROPERTIES
+                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
+                INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
+        )
+        message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
+    else ()
+        message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
+    endif ()
+endif ()
+
+# Library containing MQTT client
+if (NES_USE_MQTT)
+    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+    find_package(PahoMqttCpp CONFIG REQUIRED)
+    target_link_libraries(nes-runtime PRIVATE PahoMqttCpp::paho-mqttpp3-static)
+    add_compile_definitions(ENABLE_MQTT_BUILD)
+endif (NES_USE_MQTT)
+
+
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-runtime REUSE_FROM nes-common)
 endif ()
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
+
+
+# Add Private Dependencies
+target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ})
+
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")

@@ -49,7 +49,7 @@ target_include_directories(nes-arrow PUBLIC
 set_target_properties(nes-arrow PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/nes-plugins/)
 
-target_link_libraries(nes-arrow PUBLIC nes ${ARROW_LIBRARIES} )
+target_link_libraries(nes-arrow PUBLIC nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations ${ARROW_LIBRARIES} )
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

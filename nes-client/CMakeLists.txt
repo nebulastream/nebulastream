@@ -17,7 +17,8 @@ get_source(nes-client NES_CLIENT_SOURCE_FILES)
 
 # Add Library
 add_library(nes-client SHARED ${NES_CLIENT_SOURCE_FILES})
-target_link_libraries(nes-client PUBLIC cpr::cpr ${CURL_LIBRARIES} nes-operators)
+target_link_libraries(nes-client PUBLIC nes-common nes-data-types nes-operators)
+target_link_libraries(nes-client PRIVATE cpr::cpr ${CURL_LIBRARIES} nes-grpc )
 target_include_directories(nes-client PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

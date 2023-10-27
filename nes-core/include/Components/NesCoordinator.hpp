@@ -19,7 +19,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Identifiers.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
 #include <string>
@@ -31,6 +30,16 @@ class Server;
 }
 namespace NES {
 
+namespace Runtime {
+
+class QueryStatistics;
+using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
+
+
+class NodeEngine;
+using NodeEnginePtr = std::shared_ptr<NodeEngine>;
+
+}
 using namespace Configurations;
 
 class RequestQueue;

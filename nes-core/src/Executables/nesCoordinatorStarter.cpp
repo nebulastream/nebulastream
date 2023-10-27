@@ -14,7 +14,6 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>

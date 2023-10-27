@@ -26,7 +26,8 @@ endif (NES_USE_OPC)
 
 # Add Library
 add_library(nes-operators SHARED ${NES_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-operators PUBLIC nes-data-types nes-grpc ${LIBRARIES})
+target_link_libraries(nes-operators PRIVATE nes-common nes-configurations   nes-data-types nes-grpc)
+target_link_libraries(nes-operators PRIVATE ${LIBRARIES_Z3})
 target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

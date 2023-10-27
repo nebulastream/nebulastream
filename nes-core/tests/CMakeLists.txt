@@ -39,7 +39,10 @@ add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
 target_include_directories(nes-core-test-util PUBLIC "./include")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(nes-core-test-util PUBLIC nes nes-test-util nes-client)
+target_link_libraries(nes-core-test-util PUBLIC nes-common nes-data-types nes-operators nes-grpc nes-catalogs nes-optimizer nes-compiler nes-runtime nes-test-util nes-client nes nes-worker nes-configurations)
+target_link_libraries(nes-core-test-util PUBLIC cpr::cpr )
+find_package(oatpp REQUIRED)
+target_link_libraries(nes-core-test-util PUBLIC oatpp::oatpp oatpp::oatpp-test)
 
 if (CODE_COVERAGE)
     target_code_coverage(nes AUTO)

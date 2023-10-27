@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_RUNTIME_NODEENGINE_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
-#include <Common/ForwardDeclaration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>

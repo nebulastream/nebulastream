@@ -15,12 +15,11 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_ZMQSOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_ZMQSOURCE_HPP_
 
+#include <Sources/DataSource.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <zmq.hpp>
-
-#include <Sources/DataSource.hpp>
 namespace NES {
 class TupleBuffer;
 /**

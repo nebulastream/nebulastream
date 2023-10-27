@@ -19,7 +19,8 @@ get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
 add_library(nes-optimizer SHARED ${NES_OPTIMIZER_SOURCE_FILES})
-target_link_libraries(nes-optimizer PUBLIC nes-catalogs ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+target_link_libraries(nes-optimizer PRIVATE nes-common  nes-data-types  nes-configurations nes-operators nes-catalogs)
+target_link_libraries(nes-optimizer PRIVATE cpr::cpr ${CURL_LIBRARIES} ${Z3_LIBRARIES})
 
 target_include_directories(nes-optimizer PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

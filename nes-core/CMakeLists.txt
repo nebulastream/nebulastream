@@ -21,10 +21,27 @@ add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes PUBLIC nes-compiler nes-runtime nes-optimizer nes-worker nes-client)
+target_link_libraries(nes PRIVATE nes-common nes-grpc nes-operators nes-compiler nes-catalogs nes-runtime nes-optimizer nes-worker nes-client  nes-data-types  nes-configurations)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes REUSE_FROM nes-common)
 endif ()
+
+#Oatpp for the rest server
+find_package(oatpp REQUIRED)
+target_link_libraries(nes PRIVATE oatpp::oatpp oatpp::oatpp-test)
+target_link_libraries(nes PRIVATE cpr::cpr)
+
+# Antlr
+# Currently antlr dose not come with an own cmake file
+message(STATUS Antlr ${NES_DEPENDENCIES_BINARY_ROOT})
+target_include_directories(nes PRIVATE ${NES_DEPENDENCIES_BINARY_ROOT}/include/antlr4-runtime)
+if (NOT APPLE)
+    target_link_libraries(nes PUBLIC ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libuuid.a)
+endif ()
+target_link_libraries(nes PRIVATE ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libantlr4-runtime.a)
+
+
+
 if (NES_USE_TF)
     message(STATUS "Building with tensorflowlite")
     find_package(tensorflow-lite-c REQUIRED)
@@ -55,7 +72,7 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 #register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/fmt/ fmt)
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator PUBLIC nes)
+target_link_libraries(nesCoordinator PRIVATE nes nes-catalogs nes-configurations )
 
 #add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 #target_link_libraries(nesWorker PUBLIC nes)

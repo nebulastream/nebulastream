@@ -306,7 +306,7 @@ set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
 # spdlog
 find_package(spdlog REQUIRED)
-set(LIBRARIES ${LIBRARIES} spdlog::spdlog)
+set(LIBRARIES_SDP spdlog::spdlog)
 
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
@@ -368,7 +368,7 @@ find_package(ZeroMQ CONFIG REQUIRED)
 if (NOT ${ZeroMQ_FOUND})
     message(FATAL_ERROR "Unable to find libzmq")
 endif ()
-set(LIBRARIES ${LIBRARIES} libzmq libzmq-static)
+set(LIBRARIES_ZMQ ${LIBRARIES_ZMQ} libzmq libzmq-static)
 
 # CppZMQ
 message(STATUS "cppzmq")
@@ -384,7 +384,7 @@ find_package(Z3 REQUIRED)
 if (NOT ${Z3_FOUND})
     message(FATAL_ERROR "Unable to find Z3")
 endif ()
-set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
+set(LIBRARIES_Z3 ${Z3_LIBRARIES})
 message(STATUS "Using z3: " ${Z3_LIBRARIES})
 
 # Backward
@@ -394,21 +394,8 @@ add_compile_definitions(${BACKWARD_DEFINITIONS})
 link_directories(${BACKWARD_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
 
-# folly
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    include(CMakeFindDependencyMacro)
-    find_dependency(gflags CONFIG REQUIRED) # required on macos
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
-    include_directories(${FOLLY_INCLUDE_DIR})
-endif ()
-
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
-
-#Oatpp
-find_package(oatpp REQUIRED)
-set(LIBRARIES ${LIBRARIES} oatpp::oatpp oatpp::oatpp-test)
 
 # CPR
 find_package(cpr REQUIRED)
@@ -437,36 +424,6 @@ if (NES_USE_S2)
 else ()
     message(STATUS "s2 is disabled")
 endif ()
-
-# Library containing Kafka client
-if (NES_USE_KAFKA)
-    # TODO #3351 The commands should be moved into a separate CMake config file.
-    if (NOT APPLE)
-        find_package(RdKafka CONFIG REQUIRED)
-        set(LIBRARIES ${LIBRARIES} RdKafka::rdkafka RdKafka::rdkafka++)
-
-        include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
-        add_compile_definitions(ENABLE_KAFKA_BUILD)
-        add_library(cppkafka::cppkafka SHARED IMPORTED)
-        set_target_properties(cppkafka::cppkafka
-                PROPERTIES
-                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
-                INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
-        )
-        message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
-    else ()
-        message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
-    endif ()
-endif ()
-
-# Library containing MQTT client
-if (NES_USE_MQTT)
-    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
-    find_package(PahoMqttCpp CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3-static)
-    add_compile_definitions(ENABLE_MQTT_BUILD)
-endif (NES_USE_MQTT)
 
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
@@ -500,15 +457,6 @@ if (NES_ENABLES_TESTS)
     endif ()
     set(GTEST_LIBRARIES ${GTEST_LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 endif ()
-
-# Antlr
-# Currently antlr dose not come with an own cmake file
-message(STATUS Antlr ${NES_DEPENDENCIES_BINARY_ROOT})
-include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/antlr4-runtime)
-if (NOT APPLE)
-    set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libuuid.a)
-endif ()
-set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libantlr4-runtime.a)
 
 # PAPI
 if (CMAKE_USE_PAPI_PROFILER)
