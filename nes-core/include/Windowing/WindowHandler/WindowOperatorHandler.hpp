@@ -102,6 +102,12 @@ class WindowOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     SchemaPtr getResultSchema();
 
+    /**
+     * @brief returns the string representation of the class
+     * @return the string representation of the class
+     */
+    std::string toString() const;
+
   private:
     LogicalWindowDefinitionPtr windowDefinition;
     AbstractWindowHandlerPtr windowHandler;

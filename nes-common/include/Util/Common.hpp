@@ -32,6 +32,7 @@ template<typename E = JoinBuildSideType, typename Out = uint64_t>
 constexpr Out to_underlying(E e) noexcept {
     return static_cast<Out>(e);
 }
+
 }// namespace NES::QueryCompilation
 
 namespace NES::Util {

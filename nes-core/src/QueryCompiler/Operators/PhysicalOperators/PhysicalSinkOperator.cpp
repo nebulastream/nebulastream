@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -37,7 +38,17 @@ PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId id,
 
 SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() { return sinkDescriptor; }
 
-std::string PhysicalSinkOperator::toString() const { return "PhysicalSinkOperator"; }
+std::string PhysicalSinkOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalSinkOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    if (sinkDescriptor != nullptr) {
+        out << sinkDescriptor->toString();
+    }
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalSinkOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, sinkDescriptor);

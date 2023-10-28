@@ -30,7 +30,15 @@ PhysicalOperatorPtr PhysicalLimitOperator::create(SchemaPtr inputSchema, SchemaP
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), limit);
 }
 
-std::string PhysicalLimitOperator::toString() const { return "PhysicalLimitOperator"; }
+std::string PhysicalLimitOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalLimitOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << "limit: " << limit;
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalLimitOperator::copy() { return create(id, inputSchema, outputSchema, limit); }
 

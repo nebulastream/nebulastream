@@ -14,6 +14,7 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Util/Core.hpp>
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalNonKeyedThreadLocalPreAggregationOperator::PhysicalNonKeyedThreadLocalPreAggregationOperator(
@@ -26,7 +27,12 @@ PhysicalNonKeyedThreadLocalPreAggregationOperator::PhysicalNonKeyedThreadLocalPr
       windowDefinition(windowDefinition) {}
 
 std::string PhysicalNonKeyedThreadLocalPreAggregationOperator::toString() const {
-    return "PhysicalNonKeyedThreadLocalPreAggregationOperator";
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalNonKeyedThreadLocalPreAggregationOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << windowDefinition->toString();
+    return out.str();
 }
 
 std::shared_ptr<PhysicalOperator>

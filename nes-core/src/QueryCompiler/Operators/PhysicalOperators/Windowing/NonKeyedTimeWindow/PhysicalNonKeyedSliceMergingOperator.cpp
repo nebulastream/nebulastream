@@ -14,6 +14,7 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <memory>
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -25,7 +26,14 @@ PhysicalNonKeyedSliceMergingOperator::PhysicalNonKeyedSliceMergingOperator(Opera
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       operatorHandler(operatorHandler), windowDefinition(windowDefinition) {}
 
-std::string PhysicalNonKeyedSliceMergingOperator::toString() const { return "PhysicalNonKeyedSliceMergingOperator"; }
+std::string PhysicalNonKeyedSliceMergingOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalNonKeyedSliceMergingOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << windowDefinition->toString();
+    return out.str();
+}
 
 std::shared_ptr<PhysicalNonKeyedSliceMergingOperator>
 PhysicalNonKeyedSliceMergingOperator::create(SchemaPtr inputSchema,

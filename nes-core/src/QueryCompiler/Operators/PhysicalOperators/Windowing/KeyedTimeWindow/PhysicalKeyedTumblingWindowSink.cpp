@@ -14,6 +14,7 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedTumblingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <memory>
 
 namespace NES {
@@ -35,7 +36,14 @@ PhysicalKeyedTumblingWindowSink::create(SchemaPtr inputSchema,
 
 Windowing::LogicalWindowDefinitionPtr PhysicalKeyedTumblingWindowSink::getWindowDefinition() { return windowDefinition; }
 
-std::string PhysicalKeyedTumblingWindowSink::toString() const { return "PhysicalKeyedTumblingWindowSink"; }
+std::string PhysicalKeyedTumblingWindowSink::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalKeyedTumblingWindowSink:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << windowDefinition->toString();
+    return out.str();
+}
 
 OperatorNodePtr PhysicalKeyedTumblingWindowSink::copy() { return create(inputSchema, outputSchema, windowDefinition); }
 

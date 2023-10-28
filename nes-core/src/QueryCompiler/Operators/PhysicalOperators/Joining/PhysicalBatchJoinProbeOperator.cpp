@@ -46,7 +46,13 @@ PhysicalBatchJoinProbeOperator::PhysicalBatchJoinProbeOperator(
     : OperatorNode(id), PhysicalBatchJoinOperator(std::move(joinOperatorHandler)),
       PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)){};
 
-std::string PhysicalBatchJoinProbeOperator::toString() const { return "PhysicalBatchJoinProbeOperator"; }
+std::string PhysicalBatchJoinProbeOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalBatchJoinProbeOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    return out.str();
+}
 
 OperatorNodePtr PhysicalBatchJoinProbeOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, operatorHandler);

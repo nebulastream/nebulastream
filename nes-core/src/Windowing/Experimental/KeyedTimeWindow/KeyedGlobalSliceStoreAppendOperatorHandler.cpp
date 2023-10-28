@@ -96,4 +96,13 @@ Windowing::LogicalWindowDefinitionPtr KeyedGlobalSliceStoreAppendOperatorHandler
     return windowDefinition;
 }
 
+std::string KeyedGlobalSliceStoreAppendOperatorHandler::toString() const {
+    std::stringstream out;
+    out << windowDefinition->toString();
+    out << "windowSize: " << windowSize << "\n";
+    out << "windowSlide: " << windowSlide;
+    out << std::endl;
+    return out.str();
+}
+
 }// namespace NES::Windowing::Experimental

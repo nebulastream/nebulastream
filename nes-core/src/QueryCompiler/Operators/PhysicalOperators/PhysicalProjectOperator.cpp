@@ -36,7 +36,13 @@ PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, s
 
 std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions() { return expressions; }
 
-std::string PhysicalProjectOperator::toString() const { return "PhysicalProjectOperator"; }
+std::string PhysicalProjectOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalProjectOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    return out.str();
+}
 
 OperatorNodePtr PhysicalProjectOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, getExpressions());

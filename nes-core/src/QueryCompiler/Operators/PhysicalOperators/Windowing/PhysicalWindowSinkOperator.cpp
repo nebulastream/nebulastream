@@ -34,7 +34,13 @@ PhysicalWindowSinkOperator::PhysicalWindowSinkOperator(OperatorId id,
                                                        Windowing::WindowOperatorHandlerPtr handler)
     : OperatorNode(id), PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(handler)){};
 
-std::string PhysicalWindowSinkOperator::toString() const { return "PhysicalWindowSinkOperator"; }
+std::string PhysicalWindowSinkOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalWindowSinkOperator:\n";
+    out << PhysicalWindowOperator::toString();
+    return out.str();
+}
 
 OperatorNodePtr PhysicalWindowSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 

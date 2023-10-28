@@ -37,7 +37,11 @@ std::shared_ptr<PhysicalNonKeyedWindowSliceStoreAppendOperator> PhysicalNonKeyed
 }
 
 std::string PhysicalNonKeyedWindowSliceStoreAppendOperator::toString() const {
-    return "PhysicalNonKeyedWindowSliceStoreAppendOperator";
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalNonKeyedWindowSliceStoreAppendOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    return out.str();
 }
 
 OperatorNodePtr PhysicalNonKeyedWindowSliceStoreAppendOperator::copy() {

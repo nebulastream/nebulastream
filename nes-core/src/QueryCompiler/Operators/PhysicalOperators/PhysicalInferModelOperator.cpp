@@ -52,7 +52,15 @@ PhysicalOperatorPtr PhysicalInferModelOperator::create(SchemaPtr inputSchema,
     return create(getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
 }
 
-std::string PhysicalInferModelOperator::toString() const { return "PhysicalInferModelOperator"; }
+std::string PhysicalInferModelOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalInferModelOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << "model: " << model;
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalInferModelOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);

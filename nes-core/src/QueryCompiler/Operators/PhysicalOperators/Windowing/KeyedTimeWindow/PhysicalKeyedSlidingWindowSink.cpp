@@ -14,6 +14,8 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSlidingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Windowing/Experimental/KeyedTimeWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <memory>
 
 namespace NES {
@@ -41,7 +43,14 @@ std::shared_ptr<PhysicalKeyedSlidingWindowSink> PhysicalKeyedSlidingWindowSink::
                                                             windowDefinition);
 }
 
-std::string PhysicalKeyedSlidingWindowSink::toString() const { return "PhysicalKeyedSlidingWindowSink"; }
+std::string PhysicalKeyedSlidingWindowSink::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalKeyedSlidingWindowSink:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << windowDefinition->toString();
+    return out.str();
+}
 Windowing::LogicalWindowDefinitionPtr PhysicalKeyedSlidingWindowSink::getWindowDefinition() { return windowDefinition; }
 OperatorNodePtr PhysicalKeyedSlidingWindowSink::copy() {
     return create(inputSchema, outputSchema, keyedEventTimeWindowHandler, windowDefinition);

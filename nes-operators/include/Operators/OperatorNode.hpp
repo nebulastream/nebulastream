@@ -191,6 +191,12 @@ class OperatorNode : public Node {
      */
     virtual const std::vector<OriginId> getOutputOriginIds() const = 0;
 
+    /**
+     * @brief returns the string representation of the class
+     * @return the string representation of the class
+     */
+    std::string toString() const override;
+
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors

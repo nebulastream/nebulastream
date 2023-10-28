@@ -14,6 +14,7 @@
 
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -71,7 +72,17 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
       PhysicalUnaryOperator(id, inputSchema, outputSchema), timeStampFieldName(timeStampFieldName), joinFieldName(joinFieldName),
       buildSide(buildSide) {}
 
-std::string PhysicalStreamJoinBuildOperator::toString() const { return "PhysicalStreamJoinBuildOperator"; }
+std::string PhysicalStreamJoinBuildOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalStreamJoinBuildOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << "timeStampFieldName: " << timeStampFieldName << "\n";
+    out << "joinFieldName: " << joinFieldName << "\n";
+    out << "buildSide: " << magic_enum::enum_name(buildSide);
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalStreamJoinBuildOperator::copy() {
     auto result = create(id,

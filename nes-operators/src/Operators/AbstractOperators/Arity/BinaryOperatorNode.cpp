@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/OperatorsUtil.hpp>
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
 
@@ -69,6 +70,18 @@ const std::vector<OriginId> BinaryOperatorNode::getOutputOriginIds() const {
     std::vector<uint64_t> outputOriginIds = leftInputOriginIds;
     outputOriginIds.insert(outputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
     return outputOriginIds;
+}
+
+std::string BinaryOperatorNode::toString() const {
+    std::stringstream out;
+    out << OperatorNode::toString();
+    out << "leftInputSchema: " << leftInputSchema->toString() << "\n";
+    out << "rightInputSchema: " << rightInputSchema->toString() << "\n";
+    out << "outputSchema: " << outputSchema->toString() << "\n";
+    out << "distinctSchemas: " << Util::concatenateVectorAsString<SchemaPtr>(distinctSchemas);
+    out << "leftInputOriginIds: " << Util::concatenateVectorAsString<uint64_t>(leftInputOriginIds);
+    out << "rightInputOriginIds: " << Util::concatenateVectorAsString<uint64_t>(rightInputOriginIds);
+    return out.str();
 }
 
 }// namespace NES

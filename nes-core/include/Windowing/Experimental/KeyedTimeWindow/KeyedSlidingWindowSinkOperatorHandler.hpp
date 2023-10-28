@@ -98,6 +98,12 @@ class KeyedSlidingWindowSinkOperatorHandler
 
     ~KeyedSlidingWindowSinkOperatorHandler();
 
+    /**
+     * @brief returns the string representation of the class
+     * @return the string representation of the class
+     */
+    std::string toString() const;
+
   private:
     uint64_t windowSize;
     uint64_t windowSlide;

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -43,7 +44,17 @@ PhysicalWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }
 
-std::string PhysicalWatermarkAssignmentOperator::toString() const { return "PhysicalWatermarkAssignmentOperator"; }
+std::string PhysicalWatermarkAssignmentOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalWatermarkAssignmentOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    if (watermarkStrategyDescriptor != nullptr) {
+        out << "watermarkStrategyDescriptor: " << watermarkStrategyDescriptor->toString();
+    }
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalWatermarkAssignmentOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, getWatermarkStrategyDescriptor());

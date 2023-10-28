@@ -29,6 +29,12 @@ class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperatorNode 
 
   public:
     ~PhysicalUnaryOperator() noexcept override = default;
+
+    /**
+     * @brief returns the string representation of the class
+     * @return the string representation of the class
+     */
+    std::string toString() const override;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators
