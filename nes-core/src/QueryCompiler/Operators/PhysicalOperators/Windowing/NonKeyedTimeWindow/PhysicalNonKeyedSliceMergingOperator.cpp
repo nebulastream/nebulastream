@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <memory>
 namespace NES::QueryCompilation::PhysicalOperators {
 

@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/KeyedTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceMergingOperatorHandler.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <atomic>
 #include <memory>
 

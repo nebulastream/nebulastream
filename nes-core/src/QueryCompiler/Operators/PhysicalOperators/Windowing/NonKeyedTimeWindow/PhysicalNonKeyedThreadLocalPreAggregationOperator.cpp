@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/NonKeyedTimeWindow/PhysicalNonKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Util/Core.hpp>
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalNonKeyedThreadLocalPreAggregationOperator::PhysicalNonKeyedThreadLocalPreAggregationOperator(

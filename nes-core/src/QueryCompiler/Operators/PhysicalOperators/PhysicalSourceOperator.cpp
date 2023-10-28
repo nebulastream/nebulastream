@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
