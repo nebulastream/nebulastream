@@ -25,8 +25,6 @@ PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
 
 Windowing::WindowOperatorHandlerPtr PhysicalWindowOperator::getOperatorHandler() const { return operatorHandler; }
 
-std::string PhysicalWindowOperator::toString() const {
-    return PhysicalUnaryOperator::toString();
-}
+std::string PhysicalWindowOperator::toString() const { return PhysicalUnaryOperator::toString(); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

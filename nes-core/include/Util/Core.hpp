@@ -15,10 +15,10 @@
 #ifndef NES_CORE_INCLUDE_UTIL_CORE_HPP_
 #define NES_CORE_INCLUDE_UTIL_CORE_HPP_
 
+#include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <any>
@@ -131,7 +131,7 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
  */
 std::string trim(const std::string& str);
 
-} // namespace Util
+}// namespace Util
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_UTIL_CORE_HPP_

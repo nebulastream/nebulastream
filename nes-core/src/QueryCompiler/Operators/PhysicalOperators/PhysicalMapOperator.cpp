@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {

@@ -23,14 +23,14 @@
 #include <Services/QueryService.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
-#include <Util/OperatorsUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/OperatorsUtil.hpp>
 #include <Util/TestUtils.hpp>
-#include <queue>
 #include <chrono>//for timing execution
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <queue>
 #include <regex>
 
 //used tests: QueryCatalogServiceTest, QueryTest
