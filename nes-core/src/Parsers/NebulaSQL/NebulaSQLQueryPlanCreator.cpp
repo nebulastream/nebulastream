@@ -22,7 +22,6 @@ limitations under the License.
 #include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 
@@ -39,10 +38,9 @@ namespace NES::Parsers {
             queryPlan = QueryPlanBuilder::addLimit(helper.getLimit(), queryPlan);
             queryPlan = QueryPlanBuilder::addRename(helper.getNewName(),queryPlan);
             queryPlan = QueryPlanBuilder::addMap(helper.getMapExpression(),queryPlan);
-            /*
+            // TODO: Implement logic to handle the union of 2 queryPlan
             queryPlan = QueryPlanBuilder::addUnion(queryPlan,queryPlan);
-            queryPlan = QueryPlanBuilder::addJoin();
-            */
+            //queryPlan = QueryPlanBuilder::addJoin();
             queryPlan = QueryPlanBuilder::assignWatermark(queryPlan,helper.getWatermarkStrategieDescriptor());
             queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan,helper.getWindowType());
             queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinkDescriptor());
@@ -51,11 +49,7 @@ namespace NES::Parsers {
         }
 
         void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context) {
-            for (auto namedExprContext : context->namedExpressionSeq()->namedExpression()) {
-                auto expressionText = namedExprContext->expression()->getText();
-                auto attribute = NES::Attribute(expressionText).getExpressionNode();
-                helper.addProjectionField(attribute);
-            }
+            NebulaSQLBaseListener::enterSelectClause(context);
         }
 
         void NebulaSQLQueryPlanCreator::enterFromClause(NebulaSQLParser::FromClauseContext* context) {
@@ -166,13 +160,14 @@ namespace NES::Parsers {
             else if (opText == "==") {
                 expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
             }
-            helper.addWhereClause(expression);
+            helper.addExpression(expression);
         }
         void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context) {
             NebulaSQLBaseListener::exitSelectClause(context);
+
         }
         void NebulaSQLQueryPlanCreator::exitFromClause(NebulaSQLParser::FromClauseContext* context) {
-            NebulaSQLBaseListener::exitFromClause(context);
+            helper.addSource(context->getText());
         }
         void NebulaSQLQueryPlanCreator::enterWhereClause(NebulaSQLParser::WhereClauseContext* context) {
             NebulaSQLBaseListener::enterWhereClause(context);
@@ -191,6 +186,8 @@ namespace NES::Parsers {
         }
         void NebulaSQLQueryPlanCreator::enterArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) {
             NebulaSQLBaseListener::enterArithmeticBinary(context);
+            NES::ExpressionNodePtr arithmeticBinaryExpr = NES::Attribute(context->getText()).getExpressionNode();
+            //helper.addArithmeticBinaryExpression(arithmeticBinaryExpr);
         }
         void NebulaSQLQueryPlanCreator::exitErrorCapturingIdentifier(NebulaSQLParser::ErrorCapturingIdentifierContext* context) {
             NebulaSQLBaseListener::exitErrorCapturingIdentifier(context);
