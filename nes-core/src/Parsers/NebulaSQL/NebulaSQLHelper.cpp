@@ -41,11 +41,33 @@ namespace NES::Parsers {
         void NebulaSQLHelper::addProjectionField(ExpressionNodePtr expressionNode) { this->projectionFields.push_back(expressionNode); }
         const std::vector<ExpressionNodePtr>& NebulaSQLHelper::getProjectionFields() const { return this->projectionFields; }
         uint64_t NebulaSQLHelper::getLimit() const { return 0; }
-        const std::string& NebulaSQLHelper::getNewName() const { return <#initializer #>; }
-        const FieldAssignmentExpressionNodePtr& NebulaSQLHelper::getMapExpression() const { return <#initializer #>; }
-        const WatermarkStrategyDescriptorPtr& NebulaSQLHelper::getWatermarkStrategieDescriptor() const {
-            return <#initializer #>;
-        }
-        const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const { return NES::Windowing::WindowTypePtr(); }
 
-    }// namespace NES::Parsers
+        const std::string& NebulaSQLHelper::getNewName() const {
+            // TODO: Implement logic to return the new name
+            static const std::string placeholder = ""; // Temporary placeholder
+            return placeholder;
+        }
+        const FieldAssignmentExpressionNodePtr& NebulaSQLHelper::getMapExpression() const {
+            // TODO: Implement logic to return the map expression
+            static const FieldAssignmentExpressionNodePtr placeholder = nullptr; // Temporary placeholder
+            return placeholder;
+        }
+        const WatermarkStrategyDescriptorPtr& NebulaSQLHelper::getWatermarkStrategieDescriptor() const {
+            // TODO: Implement logic to return the watermark strategy descriptor
+            static const WatermarkStrategyDescriptorPtr placeholder = nullptr; // Temporary placeholder
+            return placeholder;
+        }
+        /*
+        void NebulaSQLHelper::addArithmeticBinaryExpression(ExpressionNodePtr sharedPtr) const {
+            // TODO: Implement logic to handle the addition of an arithmetic binary expression
+        }
+        */
+        const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const { return NES::Windowing::WindowTypePtr(); }
+        const std::pair<std::string, int32_t>& NebulaSQLHelper::getWindow() const { return this->window; }
+        void NebulaSQLHelper::setWindow(const std::pair<std::string, int32_t>& window) { this->window = window; }
+        void NebulaSQLHelper::addExpression(ExpressionNodePtr expressionNode) {
+            auto pos = this->expressionList.begin();
+            this->expressionList.insert(pos, expressionNode);
+        }
+
+        }// namespace NES::Parsers

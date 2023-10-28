@@ -33,6 +33,11 @@ namespace NES::Parsers {
             std::vector<std::string> sources;
             SinkDescriptorPtr sinkDescriptor;
             std::vector<ExpressionNodePtr> whereClauses;
+            std::map<int32_t, std::string> sourceList;
+            std::map<int32_t, NebulaSQLOperatorNode> operatorList;// contains the operators from the PATTERN clause
+            std::list<ExpressionNodePtr> expressionList;
+            std::list<SinkDescriptorPtr> sinkList; // INTO
+            std::pair<std::string, int32_t> window;// WITHIN
 
 
           public:
@@ -55,6 +60,10 @@ namespace NES::Parsers {
             const FieldAssignmentExpressionNodePtr& getMapExpression() const;
             const WatermarkStrategyDescriptorPtr& getWatermarkStrategieDescriptor() const;
             const NES::Windowing::WindowTypePtr getWindowType() const;
+            void addExpression(ExpressionNodePtr expressionNode);
+            //void addArithmeticBinaryExpression(ExpressionNodePtr sharedPtr) const;
+            const std::pair<std::string, int32_t>& getWindow() const;
+            void setWindow(const std::pair<std::string, int32_t>& window);
         };
     }// namespace NES::Parsers
 

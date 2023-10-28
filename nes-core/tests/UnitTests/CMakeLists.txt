@@ -269,7 +269,10 @@ add_executable(pattern-query-plan-tests "Services/PatternParsingServiceTest.cpp"
 target_link_libraries(pattern-query-plan-tests nes-core-test-util)
 gtest_discover_tests(pattern-query-plan-tests DISCOVERY_TIMEOUT 30)
 
-
+### SQL Query Plan Tests ###
+add_executable(sql-query-plan-tests "Services/SQLParsingServiceTest.cpp")
+target_link_libraries(sql-query-plan-tests nes-core-test-util)
+gtest_discover_tests(sql-query-plan-tests DISCOVERY_TIMEOUT 30)
 
 ### Lineage Manager Test ###
 add_nes_unit_test(lineage-manager-tests "Runtime/LineageManagerTest.cpp")
