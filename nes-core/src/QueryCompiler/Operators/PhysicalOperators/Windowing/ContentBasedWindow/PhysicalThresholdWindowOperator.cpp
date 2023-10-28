@@ -13,6 +13,7 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <memory>
 #include <utility>
 
@@ -32,7 +33,14 @@ PhysicalThresholdWindowOperator::create(SchemaPtr inputSchema,
     return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
 }
 
-std::string PhysicalThresholdWindowOperator::toString() const { return "PhysicalThresholdWindowOperator"; }
+std::string PhysicalThresholdWindowOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalThresholdWindowOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << operatorHandler->toString();
+    return out.str();
+}
 
 OperatorNodePtr PhysicalThresholdWindowOperator::copy() { return create(inputSchema, outputSchema, operatorHandler); }
 

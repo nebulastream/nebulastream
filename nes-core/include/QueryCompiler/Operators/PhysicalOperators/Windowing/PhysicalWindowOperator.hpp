@@ -37,6 +37,12 @@ class PhysicalWindowOperator : public PhysicalUnaryOperator {
     */
     Windowing::WindowOperatorHandlerPtr getOperatorHandler() const;
 
+    /**
+     * @brief returns the string representation of the class
+     * @return the string representation of the class
+     */
+    std::string toString() const override;
+
   protected:
     Windowing::WindowOperatorHandlerPtr operatorHandler;
 };

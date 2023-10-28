@@ -18,6 +18,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <any>
@@ -119,7 +120,6 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
                                                                             Runtime::BufferManagerPtr bufferManager,
                                                                             const std::string& timeStampFieldName,
                                                                             uint64_t lastTimeStamp);
-
 /**
  * @brief Trim leading and trailing whitespace characters from a string.
  *
@@ -131,7 +131,7 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
  */
 std::string trim(const std::string& str);
 
-};// namespace Util
+} // namespace Util
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_UTIL_CORE_HPP_

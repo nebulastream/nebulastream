@@ -44,7 +44,16 @@ PhysicalOperatorPtr PhysicalIterationCEPOperator::create(SchemaPtr inputSchema,
     return create(getNextOperatorId(), inputSchema, outputSchema, minIterations, maxIterations);
 }
 
-std::string PhysicalIterationCEPOperator::toString() const { return "PhysicalIterationCEPOperator"; }
+std::string PhysicalIterationCEPOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalIterationCEPOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << "minIterations: " << minIterations << "\n";
+    out << "maxIterations: " << maxIterations;
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalIterationCEPOperator::copy() {
     return create(id, inputSchema, outputSchema, getMinIterations(), getMaxIterations());

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/OperatorsUtil.hpp>
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 
@@ -47,5 +48,14 @@ void UnaryOperatorNode::setInputOriginIds(std::vector<OriginId> originIds) { thi
 const std::vector<OriginId> UnaryOperatorNode::getInputOriginIds() const { return inputOriginIds; }
 
 const std::vector<OriginId> UnaryOperatorNode::getOutputOriginIds() const { return inputOriginIds; }
+
+std::string UnaryOperatorNode::toString() const {
+    std::stringstream out;
+    out << OperatorNode::toString();
+    out << "inputSchema: " << inputSchema->toString() << "\n";
+    out << "outputSchema: " << outputSchema->toString() << "\n";
+    out << "inputOriginIds: " << Util::concatenateVectorAsString<uint64_t>(inputOriginIds);
+    return out.str();
+}
 
 }// namespace NES

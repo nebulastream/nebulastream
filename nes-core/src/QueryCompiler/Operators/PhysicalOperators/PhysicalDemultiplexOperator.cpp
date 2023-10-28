@@ -25,7 +25,13 @@ PhysicalOperatorPtr PhysicalDemultiplexOperator::create(SchemaPtr inputSchema) {
 PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const SchemaPtr& inputSchema)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
 
-std::string PhysicalDemultiplexOperator::toString() const { return "PhysicalDemultiplexOperator"; }
+std::string PhysicalDemultiplexOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalDemultiplexOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    return out.str();
+}
 
 OperatorNodePtr PhysicalDemultiplexOperator::copy() { return create(id, inputSchema); }
 

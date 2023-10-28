@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -39,7 +40,15 @@ PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id,
     : OperatorNode(id), PhysicalJoinOperator(std::move(operatorHandler)),
       PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), joinBuildSide(buildSide){};
 
-std::string PhysicalJoinBuildOperator::toString() const { return "PhysicalJoinBuildOperator"; }
+std::string PhysicalJoinBuildOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalJoinBuildOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << "joinBuildSide: " << magic_enum::enum_name(joinBuildSide);
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalJoinBuildOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, operatorHandler, joinBuildSide);

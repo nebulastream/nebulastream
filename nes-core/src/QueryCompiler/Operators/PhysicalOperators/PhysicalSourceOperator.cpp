@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -43,7 +44,18 @@ void PhysicalSourceOperator::setOriginId(OriginId originId) { this->originId = o
 
 SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourceDescriptor; }
 
-std::string PhysicalSourceOperator::toString() const { return "PhysicalSourceOperator"; }
+std::string PhysicalSourceOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalSourceOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    if (sourceDescriptor != nullptr) {
+        out << sourceDescriptor->toString() << "\n";
+    }
+    out << "originId: " << originId;
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalSourceOperator::copy() {
     auto result = create(id, originId, inputSchema, outputSchema, sourceDescriptor);

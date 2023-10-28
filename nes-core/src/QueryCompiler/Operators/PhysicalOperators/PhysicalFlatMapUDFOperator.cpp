@@ -36,7 +36,17 @@ PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(OperatorId id,
     return std::make_shared<PhysicalFlatMapUDFOperator>(id, inputSchema, outputSchema, udfDescriptor);
 }
 
-std::string PhysicalFlatMapUDFOperator::toString() const { return "PhysicalMapUDFOperator"; }
+std::string PhysicalFlatMapUDFOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalMapUDFOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    if (udfDescriptor != nullptr) {
+        out << udfDescriptor->generateInferStringSignature().str();
+    }
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalFlatMapUDFOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, udfDescriptor);

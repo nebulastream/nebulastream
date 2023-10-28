@@ -69,4 +69,13 @@ void KeyedSlidingWindowSinkOperatorHandler::postReconfigurationCallback(Runtime:
     globalSliceStore.reset();
 }
 
+std::string KeyedSlidingWindowSinkOperatorHandler::toString() const {
+    std::stringstream out;
+    out << windowDefinition->toString();
+    out << "windowSize: " << windowSize << "\n";
+    out << "windowSlide: " << windowSlide << "\n";
+    out << std::endl;
+    return out.str();
+}
+
 }// namespace NES::Windowing::Experimental

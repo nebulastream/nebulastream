@@ -23,4 +23,10 @@ PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSche
     BinaryOperatorNode::setOutputSchema(std::move(outputSchema));
 }
 
+std::string PhysicalBinaryOperator::toString() const {
+    std::stringstream out;
+    out << BinaryOperatorNode::toString();
+    return out.str();
+}
+
 }// namespace NES::QueryCompilation::PhysicalOperators

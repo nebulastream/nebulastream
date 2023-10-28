@@ -19,7 +19,6 @@
 #include <utility>
 
 namespace NES {
-
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
@@ -207,4 +206,20 @@ OperatorId getNextOperatorId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
+
+std::string OperatorNode::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "operatorId: " << id << "\n";
+    out << "properties: ";
+    for (const auto& item : properties) {
+        if (item.first != properties.begin()->first) {
+            out << ", ";
+        }
+        out << item.first;
+    }
+    out << std::endl;
+    return out.str();
+}
+
 }// namespace NES

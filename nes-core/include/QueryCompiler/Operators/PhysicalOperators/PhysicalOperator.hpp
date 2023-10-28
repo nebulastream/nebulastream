@@ -34,6 +34,12 @@ class PhysicalOperator : public virtual OperatorNode {
 
   public:
     ~PhysicalOperator() noexcept = default;
+
+    /**
+     * @brief returns the string representation of the class
+     * @return the string representation of the class
+     */
+    std::string toString() const;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

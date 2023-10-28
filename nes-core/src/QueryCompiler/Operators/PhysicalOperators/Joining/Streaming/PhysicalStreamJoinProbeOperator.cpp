@@ -86,7 +86,19 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
       PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema), joinFieldNameLeft(joinFieldNameLeft),
       joinFieldNameRight(joinFieldNameRight), windowMetaData(windowStartFieldName, windowEndFieldName, windowKeyFieldName) {}
 
-std::string PhysicalStreamJoinProbeOperator::toString() const { return "PhysicalStreamJoinProbeOperator"; }
+std::string PhysicalStreamJoinProbeOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalStreamJoinProbeOperator:\n";
+    out << PhysicalBinaryOperator::toString();
+    out << "joinFieldNameLeft: " << joinFieldNameLeft << "\n";
+    out << "joinFieldNameRight: " << joinFieldNameRight << "\n";
+    out << "windowStartFieldName: " << windowMetaData.windowStartFieldName << "\n";
+    out << "windowEndFieldName: " << windowMetaData.windowEndFieldName << "\n";
+    out << "windowKeyFieldName: " << windowMetaData.windowKeyFieldName;
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalStreamJoinProbeOperator::copy() {
     return create(id,

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/OperatorsUtil.hpp>
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
 
@@ -48,5 +49,14 @@ SchemaPtr ExchangeOperatorNode::getOutputSchema() const { return outputSchema; }
 void ExchangeOperatorNode::setInputOriginIds(std::vector<OriginId> originIds) { this->inputOriginIds = originIds; }
 
 const std::vector<OriginId> ExchangeOperatorNode::getOutputOriginIds() const { return inputOriginIds; }
+
+std::string ExchangeOperatorNode::toString() const {
+    std::stringstream out;
+    out << OperatorNode::toString();
+    out << "inputSchema: " << inputSchema->toString() << "\n";
+    out << "outputSchema: " << outputSchema->toString() << "\n";
+    out << "inputOriginIds: " << Util::concatenateVectorAsString<uint64_t>(inputOriginIds);
+    return out.str();
+}
 
 }// namespace NES

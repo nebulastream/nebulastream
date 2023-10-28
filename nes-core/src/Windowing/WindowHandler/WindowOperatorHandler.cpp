@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <State/StateManager.hpp>
+#include <API/Schema.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
@@ -61,6 +62,14 @@ void WindowOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, R
 void WindowOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
     windowHandler->postReconfigurationCallback(task);
+}
+
+std::string WindowOperatorHandler::toString() const {
+    std::stringstream out;
+    out << windowDefinition->toString();
+    out << "resultSchema: " << resultSchema->toString();
+    out << std::endl;
+    return out.str();
 }
 
 }// namespace NES::Windowing

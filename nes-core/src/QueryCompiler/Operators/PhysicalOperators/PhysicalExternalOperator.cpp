@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <utility>
 namespace NES {
 namespace QueryCompilation {
@@ -38,7 +39,15 @@ PhysicalExternalOperator::create(OperatorId id,
     return std::make_shared<PhysicalExternalOperator>(id, inputSchema, outputSchema, executablePipelineStage);
 }
 
-std::string PhysicalExternalOperator::toString() const { return "PhysicalExternalOperator"; }
+std::string PhysicalExternalOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalExternalOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << executablePipelineStage->getCodeAsString();
+    out << std::endl;
+    return out.str();
+}
 
 OperatorNodePtr PhysicalExternalOperator::copy() {
     auto result = create(id, inputSchema, outputSchema, executablePipelineStage);

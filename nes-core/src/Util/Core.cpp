@@ -13,7 +13,6 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Common/DataTypes/DataType.hpp>

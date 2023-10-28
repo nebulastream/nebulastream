@@ -40,7 +40,12 @@ std::shared_ptr<PhysicalKeyedGlobalSliceStoreAppendOperator> PhysicalKeyedGlobal
 }
 
 std::string PhysicalKeyedGlobalSliceStoreAppendOperator::toString() const {
-    return "PhysicalKeyedGlobalSliceStoreAppendOperator";
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalKeyedGlobalSliceStoreAppendOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    out << keyedEventTimeWindowHandler->toString();
+    return out.str();
 }
 
 OperatorNodePtr PhysicalKeyedGlobalSliceStoreAppendOperator::copy() {

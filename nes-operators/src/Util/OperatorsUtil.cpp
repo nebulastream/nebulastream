@@ -11,17 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
-namespace NES::QueryCompilation::PhysicalOperators {
+#include <API/Schema.hpp>
+#include <Util/OperatorsUtil.hpp>
 
-PhysicalOperator::PhysicalOperator(OperatorId id) : OperatorNode(id) {}
+namespace Util {
 
-std::string PhysicalOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalOperator:\n";
-    out << OperatorNode::toString();
-    return out.str();
+std::string detail::concatenateFunctionHelper(uint64_t value) {
+    std::ostringstream ss;
+    ss << value;
+    return ss.str();
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+std::string detail::concatenateFunctionHelper(const NES::SchemaPtr& schema) {
+    return schema->toString();
+}
+
+} // namespace Util
