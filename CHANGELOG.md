@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.5.233](https://github.com/nebulastream/nebulastream/tree/v0.5.233) (2023-10-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.232...v0.5.233)
+
+**Implemented enhancements:**
+
+- \[TASK\] Use `folly::Synchronize` in PartitionManager [\#4297](https://github.com/nebulastream/nebulastream/issues/4297)
+- \[TASK\] Adjust statReuquests to the new design [\#4275](https://github.com/nebulastream/nebulastream/issues/4275)
+- \[TASK\] add StatRequestParam classes  [\#4258](https://github.com/nebulastream/nebulastream/issues/4258)
+- \[TASK\] Add more information to PhysicalOperators::toString\(\)  [\#4244](https://github.com/nebulastream/nebulastream/issues/4244)
+- Create statCollectorParamObj class [\#4235](https://github.com/nebulastream/nebulastream/issues/4235)
+- \[TASK\] Register Query as example and placeholder for future Statistic Queries [\#4140](https://github.com/nebulastream/nebulastream/issues/4140)
+- \[FEATURE\] Add Statistic Manager to the Worker [\#3861](https://github.com/nebulastream/nebulastream/issues/3861)
+
 ## [v0.5.232](https://github.com/nebulastream/nebulastream/tree/v0.5.232) (2023-10-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.231...v0.5.232)
