@@ -160,7 +160,6 @@ using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
 
 }// namespace Phases
 
-
 namespace PhysicalOperators {
 class PhysicalOperator;
 using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;

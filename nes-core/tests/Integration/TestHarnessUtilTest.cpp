@@ -661,8 +661,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     };
 
     auto queryWithFilterOperator = Query::from("car").filter(Attribute("key") < 1000);
-    TestHarness testHarness =
-        TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
     EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), Exceptions::RuntimeException);

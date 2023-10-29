@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <API/QueryAPI.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -86,10 +86,11 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
     std::string outputFilePath = getTestResourceFolder() / "filterPushDownTest.out";
     remove(outputFilePath.c_str());
 
-    auto query = Query::from("QnV1").map(Attribute("velocity") = Attribute("velocity") - 5)
-        .map(Attribute("velocity") = 5 * Attribute("velocity"))
-        .filter(Attribute("velocity") < 100)
-        .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
+    auto query = Query::from("QnV1")
+                     .map(Attribute("velocity") = Attribute("velocity") - 5)
+                     .map(Attribute("velocity") = 5 * Attribute("velocity"))
+                     .filter(Attribute("velocity") < 100)
+                     .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
@@ -128,9 +129,10 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
     std::string outputFilePath = getTestResourceFolder() / "filterPushDownTest.out";
     remove(outputFilePath.c_str());
 
-    auto query = Query::from("QnV1").map(Attribute("velocity") = 5 * (Attribute("velocity") - 5))
-        .filter(Attribute("velocity") < 100)
-        .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
+    auto query = Query::from("QnV1")
+                     .map(Attribute("velocity") = 5 * (Attribute("velocity") - 5))
+                     .filter(Attribute("velocity") < 100)
+                     .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
@@ -168,10 +170,10 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
     std::string outputFilePath = getTestResourceFolder() / "filterPushDownTest.out";
     remove(outputFilePath.c_str());
 
-    auto query =
-        Query::from("QnV1").map(Attribute("NewVelocity") = 5 * (Attribute("velocity") - 5))
-        .filter(Attribute("NewVelocity") < 100)
-        .project(Attribute("timestamp"), Attribute("NewVelocity"), Attribute("quantity"));
+    auto query = Query::from("QnV1")
+                     .map(Attribute("NewVelocity") = 5 * (Attribute("velocity") - 5))
+                     .filter(Attribute("NewVelocity") < 100)
+                     .project(Attribute("timestamp"), Attribute("NewVelocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()

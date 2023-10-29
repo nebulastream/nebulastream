@@ -27,7 +27,8 @@ PhysicalSlicePreAggregationOperator::PhysicalSlicePreAggregationOperator(Operato
                                                                          SchemaPtr inputSchema,
                                                                          SchemaPtr outputSchema,
                                                                          Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
+    : OperatorNode(id),
+      PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
 
 std::string PhysicalSlicePreAggregationOperator::toString() const {
     std::stringstream out;

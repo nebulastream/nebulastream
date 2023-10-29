@@ -888,7 +888,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
-                                                  std::weak_ptr<NesWorker>(),
+                         std::weak_ptr<NesWorker>(),
                          std::make_shared<OpenCLManager>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,

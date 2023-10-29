@@ -14,9 +14,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, uint32_t) {
-    NES_INFO("Started StreamJoinOperatorHandler!");
-}
+void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, uint32_t) { NES_INFO("Started StreamJoinOperatorHandler!"); }
 void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_INFO("Stopped StreamJoinOperatorHandler!");
 }

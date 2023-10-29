@@ -33,7 +33,7 @@ void NonKeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionCon
     defaultState = std::make_unique<State>(entrySize);
 }
 
-void NonKeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr,  uint32_t) {
+void NonKeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
     NES_DEBUG("start NonKeyedSliceMergingHandler");
 }
 

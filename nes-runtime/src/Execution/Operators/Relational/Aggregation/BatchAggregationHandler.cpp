@@ -32,7 +32,7 @@ void BatchAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext
     }
 }
 
-void BatchAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr,  uint32_t) {
+void BatchAggregationHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
     NES_DEBUG("start BatchAggregationHandler");
 }
 
