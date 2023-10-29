@@ -524,7 +524,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
         "15000,25000,1,126\n"
         "20000,30000,1,41\n";
 
-        EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {

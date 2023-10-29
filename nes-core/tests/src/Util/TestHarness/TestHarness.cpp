@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
-#include <Configurations/Enums/DumpMode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <filesystem>
@@ -269,8 +269,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
         coordinatorConfiguration->enableNewRequestExecutor = true;
     }
 
-    coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode =
-        QueryCompilation::DumpMode::CONSOLE;
+    coordinatorConfiguration->worker.queryCompiler.queryCompilerDumpMode = QueryCompilation::DumpMode::CONSOLE;
     coordinatorConfiguration->worker.queryCompiler.windowingStrategy = windowingStrategy;
     coordinatorConfiguration->worker.queryCompiler.joinStrategy = joinStrategy;
 

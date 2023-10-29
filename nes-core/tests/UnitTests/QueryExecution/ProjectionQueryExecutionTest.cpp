@@ -137,8 +137,7 @@ TEST_P(ProjectionQueryExecutionTest, projectNonExistingFields) {
 
 INSTANTIATE_TEST_CASE_P(testProjectionQueries,
                         ProjectionQueryExecutionTest,
-                        ::testing::Values(
-                                          QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<ProjectionQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });

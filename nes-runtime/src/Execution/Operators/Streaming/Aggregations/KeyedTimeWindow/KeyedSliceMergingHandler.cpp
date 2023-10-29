@@ -29,7 +29,7 @@ void KeyedSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContex
     this->valueSize = valueSize;
 }
 
-void KeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr,  uint32_t) {
+void KeyedSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {
     NES_DEBUG("start GlobalSliceMergingHandler");
 }
 

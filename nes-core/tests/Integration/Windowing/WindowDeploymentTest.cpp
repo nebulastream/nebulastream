@@ -724,7 +724,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
                                        .byKey(Attribute("key"))
                                        .apply(Max(Attribute("value")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("car", carSchema)
+                           .addLogicalSource("car", carSchema)
 
                            .attachWorkerWithMemorySourceToCoordinator("car");
 

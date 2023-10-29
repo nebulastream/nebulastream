@@ -49,8 +49,6 @@ bool BufferOptimizationPhase::isReadOnlyInput(OperatorPipelinePtr pipeline) {
     return false;
 }
 
-OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
-  return operatorPipeline;
-}
+OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) { return operatorPipeline; }
 
 }// namespace NES::QueryCompilation

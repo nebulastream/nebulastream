@@ -1398,7 +1398,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     csvSourceType->setNumberOfBuffersToProduce(2);
     csvSourceType->setSkipHeader(false);
 
-      auto csvSourceType2 = CSVSourceType::create("window2", "window_p2");
+    auto csvSourceType2 = CSVSourceType::create("window2", "window_p2");
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);

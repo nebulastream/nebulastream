@@ -38,9 +38,8 @@ class PhysicalThresholdWindowOperator : public PhysicalUnaryOperator {
                                     SchemaPtr outputSchema,
                                     Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    static std::shared_ptr<PhysicalThresholdWindowOperator> create(SchemaPtr inputSchema,
-                                                                   SchemaPtr outputSchema,
-                                                                   Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    static std::shared_ptr<PhysicalThresholdWindowOperator>
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 

@@ -89,7 +89,7 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
      */
     uint64_t getStateEntrySize() const { return entrySize; }
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr,  uint32_t) override{};
+    void start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) override{};
 
     void stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) override{};
 

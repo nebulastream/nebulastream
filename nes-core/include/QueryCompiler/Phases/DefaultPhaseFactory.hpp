@@ -32,6 +32,6 @@ class DefaultPhaseFactory : public PhaseFactory {
     BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
 };
 
-}// namespace NES
+}// namespace NES::QueryCompilation::Phases
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_
