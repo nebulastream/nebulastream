@@ -25,8 +25,6 @@
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include <z3++.h>
-
 namespace NES {
 
 CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)

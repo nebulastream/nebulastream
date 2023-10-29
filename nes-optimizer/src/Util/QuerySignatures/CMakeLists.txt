@@ -11,10 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-operators
+add_source_files(nes-optimizer
         DataTypeToZ3ExprUtil.cpp
         ExpressionToZ3ExprUtil.cpp
         QuerySignature.cpp
         QuerySignatureUtil.cpp
         Z3ExprAndFieldMap.cpp
+        Z3QuerySignatureContext.cpp
 )

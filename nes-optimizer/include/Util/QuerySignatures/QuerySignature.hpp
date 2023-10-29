@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <z3++.h>
 
 namespace z3 {
 class expr;

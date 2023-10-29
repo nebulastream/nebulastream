@@ -27,21 +27,13 @@ class KeyedThresholdWindowState {
   public:
     KeyedThresholdWindowState();
 
-    KeyedThresholdWindowState(const KeyedThresholdWindowState& other) {
-        aggregationValues.reserve(other.aggregationValues.size());
-        for (const auto& value : other.aggregationValues) {
-            aggregationValues.push_back(std::make_unique<Aggregation::AggregationValue>(*value));
-        }
-        recordCount = other.recordCount;
-        isWindowOpen = other.isWindowOpen;
-    }
+    KeyedThresholdWindowState(const KeyedThresholdWindowState& other);
 
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggregationValues{};
     uint64_t recordCount = 0;// counts the records contributing to the aggregate,
     bool isWindowOpen = false;
     std::mutex mutex;
 };
-KeyedThresholdWindowState::KeyedThresholdWindowState() = default;
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWSTATE_HPP_

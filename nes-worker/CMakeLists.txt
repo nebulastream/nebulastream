@@ -1,5 +1,3 @@
-# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,32 +10,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Set Sources and Headers
+# Add Source Code
 add_subdirectory(src)
+include(GNUInstallDirs)
 
-get_source(nes-compiler NES_COMPILER_SOURCE_FILES)
+# Add nes-core library
+get_source(worker NES_WORKER_SOURCE_FILES)
+add_library(nes-worker ${NES_WORKER_SOURCE_FILES})
 
-# Add Library
-add_library(nes-compiler ${NES_COMPILER_SOURCE_FILES})
-target_link_libraries(nes-compiler PUBLIC nes-common)
-target_include_directories(nes-compiler PUBLIC
+target_include_directories(nes-worker PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-compiler REUSE_FROM nes-common)
-    # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
-    target_compile_options(nes-compiler PUBLIC "-fPIC")
-endif ()
+
+target_link_libraries(nes-worker PRIVATE nes-runtime nes-grpc nes-configurations nes-operators)
+
+add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
+target_link_libraries(nesWorker PRIVATE nes-worker nes-configurations nes-runtime)
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
-    add_subdirectory(tests)
+    add_subdirectory(test)
     message(STATUS "Tests are enabled")
 else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-#Add the nes common and headers to cpack
-install(TARGETS nes-compiler
+#Add the nes lib and headers to cpack
+install(TARGETS nes-worker
         EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
+        LIBRARY
+        COMPONENT nesLibrary)
+
+install(TARGETS nesWorker
+        RUNTIME
+        COMPONENT nesExecutables)

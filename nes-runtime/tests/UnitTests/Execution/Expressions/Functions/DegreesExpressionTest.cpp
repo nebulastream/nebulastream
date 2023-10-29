@@ -33,32 +33,32 @@ class DegreesExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down DegreesExpressionTest test class."); }
 };
 
-double calculateDegrees(double x) { return (x * 180.0) / M_PI; }
+double calculateDegreesTest(double x) { return (x * 180.0) / M_PI; }
 
 TEST_F(DegreesExpressionTest, evaluateDegreesExpressionInteger) {
     auto expression = UnaryExpressionWrapper<DegreesExpression>();
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) M_PI));
-        ASSERT_EQ(resultValue, calculateDegrees((int8_t) M_PI));
+        ASSERT_EQ(resultValue, calculateDegreesTest((int8_t) M_PI));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int16
     {
         auto resultValue = expression.eval(Value<Int16>((int16_t) M_PI_2));
-        ASSERT_EQ(resultValue, calculateDegrees((int16_t) M_PI_2));
+        ASSERT_EQ(resultValue, calculateDegreesTest((int16_t) M_PI_2));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t) M_PI_4));
-        ASSERT_EQ(resultValue, calculateDegrees((int32_t) M_PI_4));
+        ASSERT_EQ(resultValue, calculateDegreesTest((int32_t) M_PI_4));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t) M_PI));
-        ASSERT_EQ(resultValue, calculateDegrees((int64_t) M_PI));
+        ASSERT_EQ(resultValue, calculateDegreesTest((int64_t) M_PI));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -68,7 +68,7 @@ TEST_F(DegreesExpressionTest, evaluateDegreesExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) M_PI));
-        ASSERT_EQ(resultValue.as<Double>(), calculateDegrees((float) M_PI));
+        ASSERT_EQ(resultValue.as<Double>(), calculateDegreesTest((float) M_PI));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double

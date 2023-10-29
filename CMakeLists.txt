@@ -55,7 +55,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(NES_USE_CCACHE "USE CCACHE" OFF)
-
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
@@ -112,6 +112,8 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 # C++ Standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 # Set NES Flags
 set(NES_SPECIFIC_FLAGS)
@@ -421,10 +423,6 @@ endif ()
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
 
-# Eigen3 linear alg library
-find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
-set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
-
 # s2 Library
 if (NES_USE_S2)
     message(STATUS "s2 is enabled")
@@ -557,16 +555,16 @@ else ()
     message(FATAL_ERROR "Cannot find llvm. LLVM ${LLVM_VERSION} is required. Use self-hosted=1 or install it manually.")
 endif ()
 
-find_package(Clang CONFIG REQUIRED)
-if (Clang_FOUND)
-    get_property(CLANG_FORMAT_EXECUTABLE TARGET clang-format PROPERTY LOCATION)
-    get_property(CLANG_EXECUTABLE TARGET clang PROPERTY LOCATION)
-    set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/lib/clang/${LLVM_VERSION_MAJOR}/include/)
-    message(STATUS "CLANG_FORMAT_EXECUTABLE ${CLANG_FORMAT_EXECUTABLE}")
-    message(STATUS "CLANG_EXECUTABLE ${CLANG_EXECUTABLE}")
-else ()
-    message(FATAL_ERROR "Cannot find clang.")
-endif ()
+#find_package(Clang CONFIG REQUIRED)
+#if (Clang_FOUND)
+#    get_property(CLANG_FORMAT_EXECUTABLE TARGET clang-format PROPERTY LOCATION)
+#    get_property(CLANG_EXECUTABLE TARGET clang PROPERTY LOCATION)
+#    set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/lib/clang/${LLVM_VERSION_MAJOR}/include/)
+#    message(STATUS "CLANG_FORMAT_EXECUTABLE ${CLANG_FORMAT_EXECUTABLE}")
+#    message(STATUS "CLANG_EXECUTABLE ${CLANG_EXECUTABLE}")
+#else ()
+#    message(FATAL_ERROR "Cannot find clang.")
+#endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     find_package(JNI)

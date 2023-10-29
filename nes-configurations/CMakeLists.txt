@@ -18,7 +18,7 @@ add_subdirectory(src)
 get_source(nes-configurations NES_CONFIGURATIONS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-configurations SHARED ${NES_CONFIGURATIONS_SOURCE_FILES})
+add_library(nes-configurations ${NES_CONFIGURATIONS_SOURCE_FILES})
 target_link_libraries(nes-configurations PUBLIC nes-common)
 
 target_include_directories(nes-configurations PUBLIC

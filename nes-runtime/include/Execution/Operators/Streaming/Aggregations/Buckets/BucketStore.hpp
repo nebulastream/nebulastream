@@ -17,7 +17,6 @@
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <folly/Synchronized.h>
 #include <list>
 #include <map>
 #include <memory>
