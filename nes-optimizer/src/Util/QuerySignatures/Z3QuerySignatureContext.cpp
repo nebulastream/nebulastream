@@ -9,4 +9,6 @@ QuerySignaturePtr Z3QuerySignatureContext::createQuerySignatureForOperator(const
     return QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
 }
 
+z3::ContextPtr Z3QuerySignatureContext::getContext() const { return context; }
+
 }// namespace NES::Optimizer

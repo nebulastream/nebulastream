@@ -13,9 +13,4 @@
 
 add_source_files(nes-core
         PlanJsonGenerator.cpp
-        )
-if (NES_USE_MQTT)
-    add_source_files(nes-core
-            MQTTClientWrapper.cpp
-            )
-endif ()
+)

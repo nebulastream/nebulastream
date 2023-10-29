@@ -636,7 +636,7 @@ add_subdirectory(nes-optimizer)
 add_subdirectory(nes-worker)
 
 # Add target for core, which contains the nes lib
-add_subdirectory(nes-core)
+add_subdirectory(nes-coordinator)
 # Add target for client
 add_subdirectory(nes-client)
 # Add targets for plugins

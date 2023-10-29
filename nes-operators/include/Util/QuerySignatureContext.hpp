@@ -32,6 +32,7 @@ using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 class QuerySignatureContext {
   public:
     virtual QuerySignaturePtr createQuerySignatureForOperator(const OperatorNodePtr& operatorNode) const = 0;
+    virtual ~QuerySignatureContext() = default;
 };
 }// namespace Optimizer
 }// namespace NES

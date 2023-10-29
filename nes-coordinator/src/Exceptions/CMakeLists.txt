@@ -16,7 +16,6 @@ add_source_files(nes-core
         RequestTypeNotHandledException.cpp
         QueryDeploymentException.cpp
         QueryUndeploymentException.cpp
-        WindowProcessingException.cpp
         InvalidCoordinateFormatException.cpp
         MapEntryNotFoundException.cpp
         ExecutionNodeNotFoundException.cpp

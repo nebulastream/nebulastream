@@ -17,19 +17,18 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/HybridCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
-#include <Util/QuerySignatureContext.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatureContext.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 
 namespace NES::Optimizer {
 
-HybridCompleteQueryMergerRule::HybridCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule() {
-    this->context = std::make_shared<QuerySignatureContext>(context);
-    signatureEqualityUtil = SignatureEqualityUtil::create(this->context);
+HybridCompleteQueryMergerRule::HybridCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule(), context(context) {
+    signatureEqualityUtil = SignatureEqualityUtil::create(context);
 }
 
 HybridCompleteQueryMergerRulePtr HybridCompleteQueryMergerRule::create(z3::ContextPtr context) {
