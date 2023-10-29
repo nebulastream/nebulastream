@@ -114,9 +114,91 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04
     if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
-        add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp)
+        add_library(nes-runtime-proxy
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Aggregation/HyperLogLogDistinctCountApproximation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Aggregation/MaxAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Aggregation/MinAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Aggregation/QuantileEstimationAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/AbsExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/AcosExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/AsinExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/Atan2Expression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/AtanExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/BitcounterExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/CbrtExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/CeilExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/CosExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/CotExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/DegreesExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/ExpExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/FactorialExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/FloorExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/GammaExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/LGammaExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/LnExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/Log2Expression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/Log10Expression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/MaxExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/MinExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/ModExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/PowerExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/RadiansExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/RandomExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/SignExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/SinExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/SqrtExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/TanExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/Functions/TruncExpression.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/TextFunctions/PatternMatching/ExtractingRegex.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/TextFunctions/PatternMatching/MatchingRegex.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/TextFunctions/PatternMatching/ReplacingRegex.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/TextFunctions/PatternMatching/SearchingRegex.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/TextFunctions/SimilarityFunctions/HammingDistance.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/TextFunctions/SimilarityFunctions/JaccardDistance.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/TextFunctions/SimilarityFunctions/JaroSimilarity.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Expressions/TextFunctions/SimilarityFunctions/LevenshteinDistance.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/MemoryProvider/MemoryProvider.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/ExecutionContext.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Aggregation/BatchAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Aggregation/BatchAggregationScan.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Aggregation/BatchKeyedAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Join/BatchJoinBuild.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Join/BatchJoinProbe.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Limit.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Sort/BatchSort.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Relational/Sort/BatchSortScan.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMerging.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJBuildBucketing.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/HashJoin/HJProbe.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/StreamJoinBuild.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/StreamJoinBuildBucketing.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/Streaming/Join/StreamJoinProbe.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindow.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/RecordBuffer.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/DataTypes/List/List.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/DataTypes/MemRefUtils.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/DataTypes/Text/Text.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/FixedPage/FixedPageRef.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/Hash/H3Hash.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/Hash/MurMur3HashFunction.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Nautilus/Interface/PagedVector/PagedVectorRef.cpp)
         message(STATUS "CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
-        target_include_directories(nes-runtime-proxy PUBLIC ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-runtime/include/ ${CMAKE_SOURCE_DIR}/nes-data-types/include/)
+        target_include_directories(nes-runtime-proxy PUBLIC ${CMAKE_SOURCE_DIR}/nes-configurations/include/ ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-operators/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-runtime/include/ ${CMAKE_SOURCE_DIR}/nes-data-types/include/)
 
         set_target_properties(nes-runtime-proxy PROPERTIES LINKER_LANGUAGE CXX)
         llvmir_attach_bc_target(nes-runtime_bc nes-runtime-proxy -O3)
@@ -168,7 +250,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
             SOURCE_DIR "lib/flounder"
             BINARY_DIR "lib/flounder"
     )
-    set (flounder_BUILD_TESTING OFF CACHE INTERNAL "Turn off tests")
+    set(flounder_BUILD_TESTING OFF CACHE INTERNAL "Turn off tests")
     set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(flounder)
     target_compile_options(flounder PRIVATE -Wno-unqualified-std-cast-call)
@@ -194,17 +276,17 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     # Define map java udf utils class file
     if (NES_JAVA_UDF_UTILS_PATH)
         # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
-        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
+        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS= "${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
 
         message(STATUS "Setting path of Java helpers to: ${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
 
         # Install Java deserialization helper.
         INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/stream/nebula/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH}/stream/nebula)
-    else()
+    else ()
         # Use Java helpers from test directory when working in CLion.
-        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")
-    endif()
-endif()
+        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS= "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")
+    endif ()
+endif ()
 
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp Runtime/MemoryLayout/DynamicTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp)

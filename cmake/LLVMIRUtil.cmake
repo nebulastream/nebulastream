@@ -129,7 +129,7 @@ function(llvmir_attach_bc_target)
     catuniq(CURRENT_DEFS ${IN_DEFS} ${IN_FILE_DEFS})
     debug("@llvmir_attach_bc_target ${DEPENDS_TRGT} defs: ${CURRENT_DEFS}")
 
-    catuniq(CURRENT_COMPILE_FLAGS ${IN_COMPILE_FLAGS} ${IN_FILE_COMPILE_FLAGS})
+    catuniq(CURRENT_COMPILE_FLAGS "-Wno-error=deprecated" ${IN_COMPILE_FLAGS} ${IN_FILE_COMPILE_FLAGS})
     debug("@llvmir_attach_bc_target ${DEPENDS_TRGT} compile flags: \
     ${CURRENT_COMPILE_FLAGS}")
 
