@@ -45,20 +45,7 @@ endif ()
 if (NES_USE_KAFKA)
     # TODO #3351 The commands should be moved into a separate CMake config file.
     if (NOT APPLE)
-        find_package(RdKafka CONFIG REQUIRED)
-        #target_link_libraries(nes-runtime PUBLIC  RdKafka::rdkafka RdKafka::rdkafka++)
-        #target_include_directories(nes-runtime PRIVATE ${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-        #target_link_libraries(nes-runtime PRIVATE  ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
-        add_compile_definitions(ENABLE_KAFKA_BUILD)
-        add_library(cppkafka::cppkafka STATIC IMPORTED)
-        set_target_properties(cppkafka::cppkafka
-                PROPERTIES
-                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
-                INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
-        )
-        target_link_libraries(cppkafka::cppkafka INTERFACE RdKafka::rdkafka RdKafka::rdkafka++)
-        target_link_libraries(nes-runtime PRIVATE  cppkafka::cppkafka)
-        message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
+        find_package(cppkafka REQUIRED)
     else ()
         message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
     endif ()
