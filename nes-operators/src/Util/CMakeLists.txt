@@ -14,5 +14,3 @@
 add_source_files(nes-operators
         QueryConsoleDumpHandler.cpp
 )
-
-add_subdirectory(QuerySignatures)

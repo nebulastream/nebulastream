@@ -16,7 +16,7 @@ include(GNUInstallDirs)
 
 # Add nes-core library
 get_source(worker NES_WORKER_SOURCE_FILES)
-add_library(nes-worker SHARED ${NES_WORKER_SOURCE_FILES})
+add_library(nes-worker ${NES_WORKER_SOURCE_FILES})
 
 target_include_directories(nes-worker PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

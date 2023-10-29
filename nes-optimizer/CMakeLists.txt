@@ -18,7 +18,7 @@ add_subdirectory(src)
 get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-optimizer SHARED ${NES_OPTIMIZER_SOURCE_FILES})
+add_library(nes-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
 target_link_libraries(nes-optimizer PRIVATE nes-common  nes-data-types  nes-configurations nes-operators nes-catalogs)
 target_link_libraries(nes-optimizer PRIVATE cpr::cpr ${CURL_LIBRARIES} ${Z3_LIBRARIES})
 

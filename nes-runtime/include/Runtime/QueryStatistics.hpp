@@ -14,9 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
-#include <folly/Synchronized.h>
-
 #include <atomic>
+#include <folly/Synchronized.h>
 #include <map>
 #include <memory>
 #include <string>

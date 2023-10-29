@@ -21,7 +21,7 @@ add_subdirectory(src)
 get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
-add_library(nes-runtime SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
+add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
 # if musl we cant use can't use backtrace for tracing
 if (HOST_IS_MUSL)
     target_compile_definitions(nes-runtime PRIVATE HOST_IS_MUSL)
@@ -37,7 +37,7 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     include(CMakeFindDependencyMacro)
     find_dependency(gflags CONFIG REQUIRED) # required on macos
     find_package(folly CONFIG REQUIRED)
-    target_link_libraries(nes-runtime PRIVATE Folly::folly Folly::folly_deps)
+    target_link_libraries(nes-runtime PRIVATE Folly::folly)
     target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
 endif ()
 
@@ -75,7 +75,8 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-runtime REUSE_FROM nes-common)
 endif ()
 
-target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
+target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
+#target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
 
 # Add Private Dependencies

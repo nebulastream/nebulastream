@@ -18,7 +18,7 @@ add_subdirectory(src)
 get_source(nes-compiler NES_COMPILER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-compiler SHARED ${NES_COMPILER_SOURCE_FILES})
+add_library(nes-compiler ${NES_COMPILER_SOURCE_FILES})
 target_link_libraries(nes-compiler PUBLIC nes-common)
 
 target_include_directories(nes-compiler PUBLIC

@@ -48,7 +48,7 @@ macro(target_public_headers TARGET)
 endmacro()
 
 # Add nes-grpc library
-add_library(nes-grpc SHARED ${OUTPUT_SOURCES})
+add_library(nes-grpc ${OUTPUT_SOURCES})
 target_link_libraries(nes-grpc PUBLIC ${GRPC_LIBRARIES})
 target_include_directories(nes-grpc PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
@@ -63,7 +63,8 @@ install(TARGETS nes-grpc
 get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
-add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
+add_library(nes-common ${NES_COMMON_SOURCE_FILES})
+
 target_link_libraries(nes-common PRIVATE nes-grpc)
 target_link_libraries(nes-common PUBLIC ${LIBRARIES_SDP})
 

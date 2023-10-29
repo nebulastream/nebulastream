@@ -18,7 +18,7 @@ add_subdirectory(src)
 get_source(nes-data-types NES_COMPILER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-data-types SHARED ${NES_COMPILER_SOURCE_FILES})
+add_library(nes-data-types ${NES_COMPILER_SOURCE_FILES})
 target_link_libraries(nes-data-types PRIVATE nes-configurations)
 target_include_directories(nes-data-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
