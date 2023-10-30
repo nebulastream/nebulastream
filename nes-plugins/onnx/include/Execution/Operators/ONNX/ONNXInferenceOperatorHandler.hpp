@@ -17,11 +17,11 @@
 
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
+#include <absl/types/span.h>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
-#include <absl/types/span.h>
 
 //TODO: Change to BitCast once available
 #define ONNX_HANDLER_CAST reinterpret_cast
@@ -47,8 +47,7 @@ class ONNXInferenceOperatorHandler : public OperatorHandler {
 
     ~ONNXInferenceOperatorHandler() override;
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               uint32_t localStateVariableId) override;
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
 
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;

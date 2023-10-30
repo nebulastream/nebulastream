@@ -14,13 +14,13 @@
 
 #include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Arrow/ArrowSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>

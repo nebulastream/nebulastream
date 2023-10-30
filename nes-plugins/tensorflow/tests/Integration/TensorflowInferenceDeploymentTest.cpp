@@ -197,7 +197,7 @@ TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) 
 
     auto irisSchema = std::get<1>(GetParam());
 
-    auto csvSourceType = CSVSourceType::create("irisData","irisDataP");
+    auto csvSourceType = CSVSourceType::create("irisData", "irisDataP");
     csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / std::get<2>(GetParam()));
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType->setNumberOfBuffersToProduce(10);

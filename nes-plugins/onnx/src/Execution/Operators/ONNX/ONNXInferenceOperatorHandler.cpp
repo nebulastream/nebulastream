@@ -38,9 +38,7 @@ ONNXInferenceOperatorHandler::ONNXInferenceOperatorHandler(std::string model) : 
     initializeModel(this->model);
 }
 
-ONNXInferenceOperatorHandler::~ONNXInferenceOperatorHandler() {
-    this->session->release();
-}
+ONNXInferenceOperatorHandler::~ONNXInferenceOperatorHandler() { this->session->release(); }
 
 void ONNXInferenceOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {}
 
