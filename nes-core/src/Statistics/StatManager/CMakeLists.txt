@@ -10,5 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(StatCoordinator)
-add_subdirectory(StatManager)
+add_source_files(nes-core
+        StatManager.cpp
+        StatCollectorIdentifier.cpp)
+

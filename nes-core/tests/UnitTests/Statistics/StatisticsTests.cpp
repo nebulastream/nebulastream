@@ -21,7 +21,6 @@
 #include <Statistics/Requests/StatProbeRequest.hpp>
 #include <Statistics/Requests/StatRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
-#include <Statistics/StatCoordinator.hpp>
 
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>

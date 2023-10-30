@@ -25,18 +25,18 @@ namespace NES::Experimental::Statistics {
 class StatCollectorIdentifier {
   public:
     /**
-     * @param logicalSourceName the logicalSourceName over which the statistic is generated
+     * @param physicalSourceName the physicalSourceName over which the statistic is generated
      * @param fieldName the fieldName over which the statistic is generated
      * @param statCollectorType the Type of statCollector that is used/the statistic that is generated
      */
-    StatCollectorIdentifier(const std::string& logicalSourceName,
+    StatCollectorIdentifier(const std::string& physicalSourceName,
                             const std::string& fieldName,
                             const StatCollectorType statCollectorType);
 
     /**
-     * @return returns the logicalSourceName over which the statistic is generated
+     * @return returns the physicalSourceName over which the statistic is generated
      */
-    std::string getLogicalSourceName() const;
+    std::string getPhysicalSourceName() const;
 
     /**
      * @return returns the fieldName over which the statistic is generated
@@ -49,7 +49,13 @@ class StatCollectorIdentifier {
     StatCollectorType getStatCollectorType() const;
 
     /**
-     * @param statCollectorIdentifier  a object that allows for the identfication of
+     *
+     * @param fieldName
+     */
+    void setPhysicalSourceName(std::string& fieldName);
+
+    /**
+     * @param statCollectorIdentifier  a object that allows for the identification of
      * tracked statistics
      * @return true if two StatCollectorIdentifiers are equal
      */
@@ -70,7 +76,7 @@ class StatCollectorIdentifier {
     };
 
   private:
-    std::string logicalSourceName;
+    std::string physicalSourceName;
     std::string fieldName;
     StatCollectorType statCollectorType;
 };

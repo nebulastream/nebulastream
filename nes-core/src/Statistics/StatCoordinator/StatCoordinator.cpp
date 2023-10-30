@@ -27,7 +27,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include <GRPC/WorkerRPCClient.hpp>
+#include "GRPC/WorkerRPCClient.hpp"
 
 namespace NES {
 
@@ -48,8 +48,8 @@ QueryId StatCoordinator::createStat(StatCreateRequest& createRequest) {
 
         NES_DEBUG("Statistic does not yet exist");
         // ToDo: add logic for different queries in later issue
-        auto sourceName = statIdentifier.getLogicalSourceName();
-        auto fieldName = statIdentifier.getFieldName();
+        auto sourceName = statQueryIdentifier.getLogicalSourceName();
+        auto fieldName = statQueryIdentifier.getFieldName();
         auto query = Query::from(sourceName).filter(Attribute(fieldName) < 42).sink(PrintSinkDescriptor::create());
 
         // ToDo: add actual statistic query. Issue: 4314
@@ -61,7 +61,7 @@ QueryId StatCoordinator::createStat(StatCreateRequest& createRequest) {
         //                                                        LineageType::IN_MEMORY);
         queryId = 1;
         NES_DEBUG("Adding statistic to the unordered_map of tracked statistics");
-        trackedStatistics[statIdentifier] = queryId;
+        trackedStatistics[statQueryIdentifier] = queryId;
 
         return queryId;
 
@@ -94,7 +94,7 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
                                                   probeRequest.getFieldName(),
                                                   probeRequest.getStatCollectorType());
 
-    auto statQueryIdIt = trackedStatistics.find(statIdentifier);
+    auto statQueryIdIt = trackedStatistics.find(statQueryIdentifier);
 
     if (statQueryIdIt == trackedStatistics.end()) {
         NES_DEBUG("Statistic cannot queried, as it is not being generated.");
@@ -121,7 +121,7 @@ bool StatCoordinator::deleteStat(StatDeleteRequest& deleteRequest) {
                                                   deleteRequest.getFieldName(),
                                                   deleteRequest.getStatCollectorType());
 
-    auto statQueryIdIt = trackedStatistics.find(statIdentifier);
+    auto statQueryIdIt = trackedStatistics.find(statQueryIdentifier);
     if (statQueryIdIt == trackedStatistics.end()) {
         // stat is not being generated, return with error value
         return -1;
@@ -138,12 +138,12 @@ bool StatCoordinator::deleteStat(StatDeleteRequest& deleteRequest) {
         }
 //        ToDo: Add Logic to stop statistic queries. Issue: 4315
 //        NES_DEBUG("Trying to stop query!");
-//        auto queryStopped = queryService->validateAndQueueStopQueryRequest(it->second);
+//        auto queryStopped = queryService->validateAndQueueStopQueryRequest(statQueryIdIt->second);
 //        if (!queryStopped) {
 //            return -1;
 //        }
 
-        trackedStatistics.erase(statIdentifier);
+        trackedStatistics.erase(statQueryIdentifier);
         NES_DEBUG("StatCollectors successfully deleted and query stopped!");
         return success;
     }

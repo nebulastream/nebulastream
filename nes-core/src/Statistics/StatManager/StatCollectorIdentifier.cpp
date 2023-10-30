@@ -12,24 +12,25 @@
     limitations under the License.
 */
 
-#include <Statistics/StatCollectorIdentifier.hpp>
+#include "Statistics/StatManager/StatCollectorIdentifier.hpp"
 
 namespace NES {
 
 namespace Experimental::Statistics {
 
-StatCollectorIdentifier::StatCollectorIdentifier(const std::string& logicalSourceName,
+StatCollectorIdentifier::StatCollectorIdentifier(const std::string& physicalSourceName,
                                                  const std::string& fieldName,
                                                  const StatCollectorType statCollectorType)
-    : logicalSourceName(logicalSourceName), fieldName(fieldName), statCollectorType(statCollectorType) {}
+    : physicalSourceName(physicalSourceName), fieldName(fieldName), statCollectorType(statCollectorType) {}
 
 bool StatCollectorIdentifier::operator==(const StatCollectorIdentifier& statCollectorIdentifier) const {
-    return logicalSourceName == statCollectorIdentifier.getLogicalSourceName()
+    return physicalSourceName == statCollectorIdentifier.getPhysicalSourceName()
         && fieldName == statCollectorIdentifier.getFieldName()
         && statCollectorType == statCollectorIdentifier.getStatCollectorType();
 }
-std::string StatCollectorIdentifier::getLogicalSourceName() const {
-    return logicalSourceName;
+
+std::string StatCollectorIdentifier::getPhysicalSourceName() const {
+    return physicalSourceName;
 }
 
 std::string StatCollectorIdentifier::getFieldName() const {
@@ -38,6 +39,10 @@ std::string StatCollectorIdentifier::getFieldName() const {
 
 StatCollectorType StatCollectorIdentifier::getStatCollectorType() const {
     return statCollectorType;
+}
+
+void StatCollectorIdentifier::setPhysicalSourceName(std::string& fieldName) {
+    this->fieldName = fieldName;
 }
 
 }

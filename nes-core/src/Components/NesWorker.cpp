@@ -45,6 +45,7 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
 #include <utility>
+#include <Statistics/StatManager/StatManager.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;

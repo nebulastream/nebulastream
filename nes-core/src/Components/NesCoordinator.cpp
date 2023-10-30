@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Statistics/StatCoordinator/StatCoordinator.hpp"
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -42,7 +43,6 @@
 #include <memory>
 #include <thread>
 #include <z3++.h>
-#include <Statistics/StatCoordinator.hpp>
 
 //GRPC Includes
 #include <Catalogs/Source/SourceCatalogService.hpp>
