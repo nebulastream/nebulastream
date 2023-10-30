@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.5.236](https://github.com/nebulastream/nebulastream/tree/v0.5.236) (2023-10-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.235...v0.5.236)
+
+**Implemented enhancements:**
+
+- \[TASK\] Model Inference Operator using ONNX [\#4180](https://github.com/nebulastream/nebulastream/issues/4180)
+- \[TASK\] Similarity Operators for DynamicTupleBuffers [\#4051](https://github.com/nebulastream/nebulastream/issues/4051)
+- \[TASK\] Fix errors with Threshold Window Test in QuerySubmissionTests using docker compose [\#3766](https://github.com/nebulastream/nebulastream/issues/3766)
+
+### Miscellaneous Issues ✌️
+
+- Nautilus \(ML\)IR Benchmarks [\#2931](https://github.com/nebulastream/nebulastream/issues/2931)
+
 ## [v0.5.235](https://github.com/nebulastream/nebulastream/tree/v0.5.235) (2023-10-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.234...v0.5.235)
