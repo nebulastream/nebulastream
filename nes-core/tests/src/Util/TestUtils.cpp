@@ -846,13 +846,13 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
     return allBuffers;
 }
 
-CSVSourceTypePtr TestUtils::createSourceTypeCSV(const SourceTypeConfigCSV& sourceTypeConfig) {
-    CSVSourceTypePtr sourceType = CSVSourceType::create();
-    sourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / sourceTypeConfig.fileName);
-    sourceType->setGatheringInterval(sourceTypeConfig.gatheringInterval);
-    sourceType->setNumberOfTuplesToProducePerBuffer(sourceTypeConfig.numberOfTuplesToProduce);
-    sourceType->setNumberOfBuffersToProduce(sourceTypeConfig.numberOfBuffersToProduce);
-    sourceType->setSkipHeader(sourceTypeConfig.isSkipHeader);
+CSVSourceTypePtr TestUtils::createSourceTypeCSV(const SourceTypeConfigCSV& sourceTypeConfigCSV) {
+    CSVSourceTypePtr sourceType = CSVSourceType::create(sourceTypeConfigCSV.logicalSourceName, sourceTypeConfigCSV.physicalSourceName);
+    sourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / sourceTypeConfigCSV.fileName);
+    sourceType->setGatheringInterval(sourceTypeConfigCSV.gatheringInterval);
+    sourceType->setNumberOfTuplesToProducePerBuffer(sourceTypeConfigCSV.numberOfTuplesToProduce);
+    sourceType->setNumberOfBuffersToProduce(sourceTypeConfigCSV.numberOfBuffersToProduce);
+    sourceType->setSkipHeader(sourceTypeConfigCSV.isSkipHeader);
     return sourceType;
 }
 

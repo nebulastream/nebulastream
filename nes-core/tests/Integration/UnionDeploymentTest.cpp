@@ -38,10 +38,10 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
         Testing::BaseIntegrationTest::SetUp();
 
         // Setup sources.
-        sourceCar = TestUtils::createSourceTypeCSV({"car.csv", 1, 40, 1});
-        sourceTruck = TestUtils::createSourceTypeCSV({"truck.csv", 1, 40, 1});
-        sourceRuby = TestUtils::createSourceTypeCSV({"window.csv", 1, 28, 1});
-        sourceDiamond = TestUtils::createSourceTypeCSV({"window.csv", 1, 28, 1});
+        sourceCar = TestUtils::createSourceTypeCSV({"car", "car_physical", "car.csv", 1, 40, 1});
+        sourceTruck = TestUtils::createSourceTypeCSV({"truck", "truck_physical", "truck.csv", 1, 40, 1});
+        sourceRuby = TestUtils::createSourceTypeCSV({"ruby", "ruby_physical", "window.csv", 1, 28, 1});
+        sourceDiamond = TestUtils::createSourceTypeCSV({"diamond", "diamond_physical", "window.csv", 1, 28, 1});
 
         // Setup schemas.
         schemaCarTruck = Schema::create()
@@ -85,9 +85,9 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("car", schemaCarTruck)
-                                  .attachWorkerWithCSVSourceToCoordinator("car", sourceCar) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceCar) 
                                   .addLogicalSource("truck", schemaCarTruck)
-                                  .attachWorkerWithCSVSourceToCoordinator("truck", sourceTruck)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceTruck)
                                   .validate()
                                   .setupTopology();
     std::vector<OutputCarTruck> expectedOutput;
@@ -114,7 +114,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 }
 
 /**
- * Test deploying unionWith query with source on two different worker node using the top down strategy.
+ * Test deploying unionWith query with source on two different worker node using the topDown strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
@@ -122,9 +122,9 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("car", schemaCarTruck)
-                                  .attachWorkerWithCSVSourceToCoordinator("car", sourceCar) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceCar) 
                                   .addLogicalSource("truck", schemaCarTruck)
-                                  .attachWorkerWithCSVSourceToCoordinator("truck", sourceTruck)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceTruck)
                                   .validate()
                                   .setupTopology();
     std::vector<OutputCarTruck> expectedOutput;
@@ -148,57 +148,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 }
 
 /**
- * Test deploying filter-push-down on unionWith query with source on two different worker node using top down strategy.
- * Case: 2 filter operators are above a unionWith operator and will be pushed down towards both of the available sources.
- *       2 filter operators are already below unionWith operator and need to be pushed down normally towards its respective source.
- */
-TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources) {
-    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
-    const auto query = 
-        Query::from("ruby")
-        .filter(Attribute("value") > 3)
-        .unionWith(
-            Query::from("diamond")
-            .filter(Attribute("value") < 15)
-            .map(Attribute("timestamp") = 1)
-            .filter(Attribute("value") < 17)
-            .map(Attribute("timestamp") = 2)
-            .filter(Attribute("value") > 3)
-        );
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .enableNewRequestExecutor()
-                                  .addLogicalSource("ruby", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator("ruby", sourceRuby) 
-                                  .addLogicalSource("diamond", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator("diamond", sourceDiamond)
-                                  .validate()
-                                  .setupTopology();
-                                  
-    std::vector<OutputRubyDiamond> expectedOutput;
-    // The first 17 entries are raw entries from the window.csv file stream.
-    // The next 12 entries are the result of the second query of the unionWith statement.
-    uint32_t numFirstQueryValues = 18;
-    for(uint32_t i = 0; i < 29; i++) {
-        uint32_t id = 1;
-        uint32_t value = (i % numFirstQueryValues) + 4;
-        uint32_t timestamp = (i < numFirstQueryValues) ? value * 1000 : 2;
-        expectedOutput.emplace_back(OutputRubyDiamond{value, id, timestamp});
-    }
-
-    std::vector<OutputRubyDiamond> actualOutput = testHarness.getOutput<OutputRubyDiamond>(
-        /* num output tuples expected */ expectedOutput.size(), 
-        /* placement strategy*/ "BottomUp",
-        /* fault tolerance*/ "NONE",
-        /* lineage*/ "IN_MEMORY"
-        );
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
-}
-
-/**
- * Test deploying filter-push-down on unionWith query with source on two different worker node using top down strategy.
- * Case: 1 filter operator is above a unionWith operator and will be pushed down towards both of the available sources.
- *       1 filter operator is already below unionWith operator and needs to be pushed down normally towards its own source.
+ * Test deploying a union query with filters and sources on two different worker nodes using bottomUp strategy.
  */
 TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources) {
     std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
@@ -215,9 +165,9 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator("ruby", sourceRuby) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby) 
                                   .addLogicalSource("diamond", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator("diamond", sourceDiamond)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceDiamond)
                                   .validate()
                                   .setupTopology();
                                   
@@ -242,9 +192,53 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
 }
 
 /**
- * Test deploying filter-push-down on unionWith query with source on two different worker node using top down strategy.
- * Case: 2 filter operators are already below unionWith operator and needs to be pushed down normally towards their respective source.
- *       Here the filters don't need to be pushed down over an existing unionWith operator.
+ * Test deploying a union query with filters and sources on two different worker nodes using topDown strategy.
+ */
+TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources) {
+    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
+    const auto query = 
+        Query::from("ruby")
+        .filter(Attribute("value") > 3)
+        .unionWith(
+            Query::from("diamond")
+            .filter(Attribute("value") < 15)
+            .map(Attribute("timestamp") = 1)
+            .filter(Attribute("value") < 17)
+            .map(Attribute("timestamp") = 2)
+            .filter(Attribute("value") > 3)
+        );
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .enableNewRequestExecutor()
+                                  .addLogicalSource("ruby", schemaRubyDiamond)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby) 
+                                  .addLogicalSource("diamond", schemaRubyDiamond)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceDiamond)
+                                  .validate()
+                                  .setupTopology();
+                                  
+    std::vector<OutputRubyDiamond> expectedOutput;
+    // The first 17 entries are raw entries from the window.csv file stream.
+    // The next 12 entries are the result of the second query of the unionWith statement.
+    uint32_t numFirstQueryValues = 18;
+    for(uint32_t i = 0; i < 29; i++) {
+        uint32_t id = 1;
+        uint32_t value = (i % numFirstQueryValues) + 4;
+        uint32_t timestamp = (i < numFirstQueryValues) ? value * 1000 : 2;
+        expectedOutput.emplace_back(OutputRubyDiamond{value, id, timestamp});
+    }
+
+    std::vector<OutputRubyDiamond> actualOutput = testHarness.getOutput<OutputRubyDiamond>(
+        /* num output tuples expected */ expectedOutput.size(), 
+        /* placement strategy*/ "TopDown",
+        /* fault tolerance*/ "NONE",
+        /* lineage*/ "IN_MEMORY"
+        );
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/**
+ * Test a union query with multiple filters for both sources and two different worker nodes using the bottomUp strategy.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources) {
     std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
@@ -263,9 +257,9 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator("ruby", sourceRuby) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby) 
                                   .addLogicalSource("diamond", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator("diamond", sourceDiamond)
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceDiamond)
                                   .validate()
                                   .setupTopology();
 
