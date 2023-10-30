@@ -264,7 +264,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
-
     ENDPOINT("POST", "/explain", explainQuery, BODY_STRING(String, request)) {
         try {
             std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
