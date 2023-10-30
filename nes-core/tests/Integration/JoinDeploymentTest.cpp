@@ -60,8 +60,10 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         const auto logicalSourceNameTwo = "test2";
         const auto physicalSourceNameOne = "test1_physical";
         const auto physicalSourceNameTwo = "test2_physical";
-        auto sourceConfig1 = TestUtils::createSourceTypeCSV({logicalSourceNameOne, physicalSourceNameOne, csvFileParams.inputCsvFiles[0]});
-        auto sourceConfig2 = TestUtils::createSourceTypeCSV({logicalSourceNameTwo, physicalSourceNameTwo, csvFileParams.inputCsvFiles[1]});
+        auto sourceConfig1 =
+            TestUtils::createSourceTypeCSV({logicalSourceNameOne, physicalSourceNameOne, csvFileParams.inputCsvFiles[0]});
+        auto sourceConfig2 =
+            TestUtils::createSourceTypeCSV({logicalSourceNameTwo, physicalSourceNameTwo, csvFileParams.inputCsvFiles[1]});
         auto expectedSinkBuffer =
             TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
         auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);

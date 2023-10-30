@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/TestUtils.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <Util/TestUtils.hpp>
 
 namespace NES {
 
@@ -44,13 +44,11 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
         sourceDiamond = TestUtils::createSourceTypeCSV({"diamond", "diamond_physical", "window.csv", 1, 28, 1});
 
         // Setup schemas.
-        schemaCarTruck = Schema::create()
-                          ->addField("id", BasicType::UINT32)
-                          ->addField("value", BasicType::UINT64);
+        schemaCarTruck = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         schemaRubyDiamond = Schema::create()
-                        ->addField(createField("value", BasicType::UINT32))
-                        ->addField(createField("id", BasicType::UINT32))
-                        ->addField(createField("timestamp", BasicType::INT32));
+                                ->addField(createField("value", BasicType::UINT32))
+                                ->addField(createField("id", BasicType::UINT32))
+                                ->addField(createField("timestamp", BasicType::INT32));
     }
 
     std::string testName = "UnionDeploymentTest";
@@ -60,9 +58,7 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
         uint32_t car$id;
         uint64_t car$value;
 
-        bool operator==(OutputCarTruck const& rhs) const {
-            return (car$id == rhs.car$id && car$value == rhs.car$value);
-        }
+        bool operator==(OutputCarTruck const& rhs) const { return (car$id == rhs.car$id && car$value == rhs.car$value); }
     };
 
     struct __attribute__((packed)) OutputRubyDiamond {
@@ -85,14 +81,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("car", schemaCarTruck)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceCar) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceCar)
                                   .addLogicalSource("truck", schemaCarTruck)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceTruck)
                                   .validate()
                                   .setupTopology();
     std::vector<OutputCarTruck> expectedOutput;
     // The first 40 entries are car values (0,0 - 39,39), the last 40 entries are truck values (0,0 - 39,3900).
-    for(uint32_t i = 0; i < 80; i++) {
+    for (uint32_t i = 0; i < 80; i++) {
         bool isCarValue = i < 40;
         // Start counting from 0 again when the 40 car values were processed.
         uint32_t id = i % 40;
@@ -104,11 +100,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     std::string faultTolerance = "NONE";
     std::string lineage = "IN_MEMORY";
     std::vector<OutputCarTruck> actualOutput = testHarness.getOutput<OutputCarTruck>(
-        /* num output tuples expected */ expectedOutput.size(), 
+        /* num output tuples expected */ expectedOutput.size(),
         /* placement strategy*/ "BottomUp",
         /* fault tolerance*/ "NONE",
-        /* lineage*/ "IN_MEMORY"
-        );
+        /* lineage*/ "IN_MEMORY");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -122,14 +117,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("car", schemaCarTruck)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceCar) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceCar)
                                   .addLogicalSource("truck", schemaCarTruck)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceTruck)
                                   .validate()
                                   .setupTopology();
     std::vector<OutputCarTruck> expectedOutput;
     // The first 40 entries are car values (0,0 - 39,39), the last 40 entries are truck values (0,0 - 39,3900).
-    for(uint32_t i = 0; i < 80; i++) {
+    for (uint32_t i = 0; i < 80; i++) {
         bool isCarValue = i < 40;
         // Start counting from 0 again when the 40 car values were processed.
         uint32_t id = i % 40;
@@ -138,11 +133,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     }
 
     std::vector<OutputCarTruck> actualOutput = testHarness.getOutput<OutputCarTruck>(
-        /* num output tuples expected */ expectedOutput.size(), 
+        /* num output tuples expected */ expectedOutput.size(),
         /* placement strategy*/ "TopDown",
         /* fault tolerance*/ "NONE",
-        /* lineage*/ "IN_MEMORY"
-        );
+        /* lineage*/ "IN_MEMORY");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -151,26 +145,24 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
  * Test deploying a union query with filters and sources on two different worker nodes using bottomUp strategy.
  */
 TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources) {
-    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
-    const auto query = 
-        Query::from("ruby")
-        .filter(Attribute("id") > 4)
-        .unionWith(
-            Query::from("diamond")
-            .map(Attribute("timestamp") = 1)
-            .filter(Attribute("id") > 3)
-            .map(Attribute("timestamp") = 2)
-            .filter(Attribute("id") > 4)
-        );
+    std::string outputFilePath =
+        getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
+    const auto query = Query::from("ruby")
+                           .filter(Attribute("id") > 4)
+                           .unionWith(Query::from("diamond")
+                                          .map(Attribute("timestamp") = 1)
+                                          .filter(Attribute("id") > 3)
+                                          .map(Attribute("timestamp") = 2)
+                                          .filter(Attribute("id") > 4));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceDiamond)
                                   .validate()
                                   .setupTopology();
-                                  
+
     std::vector<OutputRubyDiamond> expectedOutput;
     expectedOutput.emplace_back(OutputRubyDiamond{1, 12, 2});
     expectedOutput.emplace_back(OutputRubyDiamond{2, 11, 2});
@@ -182,11 +174,10 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     expectedOutput.emplace_back(OutputRubyDiamond{3, 11, 3001});
 
     std::vector<OutputRubyDiamond> actualOutput = testHarness.getOutput<OutputRubyDiamond>(
-        /* num output tuples expected */ expectedOutput.size(), 
+        /* num output tuples expected */ expectedOutput.size(),
         /* placement strategy*/ "BottomUp",
         /* fault tolerance*/ "NONE",
-        /* lineage*/ "IN_MEMORY"
-        );
+        /* lineage*/ "IN_MEMORY");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -195,32 +186,30 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
  * Test deploying a union query with filters and sources on two different worker nodes using topDown strategy.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources) {
-    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
-    const auto query = 
-        Query::from("ruby")
-        .filter(Attribute("value") > 3)
-        .unionWith(
-            Query::from("diamond")
-            .filter(Attribute("value") < 15)
-            .map(Attribute("timestamp") = 1)
-            .filter(Attribute("value") < 17)
-            .map(Attribute("timestamp") = 2)
-            .filter(Attribute("value") > 3)
-        );
+    std::string outputFilePath =
+        getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
+    const auto query = Query::from("ruby")
+                           .filter(Attribute("value") > 3)
+                           .unionWith(Query::from("diamond")
+                                          .filter(Attribute("value") < 15)
+                                          .map(Attribute("timestamp") = 1)
+                                          .filter(Attribute("value") < 17)
+                                          .map(Attribute("timestamp") = 2)
+                                          .filter(Attribute("value") > 3));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceDiamond)
                                   .validate()
                                   .setupTopology();
-                                  
+
     std::vector<OutputRubyDiamond> expectedOutput;
     // The first 17 entries are raw entries from the window.csv file stream.
     // The next 12 entries are the result of the second query of the unionWith statement.
     uint32_t numFirstQueryValues = 18;
-    for(uint32_t i = 0; i < 29; i++) {
+    for (uint32_t i = 0; i < 29; i++) {
         uint32_t id = 1;
         uint32_t value = (i % numFirstQueryValues) + 4;
         uint32_t timestamp = (i < numFirstQueryValues) ? value * 1000 : 2;
@@ -228,11 +217,10 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     }
 
     std::vector<OutputRubyDiamond> actualOutput = testHarness.getOutput<OutputRubyDiamond>(
-        /* num output tuples expected */ expectedOutput.size(), 
+        /* num output tuples expected */ expectedOutput.size(),
         /* placement strategy*/ "TopDown",
         /* fault tolerance*/ "NONE",
-        /* lineage*/ "IN_MEMORY"
-        );
+        /* lineage*/ "IN_MEMORY");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -241,23 +229,21 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
  * Test a union query with multiple filters for both sources and two different worker nodes using the bottomUp strategy.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources) {
-    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
-    const auto query = 
-        Query::from("ruby")
-        .map(Attribute("timestamp") = 2)
-        .filter(Attribute("id") < 4)
-        .filter(Attribute("value") > 3)
-        .unionWith(
-            Query::from("diamond")
-            .map(Attribute("timestamp") = 1)
-            .filter(Attribute("id") < 4)
-            .filter(Attribute("value") > 3)
-            .filter(Attribute("value") < 6)
-        );
+    std::string outputFilePath =
+        getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
+    const auto query = Query::from("ruby")
+                           .map(Attribute("timestamp") = 2)
+                           .filter(Attribute("id") < 4)
+                           .filter(Attribute("value") > 3)
+                           .unionWith(Query::from("diamond")
+                                          .map(Attribute("timestamp") = 1)
+                                          .filter(Attribute("id") < 4)
+                                          .filter(Attribute("value") > 3)
+                                          .filter(Attribute("value") < 6));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("ruby", schemaRubyDiamond)
-                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby) 
+                                  .attachWorkerWithCSVSourceToCoordinator(sourceRuby)
                                   .addLogicalSource("diamond", schemaRubyDiamond)
                                   .attachWorkerWithCSVSourceToCoordinator(sourceDiamond)
                                   .validate()
@@ -267,7 +253,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     // The first 18 entries come from the first part of the unionWith statement.
     // The next 2 entries are the result of the second query of the unionWith statement.
     uint32_t numFirstQueryValues = 18;
-    for(uint32_t i = 0; i < 20; i++) {
+    for (uint32_t i = 0; i < 20; i++) {
         uint32_t id = 1;
         uint32_t value = (i % numFirstQueryValues) + 4;
         uint32_t timestamp = (i < numFirstQueryValues) ? 2 : 1;
@@ -275,11 +261,10 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     }
 
     std::vector<OutputRubyDiamond> actualOutput = testHarness.getOutput<OutputRubyDiamond>(
-        /* num output tuples expected */ expectedOutput.size(), 
+        /* num output tuples expected */ expectedOutput.size(),
         /* placement strategy*/ "BottomUp",
         /* fault tolerance*/ "NONE",
-        /* lineage*/ "IN_MEMORY"
-        );
+        /* lineage*/ "IN_MEMORY");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }

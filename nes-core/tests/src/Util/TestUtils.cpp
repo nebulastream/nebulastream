@@ -847,7 +847,8 @@ std::vector<Runtime::TupleBuffer> TestUtils::fillBufferFromStream(std::istream& 
 }
 
 CSVSourceTypePtr TestUtils::createSourceTypeCSV(const SourceTypeConfigCSV& sourceTypeConfigCSV) {
-    CSVSourceTypePtr sourceType = CSVSourceType::create(sourceTypeConfigCSV.logicalSourceName, sourceTypeConfigCSV.physicalSourceName);
+    CSVSourceTypePtr sourceType =
+        CSVSourceType::create(sourceTypeConfigCSV.logicalSourceName, sourceTypeConfigCSV.physicalSourceName);
     sourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / sourceTypeConfigCSV.fileName);
     sourceType->setGatheringInterval(sourceTypeConfigCSV.gatheringInterval);
     sourceType->setNumberOfTuplesToProducePerBuffer(sourceTypeConfigCSV.numberOfTuplesToProduce);

@@ -66,7 +66,8 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
         for (auto i = 0_u64; i < joinParams.inputSchemas.size(); ++i) {
             std::string logicalSourceName = "window" + std::to_string(i + 1);
             std::string physicalSourceName = "windowPhysical" + std::to_string(i + 1);
-            auto sourceConfig = TestUtils::createSourceTypeCSV({logicalSourceName, physicalSourceName, csvFileParams.inputCsvFiles[i]});
+            auto sourceConfig =
+                TestUtils::createSourceTypeCSV({logicalSourceName, physicalSourceName, csvFileParams.inputCsvFiles[i]});
             auto csvSourceType =
                 TestUtils::createSourceTypeCSV({logicalSourceName, physicalSourceName, csvFileParams.inputCsvFiles[i]});
             testHarness.addLogicalSource(logicalSourceName, joinParams.inputSchemas[i])
