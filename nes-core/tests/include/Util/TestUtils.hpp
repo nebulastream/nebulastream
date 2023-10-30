@@ -20,11 +20,11 @@
 #include <Catalogs/Query/QueryCatalogService.hpp>
 // #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 // #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
