@@ -28,7 +28,7 @@ TensorflowInferenceOperatorHandler::TensorflowInferenceOperatorHandler(const std
     tfAdapter->initializeModel(model);
 }
 
-void TensorflowInferenceOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,  uint32_t) {}
+void TensorflowInferenceOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) {}
 
 void TensorflowInferenceOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {}
 

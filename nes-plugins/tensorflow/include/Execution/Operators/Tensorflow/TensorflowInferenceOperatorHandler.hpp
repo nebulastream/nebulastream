@@ -35,8 +35,7 @@ class TensorflowInferenceOperatorHandler : public OperatorHandler {
 
     ~TensorflowInferenceOperatorHandler() override = default;
 
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-                             uint32_t localStateVariableId) override;
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
 
     void stop(Runtime::QueryTerminationType queryTerminationType,
               Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
