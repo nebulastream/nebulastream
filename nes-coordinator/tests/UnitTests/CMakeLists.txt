@@ -176,3 +176,7 @@ endif (NES_USE_OPC)
 if (NES_USE_MQTT)
     add_nes_unit_test(mqtt-sink-tests "Sink/MQTTSinkTest.cpp")
 endif (NES_USE_MQTT)
+
+if (NES_USE_OPENCL)
+    add_nes_unit_test(opencl-pipeline-query-execution-test "Query/OpenCLPipelineQueryExecutionTest.cpp")
+endif()

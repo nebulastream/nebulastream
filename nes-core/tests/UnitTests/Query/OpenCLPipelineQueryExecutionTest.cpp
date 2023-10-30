@@ -17,8 +17,8 @@ limitations under the License.
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
-#include <NesBaseTest.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
+#include <BaseUnitTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -33,6 +33,7 @@ limitations under the License.
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -41,16 +42,17 @@ limitations under the License.
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <utility>
-#include <CL/cl.h>
+#include <OpenCL/cl.h>
 
 using namespace NES;
 using Runtime::TupleBuffer;
 
 #define NUMBER_OF_TUPLES 10
 
-// TODO Documentation
-class OpenCLQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class OpenCLQueryExecutionTest : public Testing::BaseUnitTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("OpenCLQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
 
@@ -87,7 +89,7 @@ class OpenCLQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
 #define ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, returnValue)                                                           \
     do {                                                                                                                         \
         if (status != CL_SUCCESS) {                                                                                              \
-            NES_ERROR(message << ": " << status);                                                                                \
+            NES_ERROR("{}: {}", message, status);                                                                                \
             return returnValue;                                                                                                  \
         }                                                                                                                        \
     } while (false)
@@ -140,12 +142,12 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
             status = clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, nullptr);
             ASSERT_OPENCL_SUCCESS(status, "Failed to get platform name");
             platformInformation << buffer;
-            NES_DEBUG(platformInformation.str());
+            NES_DEBUG("{}", platformInformation.str());
         }
 
         cl_uint numDevices = 0;
         cl_platform_id platform = platforms[0];
-        NES_DEBUG("Using OpenCL platform " << platform);
+        NES_DEBUG("Using OpenCL platform: {}", static_cast<void*>(platform));
 
         status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices);
         ASSERT_OPENCL_SUCCESS(status, "Failed to get number of devices");
@@ -162,10 +164,10 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
             char buffer[1024];
             status = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(buffer), buffer, nullptr);
             ASSERT_OPENCL_SUCCESS(status, "Could not get device name");
-            NES_DEBUG(i << ": " << devices[i] << ": " << buffer);
+            NES_DEBUG("{}: {}: {}", i, static_cast<void*>(devices[i]), buffer);
         }
         cl_device_id device = devices[0];
-        NES_DEBUG("Using OpenCL device " << device);
+        NES_DEBUG("Using OpenCL device: {}", static_cast<void*>(device));
 
         // Create OpenCL context
         context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &status);
@@ -196,7 +198,7 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
         auto numberOfTuples = buffer.getNumberOfTuples();
         auto inputSize = numberOfTuples * sizeof(InputRecord);
         auto outputSize = numberOfTuples * sizeof(OutputRecord);
-        NES_DEBUG("numberOfTuples = " << numberOfTuples << "; inputSize = " << inputSize << "; outputSize = " << outputSize);
+        NES_DEBUG("numberOfTuples = {}; inputSize = {}; outputSize = {}", numberOfTuples, inputSize, outputSize);
         cl_int status;
         cl_mem inputDeviceBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, inputSize, nullptr, &status);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not create OpenCL device input buffer");
@@ -239,12 +241,12 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
         ASSERT_OPENCL_SUCCESS_OK(status, "Waiting for execution event failed");
         cl_ulong start;
         cl_ulong end;
-        status = clGetEventProfilingInfo(executionEvent, CL_PROFILING_COMMAND_START, sizeof(ulong), &start, nullptr);
+        status = clGetEventProfilingInfo(executionEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not read kernel execution start time");
-        status = clGetEventProfilingInfo(executionEvent, CL_PROFILING_COMMAND_END, sizeof(ulong), &end, nullptr);
+        status = clGetEventProfilingInfo(executionEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not read kernel execution end time");
         // Profiling information is in nanoseconds = 1e-9 seconds.
-        NES_DEBUG("Kernel execution time = " << (end - start) / (1000 * 1000.0) << " ms");
+        NES_DEBUG("Kernel execution time = {} ms",  (end - start) / (1000 * 1000.0));
         status = clFinish(commandQueue);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after executing kernel");
 
@@ -317,18 +319,20 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
     // Create a source for the test.
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         inputSchema,
-        [&](OperatorId id,
-            OriginId,
+        [&](SchemaPtr schema,
+            OperatorId operatorId,
+            OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(inputSchema,
+            return createDefaultDataSourceWithSchemaForOneBuffer(schema,
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
-                                                                 id,
-                                                                 0,
+                                                                 operatorId,
+                                                                 originId,
                                                                  numSourceLocalBuffers,
+                                                                 "testSource",
                                                                  std::move(successors));
         });
 
@@ -352,7 +356,7 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
     // Insert the custom pipeline stage into the query.
     auto typeInferencePhase =
         Optimizer::TypeInferencePhase::create(std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr()),
-                                              Catalogs::UDF::UdfCatalog::create());
+                                              Catalogs::UDF::UDFCatalog::create());
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
     filterOperator->insertBetweenThisAndParentNodes(externalOperator);
@@ -413,6 +417,7 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
         }
     }
 
+    NES_DEBUG("Success");
     // Cleanup
     cleanUpPlan(plan);
     testSink->cleanupBuffers();
