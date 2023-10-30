@@ -21,6 +21,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <absl/types/span.h>
+
+//TODO: Change to BitCast once available
+#define ONNX_HANDLER_CAST reinterpret_cast
 
 namespace Ort {
 class Session;
@@ -98,7 +102,7 @@ class ONNXInferenceOperatorHandler : public OperatorHandler {
     void appendToByteArray(const T& data);
 
   private:
-    void inferInternal(std::span<int8_t> input, std::span<int8_t> output);
+    void inferInternal(absl::Span<int8_t> input, absl::Span<int8_t> output);
 
     void loadModel(const std::string& pathToModel);
 
@@ -116,7 +120,7 @@ class ONNXInferenceOperatorHandler : public OperatorHandler {
 
 template<typename T>
 void ONNXInferenceOperatorHandler::appendToByteArray(const T& data) {
-    auto* ptr = std::bit_cast<const int8_t*>(&data);
+    auto* ptr = ONNX_HANDLER_CAST<const int8_t*>(&data);
     input_buffer.insert(input_buffer.end(), ptr, ptr + sizeof(T));
 }
 }// namespace NES::Runtime::Execution::Operators

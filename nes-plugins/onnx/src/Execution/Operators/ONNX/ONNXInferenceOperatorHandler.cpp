@@ -15,13 +15,12 @@
 #include <Execution/Operators/ONNX/ONNXInferenceOperatorHandler.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <absl/types/span.h>
 #include <algorithm>
 #include <bit>
 #include <cpp-base64/base64.h>
 #include <numeric>
 #include <onnxruntime_cxx_api.h>
-#include <ranges>
-#include <span>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -53,11 +52,11 @@ const std::string& ONNXInferenceOperatorHandler::getModel() const { return model
 
 void ONNXInferenceOperatorHandler::appendBase64EncodedData(const std::string_view& base64_encoded_data) {
     auto decoded = base64_decode(base64_encoded_data);
-    std::ranges::copy(decoded, std::back_inserter(input_buffer));
+    std::copy(decoded.begin(), decoded.end(), std::back_inserter(input_buffer));
 }
 
 std::string ONNXInferenceOperatorHandler::getBase64EncodedData() const {
-    auto data = std::string_view(std::bit_cast<const char*>(output_buffer.data()), output_buffer.size());
+    auto data = std::string_view(ONNX_HANDLER_CAST<const char*>(output_buffer.data()), output_buffer.size());
     return base64_encode(data);
 }
 
@@ -65,7 +64,7 @@ void ONNXInferenceOperatorHandler::infer() {
     NES_DEBUG("Buffer Size: {}  ModelInputSize: {}", input_buffer.size(), getModelInputSizeInBytes())
     NES_ASSERT(input_buffer.size() == getModelInputSizeInBytes(), "Input buffer size does not match model input size");
 
-    inferInternal(std::span(input_buffer), std::span(output_buffer));
+    inferInternal(absl::Span<int8_t>(input_buffer), absl::Span<int8_t>(output_buffer));
     input_buffer.clear();
 }
 
@@ -80,7 +79,7 @@ void ONNXInferenceOperatorHandler::initializeModel(const std::string& pathToMode
 
 float ONNXInferenceOperatorHandler::getResultAt(size_t i) const {
     NES_ASSERT(i < output_buffer.size() / 4, "Index out of bounds");
-    return *std::bit_cast<const float*>(output_buffer.data() + (i * 4));
+    return *ONNX_HANDLER_CAST<const float*>(output_buffer.data() + (i * 4));
 }
 
 size_t ONNXInferenceOperatorHandler::getModelOutputSizeInBytes() {
@@ -95,7 +94,7 @@ size_t ONNXInferenceOperatorHandler::getModelInputSizeInBytes() {
     return std::accumulate(this->input_shape.begin(), this->input_shape.end(), 1, std::multiplies<>()) * sizeof(float);
 }
 
-void ONNXInferenceOperatorHandler::inferInternal(std::span<int8_t> input, std::span<int8_t> output) {
+void ONNXInferenceOperatorHandler::inferInternal(absl::Span<int8_t> input, absl::Span<int8_t> output) {
     NES_ASSERT(session, "Session not initialized");
     NES_ASSERT(input.size() % sizeof(float) == 0, "Input size must be a multiple of sizeof(float)");
     NES_ASSERT(output.size() % sizeof(float) == 0, "Output size must be a multiple of sizeof(float)");
@@ -104,9 +103,9 @@ void ONNXInferenceOperatorHandler::inferInternal(std::span<int8_t> input, std::s
     static_assert(std::endian::native == std::endian::little, "TODO: Big Endian");
 
     auto output_data_size = output.size() / (sizeof(float) / sizeof(uint8_t));
-    auto output_data = std::bit_cast<float*>(output.data());
+    auto output_data = ONNX_HANDLER_CAST<float*>(output.data());
     auto input_data_size = input.size() / (sizeof(float) / sizeof(uint8_t));
-    auto input_data = std::bit_cast<float*>(input.data());
+    auto input_data = ONNX_HANDLER_CAST<float*>(input.data());
 
     auto input_tensor =
         Ort::Value::CreateTensor<float>(memory_info, input_data, input_data_size, input_shape.data(), input_shape.size());
@@ -137,7 +136,7 @@ void ONNXInferenceOperatorHandler::loadModel(const std::string& pathToModel) {
         auto shape_info = ti.GetTensorTypeAndShapeInfo();
         std::vector<int64_t> shape = shape_info.GetShape();
 
-        if (std::ranges::any_of(shape, [](int64_t dim) {
+        if (std::any_of(shape.begin(), shape.end(), [](int64_t dim) {
                 return dim == -1;
             })) {
             NES_ERROR("Model: {}, Input: {} Shape: {}", pathToModel, i, fmt::join(shape, ","));
@@ -157,7 +156,7 @@ void ONNXInferenceOperatorHandler::loadModel(const std::string& pathToModel) {
         auto shape_info = ti.GetTensorTypeAndShapeInfo();
         std::vector<int64_t> shape = shape_info.GetShape();
 
-        if (std::ranges::any_of(shape, [](int64_t dim) {
+        if (std::any_of(shape.begin(), shape.end(), [](int64_t dim) {
                 return dim == -1;
             })) {
             NES_ERROR("Model: {}, Output: {} Shape: {}", pathToModel, i, fmt::join(shape, ","));

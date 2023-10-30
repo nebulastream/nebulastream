@@ -57,18 +57,19 @@ class ONNXInferenceOperatorTest : public Testing::BaseUnitTest {
 };
 
 static std::string_view from_text_value_type(const NES::Nautilus::Value<Text>& value) {
-    auto textValue = std::bit_cast<TextValue*>(value.getValue().getReference().value->getValue().value);
+    auto textValue = reinterpret_cast<TextValue*>(value.getValue().getReference().value->getValue().value);
     return {textValue->str(), textValue->length()};
 }
 
 static std::vector<float> decode_floats_from_base64(const std::string_view& base64_encoded) {
 
     std::vector<uint8_t> decoded;
-    std::ranges::copy(base64_decode(base64_encoded), std::back_inserter(decoded));
+    auto bytes = base64_decode(base64_encoded);
+    std::copy(bytes.begin(), bytes.end(), std::back_inserter(decoded));
 
     std::vector<float> result;
     for (size_t i = 0; i < (decoded.size() / sizeof(float)); ++i) {
-        result.push_back(*std::bit_cast<float*>(decoded.data() + (i * sizeof(float))));
+        result.push_back(*reinterpret_cast<float*>(decoded.data() + (i * sizeof(float))));
     }
     return result;
 }

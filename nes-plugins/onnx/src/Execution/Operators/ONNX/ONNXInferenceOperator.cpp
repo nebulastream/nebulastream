@@ -19,7 +19,6 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <ranges>
 #include <string>
 
 namespace NES::Runtime::Execution::Operators {
@@ -56,12 +55,10 @@ using namespace ONNX_PROXY;
 void ONNXInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const {
     //1. Extract the handler
     auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
-    auto to_values = std::ranges::views::transform([&record](const auto& name) {
-        return record.read(name);
-    });
 
     //2. Add input values for the model inference
-    for (const auto& value : inputFieldNames | to_values) {
+    for (const auto& fieldName : inputFieldNames) {
+        const auto& value = record.read(fieldName);
         if (value->isType<Float>()) {
             FunctionCall("addValueToModel", addValueToModel<float>, inferModelHandler, value.as<Float>());
         } else if (value->isType<Double>()) {
