@@ -124,21 +124,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     Runtime::NodeEnginePtr getNodeEngine();
 
-    /**
-     * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
-     * a connection pass the the new channel into the future and pass a reconfiguration message to the sink to signal that the
-     * connection has completed
-     * @param workerContext the worker context to store the future in
-     * @param newNodeLocation the location of the node to which the connection is to be established
-     * @param newNesPartition the partition of the source to which the connection is to be established
-     */
-    void connectToChannelAsync(Runtime::WorkerContext& workerContext, const NodeLocation& newNodeLocation, NesPartition newNesPartition);
-
-    /**
-     * @brief write all data from the reconnect buffer to the currently active network channel
-     * @param workerContext the context where buffers and channel are stored
-     */
-    void unbuffer(Runtime::WorkerContext& workerContext);
 
     /**
      * @brief schedule a reconfiguration which lets this sink reconnect to the specified source once it has been drained
@@ -152,7 +137,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newPartition the partition of the new downstram source
      * @param newReceiverLocation the location of the node where the new downstream source is located
      */
-    void reconfigureReceiver(NesPartition newPartition, const NodeLocation& newReceiverLocation);
+    void configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation);
 
     /**
      * @brief returns the number of sources which produce data that is consumed by this sink
@@ -163,6 +148,29 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
+    /**
+     * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
+     * a connection pass the the new channel into the future and pass a reconfiguration message to the sink to signal that the
+     * connection has completed
+     * @param workerContext the worker context to store the future in
+     * @param newNodeLocation the location of the node to which the connection is to be established
+     * @param newNesPartition the partition of the source to which the connection is to be established
+     */
+    void clearOldAndconnectToNewChannelAsync(Runtime::WorkerContext& workerContext, const NodeLocation& newNodeLocation, NesPartition newNesPartition);
+
+    /**
+     * @brief write all data from the reconnect buffer to the currently active network channel
+     * @param workerContext the context where buffers and channel are stored
+     */
+    void unbuffer(Runtime::WorkerContext& workerContext);
+
+    /**
+     * @brief Checks if a network channel has been established. If so, stores it in the worker context and unbuffers tuples into the channel
+     * @param workerContext
+     * @return true if the new channel is ready, false otherwise
+     */
+    bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext);
+
     uint64_t uniqueNetworkSinkDescriptorId;
     Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;

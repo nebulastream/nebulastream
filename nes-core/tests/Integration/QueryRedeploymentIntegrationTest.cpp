@@ -13,23 +13,23 @@
 */
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Services/QueryService.hpp>
-#include <Topology/Topology.hpp>
+#include <Catalogs/Topology/Topology.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <atomic>
@@ -72,7 +72,7 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
  * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
  * network channel to become available
  */
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testAsyncConnectingSink) {
+TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     const uint64_t numBuffersToProduceBeforeCount = 20;
     const uint64_t numBuffersToProduceAfterCount = 20;
     const uint64_t numBuffersToProduce = numBuffersToProduceBeforeCount + numBuffersToProduceAfterCount;
@@ -141,9 +141,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testAsyncConnectingSink) {
         }
     };
     auto lambdaSourceType =
-        LambdaSourceType::create(std::move(lambdaSourceFunction), numBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
-    wrkConf1->physicalSources.add(physicalSource);
+        LambdaSourceType::create("seq", "test_stream", std::move(lambdaSourceFunction), numBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
+    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -174,10 +173,12 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testAsyncConnectingSink) {
     ASSERT_TRUE(retStopCord);
 }
 
+
+//todo #4272: re-enable tests when EOS is guaranteed to come after last tuples
 /**
  * @brief This tests the reconfiguration of a network sink to point to a new source.
  */
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
+TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     const uint64_t numBuffersToProduceAfterReconnect = 40;
@@ -241,8 +242,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
             }
         };
     auto lambdaSourceType =
-        LambdaSourceType::create(std::move(lambdaSourceFunction), totalBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
+        LambdaSourceType::create("seq", "test_stream", std::move(lambdaSourceFunction), totalBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
 
     NES_INFO("rest port = {}", *restPort);
 
@@ -277,7 +277,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
     wrkConf1->connectSinksAsync.setValue(true);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
-    wrkConf1->physicalSources.add(physicalSource);
+    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
     auto wrk1DataPort = getAvailablePort();
     wrkConf1->dataPort = *wrk1DataPort;
@@ -348,9 +348,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
-    NES::Optimizer::TypeInferencePhaseContext context1({}, {});
     queryPlan1->appendOperatorAsNewRoot(networkSinkOperatorNode1);
-    queryPlan1->getSinkOperators().front()->inferSchema(context1);
+    queryPlan1->getSinkOperators().front()->inferSchema();
     //register and start query on worker 1
     auto success_register_wrk1 = wrk1->getNodeEngine()->registerQueryInNodeEngine(queryPlan1);
     ASSERT_TRUE(success_register_wrk1);
@@ -376,9 +375,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
     auto networkSinkDescriptorWrk2 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk2 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk2, networkSinkWrk2Id);
-    NES::Optimizer::TypeInferencePhaseContext context2({}, {});
     queryPlan2->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk2);
-    queryPlan2->getSinkOperators().front()->inferSchema(context2);
+    queryPlan2->getSinkOperators().front()->inferSchema();
     //register and start query on worker 2
     auto success_register_wrk2 = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan2);
     ASSERT_TRUE(success_register_wrk2);
@@ -400,9 +398,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
     //create file sink at coordinator
     auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, "CSV_FORMAT", "APPEND");
     auto sinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, fileSinkCrdId);
-    NES::Optimizer::TypeInferencePhaseContext context({}, {});
     queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
-    queryPlan->getSinkOperators().front()->inferSchema(context);
+    queryPlan->getSinkOperators().front()->inferSchema();
     //deploy and start query at coordinator
     auto success_register = crd->getNesWorker()->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
     ASSERT_TRUE(success_register);
@@ -423,7 +420,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
     auto uniqueNetworkSinkDescriptorId = networkSink->getUniqueNetworkSinkDescriptorId();
     //trigger sink reconnection to new source on wrk2
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-    wrk1->getNodeEngine()->reconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
+    wrk1->getNodeEngine()->experimentalReconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
                                                   "localhost",
                                                   *wrk3DataPort,
                                                   subQueryIds.front(),
@@ -454,9 +451,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
     auto networkSinkDescriptorWrk3 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk3 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
-    NES::Optimizer::TypeInferencePhaseContext context3({}, {});
     queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
-    queryPlan3->getSinkOperators().front()->inferSchema(context3);
+    queryPlan3->getSinkOperators().front()->inferSchema();
     //register and start query on worker 3
     auto success_register_wrk3 = wrk3->getNodeEngine()->registerQueryInNodeEngine(queryPlan3);
     ASSERT_TRUE(success_register_wrk3);
@@ -496,10 +492,11 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testSinkReconnect) {
     ASSERT_TRUE(retStopCord);
 }
 
+//todo #4272: re-enable tests when EOS is guaranteed to come after last tuples
 /**
  * @brief This tests inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersionDrainEvents) {
+TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEvents) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     const uint64_t numBuffersToProduceAfterReconnect = 40;
@@ -564,12 +561,11 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
                 records[u].value = valCount + u;
             }
         };
-    auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction),
+    auto lambdaSourceType = LambdaSourceType::create("seq", "test_stream", std::move(lambdaSourceFunction),
                                                      //numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect,
                                                      totalBuffersToProduce,
                                                      10,
                                                      GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
 
     NES_INFO("rest port = {}", *restPort);
 
@@ -602,11 +598,9 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(GetParam());
     wrkConf1->connectSinksAsync.setValue(true);
-    wrkConf1->queryCompiler.queryCompilerType.setValue(
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
-    wrkConf1->physicalSources.add(physicalSource);
+    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
     auto wrk1DataPort = getAvailablePort();
     wrkConf1->dataPort = *wrk1DataPort;
@@ -622,8 +616,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
     wrkConf2->dataPort = *wrk2DataPort;
     wrkConf2->numWorkerThreads.setValue(GetParam());
     wrkConf2->connectSinksAsync.setValue(true);
-    wrkConf2->queryCompiler.queryCompilerType.setValue(
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
@@ -637,8 +629,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
     wrkConf3->dataPort = *wrk3DataPort;
     wrkConf3->numWorkerThreads.setValue(GetParam());
     wrkConf3->connectSinksAsync.setValue(true);
-    wrkConf3->queryCompiler.queryCompilerType.setValue(
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
@@ -681,9 +671,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
-    NES::Optimizer::TypeInferencePhaseContext context1({}, {});
     queryPlan1->appendOperatorAsNewRoot(networkSinkOperatorNode1);
-    queryPlan1->getSinkOperators().front()->inferSchema(context1);
+    queryPlan1->getSinkOperators().front()->inferSchema();
     //register and start query on worker 1
     auto success_register_wrk1 = wrk1->getNodeEngine()->registerQueryInNodeEngine(queryPlan1);
     ASSERT_TRUE(success_register_wrk1);
@@ -709,9 +698,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
     auto networkSinkDescriptorWrk2 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk2 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk2, networkSinkWrk2Id);
-    NES::Optimizer::TypeInferencePhaseContext context2({}, {});
     queryPlan2->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk2);
-    queryPlan2->getSinkOperators().front()->inferSchema(context2);
+    queryPlan2->getSinkOperators().front()->inferSchema();
     //register and start query on worker 2
     auto success_register_wrk2 = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan2);
     ASSERT_TRUE(success_register_wrk2);
@@ -733,9 +721,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
     //create file sink at coordinator
     auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, "CSV_FORMAT", "APPEND");
     auto sinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, fileSinkCrdId);
-    NES::Optimizer::TypeInferencePhaseContext context({}, {});
     queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
-    queryPlan->getSinkOperators().front()->inferSchema(context);
+    queryPlan->getSinkOperators().front()->inferSchema();
     //deploy and start query at coordinator
     auto success_register = crd->getNesWorker()->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
     ASSERT_TRUE(success_register);
@@ -784,9 +771,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
     auto networkSinkDescriptorWrk3 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk3 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
-    NES::Optimizer::TypeInferencePhaseContext context3({}, {});
     queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
-    queryPlan3->getSinkOperators().front()->inferSchema(context3);
+    queryPlan3->getSinkOperators().front()->inferSchema();
     //register and start query on worker 3
     auto success_register_wrk3 = wrk3->getNodeEngine()->registerQueryInNodeEngine(queryPlan3);
     ASSERT_TRUE(success_register_wrk3);
@@ -829,15 +815,16 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testPlannedReconnectWithVersio
     ASSERT_TRUE(retStopCord);
 }
 
+//todo #4272: re-enable tests when EOS is guaranteed to come after last tuples
 /**
  * @brief This tests multiple iterations of inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWithVersionDrainEvents) {
+TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersionDrainEvents) {
     const uint64_t numberOfReconnectsToPerform = 3;
     const uint64_t numBuffersToProduceBeforeReconnect = 10;
     const uint64_t numBuffersToProduceWhileBuffering = 10;
     const uint64_t numBuffersToProduceAfterReconnect = 10;
-    //these buffers are sent afte the final count, they make sure that no eos comes before the reconnect succeeded
+    //these buffers are sent after the final count, they make sure that no eos comes before the reconnect succeeded
     //const uint64_t numBuffersToProduceAfterFinalCount = 10;
     const uint64_t buffersToProducePerReconnectCycle =
         (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
@@ -868,7 +855,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
             //after sending the specified amount of tuples, wait until the reconfiguration has been triggered, subsequent tuples will be buffered
             while(!waitForReconfig);
         }
-        //if (currentCount > (numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering) * (actualReconnects + 1)) {
         if (currentCount > numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering
                 + (actualReconnects * buffersToProducePerReconnectCycle)) {
             //after writing some tuples into the buffer, give signal to start the new operators to finish the reconnect, tuples will be unbuffered to new destination
@@ -885,8 +871,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
         }
     };
     auto lambdaSourceType =
-        LambdaSourceType::create(std::move(lambdaSourceFunction), totalBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
+        LambdaSourceType::create("seq", "test_stream", std::move(lambdaSourceFunction), totalBuffersToProduce, 10, GatheringMode::INTERVAL_MODE);
 
     NES_INFO("rest port = {}", *restPort);
 
@@ -919,11 +904,9 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(GetParam());
     wrkConf1->connectSinksAsync.setValue(true);
-    wrkConf1->queryCompiler.queryCompilerType.setValue(
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
-    wrkConf1->physicalSources.add(physicalSource);
+    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
     auto wrk1DataPort = getAvailablePort();
     wrkConf1->dataPort = *wrk1DataPort;
@@ -939,8 +922,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
     wrkConf2->dataPort = *wrk2DataPort;
     wrkConf2->numWorkerThreads.setValue(GetParam());
     wrkConf2->connectSinksAsync.setValue(true);
-    wrkConf2->queryCompiler.queryCompilerType.setValue(
-        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
     wrkConf2->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
@@ -980,9 +961,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
-    NES::Optimizer::TypeInferencePhaseContext context1({}, {});
     queryPlan1->appendOperatorAsNewRoot(networkSinkOperatorNode1);
-    queryPlan1->getSinkOperators().front()->inferSchema(context1);
+    queryPlan1->getSinkOperators().front()->inferSchema();
     //register and start query on worker 1
     auto success_register_wrk1 = wrk1->getNodeEngine()->registerQueryInNodeEngine(queryPlan1);
     ASSERT_TRUE(success_register_wrk1);
@@ -1008,9 +988,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
     auto networkSinkDescriptorWrk2 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk2 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk2, networkSinkWrk2Id);
-    NES::Optimizer::TypeInferencePhaseContext context2({}, {});
     queryPlan2->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk2);
-    queryPlan2->getSinkOperators().front()->inferSchema(context2);
+    queryPlan2->getSinkOperators().front()->inferSchema();
     //register and start query on worker 2
     auto success_register_wrk2 = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan2);
     ASSERT_TRUE(success_register_wrk2);
@@ -1032,9 +1011,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
     //create file sink at coordinator
     auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, "CSV_FORMAT", "APPEND");
     auto sinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, fileSinkCrdId);
-    NES::Optimizer::TypeInferencePhaseContext context({}, {});
     queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
-    queryPlan->getSinkOperators().front()->inferSchema(context);
+    queryPlan->getSinkOperators().front()->inferSchema();
     //deploy and start query at coordinator
     auto success_register = crd->getNesWorker()->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
     ASSERT_TRUE(success_register);
@@ -1051,7 +1029,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
         std::string compareStringBefore;
         std::ostringstream oss;
         oss << "value:INTEGER(64 bits)" << std::endl;
-        //for (uint64_t i = 0; i < numBuffersToProduceBeforeReconnect * tuplesPerBuffer * (actualReconnects + 1); ++i) {
         for (uint64_t i = 0; i < (numBuffersToProduceBeforeReconnect
                                   + (actualReconnects
                                      * (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
@@ -1069,8 +1046,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
         wrkConf3->dataPort = *wrk3DataPort;
         wrkConf3->numWorkerThreads.setValue(GetParam());
         wrkConf3->connectSinksAsync.setValue(true);
-        wrkConf3->queryCompiler.queryCompilerType.setValue(
-            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
         wrkConf3->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
         NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
         bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1131,9 +1106,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
             Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
         auto networkSinkOperatorNodeWrk3 =
             std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
-        NES::Optimizer::TypeInferencePhaseContext context3({}, {});
         queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
-        queryPlan3->getSinkOperators().front()->inferSchema(context3);
+        queryPlan3->getSinkOperators().front()->inferSchema();
         //register and start query on worker 3
         auto success_register_wrk3 = wrk3->getNodeEngine()->registerQueryInNodeEngine(queryPlan3);
         ASSERT_TRUE(success_register_wrk3);
@@ -1195,7 +1169,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnectWi
  * @brief This test the reconfiguration of a network sink that is already buffering
  */
 //todo #4272: reactivate when eos is guaranteed to come after last tuples
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering) {
+TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     //const uint64_t numBuffersToProduceAfterReconnect = 40;
@@ -1248,11 +1222,10 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
             records[u].value = valCount + u;
         }
     };
-    auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction),
+    auto lambdaSourceType = LambdaSourceType::create("seq", "test_stream", std::move(lambdaSourceFunction),
                                                      numBuffersToProduceBeforeReconnect,
                                                      10,
                                                      GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
 
     NES_INFO("rest port = {}", *restPort);
 
@@ -1287,7 +1260,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     wrkConf1->connectSinksAsync.setValue(true);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
-    wrkConf1->physicalSources.add(physicalSource);
+    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
     auto wrk1DataPort = getAvailablePort();
     wrkConf1->dataPort = *wrk1DataPort;
@@ -1358,9 +1331,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
-    NES::Optimizer::TypeInferencePhaseContext context1({}, {});
     queryPlan1->appendOperatorAsNewRoot(networkSinkOperatorNode1);
-    queryPlan1->getSinkOperators().front()->inferSchema(context1);
+    queryPlan1->getSinkOperators().front()->inferSchema();
     //register and start query on worker 1
     auto success_register_wrk1 = wrk1->getNodeEngine()->registerQueryInNodeEngine(queryPlan1);
     ASSERT_TRUE(success_register_wrk1);
@@ -1386,9 +1358,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     auto networkSinkDescriptorWrk2 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk2 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk2, networkSinkWrk2Id);
-    NES::Optimizer::TypeInferencePhaseContext context2({}, {});
     queryPlan2->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk2);
-    queryPlan2->getSinkOperators().front()->inferSchema(context2);
+    queryPlan2->getSinkOperators().front()->inferSchema();
     //register and start query on worker 2
     auto success_register_wrk2 = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan2);
     ASSERT_TRUE(success_register_wrk2);
@@ -1410,9 +1381,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     //create file sink at coordinator
     auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, "CSV_FORMAT", "APPEND");
     auto sinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, fileSinkCrdId);
-    NES::Optimizer::TypeInferencePhaseContext context({}, {});
     queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
-    queryPlan->getSinkOperators().front()->inferSchema(context);
+    queryPlan->getSinkOperators().front()->inferSchema();
     //deploy and start query at coordinator
     auto success_register = crd->getNesWorker()->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
     ASSERT_TRUE(success_register);
@@ -1433,10 +1403,10 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     auto uniqueNetworkSinkDescriptorId = networkSink->getUniqueNetworkSinkDescriptorId();
     //trigger sink reconnection to new source on wrk2
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-    wrk1->getNodeEngine()->reconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
+    wrk1->getNodeEngine()->experimentalReconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
                                                   "localhost",
                                                   *wrk3DataPort,
-                                                  subQueryIds.front(),//todo: reenable actual id
+                                                  subQueryIds.front(),
                                                   uniqueNetworkSinkDescriptorId,
                                                   networkSourceWrk3Partition);
 
@@ -1466,9 +1436,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     auto networkSinkDescriptorWrk3 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk3 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
-    NES::Optimizer::TypeInferencePhaseContext context3({}, {});
     queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
-    queryPlan3->getSinkOperators().front()->inferSchema(context3);
+    queryPlan3->getSinkOperators().front()->inferSchema();
     //register and start query on worker 3
     auto success_register_wrk3 = wrk3->getNodeEngine()->registerQueryInNodeEngine(queryPlan3);
     ASSERT_TRUE(success_register_wrk3);
@@ -1509,10 +1478,11 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     ASSERT_TRUE(retStopCord);
 }
 
+//todo #4272: re-enable tests when EOS is guaranteed to come after last tuples
 /**
  * @brief This test the reconfiguration of a network sink that is already buffering
  */
-TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuffering) {
+TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     const uint64_t numBuffersToProduceBeforeReconnect = 40;
     const uint64_t numBuffersToProduceWhileBuffering = 20;
     const uint64_t totalBuffersToProduce = numBuffersToProduceBeforeReconnect + numBuffersToProduceWhileBuffering;
@@ -1564,11 +1534,10 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
             records[u].value = valCount + u;
         }
     };
-    auto lambdaSourceType = LambdaSourceType::create(std::move(lambdaSourceFunction),
+    auto lambdaSourceType = LambdaSourceType::create("seq", "test_stream", std::move(lambdaSourceFunction),
                                                      numBuffersToProduceBeforeReconnect,
                                                      10,
                                                      GatheringMode::INTERVAL_MODE);
-    auto physicalSource = PhysicalSource::create("seq", "test_stream", lambdaSourceType);
 
     NES_INFO("rest port = {}", *restPort);
 
@@ -1603,7 +1572,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
     wrkConf1->connectSinksAsync.setValue(true);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
 
-    wrkConf1->physicalSources.add(physicalSource);
+    wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
     auto wrk1DataPort = getAvailablePort();
     wrkConf1->dataPort = *wrk1DataPort;
@@ -1674,9 +1643,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
-    NES::Optimizer::TypeInferencePhaseContext context1({}, {});
     queryPlan1->appendOperatorAsNewRoot(networkSinkOperatorNode1);
-    queryPlan1->getSinkOperators().front()->inferSchema(context1);
+    queryPlan1->getSinkOperators().front()->inferSchema();
     //register and start query on worker 1
     auto success_register_wrk1 = wrk1->getNodeEngine()->registerQueryInNodeEngine(queryPlan1);
     ASSERT_TRUE(success_register_wrk1);
@@ -1702,9 +1670,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
     auto networkSinkDescriptorWrk2 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk2 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk2, networkSinkWrk2Id);
-    NES::Optimizer::TypeInferencePhaseContext context2({}, {});
     queryPlan2->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk2);
-    queryPlan2->getSinkOperators().front()->inferSchema(context2);
+    queryPlan2->getSinkOperators().front()->inferSchema();
     //register and start query on worker 2
     auto success_register_wrk2 = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan2);
     ASSERT_TRUE(success_register_wrk2);
@@ -1726,9 +1693,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
     //create file sink at coordinator
     auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, "CSV_FORMAT", "APPEND");
     auto sinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, fileSinkCrdId);
-    NES::Optimizer::TypeInferencePhaseContext context({}, {});
     queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
-    queryPlan->getSinkOperators().front()->inferSchema(context);
+    queryPlan->getSinkOperators().front()->inferSchema();
     //deploy and start query at coordinator
     auto success_register = crd->getNesWorker()->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
     ASSERT_TRUE(success_register);
@@ -1749,7 +1715,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
 
     //reconfigure with unreachable target to get sink into buffering state
     auto inexistentPartition = NES::Network::NesPartition(queryId, 8, 0, 0);
-    wrk1->getNodeEngine()->reconfigureNetworkSink(9999,
+    wrk1->getNodeEngine()->experimentalReconfigureNetworkSink(9999,
                                                   "localhost",
                                                   *wrk2DataPort,
                                                   subQueryIds.front(),
@@ -1760,10 +1726,10 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
     //reconfigure network sink on wrk1 to point to wrk3 instead of to the previous invalid partition
     //trigger sink reconnection to new source on wrk2
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-    wrk1->getNodeEngine()->reconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
+    wrk1->getNodeEngine()->experimentalReconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
                                                   "localhost",
                                                   *wrk3DataPort,
-                                                  subQueryIds.front(),//todo: reenable actual id
+                                                  subQueryIds.front(),
                                                   uniqueNetworkSinkDescriptorId,
                                                   networkSourceWrk3Partition);
 
@@ -1793,9 +1759,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
     auto networkSinkDescriptorWrk3 =
         Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes);
     auto networkSinkOperatorNodeWrk3 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
-    NES::Optimizer::TypeInferencePhaseContext context3({}, {});
     queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
-    queryPlan3->getSinkOperators().front()->inferSchema(context3);
+    queryPlan3->getSinkOperators().front()->inferSchema();
     //register and start query on worker 3
     auto success_register_wrk3 = wrk3->getNodeEngine()->registerQueryInNodeEngine(queryPlan3);
     ASSERT_TRUE(success_register_wrk3);
@@ -1835,6 +1800,5 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testReconfigureWhileAlreadyBuf
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
-
 INSTANTIATE_TEST_CASE_P(QueryRedeploymentIntegrationTestParam, QueryRedeploymentIntegrationTest, ::testing::Values(1, 4));
 }// namespace NES

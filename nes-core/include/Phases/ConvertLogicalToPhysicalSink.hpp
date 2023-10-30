@@ -41,7 +41,8 @@ class ConvertLogicalToPhysicalSink {
                                       const SchemaPtr& schema,
                                       const Runtime::NodeEnginePtr& nodeEngine,
                                       const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                      size_t numOfProducers);
+                                      size_t numOfProducers,
+                                      uint16_t numberOfInputSources);
 
   private:
     ConvertLogicalToPhysicalSink() = default;

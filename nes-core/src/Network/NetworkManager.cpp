@@ -117,13 +117,16 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
     NES_DEBUG("NetworkManager: Asynchronously registering SubpartitionProducer: {}", nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
 
+    //create a promise that will be used to hand the channel back to the network sink that triggered its creation
     std::promise<NetworkChannelPtr> promise;
     auto future = promise.get_future();
 
+    //create a promise that is passed back to the caller an can be used to abort the connection process
     std::promise<bool> abortConnectionPromise;
     auto abortConnectionFuture = abortConnectionPromise.get_future();
 
     //start thread
+    //todo #4309: instead of starting one thread per connection attempt, hand this work to a designated thread pool
     std::thread thread([zmqContext = server->getContext(),
                         nodeLocation,
                         nesPartition,
@@ -133,7 +136,10 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
                         waitTime,
                         retryTimes,
                         promise = std::move(promise), queryManager, reconfigurationMessage, abortConnectionFuture = std::move(abortConnectionFuture)]() mutable {
+        //wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
         auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
+
+        //create the channel
         auto channel = NetworkChannel::create(zmqContext,
                                               nodeLocation.createZmqURI(),
                                               nesPartition,
@@ -142,11 +148,14 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
                                               highWaterMark,
                                               waitTime,
                                               retryTimes, std::move(future_optional));
+
         //pass channel back to calling thread via promise
         promise.set_value(std::move(channel));
+
         //notify the sink about successful connection via reconfiguration message
       queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, false);
     });
+
     thread.detach();
     return {std::move(future), std::move(abortConnectionPromise)};
 }

@@ -209,7 +209,8 @@ LowerToExecutableQueryPlanPhase::processSink(const OperatorPipelinePtr& pipeline
                                     sinkOperator->getOutputSchema(),
                                     std::move(nodeEngine),
                                     pipelineQueryPlan,
-                                    numOfProducers);
+                                    numOfProducers,
+                                    sinkOperator->getNumberOfInputSources());
     sinks.emplace_back(sink);
     return sink;
 }

@@ -70,26 +70,33 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
               workerContext.getId(),
               getUniqueNetworkSinkDescriptorId(),
               nodeEngine->getNodeId());
-    //if async establishing of connection is in process, do not attempt to send data but buffer it instead
-    if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-        NES_TRACE("context {} buffering data", workerContext.getId());
-        workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
-        return true;
-    }
 
     auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
-    if (channel) {
-        auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-        if (success) {
-            insertIntoStorageCallback(inputBuffer, workerContext);
-        } else {
-            //todo 4228: if this sink run on a mobile device (add a flag to indicate this), initiate async reconnect here
+
+    //if async establishing of connection is in process, do not attempt to send data but buffer it instead
+    //todo #4210: decrease amount of hashmap lookups
+    if (!channel) {
+        //todo #4311: check why sometimes buffers arrive after a channel has been closed
+        NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
+                        "Trying to write to invalid channel while no connection is in progress");
+
+        //check if connection was established and buffer it is has not yest been established
+        if (!retrieveNewChannelAndUnbuffer(workerContext)) {
+            NES_TRACE("context {} buffering data", workerContext.getId());
+            workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+            return true;
         }
-        return success;
+
+        //if a connection was established, retrieve the channel
+        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     }
-    //todo: this currently must not cause a failure because we have to expect tuples after the channel was closed
-    NES_ERROR("Attempt to write to invalid channel, buffer is dropped");
-    return false;
+
+    //todo 4228: check if buffers are actually sent and not only inserted into to send queue
+    auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+    if (success) {
+        insertIntoStorageCallback(inputBuffer, workerContext);
+    }
+    return success;
 }
 
 void NetworkSink::preSetup() {
@@ -122,7 +129,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
+            //check if the worker is configured to use async connecting
             if (nodeEngine->getConnectSinksAsync()) {
+                //async connecting is activated. Delegate connection process to another thread and start the future
                 auto reconf = Runtime::ReconfigurationMessage(queryId,
                                                               querySubPlanId,
                                                               Runtime::ReconfigurationType::ConnectionEstablished,
@@ -137,7 +146,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                                               reconf,
                                                                                               queryManager);
                 workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
+                workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             } else {
+                //synchronous connecting is configured. let this thread wait on the connection being established
                 auto channel = networkManager->registerSubpartitionProducer(receiverLocation,
                                                                             nesPartition,
                                                                             bufferManager,
@@ -190,7 +201,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
             }
 
-            connectToChannelAsync(workerContext, newReceiverLocation, newPartition);
+            clearOldAndconnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition);
             break;
         }
         case Runtime::ReconfigurationType::ConnectionEstablished: {
@@ -201,30 +212,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                           Runtime::NesThread::getId());
                 break;
             }
-
-            //retrieve new channel
-            auto newNetworkChannelFuture = workerContext.getAsyncConnectionResult(getUniqueNetworkSinkDescriptorId());
-
-            //if the connection process did not finish yet, the reconfiguration was triggered by another thread.
-            if (!newNetworkChannelFuture.has_value()) {
-                NES_DEBUG("NetworkSink: reconfigure() network channel has not connected yet for operator {} Thread {}",
-                          nesPartition.toString(),
-                          Runtime::NesThread::getId());
-                break;
-            }
-
-            //check if channel connected successfully
-            if (newNetworkChannelFuture.value() == nullptr) {
-                NES_DEBUG("NetworkSink: reconfigure() network channel retrieved from future is null for operator {} Thread {}",
-                          nesPartition.toString(),
-                          Runtime::NesThread::getId());
-                NES_THROW_RUNTIME_ERROR("could not establish connection");
-                break;
-            }
-            workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(newNetworkChannelFuture.value()));
-
-            NES_INFO("stop buffering data for context {}", workerContext.getId());
-            unbuffer(workerContext);
+            retrieveNewChannelAndUnbuffer(workerContext);
             break;
         }
         default: {
@@ -240,6 +228,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                           "operator {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
+                //todo #4309: make sure this function times out
+                //the following call blocks until the channel has been established
                 auto channel = workerContext.waitForAsyncConnection(getUniqueNetworkSinkDescriptorId());
                 if (channel) {
                     NES_DEBUG("NetworkSink: reconfigure() established connection for operator {} Thread {}",
@@ -281,22 +271,21 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             break;
         }
         case Runtime::ReconfigurationType::DrainVersion: {
-            if (pendingReconfiguration.has_value()) {
-                auto currentCount = ++receivedVersionDrainEvents;
+            auto currentCount = ++receivedVersionDrainEvents;
+            if (currentCount == numberOfInputSources) {
                 NES_DEBUG("NetworkSink: postReconfigurationCallback() received {} of {} expected version drain events",
                           currentCount,
                           numberOfInputSources);
-                if (currentCount == numberOfInputSources) {
+                receivedVersionDrainEvents = 0;
+                if (pendingReconfiguration.has_value()) {
                     auto [newReceiverLocation, newPartition] = pendingReconfiguration.value();
-                    reconfigureReceiver(newPartition, newReceiverLocation);
+                    configureNewReceiverAndPartition(newPartition, newReceiverLocation);
                     pendingReconfiguration = std::nullopt;
-                    receivedVersionDrainEvents = 0;
-                } else if (currentCount > numberOfInputSources) {
-                    NES_THROW_RUNTIME_ERROR("Number of received version drain events is higher than the expected maximum");
+                } else {
+                    //todo #4282: propagate version drain event to downstream source without reconfiguring sink
                 }
             } else {
-                NES_DEBUG("NetworkSink: postReconfigurationCallback() ignoring version drain event because no reconfiguration is "
-                          "pending");
+                NES_ASSERT2_FMT(currentCount <= numberOfInputSources, "Number of received version drain events is higher than the expected maximum");
             }
             break;
         }
@@ -326,16 +315,15 @@ OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() const { return unique
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
-void NetworkSink::reconfigureReceiver(NesPartition newPartition, const NodeLocation& newReceiverLocation) {
+void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation) {
     std::pair newReceiverTuple = {newReceiverLocation, newPartition};
     NES_ASSERT2_FMT(!pendingReconfiguration.has_value() || pendingReconfiguration.value() == newReceiverTuple,
                     "Cannot reconfigure receiver to " << newPartition << " because a reconnect to "
                                                       << pendingReconfiguration.value().second << " is already pending");
     //register event consumer for new source
-    NES_ASSERT2_FMT(networkManager->registerSubpartitionEventConsumer(newReceiverLocation,
-                                                                      newPartition,
-                                                                      inherited1::shared_from_this()),
-                    "Cannot register event listener " << nesPartition.toString());
+    NES_ASSERT2_FMT(
+        networkManager->registerSubpartitionEventConsumer(newReceiverLocation, newPartition, inherited1::shared_from_this()),
+        "Cannot register event listener " << nesPartition.toString());
     Runtime::ReconfigurationMessage message =
         Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
                                         querySubPlanId,
@@ -345,10 +333,10 @@ void NetworkSink::reconfigureReceiver(NesPartition newPartition, const NodeLocat
     queryManager->addReconfigurationMessage(nesPartition.getQueryId(), querySubPlanId, message, false);
 }
 
-void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext,
+void NetworkSink::clearOldAndconnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                         const NodeLocation& newNodeLocation,
                                         NesPartition newNesPartition) {
-    NES_DEBUG("NetworkSink: method connectToChannelAsync() called {} qep {}, by thread {}",
+    NES_DEBUG("NetworkSink: method clearOldAndconnectToNewChannelAsync() called {} qep {}, by thread {}",
               nesPartition.toString(),
               querySubPlanId,
               Runtime::NesThread::getId());
@@ -370,9 +358,11 @@ void NetworkSink::connectToChannelAsync(Runtime::WorkerContext& workerContext,
                                                                                   queryManager);
     //todo: #4282 use QueryTerminationType::Redeployment
     workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
+    //todo: do release and storing of nullptr in one call
     workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                         Runtime::QueryTerminationType::HardStop,
                                         queryManager->getNumberOfWorkerThreads());
+    workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
 }
 
 void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
@@ -392,11 +382,39 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
     }
 }
 
+bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext) {
+    //retrieve new channel
+    auto newNetworkChannelFutureOptional = workerContext.getAsyncConnectionResult(getUniqueNetworkSinkDescriptorId());
+
+    //if the connection process did not finish yet, the reconfiguration was triggered by another thread.
+    if (!newNetworkChannelFutureOptional.has_value()) {
+        NES_DEBUG("NetworkSink: reconfigure() network channel has not connected yet for operator {} Thread {}",
+                  nesPartition.toString(),
+                  Runtime::NesThread::getId());
+        return false;
+    }
+
+    //check if channel connected successfully
+    if (newNetworkChannelFutureOptional.value() == nullptr) {
+        NES_DEBUG("NetworkSink: reconfigure() network channel retrieved from future is null for operator {} Thread {}",
+                  nesPartition.toString(),
+                  Runtime::NesThread::getId());
+        NES_ASSERT2_FMT(retryTimes != 0, "Received invalid channel although channel retry times are set to indefinite");
+
+        //todo 4308: if there were finite retry attempts and they failed, do not crash the worker but fail the query
+        NES_ASSERT2_FMT(false, "Could not establish network channel");
+        return false;
+    }
+    workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), std::move(newNetworkChannelFutureOptional.value()));
+
+    NES_INFO("stop buffering data for context {}", workerContext.getId());
+    unbuffer(workerContext);
+    return true;
+}
+
 void NetworkSink::addPendingReconfiguration(const NodeLocation& newTargetNodeLocation, NesPartition newTargetSourcePartition) {
     pendingReconfiguration = {newTargetNodeLocation, newTargetSourcePartition};
 }
 
-uint16_t NetworkSink::getNumberOfInputSources() const {
-    return numberOfInputSources;
-}
+uint16_t NetworkSink::getNumberOfInputSources() const { return numberOfInputSources; }
 }// namespace NES::Network

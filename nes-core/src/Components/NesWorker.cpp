@@ -156,7 +156,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         if (metricStore != nullptr) {
             nodeEngine->setMetricStore(metricStore);
         }
-        nodeEngine->setConnectSinksAsync(workerConfig->connectSinksAsync.getValue());
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
