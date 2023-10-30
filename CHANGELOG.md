@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.5.235](https://github.com/nebulastream/nebulastream/tree/v0.5.235) (2023-10-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.234...v0.5.235)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove old query compiler [\#4222](https://github.com/nebulastream/nebulastream/issues/4222)
+- \[TASK\] Reimplement UnionDeploymentTest using the TestHarness [\#4069](https://github.com/nebulastream/nebulastream/issues/4069)
+
+### Query Optimizer 🔧
+
+- Perform placement of query plan with multiple sink operators using ILP [\#2939](https://github.com/nebulastream/nebulastream/issues/2939)
+
+## [v0.5.234](https://github.com/nebulastream/nebulastream/tree/v0.5.234) (2023-10-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.233...v0.5.234)
+
 ## [v0.5.233](https://github.com/nebulastream/nebulastream/tree/v0.5.233) (2023-10-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.232...v0.5.233)
