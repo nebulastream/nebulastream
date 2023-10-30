@@ -192,7 +192,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
@@ -238,14 +237,12 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexBroadcastQuery) 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
@@ -290,14 +287,12 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexFilterQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
@@ -341,7 +336,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterMultiplexQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               2);
     ++iterator;
@@ -386,7 +380,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterImplicitMultiplexQuer
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               2);
     ++iterator;
@@ -440,7 +433,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleJoinQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               2);
     ++iterator;
@@ -493,7 +485,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleBatchJoinQue
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               2);
     ++iterator;
@@ -547,7 +538,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               3);
     ++iterator;
@@ -617,7 +607,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               4);
     ++iterator;
@@ -668,7 +657,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateWindowQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
@@ -708,7 +696,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
@@ -744,7 +731,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUDFQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
@@ -813,7 +799,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateProjectQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;
@@ -850,7 +835,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateTwoSourceQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               2);
     ++iterator;
@@ -887,7 +871,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSinkSourceQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ASSERT_EQ((*iterator)
                   ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getSinkDescriptor()
                   ->getNumberOfInputSources(),
               1);
     ++iterator;

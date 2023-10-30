@@ -274,7 +274,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Let network sinks use a separate thread to establish a connection
      */
-    BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC, true, "Let network sinks use a separate thread to establish a connection"};
+    BoolOption connectSinksAsync = {CONNECT_SINKS_ASYNC, false, "Let network sinks use a separate thread to establish a connection"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

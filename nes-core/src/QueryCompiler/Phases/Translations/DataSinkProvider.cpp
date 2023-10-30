@@ -25,7 +25,8 @@ DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
                                     SchemaPtr schema,
                                     Runtime::NodeEnginePtr nodeEngine,
                                     const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                    size_t numOfProducers) {
+                                    size_t numOfProducers,
+                                    uint16_t numberOfInputSources) {
     for (const auto& plugin : SinkPluginRegistry::getPlugins()) {
         auto dataSink = plugin->createDataSink(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlan, numOfProducers);
         if (dataSink.has_value()) {
@@ -37,7 +38,8 @@ DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
                                                         std::move(schema),
                                                         std::move(nodeEngine),
                                                         querySubPlan,
-                                                        numOfProducers);
+                                                        numOfProducers,
+                                                        numberOfInputSources);
 }
 
 }// namespace NES::QueryCompilation

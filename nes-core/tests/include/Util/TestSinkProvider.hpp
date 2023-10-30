@@ -45,7 +45,7 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
                       SchemaPtr schema,
                       Runtime::NodeEnginePtr nodeEngine,
                       const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                      size_t numOfProducers) override;
+                      size_t numOfProducers, uint16_t numberOfInputSources) override;
 };
 }// namespace NES::TestUtils
 #endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_

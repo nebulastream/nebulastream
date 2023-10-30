@@ -51,13 +51,14 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker,
-                       bool sourceSharing)
+                       bool sourceSharing,
+                       bool connectSinksAsync)
     : nodeId(INVALID_TOPOLOGY_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)), openCLManager(std::move(openCLManager)),
       nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
-      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing), connectSinksAsync(true) {
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing), connectSinksAsync(connectSinksAsync) {
 
     NES_TRACE("Runtime() id={}", nodeEngineId);
     // here shared_from_this() does not work because of the machinery behind make_shared
@@ -611,7 +612,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
     }
 }
 
-bool NodeEngine::reconfigureNetworkSink(uint64_t newNodeId,
+bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
                                         const std::string& newHostname,
                                         uint32_t newPort,
                                         QuerySubPlanId querySubPlanId,
@@ -634,7 +635,7 @@ bool NodeEngine::reconfigureNetworkSink(uint64_t newNodeId,
               return networkSink && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
             });
         if (it != networkSinks.end()) {
-            networkSink->reconfigureReceiver(newPartition, newNodeLocation);
+            networkSink->configureNewReceiverAndPartition(newPartition, newNodeLocation);
             return true;
         }
         //query sub plan did not have network sink with specified id
@@ -661,9 +662,5 @@ const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManag
 
 bool NodeEngine::getConnectSinksAsync() {
     return connectSinksAsync;
-}
-
-void NodeEngine::setConnectSinksAsync(bool value) {
-    connectSinksAsync = value;
 }
 }// namespace NES::Runtime

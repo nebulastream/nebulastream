@@ -21,12 +21,12 @@ DataSinkPtr TestSinkProvider::lower(OperatorId sinkId,
                                     SchemaPtr schema,
                                     Runtime::NodeEnginePtr nodeEngine,
                                     const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                    size_t numOfProducers) {
+                                    size_t numOfProducers, uint16_t numberOfInputSources) {
     if (sinkDescriptor->instanceOf<TestSinkDescriptor>()) {
         auto testSinkDescriptor = sinkDescriptor->as<TestSinkDescriptor>();
         return testSinkDescriptor->getSink();
     }
-    return DataSinkProvider::lower(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlan, numOfProducers);
+    return DataSinkProvider::lower(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlan, numOfProducers, numberOfInputSources);
 }
 
 }// namespace NES::TestUtils

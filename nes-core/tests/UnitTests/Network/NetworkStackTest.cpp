@@ -38,6 +38,7 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -271,7 +272,8 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
 
         class DummyQueryManager : public Runtime::AbstractQueryManager {
           public:
-            explicit DummyQueryManager() : Runtime::AbstractQueryManager({}, {}, 1, 1, std::make_shared<Runtime::HardwareManager>(), {}, 1, {}) {};
+            //explicit DummyQueryManager() : Runtime::AbstractQueryManager({}, {}, 1, 1, std::make_shared<Runtime::HardwareManager>(), {}, 1, {}) {};
+            explicit DummyQueryManager() : Runtime::AbstractQueryManager({}, {}, 1, 1, std::make_shared<Runtime::HardwareManager>(), 1) {};
             ExecutionResult processNextTask(bool, Runtime::WorkerContext&) override {return ExecutionResult::Error;};
             void
             addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t) override {};
@@ -360,6 +362,7 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
     ASSERT_EQ(true, true);
 }
 
+//todo #4313: let test account for channels that never connect
 TEST_F(NetworkStackTest, testEosPropagation) {
     try {
 

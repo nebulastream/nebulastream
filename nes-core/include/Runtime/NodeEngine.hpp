@@ -317,8 +317,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     const OpenCLManagerPtr getOpenCLManager() const;
 
     /**
-     * @brief reconfigure the network sink to point to a new source. Buffer all tuples that are received while the new connection
-     * is being established
+     * @brief This function is only to be used for experiments. Do not call from other classes. reconfigure the network sink to point to a new source. Buffer all tuples that are received while the new connection
+     * is being established.
      * @param newNodeId the id of the node hosting the new source
      * @param newHostname the hostname of the node hosting the new source
      * @param newPort the data port of the node hosting the new source
@@ -327,7 +327,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param newPartition the partition of the new source
      * @return true on success, false if sink was not found
      */
-    bool reconfigureNetworkSink(uint64_t newNodeId,
+    bool experimentalReconfigureNetworkSink(uint64_t newNodeId,
                                 const std::string& newHostname,
                                 uint32_t newPort,
                                 QuerySubPlanId querySubPlanId,
@@ -340,12 +340,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return the value of the connectSinkAsync flag
      */
     bool getConnectSinksAsync();
-
-    /**
-     * @brief set the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish
-     * network channels
-     */
-    void setConnectSinksAsync(bool value);
 
   public:
     /**
@@ -365,7 +359,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerWorker,
-                        bool sourceSharing);
+                        bool sourceSharing,
+                        bool connectSinksAsync = false);
 
   private:
     TopologyNodeId nodeId;

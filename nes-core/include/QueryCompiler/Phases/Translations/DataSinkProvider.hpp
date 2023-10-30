@@ -45,7 +45,8 @@ class DataSinkProvider {
                               SchemaPtr schema,
                               Runtime::NodeEnginePtr nodeEngine,
                               const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                              size_t numOfProducers);
+                              size_t numOfProducers,
+                              uint16_t numberOfInputSources);
 
     virtual ~DataSinkProvider() = default;
 };
