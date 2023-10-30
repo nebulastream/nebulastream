@@ -56,8 +56,12 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
     std::vector<ResultRecord> runJoinQueryTwoLogicalStreams(const Query& query,
                                                             const TestUtils::CsvFileParams& csvFileParams,
                                                             const TestUtils::JoinParams& joinParams) {
-        auto sourceConfig1 = TestUtils::createSourceTypeCSV(TestUtils::SourceTypeConfigCSV{csvFileParams.inputCsvFiles[0]});
-        auto sourceConfig2 = TestUtils::createSourceTypeCSV(TestUtils::SourceTypeConfigCSV{csvFileParams.inputCsvFiles[1]});
+        const auto logicalSourceNameOne = "test1";
+        const auto logicalSourceNameTwo = "test2";
+        const auto physicalSourceNameOne = "test1_physical";
+        const auto physicalSourceNameTwo = "test2_physical";
+        auto sourceConfig1 = TestUtils::createSourceTypeCSV({logicalSourceNameOne, physicalSourceNameOne, csvFileParams.inputCsvFiles[0]});
+        auto sourceConfig2 = TestUtils::createSourceTypeCSV({logicalSourceNameTwo, physicalSourceNameTwo, csvFileParams.inputCsvFiles[1]});
         auto expectedSinkBuffer =
             TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
         auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
@@ -67,8 +71,8 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
 
                                       .setJoinStrategy(joinStrategy)
                                       .setWindowingStrategy(windowingStrategy)
-                                      .addLogicalSource("test1", joinParams.inputSchemas[0])
-                                      .addLogicalSource("test2", joinParams.inputSchemas[1])
+                                      .addLogicalSource(logicalSourceNameOne, joinParams.inputSchemas[0])
+                                      .addLogicalSource(logicalSourceNameTwo, joinParams.inputSchemas[1])
                                       .attachWorkerWithCSVSourceToCoordinator(sourceConfig1)
                                       .attachWorkerWithCSVSourceToCoordinator(sourceConfig2)
                                       .validate()

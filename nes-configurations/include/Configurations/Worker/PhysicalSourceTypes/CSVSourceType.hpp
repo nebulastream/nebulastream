@@ -36,21 +36,27 @@ class CSVSourceType : public PhysicalSourceType {
     ~CSVSourceType() noexcept override = default;
 
     /**
-     * @brief create a CSVSourceTypePtr object
-     * @param sourceConfigMap inputted config options
+     * @brief create a CSVSourceTypePtr object.
+     * @param sourceConfigMap inputted config options.
+     * @param logicalSourceName: Name of the logical source that represents this CSV source.
+     * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
      * @return CSVSourceTypePtr
      */
     static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief create a CSVSourceTypePtr object
-     * @param sourceConfigMap inputted config options
+     * @brief create a CSVSourceTypePtr object.
+     * @param sourceConfigMap inputted config options.
+     * @param logicalSourceName: Name of the logical source that represents this CSV source.
+     * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
      * @return CSVSourceTypePtr
      */
     static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
-     * @brief create a default CSVSourceTypePtr object
+     * @brief create a default CSVSourceTypePtr object.
+     * @param logicalSourceName: Name of the logical source that represents this CSV source.
+     * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
      * @return CSVSourceTypePtr
      */
     static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
