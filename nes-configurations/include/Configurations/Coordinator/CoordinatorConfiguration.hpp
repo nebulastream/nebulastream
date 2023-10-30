@@ -129,10 +129,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
     /**
-     * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server
+     * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server.
+     *        The default value '*' allows all CORS requests per default. Setting the value to 'false' disables CORS requests.
      */
     StringOption restServerCorsAllowedOrigin = {REST_SERVER_CORS_ORIGIN,
-                                                "",
+                                                "*",
                                                 "The allowed origins to be set in the header of the responses to rest requests"};
 
     /**
