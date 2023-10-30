@@ -25,7 +25,7 @@
 #include <queue>
 #include <utility>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Runtime/OpenCLManager.hpp>
+#include <Runtime/OpenCLDeviceInfo.hpp>
 
 namespace NES::Optimizer {
 
