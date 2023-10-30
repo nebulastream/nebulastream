@@ -11,11 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Configurations/Coordinator/LogicalSourceType.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 
 using namespace std;
