@@ -56,7 +56,7 @@ namespace NES::Parsers {
             //queryPlan = QueryPlanBuilder::addJoin();
             //queryPlan = QueryPlanBuilder::assignWatermark(queryPlan,helper.getWatermarkStrategieDescriptor());
             //queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan,helper.getWindowType());
-            queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinkDescriptor());
+            queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinks().front());
 
             return queryPlan;
         }
@@ -131,7 +131,7 @@ namespace NES::Parsers {
                 if (sinkType == "NullOutput") {
                     sinkDescriptor = NES::NullOutputSinkDescriptor::create();
                 }
-                helper.setSink(sinkDescriptor);
+                helper.addSink(sinkDescriptor);
             }
         }
 

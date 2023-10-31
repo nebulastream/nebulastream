@@ -19,13 +19,13 @@ limitations under the License.
 #include <Parsers/NebulaSQL/gen/NebulaSQLBaseListener.h>
 #include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Operators//Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 
 
 namespace NES::Parsers {

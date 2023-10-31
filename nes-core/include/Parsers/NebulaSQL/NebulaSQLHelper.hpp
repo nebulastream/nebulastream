@@ -32,27 +32,41 @@ namespace NES::Parsers {
             std::vector<ExpressionNodePtr> projectionFields;
             SinkDescriptorPtr sinkDescriptor;
             std::vector<ExpressionNodePtr> whereClauses;
+            std::map<int32_t, std::string> sourceList;
+            std::map<int32_t, NebulaSQLOperatorNode> operatorList;// contains the operators from the PATTERN clause
+            std::list<ExpressionNodePtr> expressionList;
+            std::list<SinkDescriptorPtr> sinkList; // INTO
+            std::pair<std::string, int32_t> window;// WITHIN
 
 
           public:
-            void setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields);
-            void addProjectionField(ExpressionNodePtr expressionNode);
-
+            //Constructors
+            NebulaSQLHelper() = default;
+            // Getter and Setter
             const std::map<int32_t, std::string>& getSources() const;
-            void addSource(std::pair<int32_t, std::basic_string<char>> sourcePair);
-
-            const SinkDescriptorPtr getSinkDescriptor() const;
-            void setSink(SinkDescriptorPtr sink);
-
-            const std::vector<ExpressionNodePtr>& getWhereClauses() const;
-            void addWhereClause(ExpressionNodePtr expression);
-
+            void setSources(const std::map<int32_t, std::string>& sources);
+            const std::map<int32_t, NebulaSQLOperatorNode>& getOperatorList() const;
+            void setOperatorList(const std::map<int32_t, NebulaSQLOperatorNode>& operatorList);
+            const std::list<ExpressionNodePtr>& getExpressions() const;
+            void setExpressions(const std::list<ExpressionNodePtr>& expressions);
             const std::vector<ExpressionNodePtr>& getProjectionFields() const;
-
+            void setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields);
+            const std::list<SinkDescriptorPtr>& getSinks() const;
+            void setSinks(const std::list<SinkDescriptorPtr>& sinks);
+            const std::pair<std::string, int>& getWindow() const;
+            void setWindow(const std::pair<std::string, int>& window);
+            void addSource(std::pair<int32_t, std::basic_string<char>> sourcePair);
+            void updateSource(const int32_t key, std::string sourceName);
+            void addExpression(ExpressionNodePtr expressionNode);
+            void addSink(SinkDescriptorPtr sinkDescriptor);
+            void addProjectionField(ExpressionNodePtr expressionNode);
+            void addOperatorNode(NebulaSQLOperatorNode operatorNode);
             uint64_t getLimit() const;
+            /*
             const std::string& getNewName() const;
             const FieldAssignmentExpressionNodePtr& getMapExpression() const;
             const WatermarkStrategyDescriptorPtr& getWatermarkStrategieDescriptor() const;
+             */
             const NES::Windowing::WindowTypePtr getWindowType() const;
         };
     }// namespace NES::Parsers
