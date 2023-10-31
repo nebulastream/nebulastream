@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.238](https://github.com/nebulastream/nebulastream/tree/v0.5.238) (2023-10-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.237...v0.5.238)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Enable Sink reconfiguration while query is running [\#4171](https://github.com/nebulastream/nebulastream/issues/4171)
+
+### Miscellaneous Issues ✌️
+
+- add "isMobile" flag to workers and to Topology [\#2474](https://github.com/nebulastream/nebulastream/issues/2474)
+
 ## [v0.5.237](https://github.com/nebulastream/nebulastream/tree/v0.5.237) (2023-10-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.236...v0.5.237)
