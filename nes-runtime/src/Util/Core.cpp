@@ -97,7 +97,7 @@ Runtime::MemoryLayouts::MemoryLayoutPtr Util::createMemoryLayout(SchemaPtr schem
     }
 }
 
-#ifndef UNIKERNEL_SUPPORT_LIB
+#ifndef UNIKERNEL_TEST_LIBRARY
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                             std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
@@ -127,7 +127,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
 
     return true;
 }
-#endif// UNIKERNEL_SUPPORT_LIB
+#endif //UNIKERNEL_TEST_LIBRARY
 #ifndef UNIKERNEL_EXPORT
 std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::string& csvFile,
                                                                  const SchemaPtr& schema,

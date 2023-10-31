@@ -14,6 +14,7 @@
 
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <string>
@@ -21,18 +22,20 @@
 
 namespace NES {
 PrintSink::PrintSink(SinkFormatPtr format,
-                     Runtime::NodeEnginePtr nodeEngine,
                      uint32_t numOfProducers,
-                     SharedQueryId sharedQueryId,
-                     DecomposedQueryPlanId decomposedQueryPlanId,
+                     QueryId queryId,
+                     QuerySubPlanId querySubPlanId,
                      std::ostream& pOutputStream,
+                     FaultToleranceType faultToleranceType,
                      uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
-                 std::move(nodeEngine),
                  numOfProducers,
-                 sharedQueryId, decomposedQueryPlanId,
+                 queryId,
+                 querySubPlanId,
+                 faultToleranceType,
                  numberOfOrigins),
-      outputStream(pOutputStream) {}
+      outputStream(pOutputStream) {
+}
 
 PrintSink::~PrintSink() = default;
 
@@ -50,6 +53,7 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
     NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
     outputStream << buffer << std::endl;
+    updateWatermarkCallback(inputBuffer);
     return true;
 }
 

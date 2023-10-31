@@ -42,7 +42,3 @@ if(NES_USE_MQTT)
             MQTTSource.cpp
     )
 endif()
-
-add_source_files(nes-unikernel-support-core
-        DataSource.cpp
-)

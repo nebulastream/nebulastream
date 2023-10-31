@@ -76,6 +76,14 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
  * @return a full string stream as string
  */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
+
+/**
+* @brief Returns the physical types of all fields of the schema
+* @param schema
+* @return PhysicalTypes of the schema's field
+*/
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
+
 /**
  * @brief method to get the schema as a csv string
  * @param schema

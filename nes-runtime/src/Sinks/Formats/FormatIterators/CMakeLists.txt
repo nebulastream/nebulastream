@@ -14,7 +14,7 @@ add_source_files(nes-runtime
         FormatIterator.cpp
         Iterator.cpp
 )
-add_source_files(nes-unikernel-support-core
+add_source_files(unikernel-test-lib
         FormatIterator.cpp
         Iterator.cpp
 )

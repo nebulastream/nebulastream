@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
+#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
+#define NES_CORE_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
 
+#include <Util/FaultToleranceType.hpp>
 #include <cstdint>
 #include <memory>
 #include <sstream>
@@ -35,11 +36,11 @@ class PrintSink : public SinkMedium {
      * @Note the default output will be written to cout
      */
     PrintSink(SinkFormatPtr format,
-              Runtime::NodeEnginePtr nodeEngine,
               uint32_t numOfProducers,
-              SharedQueryId sharedQueryId,
-              DecomposedQueryPlanId decomposedQueryPlanId,
+              QuerySubPlanId querySubPlanId,
+              QueryId queryId,
               std::ostream& pOutputStream = std::cout,
+              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
               uint64_t numberOfOrigins = 1);
 
     /**
@@ -86,4 +87,4 @@ class PrintSink : public SinkMedium {
 using PrintSinkPtr = std::shared_ptr<PrintSink>;
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
+#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_

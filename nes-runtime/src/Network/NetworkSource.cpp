@@ -30,11 +30,7 @@ namespace NES::Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema,
                              Runtime::BufferManagerPtr bufferManager,
-#ifndef UNIKERNEL_SUPPORT_LIB
                              Runtime::QueryManagerPtr queryManager,
-#else
-                              NES::Runtime::WorkerContextPtr workerContext,
-#endif
                              NetworkManagerPtr networkManager,
                              NesPartition nesPartition,
                              NodeLocation sinkLocation,
@@ -48,11 +44,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
 
     : DataSource(std::move(schema),
                  std::move(bufferManager),
-#ifndef UNIKERNEL_SUPPORT_LIB
                  std::move(queryManager),
-#else
-                  std::move(workerContext),
-#endif
                  nesPartition.getOperatorId(),
                  /*invalid origin id for the network source, as the network source does not change the origin id*/
                  INVALID_ORIGIN_ID,
@@ -98,42 +90,25 @@ bool NetworkSource::start() {
     if (running.compare_exchange_strong(expected, true)) {
         for (const auto& successor : executableSuccessors) {
             auto decomposedQueryPlanId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
-                                                                           return sink->getParentPlanId();
-                                                                       }
-       #ifndef UNIKERNEL_SUPPORT_LIB
-                                                                ,
+                                                                    return sink->getParentPlanId();
+                                                                },
                                                                 [](Execution::ExecutablePipelinePtr pipeline) {
                                                                     return pipeline->getDecomposedQueryPlanId();
-                                                                }
-#endif
-                                             },
-                                                    successor);
+                                                                }},
+                                             successor);
             auto sharedQueryId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
                                                                    return sink->getSharedQueryId();
-                                                         }
-#ifndef UNIKERNEL_SUPPORT_LIB
-                                                               ,
+                                                               },
                                                                [](Execution::ExecutablePipelinePtr pipeline) {
                                                                    return pipeline->getSharedQueryId();
-                                                         }
-#endif
-                                      },
+                                                         }},
                                             successor);
 
-#ifndef UNIKERNEL_SUPPORT_LIB
             auto newReconf = ReconfigurationMessage(sharedQueryId,
                                                     decomposedQueryPlanId,
                                                     Runtime::ReconfigurationType::Initialize,
                                                     shared_from_base<DataSource>());
             queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, newReconf, true);
-#else
-            auto newReconf = ReconfigurationMessage(queryId,
-                                                    querySubPlanId,
-                                                    Runtime::ReconfigurationType::Initialize,
-                                                    shared_from_base<DataSource>(),
-                                                    1u);
-            this->reconfigure(newReconf, *workerContext);
-#endif
             break;// hack as currently we assume only one executableSuccessor
         }
         NES_DEBUG("NetworkSource: start completed on {}", nesPartition);
@@ -151,12 +126,9 @@ bool NetworkSource::fail() {
                                                 INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                 ReconfigurationType::FailEndOfStream,
                                                 DataSource::shared_from_base<DataSource>());
-#ifndef UNIKERNEL_SUPPORT_LIB
         queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Failure);
         return queryManager->addEndOfStream(shared_from_base<NetworkSource>(), Runtime::QueryTerminationType::Failure);
-#endif
-        return true;//TODO: Unikernel
     }
     return false;
 }
@@ -172,11 +144,9 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
                                                 INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                 ReconfigurationType::HardEndOfStream,
                                                 DataSource::shared_from_base<DataSource>());
-#ifndef UNIKERNEL_SUPPORT_LIB
         queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
-#endif
         NES_DEBUG("NetworkSource: stop called on {} sent hard eos", nesPartition);
     } else {
         NES_DEBUG("NetworkSource: stop called on {} but was already stopped", nesPartition);
@@ -317,29 +287,19 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
         bool expected = true;
         if (running.compare_exchange_strong(expected, false)) {
             NES_DEBUG("NetworkSource is stopped on reconf task with id {}", nesPartition.toString());
-#ifndef UNIKERNEL_SUPPORT_LIB
             queryManager->notifySourceCompletion(shared_from_base<DataSource>(), terminationType);
-#endif
         }
     }
 }
 
-void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&
-#ifndef UNIKERNEL_SUPPORT_LIB
-                                   ,
-                                   const Runtime::QueryManagerPtr&
-#endif
-) {
+void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runtime::QueryManagerPtr&) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
-
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
     if (Runtime::QueryTerminationType::Graceful == terminationType) {
-#ifndef UNIKERNEL_SUPPORT_LIB
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
-#endif
     } else {
         NES_WARNING("Ignoring forceful EoS on {}", nesPartition);
     }

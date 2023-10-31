@@ -4,80 +4,60 @@
 
 #ifndef NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_H
 #define NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_H
+#include "../../../../nes-unikernel/include/UnikernelStage.h"
 #include "Runtime/TupleBuffer.hpp"
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
-extern NES::Runtime::WorkerContextPtr the_workerContext;
+#include <utility>
+
+namespace NES::Runtime::Execution {
+class OperatorHandler;
+}
+
+extern NES::Runtime::BufferManagerPtr TheBufferManager;
+extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 namespace NES::Unikernel {
 
-class UnikernelPipelineExecutionContextBase {
+class UnikernelPipelineExecutionContext {
+    std::function<void(NES::Runtime::TupleBuffer&)> emitProxy;
+    std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy;
+    size_t currentStageId;
+    size_t nextStageId;
+    UnikernelPipelineExecutionContext(std::function<void(NES::Runtime::TupleBuffer&)> emitProxy,
+                                      std::function<NES::Runtime::Execution::OperatorHandler*(int)> getOperatorHandlerProxy,
+                                      size_t currentStageId,
+                                      size_t nextStageId)
+        : emitProxy(std::move(emitProxy)), getOperatorHandlerProxy(std::move(getOperatorHandlerProxy)),
+          currentStageId(currentStageId), nextStageId(nextStageId) {}
+
   public:
-    virtual void execute(NES::Runtime::TupleBuffer& tupleBuffer) = 0;
-    virtual void emit(NES::Runtime::TupleBuffer& tupleBuffer) = 0;
-    virtual size_t getNumberOfWorkerThreads() { return 1; }
-    virtual void setup() = 0;
-    virtual void stop() = 0;
+    template<typename T, typename Stage>
+    static UnikernelPipelineExecutionContext create() {
+        return UnikernelPipelineExecutionContext(&T::execute, &Stage::getOperatorHandler, Stage::StageId, T::StageId);
+    }
+    template<IsEmitablePipelineStage T>
+    static UnikernelPipelineExecutionContext create() {
+        return UnikernelPipelineExecutionContext(&T::execute, nullptr, 0, T::StageId);
+    }
+    [[nodiscard]] NES::Runtime::Execution::OperatorHandler* getOperatorHandler(int index) const {
+        NES_INFO("getOperatorHandler for {}", currentStageId);
+        auto opHandler = getOperatorHandlerProxy(index);
+        NES_ASSERT2_FMT(opHandler, "Op Handler is Null");
 
-    virtual NES::Runtime::Execution::OperatorHandler& getOperatorHandler(uint8_t index) = 0;
+        NES_INFO("OpHandler for Stage {} @ {}", currentStageId, static_cast<void*>(opHandler));
+        return opHandler;
+    }
+    void dispatchBuffer(NES::Runtime::TupleBuffer& tb) const {
+        NES_INFO("Dispatching to {}", nextStageId);
+        emitProxy(tb);
+    }
+    void emit(NES::Runtime::TupleBuffer& tb) const {
+        NES_INFO("Emitting to {}", nextStageId);
+        emitProxy(tb);
+    }
+    NES::Runtime::BufferManagerPtr getBufferManager() { return TheBufferManager; }
+    size_t getNumberOfWorkerThreads() { return 1; }
 };
-
-template<typename Sink, typename Stage, typename... Stages>
-class UnikernelPipelineExecutionContext : public UnikernelPipelineExecutionContextBase {
-  public:
-    UnikernelPipelineExecutionContext<Sink, Stages...> nextContext;
-
-    void execute(Runtime::TupleBuffer& tupleBuffer) override {
-        //      hexdump(tupleBuffer.getBuffer(), tupleBuffer.getBufferSize());
-        NES_DEBUG("Executing Stage {}", typeid(Stage).name());
-        Stage::execute(*static_cast<UnikernelPipelineExecutionContextBase*>(this), *the_workerContext, tupleBuffer);
-    }
-
-    void emit(NES::Runtime::TupleBuffer& tupleBuffer) override { nextContext.execute(tupleBuffer); }
-
-    NES::Runtime::Execution::OperatorHandler& getOperatorHandler(uint8_t index) override {
-        auto handlerPtr = Stage::getOperatorHandler(index);
-        return *handlerPtr;
-    }
-
-    void stop() override {
-        Stage::terminate(*static_cast<UnikernelPipelineExecutionContextBase*>(this), *the_workerContext);
-        nextContext.stop();
-    }
-
-    void setup() override {
-        assert(static_cast<UnikernelPipelineExecutionContextBase*>(this) == this);
-        NES_DEBUG("This: {}, {}", (void*) this, (void*) static_cast<UnikernelPipelineExecutionContextBase*>(this));
-        Stage::setup(*static_cast<UnikernelPipelineExecutionContextBase*>(this), *the_workerContext);
-        nextContext.setup();
-    }
-};
-
-template<typename Sink, typename Stage>
-class UnikernelPipelineExecutionContext<Sink, Stage> : public UnikernelPipelineExecutionContextBase {
-  public:
-    Sink sink;
-
-    void execute(Runtime::TupleBuffer& tupleBuffer) override {
-        Stage::execute(*static_cast<UnikernelPipelineExecutionContextBase*>(this), *the_workerContext, tupleBuffer);
-    }
-
-    void emit(NES::Runtime::TupleBuffer& tupleBuffer) override { sink.writeBuffer(tupleBuffer); }
-
-    NES::Runtime::Execution::OperatorHandler& getOperatorHandler(uint8_t index) override {
-        return *Stage::getOperatorHandler(index);
-    }
-
-    void setup() override {
-        Stage::setup(*static_cast<UnikernelPipelineExecutionContextBase*>(this), *the_workerContext);
-        sink.setup();
-    }
-
-    void stop() override {
-        Stage::terminate(*static_cast<UnikernelPipelineExecutionContextBase*>(this), *the_workerContext);
-        sink.stop();
-    }
-};
-
 }// namespace NES::Unikernel
 #endif//NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_H

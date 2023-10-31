@@ -13,6 +13,8 @@
 */
 
 #include <API/Schema.hpp>
+#include <Components/NesWorker.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -21,32 +23,39 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
-                       Runtime::NodeEnginePtr nodeEngine,
-                       uint32_t numOfProducers,
-                       SharedQueryId sharedQueryId,
-                       DecomposedQueryPlanId decomposedQueryPlanId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, 1) {}
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, uint32_t numOfProducers, QueryId queryId, QuerySubPlanId querySubPlanId)
+    : SinkMedium(sinkFormat, numOfProducers, queryId, querySubPlanId, FaultToleranceType::NONE, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
-                       Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
-                       SharedQueryId sharedQueryId,
-                       DecomposedQueryPlanId decomposedQueryPlanId,
+                       QueryId queryId,
+                       QuerySubPlanId querySubPlanId,
+                       FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins)
-    : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers),
-      sharedQueryId(sharedQueryId), decomposedQueryPlanId(decomposedQueryPlanId), numberOfOrigins(numberOfOrigins) {
+    : sinkFormat(std::move(sinkFormat)), activeProducers(numOfProducers), queryId(queryId), querySubPlanId(querySubPlanId),
+      faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {
+    bufferCount = 0;
+    buffersPerEpoch = 1000;//TODO
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
-    NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    } else {
+        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
+        };
+    }
 }
 
-OperatorId SinkMedium::getOperatorId() const { return INVALID_OPERATOR_ID; }
+OperatorId SinkMedium::getOperatorId() const { return 0; }
 
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);
     return sentBuffer;
 }
+
+void SinkMedium::updateWatermark(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
 uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
     std::unique_lock lock(writeMutex);
@@ -57,13 +66,20 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
-DecomposedQueryPlanId SinkMedium::getParentPlanId() const { return decomposedQueryPlanId; }
+QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 
-SharedQueryId SinkMedium::getSharedQueryId() const { return sharedQueryId; }
+QueryId SinkMedium::getQueryId() const { return queryId; }
+
+bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
+    NES_DEBUG("EPOCH: {}", epochBarrier)
+    return true;
+}
 
 void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);
 }
+
+uint64_t SinkMedium::getCurrentEpochBarrier() { NES_NOT_IMPLEMENTED(); }
 
 void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
@@ -89,9 +105,6 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         NES_DEBUG("Got EoS on Sink  {}", toString());
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
-            nodeEngine->getQueryManager()->notifySinkCompletion(decomposedQueryPlanId,
-                                                                std::static_pointer_cast<SinkMedium>(shared_from_this()),
-                                                                terminationType);
             NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);
         }
     }

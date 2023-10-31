@@ -14,14 +14,14 @@ add_source_files(nes-runtime
         Metric.cpp
         MetricType.cpp
 )
-
 add_subdirectory(Gauge)
 add_subdirectory(Wrapper)
 
-add_source_files(nes-unikernel-support-core
-        NetworkSink.cpp
-        NetworkSource.cpp)
-add_source_files(nes-unikernel-core
+add_source_files(unikernel-test-lib
+        ZmqServer.cpp
+        NetworkManager.cpp
+)
+add_source_files(unikernel-lib
         ZmqServer.cpp
         NetworkManager.cpp
 )
