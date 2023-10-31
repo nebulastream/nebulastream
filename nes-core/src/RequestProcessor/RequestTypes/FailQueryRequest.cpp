@@ -23,8 +23,8 @@
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
-#include <Util/RequestType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/RequestType.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 
