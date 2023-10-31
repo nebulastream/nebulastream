@@ -27,4 +27,5 @@ add_source_files(nes-core
         ResourceLockingException.cpp
         StorageHandlerAcquireResourcesException.cpp
         AccessNonLockedResourceException.cpp
+        InvalidStatProbeRequestException.cpp
 )

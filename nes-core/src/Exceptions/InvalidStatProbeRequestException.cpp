@@ -12,23 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_GRPC_STATREQUESTCOPYING_DELETEREQUESTUTIL_HPP_
-#define NES_NES_CORE_INCLUDE_GRPC_STATREQUESTCOPYING_DELETEREQUESTUTIL_HPP_
+#include <Exceptions/InvalidStatProbeRequestException.hpp>
 
-namespace NES {
+namespace NES::Experimental::Statistics::Exceptions {
+InvalidStatProbeRequestException::InvalidStatProbeRequestException(const std::string& message) : message(message) {}
 
-namespace Experimental::Statistics {
-class DeleteRequestParamObj;
-}
-
-class DeleteStat;
-
-class DeleteRequestUtil {
-  public:
-    static void copyDeleteRequest(const Experimental::Statistics::DeleteRequestParamObj& deleteRequestParamObj,
-                                  DeleteStat* deleteRequest);
-};
-
-}
-
-#endif//NES_NES_CORE_INCLUDE_GRPC_STATREQUESTCOPYING_DELETEREQUESTUTIL_HPP_
+const char* InvalidStatProbeRequestException::what() const noexcept { return message.c_str(); }
+}// namespace NES::Experimental::Statistics::Exceptions
