@@ -13,16 +13,26 @@
 */
 
 #include <GRPC/StatRequestCopying/DeleteRequestUtil.hpp>
+#include <WorkerRPCService.pb.h>
 #include <Statistics/Requests/DeleteRequestParamObj.hpp>
 #include <DeleteRequestParamObj.pb.h>
 
 namespace NES {
 
-void DeleteRequestUtil::copyDeleteRequest(const Experimental::Statistics::DeleteRequestParamObj& deleteRequestParamObj,
-                                          DeleteStat* probeRequest) {
-    probeRequest->set_logicalsourcename(deleteRequestParamObj.getLogicalSourceName());
-    probeRequest->set_fieldname(deleteRequestParamObj.getFieldName());
-    probeRequest->set_statcollectortype((uint32_t) deleteRequestParamObj.getStatCollectorType());
-    probeRequest->set_endtime(deleteRequestParamObj.getEndTime());
+void DeleteRequestUtil::packDeleteRequest(const Experimental::Statistics::DeleteRequestParamObj& deleteRequestParamObj,
+                                          DeleteStat* deleteRequest) {
+    deleteRequest->set_logicalsourcename(deleteRequestParamObj.getLogicalSourceName());
+    deleteRequest->set_fieldname(deleteRequestParamObj.getFieldName());
+    deleteRequest->set_statcollectortype((uint32_t) deleteRequestParamObj.getStatCollectorType());
+    deleteRequest->set_endtime(deleteRequestParamObj.getEndTime());
 }
+
+Experimental::Statistics::DeleteRequestParamObj DeleteRequestUtil::unpackDeleteRequest(const DeleteStat* deleteRequest) {
+
+    return Experimental::Statistics::DeleteRequestParamObj(deleteRequest->logicalsourcename(),
+                                                           deleteRequest->fieldname(),
+                                                           (Experimental::Statistics::StatCollectorType) deleteRequest->statcollectortype(),
+                                                           deleteRequest->endtime());
+}
+
 }

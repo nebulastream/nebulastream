@@ -16,6 +16,7 @@
 #define NES_NES_CORE_INCLUDE_STATISTICS_STATMANAGER_STATMANAGER_HPP_
 
 #include <vector>
+#include <WorkerRPCService.grpc.pb.h>
 
 namespace NES {
 
@@ -28,7 +29,7 @@ class DeleteRequestParamObj;
 class StatManager {
   public:
     double probeStat(StatCollectorIdentifier& statIdentifier);
-    std::vector<double> probeStats(ProbeRequestParamObj& probeRequest);
+    void probeStats(ProbeRequestParamObj& probeRequest, ProbeStatReply* stats);
     int64_t deleteStat(DeleteRequestParamObj& deleteRequestParamObj);
   private:
 

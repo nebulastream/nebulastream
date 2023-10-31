@@ -460,7 +460,7 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
-double WorkerRPCClient::probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequest) {
+std::vector<double> WorkerRPCClient::probeStat(const std::string& destAddress, Experimental::Statistics::ProbeRequestParamObj& probeRequestParamObj) {
     NES_DEBUG("WorkerRPCClient: Statistic probe request address={}", destAddress);
 
     ClientContext context;
@@ -473,11 +473,13 @@ double WorkerRPCClient::probeStat(const std::string& destAddress, Experimental::
     auto workerStub = WorkerRPCService::NewStub(chan);
     auto status = workerStub->ProbeStat(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("Returned Status was ok and stat is: {}", reply.stat());
-        return reply.stat();
+        std::vector<double> stats(reply.stats().begin(), reply.stats().end());
+        return stats;
     } else {
-        NES_DEBUG("Returned Status was not ok and stat is: {}", reply.stat());
-        return -1.0;
+        NES_DEBUG("Returned Status was not ok");
+        reply.Clear();
+        std::vector<double> stats(reply.stats().begin(), reply.stats().end());
+        return stats;
     }
 }
 

@@ -45,6 +45,10 @@ class DeleteRequestParamObj : public RequestParamObj {
         return endTime;
     }
 
+    void setEndTime(const time_t endTime) {
+        this->endTime = endTime;
+    }
+
   private:
     time_t endTime;
 };

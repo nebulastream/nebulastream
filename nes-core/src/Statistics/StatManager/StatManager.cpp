@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <limits>
+
 #include "Statistics/StatManager/StatManager.hpp"
 #include "Statistics/Requests/DeleteRequestParamObj.hpp"
 #include "Statistics/Requests/ProbeRequestParamObj.hpp"
@@ -21,31 +23,38 @@ namespace NES {
 
 namespace Experimental::Statistics {
 
-double StatManager::probeStat(StatCollectorIdentifier& statIdentifier) {
-    statIdentifier.getPhysicalSourceName();
-    return -1.0;
+double StatManager::probeStat(StatCollectorIdentifier& statCollectorIdentifier) {
+    statCollectorIdentifier.getPhysicalSourceName();
+    return 1.0;
 }
 
-std::vector<double> StatManager::probeStats(ProbeRequestParamObj& probeRequest) {
+void StatManager::probeStats(ProbeRequestParamObj& probeRequest, ProbeStatReply* stats) {
 
     probeRequest.getPhysicalSourceNames();
-    std::vector<double> stats;
 
-    auto statIdentifier = StatCollectorIdentifier(probeRequest.getPhysicalSourceNames().at(0),
-                                                  probeRequest.getFieldName(),
-                                                  probeRequest.getStatCollectorType());
+    auto allPhysicalSourceNames = probeRequest.getPhysicalSourceNames();
+    auto statCollectorIdentifier =
+        StatCollectorIdentifier(allPhysicalSourceNames.at(0), probeRequest.getFieldName(), probeRequest.getStatCollectorType());
 
-//    for (uint64_t index = 0; index < probeRequest.getPhysicalSourceNames().size(); index++) {
-//        statIdentifier->
-//    }
-
-    return stats;
+    double stat;
+    for (uint64_t index = 0; index < probeRequest.getPhysicalSourceNames().size(); index++) {
+        statCollectorIdentifier.setPhysicalSourceName(allPhysicalSourceNames.at(0));
+        stat = probeStat(statCollectorIdentifier);
+        // ToDo: add try catch block
+        if (stat != std::numeric_limits<double>::quiet_NaN()) {
+            stats->add_stats(stat);
+        } else {
+            stats->Clear();
+            return;
+        }
+    }
+    return;
 }
 
 int64_t StatManager::deleteStat(DeleteRequestParamObj& deleteRequestParamObj) {
     deleteRequestParamObj.getLogicalSourceName();
-    return -1;
+    return 1;
 }
 
-}
-}
+}// namespace Experimental::Statistics
+}// namespace NES

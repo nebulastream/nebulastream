@@ -195,6 +195,8 @@ class SourceCatalog {
     static std::vector<int64_t> allPhysicalSourceExists(const std::vector<std::string>& allPhysicalSourceNames,
                                                         const std::vector<SourceCatalogEntryPtr> allSources);
 
+    static bool compareByNode(const SourceCatalogEntryPtr& entry1, const SourceCatalogEntryPtr& entry2);
+
   private:
     std::recursive_mutex catalogMutex;
     //map logical source to schema

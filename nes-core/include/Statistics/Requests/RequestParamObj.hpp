@@ -55,6 +55,18 @@ class RequestParamObj {
         return statCollectorType;
     }
 
+    void setLogicalSourceName(const std::string& logicalSourceName) {
+        this->logicalSourceName = logicalSourceName;
+    }
+
+    void setFieldName(const std::string& fieldName) {
+        this->fieldName = fieldName;
+    }
+
+    void setStatCollectorType(const StatCollectorType statCollectorType) {
+        this->statCollectorType = statCollectorType;
+    }
+
   private:
     std::string logicalSourceName;
     std::string fieldName;

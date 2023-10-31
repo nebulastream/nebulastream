@@ -209,16 +209,26 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
 
 Status WorkerRPCServer::ProbeStat(grpc::ServerContext*, const ProbeStatRequest* request, ProbeStatReply* reply) {
 
-    auto test = request->proberequestparamobj();
-    reply->set_stat(1.0);
+    auto probeRequest = &request->proberequestparamobj();
+    auto serializedProbeRequest = ProbeRequestUtil::unpackProbeRequest(probeRequest);
+    statManager->probeStats(serializedProbeRequest, reply);
+    auto stats = reply->stats();
 
     return Status::OK;
 }
 
-Status WorkerRPCServer::DeleteStat(grpc::ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) {
-    auto test = request->deleterequestparamobj();
-    reply->set_success(true);
-    return Status::OK;
+Status WorkerRPCServer::deleteStat(grpc::ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) {
+
+    auto deleteRequest = &request->deleterequestparamobj();
+    auto serializedDeleteRequest = DeleteRequestUtil::unpackDeleteRequest(deleteRequest);
+    auto success = statManager->deleteStat(serializedDeleteRequest);
+    if (success != 0) {
+        reply->set_success(1);
+        return Status::OK;
+    } else {
+        reply->set_success(0);
+        return Status::CANCELLED;
+    }
 }
 
 }// namespace NES

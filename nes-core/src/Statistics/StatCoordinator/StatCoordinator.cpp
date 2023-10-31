@@ -77,10 +77,18 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
 
     std::vector<double> stats;
     std::vector<double> erroneousResult{-1.0};
+    auto queriedPhysicalSources = probeParamObj.getPhysicalSourceNames();
+    probeParamObj.clearPhysicalSourceNames();
 
-    auto sources = sourceCatalog->getSubsetOfPhysicalSources(probeRequest.getLogicalSourceName(), probeRequest.getPhysicalSourceNames());
+    // get all physicalSources and sort them. Sorting them according to the node allows us to combine requests to nodes that
+    // have multiple physicalSource we want to query
+    auto allPhysicalSources = sourceCatalog->getPhysicalSources(probeParamObj.getLogicalSourceName());
+    std::sort(allPhysicalSources.begin(), allPhysicalSources.end(), sourceCatalog->compareByNode);
 
-    if (sources[0] == nullptr) {
+    auto indexes = sourceCatalog->allPhysicalSourceExists(queriedPhysicalSources, allPhysicalSources);
+
+
+    if (indexes.at(0) == -1) {
         /*
          * if a single statistic cannot be found, then we return a vector with the singular error value -1
          * as we potentially otherwise run into undefined behavior about how to combine only the available
@@ -101,10 +109,26 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
         return erroneousResult;
     } else {
         NES_DEBUG("Statistic is being generated. Proceeding with probe operation.");
-        for (auto source : sources) {
-            auto node = source->getNode();
+        for (uint64_t i = 0; i < indexes.size(); i++) {
+            auto index = indexes.at(0);
+            auto physicalSource = allPhysicalSources.at(index);
+            auto physicalSourceName = physicalSource->getPhysicalSource()->getPhysicalSourceName();
+            probeParamObj.addPhysicalSourceName(physicalSourceName);
+            auto node = physicalSource->getNode();
             std::string destAddress = node->getIpAddress() + ":" + std::to_string(node->getGrpcPort());
-            stats.push_back(workerClient->probeStat(destAddress, probeRequest));
+            for (uint64_t j = i + 1; j < indexes.size(); j++) {
+                index = indexes.at(j);
+                physicalSource = allPhysicalSources.at(index);
+                physicalSourceName = physicalSource->getPhysicalSource()->getPhysicalSourceName();
+                auto secondNode = physicalSource->getNode();
+                if (node == secondNode) {
+                    probeParamObj.addPhysicalSourceName("physicalSourceName");
+                } else {
+                    break;
+                }
+            }
+            auto localStats = workerClient->probeStat(destAddress, probeParamObj);
+            stats.insert(stats.end(), localStats.begin(), localStats.end());
         }
     }
     if(probeRequest.getMerge()) {

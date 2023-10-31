@@ -25,10 +25,12 @@ class DeleteStat;
 
 class DeleteRequestUtil {
   public:
-    static void copyDeleteRequest(const Experimental::Statistics::DeleteRequestParamObj& deleteRequestParamObj,
+    static void packDeleteRequest(const Experimental::Statistics::DeleteRequestParamObj& deleteRequestParamObj,
                                   DeleteStat* deleteRequest);
+
+    static Experimental::Statistics::DeleteRequestParamObj unpackDeleteRequest(const DeleteStat* deleteRequest);
 };
 
-}
+}// namespace NES
 
 #endif//NES_NES_CORE_INCLUDE_GRPC_STATREQUESTCOPYING_DELETEREQUESTUTIL_HPP_

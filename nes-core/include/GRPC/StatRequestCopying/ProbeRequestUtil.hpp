@@ -27,8 +27,9 @@ class ProbeStat;
 
 class ProbeRequestUtil {
   public:
-    static void copyProbeRequest(const Experimental::Statistics::ProbeRequestParamObj& probeRequestParamObjPtr,
+    static void packProbeRequest(const Experimental::Statistics::ProbeRequestParamObj& probeRequestParamObjPtr,
                                  ProbeStat* probeRequest);
+    static Experimental::Statistics::ProbeRequestParamObj unpackProbeRequest(const ProbeStat* probeStat);
 };
 }
 

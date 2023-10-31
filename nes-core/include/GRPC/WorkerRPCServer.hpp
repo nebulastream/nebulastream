@@ -41,6 +41,11 @@ class ReconnectSchedulePredictor;
 using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 }// namespace Spatial::Mobility::Experimental
 
+namespace Experimental::Statistics {
+class StatManager;
+using StatManagerPtr = std::unique_ptr<StatManager>;
+}// namespace Experimental::Statistics
+
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
     WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
@@ -78,6 +83,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Monitoring::MonitoringAgentPtr monitoringAgent;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
+    NES::Experimental::Statistics::StatManagerPtr statManager;
 };
 
 }// namespace NES

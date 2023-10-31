@@ -72,11 +72,35 @@ class ProbeRequestParamObj : public RequestParamObj {
     }
 
     /**
-     * @return returns true or false and describes wether we want to merge multiple local statistics or
-     * output them seperatly
+     * @return returns true or false and describes whether we want to merge multiple local statistics or
+     * output them separately
      */
     bool getMerge() const {
         return merge;
+    }
+
+    void setProbeExpression(const std::string& probeExpression) {
+        this->probeExpression = probeExpression;
+    }
+
+    void addPhysicalSourceName(const std::string& physicalSourceName) {
+        this->physicalSourceNames.push_back(physicalSourceName);
+    }
+
+    void setStartTime(const time_t startTime) {
+        this->startTime = startTime;
+    }
+
+    void setEndTime(const time_t endTime) {
+        this->endTime = endTime;
+    }
+
+    void setMerge(const bool merge) {
+        this->merge = merge;
+    }
+
+    void clearPhysicalSourceNames() {
+        physicalSourceNames.clear();
     }
 
   private:
