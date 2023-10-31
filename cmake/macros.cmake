@@ -78,6 +78,8 @@ macro(project_enable_clang_format)
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-nautilus,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-operators,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-optimizer,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-unikernel/include,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-unikernel/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-statistics,"
