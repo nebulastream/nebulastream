@@ -205,61 +205,61 @@ class WorkerContext {
 
     /**
      * @brief retrieves an asynchronously established output channel.
-     * @param ownerId id of the operator which will use the network channel
+     * @param operatorId id of the operator which will use the network channel
      * @return an optional containing a network channel ptr:
      * - nullopt if the operation has not yet completed
      * - optional containing nullptr if the conneciton timed out
      * - optional containing valid ptr if connection succeeded
      */
-    std::optional<Network::NetworkChannelPtr> getAsyncConnectionResult(NES::OperatorId ownerId);
+    std::optional<Network::NetworkChannelPtr> getAsyncConnectionResult(NES::OperatorId operatorId);
 
     /**
      * @brief blocks until async connection of a network channel has succeeded or timed out
-     * @param ownerId id of the operator which will use the network channel
+     * @param operatorId id of the operator which will use the network channel
      * @return a pointer to the network channel or nullptr if the connection timed out
      */
-    Network::NetworkChannelPtr waitForAsyncConnection(NES::OperatorId ownerId);
+    Network::NetworkChannelPtr waitForAsyncConnection(NES::OperatorId operatorId);
 
     /**
      * @brief check if an async connection that was started by the operator with the specified id is currently in progress
-     * @param ownerId id of the operator which will use the network channel
+     * @param operatorId id of the operator which will use the network channel
      * @return true if a connection is currently being established
      */
-    bool isAsyncConnectionInProgress(OperatorId ownerId);
+    bool isAsyncConnectionInProgress(OperatorId operatorId);
 
     /**
      * @brief retrieve a registered output channel
-     * @param ownerId id of the operator that we want to store the output channel
+     * @param operatorId id of the operator that we want to store the output channel
      * @return an output channel
      */
-    Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(NES::OperatorId ownerId);
+    Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(NES::OperatorId operatorId);
 
     /**
      * @brief insert a tuple buffer into the reconnect buffer storage
-     * @param sinkId the id of the buffering sink
+     * @param operatorId the id of the buffering sink
      * @param buffer the data to be buffered
      */
-    void insertIntoReconnectBufferStorage(uint64_t sinkId, NES::Runtime::TupleBuffer buffer);
+    void insertIntoReconnectBufferStorage(OperatorId operatorId, NES::Runtime::TupleBuffer buffer);
 
     /**
      * @brief retrieve and delete a tuple buffer from the tuple buffer storage
-     * @param sinkId the id of the buffering sink
+     * @param operatorId the id of the buffering sink
      * @return the buffer that was removed from the storage
      */
-    std::optional<TupleBuffer> removeBufferFromReconnectBufferStorage(uint64_t sinkId);
+    std::optional<TupleBuffer> removeBufferFromReconnectBufferStorage(OperatorId operatorId);
 
     /**
      * @brief stop a connection process which is currently in progress
-     * @param ownerId the id of the operator that started the connection process
+     * @param operatorId the id of the operator that started the connection process
      */
-    void abortConnectionProcess(OperatorId ownerId);
+    void abortConnectionProcess(OperatorId operatorId);
 
     /**
      * @brief check if a network channel exists for the sink in question
-     * @param sinkId
+     * @param operatorId
      * @return
      */
-    [[maybe_unused]] bool doesNetworkChannelExist(uint64_t sinkId);
+    [[maybe_unused]] bool doesNetworkChannelExist(OperatorId operatorId);
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 }// namespace NES::Runtime

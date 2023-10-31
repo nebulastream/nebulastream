@@ -32,7 +32,7 @@ enum class ReconfigurationType : uint8_t {
     /// use PropagateEpoch to pass epoch barrier to all network sinks
     PropagateEpoch,
     /// start the process of connecting to a new network source
-    ConnectToNewNetworkSource,
+    ConnectToNewReceiver,
     /// indicate successful establishment of a network connection
     ConnectionEstablished,
     /// indicates that the old version of a query has been drained, and can be reconfigured or stopped depending on the situation

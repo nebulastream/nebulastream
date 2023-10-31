@@ -742,7 +742,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
         wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front());
     Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-    networkSink->addPendingReconfiguration(newNodeLocation, networkSourceWrk3Partition);
+    networkSink->addPendingReconfiguration(networkSourceWrk3Partition, newNodeLocation);
     auto message =
         Runtime::ReconfigurationMessage(sharedQueryId, subPlanIdWrk1, Runtime::ReconfigurationType::DrainVersion, networkSink);
     wrk1->getNodeEngine()->getQueryManager()->addReconfigurationMessage(sharedQueryId, subPlanIdWrk1, message, true);
@@ -1074,7 +1074,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
         networkSrcWrk3Id += 10;
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-        networkSink->addPendingReconfiguration(newNodeLocation, networkSourceWrk3Partition);
+        networkSink->addPendingReconfiguration(networkSourceWrk3Partition, newNodeLocation);
         auto message = Runtime::ReconfigurationMessage(sharedQueryId,
                                                        subPlanIdWrk1,
                                                        Runtime::ReconfigurationType::DrainVersion,
