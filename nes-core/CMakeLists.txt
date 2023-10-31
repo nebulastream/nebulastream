@@ -21,7 +21,7 @@ add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes PUBLIC nes-compiler nes-runtime nes-optimizer nes-client)
+target_link_libraries(nes PUBLIC nes-compiler nes-runtime nes-optimizer nes-client nes-grpc)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes REUSE_FROM nes-common)
 endif ()
