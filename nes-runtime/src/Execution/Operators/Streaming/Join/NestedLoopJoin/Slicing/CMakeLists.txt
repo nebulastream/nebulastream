@@ -12,7 +12,11 @@
 add_source_files(unikernel-export
         NLJBuildSlicing.cpp
 )
+add_source_files(unikernel-lib
+        NLJOperatorHandlerSlicing.cpp
+)
+
 add_source_files(nes-runtime
         NLJBuildSlicing.cpp
         NLJOperatorHandlerSlicing.cpp
-        )
+)

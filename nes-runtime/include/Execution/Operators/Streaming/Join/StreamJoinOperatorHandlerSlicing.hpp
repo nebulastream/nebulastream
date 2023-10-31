@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution::Operators {
 class StreamJoinOperatorHandlerSlicing : public virtual JoinOperatorHandlerInterfaceSlicing,
                                          public virtual StreamJoinOperatorHandler {
   public:
-    ~StreamJoinOperatorHandlerSlicing() override = default;
+    virtual ~StreamJoinOperatorHandlerSlicing() override = default;
     StreamJoinOperatorHandlerSlicing(const std::vector<OriginId>& inputOrigins,
                                      const OriginId outputOriginId,
                                      const uint64_t windowSize,

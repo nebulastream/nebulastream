@@ -28,7 +28,7 @@ using OriginId = uint64_t;
 namespace NES {
 #ifdef UNIKERNEL_LIB
 namespace Unikernel {
-class UnikernelPipelineExecutionContextBase;
+class UnikernelPipelineExecutionContext;
 }
 #endif
 class AbstractQueryStatusListener;
@@ -97,7 +97,11 @@ using FixedSizeBufferPoolPtr = std::shared_ptr<FixedSizeBufferPool>;
 
 class WorkerContext;
 using WorkerContextRef = WorkerContext&;
+#ifndef UNIKERNEL_LIB
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
+#else
+using WorkerContextPtr = WorkerContext*;
+#endif
 
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
@@ -138,6 +142,8 @@ using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 #else
 using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContextBase;
 using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContextBase*;
+using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContext;
+using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContext*;
 #endif
 
 }// namespace Execution

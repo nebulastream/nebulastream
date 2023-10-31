@@ -43,7 +43,7 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
                        const uint64_t pageSizeLeft,
                        const uint64_t pageSizeRight);
 
-    ~NLJOperatorHandler() override = default;
+    virtual ~NLJOperatorHandler() override = default;
 
     StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
 

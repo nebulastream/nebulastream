@@ -1,27 +1,31 @@
-//
-// Created by ls on 09.09.23.
-//
+/*
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
 
+         https://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+*/
 #ifndef NES_UNIKERNELSOURCE_H
 #define NES_UNIKERNELSOURCE_H
 
-#include "NetworkSource.h"
-#include "Runtime/Execution/UnikernelPipelineExecutionContext.h"
-
-extern NES::Runtime::BufferManagerPtr the_buffermanager;
-extern NES::Network::NetworkManagerPtr the_networkmanager;
-extern NES::Runtime::WorkerContextPtr the_workercontext;
+#include <Network/NetworkSource.hpp>
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.h>
 
 namespace NES::Unikernel {
 template<typename Config>
 class UnikernelSource {
-
   public:
-    explicit UnikernelSource(UnikernelPipelineExecutionContextBase* c)
-        : source(NES::Network::NetworkSource(
-            the_buffermanager,
-            *the_workerContext,
-            the_networkmanager,
+    constexpr static size_t Id = Config::UpstreamNodeID;
+
+    static std::optional<NES::Network::NetworkSource> source;
+    static void setup(UnikernelPipelineExecutionContext ctx) {
+        UnikernelSource::source.emplace(
             NES::Network::NesPartition(Config::QueryID,
                                        Config::UpstreamOperatorID,
                                        Config::UpstreamPartitionID,
@@ -30,22 +34,19 @@ class UnikernelSource {
             Config::LocalBuffers,
             200ms,
             100,
-            c,
-            "Upstream")) {}
-
-  public:
-    void setup() {}
-
-    void start() {
-        source.bind();
-        source.start();
+            ctx,
+            "Upstream");
     }
 
-    void stop() { source.stop(); }
+    static void start() {
+        source->bind();
+        source->start();
+    }
 
-  private:
-    NES::Network::NetworkSource source;
+    static void stop() { source->stop(); }
 };
+template<typename T>
+std::optional<NES::Network::NetworkSource> UnikernelSource<T>::source = std::nullopt;
 }// namespace NES::Unikernel
 
 #endif//NES_UNIKERNELSOURCE_H

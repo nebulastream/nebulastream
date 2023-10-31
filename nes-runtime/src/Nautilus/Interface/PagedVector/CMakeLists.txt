@@ -15,6 +15,10 @@ add_source_files(unikernel-export
         PagedVector.cpp
         PagedVectorRef.cpp
 )
+
+add_source_files(unikernel-lib
+        PagedVector.cpp
+)
 add_source_files(nes-runtime
         PagedVector.cpp
         PagedVectorRef.cpp

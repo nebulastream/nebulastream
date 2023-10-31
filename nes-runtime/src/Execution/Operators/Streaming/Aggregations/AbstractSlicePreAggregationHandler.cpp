@@ -15,10 +15,8 @@
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 
 #ifndef UNIKERNEL_LIB
-
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
-
 #endif
 
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
@@ -34,9 +32,6 @@
 #include <set>
 #include <vector>
 
-#ifdef UNIKERNEL_LIB
-extern NES::Runtime::BufferManagerPtr the_buffermanager;
-#endif
 namespace NES::Runtime::Execution::Operators {
 
 template<class SliceType, typename SliceStore>
@@ -66,11 +61,7 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::dispatchSliceMer
         task->slices = slices;
         NES_DEBUG("{} Deploy merge task for slice {}-{} ", windowSize, task->startSlice, task->endSlice);
 
-#if !(!defined(UNIKERNEL_SUPPORT_LIB) && defined(UNIKERNEL_LIB))
         ctx.dispatchBuffer(buffer);
-#else
-        ctx.emit(buffer);
-#endif
     }
 }
 
@@ -151,11 +142,7 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::stop(QueryTermin
                 collectedSlices.find(sliceData)->second.emplace_back(std::move(slice));
             }
         }
-#if !(!defined(UNIKERNEL_SUPPORT_LIB) && defined(UNIKERNEL_LIB))
-        dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(), collectedSlices);
-#else
-        dispatchSliceMergingTasks(*ctx, the_buffermanager, collectedSlices);
-#endif
+        dispatchSliceMergingTasks(*ctx, ctx->getBufferManager(), collectedSlices);
     }
 }
 

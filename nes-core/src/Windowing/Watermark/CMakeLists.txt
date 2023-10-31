@@ -31,9 +31,3 @@ add_source_files(nes-core
         EventTimeWatermarkStrategy.cpp
         IngestionTimeWatermarkStrategy.cpp
 )
-
-add_source_files(nes-unikernel-core
-        Watermark.cpp
-        WatermarkProcessor.cpp
-        MultiOriginWatermarkProcessor.cpp
-        )

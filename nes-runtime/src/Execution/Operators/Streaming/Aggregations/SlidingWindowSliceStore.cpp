@@ -137,16 +137,6 @@ uint64_t SlidingWindowSliceStore<SliceType>::getNumberOfSlices() {
     return slices.size();
 }
 
-template<class SliceType>
-uint64_t SlidingWindowSliceStore<SliceType>::getWindowSlide() const {
-    return windowSlide;
-}
-
-template<class SliceType>
-uint64_t SlidingWindowSliceStore<SliceType>::getWindowSize() const {
-    return windowSize;
-}
-
 // Instantiate types
 template class SlidingWindowSliceStore<NonKeyedSlice>;
 template class SlidingWindowSliceStore<KeyedSlice>;

@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#ifndef UNIKERNEL_LIB
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#endif//UNIKERNEL_LIB
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -22,6 +24,7 @@
 
 namespace NES::Runtime::Execution {
 
+#ifndef UNIKERNEL_LIB
 namespace Util {
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const std::string& keyFieldName) {
     NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),
@@ -52,6 +55,7 @@ SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSc
     return retSchema;
 }
 }// namespace Util
+#endif//UNIKERNEL_LIB
 
 WindowInfo::WindowInfo(uint64_t windowStart, uint64_t windowEnd)
     : windowStart(windowStart), windowEnd(windowEnd), windowId(windowEnd) {
@@ -73,4 +77,3 @@ std::string WindowInfo::toString() const {
 }
 
 }// namespace NES::Runtime::Execution
- // namespace NES::Runtime::Execution

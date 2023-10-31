@@ -11,10 +11,9 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
+#include "fmt.hpp"
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.h>
-#include "fmt.hpp"
-
 
 namespace fmt {
 template<>
@@ -42,11 +41,11 @@ extern "C" void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
 }
 extern "C" void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index) {
     NES_DEBUG("PC: {} index: {}", pc, index);
-    auto pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContextBase*>(pc);
+    auto pipelineCtx = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(pc);
     NES_DEBUG("getGlobalOperatorHandlerProxy");
 
     NES_DEBUG("PC: {}", (void*) pipelineCtx);
-    return &pipelineCtx->getOperatorHandler(index);
+    return pipelineCtx->getOperatorHandler(index);
 }
 
 extern "C" void triggerThreadLocalStateProxy(void* op,
@@ -76,7 +75,7 @@ extern "C" void* createGlobalState(void* op, void* sliceMergeTaskPtr) {
 extern "C" void setupSliceMergingHandler(void* ss, void* ctx, uint64_t size) {
     NES_DEBUG("setupSliceMergingHandler()");
     auto handler = static_cast<NES::Runtime::Execution::Operators::NonKeyedSliceMergingHandler*>(ss);
-    auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContextBase*>(ctx);
+    auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, size);
 }
 extern "C" void* getDefaultMergingState(void* ss) {
@@ -87,7 +86,7 @@ extern "C" void* getDefaultMergingState(void* ss) {
 extern "C" void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
     NES_DEBUG("setupWindowHandler()");
     auto handler = static_cast<NES::Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler*>(ss);
-    auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContextBase*>(ctx);
+    auto pipelineExecutionContext = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(ctx);
     NES_DEBUG("setupWindowHandler()");
     handler->setup(*pipelineExecutionContext, size);
 }

@@ -119,6 +119,7 @@ struct BufferMetaData {
     const OriginId originId;
 };
 
+#ifndef UNIKERNEL_LIB
 /**
  * @brief This stores the left, right and output schema for a binary join
  */
@@ -131,6 +132,7 @@ struct JoinSchema {
     const SchemaPtr rightSchema;
     const SchemaPtr joinSchema;
 };
+#endif
 
 /**
  * @brief Stores the window start, window end and join key field name
@@ -150,6 +152,7 @@ struct WindowMetaData {
 
 }// namespace Operators
 
+#ifndef UNIKERNEL_LIB
 namespace Util {
 
 /**
@@ -162,5 +165,6 @@ namespace Util {
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const std::string& keyFieldName);
 
 }// namespace Util
+#endif
 }// namespace NES::Runtime::Execution
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_

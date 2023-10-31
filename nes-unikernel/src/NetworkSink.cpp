@@ -11,7 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Runtime/WorkerContext.hpp"
+#include <Runtime/NesThread.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -24,8 +25,9 @@
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 
-extern const size_t OUTPUT_SCHEMA_SIZE_IN_BYTES;
-
+extern NES::Network::NetworkManagerPtr TheNetworkManager;
+extern NES::Runtime::BufferManagerPtr TheBufferManager;
+extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 namespace NES::Network {
 
 NetworkSink::NetworkSink(uint64_t uniqueNetworkSinkDescriptorId,
@@ -33,18 +35,15 @@ NetworkSink::NetworkSink(uint64_t uniqueNetworkSinkDescriptorId,
                          QuerySubPlanId querySubPlanId,
                          const NodeLocation& destination,
                          NesPartition nesPartition,
-                         Runtime::BufferManagerPtr bufferManager,
-                         Runtime::WorkerContext& workerContext,
-                         NetworkManagerPtr networkManager,
                          size_t outputSchemaSizeInBytes,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType,
                          uint64_t numberOfOrigins)
-    : SinkMedium(numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins, nullptr),
-      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), networkManager(networkManager), workerContext(workerContext),
-      receiverLocation(destination), bufferManager(std::move(bufferManager)), nesPartition(nesPartition),
+    : SinkMedium(numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), networkManager(TheNetworkManager),
+      receiverLocation(destination), bufferManager(TheBufferManager), nesPartition(nesPartition),
       schemaSizeInBytes(outputSchemaSizeInBytes), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes),
       reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
@@ -96,7 +95,7 @@ void NetworkSink::setup() {
                                                   Runtime::ReconfigurationType::Initialize,
                                                   nullptr,
                                                   std::make_any<uint32_t>(numOfProducers));
-    this->reconfigure(reconf, workerContext);
+    this->reconfigure(reconf, *TheWorkerContext);
 }
 
 void NetworkSink::shutdown() {

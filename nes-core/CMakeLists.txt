@@ -14,15 +14,6 @@
 add_subdirectory(src)
 include(GNUInstallDirs)
 
-# Add nes-unikernel-core
-get_source(nes-unikernel-core NES_UNIKERNEL_CORE_SOURCE_FILES)
-add_library(nes-unikernel STATIC ${NES_UNIKERNEL_CORE_SOURCE_FILES})
-target_compile_options(nes-unikernel PRIVATE "-DUNIKERNEL_LIB=1")
-target_include_directories(nes-unikernel PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-set_property(TARGET nes-unikernel PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-target_link_libraries(nes-unikernel PUBLIC nes-unikernel-runtime)
 
 # Add nes-unikernel-support-core
 get_source(nes-unikernel-support-core NES_UNIKERNEL_CORE_SUPPORT_SOURCE_FILES)
@@ -42,11 +33,6 @@ target_include_directories(nes PUBLIC
 target_link_libraries(nes PUBLIC nes-compiler nes-runtime nes-optimizer nes-client)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes REUSE_FROM nes-common)
-endif ()
-if (NES_USE_TF)
-    message(STATUS "Building with tensorflowlite")
-    find_package(tensorflow-lite-c REQUIRED)
-    target_link_libraries(nes PUBLIC tensorflowlite_c::tensorflowlite_c)
 endif ()
 
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)

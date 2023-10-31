@@ -25,7 +25,7 @@ add_source_files(nes-runtime
         NonKeyedWindowEmitAction.cpp
 )
 
-add_source_files(nes-unikernel-runtime
+add_source_files(unikernel-lib
         NonKeyedSlicePreAggregation.cpp
         NonKeyedSliceMergingHandler.cpp
         NonKeyedSlicePreAggregationHandler.cpp

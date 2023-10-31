@@ -54,7 +54,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
                               uint64_t sizeOfRecordLeft,
                               uint64_t sizeOfRecordRight);
 
-    ~StreamJoinOperatorHandler() override = default;
+    virtual ~StreamJoinOperatorHandler() = default;
 
     void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;

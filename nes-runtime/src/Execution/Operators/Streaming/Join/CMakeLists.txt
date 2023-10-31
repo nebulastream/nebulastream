@@ -17,10 +17,16 @@ add_source_files(unikernel-export
         StreamJoinBuild.cpp
         StreamJoinProbe.cpp
         StreamJoinBuildBucketing.cpp
-        StreamSlice.cpp
         StreamJoinUtil.cpp
         StreamSlice.cpp
         StreamJoinOperator.cpp
+)
+
+add_source_files(unikernel-lib
+        StreamJoinUtil.cpp
+        StreamJoinOperatorHandler.cpp
+        StreamJoinOperatorHandlerSlicing.cpp
+        StreamSlice.cpp
 )
 
 add_source_files(nes-runtime

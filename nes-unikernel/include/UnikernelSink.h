@@ -1,46 +1,53 @@
-//
-// Created by ls on 09.09.23.
-//
+/*
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
 
+         https://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+*/
 #ifndef NES_UNIKERNELSINK_H
 #define NES_UNIKERNELSINK_H
 
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
-
-extern NES::Runtime::BufferManagerPtr the_buffermanager;
-extern NES::Network::NetworkManagerPtr the_networkmanager;
-extern NES::Runtime::WorkerContextPtr the_workerContext;
-
+extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 namespace {
 using namespace std::chrono_literals;
 template<typename Config>
 class UnikernelSink {
   public:
-    void setup() { sink.setup(); }
+    static constexpr size_t StageId = 1;
+    static std::optional<NES::Network::NetworkSink> sink;
+    static void setup() {
+        UnikernelSink::sink.emplace(
+            1,
+            Config::QueryID,
+            Config::QuerySubplanID,
+            NES::Network::NodeLocation(Config::DownstreamNodeID, Config::DownstreamNodeHostname, Config::DownstreamNodePort),
+            NES::Network::NesPartition(Config::QueryID,
+                                       Config::DownstreamOperatorID,
+                                       Config::DownstreamPartitionID,
+                                       Config::DownstreamSubPartitionID),
+            Config::OutputSchemaSizeInBytes,
+            1,
+            200ms,
+            100);
 
-    void writeBuffer(NES::Runtime::TupleBuffer& tupleBuffer) { sink.writeData(tupleBuffer, *the_workerContext); }
+        UnikernelSink::sink->setup();
+    }
 
-    void stop() { sink.shutdown(); }
+    static void execute(NES::Runtime::TupleBuffer& tupleBuffer) { sink->writeData(tupleBuffer, *TheWorkerContext); }
 
-  private:
-    NES::Network::NetworkSink sink = NES::Network::NetworkSink(
-        1,
-        Config::QueryID,
-        Config::QuerySubplanID,
-        NES::Network::NodeLocation(Config::DownstreamNodeID, Config::DownstreamNodeHostname, Config::DownstreamNodePort),
-        NES::Network::NesPartition(Config::QueryID,
-                                   Config::DownstreamOperatorID,
-                                   Config::DownstreamPartitionID,
-                                   Config::DownstreamSubPartitionID),
-        the_buffermanager,
-        *the_workerContext,
-        the_networkmanager,
-        Config::OutputSchemaSizeInBytes,
-        1,
-        200ms,
-        100);
+    static void stop() { sink->shutdown(); }
 };
+template<typename T>
+std::optional<NES::Network::NetworkSink> UnikernelSink<T>::sink = std::nullopt;
 }// namespace
 
 #endif//NES_UNIKERNELSINK_H

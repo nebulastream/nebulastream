@@ -202,6 +202,11 @@ class WorkerContext {
      */
     Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(NES::OperatorId ownerId);
 };
+#ifndef UNIKERNEL_LIB
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
+#else
+using WorkerContextPtr = WorkerContext*;
+#endif
+
 }// namespace NES::Runtime
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
