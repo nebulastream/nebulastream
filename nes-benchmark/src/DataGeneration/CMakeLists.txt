@@ -13,13 +13,6 @@
 add_subdirectory(LightSaber)
 add_subdirectory(Nextmark)
 
-add_source_files(nes-unikernel-benchmark
-        DefaultDataGenerator.cpp
-        ZipfianDataGenerator.cpp
-        YSBDataGenerator.cpp
-        DataGenerator.cpp
-)
-
 add_source_files(nes-benchmark
         DataGenerator.cpp
         DefaultDataGenerator.cpp
