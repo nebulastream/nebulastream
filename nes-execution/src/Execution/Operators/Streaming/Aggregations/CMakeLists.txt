@@ -24,7 +24,7 @@ add_source_files(nes-execution
         AbstractSlicePreAggregationHandler.cpp
         ThreadLocalSliceStore.cpp
 )
-add_source_files(nes-unikernel-runtime
+add_source_files(unikernel-lib
         AbstractSlicePreAggregationHandler.cpp
         ThreadLocalSliceStore.cpp
 )

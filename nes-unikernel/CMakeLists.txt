@@ -1,12 +1,35 @@
-find_package(Argumentum REQUIRED)
+add_subdirectory(src)
 
-add_executable(unikernel src/main.cpp src/DataSource.cpp src/NetworkSource.cpp src/NetworkSink.cpp src/SinkMedium.cpp src/Window.cpp)
+get_source(unikernel-lib NES_UNIKERNEL_LIB_SOURCE_FILES)
 
-target_include_directories(unikernel PUBLIC
+add_library(unikernel-lib STATIC ${NES_UNIKERNEL_LIB_SOURCE_FILES})
+target_include_directories(unikernel-lib PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-file(GLOB OPERATOR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/operator/*.o)
-target_link_libraries(unikernel PRIVATE ${OPERATOR_FILES})
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-catalogs/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>)
+target_compile_options(unikernel-lib PRIVATE "-std=c++20" "-Wno-error=deprecated" "-DUNIKERNEL_LIB=1" "-DWINDOW_OPERATOR=1")
+target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork Folly::folly)
+
+add_executable(unikernel src/main.cpp)
+target_compile_options(unikernel PRIVATE "-std=c++20" "-Wno-error=deprecated" "-DUNIKERNEL_LIB=1")
+target_link_options(unikernel PRIVATE "-fuse-ld=lld")
+file(GLOB OPERATOR_FILES ${CMAKE_CURRENT_SOURCE_DIR}/operators/*.o)
+target_link_libraries(unikernel PRIVATE ${OPERATOR_FILES} unikernel-lib)
+target_include_directories(unikernel PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-catalogs/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-configurations/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
+)
 
 SET(UNIKERNEL_WORKER_ID 0)
 SET(UNIKERNEL_CONFIGURATION_FILE /home/ls/DIMA/nebulastream/cmake-build-unikernelexport-clang-16-debug/nes-unikernel-export/export.yaml)
@@ -16,10 +39,3 @@ add_custom_target(unikernel_generator
         COMMENT "Run Unikernel Generator"
 )
 add_dependencies(unikernel unikernel_generator)
-
-target_compile_options(unikernel PRIVATE "-DUNIKERNEL_LIB=1" "-DWINDOW_OPERATOR=1")
-target_link_libraries(unikernel PUBLIC nes-unikernel argumentum)
-
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L /usr/local/lib")
-
-set_property(TARGET unikernel PROPERTY EXPORT_COMPILE_COMMANDS TRUE)

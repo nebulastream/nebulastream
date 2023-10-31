@@ -25,7 +25,13 @@ add_source_files(nes-runtime
         NetworkSource.cpp
 )
 
-add_source_files(nes-unikernel-runtime
+add_source_files(unikernel-lib
+        NetworkChannel.cpp
+        ExchangeProtocol.cpp
+        PartitionManager.cpp
+        detail/BaseNetworkChannel.cpp
+)
+add_source_files(unikernel-test-lib
         NetworkChannel.cpp
         ExchangeProtocol.cpp
         PartitionManager.cpp

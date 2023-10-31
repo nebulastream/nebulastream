@@ -300,6 +300,11 @@ class WorkerContext {
      */
     bool doesEventChannelExist(OperatorId operatorId);
 };
+#ifndef UNIKERNEL_LIB
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
+#else
+using WorkerContextPtr = WorkerContext*;
+#endif
+
 }// namespace NES::Runtime
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_

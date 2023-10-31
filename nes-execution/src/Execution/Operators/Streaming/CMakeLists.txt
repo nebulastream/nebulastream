@@ -14,7 +14,7 @@ add_subdirectory(Aggregations)
 add_subdirectory(Join)
 add_subdirectory(StatisticCollection)
 
-add_source_files(nes-unikernel-runtime
+add_source_files(unikernel-lib
         MultiOriginWatermarkProcessor.cpp
         SlidingWindowAssigner.cpp
 )

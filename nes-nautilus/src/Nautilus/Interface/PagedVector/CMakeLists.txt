@@ -17,6 +17,10 @@ add_source_files(unikernel-export
         PagedVectorVarSized.cpp
         PagedVectorVarSizedRef.cpp
 )
+
+add_source_files(unikernel-lib
+        PagedVector.cpp
+)
 add_source_files(nes-nautilus
         PagedVector.cpp
         PagedVectorRef.cpp

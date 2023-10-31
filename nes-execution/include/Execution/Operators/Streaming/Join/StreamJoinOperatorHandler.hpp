@@ -54,7 +54,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
                               const SchemaPtr& leftSchema,
                               const SchemaPtr& rightSchema);
 
-    ~StreamJoinOperatorHandler() override = default;
+    virtual ~StreamJoinOperatorHandler() = default;
 
     void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;

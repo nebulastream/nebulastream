@@ -12,37 +12,20 @@
      limitations under the License.
 */
 #include "Pipeline.h"
-#include "UnikernelStage.h"
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
-#include <Network/NetworkSink.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/DataEmitter.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <State/StateManager.hpp>
-#include <TupleBufferProxyFunctions.hpp>
-#include <Utils.hpp>
-#include <argumentum/argparse.h>
-#include <string>
+#include <UnikernelExecutionPlan.hpp>
 
-NES::Network::NetworkManagerPtr the_networkmanager = nullptr;
-NES::Runtime::BufferManagerPtr the_buffermanager = nullptr;
-NES::Runtime::WorkerContextPtr the_workerContext = nullptr;
+NES::Network::NetworkManagerPtr TheNetworkManager = nullptr;
+NES::Runtime::BufferManagerPtr TheBufferManager = nullptr;
+NES::Runtime::WorkerContextPtr TheWorkerContext = nullptr;
 
 using namespace std::literals::chrono_literals;
 
@@ -83,7 +66,7 @@ extern "C" void* allocateBufferProxy(void* worker_context_ptr) {
 extern "C" [[maybe_unused]] void emitBufferProxy(void* worker_context_ptr, void* pc_ptr, void* tupleBuffer) {
     NES_TRACE("Emit Buffer Proxy: {} {} {}", worker_context_ptr, pc_ptr, tupleBuffer);
     auto* tb = (NES::Runtime::TupleBuffer*) tupleBuffer;
-    auto pipeline_context = static_cast<NES::Unikernel::UnikernelPipelineExecutionContextBase*>(pc_ptr);
+    auto pipeline_context = static_cast<NES::Unikernel::UnikernelPipelineExecutionContext*>(pc_ptr);
     if (tb->getNumberOfTuples() != 0) {
         pipeline_context->emit(*tb);
     }
@@ -93,23 +76,17 @@ int main() {
     NES::Logger::setupLogging(NES::LogLevel::LOG_TRACE);
     auto partition_manager = std::make_shared<NES::Network::PartitionManager>();
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
-    the_buffermanager = std::make_shared<NES::Runtime::BufferManager>();
-    the_buffermanager->createFixedSizeBufferPool(128);
-    the_workerContext =
-        std::make_shared<NES::Runtime::WorkerContext>(NES::Unikernel::CTConfiguration::NodeID, the_buffermanager, 1, 1);
+    TheBufferManager = std::make_shared<NES::Runtime::BufferManager>();
+    TheBufferManager->createFixedSizeBufferPool(128);
+    TheWorkerContext = new NES::Runtime::WorkerContext(NES::Unikernel::CTConfiguration::NodeID, TheBufferManager, 1, 1);
     NES::Network::ExchangeProtocol exchange_protocol(partition_manager, exchange_listener);
-    the_networkmanager = NES::Network::NetworkManager::create(NES::Unikernel::CTConfiguration::NodeID,
-                                                              NES::Unikernel::CTConfiguration::NodeIP,
-                                                              NES::Unikernel::CTConfiguration::NodePort,
-                                                              std::move(exchange_protocol),
-                                                              the_buffermanager);
+    TheNetworkManager = NES::Network::NetworkManager::create(NES::Unikernel::CTConfiguration::NodeID,
+                                                             NES::Unikernel::CTConfiguration::NodeIP,
+                                                             NES::Unikernel::CTConfiguration::NodePort,
+                                                             std::move(exchange_protocol),
+                                                             TheBufferManager);
 
-    auto state_manager = std::make_shared<NES::Runtime::StateManager>(NES::Unikernel::CTConfiguration::NodeID);
-
-    NES::Unikernel::QueryPlan qp;
-    qp.setup();
-    qp.execute();
-
+    NES::Unikernel::QueryPlan::setup();
     sleep(1000);
-    qp.stop();
+    NES::Unikernel::QueryPlan::stop();
 }

@@ -23,16 +23,12 @@
 
 namespace NES {
 
-SinkMedium::SinkMedium(
-    uint32_t numOfProducers,
-    QueryId queryId,
-    QuerySubPlanId querySubPlanId,
-    FaultToleranceType faultToleranceType,
-    uint64_t numberOfOrigins,
-    Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
-    :
-      activeProducers(numOfProducers), queryId(queryId), querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType),
-      numberOfOrigins(numberOfOrigins), watermarkProcessor(std::move(watermarkProcessor)) {
+SinkMedium::SinkMedium(uint32_t numOfProducers,
+                       QueryId queryId,
+                       QuerySubPlanId querySubPlanId,
+                       FaultToleranceType faultToleranceType,
+                       uint64_t numberOfOrigins)
+    : queryId(queryId), querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {
     bufferCount = 0;
     buffersPerEpoch = 1000;//TODO
 
@@ -49,28 +45,13 @@ SinkMedium::SinkMedium(
 
 OperatorId SinkMedium::getOperatorId() const { return 0; }
 
-uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
-    std::unique_lock lock(writeMutex);
-    return sentBuffer;
+uint64_t SinkMedium::getNumberOfWrittenOutBuffers() { return sentBuffer; }
+
+void SinkMedium::updateWatermark([[maybe_unused]] Runtime::TupleBuffer& inputBuffer) {
+    NES_DEBUG("Unikernel Not Implemented update Watermark");
 }
 
-void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
-    NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
-    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
-    if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
-        auto timestamp = watermarkProcessor->getCurrentWatermark();
-        if (timestamp) {
-            notifyEpochTermination(timestamp);
-        }
-    }
-    bufferCount++;
-}
-
-uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
-    std::unique_lock lock(writeMutex);
-    return sentTuples;
-}
-
+uint64_t SinkMedium::getNumberOfWrittenOutTuples() { return sentTuples; }
 
 QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 
@@ -84,8 +65,6 @@ bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
 void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);
 }
-
-uint64_t SinkMedium::getCurrentEpochBarrier() { return watermarkProcessor->getCurrentWatermark(); }
 
 void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
@@ -109,10 +88,8 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
         NES_DEBUG("Got EoS on Sink  {}", toString());
-        if (activeProducers.fetch_sub(1) == 1) {
-            shutdown();
-            NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);
-        }
+        shutdown();
+        NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);
     }
 }
 }// namespace NES

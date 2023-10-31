@@ -14,6 +14,12 @@ add_source_files(nes-execution
         NodeEngineBuilder.cpp
         )
 
+add_subdirectory(Profiler)
+add_subdirectory(Execution)
+if (UNIX AND NOT APPLE)
+    #add_subdirectory(CoreDumper)
+endif ()
+
 add_source_files(nes-unikernel-core
         ReconfigurationMessage.cpp
-)
+        )
