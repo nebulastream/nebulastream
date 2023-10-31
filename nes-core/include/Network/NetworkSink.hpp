@@ -18,7 +18,6 @@
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <string>
@@ -42,30 +41,18 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param nesPartition
     * @param faultToleranceType: fault-tolerance guarantee chosen by a user
     */
-    explicit NetworkSink(
-#ifndef UNIKERNEL_LIB
-        const SchemaPtr& schema,
-#endif
-        uint64_t uniqueNetworkSinkDescriptorId,
-        QueryId queryId,
-        QuerySubPlanId querySubPlanId,
-        NodeLocation const& destination,
-        NesPartition nesPartition,
-#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
-        Runtime::NodeEnginePtr nodeEngine,
-#else
-        Runtime::BufferManagerPtr bufferManager,
-        Runtime::WorkerContext& workerContext,
-        NetworkManagerPtr networkManager,
-#endif
-#ifdef UNIKERNEL_LIB
-        size_t schemaSizeInBytes,
-#endif
-        size_t numOfProducers,
-        std::chrono::milliseconds waitTime,
-        uint8_t retryTimes,
-        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-        uint64_t numberOfOrigins = 0);
+    explicit NetworkSink(const SchemaPtr& schema,
+                         uint64_t uniqueNetworkSinkDescriptorId,
+                         QueryId queryId,
+                         QuerySubPlanId querySubPlanId,
+                         NodeLocation const& destination,
+                         NesPartition nesPartition,
+                         Runtime::NodeEnginePtr nodeEngine,
+                         size_t numOfProducers,
+                         std::chrono::milliseconds waitTime,
+                         uint8_t retryTimes,
+                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                         uint64_t numberOfOrigins = 0);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -131,31 +118,22 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     uint64_t getUniqueNetworkSinkDescriptorId();
 
-#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
     /**
      * @brief method to return the node engine pointer
      * @return node engine pointer
      */
     Runtime::NodeEnginePtr getNodeEngine();
-#endif
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
     uint64_t uniqueNetworkSinkDescriptorId;
-    NetworkManagerPtr networkManager;
-#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
     Runtime::NodeEnginePtr nodeEngine;
+    NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
-#else
-    Runtime::WorkerContext& workerContext;
-#endif
     const NodeLocation receiverLocation;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
-#ifdef UNIKERNEL_LIB
-    size_t schemaSizeInBytes;
-#endif
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;

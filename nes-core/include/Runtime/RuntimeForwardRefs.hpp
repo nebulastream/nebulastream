@@ -22,7 +22,7 @@
 namespace NES {
 #ifdef UNIKERNEL_LIB
 namespace Unikernel {
-class UnikernelPipelineExecutionContextBase;
+class UnikernelPipelineExecutionContext;
 }
 #endif
 
@@ -135,8 +135,8 @@ using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 #else
-using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContextBase;
-using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContextBase*;
+using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContext;
+using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContext*;
 #endif
 }// namespace Execution
 
