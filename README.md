@@ -41,6 +41,7 @@ The codebase is structured in the following components:
 
 ```mermaid
 graph TD;
+  nes-grpc-->nes-core;
   nes-core-->nes-benchmark;
   nes-operators-->nes-catalogs;
   nes-operators-->nes-client;
