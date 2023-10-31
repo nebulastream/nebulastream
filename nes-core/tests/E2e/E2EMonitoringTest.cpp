@@ -353,9 +353,7 @@ TEST_F(E2EMonitoringTest, testBottomUpPlacementWithMonitoringSource) {
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1000000000));
-
-    std::this_thread::sleep_for(std::chrono::seconds(300));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 10, false, std::chrono::seconds(300)));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     auto lines = 5;
