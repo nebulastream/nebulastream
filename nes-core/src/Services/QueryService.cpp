@@ -75,6 +75,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
             queryPlan->setQueryId(queryId);
             queryPlan->setFaultToleranceType(faultTolerance);
             queryPlan->setLineageType(lineage);
+            queryPlan->setPlacementStrategy(placementStrategy);
 
             // perform semantic validation
             semanticQueryValidation->validate(queryPlan);
@@ -125,6 +126,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
             queryPlan->setQueryId(queryId);
             queryPlan->setFaultToleranceType(faultTolerance);
             queryPlan->setLineageType(lineage);
+            queryPlan->setPlacementStrategy(placementStrategy);
 
             // assign the id for the query and individual operators
             assignOperatorIds(queryPlan);
