@@ -31,8 +31,3 @@ add_source_files(nes-configurations
         StaticDataSourceType.cpp
         TCPSourceType.cpp
 )
-
-add_source_files(nes-unikernel-support-core
-        PhysicalSourceType.cpp
-        CSVSourceType.cpp
-)

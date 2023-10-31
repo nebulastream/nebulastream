@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-unikernel-common
 add_source_files(unikernel-lib
         NesLogger.cpp
         LogLevel.cpp
 )
+add_source_files(unikernel-test-lib
         NesLogger.cpp
         LogLevel.cpp
 )

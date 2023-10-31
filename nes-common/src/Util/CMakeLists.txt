@@ -17,7 +17,9 @@ add_source_files(unikernel-lib
         ThreadNaming.cpp
         NonBlockingMonotonicSeqQueue.cpp
 )
-add_source_files(nes-unikernel-support-common
+add_source_files(unikernel-test-lib
+        StacktraceLoader.cpp
+        ThreadNaming.cpp
         Common.cpp
 )
 add_source_files(unikernel-export

@@ -11,9 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-unikernel-support-common
-        Yaml.cpp
-)
 add_source_files(nes-common
         Yaml.cpp
 )
