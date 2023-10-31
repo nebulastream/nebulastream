@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.239](https://github.com/nebulastream/nebulastream/tree/v0.5.239) (2023-10-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.238...v0.5.239)
+
+**Implemented enhancements:**
+
+- \[TASK\] Disable old request processor and enable new request processor service by default [\#4245](https://github.com/nebulastream/nebulastream/issues/4245)
+
 ## [v0.5.238](https://github.com/nebulastream/nebulastream/tree/v0.5.238) (2023-10-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.237...v0.5.238)
