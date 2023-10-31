@@ -31,17 +31,20 @@ PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& 
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++;}
+void PartitionManager::PartitionConsumerEntry::pin() { partitionCounter++; }
 
-void PartitionManager::PartitionConsumerEntry::unpin() { partitionCounter--;
-    disconnectCount++; }
+void PartitionManager::PartitionConsumerEntry::unpin() {
+    partitionCounter--;
+    disconnectCount++;
+}
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
 uint64_t PartitionManager::PartitionConsumerEntry::getDisconnectCount() const { return disconnectCount; }
 
 void PartitionManager::PartitionConsumerEntry::decreaseDisconnectCountBy(uint64_t decreaseAmount) {
-    NES_ASSERT2_FMT(decreaseAmount <= disconnectCount, "Trying to decrease disconnect count of value " << disconnectCount << " by " << decreaseAmount);
+    NES_ASSERT2_FMT(decreaseAmount <= disconnectCount,
+                    "Trying to decrease disconnect count of value " << disconnectCount << " by " << decreaseAmount);
     disconnectCount -= decreaseAmount;
 }
 
@@ -52,7 +55,7 @@ PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& 
 
 uint64_t PartitionManager::PartitionProducerEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionProducerEntry::pin() { partitionCounter++;}
+void PartitionManager::PartitionProducerEntry::pin() { partitionCounter++; }
 
 void PartitionManager::PartitionProducerEntry::unpin() { partitionCounter--; }
 

@@ -146,13 +146,14 @@ class NetworkManager {
      * @return a pair consisting of a future containing the data network channel on completion and a promise that aborts the connection process when
      * its value is set
      */
-    std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
-                                                                     const NesPartition& nesPartition,
-                                                                     Runtime::BufferManagerPtr bufferManager,
-                                                                     std::chrono::milliseconds waitTime,
-                                                                     uint8_t retryTimes,
-                                                                     Runtime::ReconfigurationMessage reconfigurationMessage,
-                                                                     Runtime::QueryManagerPtr queryManager);
+    std::pair<std::future<NetworkChannelPtr>, std::promise<bool>>
+    registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
+                                      const NesPartition& nesPartition,
+                                      Runtime::BufferManagerPtr bufferManager,
+                                      std::chrono::milliseconds waitTime,
+                                      uint8_t retryTimes,
+                                      Runtime::ReconfigurationMessage reconfigurationMessage,
+                                      Runtime::QueryManagerPtr queryManager);
 
     /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to

@@ -53,7 +53,8 @@ class WorkerContext {
     /// data channels that send data downstream
     std::unordered_map<NES::OperatorId, Network::NetworkChannelPtr> dataChannels;
     /// data channels that have not established a connection yet
-    std::unordered_map<NES::OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>> dataChannelFutures;
+    std::unordered_map<NES::OperatorId, std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>>
+        dataChannelFutures;
     /// event only channels that send events upstream
     std::unordered_map<NES::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool stored in tls

@@ -70,7 +70,8 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
-void WorkerContext::storeNetworkChannelFuture(NES::OperatorId id,
+void WorkerContext::storeNetworkChannelFuture(
+    NES::OperatorId id,
     std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture) {
     NES_TRACE("WorkerContext: storing channel future for operator {}  for context {}", id, workerId);
     dataChannelFutures[id] = std::move(channelFuture);
@@ -128,7 +129,9 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
     }
 }
 
-bool WorkerContext::releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType, uint16_t sendingThreadCount) {
+bool WorkerContext::releaseNetworkChannel(NES::OperatorId id,
+                                          Runtime::QueryTerminationType terminationType,
+                                          uint16_t sendingThreadCount) {
     NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
@@ -215,7 +218,5 @@ void WorkerContext::abortConnectionProcess(NES::OperatorId operatorId) {
     dataChannelFutures.erase(iteratorOperatorId);
 }
 
-bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) {
-    return dataChannels.contains(operatorId);
-}
+bool WorkerContext::doesNetworkChannelExist(OperatorId operatorId) { return dataChannels.contains(operatorId); }
 }// namespace NES::Runtime

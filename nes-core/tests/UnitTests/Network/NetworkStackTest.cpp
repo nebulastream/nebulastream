@@ -273,23 +273,20 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
         class DummyQueryManager : public Runtime::AbstractQueryManager {
           public:
             //explicit DummyQueryManager() : Runtime::AbstractQueryManager({}, {}, 1, 1, std::make_shared<Runtime::HardwareManager>(), {}, 1, {}) {};
-            explicit DummyQueryManager() : Runtime::AbstractQueryManager({}, {}, 1, 1, std::make_shared<Runtime::HardwareManager>(), 1) {};
-            ExecutionResult processNextTask(bool, Runtime::WorkerContext&) override {return ExecutionResult::Error;};
-            void
-            addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t) override {};
-            void poisonWorkers() override {};
-            bool addReconfigurationMessage(QueryId ,
-                                           QuerySubPlanId ,
-                                           const Runtime::ReconfigurationMessage& ,
-                                           bool) override { receivedCallback = true; return true;};
-            bool addReconfigurationMessage(QueryId ,
-                                           QuerySubPlanId ,
-                                           TupleBuffer&& ,
-                                           bool) override {return false;};
+            explicit DummyQueryManager()
+                : Runtime::AbstractQueryManager({}, {}, 1, 1, std::make_shared<Runtime::HardwareManager>(), 1){};
+            ExecutionResult processNextTask(bool, Runtime::WorkerContext&) override { return ExecutionResult::Error; };
+            void addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t) override{};
+            void poisonWorkers() override{};
+            bool addReconfigurationMessage(QueryId, QuerySubPlanId, const Runtime::ReconfigurationMessage&, bool) override {
+                receivedCallback = true;
+                return true;
+            };
+            bool addReconfigurationMessage(QueryId, QuerySubPlanId, TupleBuffer&&, bool) override { return false; };
 
-            uint64_t getNumberOfTasksInWorkerQueues() const override {return 0;};
-            bool startThreadPool(uint64_t ) override {return false;};
-            ExecutionResult terminateLoop(Runtime::WorkerContext&) override {return ExecutionResult::Error;};
+            uint64_t getNumberOfTasksInWorkerQueues() const override { return 0; };
+            bool startThreadPool(uint64_t) override { return false; };
+            ExecutionResult terminateLoop(Runtime::WorkerContext&) override { return ExecutionResult::Error; };
             bool receivedCallback = false;
         };
 
@@ -312,14 +309,14 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
         };
 
         std::thread t([&netManagerReceiver, &completed, &nesPartition] {
-          // register the incoming channel
-          auto cnt = netManagerReceiver->registerSubpartitionConsumer(nesPartition,
-                                                              netManagerReceiver->getServerLocation(),
-                                                              std::make_shared<DataEmitterImpl>());
-          NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt {}", cnt);
-          auto v = completed.get_future().get();
-          netManagerReceiver->unregisterSubpartitionConsumer(nesPartition);
-          ASSERT_EQ(v, true);
+            // register the incoming channel
+            auto cnt = netManagerReceiver->registerSubpartitionConsumer(nesPartition,
+                                                                        netManagerReceiver->getServerLocation(),
+                                                                        std::make_shared<DataEmitterImpl>());
+            NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt {}", cnt);
+            auto v = completed.get_future().get();
+            netManagerReceiver->unregisterSubpartitionConsumer(nesPartition);
+            ASSERT_EQ(v, true);
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
@@ -330,8 +327,13 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
                                                       {},
                                                       std::make_any<uint32_t>(1));
         //setting retry times to zero will let the channel keep attempting to connect indefinitely
-        auto senderChannelFuture =
-            netManagerSender->registerSubpartitionProducerAsync(nodeLocation, nesPartition, buffMgrSend, std::chrono::seconds(1), 0, reconf, queryManager);
+        auto senderChannelFuture = netManagerSender->registerSubpartitionProducerAsync(nodeLocation,
+                                                                                       nesPartition,
+                                                                                       buffMgrSend,
+                                                                                       std::chrono::seconds(1),
+                                                                                       0,
+                                                                                       reconf,
+                                                                                       queryManager);
         EXPECT_FALSE(queryManager->receivedCallback);
         auto start_timestamp = std::chrono::system_clock::now();
         auto timeOut = std::chrono::seconds(10);
@@ -368,13 +370,10 @@ TEST_F(NetworkStackTest, testEosPropagation) {
 
         class InternalListener : public Network::ExchangeProtocolListener {
           public:
-            explicit InternalListener()
-                : numReceivedEoS(0) {}
+            explicit InternalListener() : numReceivedEoS(0) {}
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
-            void onEndOfStream(Messages::EndOfStreamMessage) override {
-                numReceivedEoS++;
-            }
+            void onEndOfStream(Messages::EndOfStreamMessage) override { numReceivedEoS++; }
             void onServerError(Messages::ErrorMessage) override {}
             void onEvent(NesPartition, Runtime::BaseEvent&) override {}
             void onChannelError(Messages::ErrorMessage) override {}
@@ -389,16 +388,14 @@ TEST_F(NetworkStackTest, testEosPropagation) {
         auto senderPort = getAvailablePort();
         auto senderLocation = NodeLocation(0, "127.0.0.1", *senderPort);
 
-            struct DataEmitterImpl : public DataEmitter {
+        struct DataEmitterImpl : public DataEmitter {
             void emitWork(TupleBuffer&) override {}
         };
 
         auto nesPartition = NesPartition(0, 0, 0, 0);
         NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
 
-        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition,
-                                                                     senderLocation,
-                                                                     std::make_shared<DataEmitterImpl>()));
+        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>()));
 
         uint64_t i = 1;
         //register and close one channel at a time
@@ -409,7 +406,10 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             exchangeProtocol.onClientAnnouncement(clientAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
 
-            auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId, Messages::ChannelType::DataChannel, Runtime::QueryTerminationType::Graceful, numSendingThreads);
+            auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
+                                                                   Messages::ChannelType::DataChannel,
+                                                                   Runtime::QueryTerminationType::Graceful,
+                                                                   numSendingThreads);
             exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
@@ -426,7 +426,10 @@ TEST_F(NetworkStackTest, testEosPropagation) {
         for (uint64_t j = i; j <= numSendingThreads; ++j) {
             ASSERT_EQ(receiveListener->numReceivedEoS, 0);
             auto channelId = ChannelId(nesPartition, j);
-            auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId, Messages::ChannelType::DataChannel, Runtime::QueryTerminationType::Graceful, numSendingThreads);
+            auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
+                                                                   Messages::ChannelType::DataChannel,
+                                                                   Runtime::QueryTerminationType::Graceful,
+                                                                   numSendingThreads);
             exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
             if (j < numSendingThreads) {

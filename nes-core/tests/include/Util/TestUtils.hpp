@@ -542,14 +542,14 @@ template<typename Predicate = std::equal_to<uint64_t>>
                                          const QueryCatalogServicePtr& queryCatalogService,
                                          std::chrono::seconds timeout = defaultTimeout);
 
-
-    /**
+/**
      * @brief Check if the query is been stopped successfully within the timeout.
      * @param queryId: Id of the query to be stopped
      * @param worker: the worker which the query runs on
      * @return true if successful
      */
-[[nodiscard]] bool checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono::seconds timeout = defaultTimeout);
+[[nodiscard]] bool
+checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono::seconds timeout = defaultTimeout);
 
 /**
  * @brief Check if the query has failed within the timeout.

@@ -32,8 +32,10 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         Runtime::BufferManagerPtr bufferManager,
                                         int highWaterMark,
                                         std::chrono::milliseconds waitTime,
-                                        uint8_t retryTimes, std::optional<std::future<bool>> abortConnection = std::nullopt) {
-    NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0, "Cannot use indefinite retries without suppliying a future to abort connection");
+                                        uint8_t retryTimes,
+                                        std::optional<std::future<bool>> abortConnection = std::nullopt) {
+    NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0,
+                    "Cannot use indefinite retries without suppliying a future to abort connection");
     std::chrono::milliseconds backOffTime = waitTime;
     constexpr auto nameHelper = []() {
         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
@@ -66,7 +68,8 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         //if retry times are set to 0, keep retrying indefinitely
         while (i < retryTimes || retryTimes == 0) {
             //if the thread creater reqeusted to abort, retur nnullptr
-            if (abortConnection.has_value() && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            if (abortConnection.has_value()
+                && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
                 NES_DEBUG("Aborting network channel connection process on caller request");
                 return nullptr;
             }
@@ -180,7 +183,8 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                          Runtime::BufferManagerPtr bufferManager,
                                          int highWaterMark,
                                          std::chrono::milliseconds waitTime,
-                                         uint8_t retryTimes, std::optional<std::future<bool>> abortConnection) {
+                                         uint8_t retryTimes,
+                                         std::optional<std::future<bool>> abortConnection) {
     return detail::createNetworkChannel<NetworkChannel>(zmqContext,
                                                         std::move(socketAddr),
                                                         nesPartition,
@@ -188,7 +192,8 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                                         bufferManager,
                                                         highWaterMark,
                                                         waitTime,
-                                                        retryTimes, std::move(abortConnection));
+                                                        retryTimes,
+                                                        std::move(abortConnection));
 }
 
 EventOnlyNetworkChannel::EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,

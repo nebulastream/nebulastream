@@ -86,7 +86,8 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
                                     Runtime::BufferManagerPtr bufferManager,
                                     int highWaterMark,
                                     std::chrono::milliseconds waitTime,
-                                    uint8_t retryTimes, std::optional<std::future<bool>> abortConnection = std::nullopt);
+                                    uint8_t retryTimes,
+                                    std::optional<std::future<bool>> abortConnection = std::nullopt);
 };
 
 /**

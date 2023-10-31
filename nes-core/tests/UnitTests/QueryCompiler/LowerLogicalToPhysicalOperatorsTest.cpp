@@ -190,10 +190,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
     ++iterator;
@@ -235,16 +232,10 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexBroadcastQuery) 
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalDemultiplexOperator>());
     ++iterator;
@@ -285,16 +276,10 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexFilterQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalDemultiplexOperator>());
     ++iterator;
@@ -334,10 +319,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterMultiplexQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              2);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 2);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
     ++iterator;
@@ -378,10 +360,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterImplicitMultiplexQuer
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              2);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 2);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
     ++iterator;
@@ -431,10 +410,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleJoinQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              2);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 2);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalJoinSinkOperator>());
     ++iterator;
@@ -483,10 +459,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleBatchJoinQue
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              2);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 2);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
@@ -536,10 +509,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              3);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 3);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalJoinSinkOperator>());
     ++iterator;
@@ -605,10 +575,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              4);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 4);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalJoinSinkOperator>());
     ++iterator;
@@ -655,10 +622,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateWindowQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalWindowSinkOperator>());
     ++iterator;
@@ -694,10 +658,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapOperator>());
     ++iterator;
@@ -729,10 +690,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUDFQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapUDFOperator>());
     ++iterator;
@@ -797,10 +755,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateProjectQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalProjectOperator>());
     ++iterator;
@@ -833,10 +788,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateTwoSourceQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              2);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 2);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
     ++iterator;
@@ -869,10 +821,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSinkSourceQuery) {
     auto iterator = QueryPlanIterator(queryPlan).begin();
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ASSERT_EQ((*iterator)
-                  ->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()
-                  ->getNumberOfInputSources(),
-              1);
+    ASSERT_EQ((*iterator)->as<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>()->getNumberOfInputSources(), 1);
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }

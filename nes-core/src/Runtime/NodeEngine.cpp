@@ -613,11 +613,11 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
 }
 
 bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
-                                        const std::string& newHostname,
-                                        uint32_t newPort,
-                                        QuerySubPlanId querySubPlanId,
-                                        uint64_t uniqueNetworkSinkDescriptorId,
-                                        Network::NesPartition newPartition) {
+                                                    const std::string& newHostname,
+                                                    uint32_t newPort,
+                                                    QuerySubPlanId querySubPlanId,
+                                                    uint64_t uniqueNetworkSinkDescriptorId,
+                                                    Network::NesPartition newPartition) {
     NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
@@ -629,11 +629,13 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
         auto networkSinks = qep->getSinks();
         Network::NetworkSinkPtr networkSink;
         //make sure that query sub plan has network sink with specified id
-        auto it =
-            std::find_if(networkSinks.begin(), networkSinks.end(), [uniqueNetworkSinkDescriptorId, &networkSink](const DataSinkPtr& dataSink) {
-              networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
-              return networkSink && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
-            });
+        auto it = std::find_if(networkSinks.begin(),
+                               networkSinks.end(),
+                               [uniqueNetworkSinkDescriptorId, &networkSink](const DataSinkPtr& dataSink) {
+                                   networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
+                                   return networkSink
+                                       && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
+                               });
         if (it != networkSinks.end()) {
             networkSink->configureNewReceiverAndPartition(newPartition, newNodeLocation);
             return true;
@@ -660,7 +662,5 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
 
-bool NodeEngine::getConnectSinksAsync() {
-    return connectSinksAsync;
-}
+bool NodeEngine::getConnectSinksAsync() { return connectSinksAsync; }
 }// namespace NES::Runtime

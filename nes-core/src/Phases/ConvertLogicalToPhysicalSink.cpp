@@ -38,7 +38,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                                          const SchemaPtr& schema,
                                                          const Runtime::NodeEnginePtr& nodeEngine,
                                                          const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                                         size_t numOfProducers, uint16_t numberOfInputSources) {
+                                                         size_t numOfProducers,
+                                                         uint16_t numberOfInputSources) {
     NES_DEBUG("Convert sink  {}", operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");
     NES_ASSERT(querySubPlan, "Invalid query sub-plan");

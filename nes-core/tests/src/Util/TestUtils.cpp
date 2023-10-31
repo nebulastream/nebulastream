@@ -278,14 +278,13 @@ checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalo
     return false;
 }
 
-    /**
+/**
      * @brief Check if the query is been stopped successfully within the timeout.
      * @param queryId: Id of the query to be stopped
      * @param worker: the worker which the query runs on
      * @return true if successful
      */
-[[nodiscard]] bool
-checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono::seconds timeout) {
+[[nodiscard]] bool checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono::seconds timeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -304,7 +303,10 @@ checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono:
             case Runtime::Execution::ExecutableQueryPlanStatus::ErrorState: status = "error"; break;
             case Runtime::Execution::ExecutableQueryPlanStatus::Invalid: status = "invalid"; break;
         }
-        NES_DEBUG("checkStoppedOrTimeout: status not reached for {} at worker {}. Current state =  {}", queryId, worker->getWorkerId(), status);
+        NES_DEBUG("checkStoppedOrTimeout: status not reached for {} at worker {}. Current state =  {}",
+                  queryId,
+                  worker->getWorkerId(),
+                  status);
         std::this_thread::sleep_for(sleepDuration);
     }
     NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
