@@ -17,8 +17,8 @@
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
-#include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/EpochMessage.hpp>
+#include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <string>
@@ -127,7 +127,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     /**
      * @brief method to check if network sink started trimming its buffer storages
-     * @return success if it is trimming
+     * @return success if it started trimming
      */
     bool hasTrimmed();
 
@@ -195,7 +195,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
     std::function<void(EpochMessage, Runtime::WorkerContext& workerContext)> deleteFromStorageCallback;
     std::function<bool(EpochMessage, Runtime::WorkerContext& workerContext)> deleteFromStorageCallback;
-    std::atomic<bool> isTrimming;
+    std::atomic<bool> trimmingStarted;
 };
 }// namespace NES::Network
 #endif// NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_

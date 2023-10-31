@@ -513,8 +513,7 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
     return true;
 }
 
-bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId,
-                                                       uint64_t epochBarrier) {
+bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier) {
     std::unique_lock queryLock(queryMutex);
     bool isPropagated = false;
     auto queryId = getQueryId(querySubPlanId);
@@ -533,10 +532,7 @@ bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId,
             isPropagated = true;
         }
     }
-    if (isPropagated) {
-        return true;
-    }
-    return false;
+    return isPropagated;
 }
 
 bool AbstractQueryManager::propagateEpochBackwards(uint64_t querySubPlanId, uint64_t epochBarrier) {
@@ -556,10 +552,7 @@ bool AbstractQueryManager::propagateEpochBackwards(uint64_t querySubPlanId, uint
             isPropagated = true;
         }
     }
-    if (isPropagated) {
-        return true;
-    }
-    return false;
+    return isPropagated;
 }
 
 bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType) {

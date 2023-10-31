@@ -53,19 +53,19 @@ class BufferStorage : public AbstractBufferStorage {
     void trimBuffer(uint64_t timestamp) override;
 
     /**
-     * @brief Return current storage size
+     * @brief Returns current storage size
      * @return Current storage size
      */
     size_t getStorageSize() const override;
 
     /**
-     * @brief Return top element of the queue
+     * @brief Returns top element of the queue
      * @return buffer storage unit
      */
     std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue() const;
 
     /**
-     * @brief Remove the top element from the queue
+     * @brief Removes the top element from the queue
      */
     void removeTopElementFromQueue();
 

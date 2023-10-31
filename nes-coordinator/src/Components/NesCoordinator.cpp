@@ -255,7 +255,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
 Catalogs::Source::SourceCatalogPtr NesCoordinator::getSourceCatalog() const { return sourceCatalog; }
 
-
 TopologyPtr NesCoordinator::getTopology() const { return topology; }
 
 bool NesCoordinator::stopCoordinator(bool force) {

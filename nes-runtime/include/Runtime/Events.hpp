@@ -27,7 +27,7 @@ template<typename T>
 concept IsNesEvent = requires(T t) { t.getEventType(); };
 
 /// Design rationale: create an own event that inherits from BaseEvent for internal system events (e.g., the checkpoint barrier, the upstream ACK).
-/// Use the custom event for user-specific events, e.g., feedback loops for toggling source sampling fequency.
+/// Use the custom event for user-specific events, e.g., feedback loops for toggling source sampling frequency.
 
 /**
  * @brief This is the base event type. All events supported in NES shall inherit from this class
@@ -56,9 +56,15 @@ class BaseEvent {
     EventType eventType;
 };
 
+/**
+ * @brief This class represents an epoch propagation method to launch trimming of tuples that are stored in buffer storages.
+ */
 struct PropagateEpochEvent {
-    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp)
-        : type(type), timestamp(timestamp) {}
+  public:
+    /**
+     * @brief creates a custom event that sends epoch trimming messages.
+     */
+    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp) : type(type), timestamp(timestamp) {}
 
     /**
      * @brief Return type of the event
@@ -72,7 +78,7 @@ struct PropagateEpochEvent {
      */
     uint64_t timestampValue() const { return timestamp; }
 
-
+  private:
     Runtime::EventType type;
     uint64_t timestamp;
 };

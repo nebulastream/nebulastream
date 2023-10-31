@@ -18,17 +18,26 @@
 #include <cstdint>
 
 namespace NES {
+/**
+     * @brief The Epoch message is a trimming acknowledgement that contains safe-to-trim timestamp for the current epoch
+     */
+class EpochMessage {
 
-    class EpochMessage {
+  public:
+    /**
+         * @brief Constructor, which creates an epoch message
+         */
+    EpochMessage(uint64_t timestamp);
 
-      public:
-        EpochMessage(uint64_t timestamp);
+    /**
+         * @brief Returns trimming timestamp
+         * @return Safe-to-trim timestamp
+         */
+    uint64_t getTimestamp() const;
 
-        uint64_t getTimestamp() const;
-
-      private:
-        uint64_t timestamp;
-    };
+  private:
+    uint64_t timestamp;
+};
 }// namespace NES
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EPOCHMESSAGE_HPP_

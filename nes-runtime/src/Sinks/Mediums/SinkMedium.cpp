@@ -66,6 +66,7 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
     bool isSync = watermarkProcessor->isWatermarkSynchronized(inputBuffer.getOriginId());
+    ///we propagate epoch termination message when we receive number of tuples  equivalent to the buffer count. In case some tuples that belong to the epoch that is finished haven't arrived yet, we wait.
     if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
         auto timestamp = watermarkProcessor->getCurrentWatermark();
         if (isSync && timestamp) {

@@ -15,6 +15,7 @@
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
@@ -25,7 +26,6 @@
 #include <Services/LocationService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
-#include <Services/ReplicationService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
@@ -68,13 +68,12 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            SourceCatalogServicePtr sourceCatalogService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
-                                           ReplicationServicePtr replicationService,
                                            LocationServicePtr locationService,
                                            QueryParsingServicePtr queryParsingService)
     : queryService(std::move(queryService)), topologyManagerService(std::move(topologyManagerService)),
       sourceCatalogService(std::move(sourceCatalogService)), queryCatalogService(std::move(queryCatalogService)),
-      monitoringManager(std::move(monitoringManager)), replicationService(std::move(replicationService)),
-      locationService(std::move(locationService)), queryParsingService(std::move(queryParsingService)){};
+      monitoringManager(std::move(monitoringManager)), locationService(std::move(locationService)),
+      queryParsingService(std::move(queryParsingService)){};
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,
@@ -302,22 +301,6 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("CoordinatorRPCServer: received broken failure message: {}", ex.what());
-        return Status::CANCELLED;
-    }
-}
-
-Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
-                                                    const EpochBarrierPropagationNotification* request,
-                                                    EpochBarrierPropagationReply* reply) {
-    try {
-        NES_INFO("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp  {} and querySubPlanId {}",
-                 request->timestamp(),
-                 request->queryid());
-        this->replicationService->notifyEpochTermination(request->timestamp(), request->queryid());
-        reply->set_success(true);
-        return Status::OK;
-    } catch (std::exception& ex) {
-        NES_ERROR("CoordinatorRPCServer: received broken punctuation message: {}", ex.what());
         return Status::CANCELLED;
     }
 }

@@ -50,7 +50,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), numberOfInputSources(numberOfInputSources),
-      receivedVersionDrainEvents(0), pendingReconfiguration(std::nullopt), isTrimming(false) {
+      receivedVersionDrainEvents(0), pendingReconfiguration(std::nullopt), trimmingStarted(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
@@ -58,7 +58,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
         deleteFromStorageCallback = [this](EpochMessage epochMessage, Runtime::WorkerContext& workerContext) {
-            return this->isTrimming = workerContext.trimStorage(this->nesPartition, epochMessage.getTimestamp());
+            return this->trimmingStarted = workerContext.trimStorage(this->nesPartition, epochMessage.getTimestamp());
         };
     } else {
         insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
@@ -296,15 +296,15 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
         auto epochBarrier = epochEvent->timestampValue();
         auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
         if (success) {
-            NES_DEBUG("NetworkSink::onEvent: epoch" , epochBarrier , " queryId " , queryId , " trimmed");
+            NES_DEBUG("NetworkSink::onEvent: epoch", epochBarrier, " queryId ", queryId, " trimmed");
             success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
             if (success) {
                 NES_DEBUG("NetworkSink::onEvent: epoch", epochBarrier, " queryId ", queryId, " sent further");
             } else {
-                NES_INFO("NetworkSink::onEvent:: end of propagation " , epochBarrier , " queryId " , queryId);
+                NES_INFO("NetworkSink::onEvent:: end of propagation ", epochBarrier, " queryId ", queryId);
             }
         } else {
-            NES_ERROR("NetworkSink::onEvent:: could not trim " , epochBarrier , " queryId " , queryId);
+            NES_ERROR("NetworkSink::onEvent:: could not trim ", epochBarrier, " queryId ", queryId);
         }
     }
 }
@@ -421,6 +421,6 @@ void NetworkSink::addPendingReconfiguration(NesPartition newPartition, const Nod
 
 uint16_t NetworkSink::getNumberOfInputSources() const { return numberOfInputSources; }
 
-bool NetworkSink::hasTrimmed() { return isTrimming; }
+bool NetworkSink::hasTrimmed() { return trimmingStarted; }
 
 }// namespace NES::Network
