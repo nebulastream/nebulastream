@@ -19,7 +19,6 @@
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
 
@@ -41,30 +40,18 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param nesPartition
     * @param version The initial version of this sink when it starts
     */
-    explicit NetworkSink(
-#ifndef UNIKERNEL_LIB
-        const SchemaPtr& schema,
-#endif
-        OperatorId uniqueNetworkSinkDescriptorId,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
-        NodeLocation const& destination,
-        NesPartition nesPartition,
-#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
-        Runtime::NodeEnginePtr nodeEngine,
-#else
-        Runtime::BufferManagerPtr bufferManager,
-        Runtime::WorkerContext& workerContext,
-        NetworkManagerPtr networkManager,
-#endif
-#ifdef UNIKERNEL_LIB
-        size_t schemaSizeInBytes,
-#endif
-        size_t numOfProducers,
-        std::chrono::milliseconds waitTime,
-        uint8_t retryTimes,
+    explicit NetworkSink(const SchemaPtr& schema,
+                         OperatorId uniqueNetworkSinkDescriptorId,
+                         SharedQueryId sharedQueryId,
+                         DecomposedQueryPlanId decomposedQueryPlanId,
+                         NodeLocation const& destination,
+                         NesPartition nesPartition,
+                         Runtime::NodeEnginePtr nodeEngine,
+                         size_t numOfProducers,
+                         std::chrono::milliseconds waitTime,
+                         uint8_t retryTimes,
 
-        uint64_t numberOfOrigins ,
+                         uint64_t numberOfOrigins ,
                          DecomposedQueryPlanVersion version);
 
     /**
@@ -131,13 +118,11 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     OperatorId getUniqueNetworkSinkDescriptorId() const;
 
-#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
     /**
      * @brief method to return the node engine pointer
      * @return node engine pointer
      */
     Runtime::NodeEnginePtr getNodeEngine();
-#endif
 
     /**
      * @brief reconfigure this sink to point to another downstream network source
@@ -192,20 +177,13 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     bool retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerContext);
 
     OperatorId uniqueNetworkSinkDescriptorId;
-    NetworkManagerPtr networkManager;
-#if !(defined(UNIKERNEL_LIB) || defined(UNIKERNEL_SUPPORT_LIB))
     Runtime::NodeEnginePtr nodeEngine;
+    NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
     NodeLocation receiverLocation;
     std::optional<NetworkSinkDescriptor> nextSinkDescriptor;
-#else
-    Runtime::WorkerContext& workerContext;
-#endif
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
-#ifdef UNIKERNEL_LIB
-    size_t schemaSizeInBytes;
-#endif
     std::atomic<uint64_t> messageSequenceNumber;
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
