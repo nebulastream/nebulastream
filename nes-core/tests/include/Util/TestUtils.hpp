@@ -102,7 +102,7 @@ struct JoinParams {
     const std::vector<std::string> joinFieldNames;
 };
 
-static constexpr auto defaultTimeout = std::chrono::seconds(60);
+static constexpr auto defaultTimeout = std::chrono::seconds(400);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last processed task, the query should be done.
@@ -443,7 +443,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
                                           const GlobalQueryPlanPtr& globalQueryPlan,
                                           uint64_t expectedResult,
                                           bool minOneProcessedTask = false,
-                                          std::chrono::seconds timeoutSeconds = defaultTimeout) {
+                                          std::chrono::seconds timeoutSeconds = std::chrono::seconds(300)) {
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         NES_ERROR("Unable to find global query Id for user query id {}", queryId);

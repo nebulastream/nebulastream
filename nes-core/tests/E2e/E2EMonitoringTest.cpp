@@ -277,4 +277,106 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     EXPECT_TRUE(retStopCord);
 }
 
+TEST_F(E2EMonitoringTest, testBottomUpPlacementWithMonitoringSource) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->enableMonitoring = true;
+    coordinatorConfig->optimizer.enableNemoPlacement = true;
+    coordinatorConfig->optimizer.distributedWindowChildThreshold = 1;
+    coordinatorConfig->optimizer.distributedWindowCombinerThreshold = 1000;
+
+    NES_INFO("ContinuousSourceTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+
+    // create topology
+    auto numLeafsperWorker = 4;
+    auto numWorkers = 2;
+    std::vector<NesWorkerPtr> workers;
+
+    auto id = 1;
+    for (auto w = 0; w < numWorkers; w++) {
+        id++;
+        auto parentId = id;
+        NES_DEBUG("ContinuousSourceTest: Start worker {}", w);
+        WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+        workerConfig->coordinatorPort = port;
+        workerConfig->enableMonitoring = false;
+        workerConfig->queryCompiler.queryCompilerType =
+            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
+        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        ASSERT_TRUE(retStart);
+        NES_INFO("ContinuousSourceTest: Worker1 started successfully");
+        workers.emplace_back(wrk);
+
+        for (auto lw = 0; lw < numLeafsperWorker; lw++) {
+            NES_DEBUG("ContinuousSourceTest: Start worker {}, {}", w, lw);
+            WorkerConfigurationPtr workerConfigLeaf = WorkerConfiguration::create();
+            workerConfigLeaf->coordinatorPort = port;
+            workerConfigLeaf->enableMonitoring = true;
+            workerConfigLeaf->parentId = parentId;
+            workerConfigLeaf->queryCompiler.queryCompilerType =
+                QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
+            NesWorkerPtr wrkLeaf = std::make_shared<NesWorker>(std::move(workerConfigLeaf));
+            bool retStartLeaf = wrkLeaf->start(/**blocking**/ false, /**withConnect**/ true);
+            ASSERT_TRUE(retStartLeaf);
+            NES_INFO("ContinuousSourceTest: Worker1 started successfully");
+            workers.emplace_back(wrkLeaf);
+            id++;
+        }
+    }
+
+    std::string outputFilePath = getTestResourceFolder() / "testTimestampCsvSink.out";
+    remove(outputFilePath.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    NES_INFO("TEST: TOPOLOGY DEPLOYED");
+
+    //register query
+    auto query = Query::from("WrappedNetworkMetrics")
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+                     .byKey(Attribute("node_id"))
+                     .apply(Avg(Attribute("tBytes")))
+                     .sink(FileSinkDescriptor::create(outputFilePath, true));
+
+    QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                                    query.getQueryPlan(),
+                                                    Optimizer::PlacementStrategy::BottomUp,
+                                                    FaultToleranceType::NONE,
+                                                    LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1000000000));
+
+    std::this_thread::sleep_for(std::chrono::seconds(300));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    auto lines = 5;
+    ASSERT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(lines, outputFilePath, 30));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    ASSERT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    NES_INFO("ContinuousSourceTest: content=\n{}", content);
+    auto lineCnt = countOccurrences("\n", content);
+    EXPECT_EQ(countOccurrences(",", content), 4 * lineCnt);
+    EXPECT_EQ(countOccurrences("timestamp", content), 1);
+
+    for (const auto& wrk : workers) {
+        bool retStopWrk = wrk->stop(false);
+        ASSERT_TRUE(retStopWrk);
+    }
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
 }// namespace NES
