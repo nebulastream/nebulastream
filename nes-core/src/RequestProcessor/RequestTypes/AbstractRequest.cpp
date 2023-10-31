@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/RequestExecutionException.hpp>
 #include <Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Exceptions/RequestExecutionException.hpp>
 #include <utility>
 
 namespace NES::RequestProcessor::Experimental {
@@ -88,7 +88,6 @@ void AbstractRequest::setExceptionInPromiseOrRethrow(std::exception_ptr exceptio
     } catch (std::future_error& e) {
         std::rethrow_exception(exception);
     }
-
 }
 
 }// namespace NES::RequestProcessor::Experimental

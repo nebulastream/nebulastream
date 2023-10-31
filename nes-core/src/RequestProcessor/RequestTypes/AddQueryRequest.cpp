@@ -169,7 +169,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] std::
     }
 
     //make sure the promise is set before returning in case a the caller is waiting on it
-    trySetExceptionInPromise(std::make_exception_ptr<RequestExecutionException>(RequestExecutionException("No return value set in promise")));
+    trySetExceptionInPromise(
+        std::make_exception_ptr<RequestExecutionException>(RequestExecutionException("No return value set in promise")));
     return {};
 }
 
