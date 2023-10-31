@@ -78,6 +78,8 @@ macro(project_enable_clang_format)
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/tests,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler/include,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-unikernel/include,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-unikernel/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/tests,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-client/include,"
