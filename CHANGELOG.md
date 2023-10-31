@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.237](https://github.com/nebulastream/nebulastream/tree/v0.5.237) (2023-10-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.236...v0.5.237)
+
+**Implemented enhancements:**
+
+- \[TASK\] Store OpenCL information in Coordinator topology [\#3853](https://github.com/nebulastream/nebulastream/issues/3853)
+
 ## [v0.5.236](https://github.com/nebulastream/nebulastream/tree/v0.5.236) (2023-10-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.235...v0.5.236)
