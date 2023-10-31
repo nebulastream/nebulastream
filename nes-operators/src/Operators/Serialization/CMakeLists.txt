@@ -21,7 +21,7 @@ add_source_files(nes-operators
         UDFSerializationUtil.cpp
 )
 
-add_source_files(nes-unikernel-support-core
+add_source_files(unikernel-test-lib
         SchemaSerializationUtil.cpp
         DataTypeSerializationUtil.cpp
         )

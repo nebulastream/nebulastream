@@ -28,7 +28,7 @@ add_source_files(nes-runtime
         BufferAccessException.cpp
 )
 
-add_source_files(nes-unikernel-support-runtime
+add_source_files(unikernel-test-lib
         ColumnLayout.cpp
         MemoryLayoutTupleBuffer.cpp
         RowLayout.cpp

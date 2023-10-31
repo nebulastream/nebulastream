@@ -22,7 +22,6 @@
 
 namespace NES {
 PrintSink::PrintSink(SinkFormatPtr format,
-                     Runtime::NodeEnginePtr nodeEngine,
                      uint32_t numOfProducers,
                      QueryId queryId,
                      QuerySubPlanId querySubPlanId,
@@ -30,14 +29,13 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      FaultToleranceType faultToleranceType,
                      uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
-                 std::move(nodeEngine),
                  numOfProducers,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
-      outputStream(pOutputStream) {}
+                 numberOfOrigins),
+      outputStream(pOutputStream) {
+}
 
 PrintSink::~PrintSink() = default;
 

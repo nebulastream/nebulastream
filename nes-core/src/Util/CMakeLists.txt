@@ -28,7 +28,6 @@ if (NES_USE_MQTT)
 endif ()
 add_subdirectory(Experimental)
 add_subdirectory(DumpHandler)
-add_source_files(nes-unikernel-support-core
+add_source_files(unikernel-test-lib
         Core.cpp
-        KalmanFilter.cpp
 )

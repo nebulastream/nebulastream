@@ -19,9 +19,10 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <queue>
 #include <yaml-cpp/yaml.h>
 
 #define UNIKERNEL_MODEL_YAML_DECODE(field) rhs.field = node[#field].as<decltype(rhs.field)>()
@@ -99,12 +100,13 @@ static NES::BasicType toBasicType(NES::DataTypePtr dt) {
 }
 
 struct EndpointConfiguration {
-    size_t subQueryID;
+    NES::QuerySubPlanId subQueryID;
     SchemaConfiguration schema;
     std::string ip;
     uint32_t port;
-    size_t nodeId;
-    std::optional<size_t> operatorId;
+    NES::NodeId nodeId;
+    std::optional<NES::OperatorId> operatorId;
+    NES::OriginId originId;
 
     void setSchema(const NES::SchemaPtr& newSchema) {
         this->schema.fields.clear();
@@ -129,6 +131,7 @@ struct convert<EndpointConfiguration> {
 
         UNIKERNEL_MODEL_YAML_ENCODE(nodeId);
         UNIKERNEL_MODEL_YAML_ENCODE(schema);
+        UNIKERNEL_MODEL_YAML_ENCODE(originId);
 
         return node;
     };
@@ -137,12 +140,13 @@ struct convert<EndpointConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(ip);
         UNIKERNEL_MODEL_YAML_DECODE(subQueryID);
         UNIKERNEL_MODEL_YAML_DECODE(port);
-        if (!node["operatorId"].IsNull()) {
+        if (node["operatorId"]) {
             rhs.operatorId.emplace(node["operatorId"].as<NES::OperatorId>());
         }
 
         UNIKERNEL_MODEL_YAML_DECODE(nodeId);
         UNIKERNEL_MODEL_YAML_DECODE(schema);
+        UNIKERNEL_MODEL_YAML_DECODE(originId);
         return node;
     };
 };
@@ -183,8 +187,10 @@ struct convert<WorkerLinkConfiguration> {
 }// namespace YAML
 
 struct WorkerStageConfiguration {
-    size_t stageId;
-    size_t numberOfOperatorHandlers;
+    std::optional<std::vector<WorkerStageConfiguration>> predecessor;
+    std::optional<WorkerLinkConfiguration> upstream;
+    size_t stageId = 0;
+    size_t numberOfOperatorHandlers = 0;
 };
 
 namespace YAML {
@@ -194,23 +200,34 @@ struct convert<WorkerStageConfiguration> {
         Node node;
         UNIKERNEL_MODEL_YAML_ENCODE(stageId);
         UNIKERNEL_MODEL_YAML_ENCODE(numberOfOperatorHandlers);
+        if (rhs.predecessor.has_value()) {
+            node["predecessor"] = rhs.predecessor.value();
+        }
+        if (rhs.upstream.has_value()) {
+            node["upstream"] = rhs.upstream.value();
+        }
         return node;
-    };
+    }
 
     static Node decode(const Node& node, WorkerStageConfiguration& rhs) {
         UNIKERNEL_MODEL_YAML_DECODE(stageId);
         UNIKERNEL_MODEL_YAML_DECODE(numberOfOperatorHandlers);
+        if (node["upstream"]) {
+            rhs.upstream = node["upstream"].as<WorkerLinkConfiguration>();
+        }
+        if (node["predecessor"]) {
+            rhs.predecessor = node["predecessor"].as<std::vector<WorkerStageConfiguration>>();
+        }
         return node;
-    };
+    }
 };
 }// namespace YAML
 
 struct WorkerSubQueryConfiguration {
-    std::vector<WorkerStageConfiguration> stages;
+    WorkerStageConfiguration stages;
     NES::QuerySubPlanId subQueryId;
     size_t outputSchemaSizeInBytes;
     WorkerLinkConfiguration downstream;
-    std::vector<WorkerLinkConfiguration> upstreams;
 };
 
 namespace YAML {
@@ -222,7 +239,6 @@ struct convert<WorkerSubQueryConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(subQueryId);
         UNIKERNEL_MODEL_YAML_ENCODE(outputSchemaSizeInBytes);
         UNIKERNEL_MODEL_YAML_ENCODE(downstream);
-        UNIKERNEL_MODEL_YAML_ENCODE(upstreams);
         return node;
     };
 
@@ -231,7 +247,6 @@ struct convert<WorkerSubQueryConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(subQueryId);
         UNIKERNEL_MODEL_YAML_DECODE(outputSchemaSizeInBytes);
         UNIKERNEL_MODEL_YAML_DECODE(downstream);
-        UNIKERNEL_MODEL_YAML_DECODE(upstreams);
         return node;
     };
 };
@@ -266,7 +281,7 @@ struct convert<WorkerConfiguration> {
 }// namespace YAML
 
 struct QueryConfiguration {
-    size_t queryID;
+    NES::QueryId queryID;
     size_t workerID;
 };
 
@@ -301,6 +316,7 @@ struct convert<Configuration> {
         UNIKERNEL_MODEL_YAML_DECODE(sources);
         UNIKERNEL_MODEL_YAML_DECODE(sink);
         UNIKERNEL_MODEL_YAML_DECODE(query);
+        UNIKERNEL_MODEL_YAML_DECODE(workers);
         return node;
     };
     static Node encode(const Configuration& rhs) {
@@ -308,6 +324,7 @@ struct convert<Configuration> {
         UNIKERNEL_MODEL_YAML_ENCODE(sources);
         UNIKERNEL_MODEL_YAML_ENCODE(sink);
         UNIKERNEL_MODEL_YAML_ENCODE(query);
+        UNIKERNEL_MODEL_YAML_ENCODE(workers);
         return node;
     };
 };

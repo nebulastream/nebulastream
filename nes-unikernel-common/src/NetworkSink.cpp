@@ -16,39 +16,41 @@
 #include <Network/NetworkSink.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 
 namespace NES::Network {
+
 NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
                          QueryId queryId,
                          QuerySubPlanId querySubPlanId,
                          const NodeLocation& destination,
                          NesPartition nesPartition,
-                         Runtime::NodeEnginePtr nodeEngine,
+                         Runtime::BufferManagerPtr bufferManager,
+                         Runtime::WorkerContextPtr workerContext,
+                         NetworkManagerPtr networkManager,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType,
                          uint64_t numberOfOrigins)
     : SinkMedium(
-        std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
-        nodeEngine,
+        std::make_shared<NesFormat>(schema, bufferManager),
         numOfProducers,
         queryId,
         querySubPlanId,
         faultToleranceType,
-        numberOfOrigins,
-        nullptr),
-      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
-      networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
-      queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
-      bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
+        numberOfOrigins),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId),
+      networkManager(networkManager),
+      workerContext(workerContext), receiverLocation(destination), bufferManager(std::move(bufferManager)),
+      nesPartition(nesPartition), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes),
+      reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
@@ -98,7 +100,7 @@ void NetworkSink::setup() {
                                                   Runtime::ReconfigurationType::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
-    queryManager->addReconfigurationMessage(queryId, querySubPlanId, reconf, true);
+    this->reconfigure(reconf, *workerContext);
 }
 
 void NetworkSink::shutdown() {
@@ -215,13 +217,11 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
 
 void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     NES_DEBUG("NetworkSink::onEvent(event) called. uniqueNetworkSinkDescriptorId: {}", this->uniqueNetworkSinkDescriptorId);
-    auto qep = queryManager->getQueryExecutionPlan(querySubPlanId);
-    qep->onEvent(event);
-
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         // todo jm continue here. how to obtain local worker context?
     }
 }
+
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
     NES_DEBUG("NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: {}",
               this->uniqueNetworkSinkDescriptorId);
@@ -231,6 +231,5 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) 
 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
 
-Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
 }// namespace NES::Network

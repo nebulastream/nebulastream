@@ -19,16 +19,6 @@ include_directories(tests/include)
 # Set Sources and Headers
 add_subdirectory(src)
 
-get_source(nes-unikernel-support-runtime NES_UNIKERNEL_SUPPORT_RUNTIME_SOURCE_FILES)
-add_library(nes-unikernel-support-runtime STATIC ${NES_UNIKERNEL_RUNTIME_SOURCE_FILES} ${NES_UNIKERNEL_SUPPORT_RUNTIME_SOURCE_FILES})
-target_compile_options(nes-unikernel-support-runtime PRIVATE "-DUNIKERNEL_SUPPORT_LIB=1")
-target_include_directories(nes-unikernel-support-runtime PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes-unikernel-support-runtime PUBLIC nes-unikernel-support-common nes-unikernel-data-types)
-set_property(TARGET nes-unikernel-support-runtime PROPERTY EXPORT_COMPILE_COMMANDS TRUE)
-
-    target_precompile_headers(nes-unikernel-support-runtime REUSE_FROM nes-unikernel-common)
 get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library

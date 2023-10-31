@@ -12,16 +12,14 @@
 # limitations under the License.
 
 
-add_source_files(nes-unikernel-runtime
+add_source_files(unikernel-test-lib
         BufferStorage.cpp
         BufferManager.cpp
         FixedSizeBufferPool.cpp
         TupleBuffer.cpp
         WorkerContext.cpp
         LocalBufferPool.cpp
-        HardwareManager.cpp
         NesThread.cpp
-        BloomFilter.cpp
         TaggedPointer.cpp
         Allocator/NesDefaultMemoryAllocator.cpp
 )

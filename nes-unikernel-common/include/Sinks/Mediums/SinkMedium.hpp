@@ -18,7 +18,6 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Util/FaultToleranceType.hpp>
-#include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <mutex>
 
 namespace NES {
@@ -45,23 +44,23 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        QueryId queryId,
-                        QuerySubPlanId querySubPlanId);
+    explicit SinkMedium(
+        SinkFormatPtr sinkFormat,
+        uint32_t numOfProducers,
+        QueryId queryId,
+        QuerySubPlanId querySubPlanId);
 
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        QueryId queryId,
-                        QuerySubPlanId querySubPlanId,
-                        FaultToleranceType faultToleranceType,
-                        uint64_t numberOfOrigins,
-                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
+    explicit SinkMedium(
+        SinkFormatPtr sinkFormat,
+        uint32_t numOfProducers,
+        QueryId queryId,
+        QuerySubPlanId querySubPlanId,
+        FaultToleranceType faultToleranceType,
+        uint64_t numberOfOrigins
+    );
 
     /**
      * @brief virtual method to setup sink
@@ -175,15 +174,12 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint32_t bufferCount;
     uint32_t buffersPerEpoch;
     bool schemaWritten;
-
-    Runtime::NodeEnginePtr nodeEngine;
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
-    Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
 
     uint64_t sentBuffer{0};

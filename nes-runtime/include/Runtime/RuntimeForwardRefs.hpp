@@ -140,8 +140,6 @@ using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 #else
-using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContextBase;
-using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContextBase*;
 using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContext;
 using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContext*;
 #endif

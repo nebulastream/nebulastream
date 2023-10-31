@@ -28,4 +28,4 @@ if (NES_USE_ARROW)
 endif ()
 
 add_subdirectory(FormatIterators)
-add_source_files(nes-unikernel-support-core CsvFormat.cpp SinkFormat.cpp NesFormat.cpp)
+add_source_files(unikernel-test-lib CsvFormat.cpp SinkFormat.cpp NesFormat.cpp)

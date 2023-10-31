@@ -25,6 +25,9 @@ add_source_files(nes-core
         QueryStatistics.cpp
         NodeEngineBuilder.cpp
         )
+add_source_files(unikernel-test-lib
+        ReconfigurationMessage.cpp
+)
 
 add_subdirectory(Profiler)
 add_subdirectory(Execution)
