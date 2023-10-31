@@ -85,7 +85,7 @@ FileSink::~FileSink() {
 std::string FileSink::toString() const {
     std::stringstream ss;
     ss << "FileSink(";
-    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
+    ss << "SCHEMA(" << sinkFormat->getFormattedSchema() << ")";
     ss << ")";
     return ss.str();
 }
