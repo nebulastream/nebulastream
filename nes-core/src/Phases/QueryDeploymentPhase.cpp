@@ -15,6 +15,7 @@
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -25,12 +26,11 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 #include <utility>
-#include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Runtime/OpenCLManager.hpp>
 
 namespace NES {
 
@@ -45,11 +45,10 @@ QueryDeploymentPhasePtr
 QueryDeploymentPhase::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const QueryCatalogServicePtr& catalogService,
                              const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
-    return std::make_shared<QueryDeploymentPhase>(
-        QueryDeploymentPhase(globalExecutionPlan,
-                             catalogService,
-                             coordinatorConfiguration->elegant.accelerateJavaUDFs,
-                             coordinatorConfiguration->elegant.accelerationServiceURL));
+    return std::make_shared<QueryDeploymentPhase>(QueryDeploymentPhase(globalExecutionPlan,
+                                                                       catalogService,
+                                                                       coordinatorConfiguration->elegant.accelerateJavaUDFs,
+                                                                       coordinatorConfiguration->elegant.accelerationServiceURL));
 }
 
 void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {

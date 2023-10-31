@@ -15,9 +15,9 @@
 #ifndef NES_OPENCLDEVICEINFO_CPP_H
 #define NES_OPENCLDEVICEINFO_CPP_H
 
-#include <string>
 #include <array>
 #include <nlohmann/json.hpp>
+#include <string>
 
 namespace NES::Runtime {
 
@@ -68,6 +68,6 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OpenCLDeviceInfo,
                                    deviceExtensions,
                                    availableProcessors);
 
-}
+}// namespace NES::Runtime
 
 #endif//NES_OPENCLDEVICEINFO_CPP_H
