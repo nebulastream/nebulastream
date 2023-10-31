@@ -86,17 +86,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")
 endif ()
 
-#Unikernel
-get_source(nes-unikernel-common NES_UNIKERNEL_COMMON_SOURCE_FILES)
-add_library(nes-unikernel-common STATIC ${NES_UNIKERNEL_COMMON_SOURCE_FILES})
-target_link_libraries(nes-unikernel-common PUBLIC spdlog::spdlog zmq-fork Folly::folly)
-target_include_directories(nes-unikernel-common PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-set_property(TARGET nes-unikernel-common PROPERTY INTERFACE_LINK_LIBRARIES
-        $<BUILD_INTERFACE: spdlog::spdlog zmq-fork Folly::folly>
-        $<INSTALL_INTERFACE:>)
-
 # Unikernel Support
 get_source(nes-unikernel-support-common NES_UNIKERNEL_SUPPORT_COMMON_SOURCE_FILES)
 add_library(nes-unikernel-support-common STATIC ${NES_UNIKERNEL_COMMON_SOURCE_FILES} ${NES_UNIKERNEL_SUPPORT_COMMON_SOURCE_FILES})
@@ -109,9 +98,6 @@ set_property(TARGET nes-unikernel-support-common PROPERTY INTERFACE_LINK_LIBRARI
         $<BUILD_INTERFACE: spdlog::spdlog zmq-fork Folly::folly>
         $<INSTALL_INTERFACE:>)
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-unikernel-common PRIVATE "include/PrecompiledHeaders.hpp")
-endif ()
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)

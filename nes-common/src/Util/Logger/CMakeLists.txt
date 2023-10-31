@@ -13,6 +13,10 @@
 # limitations under the License.
 
 add_source_files(nes-unikernel-common
+add_source_files(unikernel-lib
+        NesLogger.cpp
+        LogLevel.cpp
+)
         NesLogger.cpp
         LogLevel.cpp
 )
