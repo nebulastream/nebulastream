@@ -154,7 +154,6 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
 
-
     NES_INFO("QueryFailureTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId2);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));

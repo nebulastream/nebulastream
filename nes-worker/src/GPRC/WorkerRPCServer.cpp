@@ -134,7 +134,6 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     return Status::CANCELLED;
 }
 
-
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
 

@@ -16,8 +16,8 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/EpochMessage.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -152,7 +152,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     NES_DEBUG("NetworkSource: reconfigure() called {}", nesPartition.toString());
     NES::DataSource::reconfigure(task, workerContext);
     bool isTermination = false;
-    Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Failure;;
+    Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Failure;
+    ;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
             // we need to check again because between the invocations of
@@ -207,8 +208,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             auto epochMessage = task.getUserData<EpochMessage>();
             NES_DEBUG("Executing PropagateEpoch punctuation= ", epochMessage.getTimestamp());
             if (channel) {
-                channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent,
-                                                                 epochMessage.getTimestamp());
+                channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, epochMessage.getTimestamp());
             }
             break;
         }
@@ -223,7 +223,6 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                   Runtime::NesThread::getId());
     }
 }
-
 
 void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     NES_DEBUG("NetworkSource: postReconfigurationCallback() called {}", nesPartition.toString());

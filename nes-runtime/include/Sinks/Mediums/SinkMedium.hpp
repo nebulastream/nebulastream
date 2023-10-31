@@ -175,7 +175,6 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint32_t bufferCount;
     uint32_t buffersPerEpoch;
     bool schemaWritten;
-
     Runtime::NodeEnginePtr nodeEngine;
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
@@ -185,11 +184,9 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t numberOfOrigins;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
-
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};
     std::recursive_mutex writeMutex;
-
     bool isWaiting;
 };
 

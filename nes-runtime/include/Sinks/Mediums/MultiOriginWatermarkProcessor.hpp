@@ -71,6 +71,11 @@ class MultiOriginWatermarkProcessor {
      */
     [[nodiscard]] WatermarkTs getCurrentWatermark() const;
 
+    /**
+     * @brief Returns success if there are no tuples with smaller sequence number that haven't arrived yet than the last tuple seen
+     * @param originId origin id
+     * @return Success
+     */
     bool isWatermarkSynchronized(OriginId originId) const;
 
   private:

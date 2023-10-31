@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include<Runtime/EpochMessage.hpp>
+#include <Runtime/EpochMessage.hpp>
 
 namespace NES {
 
-    EpochMessage::EpochMessage(uint64_t timestamp)
-        : timestamp(timestamp) {}
+EpochMessage::EpochMessage(uint64_t timestamp) : timestamp(timestamp) {}
 
-    uint64_t EpochMessage::getTimestamp() const { return timestamp; }
+uint64_t EpochMessage::getTimestamp() const { return timestamp; }
 
 }// namespace NES

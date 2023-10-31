@@ -233,7 +233,6 @@ bool PartitionManager::unregisterSubpartitionProducer(NesPartition partition) {
 
     it->second.unpin();
 
-
     NES_INFO("PartitionManager: Unregistering Subpartition Producer {}; newCnt({})", partition.toString(), it->second.count());
     if (it->second.count() == 0) {
         NES_DEBUG("PartitionManager: Producer Partition {}, counter is at 0.", partition.toString());

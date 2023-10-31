@@ -20,7 +20,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Identifiers.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -29,7 +29,6 @@
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Network/NetworkSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <chrono>
@@ -257,7 +256,6 @@ TEST_F(UpstreamBackupTest, testMessagePassingBetweenWorkers) {
                 }
             }
         }
-
     }
 
     //check if the method was called
