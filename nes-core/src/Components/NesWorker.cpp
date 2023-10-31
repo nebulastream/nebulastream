@@ -31,8 +31,8 @@
 #include <Network/NetworkManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryStatistics.hpp>
 #include <Runtime/OpenCLManager.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
@@ -339,7 +339,9 @@ bool NesWorker::connect() {
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::SpatialTypeUtility::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
     for (auto i = 0u; i < nodeEngine->getOpenCLManager()->getDevices().size(); ++i) {
-        serializeOpenCLDeviceInfo(nodeEngine->getOpenCLManager()->getDevices()[i].deviceInfo, i, registrationRequest.add_opencldevices());
+        serializeOpenCLDeviceInfo(nodeEngine->getOpenCLManager()->getDevices()[i].deviceInfo,
+                                  i,
+                                  registrationRequest.add_opencldevices());
     }
 
     if (locationProvider) {

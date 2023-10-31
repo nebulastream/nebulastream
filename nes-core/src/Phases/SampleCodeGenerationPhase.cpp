@@ -16,9 +16,8 @@
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
-#include <Phases/SampleCodeGenerationPhase.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
@@ -36,6 +35,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>

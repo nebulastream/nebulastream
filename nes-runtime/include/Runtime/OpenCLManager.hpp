@@ -41,6 +41,7 @@ struct WorkerOpenCLDeviceInfo {
   public:
     WorkerOpenCLDeviceInfo(const cl_platform_id platformId, const cl_device_id deviceId, const OpenCLDeviceInfo& deviceInfo)
         : platformId(platformId), deviceId(deviceId), deviceInfo(deviceInfo) {}
+
   public:
     const cl_platform_id platformId;
     const cl_device_id deviceId;

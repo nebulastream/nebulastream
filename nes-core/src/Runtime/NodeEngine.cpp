@@ -669,8 +669,6 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
     this->physicalSources = std::move(physicalSources);
 }
 
-const OpenCLManagerPtr NodeEngine::getOpenCLManager() const {
-    return openCLManager;
-}
+const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManager; }
 
 }// namespace NES::Runtime

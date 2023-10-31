@@ -22,13 +22,13 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
-#include <Runtime/OpenCLManager.hpp>
 #include <utility>
 
 using namespace NES;
@@ -40,15 +40,15 @@ void deserializeOpenCLDeviceInfo(std::any& property,
     for (const auto& serializedDeviceInfo : serializedDeviceInfos) {
         if (serializedDeviceInfo.maxworkitems_size() != 3) {
             NES_WARNING("OpenCL device {} {} {} has invalid number of maxWorkItems: {}; skipping.",
-                        serializedDeviceInfo.platformvendor(), serializedDeviceInfo.platformname(),
-                        serializedDeviceInfo.devicename(), serializedDeviceInfo.maxworkitems_size());
+                        serializedDeviceInfo.platformvendor(),
+                        serializedDeviceInfo.platformname(),
+                        serializedDeviceInfo.devicename(),
+                        serializedDeviceInfo.maxworkitems_size());
             continue;
         }
-        std::array<size_t, 3> maxWorkItems {
-            serializedDeviceInfo.maxworkitems(0),
-            serializedDeviceInfo.maxworkitems(1),
-            serializedDeviceInfo.maxworkitems(2)
-        };
+        std::array<size_t, 3> maxWorkItems{serializedDeviceInfo.maxworkitems(0),
+                                           serializedDeviceInfo.maxworkitems(1),
+                                           serializedDeviceInfo.maxworkitems(2)};
         devices.emplace_back(serializedDeviceInfo.platformvendor(),
                              serializedDeviceInfo.platformname(),
                              serializedDeviceInfo.devicename(),
