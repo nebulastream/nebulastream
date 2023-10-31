@@ -16,8 +16,8 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Network {
 
@@ -109,11 +109,14 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                   retryTimes);
 }
 
-std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
-                                                                                 const NesPartition& nesPartition,
-                                                                                 Runtime::BufferManagerPtr bufferManager,
-                                                                                 std::chrono::milliseconds waitTime,
-                                                                                 uint8_t retryTimes, Runtime::ReconfigurationMessage reconfigurationMessage, Runtime::QueryManagerPtr queryManager) {
+std::pair<std::future<NetworkChannelPtr>, std::promise<bool>>
+NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
+                                                  const NesPartition& nesPartition,
+                                                  Runtime::BufferManagerPtr bufferManager,
+                                                  std::chrono::milliseconds waitTime,
+                                                  uint8_t retryTimes,
+                                                  Runtime::ReconfigurationMessage reconfigurationMessage,
+                                                  Runtime::QueryManagerPtr queryManager) {
     NES_DEBUG("NetworkManager: Asynchronously registering SubpartitionProducer: {}", nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
 
@@ -135,7 +138,10 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
                         highWaterMark = senderHighWatermark,
                         waitTime,
                         retryTimes,
-                        promise = std::move(promise), queryManager, reconfigurationMessage, abortConnectionFuture = std::move(abortConnectionFuture)]() mutable {
+                        promise = std::move(promise),
+                        queryManager,
+                        reconfigurationMessage,
+                        abortConnectionFuture = std::move(abortConnectionFuture)]() mutable {
         //wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
         auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
 
@@ -147,13 +153,17 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
                                               std::move(bufferManager),
                                               highWaterMark,
                                               waitTime,
-                                              retryTimes, std::move(future_optional));
+                                              retryTimes,
+                                              std::move(future_optional));
 
         //pass channel back to calling thread via promise
         promise.set_value(std::move(channel));
 
         //notify the sink about successful connection via reconfiguration message
-      queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, false);
+        queryManager->addReconfigurationMessage(reconfigurationMessage.getQueryId(),
+                                                reconfigurationMessage.getParentPlanId(),
+                                                reconfigurationMessage,
+                                                false);
     });
 
     thread.detach();

@@ -123,12 +123,14 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       endOfStreamMessage.getChannelId().toString(),
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
             //todo #4313: count connects instead of disconnects and implement timeout
-        }  else if (partitionManager->getSubpartitionConsumerDisconnectCount(partition).value() < expectedTotalConnectionsInPartitionManager) {
-            NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total channel disconnects for "
+        } else if (partitionManager->getSubpartitionConsumerDisconnectCount(partition).value()
+                   < expectedTotalConnectionsInPartitionManager) {
+            NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total channel "
+                      "disconnects for "
                       "subpartition: {} has not been reached: {}/{}",
                       endOfStreamMessage.getChannelId().toString(),
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()),
-                partitionManager->getSubpartitionConsumerDisconnectCount(partition).value(),
+                      partitionManager->getSubpartitionConsumerDisconnectCount(partition).value(),
                       expectedTotalConnectionsInPartitionManager);
         } else {
             partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())

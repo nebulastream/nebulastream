@@ -33,10 +33,18 @@ void BaseNetworkChannel::close(bool isEventOnly, Runtime::QueryTerminationType t
         return;
     }
     if (isEventOnly) {
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId, Messages::ChannelType::EventOnlyChannel, terminationType, numSendingThreads);
+        sendMessage<Messages::EndOfStreamMessage>(zmqSocket,
+                                                  channelId,
+                                                  Messages::ChannelType::EventOnlyChannel,
+                                                  terminationType,
+                                                  numSendingThreads);
     } else {
         //todo #4313: pass number of threads on client announcement instead of on closing
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId, Messages::ChannelType::DataChannel, terminationType, numSendingThreads);
+        sendMessage<Messages::EndOfStreamMessage>(zmqSocket,
+                                                  channelId,
+                                                  Messages::ChannelType::DataChannel,
+                                                  terminationType,
+                                                  numSendingThreads);
     }
     zmqSocket.close();
     NES_DEBUG("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));

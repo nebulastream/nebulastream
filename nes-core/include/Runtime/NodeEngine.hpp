@@ -328,11 +328,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return true on success, false if sink was not found
      */
     bool experimentalReconfigureNetworkSink(uint64_t newNodeId,
-                                const std::string& newHostname,
-                                uint32_t newPort,
-                                QuerySubPlanId querySubPlanId,
-                                uint64_t uniqueNetworkSinkDescriptorId,
-                                Network::NesPartition newPartition);
+                                            const std::string& newHostname,
+                                            uint32_t newPort,
+                                            QuerySubPlanId querySubPlanId,
+                                            uint64_t uniqueNetworkSinkDescriptorId,
+                                            Network::NesPartition newPartition);
 
     /**
      * @brief retrieve the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish

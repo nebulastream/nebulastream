@@ -285,7 +285,8 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
                     //todo #4282: propagate version drain event to downstream source without reconfiguring sink
                 }
             } else {
-                NES_ASSERT2_FMT(currentCount <= numberOfInputSources, "Number of received version drain events is higher than the expected maximum");
+                NES_ASSERT2_FMT(currentCount <= numberOfInputSources,
+                                "Number of received version drain events is higher than the expected maximum");
             }
             break;
         }
@@ -324,18 +325,17 @@ void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition, co
     NES_ASSERT2_FMT(
         networkManager->registerSubpartitionEventConsumer(newReceiverLocation, newPartition, inherited1::shared_from_this()),
         "Cannot register event listener " << nesPartition.toString());
-    Runtime::ReconfigurationMessage message =
-        Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
-                                        querySubPlanId,
-                                        Runtime::ReconfigurationType::ConnectToNewReceiver,
-                                        inherited0::shared_from_this(),
-                                        newReceiverTuple);
+    Runtime::ReconfigurationMessage message = Runtime::ReconfigurationMessage(nesPartition.getQueryId(),
+                                                                              querySubPlanId,
+                                                                              Runtime::ReconfigurationType::ConnectToNewReceiver,
+                                                                              inherited0::shared_from_this(),
+                                                                              newReceiverTuple);
     queryManager->addReconfigurationMessage(nesPartition.getQueryId(), querySubPlanId, message, false);
 }
 
 void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
-                                        const NodeLocation& newNodeLocation,
-                                        NesPartition newNesPartition) {
+                                                      const NodeLocation& newNodeLocation,
+                                                      NesPartition newNesPartition) {
     NES_DEBUG("NetworkSink: method clearOldAndConnectToNewChannelAsync() called {} qep {}, by thread {}",
               nesPartition.toString(),
               querySubPlanId,

@@ -27,10 +27,18 @@ namespace PhysicalOperators {
  */
 class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
   public:
-    PhysicalSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor, uint16_t numberOfInputSources);
+    PhysicalSinkOperator(OperatorId id,
+                         SchemaPtr inputSchema,
+                         SchemaPtr outputSchema,
+                         SinkDescriptorPtr sinkDescriptor,
+                         uint16_t numberOfInputSources);
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const SinkDescriptorPtr& sinkDescriptor,
+                                      uint16_t numberOfInputSources);
     static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const SinkDescriptorPtr& sinkDescriptor, uint16_t numberOfInputSources);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor, uint16_t numberOfInputSources);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor, uint16_t numberOfInputSources);
     SinkDescriptorPtr getSinkDescriptor();
 
     /**
