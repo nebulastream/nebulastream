@@ -14,7 +14,7 @@
 
 #ifndef NES_COMMON_INCLUDE_UTIL_MOBILITY_LOCATIONPROVIDERTYPE_HPP_
 #define NES_COMMON_INCLUDE_UTIL_MOBILITY_LOCATIONPROVIDERTYPE_HPP_
-
+#include <cstdint>
 namespace NES::Spatial::Mobility::Experimental {
 
 /**
