@@ -127,10 +127,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     /**
      * @brief schedule a reconfiguration which lets this sink reconnect to the specified source once it has been drained
-     * @param newTargetNodeLocation the location of the node hosting the new source
-     * @param newTargetSourcePartition the partition of the new source
+     * @param newReceiverLocation the location of the node hosting the new source
+     * @param newPartition the partition of the new source
      */
-    void addPendingReconfiguration(const NodeLocation& newTargetNodeLocation, NesPartition newTargetSourcePartition);
+    void addPendingReconfiguration(NesPartition newPartition, const NodeLocation& newReceiverLocation);
 
     /**
      * @brief reconfigure this sink to point to another downstream network source
@@ -156,7 +156,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newNodeLocation the location of the node to which the connection is to be established
      * @param newNesPartition the partition of the source to which the connection is to be established
      */
-    void clearOldAndconnectToNewChannelAsync(Runtime::WorkerContext& workerContext, const NodeLocation& newNodeLocation, NesPartition newNesPartition);
+    void clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext, const NodeLocation& newNodeLocation, NesPartition newNesPartition);
 
     /**
      * @brief write all data from the reconnect buffer to the currently active network channel

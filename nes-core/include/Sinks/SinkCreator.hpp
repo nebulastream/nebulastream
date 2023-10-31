@@ -228,6 +228,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
  * @param waitTime
  * @param retryTimes
  * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfInputSources: the amount of sources feeding data into the sink
  * @return a data sink pointer
  */
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
