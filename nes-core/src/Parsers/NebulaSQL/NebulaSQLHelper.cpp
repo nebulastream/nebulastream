@@ -17,10 +17,9 @@ limitations under the License.
 
 namespace NES::Parsers {
 
-        const std::vector<std::string>& NebulaSQLHelper::getSources() const { return this->sources; }
-        void NebulaSQLHelper::addSource(const std::string& source) {
-            this->sources.push_back(source);
-        }
+        const std::map<int32_t, std::string>& NebulaSQLHelper::getSources() const { return this->sourceList; }
+        void NebulaSQLHelper::addSource(std::pair<int32_t, std::basic_string<char>> sourcePair) { this->sourceList.insert(sourcePair); }
+
 
         const SinkDescriptorPtr NebulaSQLHelper::getSinkDescriptor() const {
             return this->sinkDescriptor;

@@ -32,6 +32,13 @@ namespace NES::Parsers {
         class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener{
           private:
             NebulaSQLHelper helper;
+            int32_t sourceCounter = 0;
+            int32_t lastSeenSourcePtr = -1;
+            int32_t nodeId = 0;
+            //bool inWhere = false;
+            //bool leftFilter = true;
+            std::string currentLeftExp;
+            std::string currentRightExp;
 
           public:
             QueryPlanPtr getQueryPlan() const;

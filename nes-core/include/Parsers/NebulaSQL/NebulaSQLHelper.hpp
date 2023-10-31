@@ -30,7 +30,6 @@ namespace NES::Parsers {
         class NebulaSQLHelper {
           private:
             std::vector<ExpressionNodePtr> projectionFields;
-            std::vector<std::string> sources;
             SinkDescriptorPtr sinkDescriptor;
             std::vector<ExpressionNodePtr> whereClauses;
 
@@ -39,8 +38,8 @@ namespace NES::Parsers {
             void setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields);
             void addProjectionField(ExpressionNodePtr expressionNode);
 
-            const std::vector<std::string>& getSources() const;
-            void addSource(const std::string& source);
+            const std::map<int32_t, std::string>& getSources() const;
+            void addSource(std::pair<int32_t, std::basic_string<char>> sourcePair);
 
             const SinkDescriptorPtr getSinkDescriptor() const;
             void setSink(SinkDescriptorPtr sink);

@@ -12,8 +12,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
-#include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -22,54 +20,63 @@ limitations under the License.
 #include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-
+#include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
+#include <Plans/Query/QueryPlanBuilder.hpp>
+#include <regex>
 
 namespace NES::Parsers {
+
+        std::string queryPlanToString(const QueryPlanPtr queryPlan) {
+            std::regex r2("[0-9]");
+            std::regex r1("  ");
+            std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
+            queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
+            return queryPlanStr;
+        }
 
         QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const {
 
             QueryPlanPtr queryPlan;
-            queryPlan = QueryPlanBuilder::createQueryPlan(helper.getSources().at(0));
-            ExpressionNodePtr predicate = helper.getWhereClauses().at(0);
-            queryPlan = QueryPlanBuilder::addFilter(predicate, queryPlan);
-            queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
-            queryPlan = QueryPlanBuilder::addLimit(helper.getLimit(), queryPlan);
-            queryPlan = QueryPlanBuilder::addRename(helper.getNewName(),queryPlan);
-            queryPlan = QueryPlanBuilder::addMap(helper.getMapExpression(),queryPlan);
-            /*
-            queryPlan = QueryPlanBuilder::addUnion(queryPlan,queryPlan);
-            queryPlan = QueryPlanBuilder::addJoin();
-            */
-            queryPlan = QueryPlanBuilder::assignWatermark(queryPlan,helper.getWatermarkStrategieDescriptor());
-            queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan,helper.getWindowType());
+            auto it = helper.getSources().begin();
+            if (it != helper.getSources().end()) {  // Check if the map is not empty
+                std::string firstString = it->second;
+                queryPlan = QueryPlanBuilder::createQueryPlan(firstString);
+            }
+            std::cout << queryPlanToString(queryPlan) << "/n";
+            //ExpressionNodePtr predicate = helper.getWhereClauses().at(0);
+            //queryPlan = QueryPlanBuilder::addFilter(predicate, queryPlan);
+            //queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
+            //queryPlan = QueryPlanBuilder::addLimit(helper.getLimit(), queryPlan);
+            //queryPlan = QueryPlanBuilder::addRename(helper.getNewName(),queryPlan);
+            //queryPlan = QueryPlanBuilder::addMap(helper.getMapExpression(),queryPlan);
+            // TODO: Implement logic to handle the union of 2 queryPlan
+            //queryPlan = QueryPlanBuilder::addUnion(queryPlan,queryPlan);
+            //queryPlan = QueryPlanBuilder::addJoin();
+            //queryPlan = QueryPlanBuilder::assignWatermark(queryPlan,helper.getWatermarkStrategieDescriptor());
+            //queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan,helper.getWindowType());
             queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinkDescriptor());
 
             return queryPlan;
         }
 
         void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context) {
-            for (auto namedExprContext : context->namedExpressionSeq()->namedExpression()) {
-                auto expressionText = namedExprContext->expression()->getText();
-                auto attribute = NES::Attribute(expressionText).getExpressionNode();
-                helper.addProjectionField(attribute);
-            }
+            NebulaSQLBaseListener::enterSelectClause(context);
         }
 
         void NebulaSQLQueryPlanCreator::enterFromClause(NebulaSQLParser::FromClauseContext* context) {
-            helper.addSource(context->getText());
+            NebulaSQLBaseListener::enterFromClause(context);
         }
 
         void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseContext *context) {
             if (context->sinkType()) {
                 auto sinkType = context->sinkType()->getText();
                 SinkDescriptorPtr sinkDescriptor;
-                if (sinkType == "Print") {
+                if (sinkType == "PRINT") {
                     sinkDescriptor = NES::PrintSinkDescriptor::create();
                 }
-                if (sinkType == "File") {
+                if (sinkType == "FILE") {
                     sinkDescriptor = NES::FileSinkDescriptor::create(context->getText());
                 }
                 if (sinkType == "MQTT") {
@@ -166,13 +173,18 @@ namespace NES::Parsers {
             else if (opText == "==") {
                 expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
             }
-            helper.addWhereClause(expression);
+            helper.addExpression(expression);
         }
         void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context) {
             NebulaSQLBaseListener::exitSelectClause(context);
+
         }
         void NebulaSQLQueryPlanCreator::exitFromClause(NebulaSQLParser::FromClauseContext* context) {
-            NebulaSQLBaseListener::exitFromClause(context);
+            helper.addSource(std::make_pair(sourceCounter,context->relation(sourceCounter)->getText()));
+            this->lastSeenSourcePtr = sourceCounter;
+            sourceCounter++;
+            this->nodeId++;
+
         }
         void NebulaSQLQueryPlanCreator::enterWhereClause(NebulaSQLParser::WhereClauseContext* context) {
             NebulaSQLBaseListener::enterWhereClause(context);
@@ -191,6 +203,8 @@ namespace NES::Parsers {
         }
         void NebulaSQLQueryPlanCreator::enterArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) {
             NebulaSQLBaseListener::enterArithmeticBinary(context);
+            NES::ExpressionNodePtr arithmeticBinaryExpr = NES::Attribute(context->getText()).getExpressionNode();
+            //helper.addArithmeticBinaryExpression(arithmeticBinaryExpr);
         }
         void NebulaSQLQueryPlanCreator::exitErrorCapturingIdentifier(NebulaSQLParser::ErrorCapturingIdentifierContext* context) {
             NebulaSQLBaseListener::exitErrorCapturingIdentifier(context);
