@@ -421,7 +421,7 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
                 return nodeToLook->getId() == child->as<TopologyNode>()->getId();
             });
 
-            if (found == children.end()) {
+            if (found == children.end() && nodeToLook->getId() != candidateNode->getId()) {
                 NES_TRACE("Topology: Unable to find the input topology node as child of the node under consideration.");
                 foundAncestor = false;
                 break;

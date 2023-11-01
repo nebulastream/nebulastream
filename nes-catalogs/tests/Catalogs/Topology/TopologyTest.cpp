@@ -884,6 +884,56 @@ TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
     EXPECT_TRUE(commonChild->getId() == 4);
 }
 
+TEST_F(TopologyTest, testCommonAncestorIfOneOfTheNodesIsAncestorOfTheOther) {
+
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<TopologyNodePtr> topologyNodes;
+    int resource = 4;
+    for (uint32_t i = 0; i < 9; ++i) {
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(topologyNodes.at(0));
+
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
+
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(3), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
+
+    topology->print();
+
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[0], topologyNodes[1]})->getId(), 0);
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[0], topologyNodes[3]})->getId(), 0);
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[1], topologyNodes[2]})->getId(), 0);
+
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[1], topologyNodes[3]})->getId(), 1);
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[1], topologyNodes[4]})->getId(), 1);
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[1], topologyNodes[4], topologyNodes[8]})->getId(), 1);
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[8], topologyNodes[4], topologyNodes[1]})->getId(), 1);
+
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[5], topologyNodes[6]})->getId(), 2);
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[2], topologyNodes[6]})->getId(), 2);
+
+    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[8], topologyNodes[4]})->getId(), 1);
+}
+
 /**
  * @brief test for expected behavior of findPathBetween in conjunction with findCommonAncestor/Child
  * as well as ignoring nodes marked for maintenance.
