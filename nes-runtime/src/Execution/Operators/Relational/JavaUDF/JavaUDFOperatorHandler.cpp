@@ -53,6 +53,7 @@ void JavaUDFOperatorHandler::setup() {
 
     // Build function signature of map function
     std::string sig = "(L" + getInputClassJNIName() + ";)L" + getOutputClassJNIName() + ";";
+    NES_DEBUG("Java UDF method signature: {}", sig);
 
     // Find udf function
     this->udfMethodId = env->GetMethodID(clazz, getMethodName().c_str(), sig.c_str());
