@@ -31,7 +31,7 @@ void jniErrorCheck(const std::source_location location) {
         auto string = (jstring) env->CallObjectMethod(exception, toString);
         const char* utf = env->GetStringUTFChars(string, &isCopy);
         NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function "
-                                << location.function_name() << " at line " << location.line() << ": " << utf);
+                                << location.function_name() << " at " << location.file_name() << ":" << location.line() << ": " << utf);
     }
 }
 
