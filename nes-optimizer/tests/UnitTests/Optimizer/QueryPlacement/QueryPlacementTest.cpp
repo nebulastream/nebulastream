@@ -148,6 +148,7 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
 TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
+    topology->print();
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -1533,7 +1534,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthThightResourcesConstrains) {
 
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 1, properties);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 1, properties);
-    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 2, properties);
+    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 1, properties);
 
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
@@ -1895,4 +1896,112 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrainsInAJ
             NES_INFO("Sub Plan: {}", querySubPlan->toString());
         }
     }
+}
+
+/**
+ * Test if BottomUp placement respects resources constrains with BinaryOperators
+ * Topology: sinkNode0(1)--mid1(90)--mid2(5)--srcNode1(A)(1)
+ *                         \          \ --srcNode2(B)(1)
+ *                          \ --srcNode2(B)(1)
+ *
+ * Query: SinkOp--join()--join()--source(A)
+ *                  \       \--source(B)
+ *                   \--source(C)
+ *
+ *
+ */
+TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrainsInTwoJoins) {
+    // Setup the topology
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 1, properties);
+    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 10, properties);
+    auto midNode2 = TopologyNode::create(2, "localhost", 4001, 5001, 90, properties);
+    auto srcNode1 = TopologyNode::create(3, "localhost", 4003, 5003, 1, properties);
+    auto srcNode2 = TopologyNode::create(4, "localhost", 4003, 5004, 1, properties);
+    auto srcNode3 = TopologyNode::create(5, "localhost", 4003, 5004, 1, properties);
+
+    TopologyPtr topology = Topology::create();
+    topology->setAsRoot(sinkNode);
+
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
+    topology->addNewTopologyNodeAsChild(midNode1, midNode2);
+    topology->addNewTopologyNodeAsChild(midNode1, srcNode3);
+    topology->addNewTopologyNodeAsChild(midNode2, srcNode1);
+    topology->addNewTopologyNodeAsChild(midNode2, srcNode2);
+
+    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
+    ASSERT_TRUE(midNode1->containAsChild(midNode2));
+    ASSERT_TRUE(midNode1->containAsChild(srcNode3));
+    ASSERT_TRUE(midNode2->containAsChild(srcNode1));
+    ASSERT_TRUE(midNode2->containAsChild(srcNode2));
+
+    // Prepare the source and schema
+    auto schema = Schema::create()
+                      ->addField("id", BasicType::UINT32)
+                      ->addField("value", BasicType::UINT64)
+                      ->addField("timestamp", BasicType::UINT64);
+
+    sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    std::vector<TopologyNodePtr> srcs{srcNode1, srcNode2, srcNode3};
+    for (size_t i = 0; i < 3; i++) {
+        const std::string sourceName = "car" + std::to_string(i + 1);
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
+        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(csvSourceType);
+        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcs[i]);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+    }
+
+    NES_INFO("Query Placement Test: \n{}", topology->toString());
+
+    Query query = Query::from("car1")
+                      .joinWith(Query::from("car2"))
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                      .joinWith(Query::from("car3"))
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                      .sink(NullOutputSinkDescriptor::create());
+
+    auto testQueryPlan = query.getQueryPlan();
+    testQueryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+
+    // Prepare the placement
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+
+    // Execute optimization phases prior to placement
+    testQueryPlan = typeInferencePhase->execute(testQueryPlan);
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    assignDataModificationFactor(testQueryPlan);
+
+    // Execute the placement
+    auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
+    auto sharedQueryId = sharedQueryPlan->getId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    queryPlacementPhase->execute(sharedQueryPlan);
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+
+    EXPECT_EQ(executionNodes.size(), 6UL);
+    NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
 }
