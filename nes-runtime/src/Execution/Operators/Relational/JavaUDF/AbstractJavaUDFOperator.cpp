@@ -149,24 +149,25 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
         // Record should contain only one field
         assert(record.getAllFields().size() == 1);
         auto fieldName = record.getAllFields()[0];
-        if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+        const auto type = field->getDataType();
+        if (type->isEquals(DataTypeFactory::createBoolean())) {
             return FunctionCall<>("createBooleanObject", createBooleanObject, record.read(fieldName).as<Boolean>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
+        } else if (type->isEquals(DataTypeFactory::createFloat())) {
             return FunctionCall<>("createFloatObject", createFloatObject, record.read(fieldName).as<Float>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+        } else if (type->isEquals(DataTypeFactory::createDouble())) {
             return FunctionCall<>("createDoubleObject", createDoubleObject, record.read(fieldName).as<Double>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
+        } else if (type->isEquals(DataTypeFactory::createInt32())) {
             return FunctionCall<>("createIntegerObject", createIntegerObject, record.read(fieldName).as<Int32>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+        } else if (type->isEquals(DataTypeFactory::createInt64())) {
             return FunctionCall<>("createLongObject", createLongObject, record.read(fieldName).as<Int64>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+        } else if (type->isEquals(DataTypeFactory::createInt16())) {
             return FunctionCall<>("createShortObject", createShortObject, record.read(fieldName).as<Int16>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
+        } else if (type->isEquals(DataTypeFactory::createInt8())) {
             return FunctionCall<>("createByteObject", createByteObject, record.read(fieldName).as<Int8>());
-        } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+        } else if (type->isEquals(DataTypeFactory::createText())) {
             return FunctionCall<>("createStringObject", createStringObject, record.read(fieldName).as<Text>()->getReference());
         } else {
-            NES_THROW_RUNTIME_ERROR("Could not create Java UDF input object (data type not supported): type=" << std::string(field->getDataType()->toString()));
+            NES_THROW_RUNTIME_ERROR("Could not create Java UDF input object (data type not supported): type=" << std::string(type->toString()));
         }
     } else {
         auto inputClassPtr = FunctionCall("findInputClass", findInputClass, handler);
@@ -176,7 +177,8 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
             auto field = operatorInputSchema->fields[i];
             auto fieldName = field->getName();
             // TODO reduce code and collapsed proxy functions.
-            if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+            const auto type = field->getDataType();
+            if (type->isEquals(DataTypeFactory::createBoolean())) {
                 FunctionCall<>("setBooleanField",
                                setBooleanField,
                                handler,
@@ -184,7 +186,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Boolean>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
+            } else if (type->isEquals(DataTypeFactory::createFloat())) {
                 FunctionCall<>("setFloatField",
                                setFloatField,
                                handler,
@@ -192,7 +194,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Float>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+            } else if (type->isEquals(DataTypeFactory::createDouble())) {
                 FunctionCall<>("setDoubleField",
                                setDoubleField,
                                handler,
@@ -200,7 +202,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Double>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
+            } else if (type->isEquals(DataTypeFactory::createInt32())) {
                 FunctionCall<>("setIntegerField",
                                setIntegerField,
                                handler,
@@ -208,7 +210,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Int32>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+            } else if (type->isEquals(DataTypeFactory::createInt64())) {
                 FunctionCall<>("setLongField",
                                setLongField,
                                handler,
@@ -216,7 +218,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Int64>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+            } else if (type->isEquals(DataTypeFactory::createInt16())) {
                 FunctionCall<>("setShortField",
                                setShortField,
                                handler,
@@ -224,7 +226,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Int16>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
+            } else if (type->isEquals(DataTypeFactory::createInt8())) {
                 FunctionCall<>("setByteField",
                                setByteField,
                                handler,
@@ -232,7 +234,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Int8>());
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+            } else if (type->isEquals(DataTypeFactory::createText())) {
                 FunctionCall<>("setStringField",
                                setStringField,
                                handler,
@@ -241,7 +243,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                Value<Int32>(i),
                                record.read(fieldName).as<Text>()->getReference());
             } else {
-                NES_THROW_RUNTIME_ERROR("Could not create Java UDF input POJO (data type not supported): field=" << fieldName << ", type=" << std::string(field->getDataType()->toString()));
+                NES_THROW_RUNTIME_ERROR("Could not create Java UDF input POJO (data type not supported): field=" << fieldName << ", type=" << std::string(type->toString()));
             }
         }
         return inputPojoPtr;
