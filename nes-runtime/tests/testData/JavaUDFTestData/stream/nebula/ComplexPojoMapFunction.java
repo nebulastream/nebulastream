@@ -21,6 +21,7 @@ public class ComplexPojoMapFunction implements MapFunction<ComplexPojo, ComplexP
         pojo.floatVariable = 10;
         pojo.intVariable = 10;
         pojo.longVariable = 10;
+        pojo.unsignedLongVariable = 10;
         pojo.shortVariable = 10;
         pojo.byteVariable = 10;
         pojo.doubleVariable = 10;
@@ -38,6 +39,7 @@ public class ComplexPojoMapFunction implements MapFunction<ComplexPojo, ComplexP
         pojo.intVariable = value.intVariable;
         pojo.booleanVariable = value.booleanVariable;
         pojo.longVariable = value.longVariable;
+        pojo.unsignedLongVariable = value.unsignedLongVariable;
         pojo.shortVariable = value.shortVariable;
         pojo.byteVariable = value.byteVariable;
         pojo.doubleVariable = value.doubleVariable;
@@ -56,6 +58,7 @@ public class ComplexPojoMapFunction implements MapFunction<ComplexPojo, ComplexP
         value.intVariable += pojo.intVariable;
         value.shortVariable += pojo.shortVariable;
         value.longVariable += pojo.longVariable;
+        value.unsignedLongVariable += pojo.unsignedLongVariable;
         value.doubleVariable += pojo.doubleVariable;
         value.byteVariable += pojo.byteVariable;
         value.booleanVariable = pojo.booleanVariable && value.booleanVariable;

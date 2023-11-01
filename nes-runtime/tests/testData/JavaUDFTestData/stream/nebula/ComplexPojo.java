@@ -11,6 +11,7 @@ public class ComplexPojo implements Serializable {
     byte byteVariable;
     short shortVariable;
     long longVariable;
+    long unsignedLongVariable;
     float floatVariable;
     double doubleVariable;
     boolean booleanVariable;

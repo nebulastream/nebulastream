@@ -23,6 +23,7 @@ public class ComplexPojoFlatMapFunction implements FlatMapFunction<ComplexPojo, 
         pojo.floatVariable = 10;
         pojo.intVariable = 10;
         pojo.longVariable = 10;
+        pojo.unsignedLongVariable = 10;
         pojo.shortVariable = 10;
         pojo.byteVariable = 10;
         pojo.doubleVariable = 10;
@@ -40,6 +41,7 @@ public class ComplexPojoFlatMapFunction implements FlatMapFunction<ComplexPojo, 
         pojo.intVariable = value.intVariable;
         pojo.booleanVariable = value.booleanVariable;
         pojo.longVariable = value.longVariable;
+        pojo.unsignedLongVariable = value.unsignedLongVariable;
         pojo.shortVariable = value.shortVariable;
         pojo.byteVariable = value.byteVariable;
         pojo.doubleVariable = value.doubleVariable;
@@ -57,6 +59,7 @@ public class ComplexPojoFlatMapFunction implements FlatMapFunction<ComplexPojo, 
         pojo.floatVariable += value.floatVariable;
         pojo.intVariable += value.intVariable;
         pojo.longVariable += value.longVariable;
+        pojo.unsignedLongVariable += value.unsignedLongVariable;
         pojo.shortVariable += value.shortVariable;
         pojo.byteVariable += value.byteVariable;
         pojo.doubleVariable += value.doubleVariable;

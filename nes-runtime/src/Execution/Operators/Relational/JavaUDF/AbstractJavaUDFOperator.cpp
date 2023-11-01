@@ -158,7 +158,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
             return FunctionCall<>("createDoubleObject", createDoubleObject, record.read(fieldName).as<Double>());
         } else if (type->isEquals(DataTypeFactory::createInt32())) {
             return FunctionCall<>("createIntegerObject", createIntegerObject, record.read(fieldName).as<Int32>());
-        } else if (type->isEquals(DataTypeFactory::createInt64())) {
+        } else if (type->isEquals(DataTypeFactory::createInt64()) || type->isEquals(DataTypeFactory::createUInt64())) {
             return FunctionCall<>("createLongObject", createLongObject, record.read(fieldName).as<Int64>());
         } else if (type->isEquals(DataTypeFactory::createInt16())) {
             return FunctionCall<>("createShortObject", createShortObject, record.read(fieldName).as<Int16>());
@@ -210,7 +210,7 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Int32>());
-            } else if (type->isEquals(DataTypeFactory::createInt64())) {
+            } else if (type->isEquals(DataTypeFactory::createInt64()) || type->isEquals(DataTypeFactory::createUInt64())) {
                 FunctionCall<>("setLongField",
                                setLongField,
                                handler,
