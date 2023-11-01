@@ -185,6 +185,41 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
 }
 
 /**
+ * @brief Test simple UDF with long objects as input and output (IntegerMapFunction<Long, Long>)
+ * The UDF increments incoming tuples by 10.
+*/
+TEST_F(MapJavaUdfOperatorTest, UnsignedLongUDFTest) {
+    input = Schema::create()->addField("id", BasicType::UINT64);
+    output = Schema::create()->addField("id", BasicType::INT64);
+    clazz = "stream.nebula.LongMapFunction";
+    inputClass = "java.lang.Long";
+    outputClass = "java.lang.Long";
+
+    int64_t initialValue = 42;
+    auto handler = std::make_shared<JavaUDFOperatorHandler>(clazz,
+                                                            method,
+                                                            inputClass,
+                                                            outputClass,
+                                                            byteCodeList,
+                                                            serializedInstance,
+                                                            input,
+                                                            output,
+                                                            std::nullopt);
+    auto map = MapJavaUDF(0, input, output);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"id", Value<Int64>(initialValue)}});
+    RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
+    map.setup(ctx);
+    map.open(ctx, recordBuffer);
+    map.execute(ctx, record);
+    auto result = collector->records[0];
+    ASSERT_EQ(result.read("id"), initialValue + 10);
+}
+
+/**
  * @brief Test simple UDF with double objects as input and output (IntegerMapFunction<Double, Double>)
  * The UDF increments incoming tuples by 10.
 */
@@ -337,6 +372,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                 ->addField("shortVariable", BasicType::INT16)
                 ->addField("intVariable", BasicType::INT32)
                 ->addField("longVariable", BasicType::INT64)
+                ->addField("unsignedLongVariable", BasicType::UINT64) // UINT64 input fields are also mapped to Java long
                 ->addField("floatVariable", BasicType::FLOAT32)
                 ->addField("doubleVariable", BasicType::FLOAT64)
                 ->addField("stringVariable", BasicType::TEXT)
@@ -346,6 +382,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                  ->addField("shortVariable", BasicType::INT16)
                  ->addField("intVariable", BasicType::INT32)
                  ->addField("longVariable", BasicType::INT64)
+                 ->addField("unsignedLongVariable", BasicType::INT64) // Java long are always mapped to INT64 in output
                  ->addField("floatVariable", BasicType::FLOAT32)
                  ->addField("doubleVariable", BasicType::FLOAT64)
                  ->addField("stringVariable", BasicType::TEXT)
@@ -358,6 +395,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     int16_t initialShort = 10;
     int32_t initialInt = 10;
     int64_t initialLong = 10;
+    uint64_t initialUnsignedLong = 10;
     float initialFloat = 10.0;
     double initialDouble = 10.0;
     bool initialBool = true;
@@ -379,6 +417,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                           {"shortVariable", Value<Int16>(initialShort)},
                           {"intVariable", Value<Int32>(initialInt)},
                           {"longVariable", Value<Int64>(initialLong)},
+                          {"unsignedLongVariable", Value<UInt64>(initialUnsignedLong)},
                           {"floatVariable", Value<Float>(initialFloat)},
                           {"doubleVariable", Value<Double>(initialDouble)},
                           {"stringVariable", Value<Text>("testValue")},
@@ -392,6 +431,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     EXPECT_EQ(result.read("shortVariable"), initialShort + 10);
     EXPECT_EQ(result.read("intVariable"), initialInt + 10);
     EXPECT_EQ(result.read("longVariable"), initialLong + 10);
+    EXPECT_EQ(result.read("longVariable"), initialUnsignedLong + 10);
     EXPECT_EQ(result.read("floatVariable"), initialFloat + 10.0);
     EXPECT_EQ(result.read("doubleVariable"), initialDouble + 10.0);
     // EXPECT_EQ(record.read("stringVariable"), Value<Text>("testValue_appended"));
