@@ -13,6 +13,7 @@
 */
 
 #include <GRPC/WorkerRPCServer.hpp>
+#include <GRPC/StatRequestUtil.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
@@ -26,6 +27,9 @@
 #include <Util/Mobility/Waypoint.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
+#include <Statistics/Requests/StatProbeRequest.hpp>
+#include <Statistics/Requests/StatDeleteRequest.hpp>
+#include <Statistics/StatManager/StatManager.hpp>
 
 namespace NES {
 
@@ -210,17 +214,17 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
 Status WorkerRPCServer::ProbeStat(grpc::ServerContext*, const ProbeStatRequest* request, ProbeStatReply* reply) {
 
     auto probeRequest = &request->proberequestparamobj();
-    auto serializedProbeRequest = ProbeRequestUtil::unpackProbeRequest(probeRequest);
+    auto serializedProbeRequest = StatRequestUtil::deserializeProbeRequest(probeRequest);
     statManager->probeStats(serializedProbeRequest, reply);
     auto stats = reply->stats();
 
     return Status::OK;
 }
 
-Status WorkerRPCServer::deleteStat(grpc::ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) {
+Status WorkerRPCServer::DeleteStat(grpc::ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) {
 
     auto deleteRequest = &request->deleterequestparamobj();
-    auto serializedDeleteRequest = DeleteRequestUtil::unpackDeleteRequest(deleteRequest);
+    auto serializedDeleteRequest = StatRequestUtil::deserializeDeleteRequest(deleteRequest);
     auto success = statManager->deleteStat(serializedDeleteRequest);
     if (success != 0) {
         reply->set_success(1);

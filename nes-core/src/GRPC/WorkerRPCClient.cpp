@@ -460,7 +460,7 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
-std::vector<double> WorkerRPCClient::probeStat(const std::string& destAddress, Experimental::Statistics::ProbeRequestParamObj& probeRequestParamObj) {
+std::vector<double> WorkerRPCClient::probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequest) {
     NES_DEBUG("WorkerRPCClient: Statistic probe request address={}", destAddress);
 
     ClientContext context;

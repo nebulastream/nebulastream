@@ -20,7 +20,7 @@
 #include <Statistics/Requests/StatDeleteRequest.hpp>
 #include <Statistics/Requests/StatProbeRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
-#include <Statistics/StatCoordinator.hpp>
+#include <Statistics/StatCoordinator/StatCoordinator.hpp>
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>

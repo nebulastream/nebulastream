@@ -58,6 +58,22 @@ class StatProbeRequest : public StatRequest {
     }
 
     /**
+     * @brief
+     */
+    void clearPhysicalSourceNames() {
+        this->physicalSourceNames.clear();
+        return;
+    }
+
+    /**
+     * @param physicalSourceName
+     */
+    void addPhysicalSourceName(std::string& physicalSourceName) {
+        physicalSourceNames.push_back(physicalSourceName);
+        return;
+    }
+
+    /**
      * @return returns the first possibleTime for which we want to query/probe one or more statistics
      */
     time_t getStartTime() const {

@@ -23,14 +23,14 @@ namespace NES {
 namespace Experimental::Statistics {
 
 class StatCollectorIdentifier;
-class ProbeRequestParamObj;
-class DeleteRequestParamObj;
+class StatProbeRequest;
+class StatDeleteRequest;
 
 class StatManager {
   public:
     double probeStat(StatCollectorIdentifier& statIdentifier);
-    void probeStats(ProbeRequestParamObj& probeRequest, ProbeStatReply* stats);
-    int64_t deleteStat(DeleteRequestParamObj& deleteRequestParamObj);
+    void probeStats(StatProbeRequest& probeRequest, ProbeStatReply* stats);
+    int64_t deleteStat(StatDeleteRequest& deleteRequestParamObj);
   private:
 
 };

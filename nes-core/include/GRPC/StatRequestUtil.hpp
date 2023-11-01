@@ -42,12 +42,26 @@ class StatRequestUtil {
                                       GRPCStatProbeRequest* grpcProbeRequest);
 
     /**
+     * @brief
+     * @param grpcProbeRequest
+     * @return
+     */
+    static Experimental::Statistics::StatProbeRequest deserializeProbeRequest(const GRPCStatProbeRequest* grpcProbeRequest);
+
+    /**
      * @brief writes a NES native delete request to a grpc generated delete request obj
      * @param probeRequestParamObjPtr the original delete request
      * @param grpcStatDeleteRequest the grpc object to which we wish to copy the original delete request
      */
     static void serializeDeleteRequest(const Experimental::Statistics::StatDeleteRequest& statDeleteRequest,
                                        GRPCStatDeleteRequest* grpcDeleteRequest);
+
+    /**
+     * @brief
+     * @param grpcDeleteRequest
+     * @return
+     */
+    static Experimental::Statistics::StatDeleteRequest deserializeDeleteRequest(const GRPCStatDeleteRequest* grpcDeleteRequest);
 };
 }
 

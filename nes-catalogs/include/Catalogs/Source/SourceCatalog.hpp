@@ -173,28 +173,6 @@ class SourceCatalog {
     std::vector<SourceCatalogEntryPtr> getSubsetOfPhysicalSources(const std::string& logicalSourceName,
                                                                   const std::vector<std::string>& allPhysicalSourceNames);
 
-    /**
-     * @brief checks whether the physicalSourceName is contained within the vector of sources
-     * @param physicalSourceName the name of the physicalSource
-     * @param allSources vector of sources
-     * @return returns the index at which the physicalSourceName was found in the vector or -1
-     * if it was not found
-     */
-    static int64_t physicalSourceExists(const std::string& physicalSourceName,
-                                        const std::vector<SourceCatalogEntryPtr>& allSources);
-
-    /**
-     * @brief checks whether a whole vector of physicalSourceNames is contained within a
-     * vector of sources
-     * @param allPhysicalSourceNames the vector of physicalSourceNames
-     * @param allSources the vector of sources
-     * @return returns a vector of indexes with the location where the nth physicalSourceName was
-     * found. If one physicalSourceName was not found, then a vector with only -1 is returned to
-     * symbolize that not all were found
-     */
-    static std::vector<int64_t> allPhysicalSourceExists(const std::vector<std::string>& allPhysicalSourceNames,
-                                                        const std::vector<SourceCatalogEntryPtr> allSources);
-
     static bool compareByNode(const SourceCatalogEntryPtr& entry1, const SourceCatalogEntryPtr& entry2);
 
   private:

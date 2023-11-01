@@ -17,7 +17,7 @@
 #include <Statistics/Requests/StatCreateRequest.hpp>
 #include <Statistics/Requests/StatDeleteRequest.hpp>
 #include <Statistics/Requests/StatProbeRequest.hpp>
-#include <Statistics/StatCoordinator.hpp>
+#include <Statistics/StatCoordinator/StatCoordinator.hpp>
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -38,10 +38,10 @@ StatCoordinator::StatCoordinator(QueryServicePtr queryService, Catalogs::Source:
 
 QueryId StatCoordinator::createStat(StatCreateRequest& createRequest) {
 
-    auto statIdentifier = StatCollectorIdentifier(createRequest.getLogicalSourceName(),
+    auto statQueryIdentifier = StatQueryIdentifier(createRequest.getLogicalSourceName(),
                                                   createRequest.getFieldName(),
                                                   createRequest.getStatCollectorType());
-    auto statQueryIdIt = trackedStatistics.find(statIdentifier);
+    auto statQueryIdIt = trackedStatistics.find(statQueryIdentifier);
 
     QueryId queryId;
     if (statQueryIdIt == trackedStatistics.end()) {
@@ -77,18 +77,15 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
 
     std::vector<double> stats;
     std::vector<double> erroneousResult{-1.0};
-    auto queriedPhysicalSources = probeParamObj.getPhysicalSourceNames();
-    probeParamObj.clearPhysicalSourceNames();
+    auto queriedPhysicalSources = probeRequest.getPhysicalSourceNames();
+    probeRequest.clearPhysicalSourceNames();
 
     // get all physicalSources and sort them. Sorting them according to the node allows us to combine requests to nodes that
     // have multiple physicalSource we want to query
-    auto allPhysicalSources = sourceCatalog->getPhysicalSources(probeParamObj.getLogicalSourceName());
+    auto allPhysicalSources = sourceCatalog->getSubsetOfPhysicalSources(probeRequest.getLogicalSourceName(), queriedPhysicalSources);
     std::sort(allPhysicalSources.begin(), allPhysicalSources.end(), sourceCatalog->compareByNode);
 
-    auto indexes = sourceCatalog->allPhysicalSourceExists(queriedPhysicalSources, allPhysicalSources);
-
-
-    if (indexes.at(0) == -1) {
+    if (allPhysicalSources[0] == nullptr) {
         /*
          * if a single statistic cannot be found, then we return a vector with the singular error value -1
          * as we potentially otherwise run into undefined behavior about how to combine only the available
@@ -98,36 +95,34 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
     }
 
     // all the desired physicalSource exist
-    auto statIdentifier = StatCollectorIdentifier(probeRequest.getLogicalSourceName(),
+    auto statQueryIdentifier = StatQueryIdentifier(probeRequest.getLogicalSourceName(),
                                                   probeRequest.getFieldName(),
                                                   probeRequest.getStatCollectorType());
 
-    auto statQueryIdIt = trackedStatistics.find(statQueryIdentifier);
+    auto statQueryPairIt = trackedStatistics.find(statQueryIdentifier);
 
-    if (statQueryIdIt == trackedStatistics.end()) {
+    if (statQueryPairIt == trackedStatistics.end()) {
         NES_DEBUG("Statistic cannot queried, as it is not being generated.");
         return erroneousResult;
     } else {
         NES_DEBUG("Statistic is being generated. Proceeding with probe operation.");
-        for (uint64_t i = 0; i < indexes.size(); i++) {
-            auto index = indexes.at(0);
-            auto physicalSource = allPhysicalSources.at(index);
-            auto physicalSourceName = physicalSource->getPhysicalSource()->getPhysicalSourceName();
-            probeParamObj.addPhysicalSourceName(physicalSourceName);
-            auto node = physicalSource->getNode();
+        for (uint64_t index = 0; index < allPhysicalSources.size(); index++) {
+            auto sourceCatalogEntry = allPhysicalSources.at(index);
+            auto physicalSourceName = sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName();
+            probeRequest.addPhysicalSourceName(physicalSourceName);
+            auto node = sourceCatalogEntry->getNode();
             std::string destAddress = node->getIpAddress() + ":" + std::to_string(node->getGrpcPort());
-            for (uint64_t j = i + 1; j < indexes.size(); j++) {
-                index = indexes.at(j);
-                physicalSource = allPhysicalSources.at(index);
-                physicalSourceName = physicalSource->getPhysicalSource()->getPhysicalSourceName();
-                auto secondNode = physicalSource->getNode();
+            for (uint64_t followUpIndexes = index + 1; followUpIndexes < allPhysicalSources.size(); followUpIndexes++) {
+                sourceCatalogEntry = allPhysicalSources.at(followUpIndexes);
+                auto secondNode = sourceCatalogEntry->getNode();
                 if (node == secondNode) {
-                    probeParamObj.addPhysicalSourceName("physicalSourceName");
+                    physicalSourceName = sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName();
+                    probeRequest.addPhysicalSourceName(physicalSourceName);
                 } else {
                     break;
                 }
             }
-            auto localStats = workerClient->probeStat(destAddress, probeParamObj);
+            auto localStats = workerClient->probeStat(destAddress, probeRequest);
             stats.insert(stats.end(), localStats.begin(), localStats.end());
         }
     }
@@ -141,12 +136,12 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
 bool StatCoordinator::deleteStat(StatDeleteRequest& deleteRequest) {
 
     // check if statistic(s) even exists
-    auto statIdentifier = StatCollectorIdentifier(deleteRequest.getLogicalSourceName(),
+    auto statQueryIdentifier = StatQueryIdentifier(deleteRequest.getLogicalSourceName(),
                                                   deleteRequest.getFieldName(),
                                                   deleteRequest.getStatCollectorType());
 
-    auto statQueryIdIt = trackedStatistics.find(statQueryIdentifier);
-    if (statQueryIdIt == trackedStatistics.end()) {
+    auto statQueryPairIt = trackedStatistics.find(statQueryIdentifier);
+    if (statQueryPairIt == trackedStatistics.end()) {
         // stat is not being generated, return with error value
         return -1;
     } else {
@@ -162,7 +157,7 @@ bool StatCoordinator::deleteStat(StatDeleteRequest& deleteRequest) {
         }
 //        ToDo: Add Logic to stop statistic queries. Issue: 4315
 //        NES_DEBUG("Trying to stop query!");
-//        auto queryStopped = queryService->validateAndQueueStopQueryRequest(statQueryIdIt->second);
+//        auto queryStopped = queryService->validateAndQueueStopQueryRequest(statQueryPairIt->second);
 //        if (!queryStopped) {
 //            return -1;
 //        }

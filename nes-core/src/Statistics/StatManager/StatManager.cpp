@@ -15,8 +15,8 @@
 #include <limits>
 
 #include "Statistics/StatManager/StatManager.hpp"
-#include "Statistics/Requests/DeleteRequestParamObj.hpp"
-#include "Statistics/Requests/ProbeRequestParamObj.hpp"
+#include "Statistics/Requests/StatDeleteRequest.hpp"
+#include "Statistics/Requests/StatProbeRequest.hpp"
 #include "Statistics/StatManager/StatCollectorIdentifier.hpp"
 
 namespace NES {
@@ -28,7 +28,7 @@ double StatManager::probeStat(StatCollectorIdentifier& statCollectorIdentifier) 
     return 1.0;
 }
 
-void StatManager::probeStats(ProbeRequestParamObj& probeRequest, ProbeStatReply* stats) {
+void StatManager::probeStats(StatProbeRequest& probeRequest, ProbeStatReply* stats) {
 
     probeRequest.getPhysicalSourceNames();
 
@@ -51,7 +51,7 @@ void StatManager::probeStats(ProbeRequestParamObj& probeRequest, ProbeStatReply*
     return;
 }
 
-int64_t StatManager::deleteStat(DeleteRequestParamObj& deleteRequestParamObj) {
+int64_t StatManager::deleteStat(StatDeleteRequest& deleteRequestParamObj) {
     deleteRequestParamObj.getLogicalSourceName();
     return 1;
 }

@@ -243,7 +243,7 @@ class WorkerRPCClient {
      * @param probeRequestParamObj a obj that has all necessary information to query a statCollector for a statistic
      * @return returns the queried statistic or an error value
      */
-    std::vector<double> probeStat(const std::string& destAddress, Experimental::Statistics::ProbeRequestParamObj& probeRequestParamObj);
+    std::vector<double> probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequestParamObj);
 
     /**
      * @brief Sends a request to a node to delete a specific statistic
