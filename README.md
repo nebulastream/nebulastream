@@ -41,21 +41,59 @@ The codebase is structured in the following components:
 
 ```mermaid
 graph TD;
-  nes-grpc-->nes-core;
-  nes-core-->nes-benchmark;
-  nes-operators-->nes-catalogs;
-  nes-operators-->nes-client;
-  nes-grpc-->nes-common;
-  nes-common-->nes-compiler; 
-  nes-common-->nes-configurations;
-  nes-client-->nes-core;
-  nes-optimizer-->nes-core;
-  nes-runtime-->nes-core;
-  nes-compiler-->nes-core;
-  nes-configurations-->nes-data-types;
-  nes-grpc-->nes-operators;
-  nes-data-types-->nes-operators;
-  nes-catalogs-->nes-optimizer;
-  nes-core-->nes-plugins;
-  nes-operators-->nes-runtime;
+nes-benchmark-->nes-common
+nes-benchmark-->nes-data-types
+nes-benchmark-->nes-operators
+nes-benchmark-->nes-grpc
+nes-benchmark-->nes-catalogs
+nes-benchmark-->nes-optimizer
+nes-benchmark-->nes-compiler
+nes-benchmark-->nes-runtime
+nes-benchmark-->nes-test-util
+nes-benchmark-->nes-client
+nes-benchmark-->nes-coordinator
+nes-benchmark-->nes-worker
+nes-benchmark-->nes-configurations
+nes-catalogs-->nes-common
+nes-catalogs-->nes-grpc
+nes-catalogs-->nes-data-types
+nes-catalogs-->nes-operators
+nes-catalogs-->nes-configurations
+nes-client-->nes-data-types
+nes-client-->nes-operators
+nes-common-->nes-grpc
+nes-compiler-->nes-common
+nes-configurations-->nes-common
+nes-coordinator-->nes-common
+nes-coordinator-->nes-grpc
+nes-coordinator-->nes-operators
+nes-coordinator-->nes-compiler
+nes-coordinator-->nes-catalogs
+nes-coordinator-->nes-runtime
+nes-coordinator-->nes-optimizer
+nes-coordinator-->nes-worker
+nes-coordinator-->nes-client
+nes-coordinator-->nes-data-types
+nes-coordinator-->nes-configurations
+nes-data-types-->nes-configurations
+nes-operators-->nes-common
+nes-operators-->nes-configurations
+nes-operators-->nes-data-types
+nes-operators-->nes-grpc
+nes-optimizer-->nes-common
+nes-optimizer-->nes-data-types
+nes-optimizer-->nes-configurations
+nes-optimizer-->nes-operators
+nes-optimizer-->nes-catalogs
+nes-plugins
+nes-runtime-->nes-common
+nes-runtime-->nes-grpc
+nes-runtime-->nes-data-types
+nes-runtime-->nes-operators
+nes-runtime-->nes-configurations
+nes-worker-->nes-common
+nes-worker-->nes-runtime
+nes-worker-->nes-grpc
+nes-worker-->nes-configurations
+nes-worker-->nes-operators
 ```
