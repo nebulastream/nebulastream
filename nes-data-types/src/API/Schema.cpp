@@ -216,7 +216,7 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
     return -1;
 }
 
-AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
+AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) const {
     //Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
     if (stringToMatch.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
