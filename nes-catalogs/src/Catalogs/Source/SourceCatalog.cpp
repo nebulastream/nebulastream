@@ -14,6 +14,7 @@
 
 #include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
+#include <Exceptions/InvalidStatProbeRequestException.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -283,6 +284,42 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Sc
     NES_TRACE("SourceCatalog: create a new schema object and add to the catalog");
     logicalSourceNameToSchemaMapping[logicalSourceName] = std::move(schemaPtr);
     return true;
+}
+
+SourceCatalogEntryPtr SourceCatalog::getSourceCatalogEntry(const std::string& physicalSourceName,
+                                                           const std::vector<SourceCatalogEntryPtr>& allSources) {
+    auto index = std::find_if(allSources.begin(), allSources.end(), [physicalSourceName](const SourceCatalogEntryPtr& entry) {
+        return entry->getPhysicalSource()->getPhysicalSourceName() == physicalSourceName;
+    });
+
+    if (index != allSources.end()) {
+        return allSources[std::distance(allSources.begin(), index)];
+    } else {
+        NES_ERROR("PhysicalSourceName {} not found in List of SourceCatalogEntries.", physicalSourceName);
+        throw Exceptions::PhysicalSourceNotFoundException(
+            "PhysicalSourceName not found in vector of SourceCatalogEntries. Source Name: " + physicalSourceName + "\n");
+    }
+}
+
+std::vector<SourceCatalogEntryPtr>
+SourceCatalog::getSubsetOfPhysicalSources(const std::string& logicalSourceName,
+                                          const std::vector<std::string>& allPhysicalSourceNames) {
+
+    std::vector<SourceCatalogEntryPtr> desiredSources;
+
+    try {
+        auto allPhysicalSources = getPhysicalSources(logicalSourceName);
+        for (const auto& physicalSourceName : allPhysicalSourceNames) {
+            auto sourceCatalogEntry = getSourceCatalogEntry(physicalSourceName, allPhysicalSources);
+            desiredSources.push_back(sourceCatalogEntry);
+        }
+    } catch (std::exception& e) {
+        std::string errorMessage = e.what();
+        throw NES::Experimental::Statistics::Exceptions::InvalidStatProbeRequestException(
+            "One or more desired physicalSources are not associated with the specified logicalSource");
+        std::vector<SourceCatalogEntryPtr> {nullptr};
+    }
+    return desiredSources;
 }
 
 }// namespace NES::Catalogs::Source

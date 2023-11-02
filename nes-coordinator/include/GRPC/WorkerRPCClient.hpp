@@ -60,6 +60,14 @@ class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 }// namespace Spatial::Mobility::Experimental
 
+namespace Experimental::Statistics {
+class StatProbeRequest;
+using StatProbeRequestPtr = std::unique_ptr<StatProbeRequest>;
+
+class StatDeleteRequest;
+using StatDeleteRequestPtr = std::unique_ptr<StatDeleteRequest>;
+}
+
 enum class RpcClientModes : uint8_t { Register, Unregister, Start, Stop };
 
 class WorkerRPCClient;
@@ -239,6 +247,22 @@ class WorkerRPCClient {
      * @throws runtimeException if the remote procedure call returned an error status
      */
     bool reconfigureQuery(const std::string& address, const QueryPlanPtr& queryPlan);
+
+    /**
+     * @brief Sends a request to a node to query a statistic
+     * @param destAddress the ip address of the node to which the statistic probe query is sent
+     * @param probeRequestParamObj a obj that has all necessary information to query a statCollector for a statistic
+     * @return returns the queried statistic or an error value
+     */
+    double probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequestParamObj);
+
+    /**
+     * @brief Sends a request to a node to delete a specific statistic
+     * @param destAddress the ipAddress of the node
+     * @param deleteRequestParamObj the deleteRequest parameter object, which contains all necessary info for the operation
+     * @return returns true when successful and false otherwise
+     */
+    bool deleteStat(const std::string& destAddress, Experimental::Statistics::StatDeleteRequest& deleteRequestParamObj);
 
   private:
     WorkerRPCClient() = default;

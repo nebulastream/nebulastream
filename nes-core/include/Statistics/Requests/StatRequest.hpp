@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_REQUESTPARAMOBJ_HPP_
-#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_REQUESTPARAMOBJ_HPP_
+#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATREQUEST_HPP_
+#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATREQUEST_HPP_
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
@@ -27,42 +27,33 @@ namespace Experimental::Statistics {
 /**
  * @brief The abstract class from which all requests inherit
  */
-class RequestParamObj {
+class StatRequest {
   public:
-    RequestParamObj(const std::string& logicalSourceName,
-                    const std::string& fieldName,
-                    const StatCollectorType statCollectorType)
+    StatRequest(const std::string& logicalSourceName, const std::string& fieldName, const StatCollectorType statCollectorType)
         : logicalSourceName(logicalSourceName), fieldName(fieldName), statCollectorType(statCollectorType) {}
 
     /**
      * @return returns the logicalStreamName of the request
      */
-    std::string getLogicalSourceName() const {
-        return logicalSourceName;
-    }
+    std::string getLogicalSourceName() const { return logicalSourceName; }
 
     /**
      * @return returns the fieldName of the request
      */
-    std::string getFieldName() const {
-        return fieldName;
-    }
+    std::string getFieldName() const { return fieldName; }
 
     /**
      * @return returns the type of StatCollector with which the statistic is to be generated
      */
-    StatCollectorType getCreateExpression() const {
-        return statCollectorType;
-    }
+    StatCollectorType getStatCollectorType() const { return statCollectorType; }
 
   private:
     std::string logicalSourceName;
-    std::vector<std::string> physicalSourceNames;
     std::string fieldName;
     StatCollectorType statCollectorType;
 };
-}
+}// namespace Experimental::Statistics
 
-}
+}// namespace NES
 
-#endif //NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_REQUESTPARAMOBJ_HPP_
+#endif//NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATREQUEST_HPP_

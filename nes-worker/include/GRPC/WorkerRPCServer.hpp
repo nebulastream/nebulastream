@@ -70,6 +70,10 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
+    Status ProbeStat(ServerContext*, const ProbeStatRequest* request, ProbeStatReply* reply) override;
+
+    Status DeleteStat(ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) override;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Monitoring::MonitoringAgentPtr monitoringAgent;

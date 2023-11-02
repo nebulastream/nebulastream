@@ -16,10 +16,13 @@
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <GRPC/StatRequestUtil.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Statistics/Requests/StatDeleteRequest.hpp>
+#include <Statistics/Requests/StatProbeRequest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -489,4 +492,46 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
+double WorkerRPCClient::probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequest) {
+    NES_DEBUG("WorkerRPCClient: Statistic probe request address={}", destAddress);
+
+    ClientContext context;
+    ProbeStatRequest request;
+    auto GRPCProbeRequest = request.mutable_proberequestparamobj();
+    StatRequestUtil::serializeProbeRequest(probeRequest, GRPCProbeRequest);
+
+    ProbeStatReply reply;
+    auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());
+    auto workerStub = WorkerRPCService::NewStub(chan);
+    auto status = workerStub->ProbeStat(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("Returned Status was ok and stat is: {}", reply.stat());
+        return reply.stat();
+    } else {
+        NES_DEBUG("Returned Status was not ok and stat is: {}", reply.stat());
+        return -1.0;
+    }
+}
+
+bool WorkerRPCClient::deleteStat(const std::string& destAddress, Experimental::Statistics::StatDeleteRequest& deleteRequest) {
+    NES_DEBUG("WorkerRPCClient: Statistic delete request address={}", destAddress);
+
+    ClientContext context;
+    DeleteStatRequest request;
+    auto GRPCDeleteRequest = request.mutable_deleterequestparamobj();
+    StatRequestUtil::serializeDeleteRequest(deleteRequest, GRPCDeleteRequest);
+
+    DeleteStatReply reply;
+    auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());
+    auto workerStub = WorkerRPCService::NewStub(chan);
+    auto status = workerStub->DeleteStat(&context, request, &reply);
+
+    if (status.ok() && reply.success() == true) {
+        NES_DEBUG("Returned Status was ok");
+        return reply.success();
+    } else {
+        NES_DEBUG("Returned Status was not ok");
+        return reply.success();
+    }
+}
 }// namespace NES
