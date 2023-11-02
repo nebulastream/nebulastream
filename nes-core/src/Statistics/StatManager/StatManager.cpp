@@ -14,10 +14,10 @@
 
 #include <limits>
 
-#include "Statistics/StatManager/StatManager.hpp"
 #include "Statistics/Requests/StatDeleteRequest.hpp"
 #include "Statistics/Requests/StatProbeRequest.hpp"
 #include "Statistics/StatManager/StatCollectorIdentifier.hpp"
+#include "Statistics/StatManager/StatManager.hpp"
 
 namespace NES {
 
@@ -35,8 +35,10 @@ void StatManager::probeStats(StatProbeRequest& probeRequest, ProbeStatReply* sta
     probeRequest.getPhysicalSourceNames();
 
     auto allPhysicalSourceNames = probeRequest.getPhysicalSourceNames();
-    auto statCollectorIdentifier =
-        StatCollectorIdentifier(allPhysicalSourceNames, probeRequest.getFieldName(), probeRequest.getStatCollectorType());
+    auto statCollectorIdentifier = StatCollectorIdentifier(probeRequest.getLogicalSourceName(),
+                                                           allPhysicalSourceNames,
+                                                           probeRequest.getFieldName(),
+                                                           probeRequest.getStatCollectorType());
 
     double stat;
     for (uint64_t index = 0; index < probeRequest.getPhysicalSourceNames().size(); index++) {
