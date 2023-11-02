@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
@@ -21,6 +22,7 @@
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <algorithm>
 
 namespace NES {
 
@@ -56,7 +58,7 @@ bool UDFLogicalOperator::inferSchema() {
         //Add new qualifier name to the field and update the field name
         field->setName(newQualifierName + fieldName);
     }
-    // TODO #3481 Check if the UDF input schema corresponds to the operator input schema of the parent operator
+    verifySchemaCompatibility(udfDescriptor->getInputSchema(), children[0]->as<OperatorNode>()->getOutputSchema());
     return true;
 }
 
@@ -68,5 +70,56 @@ bool UDFLogicalOperator::equal(const NodePtr& other) const {
 
 bool UDFLogicalOperator::isIdentical(const NodePtr& other) const {
     return equal(other) && id == other->as<UDFLogicalOperator>()->id;
+}
+
+void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema, const Schema& childOperatorOutputSchema) const {
+    // The code below detects all schema violations, prints them to the DEBUG output log,
+    // then throws an exception containing all of them.
+    // This makes it easier to users to fix all violations at once.
+    std::vector<std::string> errors;
+    if (udfInputSchema.getSize() != childOperatorOutputSchema.getSize()) {
+        errors.push_back("UDF input schema and child operator output schema have different sizes.");
+    }
+    for (const auto& field : udfDescriptor->getInputSchema()->fields) {
+        const auto& fieldName = field->getName();
+        const auto fieldInChild = childOperatorOutputSchema.hasFieldName(fieldName);
+        const auto type = field->getDataType();
+        if (!fieldInChild) {
+            errors.push_back(fmt::format("Could not find field in child operator output schema: {}", fieldName));
+        } else {
+            const auto childType = fieldInChild->getDataType();
+            if (type->isEquals(DataTypeFactory::createInt64()) && childType->isEquals(DataTypeFactory::createUInt64())) {
+                NES_WARNING("Mapping unsigned field in child output schema to signed Java long in UDF input schema: {}",
+                            fieldName)
+            } else if ((type->isEquals(DataTypeFactory::createInt8()) && childType->isEquals(DataTypeFactory::createUInt8()))
+                || (type->isEquals(DataTypeFactory::createInt16()) && childType->isEquals(DataTypeFactory::createUInt16()))
+                || (type->isEquals(DataTypeFactory::createInt32()) && childType->isEquals(DataTypeFactory::createUInt32()))) {
+                errors.push_back(fmt::format(
+                    "Field data type is unsigned integer in child operator output schema; UDFs only support signed integers: {}",
+                    fieldName));
+            } else if (!type->isEquals(childType)) {
+                errors.push_back(fmt::format("Field data type differs in UDF input schema and child operator output schema: "
+                                             "fieldName={}, udfType={}, parentType={}",
+                                             fieldName,
+                                             type->toString(),
+                                             childType->toString()));
+            }
+        }
+    }
+    if (!errors.empty()) {
+        for (auto& error : errors) {
+            NES_ERROR("{}", error);
+        }
+        std::stringstream message;
+        message << "UDF input schema does not match child operator output schema:";
+        if (errors.size() == 1) {
+            message << " " << errors[0];
+        } else {
+            std::for_each(std::begin(errors), std::end(errors), [&message](const std::string& error) {
+                message << "\n- " << error;
+            });
+        }
+        throw TypeInferenceException(message.str());
+    }
 }
 }// namespace NES

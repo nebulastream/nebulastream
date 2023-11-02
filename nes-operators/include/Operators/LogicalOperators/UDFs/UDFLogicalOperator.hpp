@@ -70,6 +70,21 @@ class UDFLogicalOperator : public LogicalUnaryOperatorNode {
      */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 
+  private:
+    /**
+     * Verify that the UDF input type is compatible with the schema of the child operator,
+     * i.e., they contain exactly the same attributes with the same types.
+     * <p>
+     * The test assumes that a UDF input schema supplied by the client only contains signed integers (Java integers are signed),
+     * therefore the child output schema cannot contained unsigned integers.
+     * The only exception is UINT64 which is mapped to a signed Java long in the UDF input schema.
+     *
+     * @param udfInputSchema The UDF input schema (supplied by the Java client).
+     * @param childOperatorOutputSchema The schema of the (first) child operator.
+     * @throws TypeInferenceException If the schemas are not compatible.
+     */
+    void verifySchemaCompatibility(const Schema& udfInputSchema, const Schema& childOperatorOutputSchema) const;
+
   protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;
 };
