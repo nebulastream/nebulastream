@@ -16,15 +16,15 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-#include <Statistics/Requests/CreateRequestParamObj.hpp>
-#include <Statistics/Requests/DeleteRequestParamObj.hpp>
-#include <Statistics/Requests/ProbeRequestParamObj.hpp>
-#include <Statistics/Requests/RequestParamObj.hpp>
+#include <Statistics/Requests/StatCreateRequest.hpp>
+#include <Statistics/Requests/StatDeleteRequest.hpp>
+#include <Statistics/Requests/StatProbeRequest.hpp>
+#include <Statistics/Requests/StatRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES {
 
-class StatisticsTest : public Testing::BaseUnitTest {
+class StatisticsTest : public Testing::BaseIntegrationTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StatisticsTest.log", NES::LogLevel::LOG_DEBUG);
@@ -39,45 +39,42 @@ TEST_F(StatisticsTest, requestsTest) {
     std::string defaultLogicalSourceName = "defaultLogicalSourceName";
     std::vector<std::string> physicalSourceNames(10, "defaultPhysicalSourceName");
     std::string defaultFieldName = "defaultFieldName";
-    Experimental::Statistics::StatCollectorType statCollectorType =
-        Experimental::Statistics::StatCollectorType::COUNT_MIN;
+    Experimental::Statistics::StatCollectorType statCollectorType = Experimental::Statistics::StatCollectorType::COUNT_MIN;
     std::string probeExpression = "x == 15";
     time_t startTime = 100;
     time_t endTime = 10;
 
-    auto buildObj = Experimental::Statistics::CreateRequestParamObj(defaultLogicalSourceName,
-                                                                    defaultFieldName,
-                                                                    Experimental::Statistics::StatCollectorType::COUNT_MIN);
+    auto createObj = Experimental::Statistics::StatCreateRequest(defaultLogicalSourceName,
+                                                                 defaultFieldName,
+                                                                 Experimental::Statistics::StatCollectorType::COUNT_MIN);
 
-    auto probeObj = Experimental::Statistics::ProbeRequestParamObj(defaultLogicalSourceName,
-                                                                   defaultFieldName,
-                                                                   Experimental::Statistics::StatCollectorType::COUNT_MIN,
-                                                                   probeExpression,
-                                                                   physicalSourceNames,
-                                                                   startTime,
-                                                                   endTime);
+    auto probeObj = Experimental::Statistics::StatProbeRequest(defaultLogicalSourceName,
+                                                               defaultFieldName,
+                                                               Experimental::Statistics::StatCollectorType::COUNT_MIN,
+                                                               probeExpression,
+                                                               physicalSourceNames,
+                                                               startTime,
+                                                               endTime);
 
-    auto deleteObj = Experimental::Statistics::DeleteRequestParamObj(defaultLogicalSourceName,
-                                                                     defaultFieldName,
-                                                                     Experimental::Statistics::StatCollectorType::COUNT_MIN,
-                                                                     endTime);
+    auto deleteObj = Experimental::Statistics::StatDeleteRequest(defaultLogicalSourceName,
+                                                                 defaultFieldName,
+                                                                 Experimental::Statistics::StatCollectorType::COUNT_MIN,
+                                                                 endTime);
 
-    EXPECT_EQ(buildObj.getLogicalSourceName(), defaultLogicalSourceName);
+    EXPECT_EQ(createObj.getLogicalSourceName(), defaultLogicalSourceName);
     EXPECT_EQ(probeObj.getLogicalSourceName(), defaultLogicalSourceName);
     EXPECT_EQ(deleteObj.getLogicalSourceName(), defaultLogicalSourceName);
     EXPECT_EQ(probeObj.getPhysicalSourceNames(), physicalSourceNames);
-    EXPECT_EQ(buildObj.getFieldName(), defaultFieldName);
+    EXPECT_EQ(createObj.getFieldName(), defaultFieldName);
     EXPECT_EQ(probeObj.getFieldName(), defaultFieldName);
     EXPECT_EQ(deleteObj.getFieldName(), defaultFieldName);
-    EXPECT_EQ(buildObj.getCreateExpression(),
-              Experimental::Statistics::StatCollectorType::COUNT_MIN);
-    EXPECT_EQ(probeObj.getCreateExpression(),
-              Experimental::Statistics::StatCollectorType::COUNT_MIN);
-    EXPECT_EQ(deleteObj.getCreateExpression(),
-              Experimental::Statistics::StatCollectorType::COUNT_MIN);
+    EXPECT_EQ(createObj.getStatCollectorType(), Experimental::Statistics::StatCollectorType::COUNT_MIN);
+    EXPECT_EQ(probeObj.getStatCollectorType(), Experimental::Statistics::StatCollectorType::COUNT_MIN);
+    EXPECT_EQ(deleteObj.getStatCollectorType(), Experimental::Statistics::StatCollectorType::COUNT_MIN);
     EXPECT_EQ(probeObj.getProbeExpression(), probeExpression);
     EXPECT_EQ(probeObj.getStartTime(), startTime);
     EXPECT_EQ(probeObj.getEndTime(), endTime);
     EXPECT_EQ(deleteObj.getEndTime(), endTime);
 };
-}
+
+}// namespace NES

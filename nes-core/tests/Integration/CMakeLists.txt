@@ -127,3 +127,6 @@ add_nes_integration_test(query-redeployment-integration-tests "QueryRedeployment
 # Enabled with issue #4270
 #add_nes_integration_test(location-integration-tests "LocationIntegrationTests.cpp")
 #target_link_libraries(location-integration-tests nes-core-test-util)
+
+### Statistics Integration Test
+add_nes_integration_test(statistics-integration-test "StatisticsIntegrationTest.cpp")

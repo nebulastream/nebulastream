@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,13 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        CoordinatorRPCServer.cpp
-        CoordinatorRPCClient.cpp
-        WorkerRPCClient.cpp
-        WorkerRPCServer.cpp
-        GrpcLibraryInizializer.cpp
-        CallData.cpp
-        HealthCheckRPCServer.cpp
-        StatRequestUtil.cpp
-)
-
+        StatCoordinator.cpp
+        StatCollectorIdentifier.cpp)

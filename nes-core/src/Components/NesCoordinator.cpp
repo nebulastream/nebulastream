@@ -42,6 +42,7 @@
 #include <memory>
 #include <thread>
 #include <z3++.h>
+#include <Statistics/StatCoordinator.hpp>
 
 //GRPC Includes
 #include <Catalogs/Source/SourceCatalogService.hpp>
@@ -138,6 +139,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     monitoringService = std::make_shared<MonitoringService>(topology, queryService, queryCatalogService, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
+
+    statCoordinator = std::make_shared<Experimental::Statistics::StatCoordinator>(queryService, sourceCatalog);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -384,5 +387,7 @@ TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { re
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 
 GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() const { return globalExecutionPlan; }
+
+Experimental::Statistics::StatCoordinatorPtr NesCoordinator::getStatCoordinator() { return statCoordinator; }
 
 }// namespace NES
