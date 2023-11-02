@@ -1,5 +1,92 @@
 # Changelog
 
+## [v](https://github.com/nebulastream/nebulastream/tree/v) (2023-11-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.239...v)
+
+**Implemented enhancements:**
+
+- \[TASK\] Splite Worker/Runtime/Core [\#4299](https://github.com/nebulastream/nebulastream/issues/4299)
+- \[TASK\] Add Mojo to execute Python UDFs [\#4288](https://github.com/nebulastream/nebulastream/issues/4288)
+- \[TASK\] Add Tuplex for Python UDF execution [\#4287](https://github.com/nebulastream/nebulastream/issues/4287)
+- \[TASK\] Enable optional static linking of executables [\#4266](https://github.com/nebulastream/nebulastream/issues/4266)
+- \[TASK\] Fixed size chars vs var-length text Handling [\#4264](https://github.com/nebulastream/nebulastream/issues/4264)
+- \[TASK\] Set parameter to dict in Python Map UDF Nautilus Operator [\#4197](https://github.com/nebulastream/nebulastream/issues/4197)
+- \[TASK\] Migrate ConcurrentWindowDeploymentTest to Nautilus [\#4131](https://github.com/nebulastream/nebulastream/issues/4131)
+- \[TASK\] Activate Nautilus in TestHarness as default [\#4128](https://github.com/nebulastream/nebulastream/issues/4128)
+- Refactor StateVariable [\#1153](https://github.com/nebulastream/nebulastream/issues/1153)
+
+### Bug Fixes 🐛
+
+- ARM64 Poison Worker Fails [\#2415](https://github.com/nebulastream/nebulastream/issues/2415)
+- Error running clean CMake [\#1995](https://github.com/nebulastream/nebulastream/issues/1995)
+- Enable OperatorCodeGenerationTest  [\#1689](https://github.com/nebulastream/nebulastream/issues/1689)
+- PrettyPrintTupleBuffer does not work when schema contains string values [\#1165](https://github.com/nebulastream/nebulastream/issues/1165)
+- Bug in QueryAPI: Handling 0 constant values [\#893](https://github.com/nebulastream/nebulastream/issues/893)
+
+#### Runtime 
+
+- Pointer to the NesWorker inside NodeEngine [\#2544](https://github.com/nebulastream/nebulastream/issues/2544)
+- Identify running node engines [\#979](https://github.com/nebulastream/nebulastream/issues/979)
+- Local Algorithm Selection [\#935](https://github.com/nebulastream/nebulastream/issues/935)
+
+#### Build Management
+
+- \[Feature\] update build + executable image to ubuntu 22.04 [\#2775](https://github.com/nebulastream/nebulastream/issues/2775)
+- VCPKG: enable Z3ValidationTest again [\#1957](https://github.com/nebulastream/nebulastream/issues/1957)
+
+#### Operators 
+
+- \[Feature\] Move Logical Operators to own component [\#3310](https://github.com/nebulastream/nebulastream/issues/3310)
+- Make Join Operator run Multithreaded Efficiently [\#1396](https://github.com/nebulastream/nebulastream/issues/1396)
+- Concept for an Efficient Distributed/Decentralized Join  [\#1394](https://github.com/nebulastream/nebulastream/issues/1394)
+- Use copy constructor to copy operators [\#1098](https://github.com/nebulastream/nebulastream/issues/1098)
+
+#### State Management 
+
+- add concept for lifecycle management of state variable [\#1684](https://github.com/nebulastream/nebulastream/issues/1684)
+
+#### Documentation 
+
+- Make Documentation available at a public server. [\#2208](https://github.com/nebulastream/nebulastream/issues/2208)
+- Add Documentation for window operators [\#1099](https://github.com/nebulastream/nebulastream/issues/1099)
+- Document Watermarking [\#1072](https://github.com/nebulastream/nebulastream/issues/1072)
+- Github Page for documentation and test coverage [\#592](https://github.com/nebulastream/nebulastream/issues/592)
+
+### Miscellaneous Issues ✌️
+
+- Move Kafka configuration to separate CMake config file [\#3351](https://github.com/nebulastream/nebulastream/issues/3351)
+- \[Feature\] Migrate to new query compiler [\#3076](https://github.com/nebulastream/nebulastream/issues/3076)
+- MLIR: Enable Assembly Printing [\#2934](https://github.com/nebulastream/nebulastream/issues/2934)
+- BTW Paper [\#2916](https://github.com/nebulastream/nebulastream/issues/2916)
+- \[Feature\] Add python3 via vcpkg [\#2774](https://github.com/nebulastream/nebulastream/issues/2774)
+- Refactor GitHub Team Structure [\#2730](https://github.com/nebulastream/nebulastream/issues/2730)
+- Aggregation MAX for uint64 returns 0  [\#2622](https://github.com/nebulastream/nebulastream/issues/2622)
+- Allow standalone NES program execution in IDE \(as flink does\) [\#2577](https://github.com/nebulastream/nebulastream/issues/2577)
+- \[Windowing\] Check accesses to thread local slice stores [\#2547](https://github.com/nebulastream/nebulastream/issues/2547)
+- Add global window [\#2537](https://github.com/nebulastream/nebulastream/issues/2537)
+- Merge CodeGenerator and CCodeGenerator [\#2533](https://github.com/nebulastream/nebulastream/issues/2533)
+- Convert SchemaSerializationUtil to namespace [\#2369](https://github.com/nebulastream/nebulastream/issues/2369)
+- Benchmarks on predicated vs branching filters [\#2224](https://github.com/nebulastream/nebulastream/issues/2224)
+- Potential Bottleneck in the Hash Specialization for Array [\#2014](https://github.com/nebulastream/nebulastream/issues/2014)
+- Windowing: Add out of order tests [\#2008](https://github.com/nebulastream/nebulastream/issues/2008)
+- Build benchmarks on the CI [\#1880](https://github.com/nebulastream/nebulastream/issues/1880)
+- Gtest with multi-threaded execution [\#1665](https://github.com/nebulastream/nebulastream/issues/1665)
+- could you add some doc [\#1645](https://github.com/nebulastream/nebulastream/issues/1645)
+- Replace ZMQ dependency [\#1635](https://github.com/nebulastream/nebulastream/issues/1635)
+- numbering of components in logs [\#1544](https://github.com/nebulastream/nebulastream/issues/1544)
+- Refactor CallData [\#1527](https://github.com/nebulastream/nebulastream/issues/1527)
+- Sorting of Sliding windows [\#1481](https://github.com/nebulastream/nebulastream/issues/1481)
+- get rid of " in API [\#1469](https://github.com/nebulastream/nebulastream/issues/1469)
+- get rid of Attribute\( [\#1468](https://github.com/nebulastream/nebulastream/issues/1468)
+- Make Window Operator run Multithreaded Efficiently [\#1395](https://github.com/nebulastream/nebulastream/issues/1395)
+- Reintroduce watermark-only buffer [\#1318](https://github.com/nebulastream/nebulastream/issues/1318)
+- Pass QueryPlan to NodeEngine [\#1251](https://github.com/nebulastream/nebulastream/issues/1251)
+- Check if we should move this to the CSV Format. [\#1128](https://github.com/nebulastream/nebulastream/issues/1128)
+- Buffer change from getTuple to getBytes [\#992](https://github.com/nebulastream/nebulastream/issues/992)
+- Buffer Manager Statistics [\#630](https://github.com/nebulastream/nebulastream/issues/630)
+- Get rid of string escaping [\#543](https://github.com/nebulastream/nebulastream/issues/543)
+
 ## [v0.5.239](https://github.com/nebulastream/nebulastream/tree/v0.5.239) (2023-10-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.238...v0.5.239)
