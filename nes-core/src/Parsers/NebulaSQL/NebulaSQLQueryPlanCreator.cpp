@@ -37,7 +37,9 @@ namespace NES::Parsers {
         }
 
         QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const {
+            return completeQueryPlan;
 
+            /**
             QueryPlanPtr queryPlan;
             auto it = helper.getSources().begin();
             if (it != helper.getSources().end()) {  // Check if the map is not empty
@@ -47,7 +49,8 @@ namespace NES::Parsers {
             std::cout << queryPlanToString(queryPlan) << "/n";
             //ExpressionNodePtr predicate = helper.getWhereClauses().at(0);
             //queryPlan = QueryPlanBuilder::addFilter(predicate, queryPlan);
-            //queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
+            if (!helper.getProjectionFields().empty())
+                queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
             //queryPlan = QueryPlanBuilder::addLimit(helper.getLimit(), queryPlan);
             //queryPlan = QueryPlanBuilder::addRename(helper.getNewName(),queryPlan);
             //queryPlan = QueryPlanBuilder::addMap(helper.getMapExpression(),queryPlan);
@@ -57,8 +60,12 @@ namespace NES::Parsers {
             //queryPlan = QueryPlanBuilder::assignWatermark(queryPlan,helper.getWatermarkStrategieDescriptor());
             //queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan,helper.getWindowType());
             queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinks().front());
+            **/
+        }
 
-            return queryPlan;
+        void NebulaSQLQueryPlanCreator::poppush(NebulaSQLHelper helper){
+            helpers.pop();
+            helpers.push(helper);
         }
 
         void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context) {
@@ -131,16 +138,21 @@ namespace NES::Parsers {
                 if (sinkType == "NullOutput") {
                     sinkDescriptor = NES::NullOutputSinkDescriptor::create();
                 }
+                NebulaSQLHelper helper = helpers.top();
                 helper.addSink(sinkDescriptor);
+                poppush(helper);
             }
         }
 
         void NebulaSQLQueryPlanCreator::exitNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context) {
             ExpressionNodePtr expressionNode;
+            NebulaSQLHelper helper = helpers.top();
             for (auto namedExpression : context->namedExpression()) {
                 auto attributeField = NES::Attribute(context->getText()).getExpressionNode();
                 helper.addProjectionField(attributeField);
             }
+            poppush(helper);
+
         }
         void NebulaSQLQueryPlanCreator::enterNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context) {
             NebulaSQLBaseListener::enterNamedExpressionSeq(context);
@@ -148,6 +160,7 @@ namespace NES::Parsers {
         }
 
         void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinaryContext* context) {
+            NebulaSQLHelper helper = helpers.top();
             auto leftExpression = NES::Attribute(context->left->getText()).getExpressionNode();
             auto rightExpression = NES::Attribute(context->right->getText()).getExpressionNode();
             NES::ExpressionNodePtr expression;
@@ -174,16 +187,24 @@ namespace NES::Parsers {
                 expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
             }
             helper.addExpression(expression);
+            helpers.pop();
+            helpers.push(helper);
+
         }
         void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context) {
             NebulaSQLBaseListener::exitSelectClause(context);
 
         }
         void NebulaSQLQueryPlanCreator::exitFromClause(NebulaSQLParser::FromClauseContext* context) {
+            NebulaSQLHelper helper = helpers.top();
             helper.addSource(std::make_pair(sourceCounter,context->relation(sourceCounter)->getText()));
+            /*
             this->lastSeenSourcePtr = sourceCounter;
             sourceCounter++;
             this->nodeId++;
+             */
+            poppush(helper);
+
 
         }
         void NebulaSQLQueryPlanCreator::enterWhereClause(NebulaSQLParser::WhereClauseContext* context) {
@@ -215,7 +236,34 @@ namespace NES::Parsers {
         void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierContext* context) {
             NebulaSQLBaseListener::enterIdentifier(context);
         }
+        void NebulaSQLQueryPlanCreator::enterPrimaryQuery(NebulaSQLParser::PrimaryQueryContext* context) {
+            NebulaSQLHelper helper;
+            helpers.push(helper);
+            NebulaSQLBaseListener::enterPrimaryQuery(context);
+        }
         void NebulaSQLQueryPlanCreator::exitPrimaryQuery(NebulaSQLParser::PrimaryQueryContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+            QueryPlanPtr queryPlan;
+            auto it = helper.getSources().begin();
+            if (it != helper.getSources().end()) {  // Check if the map is not empty
+                std::string firstString = it->second;
+                queryPlan = QueryPlanBuilder::createQueryPlan(firstString);
+            }
+            queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinks().front());
+            helpers.pop();
+            if(helper.queryPlan){
+                QueryId subQueryId = helper.queryPlan->getQueryId();
+                queryPlan->setQuerySubPlanId(subQueryId);
+            }
+            if(helpers.empty()){
+                completeQueryPlan = queryPlan;
+            }else{
+                NebulaSQLHelper subQueryHelper = helpers.top();
+                subQueryHelper.queryPlan = queryPlan;
+                poppush(helper);
+
+
+            }
             NebulaSQLBaseListener::exitPrimaryQuery(context);
         }
         void NebulaSQLQueryPlanCreator::enterTimeUnit(NebulaSQLParser::TimeUnitContext* context) {

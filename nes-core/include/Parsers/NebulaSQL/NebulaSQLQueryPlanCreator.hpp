@@ -31,15 +31,19 @@ limitations under the License.
 namespace NES::Parsers {
         class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener{
           private:
-            NebulaSQLHelper helper;
             int32_t sourceCounter = 0;
-            int32_t lastSeenSourcePtr = -1;
-            int32_t nodeId = 0;
+            //int32_t lastSeenSourcePtr = -1;
+            //int32_t nodeId = 0;
             //bool inWhere = false;
             //bool leftFilter = true;
             std::string currentLeftExp;
             std::string currentRightExp;
-
+            std::stack<NebulaSQLHelper> helpers;
+            QueryPlanPtr completeQueryPlan;
+            // helper erweitern das er querlyplan hat
+            // enterprimary: helper erstellen, auf stack
+            // exitprimary: helper nehmen,  queryplan basteln, helper poppen, entweder an top_helper senden, oder abspeichern
+            // getQueryPlan returned nur noch queryPlanDerEchteEtc
           public:
             QueryPlanPtr getQueryPlan() const;
             void enterSelectClause(NebulaSQLParser::SelectClauseContext* context) override;
@@ -59,6 +63,7 @@ namespace NES::Parsers {
             void exitErrorCapturingIdentifier(NebulaSQLParser::ErrorCapturingIdentifierContext* context) override;
             void enterUnquotedIdentifier(NebulaSQLParser::UnquotedIdentifierContext* context) override;
             void enterIdentifier(NebulaSQLParser::IdentifierContext* context) override;
+            void enterPrimaryQuery(NebulaSQLParser::PrimaryQueryContext* context) override;
             void exitPrimaryQuery(NebulaSQLParser::PrimaryQueryContext* context) override;
             void enterTimeUnit(NebulaSQLParser::TimeUnitContext* context) override;
             void exitSizeParameter(NebulaSQLParser::SizeParameterContext* context) override;
@@ -87,6 +92,7 @@ namespace NES::Parsers {
             void enterWatermarkParameters(NebulaSQLParser::WatermarkParametersContext* context) override;
             void exitWatermarkClause(NebulaSQLParser::WatermarkClauseContext* context) override;
             void exitSingleStatement(NebulaSQLParser::SingleStatementContext* context) override;
+            void poppush(NebulaSQLHelper helper);
         };
 
 

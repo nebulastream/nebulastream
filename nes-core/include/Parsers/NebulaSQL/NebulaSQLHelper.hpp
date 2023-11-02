@@ -38,7 +38,6 @@ namespace NES::Parsers {
             std::list<SinkDescriptorPtr> sinkList; // INTO
             std::pair<std::string, int32_t> window;// WITHIN
 
-
           public:
             //Constructors
             NebulaSQLHelper() = default;
@@ -68,6 +67,7 @@ namespace NES::Parsers {
             const WatermarkStrategyDescriptorPtr& getWatermarkStrategieDescriptor() const;
              */
             const NES::Windowing::WindowTypePtr getWindowType() const;
+            QueryPlanPtr queryPlan;
         };
     }// namespace NES::Parsers
 
