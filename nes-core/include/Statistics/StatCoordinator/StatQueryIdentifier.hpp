@@ -67,9 +67,9 @@ class StatQueryIdentifier {
         std::size_t operator()(const StatQueryIdentifier& identifier) const {
             // Combine the hash codes of the components to get a unique identifier
             std::size_t hashValue = 0;
-            hashValue ^= std::hash<std::string>()(identifier.getLogicalSourceName()) + 0x9e3779b9 + (hashValue << 6) + (hashValue >> 2);
-            hashValue ^= std::hash<std::string>()(identifier.getFieldName()) + 0x9e3779b9 + (hashValue << 6) + (hashValue >> 2);
-            hashValue ^= static_cast<std::size_t>(identifier.getStatCollectorType()) + 0x9e3779b9 + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<std::string>()(identifier.getLogicalSourceName());
+            hashValue ^= std::hash<std::string>()(identifier.getFieldName());
+            hashValue ^= static_cast<std::size_t>(identifier.getStatCollectorType());
             return hashValue;
         }
     };

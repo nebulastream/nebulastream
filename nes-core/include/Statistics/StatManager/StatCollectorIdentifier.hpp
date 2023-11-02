@@ -68,7 +68,7 @@ class StatCollectorIdentifier {
         std::size_t operator()(const StatCollectorIdentifier& identifier) const {
             // Combine the hash codes of the components to get a unique identifier
             std::size_t hashValue = 0;
-            hashValue ^= std::hash<std::string>()(identifier.getLogicalSourceName());
+            hashValue ^= std::hash<std::string>()(identifier.getPhysicalSourceName());
             hashValue ^= std::hash<std::string>()(identifier.getFieldName());
             hashValue ^= static_cast<std::size_t>(identifier.getStatCollectorType());
             return hashValue;

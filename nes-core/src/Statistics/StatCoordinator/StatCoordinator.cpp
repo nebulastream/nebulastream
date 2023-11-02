@@ -140,8 +140,8 @@ bool StatCoordinator::deleteStat(StatDeleteRequest& deleteRequest) {
                                                   deleteRequest.getFieldName(),
                                                   deleteRequest.getStatCollectorType());
 
-    auto statQueryPairIt = trackedStatistics.find(statQueryIdentifier);
-    if (statQueryPairIt == trackedStatistics.end()) {
+    auto statQueryIdIt = trackedStatistics.find(statQueryIdentifier);
+    if (statQueryIdIt == trackedStatistics.end()) {
         // stat is not being generated, return with error value
         return -1;
     } else {
@@ -155,12 +155,12 @@ bool StatCoordinator::deleteStat(StatDeleteRequest& deleteRequest) {
                 return success;
             }
         }
-//        ToDo: Add Logic to stop statistic queries. Issue: 4315
-//        NES_DEBUG("Trying to stop query!");
-//        auto queryStopped = queryService->validateAndQueueStopQueryRequest(statQueryPairIt->second);
-//        if (!queryStopped) {
-//            return -1;
-//        }
+        // ToDo: Add Logic to stop statistic queries. Issue: 4315
+        //        NES_DEBUG("Trying to stop query!");
+        //        auto queryStopped = queryService->validateAndQueueStopQueryRequest(statQueryIdIt->second);
+        //        if (!queryStopped) {
+        //            return -1;
+        //        }
 
         trackedStatistics.erase(statQueryIdentifier);
         NES_DEBUG("StatCollectors successfully deleted and query stopped!");
