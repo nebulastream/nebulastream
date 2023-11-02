@@ -67,11 +67,16 @@ ArrowSource::ArrowSource(SchemaPtr schema,
         NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource: Could not determine absolute pathname: " << filePath.c_str());
     }
 
-    auto openFileStatus = openFile();
-
-    if (!openFileStatus.ok()) {
-        NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource file error: " << openFileStatus.ToString());
+    auto readerStatus = openCsvFile();
+    if (!readerStatus.ok()) {
+        NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource CSV error: " << readerStatus.ToString());
     }
+
+//    auto openFileStatus = openFile();
+//
+//    if (!openFileStatus.ok()) {
+//        NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource file error: " << openFileStatus.ToString());
+//    }
 
     NES_DEBUG("ArrowSource: Opened Arrow IPC file {}", path.get());
     NES_DEBUG("ArrowSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
@@ -206,10 +211,30 @@ arrow::Status ArrowSource::openFile() {
     return arrow::Status::OK();
 }
 
+arrow::Status ArrowSource::openCsvFile() {
+    ARROW_ASSIGN_OR_RAISE(inputFile, arrow::io::ReadableFile::Open(filePath, arrow::default_memory_pool()));
+    arrow::io::IOContext io_context = arrow::io::default_io_context();
+    auto read_options = arrow::csv::ReadOptions::Defaults();
+    auto parse_options = arrow::csv::ParseOptions::Defaults();
+    auto convert_options = arrow::csv::ConvertOptions::Defaults();
+    // Instantiate TableReader from input stream and options
+    auto maybe_reader = arrow::csv::StreamingReader::Make(io_context,
+                                                          inputFile,
+                                                          read_options,
+                                                          parse_options,
+                                                          convert_options);
+    if (!maybe_reader.ok()) {
+        // Handle TableReader instantiation error...
+        NES_THROW_RUNTIME_ERROR("ArrowSource::ArrowSource CSV reader error: " << maybe_reader.status());
+    }
+    csvStreamingReader = *maybe_reader;
+    return arrow::Status::OK();
+}
+
 void ArrowSource::readNextBatch() {
     // set the internal index to 0 and read the new batch
     indexWithinCurrentRecordBatch = 0;
-    auto readStatus = recordBatchStreamReader->ReadNext(&currentRecordBatch);
+    auto readStatus = csvStreamingReader->ReadNext(&currentRecordBatch);
 
     // check if file has ended
     if (currentRecordBatch == nullptr) {
