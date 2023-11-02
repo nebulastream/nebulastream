@@ -154,6 +154,25 @@ class SourceCatalog {
 
     SourceCatalog();
 
+    /**
+     * @brief checks if a source with physicalSourceName exists in the vector of SourceCatalogEntries and if so returns it
+     * @param physicalSourceName the unique identifier to a physicalSource
+     * @param allSources a vector of source entries
+     * @return a SourceCatalogEntryPtr to the source specified by the physicalSourceName
+     */
+    SourceCatalogEntryPtr getSourceCatalogEntry(const std::string& physicalSourceName,
+                                                const std::vector<SourceCatalogEntryPtr>& allSources);
+
+    /**
+     * @brief checks if a whole list of physicalSource(Names) is part of a logicalSource and if so returns a vector of the sources
+     * @param logicalSourceName the name of the larger logical source
+     * @param allPhysicalSourceNames a vector of physicalSourceNames
+     * @return all associated SourceCatalogEntryPtrs to the queried physicalSourceNames, but if one physicalSourceName is not
+     * part of the logicalSource associated with logicalSourceName, then a vector only holding a nullptr
+     */
+    std::vector<SourceCatalogEntryPtr> getSubsetOfPhysicalSources(const std::string& logicalSourceName,
+                                                                  const std::vector<std::string>& allPhysicalSourceNames);
+
   private:
     std::recursive_mutex catalogMutex;
     //map logical source to schema

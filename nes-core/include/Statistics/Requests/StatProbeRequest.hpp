@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_PROBEREQUESTPARAMOBJ_HPP_
-#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_PROBEREQUESTPARAMOBJ_HPP_
+#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATPROBEREQUEST_HPP_
+#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATPROBEREQUEST_HPP_
 
 #include <string>
 #include <memory>
 #include <vector>
 
-#include <Statistics/Requests/RequestParamObj.hpp>
+#include <Statistics/Requests/StatRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES {
@@ -29,9 +29,9 @@ namespace Experimental::Statistics {
 /**
  * @brief the inherited class that defines what is needed to probe Statistics
  */
-class ProbeRequestParamObj : public RequestParamObj {
+class StatProbeRequest : public StatRequest {
   public:
-    ProbeRequestParamObj(const std::string &logicalSourceName,
+    StatProbeRequest(const std::string &logicalSourceName,
                          const std::string &fieldName,
                          const StatCollectorType statCollectorType,
                          const std::string &probeExpression,
@@ -39,7 +39,7 @@ class ProbeRequestParamObj : public RequestParamObj {
                          const time_t startTime,
                          const time_t endTime,
                          const bool merge = false)
-        : RequestParamObj(logicalSourceName, fieldName, statCollectorType),
+        : StatRequest(logicalSourceName, fieldName, statCollectorType),
           probeExpression(probeExpression), physicalSourceNames(physicalSourceNames),
           startTime(startTime), endTime(endTime), merge(merge) {}
 
@@ -53,7 +53,7 @@ class ProbeRequestParamObj : public RequestParamObj {
     /**
      * @return returns the physicalSourceNames over which the statCollectors were generated that we wish to probe/query
      */
-    std::vector<std::string> getPhysicalSourceNames() {
+    std::vector<std::string> getPhysicalSourceNames() const {
         return physicalSourceNames;
     }
 
@@ -90,4 +90,4 @@ class ProbeRequestParamObj : public RequestParamObj {
 
 }
 
-#endif //NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_PROBEREQUESTPARAMOBJ_HPP_
+#endif //NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATPROBEREQUEST_HPP_

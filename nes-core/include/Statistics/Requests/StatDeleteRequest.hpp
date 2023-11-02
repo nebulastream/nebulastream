@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_DELETEREQUESTPARAMOBJ_HPP_
-#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_DELETEREQUESTPARAMOBJ_HPP_
+#ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATDELETEREQUEST_HPP_
+#define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATDELETEREQUEST_HPP_
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
-#include <Statistics/Requests/RequestParamObj.hpp>
+#include <Statistics/Requests/StatRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES {
@@ -29,27 +29,25 @@ namespace Experimental::Statistics {
 /**
  * @brief the inherited class that defines what is needed to delete Statistics
  */
-class DeleteRequestParamObj : public RequestParamObj {
+class StatDeleteRequest : public StatRequest {
   public:
-    DeleteRequestParamObj(const std::string &logicalSourceName,
-                          const std::string &fieldName,
-                          const StatCollectorType statCollectorType,
-                          const time_t endTime)
-        : RequestParamObj(logicalSourceName, fieldName, statCollectorType), endTime(endTime) {}
+    StatDeleteRequest(const std::string& logicalSourceName,
+                      const std::string& fieldName,
+                      const StatCollectorType statCollectorType,
+                      const time_t endTime)
+        : StatRequest(logicalSourceName, fieldName, statCollectorType), endTime(endTime) {}
 
     /**
      * @return returns the latest possible time for which we wat to keep statCollectors.
      * Everything older is deleted
      */
-    time_t getEndTime() const {
-        return endTime;
-    }
+    time_t getEndTime() const { return endTime; }
 
   private:
     time_t endTime;
 };
-}
+}// namespace Experimental::Statistics
 
-}
+}// namespace NES
 
-#endif //NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_DELETEREQUESTPARAMOBJ_HPP_
+#endif//NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATDELETEREQUEST_HPP_

@@ -192,4 +192,19 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     }
     return Status::OK;
 }
+
+Status WorkerRPCServer::ProbeStat(grpc::ServerContext*, const ProbeStatRequest* request, ProbeStatReply* reply) {
+
+    auto test = request->proberequestparamobj();
+    reply->set_stat(1.0);
+
+    return Status::OK;
+}
+
+Status WorkerRPCServer::DeleteStat(grpc::ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) {
+    auto test = request->deleterequestparamobj();
+    reply->set_success(true);
+    return Status::OK;
+}
+
 }// namespace NES
