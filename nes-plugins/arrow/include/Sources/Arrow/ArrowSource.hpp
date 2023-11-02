@@ -20,6 +20,7 @@
 #include <Sources/Arrow/ArrowSourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <arrow/api.h>
+#include <arrow/csv/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
 #include <string>
@@ -119,12 +120,21 @@ class ArrowSource : public DataSource {
     uint64_t indexWithinCurrentRecordBatch{0};
     std::shared_ptr<arrow::ipc::RecordBatchStreamReader> recordBatchStreamReader;
 
+    // CSV reading from arrow
+    std::shared_ptr<arrow::csv::StreamingReader> csvStreamingReader;
+
     // arrow related utility functions
     /**
      * @brief opens the Arrow inputSource, and initializes the recordBatchStreamReader
      * @return returns an arrow status
      */
     arrow::Status openFile();
+
+    /**
+     * @brief opens the csv file and initializes the csv Table reader
+     * @return returns an arrow status
+     */
+    arrow::Status openCsvFile();
 
     /**
      * @brief reads the next record batch in the recordBatchStreamReader

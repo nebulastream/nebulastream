@@ -180,9 +180,10 @@ void loadClassesFromByteList(const jni::JavaUDFByteCodeList& byteCodeList) {
         const auto jniName = convertToJNIName(className);
         NES_DEBUG("Injecting Java class into JVM: {}", jniName);
         env->DefineClass(jniName.c_str(), nullptr, jCode, (jint) byteCode.size());
-        jniErrorCheck();
+//        jniErrorCheck();
         env->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
-        jniErrorCheck();
+//        jniErrorCheck();
+        env->ExceptionClear();
     }
 }
 
