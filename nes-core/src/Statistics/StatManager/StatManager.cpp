@@ -23,8 +23,10 @@ namespace NES {
 
 namespace Experimental::Statistics {
 
+StatManager::StatManager() {}
+
 double StatManager::probeStat(StatCollectorIdentifier& statCollectorIdentifier) {
-    statCollectorIdentifier.getPhysicalSourceName();
+    statCollectorIdentifier.getPhysicalSourceNames();
     return 1.0;
 }
 
@@ -34,11 +36,11 @@ void StatManager::probeStats(StatProbeRequest& probeRequest, ProbeStatReply* sta
 
     auto allPhysicalSourceNames = probeRequest.getPhysicalSourceNames();
     auto statCollectorIdentifier =
-        StatCollectorIdentifier(allPhysicalSourceNames.at(0), probeRequest.getFieldName(), probeRequest.getStatCollectorType());
+        StatCollectorIdentifier(allPhysicalSourceNames, probeRequest.getFieldName(), probeRequest.getStatCollectorType());
 
     double stat;
     for (uint64_t index = 0; index < probeRequest.getPhysicalSourceNames().size(); index++) {
-        statCollectorIdentifier.setPhysicalSourceName(allPhysicalSourceNames.at(0));
+        statCollectorIdentifier.setPhysicalSourceName(allPhysicalSourceNames[0]);
         stat = probeStat(statCollectorIdentifier);
         // ToDo: add try catch block
         if (stat != std::numeric_limits<double>::quiet_NaN()) {
@@ -51,9 +53,9 @@ void StatManager::probeStats(StatProbeRequest& probeRequest, ProbeStatReply* sta
     return;
 }
 
-int64_t StatManager::deleteStat(StatDeleteRequest& deleteRequestParamObj) {
+bool StatManager::deleteStat(StatDeleteRequest& deleteRequestParamObj) {
     deleteRequestParamObj.getLogicalSourceName();
-    return 1;
+    return true;
 }
 
 }// namespace Experimental::Statistics

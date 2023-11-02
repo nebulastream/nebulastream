@@ -12,38 +12,34 @@
     limitations under the License.
 */
 
-#include "Statistics/StatManager/StatCollectorIdentifier.hpp"
+#include <Statistics/StatManager/StatCollectorIdentifier.hpp>
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
-namespace Experimental::Statistics {
-
-StatCollectorIdentifier::StatCollectorIdentifier(const std::string& physicalSourceName,
+StatCollectorIdentifier::StatCollectorIdentifier(const std::string& logicalSourceName,
+                                                 std::vector<std::string>& physicalSourceNames,
                                                  const std::string& fieldName,
                                                  const StatCollectorType statCollectorType)
-    : physicalSourceName(physicalSourceName), fieldName(fieldName), statCollectorType(statCollectorType) {}
+    : logicalSourceName(logicalSourceName), physicalSourceNames(physicalSourceNames), fieldName(fieldName),
+      statCollectorType(statCollectorType) {}
 
-bool StatCollectorIdentifier::operator==(const StatCollectorIdentifier& statCollectorIdentifier) const {
-    return physicalSourceName == statCollectorIdentifier.getPhysicalSourceName()
-        && fieldName == statCollectorIdentifier.getFieldName()
-        && statCollectorType == statCollectorIdentifier.getStatCollectorType();
-}
-
-std::string StatCollectorIdentifier::getPhysicalSourceName() const {
-    return physicalSourceName;
+bool StatCollectorIdentifier::operator==(StatCollectorIdentifier& statCollectorIdentifier) {
+    return this->logicalSourceName == statCollectorIdentifier.getLogicalSourceName()
+        && this->physicalSourceNames == statCollectorIdentifier.getPhysicalSourceNames()
+        && this->fieldName == statCollectorIdentifier.getFieldName()
+        && this->statCollectorType == statCollectorIdentifier.getStatCollectorType();
 }
 
-std::string StatCollectorIdentifier::getFieldName() const {
-    return fieldName;
+std::string& StatCollectorIdentifier::getLogicalSourceName() { return logicalSourceName; }
+
+std::vector<std::string>& StatCollectorIdentifier::getPhysicalSourceNames() { return physicalSourceNames; }
+
+std::string& StatCollectorIdentifier::getFieldName() { return fieldName; }
+
+StatCollectorType& StatCollectorIdentifier::getStatCollectorType() { return statCollectorType; }
+
+void StatCollectorIdentifier::setPhysicalSourceName(std::string& physicalSourceName) {
+    this->physicalSourceNames.push_back(physicalSourceName);
 }
 
-StatCollectorType StatCollectorIdentifier::getStatCollectorType() const {
-    return statCollectorType;
-}
-
-void StatCollectorIdentifier::setPhysicalSourceName(std::string& fieldName) {
-    this->fieldName = fieldName;
-}
-
-}
-}
+}// namespace NES::Experimental::Statistics

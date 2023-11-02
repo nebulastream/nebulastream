@@ -24,7 +24,7 @@ void StatRequestUtil::serializeProbeRequest(const Experimental::Statistics::Stat
                                             GRPCStatProbeRequest* grpcProbeRequest) {
     grpcProbeRequest->set_logicalsourcename(statProbeRequest.getLogicalSourceName());
     grpcProbeRequest->set_fieldname(statProbeRequest.getFieldName());
-    grpcProbeRequest->set_statcollectortype((uint32_t) statProbeRequest.getStatCollectorType());
+    grpcProbeRequest->set_statcollectortype((int32_t) statProbeRequest.getStatCollectorType());
     for (const auto& physicalSourceName : statProbeRequest.getPhysicalSourceNames()) {
         grpcProbeRequest->add_physicalsourcenames(physicalSourceName);
     }
@@ -34,13 +34,13 @@ void StatRequestUtil::serializeProbeRequest(const Experimental::Statistics::Stat
     grpcProbeRequest->set_merge(statProbeRequest.getMerge());
 }
 
-Experimental::Statistics::StatProbeRequest StatRequestUtil::deserializeProbeRequest(const GRPCStatProbeRequest* grpcProbeRequest) {
+Experimental::Statistics::StatProbeRequest& StatRequestUtil::deserializeProbeRequest(const GRPCStatProbeRequest* grpcProbeRequest) {
     std::vector<std::string> physicalSourceNames;
     for (const auto& physicalSourceName : grpcProbeRequest->physicalsourcenames()) {
         physicalSourceNames.push_back(physicalSourceName);
     }
 
-    auto probeRequest = Experimental::Statistics::StatProbeRequest(
+    auto probeRequest = new Experimental::Statistics::StatProbeRequest(
         grpcProbeRequest->logicalsourcename(),
         grpcProbeRequest->fieldname(),
         (Experimental::Statistics::StatCollectorType) grpcProbeRequest->statcollectortype(),
@@ -50,24 +50,24 @@ Experimental::Statistics::StatProbeRequest StatRequestUtil::deserializeProbeRequ
         grpcProbeRequest->endtime(),
         grpcProbeRequest->merge());
 
-    return probeRequest;
+    return *probeRequest;
 };
 
 void StatRequestUtil::serializeDeleteRequest(const Experimental::Statistics::StatDeleteRequest& statDeleteRequest,
                                              GRPCStatDeleteRequest* grpcDeleteRequest) {
     grpcDeleteRequest->set_logicalsourcename(statDeleteRequest.getLogicalSourceName());
     grpcDeleteRequest->set_fieldname(statDeleteRequest.getFieldName());
-    grpcDeleteRequest->set_statcollectortype((uint32_t) statDeleteRequest.getStatCollectorType());
+    grpcDeleteRequest->set_statcollectortype((int32_t) statDeleteRequest.getStatCollectorType());
     grpcDeleteRequest->set_endtime(statDeleteRequest.getEndTime());
 }
 
-Experimental::Statistics::StatDeleteRequest StatRequestUtil::deserializeDeleteRequest(const GRPCStatDeleteRequest* grpcDeleteRequest) {
-     auto deleteRequest = Experimental::Statistics::StatDeleteRequest(
+Experimental::Statistics::StatDeleteRequest& StatRequestUtil::deserializeDeleteRequest(const GRPCStatDeleteRequest* grpcDeleteRequest) {
+     auto deleteRequest = new Experimental::Statistics::StatDeleteRequest(
         grpcDeleteRequest->logicalsourcename(),
         grpcDeleteRequest->fieldname(),
         (Experimental::Statistics::StatCollectorType) grpcDeleteRequest->statcollectortype(),
         grpcDeleteRequest->endtime());
 
-    return deleteRequest;
+    return *deleteRequest;
 }
 }// namespace NES

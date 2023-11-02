@@ -21,9 +21,7 @@
 
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
 
-namespace NES {
-
-namespace Experimental::Statistics {
+namespace NES::Experimental::Statistics {
 /**
  * @brief The abstract class from which all requests inherit
  */
@@ -52,8 +50,6 @@ class StatRequest {
     std::string fieldName;
     StatCollectorType statCollectorType;
 };
-}// namespace Experimental::Statistics
-
-}// namespace NES
+}// namespace NES::Experimental::Statistics
 
 #endif//NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATREQUEST_HPP_

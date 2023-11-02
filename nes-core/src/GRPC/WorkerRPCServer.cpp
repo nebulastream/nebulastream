@@ -226,11 +226,11 @@ Status WorkerRPCServer::DeleteStat(grpc::ServerContext*, const DeleteStatRequest
     auto deleteRequest = &request->deleterequestparamobj();
     auto serializedDeleteRequest = StatRequestUtil::deserializeDeleteRequest(deleteRequest);
     auto success = statManager->deleteStat(serializedDeleteRequest);
-    if (success != 0) {
-        reply->set_success(1);
+    if (success == true) {
+        reply->set_success(true);
         return Status::OK;
     } else {
-        reply->set_success(0);
+        reply->set_success(false);
         return Status::CANCELLED;
     }
 }

@@ -14,25 +14,22 @@
 
 #include "Statistics/StatCoordinator/StatQueryIdentifier.hpp"
 
-namespace NES {
-
-namespace Experimental::Statistics {
+namespace NES::Experimental::Statistics {
 
 StatQueryIdentifier::StatQueryIdentifier(const std::string& logicalSourceName,
                                          const std::string& fieldName,
                                          const StatCollectorType statCollectorType)
     : logicalSourceName(logicalSourceName), fieldName(fieldName), statCollectorType(statCollectorType) {}
 
-std::string StatQueryIdentifier::getLogicalSourceName() const { return logicalSourceName; }
+const std::string& StatQueryIdentifier::getLogicalSourceName() const { return logicalSourceName; }
 
-std::string StatQueryIdentifier::getFieldName() const { return fieldName; }
+const std::string& StatQueryIdentifier::getFieldName() const { return fieldName; }
 
-StatCollectorType StatQueryIdentifier::getStatCollectorType() const { return statCollectorType; }
+const StatCollectorType& StatQueryIdentifier::getStatCollectorType() const { return statCollectorType; }
 
 bool StatQueryIdentifier::operator==(const StatQueryIdentifier& statQueryIdentifier) const {
     return logicalSourceName == statQueryIdentifier.getLogicalSourceName() && fieldName == statQueryIdentifier.getFieldName()
         && statCollectorType == statQueryIdentifier.getStatCollectorType();
 }
 
-}// namespace Experimental::Statistics
-}// namespace NES
+}// namespace NES::Experimental::Statistics

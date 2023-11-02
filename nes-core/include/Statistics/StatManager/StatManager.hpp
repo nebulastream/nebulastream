@@ -26,13 +26,44 @@ class StatCollectorIdentifier;
 class StatProbeRequest;
 class StatDeleteRequest;
 
+/**
+ * @brief The StatManager is a class that resides on workers and that has access to a StatCollectorStorage. Further, the StatManager
+ * is a member of the WorkerRPCServer. When the WorkerRPCServer receives any Statistic request, it utilizes the StatManager
+ * to generate replies for the received requests.
+ */
 class StatManager {
   public:
-    double probeStat(StatCollectorIdentifier& statIdentifier);
-    void probeStats(StatProbeRequest& probeRequest, ProbeStatReply* stats);
-    int64_t deleteStat(StatDeleteRequest& deleteRequestParamObj);
-  private:
+    /**
+     * @brief the default constructor of the StatManager
+     */
+    StatManager();
 
+    /**
+     * @brief receives a single statCollectorIdentifier and will probe the StatCollectorStorage for the specified StatCollector
+     * and then extract the specified statistic from it
+     * @param statCollectorIdentifier a unique Identifier which can be hashed and used to identify StatCollectors
+     * @return a single statistic
+     */
+    double probeStat(StatCollectorIdentifier& statCollectorIdentifier);
+
+    /**
+     * @brief receives both a request and reply object and fills the reply object with the desired statistics specified by the
+     * request
+     * @param probeRequest a porbeRequest, specifying everything about the desired statistic(s)
+     * @param stats a reply object will be filled with the desired/specified statistics
+     */
+    void probeStats(StatProbeRequest& probeRequest, ProbeStatReply* stats);
+
+    /**
+     * @brief receives a deleteRequestParamObj and removes the according entries from the StatCollectorStorage
+     * @param deleteRequestParamObj a delete request, specifying one or more StatCollector(s) to be deleted from the node local
+     * StatCollectorStorage
+     * @return returns true on success, otherwise false
+     */
+    bool deleteStat(StatDeleteRequest& deleteRequestParamObj);
+
+  private:
+    // ToDo: Add StatCollectorStorage Issue: 4234
 };
 }
 }

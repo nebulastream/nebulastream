@@ -19,44 +19,43 @@
 
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
 
-namespace NES {
+namespace NES::Experimental::Statistics {
 
-namespace Experimental::Statistics {
-
+/**
+ * @brief the class of statistic query identifiers which identify whether a statistic query is already running or not and if so,
+ * what the according QueryId is
+ */
 class StatQueryIdentifier {
   public:
     /**
-     *
-     * @param physicalSourceName
-     * @param fieldName
-     * @param statCollectorType
+     * @brief the constructor of a statQueryIdentifier, which is used to identify statistic queries and their IDs
+     * @param physicalSourceName the logicalSource over which a statistic is generated
+     * @param fieldName the field on which a statistic is generated
+     * @param statCollectorType that data structure that is used to generate a statistic
      */
     StatQueryIdentifier(const std::string& physicalSourceName,
                         const std::string& fieldName,
                         const StatCollectorType statCollectorType);
 
     /**
-     *
-     * @return
+     * @return the logicalSourceName on which the statistic query runs and over which the statistic is built
      */
-    std::string getLogicalSourceName() const;
+    [[nodiscard]] const std::string& getLogicalSourceName() const;
 
     /**
-     *
-     * @return
+     * @return the fieldName on which the statistic query runs and over which the statistic is built
      */
-    std::string getFieldName() const;
+    [[nodiscard]] const std::string& getFieldName() const;
 
     /**
-     *
-     * @return
+     * @return the data structure that is used to create the statistic
      */
-    StatCollectorType getStatCollectorType() const;
+    [[nodiscard]] const StatCollectorType& getStatCollectorType() const;
 
     /**
      * @param StatQueryIdentifier a object that allows for the identification of
      * tracked statistics via the QueryID
-     * @return true if two StatQueryIdentifier are equal
+     * @return true if two StatQueryIdentifiers are equal
      */
     bool operator==(const StatQueryIdentifier& statQueryIdentifier) const;
 
@@ -79,7 +78,6 @@ class StatQueryIdentifier {
     std::string fieldName;
     StatCollectorType statCollectorType;
 };
-}// namespace Experimental::Statistics
-}// namespace NES
+}// namespace NES::Experimental::Statistics
 
 #endif//NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATQUERYIDENTIFIER_HPP_

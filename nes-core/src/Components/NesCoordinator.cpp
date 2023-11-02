@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Statistics/StatCoordinator/StatCoordinator.hpp"
+#include <Statistics/StatCoordinator/StatCoordinator.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>

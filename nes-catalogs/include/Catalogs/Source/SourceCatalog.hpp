@@ -173,6 +173,12 @@ class SourceCatalog {
     std::vector<SourceCatalogEntryPtr> getSubsetOfPhysicalSources(const std::string& logicalSourceName,
                                                                   const std::vector<std::string>& allPhysicalSourceNames);
 
+    /**
+     * @brief compare function for two SourceCatalogEntry objects such that they can be sorted
+     * @param entry1 a SourceCatalogEntry
+     * @param entry2 another SourceCatalogEntry
+     * @return returns true if the Node Pointer of entry1 is smaller than that of entry2 and otherwise false
+     */
     static bool compareByNode(const SourceCatalogEntryPtr& entry1, const SourceCatalogEntryPtr& entry2);
 
   private:

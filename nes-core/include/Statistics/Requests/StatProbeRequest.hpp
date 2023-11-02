@@ -58,7 +58,7 @@ class StatProbeRequest : public StatRequest {
     }
 
     /**
-     * @brief
+     * @brief deletes the entries of the physicalSourceNames
      */
     void clearPhysicalSourceNames() {
         this->physicalSourceNames.clear();
@@ -66,7 +66,7 @@ class StatProbeRequest : public StatRequest {
     }
 
     /**
-     * @param physicalSourceName
+     * @param physicalSourceName adds a entry to the list/vector of physicalSourceNames
      */
     void addPhysicalSourceName(std::string& physicalSourceName) {
         physicalSourceNames.push_back(physicalSourceName);
@@ -89,7 +89,7 @@ class StatProbeRequest : public StatRequest {
 
     /**
      * @return returns true or false and describes wether we want to merge multiple local statistics or
-     * output them seperatly
+     * output them separately
      */
     bool getMerge() const {
         return merge;
