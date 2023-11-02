@@ -84,7 +84,7 @@ void ArrowFileSink::setup() {}
 void ArrowFileSink::shutdown() {}
 
 bool ArrowFileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    return writeDataToArrowFile(inputBuffer);
+    return writeDataToCsv(inputBuffer);
 }
 
 std::string ArrowFileSink::getFilePath() const { return filePath; }
@@ -96,6 +96,49 @@ std::string ArrowFileSink::getAppendAsString() const {
         return "APPEND";
     }
     return "OVERWRITE";
+}
+
+bool ArrowFileSink::writeDataToCsv(Runtime::TupleBuffer &inputBuffer) {
+    std::unique_lock lock(writeMutex);
+
+    // preliminary checks
+    NES_TRACE("ArrowFileSink: getSchema medium {} format {} and mode {}",
+              toString(),
+              sinkFormat->toString(),
+              this->getAppendAsString());
+
+    if (!inputBuffer) {
+        NES_ERROR("ArrowFileSink::writeDataToCsv input buffer invalid");
+        return false;
+    }
+
+    // make arrow schema
+    auto arrowFormat = std::dynamic_pointer_cast<ArrowFormat>(sinkFormat);
+    std::shared_ptr<arrow::Schema> arrowSchema = arrowFormat->getArrowSchema();
+
+    // open the arrow ipc file
+    std::shared_ptr<arrow::io::FileOutputStream> outfileArrow;
+    std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter;
+    arrow::Status openStatus = openCsvFile(outfileArrow, arrowSchema, arrowWriter);
+
+    if (!openStatus.ok()) {
+        return false;
+    }
+
+    // get arrow arrays from tuple buffer
+    std::vector<std::shared_ptr<arrow::Array>> arrowArrays = arrowFormat->getArrowArrays(inputBuffer);
+
+    // make a record batch
+    std::shared_ptr<arrow::RecordBatch> recordBatch =
+            arrow::RecordBatch::Make(arrowSchema, arrowArrays[0]->length(), arrowArrays);
+
+    // write the record batch
+    auto write = arrowWriter->WriteRecordBatch(*recordBatch);
+
+    // close the writer
+    auto close = arrowWriter->Close();
+
+    return true;
 }
 
 bool ArrowFileSink::writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer) {
@@ -149,6 +192,15 @@ arrow::Status ArrowFileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutput
     // else the macros return failure
     ARROW_ASSIGN_OR_RAISE(arrowFileOutputStream, arrow::io::FileOutputStream::Open(filePath, append));
     ARROW_ASSIGN_OR_RAISE(arrowRecordBatchWriter, arrow::ipc::MakeStreamWriter(arrowFileOutputStream, arrowSchema));
+    return arrow::Status::OK();
+}
+
+arrow::Status ArrowFileSink::openCsvFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
+                                         std::shared_ptr<arrow::Schema> arrowSchema,
+                                         std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter) {
+    ARROW_ASSIGN_OR_RAISE(arrowFileOutputStream, arrow::io::FileOutputStream::Open(filePath, append));
+    auto write_options = arrow::csv::WriteOptions::Defaults();
+    ARROW_ASSIGN_OR_RAISE(arrowWriter, arrow::csv::MakeCSVWriter(arrowFileOutputStream, arrowSchema, write_options));
     return arrow::Status::OK();
 }
 
