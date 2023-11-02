@@ -69,9 +69,12 @@ macro(project_enable_clang_format)
     string(CONCAT FORMAT_DIRS
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark/include,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-core/src,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-core/tests,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/src,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/tests,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator/include,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/src,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/tests,"
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker/include,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/src,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/tests,"
             "${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include,"
@@ -165,11 +168,11 @@ macro(project_enable_version)
         message(AUTHOR_WARNING " -- Disabled version target as git not configured.")
     else ()
         add_custom_target(version COMMAND echo "version: ${${PROJECT_NAME}_VERSION}")
-        add_custom_command(TARGET version COMMAND cp -f ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp
-                COMMAND sed -i 's/@NES_VERSION_MAJOR@/${${PROJECT_NAME}_VERSION_MAJOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp
-                COMMAND sed -i 's/@NES_VERSION_MINOR@/${${PROJECT_NAME}_VERSION_MINOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp
-                COMMAND sed -i 's/@NES_VERSION_PATCH@/${${PROJECT_NAME}_VERSION_PATCH}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp
-                COMMAND sed -i 's/@NES_VERSION_POST_FIX@/${${PROJECT_NAME}_NES_VERSION_POST_FIX}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp)
+        add_custom_command(TARGET version COMMAND cp -f ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp
+                COMMAND sed -i 's/@NES_VERSION_MAJOR@/${${PROJECT_NAME}_VERSION_MAJOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp
+                COMMAND sed -i 's/@NES_VERSION_MINOR@/${${PROJECT_NAME}_VERSION_MINOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp
+                COMMAND sed -i 's/@NES_VERSION_PATCH@/${${PROJECT_NAME}_VERSION_PATCH}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp
+                COMMAND sed -i 's/@NES_VERSION_POST_FIX@/${${PROJECT_NAME}_NES_VERSION_POST_FIX}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp)
     endif ()
 endmacro(project_enable_version)
 

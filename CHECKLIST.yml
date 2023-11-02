@@ -1,8 +1,8 @@
 paths:
-  "nes-core/API/QueryAPI.hpp":
+  "nes-client/API/QueryAPI.hpp":
     - Did you prepare a PR to update Stream/CEP API documentation?
     - Did you open issues to reflect new API changes in Cpp/Java/Python clients?
-  "nes-core/src/REST/**":
+  "nes-coordinator/src/REST/**":
     - Did you prepare a PR to update the REST API documentation?
   ".github/**":
     - You are doing changes to github configurations. Did you assign member of build management team to your PR for change review?

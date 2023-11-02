@@ -172,7 +172,7 @@ namespace TestUtils {
      */
 [[nodiscard]] std::shared_ptr<Util::Subprocess> startWorkerPtr(std::initializer_list<std::string> flags) {
     NES_INFO("Start worker");
-    return std::make_shared<Util::Subprocess>(std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesWorker", flags);
+    return std::make_shared<Util::Subprocess>(std::string(PATH_TO_BINARY_DIR) + "/nes-worker/nesWorker", flags);
 }
 
 /**

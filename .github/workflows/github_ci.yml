@@ -7,7 +7,7 @@ on:
     tags-ignore:
       - '*'
     paths-ignore:
-      - nes-core/include/Version/version.hpp
+      - nes-common/include/Version/version.hpp
       - README.md
       - CODE_OF_CONDUCT.md
       - CHECKLIST.yml
@@ -23,7 +23,7 @@ on:
       - master
       - 'feature/**'
     paths-ignore:
-      - nes-core/include/Version/version.hpp
+      - nes-common/include/Version/version.hpp
       - README.md
       - CODE_OF_CONDUCT.md
       - CHANGELOG.md
@@ -81,12 +81,12 @@ jobs:
       - name: preamble-check
         run: |
           docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nebulastream/nes-build-image:latest
-  #      - name: format-check
-  #        run: |
-  #          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
-  #      - name: guard-check
-  #        run: |
-  #          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
+      #      - name: format-check
+      #        run: |
+      #          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
+      #      - name: guard-check
+      #        run: |
+      #          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
       - name: docker cleanup
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
@@ -303,7 +303,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
       - name: "Get NebulaStream Version"
         run: |
-          echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
+          echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-common/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
           if [[ "${{ github.event_name }}"  =~ "workflow_dispatch" ]]; then
             if [[ "${{ env.NEXT_VERSION }}" =~ "Minor" ]]; then
               echo "NES_VERSION=$(echo $NES_VERSION | awk -F. -v OFS=. '{$2 +=1 ; $3 = 0 ; print}')" >> $GITHUB_ENV

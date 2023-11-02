@@ -169,7 +169,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
         add_library(nes-runtime-proxy ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Runtime/detail/TupleBufferImpl.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/src/Execution/TupleBufferProxyFunctions.cpp)
         message(STATUS "CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
-        target_include_directories(nes-runtime-proxy PUBLIC ${CMAKE_SOURCE_DIR}/nes-core/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-runtime/include/ ${CMAKE_SOURCE_DIR}/nes-data-types/include/)
+        target_include_directories(nes-runtime-proxy PUBLIC ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-common/include/ ${CMAKE_SOURCE_DIR}/nes-runtime/include/ ${CMAKE_SOURCE_DIR}/nes-data-types/include/)
 
         set_target_properties(nes-runtime-proxy PROPERTIES LINKER_LANGUAGE CXX)
         llvmir_attach_bc_target(nes-runtime_bc nes-runtime-proxy -O3)
