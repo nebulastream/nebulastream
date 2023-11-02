@@ -1,6 +1,6 @@
 */nes-common/include/Util/Backward/*
 */nes-common/include/Util/libcuckoo/*
-*/nes-core/include/Util/jitify/*
+*/nes-coordinator/include/Util/jitify/*
 **/backward.hpp
 **/base64.h
 **/base64.cpp

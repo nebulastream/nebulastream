@@ -1,5 +1,5 @@
 # Read the version file into variable
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include/Version/version.hpp VERSION_INFO)
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include/Version/version.hpp VERSION_INFO)
 
 # Find the Major version
 string(REGEX MATCH "\\NES_VERSION_MAJOR[^\n]*" MAJOR_VERSION "${VERSION_INFO}")
@@ -35,13 +35,13 @@ elseif (POST_RELEASE)
 endif ()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/semver/version.hpp.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include/Version/version.hpp COPYONLY)
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include/Version/version.hpp COPYONLY)
 
 # Update version file with new version
-execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_MAJOR@/${MAJOR_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include/Version/version.hpp")
-execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_MINOR@/${MINOR_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include/Version/version.hpp")
-execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_PATCH@/${PATCH_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include/Version/version.hpp")
-execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_POST_FIX@/${POSTFIX_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include/Version/version.hpp")
+execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_MAJOR@/${MAJOR_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include/Version/version.hpp")
+execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_MINOR@/${MINOR_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include/Version/version.hpp")
+execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_PATCH@/${PATCH_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include/Version/version.hpp")
+execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_POST_FIX@/${POSTFIX_VERSION}/g' ${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include/Version/version.hpp")
 
 set(${PROJECT_NAME}_VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}${POSTFIX_VERSION})
 

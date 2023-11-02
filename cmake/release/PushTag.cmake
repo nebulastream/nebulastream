@@ -1,5 +1,5 @@
 # Read the version file into variable
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include/Version/version.hpp VERSION_INFO)
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include/Version/version.hpp VERSION_INFO)
 
 # Find the Major version
 string(REGEX MATCH "\\NES_VERSION_MAJOR[^\n]*" MAJOR_VERSION "${VERSION_INFO}")
