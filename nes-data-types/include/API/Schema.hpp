@@ -117,7 +117,7 @@ class Schema {
      * @param fieldName: fully or partly qualified field name
      * @return AttributeFieldPtr: pointer to attribute field if present else null pointer
      */
-    AttributeFieldPtr hasFieldName(const std::string& fieldName);
+    AttributeFieldPtr hasFieldName(const std::string& fieldName) const;
 
     /**
      * @brief Checks if attribute field name is defined in the schema and returns its index.
