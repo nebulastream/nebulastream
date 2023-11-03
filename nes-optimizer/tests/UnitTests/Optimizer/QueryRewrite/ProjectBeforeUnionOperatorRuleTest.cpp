@@ -107,8 +107,8 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     EXPECT_TRUE(projectionOperators.size() == 1);
     auto projectOperator = projectionOperators[0];
     SchemaPtr projectOutputSchema = projectOperator->getOutputSchema();
-    EXPECT_TRUE(projectOutputSchema->hasFieldName("y$a"));
-    EXPECT_TRUE(projectOutputSchema->hasFieldName("y$b"));
+    EXPECT_TRUE(projectOutputSchema->getField("y$a"));
+    EXPECT_TRUE(projectOutputSchema->getField("y$b"));
 }
 
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSchemas) {

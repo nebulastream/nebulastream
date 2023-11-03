@@ -192,7 +192,7 @@ TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
     ASSERT_TRUE(!sourceCatalog->getAllLogicalSource().empty());
     SchemaPtr schemaFromCoordinator = sourceCatalog->getLogicalSource("car")->getSchema();
     //TODO: is it a bug that one has to define the field name with a '$' in the schema for it to be found using hasFieldName ?
-    ASSERT_TRUE(schemaFromCoordinator->hasFieldName("ID") != nullptr);
+    ASSERT_TRUE(schemaFromCoordinator->getField("ID") != nullptr);
     stopCoordinator();
 }
 
@@ -224,9 +224,9 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     ASSERT_TRUE(jsonResponse["success"]);
     auto coordinatorSchema = sourceCatalog->getLogicalSource("car")->getSchema();
     //TODO: is it a bug that one has to define the field name with a '$' in the schema for it to be found using hasFieldName ?
-    ASSERT_TRUE(coordinatorSchema->hasFieldName("ID") != nullptr);
-    ASSERT_TRUE(coordinatorSchema->hasFieldName("value") != nullptr);
-    ASSERT_TRUE(coordinatorSchema->hasFieldName("timestamp") != nullptr);
+    ASSERT_TRUE(coordinatorSchema->getField("ID") != nullptr);
+    ASSERT_TRUE(coordinatorSchema->getField("value") != nullptr);
+    ASSERT_TRUE(coordinatorSchema->getField("timestamp") != nullptr);
     stopCoordinator();
 }
 TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {

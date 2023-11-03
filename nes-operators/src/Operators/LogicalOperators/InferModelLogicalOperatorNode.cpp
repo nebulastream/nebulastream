@@ -64,7 +64,7 @@ bool InferModelLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
 void InferModelLogicalOperatorNode::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) {
     auto schema = getInputSchema();
     auto fieldName = field->getFieldName();
-    auto existingField = schema->hasFieldName(fieldName);
+    auto existingField = schema->getField(fieldName);
     if (existingField) {
         field->updateFieldName(existingField->getName());
     } else {
@@ -97,7 +97,7 @@ bool InferModelLogicalOperatorNode::inferSchema() {
         auto outputExpression = outputField->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(outputExpression);
         auto fieldName = outputExpression->getFieldName();
-        if (outputSchema->hasFieldName(fieldName)) {
+        if (outputSchema->getField(fieldName)) {
             // The assigned field is part of the current schema.
             // Thus we check if it has the correct type.
             NES_TRACE("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);

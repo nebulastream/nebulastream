@@ -64,7 +64,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp( SchemaPtr schema) {
     auto fieldAccessExpression = onField->as<FieldAccessExpressionNode>();
     auto fieldName = fieldAccessExpression->getFieldName();
     //Check if the field exists in the schema
-    auto existingField = schema->hasFieldName(fieldName);
+    auto existingField = schema->getField(fieldName);
     if (existingField) {
         fieldAccessExpression->updateFieldName(existingField->getName());
         return true;

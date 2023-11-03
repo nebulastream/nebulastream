@@ -256,7 +256,7 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossibl
             auto containeeTimeBasedWindow =
                 containeeWindowDefinition->getWindowType()->asTimeBasedWindowType(containeeWindowDefinition->getWindowType());
             //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
-            auto field = container->getOutputSchema()->hasFieldName("start");
+            auto field = container->getOutputSchema()->getField("start");
             //return false if this is not possible
             if (field == nullptr) {
                 return false;

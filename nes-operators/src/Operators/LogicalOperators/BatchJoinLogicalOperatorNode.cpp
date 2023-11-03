@@ -61,7 +61,7 @@ bool BatchJoinLogicalOperatorNode::inferSchema() {
     FieldAccessExpressionNodePtr buildJoinKey = batchJoinDefinition->getBuildJoinKey();
     auto buildJoinKeyName = buildJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-        if ((*itr)->hasFieldName(buildJoinKeyName)) {
+        if ((*itr)->getField(buildJoinKeyName)) {
             leftInputSchema->copyFields(*itr);
             buildJoinKey->inferStamp( leftInputSchema);
             //remove the schema from distinct schema list
@@ -75,7 +75,7 @@ bool BatchJoinLogicalOperatorNode::inferSchema() {
     FieldAccessExpressionNodePtr probeJoinKey = batchJoinDefinition->getProbeJoinKey();
     auto probeJoinKeyName = probeJoinKey->getFieldName();
     for (auto& schema : distinctSchemas) {
-        if (schema->hasFieldName(probeJoinKeyName)) {
+        if (schema->getField(probeJoinKeyName)) {
             rightInputSchema->copyFields(schema);
             probeJoinKey->inferStamp( rightInputSchema);
         }
