@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.243](https://github.com/nebulastream/nebulastream/tree/v0.5.243) (2023-11-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.242...v0.5.243)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Java UDF not working after window aggregation [\#4321](https://github.com/nebulastream/nebulastream/issues/4321)
+
 ## [v0.5.242](https://github.com/nebulastream/nebulastream/tree/v0.5.242) (2023-11-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.241...v0.5.242)
