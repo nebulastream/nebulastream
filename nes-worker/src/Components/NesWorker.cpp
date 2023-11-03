@@ -33,6 +33,7 @@
 #include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
+#include <Statistics/StatManager/StatManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -61,7 +62,8 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_TOPOLOGY_NODE_ID),
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
-          workerConfig->mobilityConfiguration)) {
+          workerConfig->mobilityConfiguration)),
+      statManager(std::make_unique<NES::Experimental::Statistics::StatManager>()) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");

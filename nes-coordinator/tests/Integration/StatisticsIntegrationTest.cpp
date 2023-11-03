@@ -20,17 +20,22 @@
 #include <Statistics/Requests/StatDeleteRequest.hpp>
 #include <Statistics/Requests/StatProbeRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
-#include <Statistics/StatCoordinator.hpp>
+#include <Statistics/StatCoordinator/StatCoordinator.hpp>
 
-#include <API/QueryAPI.hpp>
+#include <API/Schema.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-
-#include <Util/TestHarness/TestHarness.hpp>
 
 using namespace std;
 
@@ -78,8 +83,7 @@ TEST_F(StatisticsIntegrationTest, createTest) {
 
     // create coordinator
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
-    coordinatorConfig->worker.queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("createProbeAndDeleteTest: Start coordinator");
@@ -93,8 +97,7 @@ TEST_F(StatisticsIntegrationTest, createTest) {
     NES_DEBUG("createProbeAndDeleteTest: Start worker 1");
     auto workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig1->queryCompiler.queryCompilerType =
-        QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     auto defaultSourceType1 = DefaultSourceType::create(defaultLogicalSourceName, physicalSourceNames[0]);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     workerConfig1->physicalSourceTypes.add(defaultSourceType1);

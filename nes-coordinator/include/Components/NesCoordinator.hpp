@@ -230,7 +230,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     /**
      * @return returns the statCoordinator, which is used to delegate and execute all data statistic requests
      */
-    NES::Experimental::Statistics::StatCoordinatorPtr getStatCoordinator() ;
+    NES::Experimental::Statistics::StatCoordinatorPtr getStatCoordinator();
 
   private:
     /**

@@ -15,14 +15,13 @@
 #ifndef NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATCREATEREQUEST_HPP_
 #define NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATCREATEREQUEST_HPP_
 
-#include <string>
-#include <memory>
-#include <vector>
 #include <Statistics/Requests/StatRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
-namespace NES {
-namespace Experimental::Statistics {
+namespace NES::Experimental::Statistics {
 
 /**
  * @brief the inherited class that defines what is needed to build Statistics
@@ -30,11 +29,10 @@ namespace Experimental::Statistics {
 class StatCreateRequest : public StatRequest {
   public:
     StatCreateRequest(const std::string& logicalSourceName,
-                          const std::string& fieldName,
-                          const StatCollectorType statCollectorType)
+                      const std::string& fieldName,
+                      const StatCollectorType statCollectorType)
         : StatRequest(logicalSourceName, fieldName, statCollectorType) {}
-		};
-	}
-}
+};
+}// namespace NES::Experimental::Statistics
 
-#endif //NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATCREATEREQUEST_HPP_
+#endif//NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATCREATEREQUEST_HPP_

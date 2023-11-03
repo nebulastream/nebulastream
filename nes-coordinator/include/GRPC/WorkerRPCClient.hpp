@@ -239,19 +239,19 @@ class WorkerRPCClient {
 
     /**
      * @brief Sends a request to a node to query a statistic
-     * @param destAddress the ip address of the node to which the statistic probe query is sent
-     * @param probeRequestParamObj a obj that has all necessary information to query a statCollector for a statistic
-     * @return returns the queried statistic or an error value
+     * @param destAddress the address of the node to which the statistic probe query is sent
+     * @param probeRequest a request that has all necessary information to query a statCollector for a statistic
+     * @return returns the queried statistic(s) or a vector only containing a nullptr
      */
-    double probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequestParamObj);
+    std::vector<double> probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequest);
 
     /**
      * @brief Sends a request to a node to delete a specific statistic
-     * @param destAddress the ipAddress of the node
-     * @param deleteRequestParamObj the deleteRequest parameter object, which contains all necessary info for the operation
+     * @param destAddress the address of the node
+     * @param deleteRequest a request which contains all necessary info for the deletion of one one or more StatCollectors
      * @return returns true when successful and false otherwise
      */
-    bool deleteStat(const std::string& destAddress, Experimental::Statistics::StatDeleteRequest& deleteRequestParamObj);
+    bool deleteStat(const std::string& destAddress, Experimental::Statistics::StatDeleteRequest& deleteRequest);
 
   private:
     WorkerRPCClient() = default;

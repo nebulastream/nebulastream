@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_HPP_
-#define NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_HPP_
+#ifndef NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATCOORDINATOR_HPP_
+#define NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATCOORDINATOR_HPP_
 
+#include <Statistics/StatCoordinator/StatQueryIdentifier.hpp>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers.hpp>
-#include <Statistics/StatCollectorIdentifier.hpp>
 
 namespace NES {
 
@@ -96,7 +96,7 @@ class StatCoordinator {
      */
     std::vector<std::string> addressesOfLogicalStream(const std::string& logicalSourceName);
 
-    std::unordered_map<StatCollectorIdentifier, QueryId, StatCollectorIdentifier::Hash> trackedStatistics;
+    std::unordered_map<StatQueryIdentifier, QueryId, StatQueryIdentifier::Hash> trackedStatistics;
     QueryServicePtr queryService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     WorkerRPCClientPtr workerClient;
@@ -104,4 +104,4 @@ class StatCoordinator {
 }
 }
 
-#endif//NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_HPP_
+#endif//NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATCOORDINATOR_HPP_

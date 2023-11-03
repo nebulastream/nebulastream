@@ -18,4 +18,3 @@ add_source_files(nes-worker
         HealthCheckRPCServer.cpp
         StatRequestUtil.cpp
 )
-
