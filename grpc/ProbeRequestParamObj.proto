@@ -23,7 +23,7 @@ message GRPCStatProbeRequest {
   string fieldName = 2;
   int32 statCollectorType = 3;
   repeated string physicalSourceNames = 4;
-  string expression = 5;
+  string probeExpression = 5;
   int64 startTime = 6;
   int64 endTime = 7;
   bool merge = 8;
