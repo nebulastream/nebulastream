@@ -65,7 +65,102 @@ TEST(SQLParsingServiceTest, simpleSQL) {
     //queryPlan->appendOperatorAsNewRoot(filter);
     LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
+    std::cout << queryPlanToString(sqlPlan) << "/n";
 
     //comparison of the expected and the actual generated query plan
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
 }
+
+TEST(SQLParsingServiceTest, projectionTest1) {
+    std::string inputQuery = "select * from StreamName INTO PRINT;";
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    QueryPlanPtr queryPlan = QueryPlan::create();
+    LogicalOperatorNodePtr source =
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("StreamName"));
+    queryPlan->appendOperatorAsNewRoot(source);
+    /*
+     * LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    queryPlan->appendOperatorAsNewRoot(sink);
+     */
+
+
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+
+}
+
+TEST(SQLParsingServiceTest, projectionTest2) {
+    std::string inputQuery = "select * from StreamName as sn INTO PRINT;";
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    QueryPlanPtr queryPlan = QueryPlan::create();
+
+
+
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+}
+TEST(SQLParsingServiceTest, projectionTest3) {
+    std::string inputQuery = "select f1,f2 from StreamName INTO PRINT;";
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    QueryPlanPtr queryPlan = QueryPlan::create();
+
+
+
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+}
+TEST(SQLParsingServiceTest, projectionTest4) {
+    std::string inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT;";
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    QueryPlanPtr queryPlan = QueryPlan::create();
+
+
+
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+}
+
+TEST(SQLParsingServiceTest, selectTest1) {
+    std::string inputQuery = "select * from StreamName where f1 > 10 INTO PRINT;";
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    QueryPlanPtr queryPlan = QueryPlan::create();
+
+
+
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+}
+/*
+TEST(SQLParsingServiceTest, selectTest2) {
+    std::string inputQuery = "select * from StreamName where f1 > 10.5 and f2 < 10 INTO PRINT;";
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    QueryPlanPtr queryPlan = QueryPlan::create();
+
+
+
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+}
+TEST(SQLParsingServiceTest, mergeTest1) {
+    std::string inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT;";
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    QueryPlanPtr queryPlan = QueryPlan::create();
+
+
+
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+}
+TEST(SQLParsingServiceTest, mergeTest2) {
+    std::string inputQuery = "select f1 from cars union select f1 from bikes union select f1 from autos INTO PRINT;";
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    QueryPlanPtr queryPlan = QueryPlan::create();
+
+
+
+    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+
+}
+
+*/

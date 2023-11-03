@@ -51,5 +51,26 @@ uint64_t NebulaSQLHelper::getLimit() const { return 0; }
 //const FieldAssignmentExpressionNodePtr& NebulaSQLHelper::getMapExpression() const { return <#initializer #>; }
 //const WatermarkStrategyDescriptorPtr& NebulaSQLHelper::getWatermarkStrategieDescriptor() const {return <#initializer #>;}
 const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const { return NES::Windowing::WindowTypePtr(); }
+/*
+const std::map<std::string, std::string> NebulaSQLHelper::getQueryMap() const { return this->queryMap; }
+void NebulaSQLHelper::setQueryMap(std::map<std::string, std::string> queryMap) { this->queryMap = queryMap; }
 
+std::string NebulaSQLHelper::getSelectClause() { return selectClause; }
+void NebulaSQLHelper::setSelectClause(std::string selectClause) { this->selectClause = selectClause; }
+
+std::string NebulaSQLHelper::getWhereClause() { return whereClause; }
+void NebulaSQLHelper::setWhereClause(std::string whereClause) { this->whereClause = whereClause; }
+
+std::string NebulaSQLHelper::getFromClause() { return fromClause; }
+void NebulaSQLHelper::setFromClause(std::string fromClause) { this->fromClause = fromClause; }
+
+std::string NebulaSQLHelper::getMapClause() { return mapClause; }
+void NebulaSQLHelper::setMapClause(std::string mapClause) { this->mapClause = mapClause; }
+
+std::string NebulaSQLHelper::getUnionClause() { return unionClause; }
+void NebulaSQLHelper::setUnionClause(std::stringstream unionClause) { this->unionClause = unionClause; }
+
+bool NebulaSQLHelper::isSelect() { return isSelect; }
+void NebulaSQLHelper::setSelect(bool select) { isSelect = select; }
+*/
 }// namespace NES::Parsers

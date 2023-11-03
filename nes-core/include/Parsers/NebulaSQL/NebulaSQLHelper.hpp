@@ -38,6 +38,58 @@ namespace NES::Parsers {
             std::list<SinkDescriptorPtr> sinkList; // INTO
             std::pair<std::string, int32_t> window;// WITHIN
 
+            /*
+            std::map<std::string, std::string> queryMap;
+
+            std::string selectClause;
+            std::string whereClause;
+            std::string fromClause;
+            std::string mapClause;
+            std::string unionClause;
+
+            bool isSelect = false;
+            bool isWhere = false;
+            bool isFrom = false;
+            bool hasMultipleAttributes = false;
+            bool isArithmeticBinary = false;
+
+            std::string timeUnit;
+            std::string timestampParameter;
+            std::string sizeParameter;
+            std::string advancebyParameter;
+            std::string watermarkParameter;
+            std::string countWindow;
+            std::string globalWindow;
+            std::string tumblingWindow;
+            std::string slidingWindow;
+
+            std::vector<std::string> aggregateFunctionList;
+            std::string aggregateFunction;
+            std::string groupByAttribute;
+
+            bool isWindowTumbling = false;
+            bool isWindowSliding = false;
+            bool isFunctionCall = false;
+
+            int childCountForAlias = 0; // child count for aggregate function alias
+            std::string aggregateFuncForAlias;
+
+            bool isJoinRelation = false;
+            std::string joinCriteria;
+            std::vector<std::string> joinRelationList;
+            std::map<std::string, std::string> joinCriteriaMap;
+            std::string secondRelation;
+
+            bool isJoinCriteriaDereference = false;
+            bool isHavingClause = false;
+            std::string havingClause = "";
+            bool isSinkClause = false;
+            std::string sinkType;
+            bool isWatermarkClause = false;
+            std::string watermarkClause;
+
+             */
+
           public:
             //Constructors
             NebulaSQLHelper() = default;
@@ -67,7 +119,11 @@ namespace NES::Parsers {
             const WatermarkStrategyDescriptorPtr& getWatermarkStrategieDescriptor() const;
              */
             const NES::Windowing::WindowTypePtr getWindowType() const;
-            QueryPlanPtr queryPlan;
+            std::vector<QueryPlanPtr> queryPlans;
+             /*
+            const std::map<std::string, std::string> getQueryMap() const;
+            void setQueryMap(std::map<std::string, std::string> queryMap);
+            */
         };
     }// namespace NES::Parsers
 
