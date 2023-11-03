@@ -194,7 +194,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::atomic<uint16_t> receivedVersionDrainEvents;
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
     std::function<void(EpochMessage, Runtime::WorkerContext& workerContext)> deleteFromStorageCallback;
-    std::function<bool(EpochMessage, Runtime::WorkerContext& workerContext)> deleteFromStorageCallback;
     std::atomic<bool> trimmingStarted;
 };
 }// namespace NES::Network

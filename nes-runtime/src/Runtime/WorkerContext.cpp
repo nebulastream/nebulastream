@@ -94,7 +94,7 @@ void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES:
     reconnectBufferStorage[operatorId].push(std::move(buffer));
 }
 
-void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
+bool WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
         this->storage[nesPartition]->trimBuffer(timestamp);
