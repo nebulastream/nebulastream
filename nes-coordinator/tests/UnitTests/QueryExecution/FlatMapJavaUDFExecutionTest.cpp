@@ -116,9 +116,10 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
  * The UDF increments incoming tuples by its current state starting from 10 and
 */
 TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
-    auto schema = Schema::create()->addField("id", BasicType::INT32);
-    auto testSink = executionEngine->createDataSink(schema);
-    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+    auto fqSchema = Schema::create()->addField("s$id", BasicType::INT32);
+    auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
+    auto testSink = executionEngine->createDataSink(fqSchema);
+    auto testSourceDescriptor = executionEngine->createDataSource(fqSchema);
 
     std::vector<std::string> classNames = {"stream/nebula/FlatMapFunction", "IntegerFlatMapFunction"};
     auto methodName = "flatMap";
@@ -137,7 +138,8 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
                                  .setMethodName(methodName)
                                  .setInstance(serializedInstance)
                                  .setByteCodeList(byteCodeList)
-                                 .setOutputSchema(outputSchema)
+                                 .setInputSchema(udfSchema)
+                                 .setOutputSchema(udfSchema)
                                  .setInputClassName("java.lang.Integer")
                                  .setOutputClassName("java.util.Collection")
                                  .build();
@@ -146,7 +148,7 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);
-    auto inputBuffer = executionEngine->getBuffer(schema);
+    auto inputBuffer = executionEngine->getBuffer(fqSchema);
     fillBuffer(inputBuffer);
     source->emitBuffer(inputBuffer);
     testSink->waitTillCompleted();
