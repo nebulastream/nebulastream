@@ -1,8 +1,8 @@
 # Changelog
 
-## [v](https://github.com/nebulastream/nebulastream/tree/v) (2023-11-02)
+## [v0.5.240](https://github.com/nebulastream/nebulastream/tree/v0.5.240) (2023-11-03)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.239...v)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.239...v0.5.240)
 
 **Implemented enhancements:**
 
