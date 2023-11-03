@@ -13,8 +13,8 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 

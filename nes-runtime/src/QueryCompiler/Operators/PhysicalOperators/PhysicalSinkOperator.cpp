@@ -13,8 +13,8 @@
 */
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 

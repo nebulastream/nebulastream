@@ -17,8 +17,8 @@
 
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <mutex>
 
 namespace NES {

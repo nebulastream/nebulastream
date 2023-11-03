@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id, const SchemaPtr& schema) {

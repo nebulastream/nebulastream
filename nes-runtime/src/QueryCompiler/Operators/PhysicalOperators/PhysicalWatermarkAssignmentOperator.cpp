@@ -13,8 +13,8 @@
 */
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
