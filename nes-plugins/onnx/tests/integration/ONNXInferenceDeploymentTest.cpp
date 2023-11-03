@@ -108,9 +108,9 @@ TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase6
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     for (size_t i = 0; i < actualOutput.size(); ++i) {
-        EXPECT_TRUE(std::abs(expectedOutput[i].iris0 -  actualOutput[i].iris0) < ALLOWED_ERROR);
-        EXPECT_TRUE(std::abs(expectedOutput[i].iris1 -  actualOutput[i].iris1) < ALLOWED_ERROR);
-        EXPECT_TRUE(std::abs(expectedOutput[i].iris2 -  actualOutput[i].iris2) < ALLOWED_ERROR);
+        EXPECT_TRUE(std::abs(expectedOutput[i].iris0 - actualOutput[i].iris0) < ALLOWED_ERROR);
+        EXPECT_TRUE(std::abs(expectedOutput[i].iris1 - actualOutput[i].iris1) < ALLOWED_ERROR);
+        EXPECT_TRUE(std::abs(expectedOutput[i].iris2 - actualOutput[i].iris2) < ALLOWED_ERROR);
     }
 }
 }// namespace NES

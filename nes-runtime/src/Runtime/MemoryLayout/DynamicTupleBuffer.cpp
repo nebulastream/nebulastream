@@ -185,7 +185,6 @@ DynamicTupleBuffer::TupleIterator& DynamicTupleBuffer::TupleIterator::operator++
 
 DynamicTupleBuffer::TupleIterator::TupleIterator(const TupleIterator& other) : TupleIterator(other.buffer, other.currentIndex) {}
 
-
 const DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::TupleIterator::operator++(int) {
     TupleIterator retval = *this;
     ++(*this);

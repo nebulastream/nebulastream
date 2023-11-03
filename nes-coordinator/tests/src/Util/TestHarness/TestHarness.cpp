@@ -38,10 +38,10 @@ TestHarness::TestHarness(Query queryWithoutSink,
                          std::filesystem::path testHarnessResourcePath,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
-    : queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))),
-      coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort), useNewRequestExecutor(false),
-      memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
-      topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
+    : queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))), coordinatorIPAddress("127.0.0.1"),
+      restPort(restPort), rpcPort(rpcPort), useNewRequestExecutor(false), memSrcFrequency(memSrcFrequency),
+      memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0), topologyId(1),
+      joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
       windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
       filePath(testHarnessResourcePath / "testHarness.csv"), bufferManager(std::make_shared<Runtime::BufferManager>()) {}
 
@@ -168,7 +168,6 @@ TestHarness& TestHarness::attachWorkerToCoordinator() {
 }
 uint64_t TestHarness::getWorkerCount() { return testHarnessWorkerConfigurations.size(); }
 
-
 TestHarness& TestHarness::validate() {
     validationDone = true;
     if (this->logicalSources.empty()) {
@@ -260,10 +259,7 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
 SchemaPtr TestHarness::getOutputSchema() {
     auto queryService = nesCoordinator->getQueryService();
     auto queryCatalogService = nesCoordinator->getQueryCatalogService();
-    return queryCatalogService->getEntryForQuery(queryId)
-                                  ->getExecutedQueryPlan()
-                                  ->getSinkOperators()[0]
-                                  ->getOutputSchema();
+    return queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->getSinkOperators()[0]->getOutputSchema();
 }
 
 TestHarness& TestHarness::runQuery(uint64_t numberOfRecordsToExpect,
@@ -300,11 +296,13 @@ TestHarness& TestHarness::runQuery(uint64_t numberOfRecordsToExpect,
         NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
     }
 
-
-    if (!TestUtils::checkOutputContentLengthOrTimeout(queryId, queryCatalogService, numberOfRecordsToExpect,
-                                                      filePath, testTimeoutInSeconds)) {
+    if (!TestUtils::checkOutputContentLengthOrTimeout(queryId,
+                                                      queryCatalogService,
+                                                      numberOfRecordsToExpect,
+                                                      filePath,
+                                                      testTimeoutInSeconds)) {
         NES_THROW_RUNTIME_ERROR("TestHarness: checkOutputContentLengthOrTimeout returns false, number of bytes to expect = "
-                        << numberOfRecordsToExpect);
+                                << numberOfRecordsToExpect);
     }
 
     if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
@@ -326,7 +324,8 @@ TestHarness& TestHarness::runQuery(uint64_t numberOfRecordsToExpect,
 std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestHarness::getOutputForVariableSizeDataTypes() {
     std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> receivedBuffers;
     const auto queryCatalogService = nesCoordinator->getQueryCatalogService();
-    const auto schema = queryCatalogService->getEntryForQuery(queryId)->getInputQueryPlan()->getSinkOperators()[0]->getOutputSchema();
+    const auto schema =
+        queryCatalogService->getEntryForQuery(queryId)->getInputQueryPlan()->getSinkOperators()[0]->getOutputSchema();
     auto tupleBuffers = TestUtils::createExpectedBuffersFromCsv(filePath, schema, bufferManager, true);
     return TestUtils::createDynamicBuffers(tupleBuffers, schema);
 }

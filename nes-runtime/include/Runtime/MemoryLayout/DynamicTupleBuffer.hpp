@@ -185,7 +185,6 @@ class DynamicTuple {
     bool operator==(const DynamicTuple& other) const;
     bool operator!=(const DynamicTuple& other) const;
 
-
   private:
     const uint64_t tupleIndex;
     const MemoryLayoutPtr memoryLayout;

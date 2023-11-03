@@ -480,7 +480,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
     };
 
     std::vector<Output> expectedOutput = {{2}, {4}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -532,7 +533,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
     };
 
     std::vector<Output> expectedOutput = {{2}, {4}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -587,7 +589,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar) {
     };
 
     std::vector<Output> expectedOutput = {{1000, 2000, keyOne, 2}, {1000, 2000, keyTwo, 4}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -642,7 +645,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
     };
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 3}, {2000, 3000, 1, 5}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -696,7 +700,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
     };
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 99}, {2000, 3000, 1, 20}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -749,7 +754,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
     };
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, -15}, {2000, 3000, 1, -20}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -864,7 +870,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
     };
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 15}, {2000, 3000, 1, 20}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -920,7 +927,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
     auto outputsize = sizeof(Output);
     NES_DEBUG("{}", outputsize);
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 2}, {2000, 3000, 1, 1}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -977,7 +985,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregatio
     };
 
     std::vector<Output> expectedOutput = {{1000ULL, 2000ULL, 1ULL, 30}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -1033,7 +1042,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
     auto outputsize = sizeof(Output);
     NES_DEBUG("{}", outputsize);
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 2}, {2000, 3000, 1, 1}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
