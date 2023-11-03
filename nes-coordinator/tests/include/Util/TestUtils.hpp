@@ -567,7 +567,8 @@ checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono:
  * @param outputFilePath
  * @return true if successful
  */
-[[nodiscard]] bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeoutInSeconds = 0);
+[[nodiscard]] bool
+checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeoutInSeconds = 0);
 
 /**
  * @brief Check if any query result was produced
@@ -577,8 +578,7 @@ checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono:
 [[nodiscard]] bool
 checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0);
 
-
- /**
+/**
   * @brief Check if the query result was produced
   * @param queryId
   * @param queryCatalogService
@@ -588,10 +588,10 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
   * @return True if numberOfRecordsToExpect have been seen
   */
 [[nodiscard]] bool checkOutputContentLengthOrTimeout(QueryId queryId,
-                                       QueryCatalogServicePtr queryCatalogService,
-                                       uint64_t numberOfRecordsToExpect,
-                                       const string& outputFilePath,
-                                       auto testTimeout = defaultTimeout) {
+                                                     QueryCatalogServicePtr queryCatalogService,
+                                                     uint64_t numberOfRecordsToExpect,
+                                                     const string& outputFilePath,
+                                                     auto testTimeout = defaultTimeout) {
     auto timeoutInSec = std::chrono::seconds(testTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -622,10 +622,11 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
                           currentContentSize,
                           numberOfRecordsToExpect);
                 return false;
-            } else if (currentContentSize < numberOfRecordsToExpect){
+            } else if (currentContentSize < numberOfRecordsToExpect) {
                 NES_DEBUG("number of expected bytes {} not reached yet with {} Bytes",
-                          numberOfRecordsToExpect, currentContentSize);
-            } else  {
+                          numberOfRecordsToExpect,
+                          currentContentSize);
+            } else {
                 NES_DEBUG("number of content in output file match expected number of content!");
                 return true;
             }
@@ -708,7 +709,6 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
  * @return the json
  */
 [[nodiscard]] nlohmann::json getTopology(uint64_t restPort);
-
 
 /**
  * @brief Creates the expected buffers from the csv file

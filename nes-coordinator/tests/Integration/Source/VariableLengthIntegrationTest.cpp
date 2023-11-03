@@ -19,8 +19,8 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -55,15 +55,18 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
     auto query = Query::from("variable_length")
                      .map(Attribute("camera_id_2") = Attribute("camera_id") + 10)
                      .filter(Attribute("camera_id_2") < 55)
-                     .project(Attribute("camera_id"), Attribute("timestamp"), Attribute("rows"),
-                              Attribute("cols"), Attribute("type"), Attribute("data"));
+                     .project(Attribute("camera_id"),
+                              Attribute("timestamp"),
+                              Attribute("rows"),
+                              Attribute("cols"),
+                              Attribute("type"),
+                              Attribute("data"));
 
     // setup csv sources
     CSVSourceTypePtr csvSourceType = CSVSourceType::create("variable_length", "test_stream");
     csvSourceType->setFilePath(inputFilePath);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
     csvSourceType->setNumberOfBuffersToProduce(1);
-
 
     // Creating TestHarness
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -111,15 +114,18 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
 
     auto query = Query::from("variable_length")
                      .filter(Attribute("camera_id") < 55)
-                     .project(Attribute("camera_id"), Attribute("timestamp"), Attribute("rows"),
-                              Attribute("cols"), Attribute("type"), Attribute("data"));
+                     .project(Attribute("camera_id"),
+                              Attribute("timestamp"),
+                              Attribute("rows"),
+                              Attribute("cols"),
+                              Attribute("type"),
+                              Attribute("data"));
 
     // setup csv sources
     CSVSourceTypePtr csvSourceType = CSVSourceType::create("variable_length", "test_stream");
     csvSourceType->setFilePath(inputFilePath);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
     csvSourceType->setNumberOfBuffersToProduce(1);
-
 
     // Creating TestHarness
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -147,8 +153,6 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(actualBuffers, expectedBuffers));
 }
 
-
-
 // This test reads from a csv sink which contains variable-length fields without any additional processing
 TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     const std::string inputFileName = "variable-length.csv";
@@ -174,7 +178,6 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     csvSourceType->setFilePath(inputFilePath);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
     csvSourceType->setNumberOfBuffersToProduce(1);
-
 
     // Creating TestHarness
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())

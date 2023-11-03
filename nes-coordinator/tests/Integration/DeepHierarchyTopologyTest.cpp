@@ -97,7 +97,8 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
         expectedOutput.push_back({1, 1});
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -165,7 +166,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
         expectedOutput.push_back({1, 1});
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -229,7 +231,8 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
         expectedOutput.push_back({1, 1});
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -297,7 +300,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
         expectedOutput.push_back({1, 1});
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -379,7 +383,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
         expectedOutput.push_back({1, 1});
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -461,7 +466,8 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
     std::vector<Output> expectedOutput = {{3}, {4}, {3}, {4}, {3}, {4}, {3}, {4}};
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -555,7 +561,8 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     // check that the new window op "CENTRALWINDOW" is in use
@@ -667,7 +674,8 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
     // check that the new window op "CENTRALWINDOW" is in use
@@ -755,7 +763,8 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
         expectedOutput.push_back({1, 1});
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -840,7 +849,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
                                           {6000, 8000, 112},
                                           {8000, 10000, 32}};
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+    std::vector<Output> actualOutput =
+        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

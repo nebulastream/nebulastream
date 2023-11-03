@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
-#include <API/Query.hpp>
 #include <API/AttributeField.hpp>
+#include <API/Query.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -26,9 +26,9 @@
 #include <Util/Core.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
+#include <cstring>
 #include <filesystem>
 #include <type_traits>
-#include <cstring>
 #include <utility>
 
 /**
@@ -275,7 +275,6 @@ class TestHarness {
      */
     SchemaPtr getOutputSchema();
 
-
     /**
      * @brief return the result of the query execution. This does only work for structs with NON variableLength data types
      * @tparam T: Usually a struct representing one tuple/record
@@ -291,10 +290,8 @@ class TestHarness {
         // Output struct might be padded, in this case the size is not equal to the total size of its field
         // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
         // (e.g., the size is multiple of 8)
-        const auto outputSchema = queryCatalogService->getEntryForQuery(queryId)
-                                      ->getExecutedQueryPlan()
-                                      ->getSinkOperators()[0]
-                                      ->getOutputSchema();
+        const auto outputSchema =
+            queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->getSinkOperators()[0]->getOutputSchema();
         const uint64_t outputSchemaSizeInBytes = outputSchema->getSchemaSizeInBytes();
         NES_DEBUG("TestHarness: outputSchema: {}",
                   queryCatalogService->getEntryForQuery(queryId)
@@ -324,7 +321,8 @@ class TestHarness {
 
                     // Now we are here copying the tuples. We do not have to take care of any variable data sizes,
                     // as they are not supported in this method
-                    auto* dest = reinterpret_cast<uint8_t*>(outputVector.data()) + tupleIdxInOutputVec * outputSchema->getSchemaSizeInBytes() + offSet;
+                    auto* dest = reinterpret_cast<uint8_t*>(outputVector.data())
+                        + tupleIdxInOutputVec * outputSchema->getSchemaSizeInBytes() + offSet;
                     std::memcpy(dest, tupleField.getAddressPointer(), fieldSize);
                     offSet += fieldSize;
                 }

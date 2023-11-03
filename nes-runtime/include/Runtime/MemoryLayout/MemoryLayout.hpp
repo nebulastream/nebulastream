@@ -103,7 +103,6 @@ class MemoryLayout {
     bool operator==(const MemoryLayout& rhs) const;
     bool operator!=(const MemoryLayout& rhs) const;
 
-
   protected:
     const uint64_t bufferSize;
     const SchemaPtr schema;
