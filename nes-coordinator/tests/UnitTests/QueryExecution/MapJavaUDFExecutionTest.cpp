@@ -120,12 +120,12 @@ std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::st
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
-    auto schema = Schema::create()->addField("id", BasicType::INT32);
-    auto testSink = executionEngine->createDataSink(schema);
-    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+    auto fqSchema = Schema::create()->addField("s$id", BasicType::INT32);
+    auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
+    auto testSink = executionEngine->createDataSink(fqSchema);
+    auto testSourceDescriptor = executionEngine->createDataSource(fqSchema);
 
     std::vector<std::string> classNames = {"stream/nebula/MapFunction", "IntegerMapFunction"};
-    auto methodName = "map";
     std::vector<char> serializedInstance = {};
     jni::JavaUDFByteCodeList byteCodeList;
     for (const auto& className : classNames) {
@@ -139,7 +139,8 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
                                  .setMethodName("map")
                                  .setInstance({})
                                  .setByteCodeList(byteCodeList)
-                                 .setOutputSchema(Schema::create()->addField("id", BasicType::INT32))
+                                 .setInputSchema(udfSchema)
+                                 .setOutputSchema(udfSchema)
                                  .setInputClassName("java.lang.Integer")
                                  .setOutputClassName("java.lang.Integer")
                                  .build();
@@ -148,7 +149,7 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
     ASSERT_TRUE(!!source);
-    auto inputBuffer = executionEngine->getBuffer(schema);
+    auto inputBuffer = executionEngine->getBuffer(fqSchema);
     fillBuffer(inputBuffer);
     source->emitBuffer(inputBuffer);
     testSink->waitTillCompleted();
