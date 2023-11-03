@@ -321,9 +321,4 @@ SourceCatalog::getSubsetOfPhysicalSources(const std::string& logicalSourceName,
     }
     return desiredSources;
 }
-
-bool SourceCatalog::compareByNode(const SourceCatalogEntryPtr& entry1, const SourceCatalogEntryPtr& entry2) {
-    return entry1->getNode() < entry2->getNode();
-}
-
 }// namespace NES::Catalogs::Source
