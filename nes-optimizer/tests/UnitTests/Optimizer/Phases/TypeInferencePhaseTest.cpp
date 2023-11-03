@@ -1465,18 +1465,21 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto inputSchema = Schema::create()
-                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", BasicType::UINT64))
-                           ->addField(createField("velocity", BasicType::FLOAT32))
-                           ->addField(createField("quantity", BasicType::UINT64));
+    auto sourceSchema = Schema::create()
+                            ->addField(createField("s$input1", BasicType::FLOAT32))
+                            ->addField(createField("s$input2", BasicType::UINT64));
 
-    streamCatalog->addLogicalSource("logicalSource", inputSchema);
+    auto udfInputSchema = Schema::create()
+                              ->addField(createField("input1", BasicType::FLOAT32))
+                              ->addField(createField("input2", BasicType::UINT64));
+
+    streamCatalog->addLogicalSource("logicalSource", sourceSchema);
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
     auto javaUdfDescriptor =
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
+            .setInputSchema(udfInputSchema)
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
             .build();
     auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, getNextOperatorId());
@@ -1503,19 +1506,22 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
  */
 TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto inputSchema = Schema::create()
-                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", BasicType::UINT64))
-                           ->addField(createField("velocity", BasicType::FLOAT32))
-                           ->addField(createField("quantity", BasicType::UINT64));
+    auto sourceSchema = Schema::create()
+                           ->addField(createField("s$input1", BasicType::FLOAT32))
+                           ->addField(createField("s$input2", BasicType::UINT64));
 
-    streamCatalog->addLogicalSource("logicalSource1", inputSchema);
-    streamCatalog->addLogicalSource("logicalSource2", inputSchema);
+    auto udfInputSchema = Schema::create()
+                              ->addField(createField("input1", BasicType::FLOAT32))
+                              ->addField(createField("input2", BasicType::UINT64));
+
+    streamCatalog->addLogicalSource("logicalSource1", sourceSchema);
+    streamCatalog->addLogicalSource("logicalSource2", sourceSchema);
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
     auto javaUdfDescriptor =
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
+            .setInputSchema(udfInputSchema)
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
             .build();
     auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, getNextOperatorId());
@@ -1550,19 +1556,22 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
  */
 TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) {
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto inputSchema = Schema::create()
-                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                           ->addField(createField("timestamp", BasicType::UINT64))
-                           ->addField(createField("velocity", BasicType::FLOAT32))
-                           ->addField(createField("quantity", BasicType::UINT64));
+    auto sourceSchema = Schema::create()
+                            ->addField(createField("s$input1", BasicType::FLOAT32))
+                            ->addField(createField("s$input2", BasicType::UINT64));
 
-    streamCatalog->addLogicalSource("logicalSource1", inputSchema);
-    streamCatalog->addLogicalSource("logicalSource2", inputSchema);
+    auto udfInputSchema = Schema::create()
+                              ->addField(createField("input1", BasicType::FLOAT32))
+                              ->addField(createField("input2", BasicType::UINT64));
+
+    streamCatalog->addLogicalSource("logicalSource1", sourceSchema);
+    streamCatalog->addLogicalSource("logicalSource2", sourceSchema);
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
     auto javaUdfDescriptor1 =
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
+            .setInputSchema(udfInputSchema)
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute1", DataTypeFactory::createBoolean()))
             .build();
     auto mapUdfLogicalOperatorNode1 = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, getNextOperatorId());
