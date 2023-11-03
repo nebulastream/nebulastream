@@ -82,7 +82,10 @@ std::vector<double> StatCoordinator::probeStat(StatProbeRequest& probeRequest) {
     // have multiple physicalSource we want to query
     auto allPhysicalSources =
         sourceCatalog->getSubsetOfPhysicalSources(probeRequest.getLogicalSourceName(), queriedPhysicalSources);
-    std::sort(allPhysicalSources.begin(), allPhysicalSources.end(), sourceCatalog->compareByNode);
+    std::sort(allPhysicalSources.begin(), allPhysicalSources.end(),
+              [](const Catalogs::Source::SourceCatalogEntryPtr& entry1, const Catalogs::Source::SourceCatalogEntryPtr& entry2) {
+                  return entry1->getNode()->getId() < entry2->getNode()->getId();
+              });
 
     if (allPhysicalSources[0] == nullptr) {
         /*
