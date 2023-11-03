@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.242](https://github.com/nebulastream/nebulastream/tree/v0.5.242) (2023-11-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.241...v0.5.242)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add BasicType::TEXT Support for TestHarness  [\#4304](https://github.com/nebulastream/nebulastream/issues/4304)
+
 ## [v0.5.241](https://github.com/nebulastream/nebulastream/tree/v0.5.241) (2023-11-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.240...v0.5.241)
