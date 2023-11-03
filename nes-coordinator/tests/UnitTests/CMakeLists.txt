@@ -83,6 +83,9 @@ add_nes_unit_test(stop-query-request-test "RequestProcessor/RequestTypes/StopQue
 ### Abstract Request Test ###
 add_nes_unit_test(abstract-request-test "RequestProcessor/RequestTypes/AbstractRequestTest.cpp")
 
+### Abstract MultiRequest Test ###
+add_nes_unit_test(abstract-multi-request-test "RequestProcessor/RequestTypes/AbstractMultiRequestTest.cpp")
+
 ### Async Request Processor Test ###
 add_nes_unit_test(async-request-processor-test "RequestProcessor/AsyncRequestProcessorTest.cpp")
 

@@ -52,6 +52,7 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 const uint8_t DEFAULT_RETRIES = 1;
 
+//todo: rename this to UniRequest
 class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
   public:
     /**
@@ -67,7 +68,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle);
+    virtual std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle);
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
