@@ -16,6 +16,7 @@
 #include <Configurations/Enums/StorageHandlerType.hpp>
 #include <Identifiers.hpp>
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
+#include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
@@ -105,7 +106,19 @@ void AsyncRequestProcessor::runningRoutine() {
         }
         if (running) {
             AbstractRequestPtr abstractRequest = asyncRequestQueue.front();
-            asyncRequestQueue.pop_front();
+
+            if (abstractRequest->instanceOf<AbstractMultiRequest>()) {
+                //remove the request from the queue only if it is done, leave it in and execute it otherwise
+                if (abstractRequest->as<AbstractMultiRequest>()->isDone()) {
+                    asyncRequestQueue.pop_front();
+                    //todo: do this while keeping the lock?
+                    lock.unlock();
+                    continue;
+                }
+            } else {
+                asyncRequestQueue.pop_front();
+            }
+
             lock.unlock();
 
             //execute request logic

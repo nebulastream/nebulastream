@@ -17,4 +17,6 @@ add_source_files(nes-coordinator
         AbstractRequest.cpp
         AddQueryRequest.cpp
         ExplainRequest.cpp
+        AbstractMultiRequest.cpp
+        AbstractSubRequest.cpp
         )
