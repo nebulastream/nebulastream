@@ -12,48 +12,66 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORIDENTIFIER_HPP_
-#define NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORIDENTIFIER_HPP_
+#ifndef NES_NES_CORE_INCLUDE_STATISTICS_STATMANAGER_STATCOLLECTORIDENTIFIER_HPP_
+#define NES_NES_CORE_INCLUDE_STATISTICS_STATMANAGER_STATCOLLECTORIDENTIFIER_HPP_
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
 
 namespace NES::Experimental::Statistics {
 
+/**
+ * The class of StatCollectorIdentifiers, that allow to identify a StatCollector (a statistic generating data structure)
+ * on the worker
+ */
 class StatCollectorIdentifier {
   public:
     /**
-     * @param logicalSourceName the logicalSourceName over which the statistic is generated
+     * @param logicalSourceName the logical source over which the statistic is generated
+     * @param physicalSourceName the physicalSourceName over which the statistic is generated
      * @param fieldName the fieldName over which the statistic is generated
      * @param statCollectorType the Type of statCollector that is used/the statistic that is generated
      */
     StatCollectorIdentifier(const std::string& logicalSourceName,
+                            std::vector<std::string>& physicalSourceNames,
                             const std::string& fieldName,
                             const StatCollectorType statCollectorType);
 
     /**
      * @return returns the logicalSourceName over which the statistic is generated
      */
-    std::string getLogicalSourceName() const;
+    [[nodiscard]]std::string& getLogicalSourceName();
+
+    /**
+     * @return returns the physicalSourceNames over which the statistic is generated
+     */
+    std::vector<std::string>& getPhysicalSourceNames();
 
     /**
      * @return returns the fieldName over which the statistic is generated
      */
-    std::string getFieldName() const;
+    [[nodiscard]]std::string& getFieldName();
 
     /**
      * @return returns the statCollector type aka the type of statistic
      */
-    StatCollectorType getStatCollectorType() const;
+    [[nodiscard]]StatCollectorType& getStatCollectorType();
 
     /**
-     * @param statCollectorIdentifier  a object that allows for the identfication of
+     * @brief adds a physicalSourceName to the list/vector of physicalSourceNames that are to be queried
+     * @param physicalSourceName the physicalSource that is to be queried
+     */
+    void setPhysicalSourceName(std::string& physicalSourceName);
+
+    /**
+     * @param statCollectorIdentifier a object that allows for the identification of
      * tracked statistics
      * @return true if two StatCollectorIdentifiers are equal
      */
-    bool operator==(const StatCollectorIdentifier& statCollectorIdentifier) const;
+    bool operator==(StatCollectorIdentifier& statCollectorIdentifier);
 
     /**
      * @brief custom hash object for the trackedStatistics unordered_map
@@ -62,18 +80,22 @@ class StatCollectorIdentifier {
         std::size_t operator()(const StatCollectorIdentifier& identifier) const {
             // Combine the hash codes of the components to get a unique identifier
             std::size_t hashValue = 0;
-            hashValue ^= std::hash<std::string>()(identifier.getLogicalSourceName());
-            hashValue ^= std::hash<std::string>()(identifier.getFieldName());
-            hashValue ^= static_cast<std::size_t>(identifier.getStatCollectorType());
+            hashValue ^= std::hash<std::string>()(identifier.logicalSourceName);
+            for (const auto& physicalSourceName : identifier.physicalSourceNames) {
+                hashValue ^= std::hash<std::string>()(physicalSourceName);
+            }
+            hashValue ^= std::hash<std::string>()(identifier.fieldName);
+            hashValue ^= static_cast<std::size_t>(identifier.statCollectorType);
             return hashValue;
         }
     };
 
   private:
     std::string logicalSourceName;
+    std::vector<std::string> physicalSourceNames;
     std::string fieldName;
     StatCollectorType statCollectorType;
 };
-}
+}// namespace NES::Experimental::Statistics
 
-#endif//NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORIDENTIFIER_HPP_
+#endif//NES_NES_CORE_INCLUDE_STATISTICS_STATMANAGER_STATCOLLECTORIDENTIFIER_HPP_
