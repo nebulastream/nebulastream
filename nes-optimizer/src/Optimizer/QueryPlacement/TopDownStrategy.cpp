@@ -127,15 +127,26 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
             NES_TRACE("TopDownStrategy: Get the topology nodes where children source operators are to be placed.");
             std::vector<TopologyNodePtr> childNodes = getTopologyNodesForUpStreamOperators(logicalOperator);
 
-            NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
-            candidateTopologyNode = topology->findCommonNodeBetween(childNodes, parentTopologyNodes);
+            if (childNodes.empty()) {
+                NES_WARNING("TopDownStrategy: No topology node found where child operators are placed.");
+                return;
+            }
 
-            if (!candidateTopologyNode) {
+            NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
+            auto nodesBetween = topology->sort(topology->findCommonNodesBetween(childNodes, parentTopologyNodes), Upstream);
+
+            if (nodesBetween.empty()) {
                 NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator {}",
                           logicalOperator->toString());
                 throw Exceptions::RuntimeException(
                     "TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                     + logicalOperator->toString());
+            } else if (nodesBetween.size() <= childNodes.size() + parentTopologyNodes.size()) {
+                //Some childNodes == parentNodes --> Pick any of them
+                candidateTopologyNode = nodesBetween[0];
+            } else {
+                // Nodes in between --> Pick the first non-parent node
+                candidateTopologyNode = nodesBetween[parentTopologyNodes.size()];
             }
 
             if (logicalOperator->instanceOf<SourceLogicalOperatorNode>()) {

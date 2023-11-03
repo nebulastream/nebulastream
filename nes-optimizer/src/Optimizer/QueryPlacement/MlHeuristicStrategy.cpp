@@ -214,7 +214,8 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
             if (childTopologyNodes.size() == 1) {
                 candidateTopologyNode = childTopologyNodes[0];
             } else {
-                candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
+                auto downstreamNodes = topology->sort(topology->findCommonAncestors(childTopologyNodes), Downstream);
+                candidateTopologyNode = downstreamNodes.empty() ? nullptr : downstreamNodes[0];
             }
             if (!candidateTopologyNode) {
                 NES_ERROR("MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator, "

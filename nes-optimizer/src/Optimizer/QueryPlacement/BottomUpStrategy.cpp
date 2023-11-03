@@ -13,16 +13,16 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
 #include <utility>
@@ -128,7 +128,8 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
         if (childTopologyNodes.size() == 1) {
             candidateTopologyNode = childTopologyNodes[0];
         } else {
-            candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
+            auto downstreamNodes = topology->sort(topology->findCommonAncestors(childTopologyNodes), Downstream);
+            candidateTopologyNode = downstreamNodes.empty() ? nullptr : downstreamNodes[0];
         }
 
         if (!candidateTopologyNode) {

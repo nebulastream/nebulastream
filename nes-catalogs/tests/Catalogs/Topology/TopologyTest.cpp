@@ -20,6 +20,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <cstddef>
+#include <gmock/gmock-matchers.h>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -31,6 +33,16 @@ class TopologyTest : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("NesTopologyManager.log", NES::LogLevel::LOG_DEBUG); }
 };
+
+template<typename Container>
+static std::vector<NodeId> getIds(const Container& nodes) {
+    std::vector<NodeId> result;
+    std::transform(nodes.begin(), nodes.end(), std::back_inserter(result), [](auto node) {
+        return node->getId();
+    });
+    return result;
+}
+
 /* - Nodes ----------------------------------------------------------------- */
 /**
  * Create a new node. 
@@ -449,6 +461,74 @@ TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
 }
 
 /**
+ * @brief Test Topological Sort order
+ */
+TEST_F(TopologyTest, testTopologicalSort) {
+
+    TopologyPtr topology = Topology::create();
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // creater workers
+    std::vector<TopologyNodePtr> workers;
+    int resource = 4;
+    for (uint32_t i = 0; i < 10; ++i) {
+        workers.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(workers.at(3));
+
+    // link each worker with its neighbor
+    topology->addNewTopologyNodeAsChild(workers.at(3), workers.at(1));
+    topology->addNewTopologyNodeAsChild(workers.at(3), workers.at(2));
+
+    topology->addNewTopologyNodeAsChild(workers.at(1), workers.at(5));
+    topology->addNewTopologyNodeAsChild(workers.at(2), workers.at(6));
+
+    topology->addNewTopologyNodeAsChild(workers.at(5), workers.at(4));
+    topology->addNewTopologyNodeAsChild(workers.at(6), workers.at(4));
+
+    auto getNode = [&workers](size_t id) {
+        return workers.at(id);
+    };
+    auto pick = [](std::set<size_t> ids) {
+        return [ids](TopologyNodePtr node) {
+            return ids.contains(node->getId());
+        };
+    };
+
+    ASSERT_THAT(getIds(topology->findNodesBetween({getNode(1)}, {getNode(3)})), testing::UnorderedElementsAre(3, 1));
+    ASSERT_THAT(getIds(topology->findNodesBetween({getNode(1)}, {getNode(1)})), testing::UnorderedElementsAre(1));
+    ASSERT_THAT(getIds(topology->sort(topology->findNodesBetween({getNode(1)}, {getNode(3)}), Downstream)),
+                testing::ElementsAre(1, 3));
+    ASSERT_THAT(getIds(topology->sort(topology->findNodesBetween({getNode(1)}, {getNode(3)}), Upstream)),
+                testing::ElementsAre(3, 1));
+
+    auto between = topology->findNodesBetween(getNode(4), getNode(3));
+    ASSERT_THAT(getIds(between), testing::UnorderedElementsAre(3, 1, 2, 5, 6, 4));
+    auto downstreamSorted = topology->sort(between, Downstream);
+    std::vector<TopologyNodePtr> path1;
+    std::copy_if(downstreamSorted.begin(), downstreamSorted.end(), std::back_inserter(path1), pick({3, 1, 5, 4}));
+    ASSERT_THAT(getIds(path1), testing::ElementsAre(4, 5, 1, 3));
+
+    std::vector<TopologyNodePtr> path2;
+    std::copy_if(downstreamSorted.begin(), downstreamSorted.end(), std::back_inserter(path2), pick({3, 2, 6, 4}));
+    ASSERT_THAT(getIds(path2), testing::ElementsAre(4, 6, 2, 3));
+
+    auto upstreamSorted = topology->sort(between, Upstream);
+    std::copy_if(upstreamSorted.begin(), upstreamSorted.end(), path1.begin(), pick({3, 1, 5, 4}));
+    ASSERT_THAT(getIds(path1), testing::ElementsAre(3, 1, 5, 4));
+
+    std::copy_if(upstreamSorted.begin(), upstreamSorted.end(), path2.begin(), pick({3, 2, 6, 4}));
+    ASSERT_THAT(getIds(path2), testing::ElementsAre(3, 2, 6, 4));
+}
+
+/**
  * @brief Find Path between two not connected nodes
  */
 TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
@@ -776,6 +856,7 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     TopologyNodePtr mThirdStartNodeParent4 = mThirdStartNodeParent3->getParents()[0]->as<TopologyNode>();
     EXPECT_TRUE(mThirdStartNodeParent4->getId() == topologyNodes[0]->getId());
 }
+
 /**
  * @brief Tests if findCommonAncestor properly ignores nodes marked for maintenance
  */
@@ -815,20 +896,74 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
     topology->print();
 
     auto topNodes = {topologyNodes.at(4), topologyNodes.at(5)};
-    auto commonAncestor = topology->findCommonAncestor(topNodes);
-    EXPECT_TRUE(commonAncestor->getId() == 1);
+    auto commonAncestors = topology->findCommonAncestors(topNodes);
+    EXPECT_THAT(getIds(commonAncestors), testing::UnorderedElementsAre(1, 2, 3));
     topology->findNodeWithId(1)->setForMaintenance(true);
-    commonAncestor = topology->findCommonAncestor(topNodes);
-    EXPECT_TRUE(commonAncestor->getId() == 2);
+    commonAncestors = topology->findCommonAncestors(topNodes);
+    EXPECT_THAT(getIds(commonAncestors), testing::UnorderedElementsAre(2, 3));
     topology->findNodeWithId(2)->setForMaintenance(true);
-    commonAncestor = topology->findCommonAncestor(topNodes);
-    EXPECT_TRUE(commonAncestor->getId() == 3);
+    commonAncestors = topology->findCommonAncestors(topNodes);
+    EXPECT_THAT(getIds(commonAncestors), testing::UnorderedElementsAre(3));
     topology->findNodeWithId(3)->setForMaintenance(true);
-    commonAncestor = topology->findCommonAncestor(topNodes);
-    EXPECT_TRUE(commonAncestor == nullptr);
+    commonAncestors = topology->findCommonAncestors(topNodes);
+    EXPECT_TRUE(commonAncestors.empty());
     topology->findNodeWithId(1)->setForMaintenance(false);
-    commonAncestor = topology->findCommonAncestor(topNodes);
-    EXPECT_TRUE(commonAncestor->getId() == 1);
+    commonAncestors = topology->findCommonAncestors(topNodes);
+    EXPECT_THAT(getIds(commonAncestors), testing::UnorderedElementsAre(1));
+}
+
+/**
+ * @brief Tests if findInBetweenNodes properly works
+ */
+TEST_F(TopologyTest, testInBetweenNodes) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<TopologyNodePtr> topologyNodes;
+    int resource = 4;
+    for (uint32_t i = 0; i < 20; ++i) {
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(topologyNodes.at(0));
+
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(2));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(3), topologyNodes.at(4));
+    topology->print();
+
+    EXPECT_THAT(getIds(topology->findNodesBetween(topologyNodes.at(4), topologyNodes.at(0))),
+                testing::UnorderedElementsAre(0, 1, 2, 3, 4));
+    EXPECT_THAT(getIds(topology->findNodesBetween(topologyNodes.at(4), topologyNodes.at(2))),
+                testing::UnorderedElementsAre(2, 3, 4));
+
+    topologyNodes.at(1)->setForMaintenance(true);
+    EXPECT_THAT(getIds(topology->findNodesBetween(topologyNodes.at(4), topologyNodes.at(0))), testing::IsEmpty());
+    EXPECT_THAT(getIds(topology->findNodesBetween(topologyNodes.at(4), topologyNodes.at(2))),
+                testing::UnorderedElementsAre(2, 3, 4));
+
+    topologyNodes.at(1)->setForMaintenance(false);
+
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(5), topologyNodes.at(6));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(6), topologyNodes.at(7));
+
+    EXPECT_THAT(getIds(topology->findNodesBetween(topologyNodes.at(4), topologyNodes.at(0))),
+                testing::UnorderedElementsAre(0, 1, 2, 3, 4));
+    EXPECT_THAT(getIds(topology->findNodesBetween(topologyNodes.at(7), topologyNodes.at(0))),
+                testing::UnorderedElementsAre(0, 1, 5, 6, 7));
+
+    EXPECT_THAT(getIds(topology->findNodesBetween({topologyNodes.at(7), topologyNodes.at(4)}, {topologyNodes.at(0)})),
+                testing::UnorderedElementsAre(0, 1));
 }
 
 /**
@@ -868,20 +1003,15 @@ TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
     topology->print();
 
     auto topNodes = {topologyNodes.at(1), topologyNodes.at(2)};
-    auto commonChild = topology->findCommonChild(topNodes);
-    EXPECT_TRUE(commonChild->getId() == 4);
+    EXPECT_THAT(getIds(topology->findCommonChildren(topNodes)), testing::UnorderedElementsAre(4, 5, 3));
     topology->findNodeWithId(4)->setForMaintenance(true);
-    commonChild = topology->findCommonChild(topNodes);
-    EXPECT_TRUE(commonChild->getId() == 5);
+    EXPECT_THAT(getIds(topology->findCommonChildren(topNodes)), testing::UnorderedElementsAre(5, 3));
     topology->findNodeWithId(5)->setForMaintenance(true);
-    commonChild = topology->findCommonChild(topNodes);
-    EXPECT_TRUE(commonChild->getId() == 3);
+    EXPECT_THAT(getIds(topology->findCommonChildren(topNodes)), testing::UnorderedElementsAre(3));
     topology->findNodeWithId(3)->setForMaintenance(true);
-    commonChild = topology->findCommonChild(topNodes);
-    EXPECT_TRUE(commonChild == nullptr);
+    EXPECT_THAT(getIds(topology->findCommonChildren(topNodes)), testing::IsEmpty());
     topology->findNodeWithId(4)->setForMaintenance(false);
-    commonChild = topology->findCommonChild(topNodes);
-    EXPECT_TRUE(commonChild->getId() == 4);
+    EXPECT_THAT(getIds(topology->findCommonChildren(topNodes)), testing::UnorderedElementsAre(4));
 }
 
 TEST_F(TopologyTest, testCommonAncestorIfOneOfTheNodesIsAncestorOfTheOther) {
@@ -918,20 +1048,29 @@ TEST_F(TopologyTest, testCommonAncestorIfOneOfTheNodesIsAncestorOfTheOther) {
     topology->addNewTopologyNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
 
     topology->print();
+    EXPECT_THAT(getIds(topology->findCommonAncestors({})), testing::IsEmpty());
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[3]})), testing::ElementsAre(3));
 
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[0], topologyNodes[1]})->getId(), 0);
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[0], topologyNodes[3]})->getId(), 0);
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[1], topologyNodes[2]})->getId(), 0);
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[0], topologyNodes[1]})), testing::ElementsAre(0));
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[0], topologyNodes[3]})), testing::ElementsAre(0));
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[1], topologyNodes[2]})), testing::ElementsAre(0));
 
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[1], topologyNodes[3]})->getId(), 1);
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[1], topologyNodes[4]})->getId(), 1);
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[1], topologyNodes[4], topologyNodes[8]})->getId(), 1);
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[8], topologyNodes[4], topologyNodes[1]})->getId(), 1);
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[1], topologyNodes[3]})), testing::ElementsAre(1));
+    EXPECT_THAT(getIds(topology->findCommonChildren({topologyNodes[3], topologyNodes[1]})), testing::ElementsAre(3));
+    EXPECT_THAT(getIds(topology->findCommonChildren({topologyNodes[7], topologyNodes[1]})), testing::ElementsAre(7));
 
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[5], topologyNodes[6]})->getId(), 2);
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[2], topologyNodes[6]})->getId(), 2);
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[1], topologyNodes[4]})), testing::ElementsAre(1));
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[1], topologyNodes[4], topologyNodes[8]})),
+                testing::ElementsAre(1));
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[8], topologyNodes[4], topologyNodes[1]})),
+                testing::ElementsAre(1));
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[5], topologyNodes[6]})), testing::ElementsAre(2));
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[2], topologyNodes[6]})), testing::ElementsAre(2));
 
-    EXPECT_EQ(topology->findCommonAncestor({topologyNodes[8], topologyNodes[4]})->getId(), 1);
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[8], topologyNodes[4]})), testing::ElementsAre(1));
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[8], topologyNodes[6]})),
+                testing::ElementsAre(0));
+
 }
 
 /**
@@ -986,11 +1125,11 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
 
     auto childNodes = {topologyNodes.at(7), topologyNodes.at(8)};
     auto parentNodes = {topologyNodes.at(1), topologyNodes.at(2)};
-    auto commonAncestor = topology->findCommonAncestor(childNodes);
-    auto commonChild = topology->findCommonChild(parentNodes);
-    EXPECT_TRUE(commonAncestor->getId() == 3);
-    EXPECT_TRUE(commonAncestor->getId() == commonChild->getId());
+    auto commonAncestor = topology->findCommonAncestors(childNodes);
+    auto commonChild = topology->findCommonChildren(parentNodes);
+    EXPECT_THAT(getIds(commonAncestor), testing::ElementsAre(3));
+    EXPECT_THAT(getIds(commonAncestor), testing::ElementsAreArray(getIds(commonChild)));
 
     auto path = topology->findPathBetween(childNodes, parentNodes);
-    EXPECT_TRUE(path.size() != 0);
+    EXPECT_TRUE(!path.empty());
 }

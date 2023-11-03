@@ -16,10 +16,13 @@
 #define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
 #include <Catalogs/Topology/LinkProperty.hpp>
+#include <Catalogs/Topology/TopologyNodeSet.hpp>
+#include <Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <any>
+#include <cstdint>
 #include <fmt/core.h>
 #include <map>
 #include <optional>
@@ -189,6 +192,8 @@ class TopologyNode : public Node {
      * @return true if the node is running on a mobile device
      */
     NES::Spatial::Experimental::SpatialType getSpatialNodeType();
+
+    TopologyNodeSet dfs(Direction direction, bool ignoreMaintenance = false);
 
   private:
     uint64_t id;
