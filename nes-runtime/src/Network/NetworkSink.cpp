@@ -193,11 +193,26 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             deleteFromStorageCallback(epochMessage, workerContext);
             break;
         }
-        case Runtime::ReconfigurationType::StopBuffering: {
-            //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
-            //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
+        case Runtime::ReconfigurationType::ConnectToNewReceiver: {
+            //retrieve information about which source to connect to
+            auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
+            if (newReceiverLocation == receiverLocation && newPartition == nesPartition) {
+                NES_THROW_RUNTIME_ERROR("Attempting reconnect but the new source descriptor equals the old one");
+            }
+
+            if (workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
+                workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
+            }
+
+            clearOldAndConnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition);
+            break;
+        }
+        case Runtime::ReconfigurationType::ConnectionEstablished: {
+            //if the callback was triggered by the channel for another thread becoming ready, we cannot do anything
+            if (!workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
+                NES_DEBUG("NetworkSink: reconfigure() No network channel future found for operator {} Thread {}",
+                          nesPartition.toString(),
+                          Runtime::NesThread::getId());
                 break;
             }
             retrieveNewChannelAndUnbuffer(workerContext);
