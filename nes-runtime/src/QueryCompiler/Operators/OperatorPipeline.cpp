@@ -16,10 +16,10 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <numeric>
-#include <utility>
 #include <atomic>
+#include <numeric>
 #include <sstream>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
@@ -27,7 +27,6 @@ uint64_t getNextPipelineId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }
-
 
 OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
     : id(pipelineId), queryPlan(QueryPlan::create()), pipelineType(pipelineType) {}

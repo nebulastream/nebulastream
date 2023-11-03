@@ -14,8 +14,8 @@
 #ifndef NES_CORE_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
 #define NES_CORE_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
 
-#include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <vector>

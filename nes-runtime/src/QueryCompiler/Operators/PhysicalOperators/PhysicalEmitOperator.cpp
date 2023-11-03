@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const SchemaPtr& inputSchema)

@@ -24,8 +24,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/SinkCreator.hpp>

@@ -42,4 +42,4 @@ std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> NautilusPipelineOp
 
 std::vector<Runtime::Execution::OperatorHandlerPtr> NautilusPipelineOperator::getOperatorHandlers() { return operatorHandlers; }
 
-} // namespace NES::QueryCompilation
+}// namespace NES::QueryCompilation

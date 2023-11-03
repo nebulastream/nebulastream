@@ -13,8 +13,8 @@
 */
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 

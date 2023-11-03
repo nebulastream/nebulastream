@@ -13,9 +13,8 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <utility>
 #include <sstream>
-
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -60,5 +59,4 @@ Runtime::Execution::ExecutablePipelineStagePtr PhysicalExternalOperator::getExec
     return executablePipelineStage;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
-
+}// namespace NES::QueryCompilation::PhysicalOperators

@@ -13,8 +13,8 @@
 */
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 

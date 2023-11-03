@@ -14,7 +14,6 @@
 
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
-#include <Util/Mobility/ReconnectPoint.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
@@ -23,6 +22,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>

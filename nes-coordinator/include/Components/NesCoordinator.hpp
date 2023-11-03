@@ -35,11 +35,10 @@ namespace Runtime {
 class QueryStatistics;
 using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
-
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
-}
+}// namespace Runtime
 using namespace Configurations;
 
 class RequestQueue;

@@ -18,7 +18,6 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include <Util/Mobility/ReconnectPoint.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
@@ -28,6 +27,7 @@
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <utility>
 

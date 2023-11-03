@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/WatermarkProcessor.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::Windowing {
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <atomic>
 #include <gtest/gtest.h>

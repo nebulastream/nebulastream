@@ -62,5 +62,4 @@ const std::string& PhysicalInferModelOperator::getModel() const { return model; 
 const std::vector<ExpressionNodePtr>& PhysicalInferModelOperator::getInputFields() const { return inputFields; }
 const std::vector<ExpressionNodePtr>& PhysicalInferModelOperator::getOutputFields() const { return outputFields; }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
-
+}// namespace NES::QueryCompilation::PhysicalOperators

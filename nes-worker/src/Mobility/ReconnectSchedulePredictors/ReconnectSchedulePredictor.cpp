@@ -14,12 +14,12 @@
 
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
-#include <Util/Mobility/ReconnectPoint.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
+#include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/S2Utilities.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/TimeMeasurement.hpp>
