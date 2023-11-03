@@ -15,8 +15,8 @@
 #include <API/Schema.hpp>
 #include <Exceptions/RpcException.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 #include <GRPC/StatRequestUtil.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
@@ -492,24 +492,27 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
-double WorkerRPCClient::probeStat(const std::string& destAddress, Experimental::Statistics::StatProbeRequest& probeRequest) {
+std::vector<double> WorkerRPCClient::probeStat(const std::string& destAddress,
+                                               Experimental::Statistics::StatProbeRequest& probeRequest) {
     NES_DEBUG("WorkerRPCClient: Statistic probe request address={}", destAddress);
 
     ClientContext context;
     ProbeStatRequest request;
-    auto GRPCProbeRequest = request.mutable_proberequestparamobj();
-    StatRequestUtil::serializeProbeRequest(probeRequest, GRPCProbeRequest);
+    auto grpcProbeRequest = request.mutable_proberequestparamobj();
+    StatRequestUtil::serializeProbeRequest(probeRequest, grpcProbeRequest);
 
     ProbeStatReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());
     auto workerStub = WorkerRPCService::NewStub(chan);
     auto status = workerStub->ProbeStat(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("Returned Status was ok and stat is: {}", reply.stat());
-        return reply.stat();
+        std::vector<double> stats(reply.stats().begin(), reply.stats().end());
+        return stats;
     } else {
-        NES_DEBUG("Returned Status was not ok and stat is: {}", reply.stat());
-        return -1.0;
+        NES_DEBUG("Returned Status was not ok");
+        reply.Clear();
+        std::vector<double> stats(reply.stats().begin(), reply.stats().end());
+        return stats;
     }
 }
 
@@ -518,8 +521,8 @@ bool WorkerRPCClient::deleteStat(const std::string& destAddress, Experimental::S
 
     ClientContext context;
     DeleteStatRequest request;
-    auto GRPCDeleteRequest = request.mutable_deleterequestparamobj();
-    StatRequestUtil::serializeDeleteRequest(deleteRequest, GRPCDeleteRequest);
+    auto grpcDeleteRequest = request.mutable_deleterequestparamobj();
+    StatRequestUtil::serializeDeleteRequest(deleteRequest, grpcDeleteRequest);
 
     DeleteStatReply reply;
     auto chan = grpc::CreateChannel(destAddress, grpc::InsecureChannelCredentials());

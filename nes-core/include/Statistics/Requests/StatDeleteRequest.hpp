@@ -22,9 +22,7 @@
 #include <Statistics/Requests/StatRequest.hpp>
 #include <Statistics/StatCollectors/StatCollectorType.hpp>
 
-namespace NES {
-
-namespace Experimental::Statistics {
+namespace NES::Experimental::Statistics {
 
 /**
  * @brief the inherited class that defines what is needed to delete Statistics
@@ -38,16 +36,13 @@ class StatDeleteRequest : public StatRequest {
         : StatRequest(logicalSourceName, fieldName, statCollectorType), endTime(endTime) {}
 
     /**
-     * @return returns the latest possible time for which we wat to keep statCollectors.
-     * Everything older is deleted
+     * @return returns the latest possible time for which we want to keep statCollectors. Everything older is deleted
      */
     time_t getEndTime() const { return endTime; }
 
   private:
     time_t endTime;
 };
-}// namespace Experimental::Statistics
-
-}// namespace NES
+}// namespace NES::Experimental::Statistics
 
 #endif//NES_NES_CORE_INCLUDE_STATISTICS_REQUESTS_STATDELETEREQUEST_HPP_

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <GRPC/StatRequestUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Mobility/LocationProviders/LocationProvider.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
@@ -21,6 +22,9 @@
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Statistics/Requests/StatDeleteRequest.hpp>
+#include <Statistics/Requests/StatProbeRequest.hpp>
+#include <Statistics/StatManager/StatManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -216,16 +220,26 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
 
 Status WorkerRPCServer::ProbeStat(grpc::ServerContext*, const ProbeStatRequest* request, ProbeStatReply* reply) {
 
-    auto test = request->proberequestparamobj();
-    reply->set_stat(1.0);
+    auto probeRequest = &request->proberequestparamobj();
+    auto serializedProbeRequest = StatRequestUtil::deserializeProbeRequest(probeRequest);
+    statManager->probeStats(serializedProbeRequest, reply);
+    auto stats = reply->stats();
 
     return Status::OK;
 }
 
 Status WorkerRPCServer::DeleteStat(grpc::ServerContext*, const DeleteStatRequest* request, DeleteStatReply* reply) {
-    auto test = request->deleterequestparamobj();
-    reply->set_success(true);
-    return Status::OK;
+
+    auto deleteRequest = &request->deleterequestparamobj();
+    auto serializedDeleteRequest = StatRequestUtil::deserializeDeleteRequest(deleteRequest);
+    auto success = statManager->deleteStat(serializedDeleteRequest);
+    if (success == true) {
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
 }
 
 }// namespace NES

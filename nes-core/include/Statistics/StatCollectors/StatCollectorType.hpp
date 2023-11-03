@@ -15,13 +15,10 @@
 #ifndef NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORS_STATCOLLECTORTYPE_HPP_
 #define NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORS_STATCOLLECTORTYPE_HPP_
 
-namespace NES {
-
-namespace Experimental::Statistics {
+namespace NES::Experimental::Statistics {
 /**
  * @brief the types of statCollectors
  */
 enum class StatCollectorType { COUNT_MIN, HYPER_LOG_LOG, DDSKETCH, RESERVOIR, UNDEFINED };
-}
-}
+}// namespace NES::Experimental::Statistics
 #endif//NES_NES_CORE_INCLUDE_STATISTICS_STATCOLLECTORS_STATCOLLECTORTYPE_HPP_

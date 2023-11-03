@@ -191,7 +191,7 @@ message ProbeStatRequest {
 }
 
 message ProbeStatReply {
-  double stat = 1;
+  repeated double stats = 1;
 }
 
 message DeleteStatRequest {

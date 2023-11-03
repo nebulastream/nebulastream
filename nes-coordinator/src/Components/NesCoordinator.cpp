@@ -48,6 +48,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
+#include <Statistics/StatCoordinator/StatCoordinator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <WorkQueues/RequestQueue.hpp>
@@ -57,7 +58,6 @@
 #include <memory>
 #include <thread>
 #include <z3++.h>
-#include <Statistics/StatCoordinator.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;

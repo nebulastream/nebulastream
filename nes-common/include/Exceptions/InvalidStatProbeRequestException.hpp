@@ -20,6 +20,9 @@
 
 namespace NES::Experimental::Statistics::Exceptions {
 
+/**
+ * @brief a custom exception class that can be thrown with a custom message, when a StatProbeRequest is invalid for some reason
+ */
 class InvalidStatProbeRequestException : public std::exception {
   public:
     InvalidStatProbeRequestException(const std::string& message);
