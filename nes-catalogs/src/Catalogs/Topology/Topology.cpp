@@ -1008,6 +1008,7 @@ nlohmann::json Topology::requestLocationAndParentDataFromAllMobileNodes() {
             }
             ++count;
         }
+        set = std::move(newSet);
     }
     nlohmann::json response;
     response["nodes"] = locationMapJson;

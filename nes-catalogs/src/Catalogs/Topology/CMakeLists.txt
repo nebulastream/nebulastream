@@ -18,6 +18,7 @@ add_source_files(nes-catalogs
         AbstractHealthCheckService.cpp
         PathFinder.cpp
         TopologyNode.cpp
+        TopologyNodeSet.cpp
         Topology.cpp
 )
 add_subdirectory(Prediction)
