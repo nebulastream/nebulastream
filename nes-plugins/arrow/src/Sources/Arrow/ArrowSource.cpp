@@ -217,7 +217,8 @@ arrow::Status ArrowSource::openCsvFile() {
     auto read_options = arrow::csv::ReadOptions::Defaults();
     auto parse_options = arrow::csv::ParseOptions::Defaults();
     auto convert_options = arrow::csv::ConvertOptions::Defaults();
-    // Instantiate TableReader from input stream and options
+//    populateOptionsFromSchema(read_options, convert_options);
+
     auto maybe_reader = arrow::csv::StreamingReader::Make(io_context,
                                                           inputFile,
                                                           read_options,
@@ -229,6 +230,39 @@ arrow::Status ArrowSource::openCsvFile() {
     }
     csvStreamingReader = *maybe_reader;
     return arrow::Status::OK();
+}
+
+void ArrowSource::populateOptionsFromSchema(arrow::csv::ReadOptions& readOptions,
+                                            arrow::csv::ConvertOptions& convertOptions) {
+    auto fields = schema->fields;
+    uint64_t numberOfSchemaFields = schema->getSize();
+    for (uint64_t schemaFieldIdx = 0; schemaFieldIdx < numberOfSchemaFields; ++schemaFieldIdx) {
+        auto nesFieldName = fields[schemaFieldIdx]->getName();
+        auto fieldName = nesFieldName.substr(nesFieldName.find('$') + 1);
+        readOptions.column_names.push_back(fieldName);
+        auto dataType = fields[schemaFieldIdx]->getDataType();
+        auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+        if (!physicalType->isBasicType()) {
+            NES_THROW_RUNTIME_ERROR("ArrowSource::populateConvertOptionsFromSchema: error inferring types");
+        }
+        auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
+        switch (basicPhysicalType->nativeType) {
+            case BasicPhysicalType::NativeType::UINT_8:
+            case BasicPhysicalType::NativeType::UINT_16:
+            case BasicPhysicalType::NativeType::UINT_32:
+            case BasicPhysicalType::NativeType::UINT_64:
+            case BasicPhysicalType::NativeType::INT_8:
+            case BasicPhysicalType::NativeType::INT_16:
+            case BasicPhysicalType::NativeType::INT_32:
+            case BasicPhysicalType::NativeType::INT_64: convertOptions.column_types[fieldName] = arrow::int64(); break;
+            case BasicPhysicalType::NativeType::FLOAT:
+            case BasicPhysicalType::NativeType::DOUBLE: convertOptions.column_types[fieldName] = arrow::float64(); break;
+            case BasicPhysicalType::NativeType::CHAR: break;
+            case BasicPhysicalType::NativeType::BOOLEAN: break;
+            case BasicPhysicalType::NativeType::TEXT: break;
+            case BasicPhysicalType::NativeType::UNDEFINED: break;
+        }
+    }
 }
 
 void ArrowSource::readNextBatch() {
