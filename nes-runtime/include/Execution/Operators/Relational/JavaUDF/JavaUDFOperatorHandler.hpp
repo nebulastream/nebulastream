@@ -65,7 +65,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      * @param javaClassName The class name in Java notation.
      * @return The class name in JNI notation.
      */
-    const std::string convertToJNIName(const std::string& javaClassName) const;
+    static const std::string convertToJNIName(const std::string& javaClassName);
 
     /**
      * @brief This method returns the class name of the java udf

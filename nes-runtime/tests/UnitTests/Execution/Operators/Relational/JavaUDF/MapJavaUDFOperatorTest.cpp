@@ -25,6 +25,7 @@
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -35,6 +36,19 @@ class MapJavaUdfOperatorTest : public testing::Test {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapJavaUdfOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup MapJavaUdfOperatorTest test class." << std::endl;
+    }
+    /** Takes an byte code list that contains class names but no class definitions and loads the byte code for the classes from the test data directory. */
+    static void loadByteCode(jni::JavaUDFByteCodeList& byteCodeList) {
+        for (auto& [className, byteCode] : byteCodeList) {
+            const auto fileName = "testData/JavaUDFTestData/" + JavaUDFOperatorHandler::convertToJNIName(className) + ".class";
+            std::ifstream classFile(fileName, std::fstream::binary);
+            NES_ASSERT(classFile, "Could not find class file: " << fileName);
+            classFile.seekg(0, std::ios_base::end);
+            auto fileSize = classFile.tellg();
+            classFile.seekg(0, std::ios_base::beg);
+            byteCode.resize(fileSize);
+            classFile.read(reinterpret_cast<char*>(byteCode.data()), byteCode.size());
+        }
     }
 };
 
@@ -52,6 +66,8 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT32);
     output = Schema::create()->addField("id", BasicType::INT32);
     clazz = "stream.nebula.IntegerMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
+    loadByteCode(byteCodeList);
     inputClass = "java.lang.Integer";
     outputClass = "java.lang.Integer";
 
