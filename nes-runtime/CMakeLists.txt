@@ -246,18 +246,16 @@ endif ()
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     target_link_libraries(nes-runtime PUBLIC ${JNI_LIBRARIES})
     # Define map java udf utils class file
+    SET(NES_JAVA_UTILS_SRC_PATH "src/Execution/Operators/Relational/JavaUDF/JavaUtils")
     if (NES_JAVA_UDF_UTILS_PATH)
         # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
         target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
-
         message(STATUS "Setting path of Java helpers to: ${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}")
-
-
         # Install Java deserialization helper.
-        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/stream/nebula/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH}/stream/nebula)
+        INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/stream/nebula/MapJavaUdfUtils.class" DESTINATION ${NES_JAVA_UDF_UTILS_PATH}/stream/nebula)
     else ()
         # Use Java helpers from test directory when working in CLion.
-        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/tests/testData/JavaUDFTestData/")
+        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/")
     endif()
 endif()
 
