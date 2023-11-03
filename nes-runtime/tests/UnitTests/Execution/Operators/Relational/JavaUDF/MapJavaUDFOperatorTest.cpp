@@ -372,7 +372,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                 ->addField("shortVariable", BasicType::INT16)
                 ->addField("intVariable", BasicType::INT32)
                 ->addField("longVariable", BasicType::INT64)
-                ->addField("unsignedLongVariable", BasicType::UINT64) // UINT64 input fields are also mapped to Java long
+                ->addField("unsignedLongVariable", BasicType::UINT64)// UINT64 input fields are also mapped to Java long
                 ->addField("floatVariable", BasicType::FLOAT32)
                 ->addField("doubleVariable", BasicType::FLOAT64)
                 ->addField("stringVariable", BasicType::TEXT)
@@ -382,7 +382,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                  ->addField("shortVariable", BasicType::INT16)
                  ->addField("intVariable", BasicType::INT32)
                  ->addField("longVariable", BasicType::INT64)
-                 ->addField("unsignedLongVariable", BasicType::INT64) // Java long are always mapped to INT64 in output
+                 ->addField("unsignedLongVariable", BasicType::INT64)// Java long are always mapped to INT64 in output
                  ->addField("floatVariable", BasicType::FLOAT32)
                  ->addField("doubleVariable", BasicType::FLOAT64)
                  ->addField("stringVariable", BasicType::TEXT)

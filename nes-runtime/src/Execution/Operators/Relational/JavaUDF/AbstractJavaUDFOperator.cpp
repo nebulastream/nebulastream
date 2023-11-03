@@ -89,7 +89,8 @@ Record AbstractJavaUDFOperator::extractRecordFromPojo(const Value<MemRef>& handl
             Value<> val = FunctionCall<>("getStringObjectValue", getStringObjectValue, outputPojoPtr);
             resultRecord.write(fieldName, val);
         } else {
-            NES_THROW_RUNTIME_ERROR("Could not extract value from Java UDF output object (data type not supported): type=" << std::string(field->getDataType()->toString()));
+            NES_THROW_RUNTIME_ERROR("Could not extract value from Java UDF output object (data type not supported): type="
+                                    << std::string(field->getDataType()->toString()));
         }
     } else {
         auto outputClassPtr = FunctionCall<>("getObjectClass", getObjectClass, outputPojoPtr);
@@ -131,7 +132,8 @@ Record AbstractJavaUDFOperator::extractRecordFromPojo(const Value<MemRef>& handl
                     FunctionCall<>("getStringField", getStringField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
                 resultRecord.write(fieldName, val);
             } else {
-                NES_THROW_RUNTIME_ERROR("Could not extract value from Java UDF output POJO (data type not supported): field=" << fieldName << ", type=" << std::string(field->getDataType()->toString()));
+                NES_THROW_RUNTIME_ERROR("Could not extract value from Java UDF output POJO (data type not supported): field="
+                                        << fieldName << ", type=" << std::string(field->getDataType()->toString()));
             }
         }
     }
@@ -167,7 +169,8 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
         } else if (type->isEquals(DataTypeFactory::createText())) {
             return FunctionCall<>("createStringObject", createStringObject, record.read(fieldName).as<Text>()->getReference());
         } else {
-            NES_THROW_RUNTIME_ERROR("Could not create Java UDF input object (data type not supported): type=" << std::string(type->toString()));
+            NES_THROW_RUNTIME_ERROR(
+                "Could not create Java UDF input object (data type not supported): type=" << std::string(type->toString()));
         }
     } else {
         auto inputClassPtr = FunctionCall("findInputClass", findInputClass, handler);
@@ -243,7 +246,8 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
                                Value<Int32>(i),
                                record.read(fieldName).as<Text>()->getReference());
             } else {
-                NES_THROW_RUNTIME_ERROR("Could not create Java UDF input POJO (data type not supported): field=" << fieldName << ", type=" << std::string(type->toString()));
+                NES_THROW_RUNTIME_ERROR("Could not create Java UDF input POJO (data type not supported): field="
+                                        << fieldName << ", type=" << std::string(type->toString()));
             }
         }
         return inputPojoPtr;
