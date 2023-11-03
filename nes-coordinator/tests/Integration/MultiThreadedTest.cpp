@@ -76,7 +76,7 @@ class MultiThreadedTest : public Testing::BaseIntegrationTest,
         allInputBuffers.reserve(inputs.size());
         for (auto [inputSchema, fileNameInputBuffers] : inputs) {
             allInputBuffers.emplace_back(
-                TestUtils::fillBufferFromCsv(fileNameInputBuffers, inputSchema, bufferManager, numTuplesPerBuffer));
+                TestUtils::createExpectedBuffersFromCsv(fileNameInputBuffers, inputSchema, bufferManager, numTuplesPerBuffer));
         }
 
         // Creating query and submitting it to the execution engine

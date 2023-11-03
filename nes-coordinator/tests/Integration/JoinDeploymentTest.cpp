@@ -65,7 +65,7 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         auto sourceConfig2 =
             TestUtils::createSourceTypeCSV({logicalSourceNameTwo, physicalSourceNameTwo, csvFileParams.inputCsvFiles[1]});
         auto expectedSinkBuffer =
-            TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
+            TestUtils::createExpectedBuffersFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
         auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
         EXPECT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
 
@@ -80,7 +80,7 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
                                       .validate()
                                       .setupTopology();
 
-        auto actualResult = testHarness.getOutput<ResultRecord>(expectedSinkBuffer.getNumberOfTuples());
+        auto actualResult = testHarness.runQuery(expectedSinkBuffer.getNumberOfTuples()).getOutput<ResultRecord>();
 
         EXPECT_EQ(actualResult.size(), expectedSinkBuffer.getNumberOfTuples());
         EXPECT_THAT(actualResult, ::testing::UnorderedElementsAreArray(expectedSinkVector));

@@ -74,7 +74,7 @@ class MultipleJoinsTest : public Testing::BaseIntegrationTest,
                 .attachWorkerWithCSVSourceToCoordinator(csvSourceType);
         }
 
-        auto actualResult = testHarness.validate().setupTopology().getOutput<ResultRecord>(expectedRecords.size());
+        auto actualResult = testHarness.validate().setupTopology().runQuery(expectedRecords.size()).template getOutput<ResultRecord>();
         EXPECT_EQ(actualResult.size(), expectedRecords.size());
         EXPECT_THAT(actualResult, ::testing::UnorderedElementsAreArray(expectedRecords));
 

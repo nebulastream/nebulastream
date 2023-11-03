@@ -166,7 +166,7 @@ class CollectTestSink : public SinkMedium {
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
-        NES_TRACE("TestSink: emit buffer with {} tuples", inputBuffer.getNumberOfTuples());
+        NES_DEBUG("TestSink: emit buffer with {} tuples", inputBuffer.getNumberOfTuples());
         auto typedResult = inputBuffer.getBuffer<Type>();
         for (size_t i = 0; i < inputBuffer.getNumberOfTuples(); i++) {
             results.emplace_back(typedResult[i]);

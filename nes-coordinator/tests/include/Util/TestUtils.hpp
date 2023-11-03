@@ -567,7 +567,7 @@ checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono:
  * @param outputFilePath
  * @return true if successful
  */
-[[nodiscard]] bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeout = 0);
+[[nodiscard]] bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeoutInSeconds = 0);
 
 /**
  * @brief Check if any query result was produced
@@ -577,18 +577,21 @@ checkStoppedOrTimeoutAtWorker(QueryId queryId, NesWorkerPtr worker, std::chrono:
 [[nodiscard]] bool
 checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0);
 
-/**
- * @brief Check if the query result was produced
- * @param expectedContent
- * @param outputFilePath
- * @return true if successful
- */
-template<typename T>
-[[nodiscard]] bool checkBinaryOutputContentLengthOrTimeout(QueryId queryId,
-                                                           QueryCatalogServicePtr queryCatalogService,
-                                                           uint64_t expectedNumberOfContent,
-                                                           const string& outputFilePath,
-                                                           auto testTimeout = defaultTimeout) {
+
+ /**
+  * @brief Check if the query result was produced
+  * @param queryId
+  * @param queryCatalogService
+  * @param numberOfRecordsToExpect
+  * @param outputFilePath
+  * @param testTimeout
+  * @return True if numberOfRecordsToExpect have been seen
+  */
+[[nodiscard]] bool checkOutputContentLengthOrTimeout(QueryId queryId,
+                                       QueryCatalogServicePtr queryCatalogService,
+                                       uint64_t numberOfRecordsToExpect,
+                                       const string& outputFilePath,
+                                       auto testTimeout = defaultTimeout) {
     auto timeoutInSec = std::chrono::seconds(testTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -604,63 +607,38 @@ template<typename T>
 
         auto isQueryStopped = entry->getQueryState() == QueryState::STOPPED;
 
-        // check if result is ready.
-        std::ifstream ifs(outputFilePath);
-        if (ifs.good() && ifs.is_open()) {
-            NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout:: file {} open and good", outputFilePath);
-            std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-            // check the length of the output file
-            ifs.seekg(0, std::ifstream::end);
-            auto length = ifs.tellg();
-            ifs.seekg(0, std::ifstream::beg);
+        if (std::filesystem::exists(outputFilePath) && std::filesystem::is_regular_file(outputFilePath)) {
 
-            // read the binary output as a vector of T
-            auto* buff = reinterpret_cast<char*>(malloc(length));
-            ifs.read(buff, length);
-            std::vector<T> currentContent(reinterpret_cast<T*>(buff), reinterpret_cast<T*>(buff) + length / sizeof(T));
-            uint64_t currentContentSize = currentContent.size();
+            // As we are writing a header in the output csv file of the query, we have to subtract one line
+            std::ifstream outFile(outputFilePath);
+            uint64_t currentContentSize = Util::countLinesOfStream(outFile);
+            if (currentContentSize > 0) {
+                currentContentSize -= 1;
+            }
 
-            ifs.close();
-            free(buff);
-
-            if (expectedNumberOfContent != currentContentSize) {
-                if (currentContentSize > expectedNumberOfContent) {
-                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result: "
-                              "currentContentSize: {} - expectedNumberOfContent: {}",
-                              currentContentSize,
-                              expectedNumberOfContent);
-                    return false;
-                }
-
-                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines {}"
-                          " not reached yet with {} lines content={}",
-                          expectedNumberOfContent,
-                          currentContent.size(),
-                          content);
-
-            } else {
-                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
-                          "number of content");
+            // File exists, now checking if we have seen the expected number of tuples
+            if (currentContentSize > numberOfRecordsToExpect) {
+                NES_DEBUG("content is larger than expected result: currentContentSize: {} - expectedNumberOfContent: {}",
+                          currentContentSize,
+                          numberOfRecordsToExpect);
+                return false;
+            } else if (currentContentSize < numberOfRecordsToExpect){
+                NES_DEBUG("number of expected bytes {} not reached yet with {} Bytes",
+                          numberOfRecordsToExpect, currentContentSize);
+            } else  {
+                NES_DEBUG("number of content in output file match expected number of content!");
                 return true;
             }
         }
+
         if (isQueryStopped) {
-            NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: query stopped but content not ready");
+            NES_DEBUG("query stopped but content not ready");
             return false;
         }
     }
-    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: expected result not reached within set timeout content");
+    NES_DEBUG("expected result not reached within set timeout content");
     return false;
 }
-
-/**
- * @brief checks if the buffers contain the same tuples
- * @param buffer1
- * @param buffer2
- * @param schemaSizeInByte
- * @return True if the buffers contain the same tuples
- */
-bool checkIfBuffersContainTheSameTuples(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
 
 /**
  * @brief Check if a outputfile is created
@@ -731,47 +709,73 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
  */
 [[nodiscard]] nlohmann::json getTopology(uint64_t restPort);
 
-/**
- * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
- *        buffers that do not fit will be discarded.
- * @param buffersToBeMerged
- * @param schema
- * @param bufferManager
- * @return merged TupleBuffer
- */
-Runtime::TupleBuffer mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
-                                  const SchemaPtr schema,
-                                  Runtime::BufferManagerPtr bufferManager);
 
 /**
- * @brief Fills the buffer from the csv
+ * @brief Creates the expected buffers from the csv file
  * @param csvFileName
  * @param schema
  * @param bufferManager
  * @param numTuplesPerBuffer
+ * @return Vector of TupleBuffers
+ */
+std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(const std::string& csvFileName,
+                                                               const SchemaPtr& schema,
+                                                               const Runtime::BufferManagerPtr& bufferManager,
+                                                               uint64_t numTuplesPerBuffer);
+
+/**
+ * @brief Creates the expected buffers from the csv file
+ * @param csvFileName
+ * @param schema
+ * @param bufferManager
+ * @param skipHeader
+ * @param numTuplesPerBuffer
  * @param delimiter
  * @return Vector of TupleBuffers
  */
-std::vector<Runtime::TupleBuffer> fillBufferFromCsv(const std::string& csvFileName,
-                                                    const SchemaPtr& schema,
-                                                    const Runtime::BufferManagerPtr& bufferManager,
-                                                    uint64_t numTuplesPerBuffer = 0,
-                                                    const std::string& delimiter = ",");
+std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(const std::string& csvFileName,
+                                                               const SchemaPtr& schema,
+                                                               const Runtime::BufferManagerPtr& bufferManager,
+                                                               bool skipHeader = false,
+                                                               uint64_t numTuplesPerBuffer = 0,
+                                                               const std::string& delimiter = ",");
 
 /**
  * @brief Fills the buffer from a stream
  * @param csvFileName
  * @param schema
  * @param bufferManager
+ * @param skipHeader
  * @param numTuplesPerBuffer
  * @param delimiter
  * @return Vector of TupleBuffers
  */
-std::vector<Runtime::TupleBuffer> fillBufferFromStream(std::istream& istream,
-                                                       const SchemaPtr& schema,
-                                                       const Runtime::BufferManagerPtr& bufferManager,
-                                                       uint64_t numTuplesPerBuffer = 0,
-                                                       const std::string& delimiter = ",");
+std::vector<Runtime::TupleBuffer> createExpectedBufferFromStream(std::istream& istream,
+                                                                 const SchemaPtr& schema,
+                                                                 const Runtime::BufferManagerPtr& bufferManager,
+                                                                 bool skipHeader,
+                                                                 uint64_t numTuplesPerBuffer = 0,
+                                                                 const std::string& delimiter = ",");
+
+/**
+ * @brief Converts all of the tuple buffers to dynamic tuple buffers
+ * @param buffers
+ * @param schema
+ * @return Vector of DynamicTupleBuffer
+ */
+std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> createDynamicBuffers(std::vector<Runtime::TupleBuffer>& buffers,
+                                                                             const SchemaPtr& schema);
+
+/**
+ * @brief Compares if leftBuffers contain the same tuples as rightBuffers
+ * @param expectedBuffers
+ * @param actualBuffers
+ * @param orderSensitive: If set to true, the order is taken into account
+ * @return True if the leftBuffers contain the same tuples in the rightBuffer
+ */
+bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& expectedBuffers,
+                              std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& actualBuffers,
+                              bool orderSensitive = false);
 
 /**
  * @brief Creates a vector for the memory [startPtr, endPtr]

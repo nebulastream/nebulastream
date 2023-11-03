@@ -128,4 +128,14 @@ uint64_t murmurHash(uint64_t key) {
     return hash;
 }
 
+uint64_t countLinesOfStream(std::istream& stream) {
+    std::string tmpStr;
+    uint64_t cnt = 0;
+    while (std::getline(stream, tmpStr)) {
+        ++cnt;
+    }
+
+    return cnt;
+}
+
 }// namespace NES::Util

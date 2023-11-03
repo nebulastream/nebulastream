@@ -613,7 +613,6 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
 
     auto queryWithFilterOperator = Query::from("car");
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithCSVSourceToCoordinator(csvSourceType)
                                   .validate()
@@ -632,7 +631,8 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     for (uint64_t i = 0; i < numBufferToProduce; i++) {
         expectedOutput.push_back({1, 1, (i + 1) * 100});
     }
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+
+    auto actualOutput = testHarness.runQuery(expectedOutput.size()).getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

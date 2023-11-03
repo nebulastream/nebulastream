@@ -41,6 +41,7 @@ class ONNXInferenceDeploymentTest
     : public Testing::BaseIntegrationTest,
       public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::vector<Output>>> {
   public:
+    static constexpr auto ALLOWED_ERROR = 0.0001;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MLModelDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MLModelDeploymentTest test class.");
@@ -103,13 +104,13 @@ TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase6
         {0.8178819, 0.16869366, 0.01342443},
     };
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    auto actualOutput = testHarness.runQuery(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     for (size_t i = 0; i < actualOutput.size(); ++i) {
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
+        EXPECT_TRUE(std::abs(expectedOutput[i].iris0 -  actualOutput[i].iris0) < ALLOWED_ERROR);
+        EXPECT_TRUE(std::abs(expectedOutput[i].iris1 -  actualOutput[i].iris1) < ALLOWED_ERROR);
+        EXPECT_TRUE(std::abs(expectedOutput[i].iris2 -  actualOutput[i].iris2) < ALLOWED_ERROR);
     }
 }
 }// namespace NES

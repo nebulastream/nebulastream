@@ -95,6 +95,15 @@ class MemoryLayout {
      */
     [[nodiscard]] const std::vector<uint64_t>& getFieldSizes() const;
 
+    /**
+     * @brief Comparator methods
+     * @param rhs
+     * @return
+     */
+    bool operator==(const MemoryLayout& rhs) const;
+    bool operator!=(const MemoryLayout& rhs) const;
+
+
   protected:
     const uint64_t bufferSize;
     const SchemaPtr schema;

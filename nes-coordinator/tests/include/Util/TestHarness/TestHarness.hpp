@@ -16,15 +16,19 @@
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
 #include <API/Query.hpp>
+#include <API/AttributeField.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/Core.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
 #include <type_traits>
+#include <cstring>
 #include <utility>
 
 /**
@@ -245,69 +249,53 @@ class TestHarness {
                                    });
 
     /**
-     * @brief execute the test based on the given operator, pushed elements, and number of workers,
-     * then return the result of the query execution
+     * @brief Runs the query based on the given operator, pushed elements, and number of workers.
+     * @param numberOfBytesToExpect
      * @param placementStrategyName: placement strategy name
      * @param faultTolerance: chosen fault tolerance guarantee
      * @param lineage: chosen lineage type
-     * @param numberOfContentToExpect: total number of tuple expected in the query result
-     * @return output string
+     * @param testTimeoutInSeconds
+     * @return TestHarness
      */
+    TestHarness& runQuery(uint64_t numberOfBytesToExpect,
+                          const std::string& placementStrategyName = "BottomUp",
+                          const std::string& faultTolerance = "NONE",
+                          const std::string& lineage = "IN_MEMORY",
+                          uint64_t testTimeoutInSeconds = 60);
+
+    /**
+     * @brief Returns the output for the previously run query. Support also data types with variable data size
+     * @return Vector of DynamicTupleBuffers
+     */
+    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> getOutputForVariableSizeDataTypes();
+
+    /**
+     * @brief Returns the output schema of the query
+     * @return SchemaPtr
+     */
+    SchemaPtr getOutputSchema();
+
+
+    /**
+     * @brief return the result of the query execution. This does only work for structs with NON variableLength data types
+     * @tparam T: Usually a struct representing one tuple/record
+     * @return Vector<T>
+     */
+    // TODO this method will be removed in issue #4330 and only getOutputForVariableSizeDataTypes() can be then used.
     template<typename T>
-    std::vector<T> getOutput(uint64_t numberOfContentToExpect,
-                             std::string placementStrategyName = "BottomUp",
-                             std::string faultTolerance = "NONE",
-                             std::string lineage = "IN_MEMORY",
-                             uint64_t testTimeout = 60) {
-
-        if (!topologySetupDone || !validationDone) {
-            throw Exceptions::RuntimeException(
-                "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
-        }
-
+    std::vector<T> getOutput() {
         QueryServicePtr queryService = nesCoordinator->getQueryService();
         QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
-
-        // local fs
-        std::string filePath = testHarnessResourcePath / "testHarness.out";
-        remove(filePath.c_str());
-
-        //register query
-        auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
-        auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultTolerance).value();
-        auto lineageMode = magic_enum::enum_cast<LineageType>(lineage).value();
-        QueryId queryId = INVALID_QUERY_ID;
-
-        if (!queryWithoutSinkStr.empty()) {
-            // we can remove this, once we just use Query
-            std::string queryString =
-                queryWithoutSinkStr + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-            queryId =
-                queryService->validateAndQueueAddQueryRequest(queryString, placementStrategy, faultToleranceMode, lineageMode);
-        } else if (queryWithoutSink.get() != nullptr) {
-            auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "NES_FORMAT", "APPEND"));
-            queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
-                                                    query.getQueryPlan(),
-                                                    placementStrategy,
-                                                    faultToleranceMode,
-                                                    lineageMode);
-        } else {
-            NES_THROW_RUNTIME_ERROR("TestHarness expects that either the query is given as a string or as a query object!");
-        }
-
-        if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
-        }
 
         // Check if the size of output struct match with the size of output schema
         // Output struct might be padded, in this case the size is not equal to the total size of its field
         // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
         // (e.g., the size is multiple of 8)
-        uint64_t outputSchemaSizeInBytes = queryCatalogService->getEntryForQuery(queryId)
-                                               ->getExecutedQueryPlan()
-                                               ->getSinkOperators()[0]
-                                               ->getOutputSchema()
-                                               ->getSchemaSizeInBytes();
+        const auto outputSchema = queryCatalogService->getEntryForQuery(queryId)
+                                      ->getExecutedQueryPlan()
+                                      ->getSinkOperators()[0]
+                                      ->getOutputSchema();
+        const uint64_t outputSchemaSizeInBytes = outputSchema->getSchemaSizeInBytes();
         NES_DEBUG("TestHarness: outputSchema: {}",
                   queryCatalogService->getEntryForQuery(queryId)
                       ->getInputQueryPlan()
@@ -319,44 +307,29 @@ class TestHarness {
                    " Output struct:"
                        << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
 
-        if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(queryId,
-                                                                   queryCatalogService,
-                                                                   numberOfContentToExpect,
-                                                                   filePath,
-                                                                   testTimeout)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false, "
-                                    "number of buffers to expect="
-                                    << std::to_string(numberOfContentToExpect));
-        }
-
-        if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
-        }
-
-        std::ifstream ifs(filePath.c_str());
-        if (!ifs.good()) {
-            NES_WARNING("TestHarness:ifs.good() returns false for query with id {} file path= {}", queryId, filePath);
-        }
-
-        // check the length of the output file
-        ifs.seekg(0, std::ifstream::end);
-        auto length = ifs.tellg();
-        ifs.seekg(0, std::ifstream::beg);
-
-        // read the binary output as a vector of T
+        auto dynamicTupleBuffers = getOutputForVariableSizeDataTypes();
         std::vector<T> outputVector;
-        outputVector.resize(length / sizeof(T));
-        auto* buff = reinterpret_cast<char*>(outputVector.data());
-        ifs.read(buff, length);
+        for (auto& buf : dynamicTupleBuffers) {
+            NES_INFO("Buf: {}", Util::printTupleBufferAsCSV(buf.getBuffer(), outputSchema));
+            for (auto i = 0_u64; i < buf.getNumberOfTuples(); ++i) {
+                auto tuple = buf[i];
 
-        NES_DEBUG("TestHarness: ExecutedQueryPlan: {}",
-                  queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
-        queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
+                const auto tupleIdxInOutputVec = outputVector.size();
+                outputVector.resize(outputVector.size() + 1);
+                uint64_t offSet = 0;
+                for (const auto& field : outputSchema->fields) {
+                    const auto& fieldName = field->getName();
+                    auto tupleField = tuple[fieldName];
+                    const auto fieldSize = tupleField.getPhysicalType()->size();
 
-        for (const auto& worker : testHarnessWorkerConfigurations) {
-            worker->getNesWorker()->stop(false);
+                    // Now we are here copying the tuples. We do not have to take care of any variable data sizes,
+                    // as they are not supported in this method
+                    auto* dest = reinterpret_cast<uint8_t*>(outputVector.data()) + tupleIdxInOutputVec * outputSchema->getSchemaSizeInBytes() + offSet;
+                    std::memcpy(dest, tupleField.getAddressPointer(), fieldSize);
+                    offSet += fieldSize;
+                }
+            }
         }
-        nesCoordinator->stopCoordinator(false);
 
         return outputVector;
     }
@@ -364,12 +337,13 @@ class TestHarness {
     TopologyPtr getTopology();
     const QueryPlanPtr& getQueryPlan() const;
 
+    Runtime::BufferManagerPtr getBufferManager() const;
+
   private:
     std::string getNextPhysicalSourceName();
     uint32_t getNextTopologyId();
 
     const std::chrono::seconds SETUP_TIMEOUT_IN_SEC = std::chrono::seconds(2);
-    const std::string queryWithoutSinkStr;
     const QueryPtr queryWithoutSink;
     std::string coordinatorIPAddress;
     uint16_t restPort;
@@ -387,8 +361,10 @@ class TestHarness {
     QueryCompilation::WindowingStrategy windowingStrategy;
     bool validationDone;
     bool topologySetupDone;
-    std::filesystem::path testHarnessResourcePath;
+    std::filesystem::path filePath;
     QueryPlanPtr queryPlan;
+    QueryId queryId;
+    Runtime::BufferManagerPtr bufferManager;
 };
 }// namespace NES
 

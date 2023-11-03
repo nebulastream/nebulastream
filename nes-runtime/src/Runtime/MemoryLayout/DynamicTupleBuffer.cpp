@@ -21,13 +21,14 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <numeric>
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
 
-DynamicField::DynamicField(uint8_t* address, PhysicalTypePtr physicalType) : address(address), physicalType(physicalType) {}
+DynamicField::DynamicField(const uint8_t* address, PhysicalTypePtr physicalType) : address(address), physicalType(physicalType) {}
 
-DynamicField DynamicTuple::operator[](std::size_t fieldIndex) {
+DynamicField DynamicTuple::operator[](std::size_t fieldIndex) const {
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
     auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
@@ -35,7 +36,7 @@ DynamicField DynamicTuple::operator[](std::size_t fieldIndex) {
     return DynamicField{basePointer, physicalType};
 }
 
-DynamicField DynamicTuple::operator[](std::string fieldName) {
+DynamicField DynamicTuple::operator[](std::string fieldName) const {
     auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value()) {
         throw BufferAccessException("field name " + fieldName + " dose not exist in layout");
@@ -56,6 +57,31 @@ std::string DynamicTuple::toString(const SchemaPtr& schema) {
     return ss.str();
 }
 
+bool DynamicTuple::operator!=(const DynamicTuple& other) const { return !(*this == other); }
+bool DynamicTuple::operator==(const DynamicTuple& other) const {
+
+    if (!this->memoryLayout->getSchema()->equals(other.memoryLayout->getSchema())) {
+        NES_DEBUG("Schema is not the same! Therefore the tuple can not be the same!");
+        return false;
+    }
+
+    for (const auto& field : this->memoryLayout->getSchema()->fields) {
+        if (!other.memoryLayout->getSchema()->hasFieldName(field->getName())) {
+            NES_ERROR("Field with name {} is not contained in both tuples!", field->getName());
+            return false;
+        }
+
+        auto thisDynamicField = this->operator[](field->getName());
+        auto otherDynamicField = other.operator[](field->getName());
+
+        if (thisDynamicField != otherDynamicField) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 std::string DynamicField::toString() {
     std::stringstream ss;
 
@@ -64,13 +90,18 @@ std::string DynamicField::toString() {
     return ss.str();
 }
 
-bool DynamicField::equal(const DynamicField& rhs) const { return std::memcmp(address, rhs.address, physicalType->size()) == 0; }
+bool DynamicField::equal(const DynamicField& rhs) const {
+    NES_ASSERT(physicalType->size() == rhs.physicalType->size(), "Size of physical type has to be the same!");
+    return std::memcmp(address, rhs.address, physicalType->size()) == 0;
+}
 
 bool DynamicField::operator==(const DynamicField& rhs) const { return equal(rhs); };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const { return !equal(rhs); }
 
-const PhysicalTypePtr& DynamicField::getPhysicalType() const { return physicalType; };
+const PhysicalTypePtr& DynamicField::getPhysicalType() const { return physicalType; }
+
+const uint8_t* DynamicField::getAddressPointer() const { return address; }
 
 uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
 
@@ -100,8 +131,8 @@ std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer) {
     return os;
 }
 
-DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::begin() { return TupleIterator(*this); }
-DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::end() { return TupleIterator(*this, getNumberOfTuples()); }
+DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::begin() const { return TupleIterator(*this); }
+DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::end() const { return TupleIterator(*this, getNumberOfTuples()); }
 
 std::string DynamicTupleBuffer::toString(const SchemaPtr& schema, bool showHeader) {
     std::stringstream str;
@@ -142,15 +173,18 @@ std::string DynamicTupleBuffer::toString(const SchemaPtr& schema, bool showHeade
     return str.str();
 }
 
-DynamicTupleBuffer::TupleIterator::TupleIterator(DynamicTupleBuffer& buffer) : TupleIterator(buffer, 0) {}
+DynamicTupleBuffer::TupleIterator::TupleIterator(const DynamicTupleBuffer& buffer) : TupleIterator(buffer, 0) {}
 
-DynamicTupleBuffer::TupleIterator::TupleIterator(DynamicTupleBuffer& buffer, uint64_t currentIndex)
+DynamicTupleBuffer::TupleIterator::TupleIterator(const DynamicTupleBuffer& buffer, const uint64_t currentIndex)
     : buffer(buffer), currentIndex(currentIndex) {}
 
 DynamicTupleBuffer::TupleIterator& DynamicTupleBuffer::TupleIterator::operator++() {
     currentIndex++;
     return *this;
 }
+
+DynamicTupleBuffer::TupleIterator::TupleIterator(const TupleIterator& other) : TupleIterator(other.buffer, other.currentIndex) {}
+
 
 const DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::TupleIterator::operator++(int) {
     TupleIterator retval = *this;
@@ -178,6 +212,17 @@ DynamicTupleBuffer DynamicTupleBuffer::createDynamicTupleBuffer(Runtime::TupleBu
     } else {
         NES_NOT_IMPLEMENTED();
     }
+}
+
+uint64_t DynamicTupleBuffer::countOccurrences(DynamicTuple& tuple) const {
+    uint64_t count = 0;
+    for (auto&& currentTupleIt : *this) {
+        if (currentTupleIt == tuple) {
+            ++count;
+        }
+    }
+
+    return count;
 }
 
 }// namespace NES::Runtime::MemoryLayouts

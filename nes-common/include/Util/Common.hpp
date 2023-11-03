@@ -246,6 +246,13 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
  */
 uint64_t murmurHash(uint64_t key);
 
+/**
+ * @brief Counts the number of lines of a stream, e.g., a file
+ * @param stream
+ * @return number of lines
+ */
+uint64_t countLinesOfStream(std::istream& stream);
+
 }// namespace NES::Util
 
 #endif// NES_COMMON_INCLUDE_UTIL_COMMON_HPP_

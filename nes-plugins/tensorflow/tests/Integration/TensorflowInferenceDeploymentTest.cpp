@@ -183,7 +183,7 @@ TEST_F(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeploymentMi
         {0.4731167, 0.31782052, 0.2090628},
     };
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    auto actualOutput = testHarness.runQuery(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     for (size_t i = 0; i < actualOutput.size(); ++i) {
@@ -220,7 +220,7 @@ TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) 
 
     std::vector<Output> expectedOutput = std::get<3>(GetParam());
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+    auto actualOutput = testHarness.runQuery(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     auto delta = 0.0000001;
