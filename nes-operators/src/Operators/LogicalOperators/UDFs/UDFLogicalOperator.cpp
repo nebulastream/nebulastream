@@ -16,8 +16,6 @@
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -73,7 +71,7 @@ bool UDFLogicalOperator::isIdentical(const NodePtr& other) const {
 }
 
 void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema, const Schema& childOperatorOutputSchema) const {
-    // The code below detects all schema violations, prints them to the DEBUG output log,
+    // The code below detects all schema violations, prints them to the ERROR output log,
     // then throws an exception containing all of them.
     // This makes it easier to users to fix all violations at once.
     std::vector<std::string> errors;
@@ -89,7 +87,8 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
         } else {
             const auto childType = fieldInChild->getDataType();
             if (type->isEquals(DataTypeFactory::createInt64()) && childType->isEquals(DataTypeFactory::createUInt64())) {
-                NES_WARNING("Mapping unsigned field in child output schema to signed Java long in UDF input schema: {}",
+                // This is not an error condition because we need to map timestamps, which are always UINT64, to Java long.
+                NES_WARNING("Mapping UINT64 field in child operator output schema to signed Java long in UDF input schema: {}",
                             fieldName)
             } else if ((type->isEquals(DataTypeFactory::createInt8()) && childType->isEquals(DataTypeFactory::createUInt8()))
                 || (type->isEquals(DataTypeFactory::createInt16()) && childType->isEquals(DataTypeFactory::createUInt16()))
