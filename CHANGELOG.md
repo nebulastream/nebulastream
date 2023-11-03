@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.241](https://github.com/nebulastream/nebulastream/tree/v0.5.241) (2023-11-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.240...v0.5.241)
+
+#### Fault Tolerance
+
+- Move centralized epoch propagation to the decentralized [\#2545](https://github.com/nebulastream/nebulastream/issues/2545)
+
 ## [v0.5.240](https://github.com/nebulastream/nebulastream/tree/v0.5.240) (2023-11-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.239...v0.5.240)
