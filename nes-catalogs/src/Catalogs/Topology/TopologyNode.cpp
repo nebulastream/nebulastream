@@ -12,13 +12,16 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Util/Mobility/Waypoint.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
+#include <Util/Mobility/Waypoint.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
+#include <deque>
 #include <utility>
 
 namespace NES {
@@ -159,6 +162,27 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
 
 void TopologyNode::setSpatialType(NES::Spatial::Experimental::SpatialType spatialType) {
     nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] = spatialType;
+}
+
+NES::TopologyNodeSet TopologyNode::dfs(Direction direction, bool ignoreMaintenance) {
+    std::vector<TopologyNodePtr> stack;
+    NES::TopologyNodeSet result;
+    stack.emplace_back(shared_from_this()->as<TopologyNode>());
+    NES_TRACE("DFS at Node {} in {} direction", id, magic_enum::enum_name<Direction>(direction));
+    while (!stack.empty()) {
+        auto current = stack.back();
+        stack.pop_back();
+        result.emplace(current);
+        auto adjacent = direction == Upstream ? current->getChildren() : current->getParents();
+        for (const auto& adj : adjacent) {
+            if (ignoreMaintenance || !adj->as<TopologyNode>()->isUnderMaintenance()) {
+                NES_TRACE("Discovered {}", adj->as<TopologyNode>()->getId());
+                stack.emplace_back(adj->as<TopologyNode>());
+            }
+        }
+    }
+
+    return result;
 }
 
 Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {

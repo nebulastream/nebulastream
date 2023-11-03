@@ -409,7 +409,9 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                       "child and parent operators.");
             TopologyNodePtr upstreamTopologyNode = upStreamExecutionNode->getTopologyNode();
             TopologyNodePtr downstreamTopologyNode = downStreamExecutionNode->getTopologyNode();
-            std::vector<TopologyNodePtr> nodesBetween = topology->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
+            auto nodesBetweenUnordered = topology->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
+            auto nodesBetween = topology->sort(nodesBetweenUnordered, Downstream);
+
             TopologyNodePtr previousParent = nullptr;
 
             // 7.2. Add network source and sinks for the identified topology nodes
@@ -430,7 +432,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                 ExecutionNodePtr candidateExecutionNode = getExecutionNode(nodesBetween[i]);
                 NES_ASSERT2_FMT(candidateExecutionNode, "Invalid candidate execution node while placing query " << queryId);
                 if (i == 0) {
-                    NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Find the query plan with child operator.");
+                    NES_DEBUG("BasePlacementStrategy::placeNetworkOperator: Find the query plan with child operator at Node {}.", candidateExecutionNode->getId());
                     std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
                     bool found = false;
                     for (auto& querySubPlan : querySubPlans) {

@@ -15,12 +15,14 @@
 #ifndef NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
 #define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
 
+#include <Catalogs/Topology/TopologyNodeSet.hpp>
 #include <Identifiers.hpp>
 #include <any>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <vector>
 
 namespace NES {
@@ -146,26 +148,35 @@ class Topology {
     static std::vector<TopologyNodePtr> mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes);
 
     /**
-     * @brief Find the immediate common ancestor for the set of Topology nodes
+     * @brief finds a the set of the lowest common ancestors for all topologyNodes.
+     * @details
+     *  - The set of ancestors may include nodes of the input
+     *  - Empty Vector -> Empty Set
+     *  - Single Node -> Set of Single Node
      * @param topologyNodes: the set of topology nodes
-     * @return the immediate common ancestor.
+     * @return set of the lowest common ancestors of all given nodes.
      */
-    TopologyNodePtr findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes);
+    static TopologyNodeSet findCommonAncestors(std::vector<TopologyNodePtr> topologyNodes);
 
     /**
-     * @brief Find the immediate common child for the set of Topology nodes
+     * @brief finds a the set of the greatest common children for all topologyNodes.
+     * @details
+     *  - The set of children may include nodes of the input
+     *  - Empty Vector -> Empty Set
+     *  - Single Node -> Set of Single Node
      * @param topologyNodes: the set of topology nodes
-     * @return the immediate common child.
+     * @return set of the greatest common children of all given nodes.
      */
-    static TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
+    static TopologyNodeSet findCommonChildren(std::vector<TopologyNodePtr> topologyNodes);
 
     /**
-     * @brief Find a node location that can be reachable from both the
+     * @brief Find a node location that can be reachable from both the children and parentNodes
+     * @details If no path exists the result is empty. Both children and parentNodes are included in the result
      * @param childNodes: list of child nodes to be reachable
      * @param parenNodes: list of parent nodes to be reachable
      * @return common node else nullptr
      */
-    TopologyNodePtr findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes);
+    TopologyNodeSet findCommonNodesBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes);
 
     /**
      * @brief Find the set of nodes (inclusive of) between a source and destination topology node
@@ -173,16 +184,24 @@ class Topology {
      * @param destinationNode : the destination topology node
      * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
      */
-    std::vector<TopologyNodePtr> findNodesBetween(const TopologyNodePtr& sourceNode, const TopologyNodePtr& destinationNode);
+    TopologyNodeSet findNodesBetween(const TopologyNodePtr& sourceNode, const TopologyNodePtr& destinationNode);
 
     /**
-     * @brief Find the set of shared nodes (inclusive of) between a set of source and destination topology nodes
+     * @brief Finds all Nodes that are common between all sourceNodes and destinationNodes
      * @param sourceNodes : the source topology nodes
      * @param destinationNodes : the destination topology nodes
-     * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
+     * @return Vector of all Nodes which are reachable from all source nodes and all destination nodes. The Order of the Vector is
+     * unspecified
      */
-    std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
-                                                  std::vector<TopologyNodePtr> destinationNodes);
+    TopologyNodeSet findNodesBetween(std::vector<TopologyNodePtr> sourceNodes, std::vector<TopologyNodePtr> destinationNodes);
+
+    /**
+     * @brief Sorts the TopologyNodeSet topological either Upstream (Sink... Source) or Downstream (Source... Sink)
+     * @param nodes Set of Nodes
+     * @param direction Downstream or Upstream
+     * @return Topologically Sorted Vector of Nodes
+     */
+    std::vector<TopologyNodePtr> sort(const TopologyNodeSet& nodes, Direction direction);
 
     /**
     * @brief Looks for the TopologyNode with id in the vector of sourceNodes and their parents

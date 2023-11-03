@@ -38,6 +38,7 @@ static constexpr OriginId INVALID_ORIGIN_ID = 0;
 static constexpr TopologyNodeId INVALID_TOPOLOGY_NODE_ID = 0;
 static constexpr RequestId INVALID_REQUEST_ID = 0;
 
+enum Direction : uint8_t { Upstream, Downstream };
 }// namespace NES
 
 #endif// NES_COMMON_INCLUDE_IDENTIFIERS_HPP_
