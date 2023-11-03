@@ -137,6 +137,12 @@ class ArrowSource : public DataSource {
     arrow::Status openCsvFile();
 
     /**
+     * TODO
+     * @return
+     */
+    void populateOptionsFromSchema(arrow::csv::ReadOptions& readOptions, arrow::csv::ConvertOptions& convertOptions);
+
+    /**
      * @brief reads the next record batch in the recordBatchStreamReader
      * @return returns an arrow status
      */
