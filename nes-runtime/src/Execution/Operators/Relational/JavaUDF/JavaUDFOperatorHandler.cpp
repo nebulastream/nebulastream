@@ -73,7 +73,7 @@ void JavaUDFOperatorHandler::setup() {
     this->udfInstance = env->NewGlobalRef(instance);
 }
 
-const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string& javaClassName) const {
+const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string& javaClassName) {
     std::string copy = javaClassName;
     std::replace(copy.begin(), copy.end(), '.', '/');
     return copy;
