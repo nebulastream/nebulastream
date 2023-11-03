@@ -65,7 +65,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
             if (joinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
                 fieldExistsInSchema = (*itr)->contains(joinKeyName);
             } else {
-                fieldExistsInSchema = ((*itr)->hasFieldName(joinKeyName) != nullptr);
+                fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
             }
 
             if (fieldExistsInSchema) {

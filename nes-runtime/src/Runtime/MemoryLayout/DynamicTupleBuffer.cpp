@@ -66,7 +66,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const {
     }
 
     for (const auto& field : this->memoryLayout->getSchema()->fields) {
-        if (!other.memoryLayout->getSchema()->hasFieldName(field->getName())) {
+        if (!other.memoryLayout->getSchema()->getField(field->getName())) {
             NES_ERROR("Field with name {} is not contained in both tuples!", field->getName());
             return false;
         }

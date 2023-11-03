@@ -125,7 +125,7 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
         return true;
     }
     for (auto&& fieldAttribute : fields) {
-        auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
+        auto otherFieldAttribute = schema->getField(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
             return false;
         }
@@ -216,7 +216,7 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
     return -1;
 }
 
-AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) const {
+AttributeFieldPtr Schema::getField(const std::string& fieldName) const {
     //Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
     if (stringToMatch.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {

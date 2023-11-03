@@ -65,7 +65,7 @@ void FieldAssignmentExpressionNode::inferStamp(
 
     //Update the field name with fully qualified field name
     auto fieldName = field->getFieldName();
-    auto existingField = schema->hasFieldName(fieldName);
+    auto existingField = schema->getField(fieldName);
     if (existingField) {
         field->updateFieldName(existingField->getName());
         field->setStamp(existingField->getDataType());

@@ -73,7 +73,7 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
         if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
             auto timeBasedWindow = windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType());
             //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
-            auto field = containerOperator->getOutputSchema()->hasFieldName("start");
+            auto field = containerOperator->getOutputSchema()->getField("start");
             //return false if this is not possible
             if (field == nullptr) {
                 return {};

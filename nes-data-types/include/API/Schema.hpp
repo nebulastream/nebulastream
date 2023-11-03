@@ -113,11 +113,16 @@ class Schema {
     void replaceField(const std::string& name, const DataTypePtr& type);
 
     /**
-     * @brief Checks if an attribute with the input field name is defined in the schema
-     * @param fieldName: fully or partly qualified field name
-     * @return AttributeFieldPtr: pointer to attribute field if present else null pointer
+     * @brief Returns the attribute field based on a qualified or unqualified field name.
+     *
+     * @details
+     * If an unqualified field name is given (e.g., `getField("fieldName")`), the function will match attribute fields with any source name.
+     * If a qualified field name is given (e.g., `getField("source$fieldName")`), the entire qualified field must match.
+     *
+     * @param fieldName: Name of the attribute field that should be returned.
+     * @return Pointer to attribute field if present, otherwise `nullptr`.
      */
-    AttributeFieldPtr hasFieldName(const std::string& fieldName) const;
+    AttributeFieldPtr getField(const std::string& fieldName) const;
 
     /**
      * @brief Checks if attribute field name is defined in the schema and returns its index.

@@ -50,7 +50,7 @@ std::string FieldAccessExpressionNode::toString() const {
 
 void FieldAccessExpressionNode::inferStamp( SchemaPtr schema) {
     // check if the access field is defined in the schema.
-    auto existingField = schema->hasFieldName(fieldName);
+    auto existingField = schema->getField(fieldName);
     if (existingField) {
         fieldName = existingField->getName();
         stamp = existingField->getDataType();

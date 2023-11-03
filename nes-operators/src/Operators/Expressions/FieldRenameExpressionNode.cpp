@@ -56,7 +56,7 @@ void FieldRenameExpressionNode::inferStamp(
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp( schema);
     auto fieldName = originalFieldName->getFieldName();
-    auto fieldAttribute = schema->hasFieldName(fieldName);
+    auto fieldAttribute = schema->getField(fieldName);
     //Detect if user has added attribute name separator
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
         if (!fieldAttribute) {
@@ -74,7 +74,7 @@ void FieldRenameExpressionNode::inferStamp(
                     fieldName,
                     newFieldName);
     } else {
-        auto newFieldAttribute = schema->hasFieldName(newFieldName);
+        auto newFieldAttribute = schema->getField(newFieldName);
         if (newFieldAttribute) {
             NES_ERROR("FieldRenameExpressionNode: The new field name {} already exists in the input schema {}. "
                       "Can't use the name of an existing field.",

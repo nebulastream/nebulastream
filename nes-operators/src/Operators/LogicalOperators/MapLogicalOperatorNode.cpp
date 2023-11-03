@@ -48,7 +48,7 @@ bool MapLogicalOperatorNode::inferSchema() {
     auto assignedField = mapExpression->getField();
     std::string fieldName = assignedField->getFieldName();
 
-    if (outputSchema->hasFieldName(fieldName)) {
+    if (outputSchema->getField(fieldName)) {
         // The assigned field is part of the current schema.
         // Thus we check if it has the correct type.
         NES_TRACE("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);

@@ -80,7 +80,7 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
     }
     for (const auto& field : udfDescriptor->getInputSchema()->fields) {
         const auto& fieldName = field->getName();
-        const auto fieldInChild = childOperatorOutputSchema.hasFieldName(fieldName);
+        const auto fieldInChild = childOperatorOutputSchema.getField(fieldName);
         const auto type = field->getDataType();
         if (!fieldInChild) {
             errors.push_back(fmt::format("Could not find field in child operator output schema: {}", fieldName));
