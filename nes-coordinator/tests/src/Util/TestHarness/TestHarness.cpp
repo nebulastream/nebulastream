@@ -23,8 +23,10 @@
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <Util/TestUtils.hpp>
 #include <filesystem>
 #include <type_traits>
 #include <utility>
@@ -36,12 +38,12 @@ TestHarness::TestHarness(Query queryWithoutSink,
                          std::filesystem::path testHarnessResourcePath,
                          uint64_t memSrcFrequency,
                          uint64_t memSrcNumBuffToProcess)
-    : queryWithoutSinkStr(""), queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))),
+    : queryWithoutSink(std::make_shared<Query>(std::move(queryWithoutSink))),
       coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort), useNewRequestExecutor(false),
       memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096), physicalSourceCount(0),
       topologyId(1), joinStrategy(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN),
       windowingStrategy(QueryCompilation::WindowingStrategy::SLICING), validationDone(false), topologySetupDone(false),
-      testHarnessResourcePath(testHarnessResourcePath) {}
+      filePath(testHarnessResourcePath / "testHarness.csv"), bufferManager(std::make_shared<Runtime::BufferManager>()) {}
 
 TestHarness& TestHarness::addLogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema) {
     auto logicalSource = LogicalSource::create(logicalSourceName, schema);
@@ -166,6 +168,7 @@ TestHarness& TestHarness::attachWorkerToCoordinator() {
 }
 uint64_t TestHarness::getWorkerCount() { return testHarnessWorkerConfigurations.size(); }
 
+
 TestHarness& TestHarness::validate() {
     validationDone = true;
     if (this->logicalSources.empty()) {
@@ -253,6 +256,80 @@ PhysicalSourceTypePtr TestHarness::createPhysicalSourceOfMemoryType(TestHarnessW
                                                      GatheringMode::INTERVAL_MODE);
     return memorySourceType;
 };
+
+SchemaPtr TestHarness::getOutputSchema() {
+    auto queryService = nesCoordinator->getQueryService();
+    auto queryCatalogService = nesCoordinator->getQueryCatalogService();
+    return queryCatalogService->getEntryForQuery(queryId)
+                                  ->getExecutedQueryPlan()
+                                  ->getSinkOperators()[0]
+                                  ->getOutputSchema();
+}
+
+TestHarness& TestHarness::runQuery(uint64_t numberOfRecordsToExpect,
+                                   const std::string& placementStrategyName,
+                                   const std::string& faultTolerance,
+                                   const std::string& lineage,
+                                   uint64_t testTimeoutInSeconds) {
+    if (!topologySetupDone || !validationDone) {
+        throw Exceptions::RuntimeException(
+            "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
+    }
+
+    QueryServicePtr queryService = nesCoordinator->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
+
+    // local fs
+    remove(filePath.c_str());
+
+    //register query
+    auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
+    auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultTolerance).value();
+    auto lineageMode = magic_enum::enum_cast<LineageType>(lineage).value();
+    queryId = INVALID_QUERY_ID;
+
+    auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
+    queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
+                                            query.getQueryPlan(),
+                                            placementStrategy,
+                                            faultToleranceMode,
+                                            lineageMode);
+
+    // Now run the query
+    if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
+        NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
+    }
+
+
+    if (!TestUtils::checkOutputContentLengthOrTimeout(queryId, queryCatalogService, numberOfRecordsToExpect,
+                                                      filePath, testTimeoutInSeconds)) {
+        NES_THROW_RUNTIME_ERROR("TestHarness: checkOutputContentLengthOrTimeout returns false, number of bytes to expect = "
+                        << numberOfRecordsToExpect);
+    }
+
+    if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
+        NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
+    }
+
+    NES_DEBUG("TestHarness: ExecutedQueryPlan: {}",
+              queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
+    queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
+
+    for (const auto& worker : testHarnessWorkerConfigurations) {
+        worker->getNesWorker()->stop(false);
+    }
+    nesCoordinator->stopCoordinator(false);
+
+    return *this;
+}
+
+std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestHarness::getOutputForVariableSizeDataTypes() {
+    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> receivedBuffers;
+    const auto queryCatalogService = nesCoordinator->getQueryCatalogService();
+    const auto schema = queryCatalogService->getEntryForQuery(queryId)->getInputQueryPlan()->getSinkOperators()[0]->getOutputSchema();
+    auto tupleBuffers = TestUtils::createExpectedBuffersFromCsv(filePath, schema, bufferManager, true);
+    return TestUtils::createDynamicBuffers(tupleBuffers, schema);
+}
 
 TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor) {
     if (!validationDone) {
@@ -356,5 +433,6 @@ uint32_t TestHarness::getNextTopologyId() {
     topologyId++;
     return topologyId;
 }
+Runtime::BufferManagerPtr TestHarness::getBufferManager() const { return bufferManager; }
 
 }// namespace NES

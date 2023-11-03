@@ -44,11 +44,22 @@ std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& f
     if (!nameFieldIndexMap.contains(fieldName)) {
         return std::nullopt;
     }
-    return std::optional<uint64_t>(nameFieldIt->second);
+    return {nameFieldIt->second};
 }
 
 uint64_t MemoryLayout::getCapacity() const { return capacity; }
+
 const SchemaPtr& MemoryLayout::getSchema() const { return schema; }
+
 uint64_t MemoryLayout::getBufferSize() const { return bufferSize; }
+
 const std::vector<PhysicalTypePtr>& MemoryLayout::getPhysicalTypes() const { return physicalTypes; }
+
+bool MemoryLayout::operator==(const MemoryLayout& rhs) const {
+    return bufferSize == rhs.bufferSize && schema->equals(rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
+        && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypes == rhs.physicalTypes
+        && nameFieldIndexMap == rhs.nameFieldIndexMap;
+}
+
+bool MemoryLayout::operator!=(const MemoryLayout& rhs) const { return !(rhs == *this); }
 }// namespace NES::Runtime::MemoryLayouts

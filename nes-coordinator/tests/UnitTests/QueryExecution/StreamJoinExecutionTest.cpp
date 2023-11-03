@@ -80,7 +80,8 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
         std::vector<std::vector<Runtime::TupleBuffer>> allInputBuffers;
         allInputBuffers.reserve(inputs.size());
         for (auto [inputSchema, fileNameInputBuffers] : inputs) {
-            allInputBuffers.emplace_back(TestUtils::fillBufferFromCsv(fileNameInputBuffers, inputSchema, bufferManager));
+            allInputBuffers.emplace_back(
+                TestUtils::createExpectedBuffersFromCsv(fileNameInputBuffers, inputSchema, bufferManager));
         }
 
         // Creating query and submitting it to the execution engine
@@ -118,7 +119,7 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
 
         std::vector<ResultRecord> expectedSinkVector;
         const auto expectedSinkBuffers =
-            TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager);
+            TestUtils::createExpectedBuffersFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager);
 
         for (const auto& buf : expectedSinkBuffers) {
             const auto tmpVec = TestUtils::createVecFromTupleBuffer<ResultRecord>(buf);
@@ -573,7 +574,8 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
 
     // Getting the expected output tuples
     auto bufferManager = executionEngine->getBufferManager();
-    const auto expectedSinkBuffer = TestUtils::fillBufferFromCsv(csvFileParams.expectedFile, sinkSchema, bufferManager)[0];
+    const auto expectedSinkBuffer =
+        TestUtils::createExpectedBuffersFromCsv(csvFileParams.expectedFile, sinkSchema, bufferManager)[0];
     const auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
 
     // Creating the sink and the sources

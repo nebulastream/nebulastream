@@ -47,7 +47,7 @@ class DynamicField {
      * @brief Constructor to create a DynamicField
      * @param address for the field
      */
-    explicit DynamicField(uint8_t* address, PhysicalTypePtr physicalType);
+    explicit DynamicField(const uint8_t* address, PhysicalTypePtr physicalType);
 
     /**
      * @brief Read a pointer type and return the value as a pointer.
@@ -62,7 +62,7 @@ class DynamicField {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
         }
-        return reinterpret_cast<Type>(address);
+        return reinterpret_cast<Type>(const_cast<uint8_t*>(address));
     };
 
     /**
@@ -78,7 +78,7 @@ class DynamicField {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
         }
-        return *reinterpret_cast<Type*>(address);
+        return *reinterpret_cast<Type*>(const_cast<uint8_t*>(address));
     };
 
     /**
@@ -94,7 +94,7 @@ class DynamicField {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
         }
-        *reinterpret_cast<Type*>(address) = value;
+        *reinterpret_cast<Type*>(const_cast<uint8_t*>(address)) = value;
     };
 
     /**
@@ -108,7 +108,7 @@ class DynamicField {
      * @param rhs
      * @return True if equal otherwise false
      */
-    bool equal(const DynamicField& rhs) const;
+    [[nodiscard]] bool equal(const DynamicField& rhs) const;
 
     /**
      * @brief Checks if the DynamicField is equal
@@ -128,10 +128,16 @@ class DynamicField {
      * @brief Getter for the physical type
      * @return Physical type
      */
-    const PhysicalTypePtr& getPhysicalType() const;
+    [[nodiscard]] const PhysicalTypePtr& getPhysicalType() const;
+
+    /**
+     * @brief Getter for the address
+     * @return uint8_t
+     */
+    [[nodiscard]] const uint8_t* getAddressPointer() const;
 
   private:
-    uint8_t* address;
+    const uint8_t* address;
     const PhysicalTypePtr physicalType;
 };
 
@@ -155,7 +161,7 @@ class DynamicTuple {
      * @throws BufferAccessException if field index is invalid
      * @return DynamicField
      */
-    DynamicField operator[](std::size_t fieldIndex);
+    DynamicField operator[](std::size_t fieldIndex) const;
 
     /**
     * @brief Accesses an individual field in the tuple by name.
@@ -163,13 +169,22 @@ class DynamicTuple {
     * @throws BufferAccessException if field index is invalid
     * @return DynamicField
     */
-    DynamicField operator[](std::string fieldName);
+    DynamicField operator[](std::string fieldName) const;
 
     /**
      * @brief get a string representation of this dynamic tuple
      * @return a string
      */
     std::string toString(const SchemaPtr& schema);
+
+    /**
+     * @brief Compares if the values of both tuples are equal. This means that the underlying memory layout CAN BE different
+     * @param other
+     * @return True, if equal otherwise false
+     */
+    bool operator==(const DynamicTuple& other) const;
+    bool operator!=(const DynamicTuple& other) const;
+
 
   private:
     const uint64_t tupleIndex;
@@ -283,14 +298,20 @@ class DynamicTupleBuffer {
          * @brief Constructor to create a new TupleIterator
          * @param buffer the DynamicTupleBuffer that we want to process
          */
-        explicit TupleIterator(DynamicTupleBuffer& buffer);
+        explicit TupleIterator(const DynamicTupleBuffer& buffer);
 
         /**
          * @brief Constructor to create a new RecordIterator
          * @param buffer the DynamicTupleBuffer that we want to process
          * @param currentIndex the index of the current record
          */
-        explicit TupleIterator(DynamicTupleBuffer& buffer, uint64_t currentIndex);
+        explicit TupleIterator(const DynamicTupleBuffer& buffer, const uint64_t currentIndex);
+
+        /**
+         * @brief Copy Constructor
+         * @param other
+         */
+        TupleIterator(const TupleIterator& other);
 
         TupleIterator& operator++();
         const TupleIterator operator++(int);
@@ -299,7 +320,7 @@ class DynamicTupleBuffer {
         reference operator*() const;
 
       private:
-        DynamicTupleBuffer& buffer;
+        const DynamicTupleBuffer& buffer;
         uint64_t currentIndex;
     };
 
@@ -307,13 +328,13 @@ class DynamicTupleBuffer {
      * @brief Start of the iterator at index 0.
      * @return TupleIterator
      */
-    TupleIterator begin();
+    TupleIterator begin() const;
 
     /**
      * @brief End of the iterator at index getNumberOfTuples().
      * @return TupleIterator
      */
-    TupleIterator end();
+    TupleIterator end() const;
 
     /**
      * @brief Outputs the content of a tuple buffer to a output stream.
@@ -390,6 +411,19 @@ class DynamicTupleBuffer {
         return retTuple;
     }
 
+    /**
+     * @brief Returns the number of occurrences of the tuple in this buffer
+     * @param tuple
+     * @return Count of occurrences
+     */
+    uint64_t countOccurrences(DynamicTuple& tuple) const;
+
+    /**
+     * @brief Gets the memoryLayout.
+     * @return MemoryLayoutPtr
+     */
+    MemoryLayoutPtr getMemoryLayout() const;
+
   private:
     /**
      * @brief Takes a tuple as a reference and a recordIndex. Copies the record in the TupleBuffer at the given 
@@ -411,12 +445,6 @@ class DynamicTupleBuffer {
             copyRecordFromBufferToTuple<I + 1>(record, recordIndex);
         }
     }
-
-    /**
-     * @brief Gets the memoryLayout.
-     * @return MemoryLayoutPtr
-     */
-    MemoryLayoutPtr getMemoryLayout() const;
 
   private:
     const MemoryLayoutPtr memoryLayout;
