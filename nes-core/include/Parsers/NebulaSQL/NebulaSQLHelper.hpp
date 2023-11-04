@@ -38,6 +38,9 @@ namespace NES::Parsers {
             std::list<SinkDescriptorPtr> sinkList; // INTO
             std::pair<std::string, int32_t> window;// WITHIN
 
+
+
+
             /*
             std::map<std::string, std::string> queryMap;
 
@@ -47,11 +50,8 @@ namespace NES::Parsers {
             std::string mapClause;
             std::string unionClause;
 
-            bool isSelect = false;
-            bool isWhere = false;
-            bool isFrom = false;
-            bool hasMultipleAttributes = false;
-            bool isArithmeticBinary = false;
+
+
 
             std::string timeUnit;
             std::string timestampParameter;
@@ -120,10 +120,21 @@ namespace NES::Parsers {
              */
             const NES::Windowing::WindowTypePtr getWindowType() const;
             std::vector<QueryPlanPtr> queryPlans;
+            bool isSelect = false;
+            bool isWhere = false;
+            bool isFrom = false;
+            bool isArithmeticBinary = false;
+            bool isJoinRelation = false;
+            bool isFunctionCall = false;
+
+            bool hasMultipleAttributes = false;
              /*
             const std::map<std::string, std::string> getQueryMap() const;
             void setQueryMap(std::map<std::string, std::string> queryMap);
             */
+
+            std::vector<ExpressionNodePtr> projections;
+
         };
     }// namespace NES::Parsers
 

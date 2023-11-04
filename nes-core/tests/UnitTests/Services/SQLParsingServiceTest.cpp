@@ -79,10 +79,9 @@ TEST(SQLParsingServiceTest, projectionTest1) {
     LogicalOperatorNodePtr source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("StreamName"));
     queryPlan->appendOperatorAsNewRoot(source);
-    /*
-     * LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
-     */
+
 
 
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
@@ -93,21 +92,17 @@ TEST(SQLParsingServiceTest, projectionTest2) {
     std::string inputQuery = "select * from StreamName as sn INTO PRINT;";
     std::shared_ptr<QueryParsingService> SQLParsingService;
     QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    QueryPlanPtr queryPlan = QueryPlan::create();
+    Query query = Query::from("StreamName").as("sn").sink(PrintSinkDescriptor::create());
 
-
-
-    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(sqlPlan));
 }
 TEST(SQLParsingServiceTest, projectionTest3) {
     std::string inputQuery = "select f1,f2 from StreamName INTO PRINT;";
     std::shared_ptr<QueryParsingService> SQLParsingService;
     QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    QueryPlanPtr queryPlan = QueryPlan::create();
+    Query query=Query::from("StreamName").project(Attribute("f1"),Attribute("f2")).sink(PrintSinkDescriptor::create());
 
-
-
-    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
+    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
 }
 TEST(SQLParsingServiceTest, projectionTest4) {
     std::string inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT;";
