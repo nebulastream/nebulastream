@@ -181,11 +181,11 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchemaDifferentSize) {
 
 // The schemas are not compatible because a field is missing.
 TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchemaMissingField) {
-    auto udfInputSchema = Schema::create()->addField("field1", BasicType::INT8);
+    auto udfInputSchema = Schema::create()->addField("field1", BasicType::INT8)->addField("missingField", BasicType::INT8);
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
     // Different field name in the schema below.
-    auto childOutputSchema = Schema::create()->addField("source$field2", BasicType::INT8);
+    auto childOutputSchema = Schema::create()->addField("source$field1", BasicType::INT8);
     auto source = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(childOutputSchema)));
     op->addChild(source);
     EXPECT_THROW(op->inferSchema(), NES::TypeInferenceException);
@@ -219,6 +219,45 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchemaUnsignedLong) {
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
     auto childOutputSchema = Schema::create()->addField("source$unsignedLongField", BasicType::UINT64);
+    auto source = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(childOutputSchema)));
+    op->addChild(source);
+    // No exception is thrown here
+    op->inferSchema();
+}
+
+// The schemas are compatible if the Java UDF input type is not a complex object,
+// the name of the field in the child operator output schema does not matter.
+// Regression test for https://github.com/nebulastream/nebulastream/issues/4334
+TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchemaSingleField) {
+    auto udfInputSchema = Schema::create()->addField("", BasicType::INT64);
+    auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
+        Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
+    auto childOutputSchema = Schema::create()->addField("source$randomName", BasicType::INT64);
+    auto source = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(childOutputSchema)));
+    op->addChild(source);
+    // No exception is thrown here
+    op->inferSchema();
+}
+
+// The schemas are not compatible because the types are different.
+// Regression test for https://github.com/nebulastream/nebulastream/issues/4334
+TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchemaSingleFieldIncompatibleTypes) {
+    auto udfInputSchema = Schema::create()->addField("", BasicType::INT64);
+    auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
+        Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
+    auto childOutputSchema = Schema::create()->addField("source$randomName", BasicType::INT32);
+    auto source = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(childOutputSchema)));
+    op->addChild(source);
+    EXPECT_THROW(op->inferSchema(), NES::TypeInferenceException);
+}
+
+// The schemas are compatible because the UINT64 can be mapped to INT64.
+// Regression test for https://github.com/nebulastream/nebulastream/issues/4334
+TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchemaSingleFieldUnsignedLong) {
+    auto udfInputSchema = Schema::create()->addField("", BasicType::INT64);
+    auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
+        Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
+    auto childOutputSchema = Schema::create()->addField("source$randomName", BasicType::UINT64);
     auto source = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(childOutputSchema)));
     op->addChild(source);
     // No exception is thrown here
