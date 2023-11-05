@@ -103,6 +103,7 @@ class CSVSource : public DataSource {
     std::vector<PhysicalTypePtr> physicalTypes;
     size_t fileSize;
     bool skipHeader;
+    uint32_t replaceTimestamp;
     CSVParserPtr inputParser;
 };
 

@@ -252,6 +252,13 @@ template<typename T>
 [[nodiscard]] std::string sourceGatheringInterval(uint64_t sourceGatheringInterval);
 
 /**
+ * @brief Creates the command line argument for setting the source gathering interval
+ * @param sourceGatheringInterval
+ * @return Command line argument
+ */
+[[nodiscard]] std::string replaceTimestamp(uint32_t timestamp);
+
+/**
  * @brief Creates the command line argument for setting the rest port
  * @param restPort
  * @return Command line argument

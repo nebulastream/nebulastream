@@ -220,4 +220,35 @@ std::string Util::trim(const std::string& str) {
     return str.substr(start, end - start + 1);
 }
 
+std::string Util::replaceColumn(const std::string& inputStr,
+                                uint32_t columnToReplace,
+                                const std::string& newValue,
+                                const std::string& delimiter) {
+    std::vector<std::string> parts;// To store the split parts
+    std::istringstream iss(inputStr);
+    std::string part;
+
+    // Split the input string into parts using the specified delimiter
+    while (std::getline(iss, part, delimiter[0])) {// Use the first character of the delimiter string
+        parts.push_back(part);
+    }
+
+    // Check if the columnToReplace is within the range of columns
+    if (columnToReplace < parts.size()) {
+        // Replace the specified column with the new value
+        parts[columnToReplace] = newValue;
+    }
+
+    // Join the parts back together with the specified delimiter
+    std::ostringstream oss;
+    for (size_t i = 0; i < parts.size(); ++i) {
+        if (i > 0) {
+            oss << delimiter;
+        }
+        oss << parts[i];
+    }
+
+    return oss.str();
+}
+
 }// namespace NES

@@ -32,13 +32,15 @@ using namespace Configurations;
 */
 class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
   public:
-    Runtime::BufferManagerPtr bufferManager;
+    std::string debs_dir = "debs13_full/";
 
-    std::list<std::string> sources = {"100_ms", "13_ms", "24_ms", "47_ms", "54_ms", "62_ms", "67_ms", "74_ms", "98_ms",
+    std::list<std::string> sources_short = {"100_ms", "13_ms", "24_ms", "47_ms", "54_ms", "62_ms", "67_ms", "74_ms", "98_ms",
                                       "105_ms", "14_ms", "28_ms", "49_ms", "57_ms", "63_ms", "68_ms", "75_ms", "99_ms",
                                       "106_ms", "16_ms", "38_ms", "4_ms",  "58_ms", "64_ms", "69_ms", "88_ms", "10_ms",
                                       "19_ms",  "40_ms", "52_ms", "59_ms", "65_ms", "71_ms", "8_ms",  "12_ms", "23_ms",
                                       "44_ms",  "53_ms", "61_ms", "66_ms", "73_ms", "97_ms"};
+
+    std::list<std::string> sources_full = {"24_ms"};
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AdditionalBaselinesIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
@@ -47,13 +49,15 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
 
     void SetUp() override {
         Testing::BaseIntegrationTest::SetUp();
-        bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
     }
 
     static CSVSourceTypePtr createCSVSourceType(std::string inputPath) {
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setFilePath(std::move(inputPath));
         csvSourceType->setSkipHeader(false);
+        csvSourceType->setGatheringInterval(0);
+        //csvSourceType->setNumberOfBuffersToProduce(5);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(200);
         return csvSourceType;
     }
 
@@ -69,6 +73,7 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
                 //config->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
                 config->optimizer.distributedWindowChildThreshold.setValue(childThreshold);
                 config->optimizer.distributedWindowCombinerThreshold.setValue(combinerThreshold);
+                config->worker.bufferSizeInBytes = 32000;
             };
 
         auto inputSchema = Schema::create()
@@ -125,28 +130,24 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
                     if (layers == 11) {
                         if (i >= 4) {
                             leafNodes++;
-                            auto source = sources.begin();
-                            std::advance(source, i);
 
-                            std::string elem = *source;
+                            std::string elem = sources_full.front();
                             auto csvSource =
-                                createCSVSourceType(std::string(TEST_DATA_DIRECTORY) + "debs13_readings/" + elem + ".csv");
+                                createCSVSourceType(std::string(TEST_DATA_DIRECTORY) + debs_dir + elem + ".csv");
                             testHarness.attachWorkerWithCSVSourceToWorkerWithId("debs_test", csvSource, parent);
-                            NES_DEBUG("AdditionalBaselinesIntegrationTest: Adding CSV source for node:{}", nodeId);
+                            NES_DEBUG("AdditionalBaselinesIntegrationTest: Adding CSV source {} for node:{}", elem, nodeId);
                             currentNumberOfNodes++;
                             continue;
                         }
                     } else if (layers == 4) {
                         if (i == layers || i == layers - 1) {
                             leafNodes++;
-                            auto source = sources.begin();
-                            std::advance(source, cnt);
 
-                            std::string elem = *source;
+                            std::string elem = sources_full.front();
                             auto csvSource =
-                                createCSVSourceType(std::string(TEST_DATA_DIRECTORY) + "debs13_readings/" + elem + ".csv");
+                                createCSVSourceType(std::string(TEST_DATA_DIRECTORY) + debs_dir + elem + ".csv");
                             testHarness.attachWorkerWithCSVSourceToWorkerWithId("debs_test", csvSource, parent);
-                            NES_DEBUG("AdditionalBaselinesIntegrationTest: Adding CSV source for node:{}", nodeId);
+                            NES_DEBUG("AdditionalBaselinesIntegrationTest: Adding CSV source {} for node:{}", elem, nodeId);
                             currentNumberOfNodes++;
                             continue;
                         }
@@ -155,14 +156,12 @@ class AdditionalBaselinesIntegrationTest : public Testing::BaseIntegrationTest {
                     else {
                         if (i == layers) {
                             leafNodes++;
-                            auto source = sources.begin();
-                            std::advance(source, cnt);
 
-                            std::string elem = *source;
+                            std::string elem = sources_full.front();
                             auto csvSource =
-                                createCSVSourceType(std::string(TEST_DATA_DIRECTORY) + "debs13_readings/" + elem + ".csv");
+                                createCSVSourceType(std::string(TEST_DATA_DIRECTORY) + debs_dir + elem + ".csv");
                             testHarness.attachWorkerWithCSVSourceToWorkerWithId("debs_test", csvSource, parent);
-                            NES_DEBUG("AdditionalBaselinesIntegrationTest: Adding CSV source for node:{}", nodeId);
+                            NES_DEBUG("AdditionalBaselinesIntegrationTest: Adding CSV source {} for node:{}", elem, nodeId);
                             currentNumberOfNodes++;
                             continue;
                         }
@@ -199,7 +198,7 @@ TEST_F(AdditionalBaselinesIntegrationTest, testChainApproach) {
     // we only need 8 sources
     int64_t childThreshold = 1000;
     int64_t combinerThreshold = 1;
-    uint64_t expectedTuples = 16;
+    uint64_t expectedTuples = 4;
 
     struct Test {
         uint64_t sid;
@@ -235,7 +234,7 @@ TEST_F(AdditionalBaselinesIntegrationTest, testMstApproach) {
     // we only need 8 sources
     int64_t childThreshold = 1000;
     int64_t combinerThreshold = 1;
-    uint64_t expectedTuples = 2;
+    uint64_t expectedTuples = 8;
 
     struct Test {
         uint64_t sid;

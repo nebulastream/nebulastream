@@ -137,6 +137,8 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
  */
 std::string trim(const std::string& str);
 
+std::string replaceColumn(const std::string& inputStr, uint32_t columnToReplace, const std::string& newValue, const std::string& delimiter);
+
 };// namespace Util
 }// namespace NES
 

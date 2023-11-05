@@ -103,6 +103,10 @@ namespace TestUtils {
     return "--physicalSources." + NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + "=" + std::to_string(numberOfBuffersToProduce);
 }
 
+[[nodiscard]] std::string replaceTimestamp(uint32_t replaceTimestamp) {
+    return "--physicalSources." + REPLACE_TIMESTAMP_CONFIG + "=" + std::to_string(replaceTimestamp);
+}
+
 [[nodiscard]] std::string sourceGatheringInterval(uint64_t sourceGatheringInterval) {
     return "--physicalSources." + SOURCE_GATHERING_INTERVAL_CONFIG + "=" + std::to_string(sourceGatheringInterval);
 }

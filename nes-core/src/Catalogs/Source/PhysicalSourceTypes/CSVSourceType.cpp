@@ -37,6 +37,10 @@ CSVSourceType::CSVSourceType()
       skipHeader(Configurations::ConfigurationOption<bool>::create(Configurations::SKIP_HEADER_CONFIG,
                                                                    false,
                                                                    "Skip first line of the file.")),
+      replaceTimestamp(Configurations::ConfigurationOption<uint32_t>::create(
+          Configurations::REPLACE_TIMESTAMP_CONFIG,
+          0,
+          "Option to replace column with current timestamp. Starts with 1. 0 means disabled")),
       delimiter(
           Configurations::ConfigurationOption<std::string>::create(Configurations::DELIMITER_CONFIG,
                                                                    ",",
@@ -72,6 +76,9 @@ CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap)
     }
     if (sourceConfigMap.find(Configurations::SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
         skipHeader->setValue((sourceConfigMap.find(Configurations::SKIP_HEADER_CONFIG)->second == "true"));
+    }
+    if (sourceConfigMap.find(Configurations::REPLACE_TIMESTAMP_CONFIG) != sourceConfigMap.end()) {
+        replaceTimestamp->setValue(std::stoi(sourceConfigMap.find(Configurations::REPLACE_TIMESTAMP_CONFIG)->second));
     }
     if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
         numberOfBuffersToProduce->setValue(
@@ -109,6 +116,10 @@ CSVSourceType::CSVSourceType(Yaml::Node yamlConfig) : CSVSourceType() {
         && yamlConfig[Configurations::SKIP_HEADER_CONFIG].As<std::string>() != "\n") {
         skipHeader->setValue(yamlConfig[Configurations::SKIP_HEADER_CONFIG].As<bool>());
     }
+    if (!yamlConfig[Configurations::REPLACE_TIMESTAMP_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::REPLACE_TIMESTAMP_CONFIG].As<std::string>() != "\n") {
+        replaceTimestamp->setValue(yamlConfig[Configurations::REPLACE_TIMESTAMP_CONFIG].As<int64_t>());
+    }
     if (!yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>() != "\n") {
         numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<uint32_t>());
@@ -135,6 +146,7 @@ std::string CSVSourceType::toString() {
     ss << "CSVSource Type => {\n";
     ss << Configurations::FILE_PATH_CONFIG + ":" + filePath->toStringNameCurrentValue();
     ss << Configurations::SKIP_HEADER_CONFIG + ":" + skipHeader->toStringNameCurrentValue();
+    ss << Configurations::REPLACE_TIMESTAMP_CONFIG + ":" + replaceTimestamp->toStringNameCurrentValue();
     ss << Configurations::DELIMITER_CONFIG + ":" + delimiter->toStringNameCurrentValue();
     ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG + ":" + sourceGatheringInterval->toStringNameCurrentValue();
     ss << Configurations::SOURCE_GATHERING_MODE_CONFIG + ":" + std::string(magic_enum::enum_name(gatheringMode->getValue()))
@@ -153,6 +165,7 @@ bool CSVSourceType::equal(const PhysicalSourceTypePtr& other) {
     auto otherSourceConfig = other->as<CSVSourceType>();
     return filePath->getValue() == otherSourceConfig->filePath->getValue()
         && skipHeader->getValue() == otherSourceConfig->skipHeader->getValue()
+        && replaceTimestamp->getValue() == otherSourceConfig->replaceTimestamp->getValue()
         && delimiter->getValue() == otherSourceConfig->delimiter->getValue()
         && sourceGatheringInterval->getValue() == otherSourceConfig->sourceGatheringInterval->getValue()
         && gatheringMode->getValue() == otherSourceConfig->gatheringMode->getValue()
@@ -163,6 +176,8 @@ bool CSVSourceType::equal(const PhysicalSourceTypePtr& other) {
 Configurations::StringConfigOption CSVSourceType::getFilePath() const { return filePath; }
 
 Configurations::BoolConfigOption CSVSourceType::getSkipHeader() const { return skipHeader; }
+
+Configurations::IntConfigOption CSVSourceType::getReplaceTimestamp() const { return replaceTimestamp; }
 
 Configurations::StringConfigOption CSVSourceType::getDelimiter() const { return delimiter; }
 
@@ -177,6 +192,8 @@ Configurations::IntConfigOption CSVSourceType::getNumberOfTuplesToProducePerBuff
 Configurations::GatheringModeConfigOption CSVSourceType::getGatheringMode() const { return gatheringMode; }
 
 void CSVSourceType::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
+
+void CSVSourceType::setReplaceTimestamp(uint32_t withTimestampValue) { replaceTimestamp->setValue(withTimestampValue); }
 
 void CSVSourceType::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
 
@@ -203,6 +220,7 @@ void CSVSourceType::setGatheringMode(GatheringMode inputGatheringMode) { gatheri
 void CSVSourceType::reset() {
     setFilePath(filePath->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
+    setReplaceTimestamp(replaceTimestamp->getDefaultValue());
     setDelimiter(delimiter->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());

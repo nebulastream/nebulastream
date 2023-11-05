@@ -153,6 +153,7 @@ TestHarness& TestHarness::attachWorkerWithCSVSourceToWorkerWithId(const std::str
     auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
     workerConfiguration->physicalSources.add(physicalSource);
     workerConfiguration->parentId = parentId;
+    workerConfiguration->bufferSizeInBytes = 32000;
     uint32_t workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration =
         TestHarnessWorkerConfiguration::create(workerConfiguration,
@@ -174,6 +175,8 @@ TestHarness& TestHarness::attachWorkerToWorkerWithId(uint32_t parentId) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->parentId = parentId;
+    workerConfiguration->bufferSizeInBytes = 32000;
+
     uint32_t workerId = getNextTopologyId();
     auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration, workerId);
     testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);

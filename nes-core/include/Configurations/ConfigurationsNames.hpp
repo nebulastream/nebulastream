@@ -159,6 +159,7 @@ const std::string UDFS_CONFIG = "udfs";
 const std::string FILE_PATH_CONFIG = "filePath";
 
 const std::string SKIP_HEADER_CONFIG = "skipHeader";
+const std::string REPLACE_TIMESTAMP_CONFIG = "replaceTimestamp";
 const std::string DELIMITER_CONFIG = "delimiter";
 const std::string SOURCE_GATHERING_MODE_CONFIG = "sourceGatheringMode";
 

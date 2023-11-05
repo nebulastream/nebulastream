@@ -51,7 +51,8 @@ CSVSource::CSVSource(SchemaPtr schema,
                  std::move(successors)),
       fileEnded(false), csvSourceType(csvSourceType), filePath(csvSourceType->getFilePath()->getValue()),
       numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
-      delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()) {
+      delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()),
+      replaceTimestamp(csvSourceType->getReplaceTimestamp()->getValue()) {
 
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
@@ -155,6 +156,16 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
         std::getline(input, line);
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
+
+        if (replaceTimestamp > 0) {
+            auto timestamp =
+                duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            std::string timestampString = std::to_string(timestamp);
+
+            line = Util::replaceColumn(line, replaceTimestamp - 1, timestampString, delimiter);
+
+            NES_TRACE("With timestamp is on for line out {}", line);
+        }
 
         inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
         tupleCount++;

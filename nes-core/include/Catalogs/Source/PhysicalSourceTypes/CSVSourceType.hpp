@@ -86,9 +86,19 @@ class CSVSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<bool>> getSkipHeader() const;
 
     /**
+     * @brief gets a ConfigurationOption object with skipHeader
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getReplaceTimestamp() const;
+
+    /**
      * @brief set the value for skipHeader with the appropriate data format
      */
     void setSkipHeader(bool skipHeader);
+
+    /**
+     * @brief set the value for skipHeader with the appropriate data format
+     */
+    void setReplaceTimestamp(uint32_t replaceTimestamp);
 
     /**
      * @brief gets a ConfigurationOption object with skipHeader
@@ -163,6 +173,7 @@ class CSVSourceType : public PhysicalSourceType {
     CSVSourceType();
     Configurations::StringConfigOption filePath;
     Configurations::BoolConfigOption skipHeader;
+    Configurations::IntConfigOption replaceTimestamp;
     Configurations::StringConfigOption delimiter;
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
