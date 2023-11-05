@@ -80,29 +80,36 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
     }
     for (const auto& field : udfDescriptor->getInputSchema()->fields) {
         const auto& fieldName = field->getName();
-        const auto fieldInChild = childOperatorOutputSchema.getField(fieldName);
-        const auto type = field->getDataType();
+        auto fieldInChild = childOperatorOutputSchema.getField(fieldName);
         if (!fieldInChild) {
-            errors.push_back(fmt::format("Could not find field in child operator output schema: {}", fieldName));
-        } else {
-            const auto childType = fieldInChild->getDataType();
-            if (type->isEquals(DataTypeFactory::createInt64()) && childType->isEquals(DataTypeFactory::createUInt64())) {
-                // This is not an error condition because we need to map timestamps, which are always UINT64, to Java long.
-                NES_WARNING("Mapping UINT64 field in child operator output schema to signed Java long in UDF input schema: {}",
-                            fieldName)
-            } else if ((type->isEquals(DataTypeFactory::createInt8()) && childType->isEquals(DataTypeFactory::createUInt8()))
-                || (type->isEquals(DataTypeFactory::createInt16()) && childType->isEquals(DataTypeFactory::createUInt16()))
-                || (type->isEquals(DataTypeFactory::createInt32()) && childType->isEquals(DataTypeFactory::createUInt32()))) {
-                errors.push_back(fmt::format(
-                    "Field data type is unsigned integer in child operator output schema; UDFs only support signed integers: {}",
-                    fieldName));
-            } else if (!type->isEquals(childType)) {
-                errors.push_back(fmt::format("Field data type differs in UDF input schema and child operator output schema: "
-                                             "fieldName={}, udfType={}, parentType={}",
-                                             fieldName,
-                                             type->toString(),
-                                             childType->toString()));
+            // If both schemas have size 1, the names do not matter.
+            // In this case the UDF is assumed to not have a complex type but a boxed simple type, e.g., Integer, which is not named.
+            // The UDF execution code just reads the first attribute from the child operator output schema, regardless of its name.
+            if (udfInputSchema.getSize() == 1) {
+                fieldInChild = childOperatorOutputSchema.fields[0];
+            } else {
+                errors.push_back(fmt::format("Could not find field in child operator output schema: {}", fieldName));
+                continue;
             }
+        }
+        const auto type = field->getDataType();
+        const auto childType = fieldInChild->getDataType();
+        if (type->isEquals(DataTypeFactory::createInt64()) && childType->isEquals(DataTypeFactory::createUInt64())) {
+            // This is not an error condition because we need to map timestamps, which are always UINT64, to Java long.
+            NES_WARNING("Mapping UINT64 field in child operator output schema to signed Java long in UDF input schema: {}",
+                        fieldName)
+        } else if ((type->isEquals(DataTypeFactory::createInt8()) && childType->isEquals(DataTypeFactory::createUInt8()))
+            || (type->isEquals(DataTypeFactory::createInt16()) && childType->isEquals(DataTypeFactory::createUInt16()))
+            || (type->isEquals(DataTypeFactory::createInt32()) && childType->isEquals(DataTypeFactory::createUInt32()))) {
+            errors.push_back(fmt::format(
+                "Field data type is unsigned integer in child operator output schema; UDFs only support signed integers: {}",
+                fieldName));
+        } else if (!type->isEquals(childType)) {
+            errors.push_back(fmt::format("Field data type differs in UDF input schema and child operator output schema: "
+                                         "fieldName={}, udfType={}, parentType={}",
+                                         fieldName,
+                                         type->toString(),
+                                         childType->toString()));
         }
     }
     if (!errors.empty()) {
