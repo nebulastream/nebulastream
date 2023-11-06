@@ -152,15 +152,21 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     jni::jmethodID getUDFMethodId() const;
 
     /**
-     * @brief Return the private class loader for this UDF.
-     * @return The private class loader for this UDF.
+     * @brief Find a class inside the custom class loader associated with the UDF.
+     * @param clazzName The name of the class in Java notation.
      */
-    jni::jobject getClassLoader() const;
+    jni::jclass loadClass(const std::string_view& className) const;
 
     void start(PipelineExecutionContextPtr, uint32_t) override;
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override;
 
     ~JavaUDFOperatorHandler();
+
+  private:
+    /** Setup a custom class loader for this UDF. */
+    void setupClassLoader();
+    /** Inject classes of this UDF into the JVM. */
+    void injectClassesIntoClassLoader() const;
 
   private:
     const std::string className;
@@ -180,6 +186,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     jni::jmethodID udfMethodId;
     jni::jobject udfInstance;
     jni::jobject classLoader;
+    jni::jmethodID loadClassMethod;
 };
 
 }// namespace NES::Runtime::Execution::Operators

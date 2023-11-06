@@ -56,13 +56,6 @@ jobject allocateObject(jclass clazz);
 jclass findClass(const std::string_view& clazzName);
 
 /**
- * @brief Find a class inside a custom class loader.
- * @param clazzName The name of the class in Java notation.
- * @param classLoader The class loader from which the class is loaded. If nullptr, the class is loaded from the system class loader.
- */
-jclass findClass(const std::string_view& clazzName, const jobject classLoader);
-
-/**
  * @brief Finds a method with a given name
  * @param methodName
  * @return jmethodID
@@ -179,13 +172,6 @@ int8_t getByteValue(jobject object);
  * @return std::string
  */
 std::string getStringObjectValue(jstring object);
-
-/**
- * Inject classes into the JVM.
- * @param classLoader The class loader into which the classes are loaded. If null, the classes are loaded into the system class loader.
- * @param byteCodeList A byte code list containing pairs of class names in JNI notation and their byte code.
- */
-void loadClassesFromByteList(const jobject classLoader, const jni::JavaUDFByteCodeList& byteCodeList);
 
 /**
  * @brief Converts a class name into the correct jni name

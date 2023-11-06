@@ -47,24 +47,14 @@ JavaUDFOperatorHandler::JavaUDFOperatorHandler(const std::string& className,
 
 void JavaUDFOperatorHandler::setup() {
     auto env = jni::getEnv();
-
-    // create class loader for this UDF
-    auto loaderClazz = jni::findClass("stream/nebula/UDFClassLoader");
-    auto constructor = env->GetMethodID(loaderClazz, "<init>", "()V");
-    classLoader = env->NewObject(loaderClazz, constructor);
-    jni::jniErrorCheck();
-
-    // load bytecodes
-    jni::loadClassesFromByteList(classLoader, getByteCodeList());
-    auto clazz = jni::findClass(getClassName(), classLoader);
-
-    // Build function signature of map function
-    std::string sig = "(L" + getInputClassJNIName() + ";)L" + getOutputClassJNIName() + ";";
-    NES_DEBUG("Java UDF method signature: {}", sig);
+    setupClassLoader();
+    injectClassesIntoClassLoader();
 
     // Find udf function
-    this->udfMethodId = env->GetMethodID(clazz, getMethodName().c_str(), sig.c_str());
-    jni::jniErrorCheck();
+    std::string sig = "(L" + getInputClassJNIName() + ";)L" + getOutputClassJNIName() + ";";
+    NES_DEBUG("Java UDF method signature: {}", sig);
+    auto clazz = loadClass(getClassName());
+    this->udfMethodId = jni::getMethod(clazz, getMethodName().c_str(), sig.c_str());
 
     jni::jobject instance;
     // The map udf class will be either loaded from a serialized instance or allocated using class information
@@ -73,7 +63,7 @@ void JavaUDFOperatorHandler::setup() {
         instance = jni::deserializeInstance(serializedInstance);
     } else {
         // Create instance using default constructor
-        auto constr = env->GetMethodID(clazz, "<init>", "()V");
+        auto constr = jni::getMethod(clazz, "<init>", "()V");
         instance = env->NewObject(clazz, constr);
         jni::jniErrorCheck();
     }
@@ -119,6 +109,43 @@ JavaUDFOperatorHandler::~JavaUDFOperatorHandler() {
         jni::freeObject(classLoader);
     }
 }
-jni::jobject JavaUDFOperatorHandler::getClassLoader() const { return classLoader; }
+
+jni::jclass JavaUDFOperatorHandler::loadClass(const std::string_view& className) const {
+    if (!classLoader) {
+        return jni::findClass(convertToJNIName(std::string(className)));
+    }
+    auto javaString = jni::createString(className);
+    jni::jniErrorCheck();
+    auto clazz = jni::getEnv()->CallObjectMethod(classLoader, loadClassMethod, javaString);
+    jni::jniErrorCheck();
+    freeObject(javaString);
+    return static_cast<jclass>(clazz);
+}
+
+void JavaUDFOperatorHandler::setupClassLoader() {
+    auto env = jni::getEnv();
+    auto loaderClazz = jni::findClass("stream/nebula/UDFClassLoader");
+    auto constructor = jni::getMethod(loaderClazz, "<init>", "()V");
+    loadClassMethod = jni::getMethod(loaderClazz, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+    classLoader = env->NewObject(loaderClazz, constructor);
+    jni::jniErrorCheck();
+}
+
+void JavaUDFOperatorHandler::injectClassesIntoClassLoader() const {
+    auto env = jni::getEnv();
+    for (auto& [className, byteCode] : byteCodeList) {
+        jbyteArray jData = env->NewByteArray(byteCode.size());
+        jni::jniErrorCheck();
+        jbyte* jCode = env->GetByteArrayElements(jData, nullptr);
+        jni::jniErrorCheck();
+        std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
+        const auto jniName = convertToJNIName(className);
+        NES_DEBUG("Injecting Java class into JVM: {}", className);
+        env->DefineClass(jniName.c_str(), classLoader, jCode, (jint) byteCode.size());
+        jni::jniErrorCheck();
+        env->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
+        jni::jniErrorCheck();
+    }
+}
 
 }// namespace NES::Runtime::Execution::Operators
