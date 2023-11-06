@@ -47,9 +47,16 @@ JavaUDFOperatorHandler::JavaUDFOperatorHandler(const std::string& className,
 
 void JavaUDFOperatorHandler::setup() {
     auto env = jni::getEnv();
+
+    // create class loader for this UDF
+    auto loaderClazz = jni::findClass("stream/nebula/UDFClassLoader");
+    auto constructor = env->GetMethodID(loaderClazz, "<init>", "()V");
+    classLoader = env->NewObject(loaderClazz, constructor);
+    jni::jniErrorCheck();
+
     // load bytecodes
-    jni::loadClassesFromByteList(getByteCodeList());
-    auto clazz = jni::findClass(getClassJNIName());
+    jni::loadClassesFromByteList(classLoader, getByteCodeList());
+    auto clazz = jni::findClass(getClassName(), classLoader);
 
     // Build function signature of map function
     std::string sig = "(L" + getInputClassJNIName() + ";)L" + getOutputClassJNIName() + ";";
@@ -108,6 +115,10 @@ JavaUDFOperatorHandler::~JavaUDFOperatorHandler() {
     if (udfInstance) {
         jni::freeObject(udfInstance);
     }
+    if (classLoader) {
+        jni::freeObject(classLoader);
+    }
 }
+jni::jobject JavaUDFOperatorHandler::getClassLoader() const { return classLoader; }
 
 }// namespace NES::Runtime::Execution::Operators

@@ -151,6 +151,12 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      */
     jni::jmethodID getUDFMethodId() const;
 
+    /**
+     * @brief Return the private class loader for this UDF.
+     * @return The private class loader for this UDF.
+     */
+    jni::jobject getClassLoader() const;
+
     void start(PipelineExecutionContextPtr, uint32_t) override;
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override;
 
@@ -173,6 +179,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     const std::optional<std::string> javaPath;
     jni::jmethodID udfMethodId;
     jni::jobject udfInstance;
+    jni::jobject classLoader;
 };
 
 }// namespace NES::Runtime::Execution::Operators
