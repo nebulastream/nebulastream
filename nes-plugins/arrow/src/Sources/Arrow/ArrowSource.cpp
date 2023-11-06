@@ -215,9 +215,11 @@ arrow::Status ArrowSource::openCsvFile() {
     ARROW_ASSIGN_OR_RAISE(inputFile, arrow::io::ReadableFile::Open(filePath, arrow::default_memory_pool()));
     arrow::io::IOContext io_context = arrow::io::default_io_context();
     auto read_options = arrow::csv::ReadOptions::Defaults();
+    read_options.skip_rows = 1;
     auto parse_options = arrow::csv::ParseOptions::Defaults();
+    parse_options.delimiter = '*';
     auto convert_options = arrow::csv::ConvertOptions::Defaults();
-//    populateOptionsFromSchema(read_options, convert_options);
+    populateOptionsFromSchema(read_options, convert_options);
 
     auto maybe_reader = arrow::csv::StreamingReader::Make(io_context,
                                                           inputFile,
