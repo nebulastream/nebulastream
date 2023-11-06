@@ -56,18 +56,16 @@ void JavaUDFOperatorHandler::setup() {
     auto clazz = loadClass(getClassName());
     this->udfMethodId = jni::getMethod(clazz, getMethodName().c_str(), sig.c_str());
 
-    jni::jobject instance;
     // The map udf class will be either loaded from a serialized instance or allocated using class information
     if (!getSerializedInstance().empty()) {
-        // Load instance if defined
-        instance = jni::deserializeInstance(serializedInstance);
+        deserializeInstance();
     } else {
         // Create instance using default constructor
         auto constr = jni::getMethod(clazz, "<init>", "()V");
-        instance = env->NewObject(clazz, constr);
+        auto instance = env->NewObject(clazz, constr);
         jni::jniErrorCheck();
+        this->udfInstance = env->NewGlobalRef(instance);
     }
-    this->udfInstance = env->NewGlobalRef(instance);
 }
 
 const std::string JavaUDFOperatorHandler::convertToJNIName(const std::string& javaClassName) {
@@ -122,12 +120,35 @@ jni::jclass JavaUDFOperatorHandler::loadClass(const std::string_view& className)
     return static_cast<jclass>(clazz);
 }
 
+void JavaUDFOperatorHandler::deserializeInstance() {
+    auto env = jni::getEnv();
+
+    // Load instance into Java array.
+    const auto length = serializedInstance.size();
+    const auto data = reinterpret_cast<const jbyte*>(serializedInstance.data());
+    const auto byteArray = env->NewByteArray(length);
+    jni::jniErrorCheck();
+    env->SetByteArrayRegion(byteArray, 0, length, data);
+    jni::jniErrorCheck();
+
+    // Deserialize the instance using a Java helper method.
+    const auto clazz = loadClass("stream.nebula.UDFClassLoader");
+    const auto mid = jni::getMethod(clazz, "deserialize", "([B)Ljava/lang/Object;");
+    auto instance = env->CallObjectMethod(classLoader, mid, byteArray);
+    jni::jniErrorCheck();
+    this->udfInstance = env->NewGlobalRef(instance);
+
+    // Release the array.
+    env->DeleteLocalRef(byteArray);
+    jni::jniErrorCheck();
+}
+
 void JavaUDFOperatorHandler::setupClassLoader() {
     auto env = jni::getEnv();
     auto loaderClazz = jni::findClass("stream/nebula/UDFClassLoader");
     auto constructor = jni::getMethod(loaderClazz, "<init>", "()V");
     loadClassMethod = jni::getMethod(loaderClazz, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-    classLoader = env->NewObject(loaderClazz, constructor);
+    classLoader = env->NewGlobalRef(env->NewObject(loaderClazz, constructor));
     jni::jniErrorCheck();
 }
 

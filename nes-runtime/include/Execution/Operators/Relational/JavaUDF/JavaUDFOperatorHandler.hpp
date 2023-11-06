@@ -167,6 +167,8 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     void setupClassLoader();
     /** Inject classes of this UDF into the JVM. */
     void injectClassesIntoClassLoader() const;
+    /** Deserialize the UDF instance. */
+    void deserializeInstance();
 
   private:
     const std::string className;
