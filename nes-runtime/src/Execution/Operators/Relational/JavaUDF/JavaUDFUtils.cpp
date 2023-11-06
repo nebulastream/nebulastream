@@ -32,7 +32,7 @@ namespace NES::Runtime::Execution::Operators {
 void* findInputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
-    return jni::findClass(handler->getInputClassJNIName());
+    return jni::findClass(handler->getInputClassName(), handler->getClassLoader());
 }
 
 void freeObject(void* object) { jni::freeObject((jobject) object); }
