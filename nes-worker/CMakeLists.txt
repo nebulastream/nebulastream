@@ -22,7 +22,7 @@ target_include_directories(nes-worker PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-target_link_libraries(nes-worker PRIVATE nes-common nes-runtime nes-grpc nes-configurations nes-operators  ${GRPC_LIBRARIES})
+target_link_libraries(nes-worker PRIVATE nes-common nes-runtime nes-grpc nes-configurations nes-operators)
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC nes-common  nes-worker nes-configurations nes-runtime  )

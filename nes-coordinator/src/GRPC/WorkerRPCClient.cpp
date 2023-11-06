@@ -44,8 +44,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     auto serializedQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
 
-    // TODO https://github.com/nebulastream/nebulastream/issues/4312
-    // NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
+    NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 
@@ -77,8 +76,7 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     auto serializableQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializableQueryPlan);
 
-    // TODO https://github.com/nebulastream/nebulastream/issues/4312
-    // NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
+    NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 
