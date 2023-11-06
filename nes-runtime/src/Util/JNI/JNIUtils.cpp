@@ -59,20 +59,6 @@ jclass findClass(const std::string_view& className) {
     return clazz;
 }
 
-jclass findClass(const std::string_view& className, const jobject classLoader) {
-    if (!classLoader) {
-        return findClass(convertToJNIName(std::string(className)));
-    }
-    auto loaderClazz = findClass("stream/nebula/UDFClassLoader");
-    auto findClassMethod = getMethod(loaderClazz, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-    auto javaString = createString(className);
-    jniErrorCheck();
-    auto clazz = jni::getEnv()->CallObjectMethod(classLoader, findClassMethod, javaString);
-    jniErrorCheck();
-    freeObject(javaString);
-    return static_cast<jclass>(clazz);
-}
-
 template<typename T>
 jobject createObjectType(T value, const std::string_view& className, const std::string_view& constructorSignature) {
     auto env = getEnv();
@@ -182,23 +168,6 @@ jni::jobject deserializeInstance(const jni::JavaSerializedInstance& serializedIn
     env->DeleteLocalRef(byteArray);
     jniErrorCheck();
     return obj;
-}
-
-void loadClassesFromByteList(const jobject classLoader, const jni::JavaUDFByteCodeList& byteCodeList) {
-    for (auto& [className, byteCode] : byteCodeList) {
-        auto env = getEnv();
-        jbyteArray jData = env->NewByteArray(byteCode.size());
-        jniErrorCheck();
-        jbyte* jCode = env->GetByteArrayElements(jData, nullptr);
-        jniErrorCheck();
-        std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
-        const auto jniName = convertToJNIName(className);
-        NES_DEBUG("Injecting Java class into JVM: {}", className);
-        env->DefineClass(jniName.c_str(), classLoader, jCode, (jint) byteCode.size());
-        jniErrorCheck();
-        env->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
-        jniErrorCheck();
-    }
 }
 
 }// namespace NES::jni
