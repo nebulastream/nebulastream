@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.244](https://github.com/nebulastream/nebulastream/tree/v0.5.244) (2023-11-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.243...v0.5.244)
+
+### Bug Fixes 🐛
+
+- Java client integration tests failed for NebulaStream version v0.5.243 [\#4334](https://github.com/nebulastream/nebulastream/issues/4334)
+- \[BUG\] Cannot output query plan on macOS ARM [\#4312](https://github.com/nebulastream/nebulastream/issues/4312)
+
 ## [v0.5.243](https://github.com/nebulastream/nebulastream/tree/v0.5.243) (2023-11-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.242...v0.5.243)
