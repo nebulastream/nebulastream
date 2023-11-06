@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/FaultToleranceType.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -35,7 +34,6 @@ class FileSink : public SinkMedium {
      * @param format in which the data is written
      * @param filePath location of file on sink server
      * @param modus of writting (overwrite or append)
-     * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      */
     explicit FileSink(SinkFormatPtr format,
@@ -45,7 +43,6 @@ class FileSink : public SinkMedium {
                       bool append,
                       QueryId queryId,
                       QuerySubPlanId querySubPlanId,
-                      FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                       uint64_t numberOfOrigins = 1);
 
     /**

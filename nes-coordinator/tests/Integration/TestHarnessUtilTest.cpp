@@ -83,7 +83,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
                                           },
                                           {71, 71, 71}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -139,7 +139,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
                                           },
                                           {71, 71, 71}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -208,7 +208,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
                                           },
                                           {71, 71, 71}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -301,7 +301,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
         {5000, 6000, 1, 10},
     };
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -386,7 +386,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
                                           {2000, 3000, 11, 11, 2001, 11, 2301},
                                           {2000, 3000, 1, 1, 2000, 1, 2010}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -439,7 +439,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
                                           },
                                           {71, 5041, 71}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -523,7 +523,7 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
                                           },
                                           {71, 5041, 71}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -577,7 +577,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     };
     std::vector<Output> expectedOutput = {{1, 2, 3}, {1, 2, 4}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -636,7 +636,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     };
     std::vector<Output> expectedOutput = {{1, 2, 3}, {1, 2, 4}, {1, 9, 9}, {1, 8, 8}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

@@ -231,9 +231,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE,
-                                                                    LineageType::IN_MEMORY);
+                                                                    Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
@@ -308,9 +306,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE,
-                                                                    LineageType::IN_MEMORY);
+                                                                    Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(10);

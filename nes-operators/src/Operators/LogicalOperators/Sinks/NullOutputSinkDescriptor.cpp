@@ -17,11 +17,11 @@
 
 namespace NES {
 
-NullOutputSinkDescriptor::NullOutputSinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins)
-    : SinkDescriptor(faultToleranceType, numberOfOrigins) {}
+NullOutputSinkDescriptor::NullOutputSinkDescriptor(uint64_t numberOfOrigins)
+    : SinkDescriptor(numberOfOrigins) {}
 
-SinkDescriptorPtr NullOutputSinkDescriptor::create(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins) {
-    return std::make_shared<NullOutputSinkDescriptor>(NullOutputSinkDescriptor(faultToleranceType, numberOfOrigins));
+SinkDescriptorPtr NullOutputSinkDescriptor::create(uint64_t numberOfOrigins) {
+    return std::make_shared<NullOutputSinkDescriptor>(NullOutputSinkDescriptor(numberOfOrigins));
 }
 
 std::string NullOutputSinkDescriptor::toString() const { return "NullOutputSinkDescriptor()"; }

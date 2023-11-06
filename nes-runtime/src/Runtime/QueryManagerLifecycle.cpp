@@ -513,48 +513,6 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
     return true;
 }
 
-bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier) {
-    std::unique_lock queryLock(queryMutex);
-    bool isPropagated = false;
-    auto queryId = getQueryId(querySubPlanId);
-    auto qep = getQueryExecutionPlan(querySubPlanId);
-    //post reconfiguration message to the executable query plan with an epoch barrier to trim buffer storages
-    auto sinks = qep->getSinks();
-    for (auto sink : sinks) {
-        if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
-            NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId= ", queryId, "punctuation= ", epochBarrier);
-            auto newReconf = ReconfigurationMessage(queryId,
-                                                    qep->getQuerySubPlanId(),
-                                                    Runtime::ReconfigurationType::PropagateEpoch,
-                                                    sink,
-                                                    std::make_any<EpochMessage>(epochBarrier));
-            addReconfigurationMessage(queryId, qep->getQuerySubPlanId(), newReconf);
-            isPropagated = true;
-        }
-    }
-    return isPropagated;
-}
-
-bool AbstractQueryManager::propagateEpochBackwards(uint64_t querySubPlanId, uint64_t epochBarrier) {
-    std::unique_lock queryLock(queryMutex);
-    auto queryId = getQueryId(querySubPlanId);
-    auto qep = getQueryExecutionPlan(querySubPlanId);
-    auto sources = qep->getSources();
-    bool isPropagated = false;
-    for (auto source : sources) {
-        if (source->getType() == SourceType::NETWORK_SOURCE) {
-            auto newReconf = Runtime::ReconfigurationMessage(queryId,
-                                                             querySubPlanId,
-                                                             Runtime::ReconfigurationType::PropagateEpoch,
-                                                             source,
-                                                             std::make_any<EpochMessage>(epochBarrier));
-            addReconfigurationMessage(queryId, querySubPlanId, newReconf);
-            isPropagated = true;
-        }
-    }
-    return isPropagated;
-}
-
 bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType) {
     std::unique_lock queryLock(queryMutex);
     NES_DEBUG("AbstractQueryManager: AbstractQueryManager::addEndOfStream for source operator {} terminationType={}",

@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_ZMQSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 
@@ -31,14 +30,12 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      * @param host: address name for connecting to zmq
      * @param port: port number for connecting to zmq
      * @param internal: defines if the zmq should send the message schema as a first message
-     * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for ZMQ sink
      */
     static SinkDescriptorPtr create(std::string host,
                                     uint16_t port,
                                     bool internal = false,
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**
@@ -57,11 +54,6 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      */
     void setPort(uint16_t port);
 
-    /**
-     * @brief getter for fault-tolerance type
-     * @return fault-tolerance type
-     */
-    FaultToleranceType getFaultToleranceType() const;
 
     bool isInternal() const;
     void setInternal(bool internal);
@@ -79,7 +71,6 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     explicit ZmqSinkDescriptor(std::string host,
                                uint16_t port,
                                bool internal,
-                               NES::FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins);
 
     std::string host;

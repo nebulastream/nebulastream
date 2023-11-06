@@ -28,8 +28,6 @@ message SerializableQueryPlan{
   repeated uint64 rootOperatorIds = 2;
   optional uint64 queryId = 3;
   optional uint64 querySubPlanId = 4;
-  optional uint64 faultToleranceMode = 5;
-  optional uint64 lineageMode = 6;
 }
 
 message SubmitQueryRequest {

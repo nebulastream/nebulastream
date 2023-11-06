@@ -79,9 +79,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
         + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query={}", query);
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE,
-                                                                    LineageType::IN_MEMORY);
+                                                                    Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 
@@ -210,9 +208,7 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
 
     QueryId queryId = queryService->addQueryRequest("",
                                                     query.getQueryPlan(),
-                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                    FaultToleranceType::NONE,
-                                                    LineageType::IN_MEMORY);
+                                                    Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 

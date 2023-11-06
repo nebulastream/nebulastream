@@ -116,9 +116,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                  query.getQueryPlan(),
-                                                 Optimizer::PlacementStrategy::BottomUp,
-                                                 FaultToleranceType::NONE,
-                                                 LineageType::IN_MEMORY);
+                                                 Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
@@ -204,15 +202,11 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId1 = queryService->addQueryRequest(query1.getQueryPlan()->toString(),
                                                   query1.getQueryPlan(),
-                                                  Optimizer::PlacementStrategy::BottomUp,
-                                                  FaultToleranceType::NONE,
-                                                  LineageType::IN_MEMORY);
+                                                  Optimizer::PlacementStrategy::BottomUp);
 
     auto queryId2 = queryService->addQueryRequest(query2.getQueryPlan()->toString(),
                                                   query2.getQueryPlan(),
-                                                  Optimizer::PlacementStrategy::BottomUp,
-                                                  FaultToleranceType::NONE,
-                                                  LineageType::IN_MEMORY);
+                                                  Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
     if (!ret) {
@@ -292,9 +286,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                  query.getQueryPlan(),
-                                                 Optimizer::PlacementStrategy::BottomUp,
-                                                 FaultToleranceType::NONE,
-                                                 LineageType::IN_MEMORY);
+                                                 Optimizer::PlacementStrategy::BottomUp);
 
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {

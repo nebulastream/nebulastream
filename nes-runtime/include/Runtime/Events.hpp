@@ -56,32 +56,6 @@ class BaseEvent {
     EventType eventType;
 };
 
-/**
- * @brief This class represents an epoch propagation method to launch trimming of tuples that are stored in buffer storages.
- */
-struct PropagateEpochEvent {
-  public:
-    /**
-     * @brief creates a custom event that sends epoch trimming messages.
-     */
-    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp) : type(type), timestamp(timestamp) {}
-
-    /**
-     * @brief Return type of the event
-     * @return event type
-     */
-    Runtime::EventType getEventType() const { return type; }
-
-    /**
-     * @brief Return timestamp of the PropagateEpochEvent
-     * @return timestamp
-     */
-    uint64_t timestampValue() const { return timestamp; }
-
-  private:
-    Runtime::EventType type;
-    uint64_t timestamp;
-};
 
 /**
  * @brief This class shall be used to define custom events with user-supplied data

@@ -51,16 +51,13 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    uint64_t messageDelay,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient,
-                   FaultToleranceType faultToleranceType,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat),
                  nodeEngine,
                  numOfProducers,
                  queryId,
                  querySubPlanId,
-                 faultToleranceType,
-                 numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+                 numberOfOrigins),
       address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 
@@ -126,7 +123,6 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: {}", ex.what());
         return false;
     }
-    updateWatermarkCallback(inputBuffer);
     return true;
 }
 

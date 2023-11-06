@@ -29,13 +29,12 @@ class NullOutputSinkDescriptor : public SinkDescriptor {
      * @brief Factory method to create a new prink sink descriptor
      * @return descriptor for print sink
      */
-    static SinkDescriptorPtr create(FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                    uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr create(uint64_t numberOfOrigins = 1);
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
   private:
-    explicit NullOutputSinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
+    explicit NullOutputSinkDescriptor(uint64_t numberOfOrigins);
 };
 
 using NullOutputSinkDescriptorPtr = std::shared_ptr<NullOutputSinkDescriptor>;

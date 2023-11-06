@@ -89,9 +89,7 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
             "/nesui", "rfRqLGZRChg8eS30PEeR", 5, MQTTSinkDescriptor::milliseconds, 500, MQTTSinkDescriptor::atLeastOnce, false));)";
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE,
-                                                                    LineageType::IN_MEMORY);
+                                                                    Optimizer::PlacementStrategy::BottomUp);
 
     // Comment for better understanding: From here on at some point the DataSource.cpp 'runningRoutine()' function is called
     // this function, because "default_logical" is used, uses 'DefaultSource.cpp', which create a TupleBuffer with 10 id:value

@@ -17,8 +17,6 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Util/FaultToleranceType.hpp>
-#include <Util/LineageType.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -111,15 +109,11 @@ class BasePlacementStrategy {
      * Update Global execution plan by placing operators including and between input pinned upstream and downstream operators
      * for the query with input id and input fault tolerance strategy
      * @param queryId: id of the query
-     * @param faultToleranceType: fault tolerance type
-     * @param lineageType: lineage type
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @return true if successful else false
      */
     virtual bool updateGlobalExecutionPlan(QueryId queryId,
-                                           FaultToleranceType faultToleranceType,
-                                           LineageType lineageType,
                                            const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
@@ -178,11 +172,9 @@ class BasePlacementStrategy {
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id
      * @param queryId: the input query id
-     * @param faultToleranceType: fault-tolerance type
-     * @param lineageType: lineage type
      * @return true if successful else false
      */
-    bool runTypeInferencePhase(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
+    bool runTypeInferencePhase(QueryId queryId);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed

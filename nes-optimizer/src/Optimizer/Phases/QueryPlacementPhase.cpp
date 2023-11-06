@@ -65,8 +65,6 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     auto sharedQueryId = sharedQueryPlan->getId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
-    auto faultToleranceType = queryPlan->getFaultToleranceType();
-    auto lineageType = queryPlan->getLineageType();
     NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan\n{}", queryPlan->toString());
 
     // Get current time stamp
@@ -92,8 +90,6 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             }
 
             bool success = placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId,
-                                                                           faultToleranceType,
-                                                                           lineageType,
                                                                            pinnedUpstreamOperators,
                                                                            pinnedDownStreamOperators);
 
@@ -126,8 +122,6 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
 
         bool success = placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId,
-                                                                       faultToleranceType,
-                                                                       lineageType,
                                                                        pinnedUpstreamOperators,
                                                                        pinnedDownStreamOperators);
 

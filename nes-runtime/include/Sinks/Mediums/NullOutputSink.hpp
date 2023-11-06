@@ -38,7 +38,6 @@ class NullOutputSink : public SinkMedium {
                             uint32_t numOfProducers,
                             QueryId queryId,
                             QuerySubPlanId querySubPlanId,
-                            FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                             uint64_t numberOfOrigins = 1);
 
     /**

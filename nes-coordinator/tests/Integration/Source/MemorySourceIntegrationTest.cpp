@@ -106,9 +106,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest("",
                                                     query.getQueryPlan(),
-                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                    FaultToleranceType::NONE,
-                                                    LineageType::IN_MEMORY);
+                                                    Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -208,9 +206,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest("",
                                                     query.getQueryPlan(),
-                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                    FaultToleranceType::NONE,
-                                                    LineageType::IN_MEMORY);
+                                                    Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -319,9 +315,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     auto query = Query::from("memory_stream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     QueryId queryId = queryService->addQueryRequest("",
                                                     query.getQueryPlan(),
-                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                    FaultToleranceType::NONE,
-                                                    LineageType::IN_MEMORY);
+                                                    Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

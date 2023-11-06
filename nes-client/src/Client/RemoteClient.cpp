@@ -56,14 +56,6 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     placement.set_value(std::string(magic_enum::enum_name(config.getPlacementType())));
     context["placement"] = placement;
 
-    auto linageType = google::protobuf::Any();
-    linageType.set_value(std::string(magic_enum::enum_name(config.getLineageType())));
-    context["linage"] = linageType;
-
-    auto faultToleranceType = google::protobuf::Any();
-    faultToleranceType.set_value(std::string(magic_enum::enum_name(config.getFaultToleranceType())));
-    context["faultTolerance"] = faultToleranceType;
-
     std::string message = request.SerializeAsString();
     auto path = "query/execute-query-ex";
 

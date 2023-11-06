@@ -29,8 +29,6 @@ enum class ReconfigurationType : uint8_t {
     HardEndOfStream,
     /// forceful stop of a query with a failure
     FailEndOfStream,
-    /// use PropagateEpoch to pass epoch barrier to all network sinks
-    PropagateEpoch,
     /// start the process of connecting to a new network source
     ConnectToNewReceiver,
     /// indicate successful establishment of a network connection

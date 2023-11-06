@@ -367,7 +367,6 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES,
-                                                         FaultToleranceType::NONE,
                                                          0);
         networkSink->preSetup();
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {

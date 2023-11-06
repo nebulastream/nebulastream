@@ -27,32 +27,19 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, queryId, querySubPlanId, FaultToleranceType::NONE, 1, nullptr) {}
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, queryId, querySubPlanId, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId,
-                       FaultToleranceType faultToleranceType,
-                       uint64_t numberOfOrigins,
-                       Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
+                       uint64_t numberOfOrigins)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
-      querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins),
-      watermarkProcessor(std::move(watermarkProcessor)) {
-    bufferCount = 0;
-    buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
+      querySubPlanId(querySubPlanId), numberOfOrigins(numberOfOrigins) {
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
-            updateWatermark(inputBuffer);
-        };
-    } else {
-        updateWatermarkCallback = [](Runtime::TupleBuffer&) {
-        };
-    }
 }
 
 OperatorId SinkMedium::getOperatorId() const { return 0; }
@@ -60,23 +47,6 @@ OperatorId SinkMedium::getOperatorId() const { return 0; }
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);
     return sentBuffer;
-}
-
-void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
-    NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
-    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
-    bool isSync = watermarkProcessor->isWatermarkSynchronized(inputBuffer.getOriginId());
-    ///we propagate epoch termination message when we receive number of tuples  equivalent to the buffer count. In case some tuples that belong to the epoch that is finished haven't arrived yet, we wait.
-    if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
-        auto timestamp = watermarkProcessor->getCurrentWatermark();
-        if (isSync && timestamp) {
-            notifyEpochTermination(timestamp);
-            isWaiting = false;
-        } else {
-            isWaiting = true;
-        }
-    }
-    bufferCount++;
 }
 
 uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
@@ -92,19 +62,9 @@ QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
 
 QueryId SinkMedium::getQueryId() const { return queryId; }
 
-bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
-    auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
-    if (nodeEngine->getQueryManager()->propagateEpochBackwards(querySubPlanId, epochBarrier)) {
-        return true;
-    }
-    return false;
-}
-
 void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);
 }
-
-uint64_t SinkMedium::getCurrentEpochBarrier() { return watermarkProcessor->getCurrentWatermark(); }
 
 void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);

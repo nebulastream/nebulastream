@@ -63,8 +63,6 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(std::string serviceURL,
       serviceURL(std::move(serviceURL)), timeWeight(timeWeight) {}
 
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
-                                                         FaultToleranceType faultToleranceType,
-                                                         LineageType lineageType,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
@@ -96,7 +94,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 5. Perform type inference on updated query plans
-        return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+        return runTypeInferencePhase(queryId);
     } catch (const std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }

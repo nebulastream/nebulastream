@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <string>
 
 namespace NES {
@@ -42,7 +41,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
-     * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for MQTT sink
      */
@@ -55,7 +53,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                     ServiceQualities qualityOfService,
                                     bool asynchronousClient,
                                     std::string&& clientId = "",
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**
@@ -112,11 +109,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     bool getAsynchronousClient() const;
 
-    /**
-     * @brief getter for fault-tolerance type
-     * @return fault-tolerance type
-     */
-    FaultToleranceType getFaultToleranceType() const;
 
     /**
      * @brief getter for number of origins
@@ -138,7 +130,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
-     * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      * @return MQTT sink
      */
@@ -151,7 +142,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                 uint64_t messageDelay,
                                 ServiceQualities qualityOfService,
                                 bool asynchronousClient,
-                                FaultToleranceType faultToleranceType,
                                 uint64_t numberOfOrigins);
 
   private:

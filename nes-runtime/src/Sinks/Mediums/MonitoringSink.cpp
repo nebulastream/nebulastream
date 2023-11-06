@@ -31,16 +31,13 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                                uint32_t numOfProducers,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
-                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat),
                  std::move(nodeEngine),
                  numOfProducers,
                  queryId,
                  querySubPlanId,
-                 faultToleranceType,
-                 numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+                 numberOfOrigins),
       metricStore(metricStore), collectorType(collectorType) {
     NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");
 }
@@ -67,9 +64,6 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
               asJson(parsedMetric));
 
     metricStore->addMetrics(nodeId, std::move(parsedMetric));
-
-    updateWatermarkCallback(inputBuffer);
-
     return true;
 }
 

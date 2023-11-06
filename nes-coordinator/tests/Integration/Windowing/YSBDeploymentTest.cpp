@@ -163,9 +163,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
 
     QueryId queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                                     query.getQueryPlan(),
-                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                    FaultToleranceType::NONE,
-                                                    LineageType::IN_MEMORY);
+                                                    Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

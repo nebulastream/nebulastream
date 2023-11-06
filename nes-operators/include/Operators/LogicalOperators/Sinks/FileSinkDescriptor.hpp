@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <string>
 
 class SinkMedium;
@@ -33,7 +32,6 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param sinkFormat the sink format
      * @param append flag to indicate if to append to file
      * @param addTimestamp flat to indicate if timestamp shall be add when writing to file
-     * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for file sink
      */
@@ -41,7 +39,6 @@ class FileSinkDescriptor : public SinkDescriptor {
                                     std::string sinkFormat,
                                     const std::string& append,
                                     bool addTimestamp,
-                                    FaultToleranceType faultToleranceType,
                                     uint64_t numberOfOrigins);
 
     /**
@@ -95,7 +92,6 @@ class FileSinkDescriptor : public SinkDescriptor {
                                 std::string sinkFormat,
                                 bool append,
                                 bool addTimestamp,
-                                FaultToleranceType faultToleranceType,
                                 uint64_t numberOfOrigins);
     std::string fileName;
     std::string sinkFormat;
