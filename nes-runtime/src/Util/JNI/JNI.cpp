@@ -143,7 +143,7 @@ void JVM::init() {
         }
 
         if (!classPath.empty()) {
-            NES_DEBUG("JVM add classPath {}", classPath);
+            NES_DEBUG("JVM add class path {}", classPath);
             jvmOptions.push_back(JavaVMOption{.optionString = const_cast<char*>(classPath.c_str())});
         }
         args.version = JNI_VERSION_1_8;

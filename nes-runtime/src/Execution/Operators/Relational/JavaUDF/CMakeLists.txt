@@ -18,4 +18,4 @@ add_source_files(nes-runtime
         AbstractJavaUDFOperator.cpp
         )
 
-file(COPY JavaUtils DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY_FILE JavaUtils/JavaUtils.jar ${CMAKE_CURRENT_BINARY_DIR}/JavaUtils.jar)
