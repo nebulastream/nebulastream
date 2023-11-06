@@ -252,15 +252,11 @@ class TestHarness {
      * @brief Runs the query based on the given operator, pushed elements, and number of workers.
      * @param numberOfBytesToExpect
      * @param placementStrategyName: placement strategy name
-     * @param faultTolerance: chosen fault tolerance guarantee
-     * @param lineage: chosen lineage type
      * @param testTimeoutInSeconds
      * @return TestHarness
      */
     TestHarness& runQuery(uint64_t numberOfBytesToExpect,
                           const std::string& placementStrategyName = "BottomUp",
-                          const std::string& faultTolerance = "NONE",
-                          const std::string& lineage = "IN_MEMORY",
                           uint64_t testTimeoutInSeconds = 60);
 
     /**

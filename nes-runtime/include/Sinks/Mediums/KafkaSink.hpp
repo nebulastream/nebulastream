@@ -42,7 +42,6 @@ class KafkaSink : public SinkMedium {
     * @param queryId
     * @param querySubPlanId
     * @param kafkaProducerTimeout timeout how long to wait until the push fails
-    * @param faultToleranceType
     * @param numberOfOrigins
     */
     KafkaSink(SinkFormatPtr format,
@@ -53,7 +52,6 @@ class KafkaSink : public SinkMedium {
               QueryId queryId,
               QuerySubPlanId querySubPlanId,
               const uint64_t kafkaProducerTimeout = 10 * 1000,
-              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
               uint64_t numberOfOrigins = 1);
 
     ~KafkaSink() override;

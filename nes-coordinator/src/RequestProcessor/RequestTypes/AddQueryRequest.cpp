@@ -67,8 +67,6 @@ namespace NES::RequestProcessor::Experimental {
 
 AddQueryRequest::AddQueryRequest(const std::string& queryString,
                                  const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                 const FaultToleranceType faultTolerance,
-                                 const LineageType lineage,
                                  const uint8_t maxRetries,
                                  const z3::ContextPtr& z3Context,
                                  const QueryParsingServicePtr& queryParsingService)
@@ -80,13 +78,10 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                        ResourceType::SourceCatalog,
                        ResourceType::CoordinatorConfiguration},
                       maxRetries),
-      queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
-      faultTolerance(faultTolerance), lineage(lineage), z3Context(z3Context), queryParsingService(queryParsingService) {}
+      queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy), z3Context(z3Context), queryParsingService(queryParsingService) {}
 
 AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                                  const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                 const FaultToleranceType faultTolerance,
-                                 const LineageType lineage,
                                  const uint8_t maxRetries,
                                  const z3::ContextPtr& z3Context)
     : AbstractRequest({ResourceType::QueryCatalogService,
@@ -98,19 +93,15 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                        ResourceType::CoordinatorConfiguration},
                       maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
-      faultTolerance(faultTolerance), lineage(lineage), z3Context(z3Context), queryParsingService(nullptr) {}
+ z3Context(z3Context), queryParsingService(nullptr) {}
 
 AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                           const FaultToleranceType faultTolerance,
-                                           const LineageType lineage,
                                            const uint8_t maxRetries,
                                            const z3::ContextPtr& z3Context,
                                            const QueryParsingServicePtr& queryParsingService) {
     return std::make_shared<AddQueryRequest>(queryPlan,
                                              queryPlacementStrategy,
-                                             faultTolerance,
-                                             lineage,
                                              maxRetries,
                                              z3Context,
                                              queryParsingService);
@@ -118,11 +109,9 @@ AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
 
 AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                           const FaultToleranceType faultTolerance,
-                                           const LineageType lineage,
                                            const uint8_t maxRetries,
                                            const z3::ContextPtr& z3Context) {
-    return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, faultTolerance, lineage, maxRetries, z3Context);
+    return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context);
 }
 
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
@@ -243,8 +232,6 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryId = PlanIdGenerator::getNextQueryId();
         queryPlan->setQueryId(queryId);
         queryPlan->setPlacementStrategy(queryPlacementStrategy);
-        queryPlan->setFaultToleranceType(faultTolerance);
-        queryPlan->setLineageType(lineage);
 
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);

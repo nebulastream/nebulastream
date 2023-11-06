@@ -17,8 +17,6 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers.hpp>
-#include <Util/FaultToleranceType.hpp>
-#include <Util/LineageType.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <future>
 
@@ -88,31 +86,23 @@ class QueryService {
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : query in string form.
      * @param placementStrategy : name of the placement strategy to be used.
-     * @param faultTolerance : fault-tolerance guarantee for the given query.
-     * @param lineage : lineage type for the given query.
      * @return queryId : query id of the valid input query.
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
     QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
-                                            const Optimizer::PlacementStrategy placementStrategy,
-                                            const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                                            const LineageType lineage = LineageType::NONE);
+                                            const Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : queryIdAndCatalogEntryMapping in string format
      * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategy : Name of the placement strategy
-     * @param faultTolerance : fault-tolerance guarantee for the given query.
-     * @param lineage : lineage type for the given query.
      * @return query id
      */
     QueryId addQueryRequest(const std::string& queryString,
                             const QueryPlanPtr& queryPlan,
-                            const Optimizer::PlacementStrategy placementStrategy,
-                            const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                            const LineageType lineage = LineageType::NONE);
+                            const Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.

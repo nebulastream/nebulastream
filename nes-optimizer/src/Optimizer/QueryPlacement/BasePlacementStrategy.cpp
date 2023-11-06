@@ -331,9 +331,7 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryI
     return LogicalOperatorFactory::createSourceOperator(networkSourceDescriptor, operatorId);
 }
 
-bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
-                                                  FaultToleranceType faultToleranceType,
-                                                  LineageType lineageType) {
+bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
     NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     for (const auto& executionNode : executionNodes) {
@@ -343,12 +341,9 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
             auto sinks = querySubPlan->getOperatorByType<SinkLogicalOperatorNode>();
             for (const auto& sink : sinks) {
                 auto sinkDescriptor = sink->getSinkDescriptor()->as<SinkDescriptor>();
-                sinkDescriptor->setFaultToleranceType(faultToleranceType);
                 sink->setSinkDescriptor(sinkDescriptor);
             }
             typeInferencePhase->execute(querySubPlan);
-            querySubPlan->setFaultToleranceType(faultToleranceType);
-            querySubPlan->setLineageType(lineageType);
         }
     }
     return true;

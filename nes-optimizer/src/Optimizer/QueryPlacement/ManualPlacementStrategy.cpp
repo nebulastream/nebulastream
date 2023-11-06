@@ -43,8 +43,6 @@ ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr glo
 
 bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     QueryId queryId /*queryId*/,
-    FaultToleranceType faultToleranceType /*faultToleranceType*/,
-    LineageType lineageType /*lineageType*/,
     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
     const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
 
@@ -59,7 +57,7 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 4. Perform type inference on all updated query plans
-        return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+        return runTypeInferencePhase(queryId);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }

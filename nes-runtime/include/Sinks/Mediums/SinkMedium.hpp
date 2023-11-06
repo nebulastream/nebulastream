@@ -17,8 +17,6 @@
 
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
-#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <mutex>
 
 namespace NES {
@@ -59,9 +57,7 @@ class SinkMedium : public Runtime::Reconfigurable {
                         uint32_t numOfProducers,
                         QueryId queryId,
                         QuerySubPlanId querySubPlanId,
-                        FaultToleranceType faultToleranceType,
-                        uint64_t numberOfOrigins,
-                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor);
+                        uint64_t numberOfOrigins);
 
     /**
      * @brief virtual method to setup sink
@@ -127,13 +123,6 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::string getSinkFormat();
 
     /**
-     * @brief method passes current safe to trim timestamp to coordinator via RPC
-     * @param epochBarrier max epoch timestamp
-     * @return success
-     */
-    bool notifyEpochTermination(uint64_t epochBarrier) const;
-
-    /**
       * @brief method to return the type of medium
       * @return type of medium
       */
@@ -158,36 +147,19 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     OperatorId getOperatorId() const;
 
-    /**
-     * @brief returns current smallest timestamp stored in multi origin watermark processor
-     * @return epoch barrier
-     */
-    uint64_t getCurrentEpochBarrier();
-
-    /**
-     * @brief update watermark and propagate timestamp
-     * @param inputBuffer
-     */
-    void updateWatermark(Runtime::TupleBuffer& inputBuffer);
 
   protected:
     SinkFormatPtr sinkFormat;
-    uint32_t bufferCount;
-    uint32_t buffersPerEpoch;
     bool schemaWritten;
     Runtime::NodeEnginePtr nodeEngine;
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
-    FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
-    Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
-    std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};
     std::recursive_mutex writeMutex;
-    bool isWaiting;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

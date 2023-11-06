@@ -18,8 +18,6 @@
 #include <Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Util/FaultToleranceType.hpp>
-#include <Util/LineageType.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <memory>
 #include <set>
@@ -233,30 +231,6 @@ class QueryPlan {
     void setSourceConsumed(const std::string& sourceName);
 
     /**
-     * @brief Get current fault-tolerance flag
-     * @return FaultToleranceType: type of fault-tolerance for a given query
-     */
-    FaultToleranceType getFaultToleranceType() const;
-
-    /**
-     * @brief Set current lineage flag
-     * @param LineageType: type of lineage for a given query
-     */
-    void setLineageType(LineageType lineageType = LineageType::NONE);
-
-    /**
-     * @brief Get current lineage flag
-     * @return LineageType: type of lineage for a given query
-     */
-    LineageType getLineageType() const;
-
-    /**
-     * @brief Set current fault-tolerance flag
-     * @param FaultToleranceType: type of fault-tolerance for a given query
-     */
-    void setFaultToleranceType(FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
-
-    /**
      * @brief Set query placement strategy
      * @param PlacementStrategy: query placement strategy
      */
@@ -315,8 +289,6 @@ class QueryPlan {
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
-    FaultToleranceType faultToleranceType;
-    LineageType lineageType;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request

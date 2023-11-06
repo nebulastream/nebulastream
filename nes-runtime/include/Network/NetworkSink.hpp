@@ -20,7 +20,6 @@
 #include <Runtime/EpochMessage.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <string>
 
 namespace NES::Network {
@@ -39,7 +38,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param networkManager
     * @param nodeLocation
     * @param nesPartition
-    * @param faultToleranceType: fault-tolerance guarantee chosen by a user
     */
     explicit NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
@@ -51,7 +49,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
-                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                          uint64_t numberOfOrigins = 0,
                          uint16_t numberOfInputSources = 0);
 
@@ -126,12 +123,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     Runtime::NodeEnginePtr getNodeEngine();
 
     /**
-     * @brief method to check if network sink started trimming its buffer storages
-     * @return success if it started trimming
-     */
-    bool hasTrimmed();
-
-    /**
      * @brief schedule a reconfiguration which lets this sink reconnect to the specified source once it has been drained
      * @param newReceiverLocation the location of the node hosting the new source
      * @param newPartition the partition of the new source
@@ -189,12 +180,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
     uint16_t numberOfInputSources;
     std::atomic<uint16_t> receivedVersionDrainEvents;
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
-    std::function<void(EpochMessage, Runtime::WorkerContext& workerContext)> deleteFromStorageCallback;
-    std::atomic<bool> trimmingStarted;
+
 };
 }// namespace NES::Network
 #endif// NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_

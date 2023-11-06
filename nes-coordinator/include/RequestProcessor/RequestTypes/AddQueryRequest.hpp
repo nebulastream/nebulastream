@@ -118,16 +118,12 @@ class AddQueryRequest : public AbstractRequest {
      * @brief Constructor
      * @param queryString: the query string
      * @param queryPlacementStrategy: the placement strategy
-     * @param faultTolerance: the fault tolerance aspect of the query
-     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param queryParsingService: parsing string queries
      */
     AddQueryRequest(const std::string& queryString,
                     const Optimizer::PlacementStrategy queryPlacementStrategy,
-                    const FaultToleranceType faultTolerance,
-                    const LineageType lineage,
                     const uint8_t maxRetries,
                     const z3::ContextPtr& z3Context,
                     const QueryParsingServicePtr& queryParsingService);
@@ -136,15 +132,11 @@ class AddQueryRequest : public AbstractRequest {
      * @brief Constructor
      * @param queryPlan: the query plan
      * @param queryPlacementStrategy: the placement strategy
-     * @param faultTolerance: the fault tolerance aspect of the query
-     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     AddQueryRequest(const QueryPlanPtr& queryPlan,
                     const Optimizer::PlacementStrategy queryPlacementStrategy,
-                    const FaultToleranceType faultTolerance,
-                    const LineageType lineage,
                     const uint8_t maxRetries,
                     const z3::ContextPtr& z3Context);
 
@@ -152,15 +144,11 @@ class AddQueryRequest : public AbstractRequest {
      * @brief creates a new AddQueryRequest object
      * @param queryPlan: the query plan
      * @param queryPlacementStrategy: the placement strategy
-     * @param faultTolerance: the fault tolerance aspect of the query
-     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     static AddQueryRequestPtr create(const QueryPlanPtr& queryPlan,
                                      const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                     const FaultToleranceType faultTolerance,
-                                     const LineageType lineage,
                                      const uint8_t maxRetries,
                                      const z3::ContextPtr& z3Context);
 
@@ -168,16 +156,12 @@ class AddQueryRequest : public AbstractRequest {
      * @brief creates a new AddQueryRequest object
      * @param queryPlan: the query plan
      * @param queryPlacementStrategy: the placement strategy
-     * @param faultTolerance: the fault tolerance aspect of the query
-     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param queryParsingService: parsing string query
      */
     static AddQueryRequestPtr create(const std::string& queryPlan,
                                      const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                     const FaultToleranceType faultTolerance,
-                                     const LineageType lineage,
                                      const uint8_t maxRetries,
                                      const z3::ContextPtr& z3Context,
                                      const QueryParsingServicePtr& queryParsingService);
@@ -225,8 +209,6 @@ class AddQueryRequest : public AbstractRequest {
     std::string queryString;
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy queryPlacementStrategy;
-    FaultToleranceType faultTolerance;
-    LineageType lineage;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
     void markAsFailedInQueryCatalog(RequestExecutionException& e);

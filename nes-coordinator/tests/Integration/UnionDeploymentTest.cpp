@@ -97,14 +97,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     }
 
     std::string placementStrategy = "BottomUp";
-    std::string faultTolerance = "NONE";
-    std::string lineage = "IN_MEMORY";
     std::vector<OutputCarTruck> actualOutput = testHarness
                                                    .runQuery(
                                                        /* num output tuples expected */ expectedOutput.size(),
-                                                       /* placement strategy*/ "BottomUp",
-                                                       /* fault tolerance*/ "NONE",
-                                                       /* lineage*/ "IN_MEMORY")
+                                                       /* placement strategy*/ "BottomUp")
                                                    .getOutput<OutputCarTruck>();
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -137,9 +133,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     auto actualOutput = testHarness
                             .runQuery(
                                 /* num output tuples expected */ expectedOutput.size(),
-                                /* placement strategy*/ "TopDown",
-                                /* fault tolerance*/ "NONE",
-                                /* lineage*/ "IN_MEMORY")
+                                /* placement strategy*/ "TopDown")
                             .getOutput<OutputCarTruck>();
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -180,9 +174,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     auto actualOutput = testHarness
                             .runQuery(
                                 /* num output tuples expected */ expectedOutput.size(),
-                                /* placement strategy*/ "BottomUp",
-                                /* fault tolerance*/ "NONE",
-                                /* lineage*/ "IN_MEMORY")
+                                /* placement strategy*/ "BottomUp")
                             .getOutput<OutputRubyDiamond>();
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -225,9 +217,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     auto actualOutput = testHarness
                             .runQuery(
                                 /* num output tuples expected */ expectedOutput.size(),
-                                /* placement strategy*/ "TopDown",
-                                /* fault tolerance*/ "NONE",
-                                /* lineage*/ "IN_MEMORY")
+                                /* placement strategy*/ "TopDown")
                             .getOutput<OutputRubyDiamond>();
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -271,9 +261,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     auto actualOutput = testHarness
                             .runQuery(
                                 /* num output tuples expected */ expectedOutput.size(),
-                                /* placement strategy*/ "BottomUp",
-                                /* fault tolerance*/ "NONE",
-                                /* lineage*/ "IN_MEMORY")
+                                /* placement strategy*/ "BottomUp")
                             .getOutput<OutputRubyDiamond>();
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

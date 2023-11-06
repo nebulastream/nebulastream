@@ -277,22 +277,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
 
     /**
-     * @brief Triggers an epoch propagation for all network sinks
-     * @param querySubPlanId query subplan id
-     * @param epochBarrier timestamp that should be trimmed in the storage
-     * @return true if successful
-     */
-    bool sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier);
-
-    /**
-     * @brief Triggers an epoch propagation for all network sinks
-     * @param querySubPlanId query subplan id
-     * @param epochBarrier timestamp that should be trimmed in the storage
-     * @return true if successful
-     */
-    bool propagateEpochBackwards(uint64_t querySubPlanId, uint64_t epochBarrier);
-
-    /**
      * @return true if thread pool is running
      */
     bool isThreadPoolRunning() const;
