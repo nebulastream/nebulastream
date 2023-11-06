@@ -37,7 +37,7 @@ JavaUDFOperatorHandler::JavaUDFOperatorHandler(const std::string& className,
       udfMethodId(nullptr), udfInstance(nullptr) {
     auto& jvm = jni::JVM::get();
     if (!jvm.isInitialized()) {
-        jvm.addClasspath(JAVA_UDF_UTILS);
+        jvm.addClasspath(JAVA_UDF_UTILS_JAR);
         if (javaPath.has_value()) {
             jvm.addClasspath(javaPath.value());
         }
