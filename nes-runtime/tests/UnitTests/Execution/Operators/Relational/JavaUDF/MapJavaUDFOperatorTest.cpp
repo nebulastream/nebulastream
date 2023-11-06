@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <BaseUnitTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,7 +31,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {
-class MapJavaUdfOperatorTest : public testing::Test {
+class MapJavaUdfOperatorTest : public NES::Testing::BaseUnitTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -38,9 +39,10 @@ class MapJavaUdfOperatorTest : public testing::Test {
         std::cout << "Setup MapJavaUdfOperatorTest test class." << std::endl;
     }
     /** Takes an byte code list that contains class names but no class definitions and loads the byte code for the classes from the test data directory. */
-    static void loadByteCode(jni::JavaUDFByteCodeList& byteCodeList) {
+    void loadByteCode(jni::JavaUDFByteCodeList& byteCodeList) {
         for (auto& [className, byteCode] : byteCodeList) {
-            const auto fileName = "testData/JavaUDFTestData/" + JavaUDFOperatorHandler::convertToJNIName(className) + ".class";
+            const auto fileName = std::filesystem::path(TEST_DATA_DIRECTORY) / "JavaUDFTestData" / fmt::format("{}.class", JavaUDFOperatorHandler::convertToJNIName(className));
+            NES_DEBUG("Loading byte code: class={}, file={}", className, fileName.string());
             std::ifstream classFile(fileName, std::fstream::binary);
             NES_ASSERT(classFile, "Could not find class file: " << fileName);
             classFile.seekg(0, std::ios_base::end);
@@ -103,6 +105,8 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT16);
     output = Schema::create()->addField("id", BasicType::INT16);
     clazz = "stream.nebula.ShortMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
+    loadByteCode(byteCodeList);
     inputClass = "java.lang.Short";
     outputClass = "java.lang.Short";
 
@@ -138,6 +142,8 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT8);
     output = Schema::create()->addField("id", BasicType::INT8);
     clazz = "stream.nebula.ByteMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
+    loadByteCode(byteCodeList);
     inputClass = "java.lang.Byte";
     outputClass = "java.lang.Byte";
 
@@ -173,6 +179,8 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
     input = Schema::create()->addField("id", BasicType::INT64);
     output = Schema::create()->addField("id", BasicType::INT64);
     clazz = "stream.nebula.LongMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
+    loadByteCode(byteCodeList);
     inputClass = "java.lang.Long";
     outputClass = "java.lang.Long";
 
@@ -208,6 +216,8 @@ TEST_F(MapJavaUdfOperatorTest, UnsignedLongUDFTest) {
     input = Schema::create()->addField("id", BasicType::UINT64);
     output = Schema::create()->addField("id", BasicType::INT64);
     clazz = "stream.nebula.LongMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
+    loadByteCode(byteCodeList);
     inputClass = "java.lang.Long";
     outputClass = "java.lang.Long";
 
@@ -243,6 +253,8 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
     input = Schema::create()->addField("id", BasicType::FLOAT64);
     output = Schema::create()->addField("id", BasicType::FLOAT64);
     clazz = "stream.nebula.DoubleMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
+    loadByteCode(byteCodeList);
     inputClass = "java.lang.Double";
     outputClass = "java.lang.Double";
 
@@ -278,6 +290,8 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
     input = Schema::create()->addField("id", BasicType::FLOAT32);
     output = Schema::create()->addField("id", BasicType::FLOAT32);
     clazz = "stream.nebula.FloatMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
+    loadByteCode(byteCodeList);
     inputClass = "java.lang.Float";
     outputClass = "java.lang.Float";
 
@@ -313,6 +327,8 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
     input = Schema::create()->addField("id", BasicType::BOOLEAN);
     output = Schema::create()->addField("id", BasicType::BOOLEAN);
     clazz = "stream.nebula.BooleanMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
+    loadByteCode(byteCodeList);
     inputClass = "java.lang.Boolean";
     outputClass = "java.lang.Boolean";
 
@@ -351,6 +367,7 @@ TEST_F(MapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
     input = Schema::create()->addField("id", BasicType::TEXT);
     output = Schema::create()->addField("id", BasicType::TEXT);
     clazz = "stream.nebula.StringMapFunction";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}};
     inputClass = "java.lang.String";
     outputClass = "java.lang.String";
 
@@ -406,6 +423,8 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     clazz = "stream.nebula.ComplexPojoMapFunction";
     inputClass = "stream.nebula.ComplexPojo";
     outputClass = "stream.nebula.ComplexPojo";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}}, {{clazz}, {}}, {{inputClass}, {}}};
+    loadByteCode(byteCodeList);
 
     int8_t initialByte = 10;
     int16_t initialShort = 10;
@@ -464,6 +483,11 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
     clazz = "stream.nebula.DummyRichMapFunction";
     inputClass = "java.lang.Integer";
     outputClass = "java.lang.Integer";
+    byteCodeList = {{{"stream.nebula.MapFunction"}, {}},
+                    {{clazz}, {}},
+                    {{"stream.nebula.DummyRichMapFunction$DependentClass"}, {}},
+                    {{"stream.nebula.DummyRichMapFunction$RecursiveDependentClass"}, {}}};
+    loadByteCode(byteCodeList);
 
     auto initalValue = 42;
     auto handler = std::make_shared<JavaUDFOperatorHandler>(clazz,
