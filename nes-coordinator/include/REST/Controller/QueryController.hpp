@@ -178,28 +178,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             auto userQuery = requestJson["userQuery"].get<std::string>();
 
             std::string placementStrategyString = DEFAULT_PLACEMENT_STRATEGY_TYPE;
-            std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
-            std::string lineageString = DEFAULT_LINEAGE_TYPE;
-            if (requestJson.contains("faultTolerance")) {
-                if (!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())) {
-                    std::string errorMessage =
-                        "Invalid fault tolerance Type provided: " + requestJson["faultTolerance"].get<std::string>()
-                        + ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
-                    return errorHandler->handleError(Status::CODE_400, errorMessage);
-                } else {
-                    faultToleranceString = requestJson["faultTolerance"].get<std::string>();
-                }
-            }
-            if (requestJson.contains("lineage")) {
-                if (!validateLineageMode(requestJson["lineage"].get<std::string>())) {
-                    NES_ERROR("QueryController: handlePost -execute-query: Invalid Lineage Type provided: {}", lineageString);
-                    std::string errorMessage = "Invalid Lineage Mode Type provided: " + lineageString
-                        + ". Valid Lineage Modes are: 'IN_MEMORY', 'PERSISTENT', 'REMOTE', 'NONE'.";
-                    return errorHandler->handleError(Status::CODE_400, errorMessage);
-                } else {
-                    lineageString = requestJson["lineage"].get<std::string>();
-                }
-            }
+
             if (requestJson.contains("placement")) {
                 if (!validatePlacementStrategy(placementStrategyString = requestJson["placement"].get<std::string>())) {
                     NES_ERROR("QueryController: handlePost -execute-query: Invalid Placement Strategy Type provided: {}",
@@ -212,17 +191,13 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 }
             }
 
-            auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).value();
-            auto lineageMode = magic_enum::enum_cast<LineageType>(lineageString).value();
             auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}, faultTolerance= {}, "
-                      "lineage= {}",
+            NES_DEBUG(
+                "QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
                       userQuery,
-                      placementStrategyString,
-                      faultToleranceString,
-                      lineageString);
+                      placementStrategyString);
             QueryId queryId =
-                queryService->validateAndQueueAddQueryRequest(userQuery, placement, faultToleranceMode, lineageMode);
+                queryService->validateAndQueueAddQueryRequest(userQuery, placement);
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
@@ -256,27 +231,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
             auto* context = protobufMessage->mutable_context();
 
             std::string placementStrategyString = DEFAULT_PLACEMENT_STRATEGY_TYPE;
-            std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
-            std::string lineageString = DEFAULT_TOLERANCE_TYPE;
-            if (context->contains("faultTolerance")) {
-                if (!validateFaultToleranceType(context->at("faultTolerance").value())) {
-                    std::string errorMessage = "Invalid fault tolerance Type provided: " + context->at("faultTolerance").value()
-                        + ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
-                    return errorHandler->handleError(Status::CODE_400, errorMessage);
-                } else {
-                    faultToleranceString = context->at("faultTolerance").value();
-                }
-            }
-            if (context->contains("lineage")) {
-                if (!validateLineageMode(lineageString = context->at("lineage").value())) {
-                    NES_ERROR("QueryController: handlePost -execute-query: Invalid Lineage Type provided: {}", lineageString);
-                    std::string errorMessage = "Invalid Lineage Mode Type provided: " + lineageString
-                        + ". Valid Lineage Modes are: 'IN_MEMORY', 'PERSISTENT', 'REMOTE', 'NONE'.";
-                    return errorHandler->handleError(Status::CODE_400, errorMessage);
-                } else {
-                    lineageString = context->at("lineage").value();
-                }
-            }
             if (context->contains("placement")) {
                 if (!validatePlacementStrategy(placementStrategyString = context->at("placement").value())) {
                     NES_ERROR("QueryController: handlePost -execute-query: Invalid Placement Strategy Type provided: {}",
@@ -291,10 +245,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
             std::string* queryString = protobufMessage->mutable_querystring();
             auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).value();
-            auto lineageType = magic_enum::enum_cast<LineageType>(lineageString).value();
             QueryId queryId =
-                queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceMode, lineageType);
+                queryService->addQueryRequest(*queryString, queryPlan, placementStrategy);
 
             //Prepare the response
             nlohmann::json response;
@@ -354,10 +306,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
         return magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).has_value();
     }
 
-    bool validateFaultToleranceType(const std::string& faultToleranceString) {
-        return magic_enum::enum_cast<FaultToleranceType>(faultToleranceString).has_value();
-    }
-
     std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>>
     validateProtobufMessage(const std::shared_ptr<SubmitQueryRequest>& protobufMessage, const std::string& body) {
         if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
@@ -380,13 +328,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
         return std::nullopt;
     }
 
-    bool validateLineageMode(const std::string& lineageModeString) {
-        return magic_enum::enum_cast<LineageType>(lineageModeString).has_value();
-    }
-
     const std::string DEFAULT_PLACEMENT_STRATEGY_TYPE = "NONE";
-    const std::string DEFAULT_TOLERANCE_TYPE = "NONE";
-    const std::string DEFAULT_LINEAGE_TYPE = "NONE";
+
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;

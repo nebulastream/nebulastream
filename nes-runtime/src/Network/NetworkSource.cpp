@@ -202,16 +202,6 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             isTermination = true;
             break;
         }
-        case Runtime::ReconfigurationType::PropagateEpoch: {
-            auto* channel = workerContext.getEventOnlyNetworkChannel(nesPartition.getOperatorId());
-            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            auto epochMessage = task.getUserData<EpochMessage>();
-            NES_DEBUG("Executing PropagateEpoch punctuation= ", epochMessage.getTimestamp());
-            if (channel) {
-                channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, epochMessage.getTimestamp());
-            }
-            break;
-        }
         default: {
             break;
         }

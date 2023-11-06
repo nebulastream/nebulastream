@@ -72,7 +72,6 @@ class NetworkSource : public DataSource {
 
     /**
       * @brief This method is called once an event is triggered for the current source.
-      * The event type is PropagateEpochEvent. Method passes epoch barrier further to network sink as a reconfiguration message.
       * @param event
       */
     void onEvent(Runtime::BaseEvent& event) override;

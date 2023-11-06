@@ -51,8 +51,6 @@ MlHeuristicStrategy::MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionP
     : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
 
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
-                                                    FaultToleranceType faultToleranceType,
-                                                    LineageType lineageType,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
     try {
@@ -70,19 +68,17 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         if (DEFAULT_ENABLE_OPERATOR_REDUNDANCY_ELIMINATION) {
-            performOperatorRedundancyElimination(queryId, faultToleranceType, lineageType);
+            performOperatorRedundancyElimination(queryId);
         }
 
         // 4. Perform type inference on all updated query plans
-        return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+        return runTypeInferencePhase(queryId);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }
 }
 
-void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId,
-                                                               FaultToleranceType faultToleranceType,
-                                                               LineageType lineageType) {
+void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId) {
     auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     auto context = std::make_shared<z3::context>();
     auto signatureInferencePhase =
@@ -94,7 +90,7 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId,
         SignatureEqualityUtilPtr signatureEqualityUtil = SignatureEqualityUtil::create(context);
 
         if (querysubplans.size() >= 2) {
-            runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+            runTypeInferencePhase(queryId);
             std::vector<QuerySignaturePtr> signatures;
             std::vector<int> querysubplansToRemove;
 

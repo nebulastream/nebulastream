@@ -113,10 +113,6 @@ add_dependencies(source-integration-tests nesCoordinator nesWorker)
 ### TestHarnessUtilTest ###
 add_nes_integration_test(test-harness-util-test "TestHarnessUtilTest.cpp")
 
-### UpstreamBackup ###
-add_nes_integration_test(upstream-backup-test "UpstreamBackupTest.cpp")
-
-
 ### Query Failure Test
 add_nes_integration_test(query-failure-test "QueryFailureTest.cpp")
 

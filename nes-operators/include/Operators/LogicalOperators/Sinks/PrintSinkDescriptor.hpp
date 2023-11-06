@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_PRINTSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 
@@ -28,20 +27,13 @@ class PrintSinkDescriptor : public SinkDescriptor {
   public:
     /**
      * @brief Factory method to create a new prink sink descriptor
-     * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for print sink
      */
-    static SinkDescriptorPtr create(FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                    uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr create(uint64_t numberOfOrigins = 1);
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
-    /**
-     * @brief getter for fault-tolerance type
-     * @return fault-tolerance type
-     */
-    FaultToleranceType getFaultToleranceType() const;
 
     /**
      * @brief getter for number of origins
@@ -50,7 +42,7 @@ class PrintSinkDescriptor : public SinkDescriptor {
     uint64_t getNumberOfOrigins() const;
 
   private:
-    explicit PrintSinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
+    explicit PrintSinkDescriptor(uint64_t numberOfOrigins);
 };
 
 using PrintSinkDescriptorPtr = std::shared_ptr<PrintSinkDescriptor>;

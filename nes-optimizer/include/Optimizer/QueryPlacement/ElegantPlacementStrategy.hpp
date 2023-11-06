@@ -50,8 +50,6 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                                             TypeInferencePhasePtr typeInferencePhase);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
-                                   FaultToleranceType faultToleranceType,
-                                   LineageType lineageType,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 

@@ -119,10 +119,8 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
             + R"(", "CSV_FORMAT", "APPEND"));)";
         const auto placementStrategy = Optimizer::PlacementStrategy::BottomUp;
         queryId = 1;
-        const auto lineage = LineageType::IN_MEMORY;
         auto queryPlan = syntacticQueryValidation->validate(query);
         queryPlan->setQueryId(queryId);
-        queryPlan->setLineageType(lineage);
         queryCatalogService->createNewEntry(query, queryPlan, placementStrategy);
         const auto runRequest = AddQueryRequest::create(queryPlan, placementStrategy);
 

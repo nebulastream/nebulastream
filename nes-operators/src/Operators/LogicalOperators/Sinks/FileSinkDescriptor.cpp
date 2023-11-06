@@ -26,34 +26,31 @@ SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, bool addTimes
 
 SinkDescriptorPtr
 FileSinkDescriptor::create(std::string fileName, std::string sinkFormat, const std::string& append, bool addTimestamp) {
-    return create(std::move(fileName), std::move(sinkFormat), append, addTimestamp, FaultToleranceType::NONE, 1);
+    return create(std::move(fileName), std::move(sinkFormat), append, addTimestamp, 1);
 }
 
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName,
                                              std::string sinkFormat,
                                              const std::string& append,
                                              bool addTimestamp,
-                                             FaultToleranceType faultToleranceType,
                                              uint64_t numberOfOrigins) {
     return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(std::move(fileName),
                                                                    std::move(sinkFormat),
                                                                    append == "APPEND",
                                                                    addTimestamp,
-                                                                   faultToleranceType,
                                                                    numberOfOrigins));
 }
 
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, std::string sinkFormat, const std::string& append) {
-    return create(std::move(fileName), std::move(sinkFormat), append, false, FaultToleranceType::NONE, 1);
+    return create(std::move(fileName), std::move(sinkFormat), append, false, 1);
 }
 
 FileSinkDescriptor::FileSinkDescriptor(std::string fileName,
                                        std::string sinkFormat,
                                        bool append,
                                        bool addTimestamp,
-                                       FaultToleranceType faultToleranceType,
                                        uint64_t numberOfOrigins)
-    : SinkDescriptor(faultToleranceType, numberOfOrigins, addTimestamp), fileName(std::move(fileName)),
+    : SinkDescriptor(numberOfOrigins, addTimestamp), fileName(std::move(fileName)),
       sinkFormat(std::move(sinkFormat)), append(append) {}
 
 const std::string& FileSinkDescriptor::getFileName() const { return fileName; }

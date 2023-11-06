@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_
 
-#include <Util/FaultToleranceType.hpp>
 #include <memory>
 
 namespace NES {
@@ -31,13 +30,12 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
   public:
     /**
      * @brief Ctor to create a new sink descriptor
-     * @param faultToleranceType: fault tolerance type of a query
      * @param numberOfOrigins: number of origins of a given query
      * @param addTimestamp flat to indicate if timestamp shall be added when writing to sink
      * @return descriptor for sink
      */
-    SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins, bool addTimestamp);
-    SinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
+    SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp);
+    SinkDescriptor(uint64_t numberOfOrigins);
     SinkDescriptor();
 
     virtual ~SinkDescriptor() = default;
@@ -54,18 +52,6 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
         };
         return false;
     };
-
-    /**
-     * @brief getter for fault-tolerance type
-     * @return fault-tolerance type
-     */
-    FaultToleranceType getFaultToleranceType() const;
-
-    /**
-      * @brief setter for fault-tolerance type
-      * @param fault-tolerance type
-      */
-    void setFaultToleranceType(FaultToleranceType faultToleranceType);
 
     /**
      * @brief getter for number of origins
@@ -100,7 +86,6 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     [[nodiscard]] virtual bool equal(SinkDescriptorPtr const& other) = 0;
 
   protected:
-    FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
     bool addTimestamp;
 };

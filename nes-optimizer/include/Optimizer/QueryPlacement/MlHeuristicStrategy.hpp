@@ -45,15 +45,11 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     /**
      * @brief Implementation of the virtual function of BasePlacementStrategy
      * @param queryId
-     * @param faultToleranceType
-     * @param lineageType
      * @param pinnedUpStreamOperators
      * @param pinnedDownStreamOperators
      * @return
      */
     bool updateGlobalExecutionPlan(QueryId queryId,
-                                   FaultToleranceType faultToleranceType,
-                                   LineageType lineageType,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
@@ -91,10 +87,8 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     /**
      * @brief removes redundant operators
      * @param queryId
-     * @param faultToleranceType
-     * @param lineageType
      */
-    void performOperatorRedundancyElimination(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
+    void performOperatorRedundancyElimination(QueryId queryId);
 };
 }// namespace NES::Optimizer
 

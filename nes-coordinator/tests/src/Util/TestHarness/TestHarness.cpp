@@ -264,8 +264,6 @@ SchemaPtr TestHarness::getOutputSchema() {
 
 TestHarness& TestHarness::runQuery(uint64_t numberOfRecordsToExpect,
                                    const std::string& placementStrategyName,
-                                   const std::string& faultTolerance,
-                                   const std::string& lineage,
                                    uint64_t testTimeoutInSeconds) {
     if (!topologySetupDone || !validationDone) {
         throw Exceptions::RuntimeException(
@@ -280,16 +278,12 @@ TestHarness& TestHarness::runQuery(uint64_t numberOfRecordsToExpect,
 
     //register query
     auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyName).value();
-    auto faultToleranceMode = magic_enum::enum_cast<FaultToleranceType>(faultTolerance).value();
-    auto lineageMode = magic_enum::enum_cast<LineageType>(lineage).value();
     queryId = INVALID_QUERY_ID;
 
     auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
     queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
                                             query.getQueryPlan(),
-                                            placementStrategy,
-                                            faultToleranceMode,
-                                            lineageMode);
+                                            placementStrategy);
 
     // Now run the query
     if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {

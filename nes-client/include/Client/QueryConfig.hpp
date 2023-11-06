@@ -15,8 +15,6 @@
 #ifndef NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 #define NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 
-#include <Util/FaultToleranceType.hpp>
-#include <Util/LineageType.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <ostream>
 
@@ -27,33 +25,7 @@ namespace NES::Client {
  */
 class QueryConfig {
   public:
-    explicit QueryConfig(NES::FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                         LineageType lineageType = LineageType::NONE,
-                         Optimizer::PlacementStrategy placementType = Optimizer::PlacementStrategy::BottomUp);
-
-    /**
-     * @brief Returns the level of fault tolerance.
-     * @return FaultToleranceType
-     */
-    FaultToleranceType getFaultToleranceType() const;
-
-    /**
-     * @brief Sets the level of fault tolerance.
-     * @param faultToleranceType
-     */
-    void setFaultToleranceType(FaultToleranceType faultToleranceType);
-
-    /**
-     * @brief Returns the type of Linage.
-     * @return LineageType
-     */
-    LineageType getLineageType() const;
-
-    /**
-     * @brief Sets the linage type
-     * @param lineageType
-     */
-    void setLineageType(LineageType lineageType);
+    explicit QueryConfig(Optimizer::PlacementStrategy placementType = Optimizer::PlacementStrategy::BottomUp);
 
     /**
      * @brief Returns the placement type.
@@ -68,8 +40,6 @@ class QueryConfig {
     void setPlacementType(Optimizer::PlacementStrategy placementType);
 
   private:
-    FaultToleranceType faultToleranceType;
-    LineageType lineageType;
     Optimizer::PlacementStrategy placementType;
 };
 }// namespace NES::Client

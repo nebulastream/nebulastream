@@ -33,16 +33,13 @@ FileSink::FileSink(SinkFormatPtr format,
                    bool append,
                    QueryId queryId,
                    QuerySubPlanId querySubPlanId,
-                   FaultToleranceType faultToleranceType,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  queryId,
                  querySubPlanId,
-                 faultToleranceType,
-                 numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
+                 numberOfOrigins) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
@@ -105,8 +102,6 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     NES_DEBUG("FileSink::getData: writing to file {} following content {}", filePath, fBuffer);
     outputFile.write(fBuffer.c_str(), fBuffer.size());
     outputFile.flush();
-    updateWatermarkCallback(inputBuffer);
-
     return true;
 }
 

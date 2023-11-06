@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
 #define NES_CORE_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
 
-#include <Util/FaultToleranceType.hpp>
 #include <cstdint>
 #include <memory>
 #include <sstream>
@@ -41,7 +40,6 @@ class PrintSink : public SinkMedium {
               QuerySubPlanId querySubPlanId,
               QueryId queryId,
               std::ostream& pOutputStream = std::cout,
-              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
               uint64_t numberOfOrigins = 1);
 
     /**

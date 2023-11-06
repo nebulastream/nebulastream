@@ -51,8 +51,6 @@ ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(std::move(z3Context)) {}
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
-                                            FaultToleranceType faultToleranceType,
-                                            LineageType lineageType,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
@@ -240,7 +238,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     // 10. Run the type inference phase and return.
-    return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+    return runTypeInferencePhase(queryId);
 }
 
 std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators) {

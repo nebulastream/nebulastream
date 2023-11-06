@@ -42,8 +42,6 @@ BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
     : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
-                                                 FaultToleranceType faultToleranceType,
-                                                 LineageType lineageType,
                                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
     try {
@@ -61,7 +59,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 4. Perform type inference on all updated query plans
-        return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+        return runTypeInferencePhase(queryId);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }

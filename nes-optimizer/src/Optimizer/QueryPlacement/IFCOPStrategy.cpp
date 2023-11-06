@@ -80,7 +80,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     //addNetworkSourceAndSinkOperators(queryPlan);
 
     // 7. run the type inference phase
-    return runTypeInferencePhase(queryPlan->getQueryId(), queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
+    return runTypeInferencePhase(queryPlan->getQueryId());
 }
 
 PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan) {
@@ -315,8 +315,6 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
 }
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
-                                              FaultToleranceType /*faultToleranceType*/,
-                                              LineageType /*lineageType*/,
                                               const std::set<LogicalOperatorNodePtr>& /*pinnedUpStreamNodes*/,
                                               const std::set<LogicalOperatorNodePtr>& /*pinnedDownStreamNodes*/) {
     NES_NOT_IMPLEMENTED();

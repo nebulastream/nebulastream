@@ -21,7 +21,6 @@
 #include <zmq.hpp>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -38,7 +37,6 @@ class ZmqSink : public SinkMedium {
             bool internal,
             QueryId queryId,
             QuerySubPlanId querySubPlanId,
-            FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
             uint64_t numberOfOrigins = 1);
     ~ZmqSink() override;
 

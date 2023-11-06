@@ -35,16 +35,13 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  bool internal,
                  QueryId queryId,
                  QuerySubPlanId querySubPlanId,
-                 FaultToleranceType faultToleranceType,
                  uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  queryId,
                  querySubPlanId,
-                 faultToleranceType,
-                 numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+                 numberOfOrigins),
       host(host.substr(0, host.find(':'))), port(port), internal(internal), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink: Init ZMQ Sink to {}:{}", host, port);
@@ -155,7 +152,6 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             NES_ERROR("ZmqSink:  {}", ex.what());
         }
     }
-    updateWatermarkCallback(inputBuffer);
     return true;
 }
 

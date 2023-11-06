@@ -1497,7 +1497,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
                   "SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor();
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(printSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else if (sinkDescriptor.instanceOf<const NullOutputSinkDescriptor>()) {
         auto nullSinkDescriptor = sinkDescriptor.as<const NullOutputSinkDescriptor>();
@@ -1505,7 +1504,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
                   "SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor();
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(nullSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else if (sinkDescriptor.instanceOf<const ZmqSinkDescriptor>()) {
         // serialize zmq sink descriptor
@@ -1517,7 +1515,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         serializedSinkDescriptor.set_isinternal(zmqSinkDescriptor->isInternal());
         serializedSinkDescriptor.set_host(zmqSinkDescriptor->getHost());
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(zmqSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else if (sinkDescriptor.instanceOf<const MonitoringSinkDescriptor>()) {
         // serialize Monitoring sink descriptor
@@ -1527,7 +1524,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor();
         serializedSinkDescriptor.set_collectortype(magic_enum::enum_integer(monitoringSinkDescriptor->getCollectorType()));
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(monitoringSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     }
 
@@ -1571,8 +1567,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         mqttSerializedSinkDescriptor.set_asynchronousclient(mqttSinkDescriptor->getAsynchronousClient());
 
         sinkDetails.mutable_sinkdescriptor()->PackFrom(mqttSerializedSinkDescriptor);
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(mqttSinkDescriptor->getFaultToleranceType()));
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(mqttSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     }
 #endif
@@ -1601,7 +1595,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
         //pack to output
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(networkSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else if (sinkDescriptor.instanceOf<const FileSinkDescriptor>()) {
         // serialize file sink descriptor. The file sink has different types which have to be set correctly
@@ -1627,7 +1620,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
             NES_ERROR("serializeSinkDescriptor: format not supported");
         }
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-        sinkDetails.set_faulttolerancemode(static_cast<uint64_t>(fileSinkDescriptor->getFaultToleranceType()));
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - {}", sinkDescriptor.toString());
@@ -1639,17 +1631,15 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
     // de-serialize a sink descriptor and all its properties to a SinkDescriptor.
     NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor {}", sinkDetails.DebugString());
     const auto& deserializedSinkDescriptor = sinkDetails.sinkdescriptor();
-    const auto deserializedFaultTolerance = sinkDetails.faulttolerancemode();
     const auto deserializedNumberOfOrigins = sinkDetails.numberoforiginids();
     if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor>()) {
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
-        return PrintSinkDescriptor::create(FaultToleranceType(deserializedFaultTolerance), deserializedNumberOfOrigins);
     }
     if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor>()) {
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
-        return NullOutputSinkDescriptor::create(FaultToleranceType(deserializedFaultTolerance), deserializedNumberOfOrigins);
+        return NullOutputSinkDescriptor::create(deserializedNumberOfOrigins);
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as ZmqSinkDescriptor");
@@ -1658,7 +1648,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         return ZmqSinkDescriptor::create(serializedSinkDescriptor.host(),
                                          serializedSinkDescriptor.port(),
                                          serializedSinkDescriptor.isinternal(),
-                                         FaultToleranceType(deserializedFaultTolerance),
                                          deserializedNumberOfOrigins);
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
@@ -1666,7 +1655,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         return MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType(serializedSinkDescriptor.collectortype()),
-                                                FaultToleranceType(deserializedFaultTolerance),
                                                 deserializedNumberOfOrigins);
     }
 #ifdef ENABLE_OPC_BUILD
@@ -1700,7 +1688,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
                                           (MQTTSinkDescriptor::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
                                           serializedSinkDescriptor.asynchronousclient(),
                                           std::string{serializedSinkDescriptor.clientid()},
-                                          FaultToleranceType(deserializedFaultTolerance),
                                           deserializedNumberOfOrigins);
     }
 #endif
@@ -1721,7 +1708,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
                                                       nesPartition,
                                                       waitTime,
                                                       serializedSinkDescriptor.retrytimes(),
-                                                      FaultToleranceType(deserializedFaultTolerance),
                                                       deserializedNumberOfOrigins);
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor
@@ -1732,7 +1718,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
                                           serializedSinkDescriptor.sinkformat(),
                                           serializedSinkDescriptor.append() ? "APPEND" : "OVERWRITE",
                                           serializedSinkDescriptor.addtimestamp(),
-                                          FaultToleranceType(deserializedFaultTolerance),
                                           deserializedNumberOfOrigins);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type {}", sinkDetails.DebugString());

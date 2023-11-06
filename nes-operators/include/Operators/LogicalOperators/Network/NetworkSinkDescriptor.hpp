@@ -18,7 +18,6 @@
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <chrono>
 #include <string>
 
@@ -42,7 +41,6 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     NesPartition nesPartition,
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**
@@ -82,24 +80,11 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      */
     uint8_t getRetryTimes() const;
 
-    /**
-     * @brief getter for fault-tolerance type
-     * @return fault-tolerance type
-     */
-    FaultToleranceType getFaultToleranceType() const;
-
-    /**
-     * @brief setter for fault-tolerance type
-     * @param fault-tolerance type
-     */
-    void setFaultToleranceType(FaultToleranceType faultToleranceType);
-
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
-                                   FaultToleranceType faultToleranceType,
                                    uint64_t numberOfOrigins);
 
     NodeLocation nodeLocation;

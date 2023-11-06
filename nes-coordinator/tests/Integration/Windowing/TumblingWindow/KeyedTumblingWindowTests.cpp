@@ -269,7 +269,7 @@ TEST_F(KeyedTumblingWindowTests, testSimpleWindowEventTime) {
                                                        {3000, 4000, 11, 3}};
 
     auto actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<KeyedWindowOutput<>>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<KeyedWindowOutput<>>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -300,7 +300,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowSingleBuffer) {
     std::vector<Output> expectedOutput = {{0, 1000, 0, 170}};
 
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -327,7 +327,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowMultiBuffer) {
     testHarness.validate().setupTopology();
     std::vector<Output> expectedOutput = {{0, 1000, 0, 17000}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -369,7 +369,7 @@ TEST_F(KeyedTumblingWindowTests, testMultipleTumblingWindowMultiBuffer) {
                                           {15000, 16000, 1, 1000},
                                           {16000, 17000, 1, 1000}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -401,7 +401,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys
         expectedOutput.push_back({0, 1000, k, 100});
     }
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -443,7 +443,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowCount) {
                                           {15000, 16000, 1, 1000},
                                           {16000, 17000, 1, 1000}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -485,7 +485,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin) {
                                           {15000, 16000, 1, 1},
                                           {16000, 17000, 1, 1}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -524,7 +524,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 15}, {2000, 3000, 1, 20}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -567,7 +567,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMax) {
                                           {15000, 16000, 1, 1},
                                           {16000, 17000, 1, 1}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -609,7 +609,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowAVG) {
                                           {15000, 16000, 1, 1},
                                           {16000, 17000, 1, 1}};
     std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<Output>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -640,7 +640,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleMultiKeyTumblingWindow) {
         expectedOutput.push_back({0, 1000, k, k, k, 1});
     }
     std::vector<OutputMultiKeys> actualOutput =
-        testHarness.runQuery(102, "BottomUp", "NONE", "IN_MEMORY").getOutput<OutputMultiKeys>();
+        testHarness.runQuery(102, "BottomUp").getOutput<OutputMultiKeys>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -686,7 +686,7 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
                                                   {15000, 16000, 1, 1000, 1000, 1, 1, 1},
                                                   {16000, 17000, 1, 1000, 1000, 1, 1, 1}};
     std::vector<OutputMultiAgg> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY").getOutput<OutputMultiAgg>();
+        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<OutputMultiAgg>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }

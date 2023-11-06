@@ -1185,9 +1185,7 @@ TEST_F(LocationIntegrationTests, DISABLED_testSequenceWithReconnecting) {
 
     QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
         R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
-        Optimizer::PlacementStrategy::BottomUp,
-        FaultToleranceType::NONE,
-        LineageType::NONE);
+        Optimizer::PlacementStrategy::BottomUp);
 
     NES_INFO("Query ID: {}", queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);

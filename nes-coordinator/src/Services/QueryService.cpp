@@ -61,9 +61,7 @@ QueryService::QueryService(bool enableNewRequestExecutor,
 }
 
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
-                                                      const Optimizer::PlacementStrategy placementStrategy,
-                                                      const FaultToleranceType faultTolerance,
-                                                      const LineageType lineage) {
+                                                      const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
         NES_INFO("QueryService: Validating and registering the user query.");
@@ -74,8 +72,6 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
             QueryPlanPtr queryPlan = syntacticQueryValidation->validate(queryString);
 
             queryPlan->setQueryId(queryId);
-            queryPlan->setFaultToleranceType(faultTolerance);
-            queryPlan->setLineageType(lineage);
             queryPlan->setPlacementStrategy(placementStrategy);
 
             // perform semantic validation
@@ -101,8 +97,6 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
 
         auto addRequest = RequestProcessor::Experimental ::AddQueryRequest::create(queryString,
                                                                                    placementStrategy,
-                                                                                   faultTolerance,
-                                                                                   lineage,
                                                                                    1,
                                                                                    z3Context,
                                                                                    queryParsingService);
@@ -114,9 +108,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
 
 QueryId QueryService::addQueryRequest(const std::string& queryString,
                                       const QueryPlanPtr& queryPlan,
-                                      const Optimizer::PlacementStrategy placementStrategy,
-                                      const FaultToleranceType faultTolerance,
-                                      const LineageType lineage) {
+                                      const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
         QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -125,8 +117,6 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
 
             //Assign additional configurations
             queryPlan->setQueryId(queryId);
-            queryPlan->setFaultToleranceType(faultTolerance);
-            queryPlan->setLineageType(lineage);
             queryPlan->setPlacementStrategy(placementStrategy);
 
             // assign the id for the query and individual operators
@@ -154,8 +144,6 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
     } else {
         auto addRequest = RequestProcessor::Experimental::AddQueryRequest::create(queryPlan,
                                                                                   placementStrategy,
-                                                                                  faultTolerance,
-                                                                                  lineage,
                                                                                   1,
                                                                                   z3Context);
         asyncRequestExecutor->runAsync(addRequest);
