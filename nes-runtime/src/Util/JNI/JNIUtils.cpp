@@ -147,27 +147,4 @@ const std::string convertToJNIName(const std::string& javaClassName) {
     return result;
 }
 
-jni::jobject deserializeInstance(const jni::JavaSerializedInstance& serializedInstance) {
-    auto env = getEnv();
-    const auto length = serializedInstance.size();
-    const auto data = reinterpret_cast<const jbyte*>(serializedInstance.data());
-    const auto byteArray = env->NewByteArray(length);
-    jniErrorCheck();
-    env->SetByteArrayRegion(byteArray, 0, length, data);
-    jniErrorCheck();
-
-    // Deserialize the instance using a Java helper method.
-    const auto clazz = env->FindClass("stream/nebula/MapJavaUdfUtils");
-    jniErrorCheck();
-    // TODO #3738: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
-    const auto mid = env->GetMethodID(clazz, "deserialize", "([B)Ljava/lang/Object;");
-    jniErrorCheck();
-    const auto obj = env->CallStaticObjectMethod(clazz, mid, byteArray);
-    jniErrorCheck();
-    // Release the array.
-    env->DeleteLocalRef(byteArray);
-    jniErrorCheck();
-    return obj;
-}
-
 }// namespace NES::jni

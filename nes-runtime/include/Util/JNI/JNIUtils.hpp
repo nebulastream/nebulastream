@@ -180,12 +180,6 @@ std::string getStringObjectValue(jstring object);
  */
 const std::string convertToJNIName(const std::string& javaClassName);
 
-/**
- * @brief deserialize a udf instance to a jni jobject
- * @return jobject
- */
-jni::jobject deserializeInstance(const jni::JavaSerializedInstance& serializedInstance);
-
 }// namespace NES::jni
 
 #endif// NES_COMMON_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
