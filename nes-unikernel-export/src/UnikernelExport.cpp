@@ -1,6 +1,16 @@
-//
-// Created by ls on 05.10.23.
-//
+/*
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         https://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+*/
 
 #include "UnikernelExport.h"
 #include "LLVMImporter.h"
@@ -50,6 +60,7 @@ void exportToObjectFile(llvm::Module* module, llvm::raw_fd_ostream& output) {
 void UnikernelExport::exportPipelineStageToObjectFile(
     std::string outputPath,
     uint64_t pipelineId,
+    QuerySubPlanId subPlanId,
     std::vector<EitherSharedOrLocal> handlers,
     std::unique_ptr<NES::Runtime::Execution::CompiledExecutablePipelineStage>&& stage) const {
     NES::Unikernel::UnikernelPipelineExport pipelineExport;
@@ -57,9 +68,8 @@ void UnikernelExport::exportPipelineStageToObjectFile(
     LLVMImporter importer;
     LLVMModuleStripper stripper;
 
-
-    auto generatedSource = NES::Runtime::Unikernel::OperatorHandlerTracer::generateFile(handlers, pipelineId);
-    NES_TRACE("Generated Source for Pipeline {}:\n{}", pipelineId, generatedSource);
+    auto generatedSource = NES::Runtime::Unikernel::OperatorHandlerTracer::generateFile(handlers, pipelineId, subPlanId);
+    NES_DEBUG("Generated Source for Pipeline {}:\n{}", pipelineId, generatedSource);
     auto llvmIr = ci.compile(generatedSource);
 
     if (llvmIr.has_error()) {
@@ -76,10 +86,11 @@ void UnikernelExport::exportPipelineStageToObjectFile(
 
 void UnikernelExport::exportSharedOperatorHandlersToObjectFile(
     std::string filePath,
+    QuerySubPlanId subPlanId,
     const std::vector<NES::Runtime::Unikernel::OperatorHandlerDescriptor>& sharedHandlers) {
 
-    auto generatedSource = NES::Runtime::Unikernel::OperatorHandlerTracer::generateSharedHandlerFile(sharedHandlers);
-    NES_TRACE("Generated Source for Shared Handlers:\n{}", generatedSource);
+    auto generatedSource = NES::Runtime::Unikernel::OperatorHandlerTracer::generateSharedHandlerFile(sharedHandlers, subPlanId);
+    NES_DEBUG("Generated Source for Shared Handlers:\n{}", generatedSource);
     auto llvmIr = ci.compileToObject(generatedSource, filePath);
 
     if (llvmIr.has_error()) {

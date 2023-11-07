@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     namespace stdr = std::ranges;
     namespace stdv = std::ranges::views;
 
-    NES::Logger::setupLogging("unikernel_export.log", NES::LogLevel::LOG_TRACE);
+    NES::Logger::setupLogging("unikernel_export.log", NES::LogLevel::LOG_DEBUG);
     auto cliResult = Options::getCLIOptions(argc, argv);
 
     if (!cliResult) {
@@ -74,12 +74,12 @@ int main(int argc, char** argv) {
     YamlExport yamlExport;
 
     auto [topology, sourcesCatalog, physicalSources] = options.getTopologyAndSources();
-    NES_INFO("Topolgy: {}", topology->toString());
     NESProvider nesProvider(physicalSources, topology, sourcesCatalog);
     NES_DEBUG("Exporter Starter");
     auto query = nesProvider.parseQueryString(options.getQueryString());
     auto [queryPlan, gep] = nesProvider.optimize(query);
 
+    NES_INFO("Topology: \n{}", topology->toString());
     NES_INFO("GEP:\n{}", gep->getAsString());
 
     yamlExport.setQueryPlan(queryPlan, gep);
@@ -96,8 +96,10 @@ int main(int argc, char** argv) {
             std::vector<WorkerSubQueryStage> stageIds;
 
             if (!sharedHandler.empty()) {
-                unikernelExport.exportSharedOperatorHandlersToObjectFile(options.getOutputPathForFile("sharedHandlers.o"),
-                                                                         sharedHandler);
+                unikernelExport.exportSharedOperatorHandlersToObjectFile(
+                    options.getOutputPathForFile(fmt::format("sharedHandlers{}.o", subquery->getQuerySubPlanId())),
+                    subquery->getQuerySubPlanId(),
+                    sharedHandler);
             }
 
             for (auto& [pipelineId, successor, predecessors, stage, handlers] : stdv::reverse(stages)) {
@@ -105,6 +107,7 @@ int main(int argc, char** argv) {
                 unikernelExport.exportPipelineStageToObjectFile(
                     options.getOutputPathForFile("stage" + std::to_string(pipelineId) + ".o"),
                     pipelineId,
+                    subquery->getQuerySubPlanId(),
                     std::move(handlers),
                     std::move(stage));
             }

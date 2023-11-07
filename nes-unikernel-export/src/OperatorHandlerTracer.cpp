@@ -14,14 +14,14 @@
 #include "API/AttributeField.hpp"
 #include "Common/DataTypes/DataType.hpp"
 #include "Util/Logger/Logger.hpp"
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Identifiers.hpp>
 #include <OperatorHandlerTracer.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Util/Common.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <cxxabi.h>
 #include <ranges>
-
 namespace NES::Runtime::Unikernel {
 static thread_local OperatorHandlerTracer* traceContext = nullptr;
 
@@ -136,7 +136,9 @@ std::string generateSharedHandlerIf(std::vector<EitherSharedOrLocal> descriptors
     return ss.str();
 }
 std::vector<OperatorHandlerDescriptor> OperatorHandlerTracer::getDescriptors() { return get()->descriptors; }
-std::string OperatorHandlerTracer::generateFile(std::vector<EitherSharedOrLocal> eitherSharedOrLocal, uint64_t pipelineID) {
+std::string OperatorHandlerTracer::generateFile(std::vector<EitherSharedOrLocal> eitherSharedOrLocal,
+                                                uint64_t pipelineID,
+                                                NES::QuerySubPlanId subPlanId) {
     std::stringstream ss;
 
     std::vector<OperatorHandlerDescriptor> descriptors;
@@ -152,6 +154,7 @@ std::string OperatorHandlerTracer::generateFile(std::vector<EitherSharedOrLocal>
     ss << generateRuntimeIncludes();
 
     if (!sharedHandlers.empty()) {
+        ss << "template<size_t SubQueryId>\n";
         ss << "extern NES::Runtime::Execution::OperatorHandler* getSharedOperatorHandler(int index);\n";
     }
 
@@ -167,7 +170,7 @@ std::string OperatorHandlerTracer::generateFile(std::vector<EitherSharedOrLocal>
         if (std::holds_alternative<OperatorHandlerDescriptor>(eitherSharedOrLocal[i])) {
             ss << "\treturn handlers[" << localHandlerIndex++ << "];\n";
         } else {
-            ss << "\treturn getSharedOperatorHandler(" << std::get<size_t>(eitherSharedOrLocal[i]) << ");\n";
+            ss << "\treturn getSharedOperatorHandler<" << subPlanId << ">(" << std::get<size_t>(eitherSharedOrLocal[i]) << ");\n";
         }
     }
     ss << "default:\n"
@@ -196,7 +199,8 @@ std::string OperatorHandlerTracer::generateRuntimeIncludes() {
            "#include <Runtime/RuntimeForwardRefs.hpp>\n";
 }
 
-std::string OperatorHandlerTracer::generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handlers) {
+std::string OperatorHandlerTracer::generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handlers,
+                                                             NES::QuerySubPlanId subPlanId) {
     std::stringstream ss;
 
     ss << generateRuntimeIncludes();
@@ -204,9 +208,11 @@ std::string OperatorHandlerTracer::generateSharedHandlerFile(const std::vector<O
     for (auto& handler : handlers) {
         ss << handler.generateInclude();
     }
-
-    ss << generateAlignedStaticBufferAllocation(handlers)
-       << "NES::Runtime::Execution::OperatorHandler* getSharedOperatorHandler(int "
+    ss << "template<size_t SubQueryPlanId>\nNES::Runtime::Execution::OperatorHandler* "
+          "getSharedOperatorHandler(int index);\n";
+    ss << generateAlignedStaticBufferAllocation(handlers) << "template <>\n"
+       << "NES::Runtime::Execution::OperatorHandler* getSharedOperatorHandler<" << subPlanId
+       << ">(int "
           "index) { \n"
        << generateOperatorInstantiation(handlers);
     ss << "assert(index < " << handlers.size() << "&& \"Called getSharedOperatorHandler with an out of bound index\");\n"

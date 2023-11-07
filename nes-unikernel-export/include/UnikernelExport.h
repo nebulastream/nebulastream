@@ -29,12 +29,14 @@ class UnikernelExport {
 
   public:
     void exportPipelineStageToObjectFile(std::string outputPath,
-                            uint64_t pipelineId,
-                            std::vector<NES::Runtime::Unikernel::EitherSharedOrLocal> handlers,
-                            std::unique_ptr<NES::Runtime::Execution::CompiledExecutablePipelineStage>&& stage) const;
-    void
-    exportSharedOperatorHandlersToObjectFile(std::string filePath,
-                                             const std::vector<NES::Runtime::Unikernel::OperatorHandlerDescriptor>& sharedHandlers);
+                                         uint64_t pipelineId,
+                                         NES::QuerySubPlanId subPlanId,
+                                         std::vector<NES::Runtime::Unikernel::EitherSharedOrLocal> handlers,
+                                         std::unique_ptr<NES::Runtime::Execution::CompiledExecutablePipelineStage>&& stage) const;
+    void exportSharedOperatorHandlersToObjectFile(
+        std::string filePath,
+        NES::QuerySubPlanId subPlanId,
+        const std::vector<NES::Runtime::Unikernel::OperatorHandlerDescriptor>& sharedHandlers);
 };
 
 #endif//NES_UNIKERNELEXPORT_H
