@@ -108,7 +108,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     const std::string NETWORK_DELAYS_KEY = "networkDelays";
     const std::string LINK_ID_KEY = "linkID";
     const std::string TRANSFER_RATE_KEY = "transferRate";
-    const std::string TIME_WEIGHT_KEY = "time_Weight";
+    const std::string TIME_WEIGHT_KEY = "time_weight";
 
     //Response payload constants
     const std::string AVAILABLE_NODES_KEY = "availNodes";
