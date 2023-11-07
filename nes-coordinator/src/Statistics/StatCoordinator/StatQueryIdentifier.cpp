@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Statistics/StatCoordinator/StatQueryIdentifier.hpp"
+#include <Statistics/StatCoordinator/StatQueryIdentifier.hpp>
 
 namespace NES::Experimental::Statistics {
 

@@ -24,8 +24,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Services/QueryService.hpp>
 
 #include <GRPC/WorkerRPCClient.hpp>
 

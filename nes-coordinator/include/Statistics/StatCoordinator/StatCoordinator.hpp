@@ -15,11 +15,11 @@
 #ifndef NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATCOORDINATOR_HPP_
 #define NES_NES_CORE_INCLUDE_STATISTICS_STATCOORDINATOR_STATCOORDINATOR_HPP_
 
-#include <Statistics/StatCoordinator/StatQueryIdentifier.hpp>
+#include "Identifiers.hpp"
+#include "StatQueryIdentifier.hpp"
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include <Identifiers.hpp>
 
 namespace NES {
 
