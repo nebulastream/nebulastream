@@ -183,9 +183,8 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&) {
 }
 
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
-    // propagate EOS to the locally running QEPs that use the network source
-    NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
     if (Runtime::QueryTerminationType::Graceful == terminationType) {
+        NES_WARNING("Ignoring Graceful EoS on {}", nesPartition);
     } else {
         NES_WARNING("Ignoring forceful EoS on {}", nesPartition);
     }

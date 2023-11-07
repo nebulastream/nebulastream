@@ -23,6 +23,18 @@ add_source_files(unikernel-test-lib
         TaggedPointer.cpp
         Allocator/NesDefaultMemoryAllocator.cpp
 )
+
+add_source_files(unikernel-lib
+        Allocator/NesDefaultMemoryAllocator.cpp
+        BufferManager.cpp
+        BufferStorage.cpp
+        FixedSizeBufferPool.cpp
+        LocalBufferPool.cpp
+        TaggedPointer.cpp
+        NesThread.cpp
+        TupleBuffer.cpp
+        WorkerContext.cpp
+)
 add_source_files(unikernel-export
         BufferManager.cpp
         FixedSizeBufferPool.cpp
