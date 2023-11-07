@@ -33,13 +33,8 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                      QuerySubPlanId querySubPlanId,
                      const uint64_t kafkaProducerTimeout,
                      uint64_t numberOfOrigins)
-    : SinkMedium(format,
-                 std::move(nodeEngine),
-                 numOfProducers,
-                 queryId,
-                 querySubPlanId,
-                 numberOfOrigins),
-      brokers(brokers), topic(topic), kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout)) {
+    : SinkMedium(format, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins), brokers(brokers),
+      topic(topic), kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout)) {
 
     config = std::make_unique<cppkafka::Configuration>();
     config->set("metadata.broker.list", brokers.c_str());

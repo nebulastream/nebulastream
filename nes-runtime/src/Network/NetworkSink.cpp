@@ -395,5 +395,4 @@ void NetworkSink::addPendingReconfiguration(NesPartition newPartition, const Nod
 
 uint16_t NetworkSink::getNumberOfInputSources() const { return numberOfInputSources; }
 
-
 }// namespace NES::Network

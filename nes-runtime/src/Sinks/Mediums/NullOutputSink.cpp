@@ -24,20 +24,13 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
                                uint64_t numberOfOrigins)
-    : SinkMedium(nullptr,
-                 std::move(nodeEngine),
-                 numOfProducers,
-                 queryId,
-                 querySubPlanId,
-                 numberOfOrigins) {}
+    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins) {}
 
 NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef) {
-    return true;
-}
+bool NullOutputSink::writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef) { return true; }
 
 std::string NullOutputSink::toString() const {
     std::stringstream ss;

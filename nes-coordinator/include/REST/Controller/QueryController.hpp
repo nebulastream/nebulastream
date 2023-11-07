@@ -192,12 +192,10 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
 
             auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            NES_DEBUG(
-                "QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
+            NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
                       userQuery,
                       placementStrategyString);
-            QueryId queryId =
-                queryService->validateAndQueueAddQueryRequest(userQuery, placement);
+            QueryId queryId = queryService->validateAndQueueAddQueryRequest(userQuery, placement);
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
@@ -245,8 +243,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
             std::string* queryString = protobufMessage->mutable_querystring();
             auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            QueryId queryId =
-                queryService->addQueryRequest(*queryString, queryPlan, placementStrategy);
+            QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, placementStrategy);
 
             //Prepare the response
             nlohmann::json response;

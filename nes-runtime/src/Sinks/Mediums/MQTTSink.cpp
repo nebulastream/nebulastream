@@ -52,13 +52,8 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient,
                    uint64_t numberOfOrigins)
-    : SinkMedium(std::move(sinkFormat),
-                 nodeEngine,
-                 numOfProducers,
-                 queryId,
-                 querySubPlanId,
-                 numberOfOrigins),
-      address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
+    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId, numberOfOrigins), address(address),
+      clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 
     minDelayBetweenSends =

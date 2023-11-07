@@ -147,7 +147,6 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     OperatorId getOperatorId() const;
 
-
   protected:
     SinkFormatPtr sinkFormat;
     bool schemaWritten;

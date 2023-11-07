@@ -203,8 +203,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
                                       : ".sink(FileSinkDescriptor::create(\"" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     std::string queryString = queryLogic + querySink;
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -293,8 +292,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     std::string queryString =
         R"(Query::from("tpch_customer").filter(Attribute("C_CUSTKEY") < 10).sink(FileSinkDescriptor::create(")" + filePath
         + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -386,8 +384,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
                                       : ".sink(FileSinkDescriptor::create(\"" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     std::string queryString = queryLogic + querySink;
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -459,8 +456,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     std::string queryString =
         R"(Query::from("tpch_nation").filter(Attribute("N_NATIONKEY") > 20).sink(FileSinkDescriptor::create(")" + filePath
         + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -531,8 +527,7 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     std::string queryString =
         R"(Query::from("static_integers_only_0").filter(Attribute("id") < 6).sink(FileSinkDescriptor::create(")" + filePath
         + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -613,8 +608,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
                 .window(TumblingWindow::of(EventTime(Attribute("timeForWindow")), Milliseconds(1)))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -693,8 +687,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
                 .equalsTo(Attribute("N_NATIONKEY"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1264,8 +1257,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
                                       : ".sink(FileSinkDescriptor::create(\"" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     std::string queryString = queryLogic + querySink;
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1343,8 +1335,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
                 ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1431,8 +1422,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
                 ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1519,8 +1509,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
             .map(Attribute("IDplusID") = Attribute("static_integers_only_1$id") + Attribute("static_integers_only_0$id"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1603,8 +1592,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
                 ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
             .sink(FileSinkDescriptor::create(")"
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1695,8 +1683,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
                                       : ".sink(FileSinkDescriptor::create(\"" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     std::string queryString = queryLogic + querySink;
 
-    QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -1846,8 +1833,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
                 : ".sink(FileSinkDescriptor::create(\"" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
             std::string queryString = queryLogic + querySink;
 
-            QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,
-                                                                            "BottomUp");
+            QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp");
             EXPECT_NE(queryId, INVALID_QUERY_ID);
             auto globalQueryPlan = crd->getGlobalQueryPlan();
             EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
