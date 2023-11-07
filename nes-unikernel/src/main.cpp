@@ -29,13 +29,23 @@ NES::Runtime::WorkerContextPtr TheWorkerContext = nullptr;
 
 using namespace std::literals::chrono_literals;
 
+std::mutex m;
+std::condition_variable stop_condition;
+bool should_exit = false;
+
 class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListener {
   public:
     ~DummyExchangeProtocolListener() override = default;
 
     void onDataBuffer(NES::Network::NesPartition, NES::Runtime::TupleBuffer&) override {}
 
-    void onEndOfStream(NES::Network::Messages::EndOfStreamMessage) override { NES_INFO("Party is Over!"); }
+    void onEndOfStream(NES::Network::Messages::EndOfStreamMessage) override {
+        {
+            std::unique_lock lock(m);
+            should_exit = true;
+        }
+        stop_condition.notify_all();
+    }
 
     void onServerError(NES::Network::Messages::ErrorMessage) override {}
 
@@ -72,6 +82,7 @@ extern "C" [[maybe_unused]] void emitBufferProxy(void* worker_context_ptr, void*
     }
     tb->release();
 }
+
 int main() {
     NES::Logger::setupLogging(NES::LogLevel::LOG_TRACE);
     auto partition_manager = std::make_shared<NES::Network::PartitionManager>();
@@ -87,6 +98,13 @@ int main() {
                                                              TheBufferManager);
 
     NES::Unikernel::QueryPlan::setup();
-    sleep(1000);
+    {
+        std::unique_lock lock(m);
+        stop_condition.wait(lock, []() {
+            return should_exit;
+        });
+    }
+    NES_INFO("Stopping Unikernel")
     NES::Unikernel::QueryPlan::stop();
+    NES_INFO("Unikernel Stopped")
 }
