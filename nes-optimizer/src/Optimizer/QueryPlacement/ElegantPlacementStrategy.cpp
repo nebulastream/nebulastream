@@ -29,7 +29,7 @@
 
 namespace NES::Optimizer {
 
-const std::string ElegantPlacementStrategy::sourceCodeKey = "code";
+const std::string ElegantPlacementStrategy::sourceCodeKey = "sourceCode";
 
 std::unique_ptr<ElegantPlacementStrategy>
 ElegantPlacementStrategy::create(const std::string& serviceURL,
