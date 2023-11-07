@@ -17,7 +17,6 @@
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
-#include <Runtime/EpochMessage.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
