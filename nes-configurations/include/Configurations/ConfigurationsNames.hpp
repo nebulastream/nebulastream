@@ -16,6 +16,8 @@
 #include <cstdint>
 #include <string>
 
+using namespace std::string_literals;
+
 namespace NES::Configurations {
 /**
  * @brief input format enum gives information whether a JSON or CSV was used to transfer data
@@ -85,10 +87,11 @@ const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distribu
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
 //Elegant Configurations
-const std::string ELEGANT = "elegant";                                // elegant configurations are initialize with this constant
-const std::string ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs";        // accelerate java udfs supplied in Map UDF operator
-const std::string PLANNER_SERVICE_URL = "plannerServiceURL";          // URL for ELEGANT planner
-const std::string ACCELERATION_SERVICE_URL = "accelerationServiceURL";// URL for acceleration service
+const auto ELEGANT = "elegant"s;                                 // elegant configurations are initialize with this constant
+const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s;         // accelerate java udfs supplied in Map UDF operator
+const auto PLANNER_SERVICE_URL = "plannerServiceURL"s;           // URL for ELEGANT planner
+const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; // URL for acceleration service
+const auto TRANSFER_RATE = "transferRate"s;                      // Fake transfer rate between two workers
 
 //Worker Configuration Names
 const std::string WORKER_ID = "workerId";

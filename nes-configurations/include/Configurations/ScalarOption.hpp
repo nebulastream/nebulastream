@@ -138,6 +138,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::stri
 }
 
 using StringOption = ScalarOption<std::string>;
+using FloatOption = ScalarOption<float>;
 using IntOption = ScalarOption<int64_t>;
 using UIntOption = ScalarOption<uint64_t>;
 using SizeTOption = ScalarOption<size_t>;
