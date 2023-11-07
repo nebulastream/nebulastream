@@ -104,7 +104,7 @@ TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase6
         {0.8178819, 0.16869366, 0.01342443},
     };
 
-    auto actualOutput = testHarness.runQuery(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY").getOutput<Output>();
+    auto actualOutput = testHarness.runQuery(expectedOutput.size(), "TopDown").getOutput<Output>();
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     for (size_t i = 0; i < actualOutput.size(); ++i) {

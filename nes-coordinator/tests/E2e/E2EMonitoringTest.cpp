@@ -242,9 +242,7 @@ TEST_F(E2EMonitoringTest, DISABLED_testNemoPlacementWithMonitoringSource) {
                      .apply(Sum(Attribute("tBytes")))
                      .sink(FileSinkDescriptor::create(outputFilePath, true));
 
-    QueryId queryId = queryService->addQueryRequest("",
-                                                    query.getQueryPlan(),
-                                                    Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = queryService->addQueryRequest("", query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

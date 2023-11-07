@@ -296,8 +296,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     std::string queryString =
         R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());)";
 
-    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,
-                                                                    Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

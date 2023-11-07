@@ -182,7 +182,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     uint16_t numberOfInputSources;
     std::atomic<uint16_t> receivedVersionDrainEvents;
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
-
 };
 }// namespace NES::Network
 #endif// NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_

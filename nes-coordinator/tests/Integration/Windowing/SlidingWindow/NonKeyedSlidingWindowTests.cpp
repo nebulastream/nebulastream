@@ -175,8 +175,7 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength
 
     std::vector<Output> expectedOutput = {{0, 1000, 170}};
 
-    std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -205,8 +204,7 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
 
     std::vector<Output> expectedOutput = {{0, 1000, 170}};
 
-    std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
 
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -231,8 +229,7 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
     std::vector<Output> expectedOutput = {{0, 1000, 17000}};
-    std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -271,8 +268,7 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
     expectedOutput.push_back({16800, 17800, 200});
     expectedOutput.push_back({16900, 17900, 100});
 
-    std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
@@ -305,8 +301,7 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
     expectedOutput.push_back({16500, 17500, 500});
     expectedOutput.push_back({16800, 17800, 200});
 
-    std::vector<Output> actualOutput =
-        testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }

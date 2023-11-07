@@ -120,10 +120,8 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     EXPECT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::REGISTERED);
 
     // Create add request
-    auto addQueryRequest = RequestProcessor::Experimental::AddQueryRequest::create(queryPlan,
-                                                                                   TEST_PLACEMENT_STRATEGY,
-                                                                                   ZERO_RETRIES,
-                                                                                   z3Context);
+    auto addQueryRequest =
+        RequestProcessor::Experimental::AddQueryRequest::create(queryPlan, TEST_PLACEMENT_STRATEGY, ZERO_RETRIES, z3Context);
     addQueryRequest->setId(requestId);
 
     // Execute add request until deployment phase

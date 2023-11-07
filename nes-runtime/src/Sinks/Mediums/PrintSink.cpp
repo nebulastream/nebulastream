@@ -27,12 +27,7 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      QuerySubPlanId querySubPlanId,
                      std::ostream& pOutputStream,
                      uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format),
-                 std::move(nodeEngine),
-                 numOfProducers,
-                 queryId,
-                 querySubPlanId,
-                 numberOfOrigins),
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins),
       outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;

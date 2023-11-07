@@ -154,13 +154,7 @@ DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
                                std::ostream& out,
                                uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format,
-                                       nodeEngine,
-                                       activeProducers,
-                                       queryId,
-                                       querySubPlanId,
-                                       out,
-                                       numberOfOrigins);
+    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out, numberOfOrigins);
 }
 
 DataSinkPtr createNullOutputSink(QueryId queryId,
@@ -168,11 +162,7 @@ DataSinkPtr createNullOutputSink(QueryId queryId,
                                  const Runtime::NodeEnginePtr& nodeEngine,
                                  uint32_t activeProducers,
                                  uint64_t numberOfOrigins) {
-    return std::make_shared<NullOutputSink>(nodeEngine,
-                                            activeProducers,
-                                            queryId,
-                                            querySubPlanId,
-                                            numberOfOrigins);
+    return std::make_shared<NullOutputSink>(nodeEngine, activeProducers, queryId, querySubPlanId, numberOfOrigins);
 }
 
 DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
@@ -183,13 +173,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                std::ostream& out,
                                uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format,
-                                       nodeEngine,
-                                       activeProducers,
-                                       queryId,
-                                       querySubPlanId,
-                                       out,
-                                       numberOfOrigins);
+    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out, numberOfOrigins);
 }
 
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,

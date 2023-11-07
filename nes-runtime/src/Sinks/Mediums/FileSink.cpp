@@ -34,12 +34,7 @@ FileSink::FileSink(SinkFormatPtr format,
                    QueryId queryId,
                    QuerySubPlanId querySubPlanId,
                    uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format),
-                 std::move(nodeEngine),
-                 numOfProducers,
-                 queryId,
-                 querySubPlanId,
-                 numberOfOrigins) {
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, numberOfOrigins) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
