@@ -38,8 +38,7 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                  numOfProducers,
                  queryId,
                  querySubPlanId,
-                 numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+                 numberOfOrigins),
       brokers(brokers), topic(topic), kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout)) {
 
     config = std::make_unique<cppkafka::Configuration>();
