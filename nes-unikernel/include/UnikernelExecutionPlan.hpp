@@ -13,8 +13,8 @@
 */
 #ifndef NES_UNIKERNELEXECUTIONPLAN_H
 #define NES_UNIKERNELEXECUTIONPLAN_H
-#include "Runtime/RuntimeForwardRefs.hpp"
-#include "Runtime/WorkerContext.hpp"
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <UnikernelSink.h>
 #include <UnikernelSource.h>
