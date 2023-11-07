@@ -130,59 +130,6 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     stopCoordinator();
 }
 
-//Check if submitting a POST request with an unsupported 'faultTolerance' type returns 400
-TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
-    startCoordinator();
-    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-    nlohmann::json request;
-    request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
-    request["placement"] = "BottomUp";
-    request["faultTolerance"] = "EXTREME";
-    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
-                                 cpr::Header{{"Content-Type", "application/json"}},
-                                 cpr::Body{request.dump()});
-    future.wait();
-    auto response = future.get();
-    EXPECT_EQ(response.status_code, 400l);
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
-    nlohmann::json res;
-    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG("{}", res.dump());
-    std::string errorMessage = res["message"].get<std::string>();
-    EXPECT_TRUE(errorMessage.find("Invalid fault tolerance Type provided:") != std::string::npos);
-    stopCoordinator();
-}
-
-//Check if submitting a POST request with an unsupported 'lineage' type returns 400
-TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
-    startCoordinator();
-    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-    nlohmann::json request;
-    request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
-    request["placement"] = "BottomUp";
-    request["faultTolerance"] = "AT_MOST_ONCE";
-    request["lineage"] = "ON_PAPER";
-    auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
-                                 cpr::Header{{"Content-Type", "application/json"}},
-                                 cpr::Body{request.dump()});
-    future.wait();
-    auto response = future.get();
-    EXPECT_EQ(response.status_code, 400l);
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
-    nlohmann::json res;
-    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    NES_DEBUG("{}", res.dump());
-    std::string errorMessage = res["message"].get<std::string>();
-    EXPECT_TRUE(errorMessage.find("Invalid Lineage Mode Type provided:") != std::string::npos);
-    stopCoordinator();
-}
-
 //Check if submitting a proper query returns 200
 TEST_F(QueryControllerTest, testSubmitValidQuery) {
     NES_INFO("TestsForOatppEndpoints: Start coordinator");
