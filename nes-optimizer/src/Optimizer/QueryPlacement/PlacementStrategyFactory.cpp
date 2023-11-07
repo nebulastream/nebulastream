@@ -34,7 +34,8 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                       const TypeInferencePhasePtr& typeInferencePhase,
                                       const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
 
-    std::string plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
+    auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
+    auto transferRate = coordinatorConfiguration->elegant.transferRate;
 
     switch (placementStrategy) {
         case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
@@ -45,6 +46,7 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
         case PlacementStrategy::ELEGANT_ENERGY:
         case PlacementStrategy::ELEGANT_BALANCED:
             return ElegantPlacementStrategy::create(plannerURL,
+                                                    transferRate,
                                                     placementStrategy,
                                                     globalExecutionPlan,
                                                     topology,

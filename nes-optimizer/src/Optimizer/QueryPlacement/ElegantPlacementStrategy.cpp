@@ -33,6 +33,7 @@ const std::string ElegantPlacementStrategy::sourceCodeKey = "sourceCode";
 
 std::unique_ptr<ElegantPlacementStrategy>
 ElegantPlacementStrategy::create(const std::string& serviceURL,
+                                 const float transferRate,
                                  PlacementStrategy placementStrategy,
                                  NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                  NES::TopologyPtr topology,
@@ -48,19 +49,21 @@ ElegantPlacementStrategy::create(const std::string& serviceURL,
     }
 
     return std::make_unique<ElegantPlacementStrategy>(ElegantPlacementStrategy(serviceURL,
+                                                                               transferRate,
                                                                                timeWeight,
                                                                                std::move(globalExecutionPlan),
                                                                                std::move(topology),
                                                                                std::move(typeInferencePhase)));
 }
 
-ElegantPlacementStrategy::ElegantPlacementStrategy(std::string serviceURL,
-                                                   float timeWeight,
+ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL,
+                                                   const float transferRate,
+                                                   const float timeWeight,
                                                    NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                    NES::TopologyPtr topology,
                                                    NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
     : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)),
-      serviceURL(std::move(serviceURL)), timeWeight(timeWeight) {}
+      serviceURL(serviceURL), transferRate(transferRate), timeWeight(timeWeight) {}
 
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -215,7 +218,7 @@ void ElegantPlacementStrategy::prepareTopologyPayload(nlohmann::json& payload) {
             nlohmann::json currentEdgeJsonValue{};
             currentEdgeJsonValue[LINK_ID_KEY] =
                 std::to_string(child->as<TopologyNode>()->getId()) + "-" + std::to_string(currentNode->getId());
-            currentEdgeJsonValue[TRANSFER_RATE_KEY] = 100;// FIXME: replace it with more intelligible value
+            currentEdgeJsonValue[TRANSFER_RATE_KEY] = transferRate;
             edges.push_back(currentEdgeJsonValue);
             childToAdd.push_back(child->as<TopologyNode>());
         }
