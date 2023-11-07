@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.245](https://github.com/nebulastream/nebulastream/tree/v0.5.245) (2023-11-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.244...v0.5.245)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove fault tolerance from NES [\#4331](https://github.com/nebulastream/nebulastream/issues/4331)
+
 ## [v0.5.244](https://github.com/nebulastream/nebulastream/tree/v0.5.244) (2023-11-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.243...v0.5.244)
@@ -1162,10 +1170,6 @@
 ## [v0.5.125](https://github.com/nebulastream/nebulastream/tree/v0.5.125) (2023-06-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.124...v0.5.125)
-
-**Implemented enhancements:**
-
-- \[TASK\] Create and process placement request for ELEGANT Planner [\#3868](https://github.com/nebulastream/nebulastream/issues/3868)
 
 ### Miscellaneous Issues ✌️
 
