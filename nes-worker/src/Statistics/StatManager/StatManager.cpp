@@ -14,10 +14,10 @@
 
 #include <limits>
 
-#include "Statistics/Requests/StatDeleteRequest.hpp"
-#include "Statistics/Requests/StatProbeRequest.hpp"
-#include "Statistics/StatManager/StatCollectorIdentifier.hpp"
-#include "Statistics/StatManager/StatManager.hpp"
+#include <Statistics/Requests/StatDeleteRequest.hpp>
+#include <Statistics/Requests/StatProbeRequest.hpp>
+#include <Statistics/StatManager/StatCollectorIdentifier.hpp>
+#include <Statistics/StatManager/StatManager.hpp>
 
 namespace NES::Experimental::Statistics {
 
