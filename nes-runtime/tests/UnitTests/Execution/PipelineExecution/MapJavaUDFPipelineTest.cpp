@@ -29,6 +29,8 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -55,6 +57,21 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
         options.setDumpToConsole(true);
     }
 
+    /** Takes an byte code list that contains class names but no class definitions and loads the byte code for the classes from the test data directory. */
+    void loadByteCode(jni::JavaUDFByteCodeList& byteCodeList) {
+        for (auto& [className, byteCode] : byteCodeList) {
+            const auto fileName = std::filesystem::path(TEST_DATA_DIRECTORY) / "JavaUDFTestData"
+                / fmt::format("{}.class", Operators::JavaUDFOperatorHandler::convertToJNIName(className));
+            NES_DEBUG("Loading byte code: class={}, file={}", className, fileName.string());
+            std::ifstream classFile(fileName, std::fstream::binary);
+            NES_ASSERT(classFile, "Could not find class file: " << fileName);
+            classFile.seekg(0, std::ios_base::end);
+            auto fileSize = classFile.tellg();
+            classFile.seekg(0, std::ios_base::beg);
+            byteCode.resize(fileSize);
+            classFile.read(reinterpret_cast<char*>(byteCode.data()), byteCode.size());
+        }
+    }
     /**
      * Initializes a pipeline with a Scan of the input tuples, a MapJavaUDF operator, and a emit of the processed tuples.
      * @param schema Schema of the input and output tuples.
@@ -113,8 +130,38 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
                         std::string methodName,
                         std::string inputProxyName,
                         std::string outputProxyName,
+                        jni::JavaUDFByteCodeList byteCodeList,
                         SchemaPtr schema) {
-        jni::JavaUDFByteCodeList byteCodeList;
+        loadByteCode(byteCodeList);
+        jni::JavaSerializedInstance serializedInstance;
+        return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
+                                                                   methodName,
+                                                                   inputProxyName,
+                                                                   outputProxyName,
+                                                                   byteCodeList,
+                                                                   serializedInstance,
+                                                                   schema,
+                                                                   schema,
+                                                                   std::nullopt);
+    }
+
+    /**
+     * Initializes the map handler for the given pipeline.
+     * @param className java class name of the udf
+     * @param methodName method name of the udf
+     * @param inputProxyName input proxy class name
+     * @param outputProxyName output proxy class name
+     * @param schema schema of the input and output tuples
+     * @param testDataPath path to the test data containing the udf jar
+     * @return operator handler
+     */
+    auto initMapHandler(std::string className,
+                        std::string methodName,
+                        std::string inputProxyName,
+                        std::string outputProxyName,
+                        SchemaPtr schema) {
+        jni::JavaUDFByteCodeList byteCodeList = {{"stream.nebula.MapFunction", {}}, {className, {}}};
+        loadByteCode(byteCodeList);
         jni::JavaSerializedInstance serializedInstance;
         return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
                                                                    methodName,
@@ -367,11 +414,13 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler("stream.nebula.ComplexPojoMapFunction",
-                                  "map",
-                                  "stream.nebula.ComplexPojo",
-                                  "stream.nebula.ComplexPojo",
-                                  schema);
+    auto handler = initMapHandler(
+        "stream.nebula.ComplexPojoMapFunction",
+        "map",
+        "stream.nebula.ComplexPojo",
+        "stream.nebula.ComplexPojo",
+        {{"stream.nebula.MapFunction", {}}, {"stream.nebula.ComplexPojoMapFunction", {}}, {"stream.nebula.ComplexPojo", {}}},
+        schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
