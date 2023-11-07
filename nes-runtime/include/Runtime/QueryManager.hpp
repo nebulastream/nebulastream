@@ -17,7 +17,6 @@
 #include <Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/EpochMessage.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
