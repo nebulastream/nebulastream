@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <ranges>
 #include <string>
+#include <Identifiers.hpp>
 #include <vector>
 
 #ifdef UNIKERNEL_EXPORT
@@ -109,8 +110,8 @@ class OperatorHandlerTracer {
 
     static std::vector<OperatorHandlerDescriptor> getDescriptors();
 
-    static std::string generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handler);
-    static std::string generateFile(std::vector<EitherSharedOrLocal> descriptors, uint64_t pipelineID);
+    static std::string generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handler, NES::QuerySubPlanId subPlanId);
+    static std::string generateFile(std::vector<EitherSharedOrLocal> descriptors, uint64_t pipelineID, NES::QuerySubPlanId subPlanId);
 
     [[nodiscard]] static std::string generateRuntimeIncludes();
 
