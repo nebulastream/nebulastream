@@ -12,6 +12,7 @@
 
 add_source_files(unikernel-export
         TopologyNode.cpp
+        TopologyNodeSet.cpp
         Topology.cpp
 )
 add_source_files(nes-catalogs

@@ -26,6 +26,7 @@
 #include <fmt/core.h>
 #include <map>
 #include <optional>
+#include <memory>
 
 namespace NES {
 class TopologyNode;
