@@ -17,8 +17,6 @@
 namespace NES::Runtime::ProxyFunctions {
 extern "C" void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    printf("%p:\n", thisPtr);
-    hexdump(thisPtr_->getBuffer(), 48);
     return thisPtr_->getBuffer();
 };
 extern "C" uint64_t NES__Runtime__TupleBuffer__getBufferSize(void* thisPtr) {
