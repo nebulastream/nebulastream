@@ -1,3 +1,4 @@
+# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Exceptions)
-add_subdirectory(Runtime)
-add_subdirectory(Network)
-add_subdirectory(Monitoring)
-add_subdirectory(QueryCompiler)
-add_subdirectory(Sources)
-add_subdirectory(Util)
-add_subdirectory(QueryCompiler)
+# Google Testing Framework ----------------------------------------------------
+include(ExternalProject)
+
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)

@@ -21,7 +21,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Sinks/SinksForwaredRefs.hpp>
+#include <Connectors/Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwardedRefs.hpp>
 #include <atomic>
 #include <future>

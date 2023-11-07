@@ -11,11 +11,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Exceptions)
-add_subdirectory(Runtime)
-add_subdirectory(Network)
-add_subdirectory(Monitoring)
-add_subdirectory(QueryCompiler)
-add_subdirectory(Sources)
-add_subdirectory(Util)
-add_subdirectory(QueryCompiler)
+add_source_files(nes-connectors
+        FileSink.cpp
+        ZmqSink.cpp
+        SinkMedium.cpp
+        PrintSink.cpp
+        NullOutputSink.cpp
+        MonitoringSink.cpp
+        KafkaSink.cpp
+        MultiOriginWatermarkProcessor.cpp
+        WatermarkProcessor.cpp
+)
+
+
+if (NES_USE_OPC)
+    add_source_files(nes-connectors
+            OPCSink.cpp
+    )
+endif ()
+
+if (NES_USE_MQTT)
+    add_source_files(nes-connectors
+            MQTTSink.cpp
+    )
+endif ()

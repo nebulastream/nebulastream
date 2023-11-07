@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,11 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Exceptions)
-add_subdirectory(Runtime)
-add_subdirectory(Network)
-add_subdirectory(Monitoring)
-add_subdirectory(QueryCompiler)
-add_subdirectory(Sources)
-add_subdirectory(Util)
-add_subdirectory(QueryCompiler)
+add_subdirectory(Sinks)
