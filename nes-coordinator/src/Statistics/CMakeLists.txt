@@ -11,4 +11,3 @@
 # limitations under the License.
 
 add_subdirectory(StatCoordinator)
-add_subdirectory(StatManager)

@@ -10,11 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-coordinator
-        MonitoringService.cpp
-        QueryService.cpp
-        RequestProcessorService.cpp
-        QueryParsingService.cpp
-        CoordinatortHealthCheckService.cpp
-        LocationService.cpp
-)
+add_nes_unit_test(statisticUnitTests "../../../nes-coordinator/tests/UnitTests/Statistics/StatisticsTests.cpp")
