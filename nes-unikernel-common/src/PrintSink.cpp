@@ -28,14 +28,8 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      std::ostream& pOutputStream,
                      FaultToleranceType faultToleranceType,
                      uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format),
-                 numOfProducers,
-                 queryId,
-                 querySubPlanId,
-                 faultToleranceType,
-                 numberOfOrigins),
-      outputStream(pOutputStream) {
-}
+    : SinkMedium(std::move(format), numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins),
+      outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;
 
@@ -52,7 +46,7 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     NES_TRACE("PrintSink::getData: write data");
     auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
     NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
-    outputStream << buffer << std::endl;
+    outputStream << "Sequence Number" << inputBuffer.getSequenceNumber() << std::endl << buffer << std::endl;
     updateWatermarkCallback(inputBuffer);
     return true;
 }
