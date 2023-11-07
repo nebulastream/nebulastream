@@ -28,6 +28,8 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -55,6 +57,22 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 };
+
+/** Takes an byte code list that contains class names but no class definitions and loads the byte code for the classes from the test data directory. */
+void loadByteCode(jni::JavaUDFByteCodeList& byteCodeList) {
+    for (auto& [className, byteCode] : byteCodeList) {
+        const auto fileName = std::filesystem::path(TEST_DATA_DIRECTORY) / "JavaUDFTestData"
+            / fmt::format("{}.class", Operators::JavaUDFOperatorHandler::convertToJNIName(className));
+        NES_DEBUG("Loading byte code: class={}, file={}", className, fileName.string());
+        std::ifstream classFile(fileName, std::fstream::binary);
+        NES_ASSERT(classFile, "Could not find class file: " << fileName);
+        classFile.seekg(0, std::ios_base::end);
+        auto fileSize = classFile.tellg();
+        classFile.seekg(0, std::ios_base::beg);
+        byteCode.resize(fileSize);
+        classFile.read(reinterpret_cast<char*>(byteCode.data()), byteCode.size());
+    }
+}
 
 /**
  * Initializes a pipeline with a Scan of the input tuples, a FlatMapJavaUDF operator, and a emit of the processed tuples.
@@ -112,8 +130,9 @@ auto initMapHandler(std::string className,
                     std::string methodName,
                     std::string inputProxyName,
                     std::string outputProxyName,
+                    jni::JavaUDFByteCodeList byteCodeList,
                     SchemaPtr schema) {
-    jni::JavaUDFByteCodeList byteCodeList;
+    loadByteCode(byteCodeList);
     jni::JavaSerializedInstance serializedInstance;
     return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
                                                                methodName,
@@ -124,6 +143,26 @@ auto initMapHandler(std::string className,
                                                                schema,
                                                                schema,
                                                                std::nullopt);
+}
+
+/**
+ * Initializes the map handler for the given pipeline.
+ * @param className java class name of the udf
+ * @param methodName method name of the udf
+ * @param inputProxyName input proxy class name
+ * @param outputProxyName output proxy class name
+ * @param schema schema of the input and output tuples
+ * @param testDataPath path to the test data containing the udf jar
+ * @return operator handler
+ */
+auto initMapHandler(std::string className,
+                    std::string methodName,
+                    std::string inputProxyName,
+                    std::string outputProxyName,
+                    SchemaPtr schema) {
+    jni::JavaUDFByteCodeList byteCodeList{{"stream.nebula.FlatMapFunction", {}}, {className, {}}};
+    jni::JavaSerializedInstance serializedInstance;
+    return initMapHandler(className, methodName, inputProxyName, outputProxyName, byteCodeList, schema);
 }
 
 /**
@@ -235,10 +274,14 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
+    jni::JavaUDFByteCodeList byteCodeList{{"stream.nebula.FlatMapFunction", {}},
+                                          {"stream.nebula.ComplexPojoFlatMapFunction", {}},
+                                          {"stream.nebula.ComplexPojo", {}}};
     auto handler = initMapHandler("stream.nebula.ComplexPojoFlatMapFunction",
                                   "flatMap",
                                   "stream.nebula.ComplexPojo",
                                   "java.util.Collection",
+                                  byteCodeList,
                                   schema);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
