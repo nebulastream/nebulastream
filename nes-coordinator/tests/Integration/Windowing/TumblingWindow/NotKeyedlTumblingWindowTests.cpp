@@ -643,8 +643,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
                                                                      {15000, 16000, 1, 1, 1, 1000},
                                                                      {16000, 17000, 1, 1, 1, 1000}};
     std::vector<GlobalOutputMultiAggSameKey> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp")
-            .getOutput<GlobalOutputMultiAggSameKey>();
+        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutputMultiAggSameKey>();
     EXPECT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
     EXPECT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }
@@ -694,8 +693,7 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndC
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
     std::vector<GlobalOutputMultiAggSameKey> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp")
-            .getOutput<GlobalOutputMultiAggSameKey>();
+        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutputMultiAggSameKey>();
     ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
     ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
 }

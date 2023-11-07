@@ -16,8 +16,7 @@
 
 namespace NES::Client {
 
-QueryConfig::QueryConfig(Optimizer::PlacementStrategy placementType)
-    : placementType(placementType) {}
+QueryConfig::QueryConfig(Optimizer::PlacementStrategy placementType) : placementType(placementType) {}
 
 Optimizer::PlacementStrategy QueryConfig::getPlacementType() const { return placementType; }
 

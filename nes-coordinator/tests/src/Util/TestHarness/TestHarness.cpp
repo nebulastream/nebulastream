@@ -262,9 +262,8 @@ SchemaPtr TestHarness::getOutputSchema() {
     return queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->getSinkOperators()[0]->getOutputSchema();
 }
 
-TestHarness& TestHarness::runQuery(uint64_t numberOfRecordsToExpect,
-                                   const std::string& placementStrategyName,
-                                   uint64_t testTimeoutInSeconds) {
+TestHarness&
+TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& placementStrategyName, uint64_t testTimeoutInSeconds) {
     if (!topologySetupDone || !validationDone) {
         throw Exceptions::RuntimeException(
             "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
@@ -281,9 +280,7 @@ TestHarness& TestHarness::runQuery(uint64_t numberOfRecordsToExpect,
     queryId = INVALID_QUERY_ID;
 
     auto query = queryWithoutSink->sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
-    queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(),
-                                            query.getQueryPlan(),
-                                            placementStrategy);
+    queryId = queryService->addQueryRequest(query.getQueryPlan()->toString(), query.getQueryPlan(), placementStrategy);
 
     // Now run the query
     if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {

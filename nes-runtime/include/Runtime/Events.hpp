@@ -56,7 +56,6 @@ class BaseEvent {
     EventType eventType;
 };
 
-
 /**
  * @brief This class shall be used to define custom events with user-supplied data
  */

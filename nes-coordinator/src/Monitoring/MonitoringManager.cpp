@@ -213,8 +213,7 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
 
         // create new monitoring query
         NES_INFO("MonitoringManager: Creating query for {}", monitoringStream);
-        queryId = queryService->validateAndQueueAddQueryRequest(query,
-                                                                Optimizer::PlacementStrategy::BottomUp);
+        queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
         if ((sync && waitForQueryToStart(queryId, std::chrono::seconds(60))) || (!sync)) {
             NES_INFO("MonitoringManager: Successfully started query {}::{}", queryId, monitoringStream);
             deployedMonitoringQueries.insert({monitoringStream, queryId});

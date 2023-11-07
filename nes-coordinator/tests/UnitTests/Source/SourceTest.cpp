@@ -1917,8 +1917,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
-    auto queryId = queryService->validateAndQueueAddQueryRequest(query,
-                                                                 Optimizer::PlacementStrategy::BottomUp);
+    auto queryId = queryService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
