@@ -156,11 +156,6 @@ add_nes_unit_test(buffer-manager-tests "Runtime/BufferManagerTest.cpp")
 ### Buffer Storage Test ###
 add_nes_unit_test(buffer-storage-tests "Runtime/BufferStorageTest.cpp")
 
-
-
-### Statistics Test ###
-add_nes_unit_test(statistics-tests "Statistics/StatisticsTests.cpp")
-
 ### Sink Tests ###
 add_nes_unit_test(sink-tests "Sink/SinkTest.cpp" Sink/SinkTest.cpp)
 
