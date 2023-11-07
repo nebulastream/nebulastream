@@ -1,0 +1,57 @@
+query: |
+  Query::from("input1").joinWith(Query::from("input2"))
+                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .joinWith(Query::from("input3"))
+                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .sink(NullOutputSinkDescriptor::create());
+topology:
+  sink:
+    ip: "127.0.0.1"
+    port: 8082
+    resources: 10
+  workers:
+    - ip: 127.0.0.1
+      id: 2
+      port: 8080
+      resources: 90
+      links: [ sink ]
+    - ip: 127.0.0.1
+      id: 3
+      port: 8081
+      resources: 5
+      links: [ 2 ]
+    - ip: "127.0.0.1"
+      port: 8083
+      sources:
+        - name: "input1"
+          schema:
+            - name: id
+              type: INT64
+            - name: timestamp
+              type: INT64
+      resources: 1
+      links: [ 3 ]
+    - ip: "127.0.0.1"
+      port: 8084
+      sources:
+        - name: "input2"
+          schema:
+            - name: id
+              type: INT64
+            - name: timestamp
+              type: INT64
+      resources: 1
+      links: [ 3 ]
+    - ip: "127.0.0.1"
+      port: 8085
+      sources:
+        - name: "input3"
+          schema:
+            - name: id
+              type: INT64
+            - name: timestamp
+              type: INT64
+      resources: 1
+      links: [ 2 ]
