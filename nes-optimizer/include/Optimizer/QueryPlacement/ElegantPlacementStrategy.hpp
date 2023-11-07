@@ -44,6 +44,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @return shared pointer to the placement strategy
      */
     static std::unique_ptr<ElegantPlacementStrategy> create(const std::string& serviceURL,
+                                                            const float transferRate,
                                                             PlacementStrategy placementStrategy,
                                                             GlobalExecutionPlanPtr globalExecutionPlan,
                                                             TopologyPtr topology,
@@ -54,8 +55,9 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
   private:
-    explicit ElegantPlacementStrategy(std::string serviceURL,
-                                      float timeWeight,
+    explicit ElegantPlacementStrategy(const std::string& serviceURL,
+                                      const float transferRate,
+                                      const float timeWeight,
                                       GlobalExecutionPlanPtr globalExecutionPlan,
                                       TopologyPtr topology,
                                       TypeInferencePhasePtr typeInferencePhase);
@@ -87,6 +89,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                            cpr::Response& response) const;
 
     std::string serviceURL;
+    float transferRate;
     float timeWeight;
 
     const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
