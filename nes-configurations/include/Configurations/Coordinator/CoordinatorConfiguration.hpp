@@ -58,12 +58,6 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption rpcPort = {RPC_PORT_CONFIG, 4000, "RPC server port of the Coordinator"};
 
     /**
-     * @brief Port of the Data server of the Coordinator.
-     * This is used to receive data at the coordinator.
-     */
-    UIntOption dataPort = {DATA_PORT_CONFIG, 0, "Data server port of the Coordinator"};
-
-    /**
      * @brief The current log level. Controls the detail of log messages.
      */
     EnumOption<LogLevel> logLevel = {LOG_LEVEL_CONFIG,
@@ -166,7 +160,6 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &coordinatorIp,
                 &rpcPort,
                 &restPort,
-                &dataPort,
                 &logLevel,
                 &enableQueryReconfiguration,
                 &enableMonitoring,
