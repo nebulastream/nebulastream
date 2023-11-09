@@ -203,6 +203,7 @@ arrow::Status ArrowSource::openFile() {
     // else the macros returns failure
     // if the user specified a .csv, we use a csv reader instead
     if (filePath.ends_with(".csv")) {
+        NES_DEBUG("ArrowSource::openFile found CSV file, using CSV parser");
         return openCsvFile();
     }
     ARROW_ASSIGN_OR_RAISE(inputFile, arrow::io::ReadableFile::Open(filePath, arrow::default_memory_pool()));
