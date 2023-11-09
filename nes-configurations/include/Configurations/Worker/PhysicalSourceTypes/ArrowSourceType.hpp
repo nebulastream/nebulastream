@@ -83,6 +83,21 @@ class ArrowSourceType : public PhysicalSourceType {
     void setFilePath(const std::string filePath);
 
     /**
+     * @brief gets a ConfigurationOption object with skipHeader
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<bool>> getSkipHeader() const;
+
+    /**
+     * @brief set the value for skipHeader with the appropriate data format
+     */
+    void setSkipHeader(bool skipHeader);
+
+    /**
+     * @brief gets a ConfigurationOption object with skipHeader
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getDelimiter() const;
+
+    /**
      * @brief gets a ConfigurationOption object with sourceGatheringInterval
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getGatheringInterval() const;
@@ -147,6 +162,8 @@ class ArrowSourceType : public PhysicalSourceType {
     ArrowSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     Configurations::StringConfigOption filePath;
+    Configurations::BoolConfigOption skipHeader;
+    Configurations::StringConfigOption delimiter;
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
     Configurations::IntConfigOption sourceGatheringInterval;
