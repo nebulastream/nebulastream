@@ -28,18 +28,8 @@ namespace NES {
 
 using namespace Configurations;
 
-struct Output {
-    float iris0;
-    float iris1;
-    float iris2;
-
-    // overload the == operator to check if two instances are the same
-    bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
-};
-
 class ONNXInferenceDeploymentTest
-    : public Testing::BaseIntegrationTest,
-      public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::vector<Output>>> {
+    : public Testing::BaseIntegrationTest {
   public:
     static constexpr auto ALLOWED_ERROR = 0.0001;
     static void SetUpTestCase() {
@@ -51,12 +41,6 @@ class ONNXInferenceDeploymentTest
 * Tests the deployment of a simple ONNX model using base64 encoded input data
 */
 TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase64Encoding) {
-    struct IrisData {
-        uint64_t id;
-        std::string data;
-        uint64_t target;
-    };
-
     auto irisSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("data", DataTypeFactory::createText())
@@ -82,35 +66,30 @@ TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase6
                                   .validate()
                                   .setupTopology();
 
-    struct Output {
-        float iris0;
-        float iris1;
-        float iris2;
+    // Expected output
+    auto expectedOutput = "0.8635288, 0.12861131, 0.00785995\n"
+                          "0.8248063, 0.16215266, 0.01304107\n"
+                          "0.8458433, 0.14335841, 0.01079828\n"
+                          "0.8178819, 0.16869366, 0.01342443\n"
+                          "0.8635288, 0.12861131, 0.00785995\n"
+                          "0.8248063, 0.16215266, 0.01304107\n"
+                          "0.8458433, 0.14335841, 0.01079828\n"
+                          "0.8178819, 0.16869366, 0.01342443\n"
+                          "0.8635288, 0.12861131, 0.00785995\n"
+                          "0.8178819, 0.16869366, 0.01342443\n";
 
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
-    };
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();
 
-    std::vector<Output> expectedOutput{
-        {0.8635288, 0.12861131, 0.00785995},
-        {0.8248063, 0.16215266, 0.01304107},
-        {0.8458433, 0.14335841, 0.01079828},
-        {0.8178819, 0.16869366, 0.01342443},
-        {0.8635288, 0.12861131, 0.00785995},
-        {0.8248063, 0.16215266, 0.01304107},
-        {0.8458433, 0.14335841, 0.01079828},
-        {0.8178819, 0.16869366, 0.01342443},
-        {0.8635288, 0.12861131, 0.00785995},
-        {0.8178819, 0.16869366, 0.01342443},
-    };
-
-    auto actualOutput = testHarness.runQuery(expectedOutput.size(), "TopDown").getOutput<Output>();
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    for (size_t i = 0; i < actualOutput.size(); ++i) {
-        EXPECT_TRUE(std::abs(expectedOutput[i].iris0 - actualOutput[i].iris0) < ALLOWED_ERROR);
-        EXPECT_TRUE(std::abs(expectedOutput[i].iris1 - actualOutput[i].iris1) < ALLOWED_ERROR);
-        EXPECT_TRUE(std::abs(expectedOutput[i].iris2 - actualOutput[i].iris2) < ALLOWED_ERROR);
+    // Expecting near a delta
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    auto actualTuples = TestUtils::countTuples(actualBuffers);
+    for (auto i = 0_u64; i < actualTuples; ++i) {
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris0"].read<float>(), actualBuffers[0][i]["irisData$iris0"].read<float>(), ALLOWED_ERROR);
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris1"].read<float>(), actualBuffers[0][i]["irisData$iris1"].read<float>(), ALLOWED_ERROR);
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris2"].read<float>(), actualBuffers[0][i]["irisData$iris2"].read<float>(), ALLOWED_ERROR);
     }
 }
 }// namespace NES

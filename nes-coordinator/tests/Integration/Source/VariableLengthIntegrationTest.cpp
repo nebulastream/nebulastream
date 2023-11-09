@@ -77,12 +77,10 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
 
     // Creating expected output
     auto tmpBuffers = TestUtils::createExpectedBuffersFromCsv(expectedCsvFile, testSchema, testHarness.getBufferManager());
-    auto expectedTuples = std::accumulate(tmpBuffers.begin(), tmpBuffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
-        return sum + buf.getNumberOfTuples();
-    });
+    auto expectedTuples = TestUtils::countTuples(tmpBuffers);
 
     // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(expectedTuples).getOutputForVariableSizeDataTypes();
+    auto actualBuffers = testHarness.runQuery(expectedTuples).getOutput();
 
     // We require DynamicTupleBuffers, therefore we create them with the output schema.
     // This step can be only done after the query has been run.
@@ -90,8 +88,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
 
     // Comparing equality
-    EXPECT_EQ(actualBuffers.size(), expectedBuffers.size());
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(actualBuffers, expectedBuffers, true));
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers, true));
 }
 
 // This test reads from a csv sink which contains variable-length fields and applies a filter
@@ -141,7 +138,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
     });
 
     // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(expectedTuples).getOutputForVariableSizeDataTypes();
+    auto actualBuffers = testHarness.runQuery(expectedTuples).getOutput();
 
     // We require DynamicTupleBuffers, therefore we create them with the output schema.
     // This step can be only done after the query has been run.
@@ -149,8 +146,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
 
     // Comparing equality
-    EXPECT_EQ(actualBuffers.size(), expectedBuffers.size());
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(actualBuffers, expectedBuffers));
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 // This test reads from a csv sink which contains variable-length fields without any additional processing
@@ -193,7 +189,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     });
 
     // Run the query and get the actual dynamic buffers
-    auto actualBuffers = testHarness.runQuery(expectedTuples).getOutputForVariableSizeDataTypes();
+    auto actualBuffers = testHarness.runQuery(expectedTuples).getOutput();
 
     // We require DynamicTupleBuffers, therefore we create them with the output schema.
     // This step can be only done after the query has been run.
@@ -201,8 +197,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
 
     // Comparing equality
-    EXPECT_EQ(actualBuffers.size(), expectedBuffers.size());
-    EXPECT_TRUE(TestUtils::buffersContainSameTuples(actualBuffers, expectedBuffers));
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 }// namespace NES

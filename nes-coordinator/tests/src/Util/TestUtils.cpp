@@ -24,10 +24,10 @@
 #include <Util/StdInt.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/TestUtils.hpp>
-#include <algorithm>
 #include <chrono>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -567,20 +567,20 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBu
                               std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& actualBuffers,
                               bool orderSensitive) {
 
-    auto numBuffersExpected =
-        std::accumulate(expectedBuffers.begin(), expectedBuffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
-            return sum + buf.getNumberOfTuples();
-        });
-    auto numBuffersActual =
-        std::accumulate(actualBuffers.begin(), actualBuffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
-            return sum + buf.getNumberOfTuples();
-        });
+    auto numTuplesExpected = std::accumulate(expectedBuffers.begin(), expectedBuffers.end(), 0_u64,
+                                             [](const uint64_t sum, const auto& buf) {
+                                                 return sum + buf.getNumberOfTuples();
+                                             });
+    auto numTuplesActual = std::accumulate(actualBuffers.begin(), actualBuffers.end(), 0_u64,
+                                            [](const uint64_t sum, const auto& buf) {
+                                                return sum + buf.getNumberOfTuples();
+                                            });
 
-    if (numBuffersExpected != numBuffersActual) {
-        NES_ERROR("expected and actual buffers do not contain the same number of tuples!");
+    if (numTuplesExpected != numTuplesActual) {
+        NES_ERROR("expected {} and actual buffers {} do not contain the same number of tuples!", numTuplesExpected, numTuplesActual);
         return false;
     }
-    if (numBuffersExpected == 0 || numBuffersActual == 0) {
+    if (numTuplesExpected == 0 || numTuplesActual == 0) {
         NES_ERROR("Buffers can not be empty for comparison!");
         return false;
     }
@@ -592,7 +592,7 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBu
         auto expectedBufferTupleIdx = 0_u64;
         auto actualBufferTupleIdx = 0_u64;
 
-        while (expectedBufferPos < expectedBuffers.size() && actualBufferPos < actualBuffers.size()) {
+        while(expectedBufferPos < expectedBuffers.size() && actualBufferPos < actualBuffers.size()) {
             if (expectedBufferTupleIdx == expectedBuffers[expectedBufferPos].getNumberOfTuples()) {
                 expectedBufferTupleIdx = 0_u64;
             }
@@ -606,8 +606,7 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBu
             if (expectedTuple != actualTuple) {
                 const auto expectedSchema = expectedBuffers[expectedBufferPos].getMemoryLayout()->getSchema();
                 const auto actualSchema = actualBuffers[actualBufferPos].getMemoryLayout()->getSchema();
-                NES_ERROR("Tuples {} and {} are not equal!",
-                          expectedTuple.toString(expectedSchema),
+                NES_ERROR("Tuples {} and {} are not equal!", expectedTuple.toString(expectedSchema),
                           actualTuple.toString(actualSchema));
                 return false;
             }
@@ -628,28 +627,23 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBu
         // actualBuffers. If the occurrences are not equal, then not all tuples are in both buffers (expected and actual).
         for (auto& expectedBuffer : expectedBuffers) {
             for (auto&& expectedTuple : expectedBuffer) {
-                uint64_t occurrencesExpected = std::accumulate(expectedBuffers.begin(),
-                                                               expectedBuffers.end(),
-                                                               0_u64,
-                                                               [&](auto sum, const auto& innerActualBuffer) {
-                                                                   return sum + innerActualBuffer.countOccurrences(expectedTuple);
-                                                               });
+                uint64_t occurrencesExpected = std::accumulate(expectedBuffers.begin(), expectedBuffers.end(), 0_u64,
+                                                             [&](auto sum, const auto& innerActualBuffer) {
+                                                                 return sum + innerActualBuffer.countOccurrences(expectedTuple);
+                                                             });
                 if (occurrencesExpected == 0) {
                     NES_ERROR("Something is wrong as the expected tuple should be occurring at least once!");
                     return false;
                 }
 
-                uint64_t occurrencesActual = std::accumulate(actualBuffers.begin(),
-                                                             actualBuffers.end(),
-                                                             0_u64,
+                uint64_t occurrencesActual = std::accumulate(actualBuffers.begin(), actualBuffers.end(), 0_u64,
                                                              [&](auto sum, const auto& innerActualBuffer) {
                                                                  return sum + innerActualBuffer.countOccurrences(expectedTuple);
                                                              });
 
+
                 if (occurrencesExpected != occurrencesActual) {
-                    NES_ERROR("Could not find same number of occurrences expected: {} actual: {}",
-                              occurrencesExpected,
-                              occurrencesActual);
+                    NES_ERROR("Could not find same number of occurrences expected: {} actual: {}", occurrencesExpected, occurrencesActual);
                     return false;
                 }
             }
@@ -892,6 +886,28 @@ std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBuffersFromCsv(const 
     return createExpectedBufferFromStream(inputFile, schema, bufferManager, skipHeader, numTuplesPerBuffer, delimiter);
 }
 
+uint64_t TestUtils::countTuples(std::vector<Runtime::TupleBuffer>& buffers) {
+    return std::accumulate(buffers.begin(), buffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
+        return sum + buf.getNumberOfTuples();
+    });
+}
+
+uint64_t TestUtils::countTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& buffers) {
+    return std::accumulate(buffers.begin(), buffers.end(), 0_u64, [](const uint64_t sum, const auto& buf) {
+        return sum + buf.getNumberOfTuples();
+    });
+}
+
+std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBufferFromCSVString(std::string str,
+                                                                               const SchemaPtr& schema,
+                                                                               const Runtime::BufferManagerPtr& bufferManager,
+                                                                               bool skipHeader,
+                                                                               uint64_t numTuplesPerBuffer,
+                                                                               const string& delimiter) {
+    std::istringstream strStream(str);
+    return createExpectedBufferFromStream(strStream, schema, bufferManager, skipHeader, numTuplesPerBuffer, delimiter);
+}
+
 std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBufferFromStream(std::istream& istream,
                                                                             const SchemaPtr& schema,
                                                                             const Runtime::BufferManagerPtr& bufferManager,
@@ -905,6 +921,10 @@ std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBufferFromStream(std:
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto maxTuplePerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
     numTuplesPerBuffer = (numTuplesPerBuffer == 0) ? maxTuplePerBuffer : numTuplesPerBuffer;
+
+    // Setting the position indicator to the beginning and clearing potential any error flags
+    istream.clear();
+    istream.seekg(0, std::ios::beg);
 
     std::string line;
     if (skipHeader) {

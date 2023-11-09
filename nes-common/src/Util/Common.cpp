@@ -128,7 +128,12 @@ uint64_t murmurHash(uint64_t key) {
     return hash;
 }
 
-uint64_t countLinesOfStream(std::istream& stream) {
+uint64_t countLines(const std::string& str) {
+    std::stringstream stream(str);
+    return countLines(stream);
+}
+
+uint64_t countLines(std::istream& stream) {
     std::string tmpStr;
     uint64_t cnt = 0;
     while (std::getline(stream, tmpStr)) {

@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
-#include <API/AttributeField.hpp>
 #include <API/Query.hpp>
+#include <API/AttributeField.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -26,9 +26,9 @@
 #include <Util/Core.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
-#include <cstring>
 #include <filesystem>
 #include <type_traits>
+#include <cstring>
 #include <utility>
 
 /**
@@ -263,70 +263,13 @@ class TestHarness {
      * @brief Returns the output for the previously run query. Support also data types with variable data size
      * @return Vector of DynamicTupleBuffers
      */
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> getOutputForVariableSizeDataTypes();
+    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> getOutput();
 
     /**
      * @brief Returns the output schema of the query
      * @return SchemaPtr
      */
     SchemaPtr getOutputSchema();
-
-    /**
-     * @brief return the result of the query execution. This does only work for structs with NON variableLength data types
-     * @tparam T: Usually a struct representing one tuple/record
-     * @return Vector<T>
-     */
-    // TODO this method will be removed in issue #4330 and only getOutputForVariableSizeDataTypes() can be then used.
-    template<typename T>
-    std::vector<T> getOutput() {
-        QueryServicePtr queryService = nesCoordinator->getQueryService();
-        QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
-
-        // Check if the size of output struct match with the size of output schema
-        // Output struct might be padded, in this case the size is not equal to the total size of its field
-        // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
-        // (e.g., the size is multiple of 8)
-        const auto outputSchema =
-            queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->getSinkOperators()[0]->getOutputSchema();
-        const uint64_t outputSchemaSizeInBytes = outputSchema->getSchemaSizeInBytes();
-        NES_DEBUG("TestHarness: outputSchema: {}",
-                  queryCatalogService->getEntryForQuery(queryId)
-                      ->getInputQueryPlan()
-                      ->getSinkOperators()[0]
-                      ->getOutputSchema()
-                      ->toString());
-        NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
-                   "The size of output struct does not match output schema."
-                   " Output struct:"
-                       << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
-
-        auto dynamicTupleBuffers = getOutputForVariableSizeDataTypes();
-        std::vector<T> outputVector;
-        for (auto& buf : dynamicTupleBuffers) {
-            NES_INFO("Buf: {}", Util::printTupleBufferAsCSV(buf.getBuffer(), outputSchema));
-            for (auto i = 0_u64; i < buf.getNumberOfTuples(); ++i) {
-                auto tuple = buf[i];
-
-                const auto tupleIdxInOutputVec = outputVector.size();
-                outputVector.resize(outputVector.size() + 1);
-                uint64_t offSet = 0;
-                for (const auto& field : outputSchema->fields) {
-                    const auto& fieldName = field->getName();
-                    auto tupleField = tuple[fieldName];
-                    const auto fieldSize = tupleField.getPhysicalType()->size();
-
-                    // Now we are here copying the tuples. We do not have to take care of any variable data sizes,
-                    // as they are not supported in this method
-                    auto* dest = reinterpret_cast<uint8_t*>(outputVector.data())
-                        + tupleIdxInOutputVec * outputSchema->getSchemaSizeInBytes() + offSet;
-                    std::memcpy(dest, tupleField.getAddressPointer(), fieldSize);
-                    offSet += fieldSize;
-                }
-            }
-        }
-
-        return outputVector;
-    }
 
     TopologyPtr getTopology();
     const QueryPlanPtr& getQueryPlan() const;
