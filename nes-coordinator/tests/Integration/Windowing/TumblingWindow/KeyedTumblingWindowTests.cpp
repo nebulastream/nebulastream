@@ -459,8 +459,8 @@ TEST_F(KeyedTumblingWindowTests, testTumblingWindowMin2) {
                                        .byKey(Attribute("key"))
                                        .apply(Min(Attribute("value")));
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car");
+                           .addLogicalSource("car", carSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.pushElement<Car>({1, 15, 1000}, 2);
@@ -603,7 +603,7 @@ TEST_F(KeyedTumblingWindowTests, testSingleMultiKeyTumblingWindow) {
     // Expected output
     std::stringstream expectedOutput;
     for (uint64_t k = 0; k < 102; k++) {
-        expectedOutput << "0, 1000, " << k << ", " <<  k << ", " << k << ", 1\n";
+        expectedOutput << "0, 1000, " << k << ", " << k << ", " << k << ", 1\n";
     }
 
     // Run the query and get the actual dynamic buffers
