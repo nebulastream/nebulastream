@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.5.246](https://github.com/nebulastream/nebulastream/tree/v0.5.246) (2023-11-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.245...v0.5.246)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move nes-runtime/benchmark to nes-benchmark [\#4340](https://github.com/nebulastream/nebulastream/issues/4340)
+
+### Bug Fixes 🐛
+
+- Pull new images when CI runs [\#1964](https://github.com/nebulastream/nebulastream/issues/1964)
+
+### Miscellaneous Issues ✌️
+
+- \[TASK\] Rename to GRPC and tests [\#4341](https://github.com/nebulastream/nebulastream/issues/4341)
+- Generic hash implementation for the maps [\#2302](https://github.com/nebulastream/nebulastream/issues/2302)
+- Allow multiple data sources per worker [\#1925](https://github.com/nebulastream/nebulastream/issues/1925)
+- FileSink and Nes Format [\#895](https://github.com/nebulastream/nebulastream/issues/895)
+
 ## [v0.5.245](https://github.com/nebulastream/nebulastream/tree/v0.5.245) (2023-11-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.244...v0.5.245)
