@@ -164,7 +164,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         NES_WARNING("NesCoordinator: finished queryRequestProcessor");
     }));
 
-    NES_DEBUG("NesCoordinator: startCoordinatorRPCServer: Building GRPC Server");
     std::shared_ptr<std::promise<bool>> promRPC = std::make_shared<std::promise<bool>>();
 
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
@@ -189,7 +188,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     // Unconditionally set IP of internal worker and set IP and port of coordinator.
     coordinatorConfiguration->worker.coordinatorIp = rpcIp;
     coordinatorConfiguration->worker.coordinatorPort = rpcPort;
-    coordinatorConfiguration->worker.localWorkerIp = rpcIp;
     // Ensure that coordinator and internal worker enable/disable monitoring together.
     coordinatorConfiguration->worker.enableMonitoring = enableMonitoring;
     // Create a copy of the worker configuration to pass to the NesWorker.
