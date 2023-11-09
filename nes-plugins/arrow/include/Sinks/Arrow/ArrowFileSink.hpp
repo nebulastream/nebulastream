@@ -123,17 +123,6 @@ class ArrowFileSink : public SinkMedium {
     arrow::Status openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
                                 std::shared_ptr<arrow::Schema> arrowSchema,
                                 std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
-
-    /**
-     *
-     * @param arrowFileOutputStream
-     * @param arrowSchema
-     * @param arrowWriter
-     * @return
-     */
-    arrow::Status openCsvFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
-                              std::shared_ptr<arrow::Schema> arrowSchema,
-                              std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
 };
 using ArrowFileSinkPtr = std::shared_ptr<ArrowFileSink>;
 }// namespace NES
