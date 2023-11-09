@@ -77,11 +77,13 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
 
         // Run the query and get the actual dynamic buffers
         std::ifstream expectedFileStream(std::filesystem::path(TEST_DATA_DIRECTORY) / csvFileParams.expectedFile);
-        auto actualBuffers = testHarness.validate().setupTopology().runQuery(NES::Util::countLines(expectedFileStream)).getOutput();
+        auto actualBuffers =
+            testHarness.validate().setupTopology().runQuery(NES::Util::countLines(expectedFileStream)).getOutput();
 
         // Comparing equality
         const auto outputSchema = testHarness.getOutputSchema();
-        auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedFileStream, outputSchema, testHarness.getBufferManager());
+        auto tmpBuffers =
+            TestUtils::createExpectedBufferFromStream(expectedFileStream, outputSchema, testHarness.getBufferManager());
         auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
         EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
     }

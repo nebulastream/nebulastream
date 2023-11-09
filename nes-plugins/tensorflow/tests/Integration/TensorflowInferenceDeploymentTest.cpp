@@ -166,8 +166,8 @@ TEST_F(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeploymentMi
                                        "0.4731167, 0.31782052, 0.2090628\n"
                                        "0.4731167, 0.31782052, 0.2090628\n";
 
-    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutputString, outputSchema,
-                                                                   testHarness.getBufferManager());
+    auto tmpBuffers =
+        TestUtils::createExpectedBufferFromCSVString(expectedOutputString, outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
     auto expectedTuples = TestUtils::countTuples(expectedBuffers);
 
@@ -216,9 +216,15 @@ TEST_P(TensorflowInferenceDeploymentTest, DISABLED_testSimpleMLModelDeployment) 
     auto actualTuples = TestUtils::countTuples(actualBuffers);
     constexpr auto delta = 0.0000001;
     for (auto i = 0_u64; i < actualTuples; ++i) {
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris0"].read<float>(), actualBuffers[0][i]["irisData$iris0"].read<float>(), delta);
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris1"].read<float>(), actualBuffers[0][i]["irisData$iris1"].read<float>(), delta);
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris2"].read<float>(), actualBuffers[0][i]["irisData$iris2"].read<float>(), delta);
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris0"].read<float>(),
+                    actualBuffers[0][i]["irisData$iris0"].read<float>(),
+                    delta);
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris1"].read<float>(),
+                    actualBuffers[0][i]["irisData$iris1"].read<float>(),
+                    delta);
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris2"].read<float>(),
+                    actualBuffers[0][i]["irisData$iris2"].read<float>(),
+                    delta);
     }
 }
 

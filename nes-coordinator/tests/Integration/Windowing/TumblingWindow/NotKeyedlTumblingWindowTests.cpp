@@ -564,8 +564,6 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
                                 "15000, 16000, 1000, 1000, 1, 1, 1\n"
                                 "16000, 17000, 1000, 1000, 1, 1, 1\n";
 
-
-
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 

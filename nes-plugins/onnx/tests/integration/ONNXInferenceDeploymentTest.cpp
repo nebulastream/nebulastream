@@ -28,8 +28,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class ONNXInferenceDeploymentTest
-    : public Testing::BaseIntegrationTest {
+class ONNXInferenceDeploymentTest : public Testing::BaseIntegrationTest {
   public:
     static constexpr auto ALLOWED_ERROR = 0.0001;
     static void SetUpTestCase() {
@@ -87,9 +86,15 @@ TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase6
     auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
     auto actualTuples = TestUtils::countTuples(actualBuffers);
     for (auto i = 0_u64; i < actualTuples; ++i) {
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris0"].read<float>(), actualBuffers[0][i]["irisData$iris0"].read<float>(), ALLOWED_ERROR);
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris1"].read<float>(), actualBuffers[0][i]["irisData$iris1"].read<float>(), ALLOWED_ERROR);
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris2"].read<float>(), actualBuffers[0][i]["irisData$iris2"].read<float>(), ALLOWED_ERROR);
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris0"].read<float>(),
+                    actualBuffers[0][i]["irisData$iris0"].read<float>(),
+                    ALLOWED_ERROR);
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris1"].read<float>(),
+                    actualBuffers[0][i]["irisData$iris1"].read<float>(),
+                    ALLOWED_ERROR);
+        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris2"].read<float>(),
+                    actualBuffers[0][i]["irisData$iris2"].read<float>(),
+                    ALLOWED_ERROR);
     }
 }
 }// namespace NES
