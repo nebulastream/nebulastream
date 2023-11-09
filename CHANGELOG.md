@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.247](https://github.com/nebulastream/nebulastream/tree/v0.5.247) (2023-11-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.246...v0.5.247)
+
+**Implemented enhancements:**
+
+- \[TASK\] Removing TestHarness::getOutput\<\>\(\) [\#4330](https://github.com/nebulastream/nebulastream/issues/4330)
+
 ## [v0.5.246](https://github.com/nebulastream/nebulastream/tree/v0.5.246) (2023-11-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.245...v0.5.246)
