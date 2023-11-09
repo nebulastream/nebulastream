@@ -61,7 +61,6 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     auto query = Query::from("test");
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("test", testSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test")     //idx=2
                            .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //idx=3
@@ -84,23 +83,20 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 4U);
 
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value); }
-    };
-
-    std::vector<Output> expectedOutput;
+    // Expected output
+    std::stringstream expectedOutput;
     for (int i = 0; i < 50; ++i) {
-        expectedOutput.push_back({1, 1});
+        expectedOutput << "1, 1\n";
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -152,23 +148,20 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value); }
-    };
-
-    std::vector<Output> expectedOutput;
+    // Expected output
+    std::stringstream expectedOutput;
     for (int i = 0; i < 60; ++i) {
-        expectedOutput.push_back({1, 1});
+        expectedOutput << "1, 1\n";
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -216,23 +209,20 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 4U);
 
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value); }
-    };
-
-    std::vector<Output> expectedOutput;
+    // Expected output
+    std::stringstream expectedOutput;
     for (int i = 0; i < 40; ++i) {
-        expectedOutput.push_back({1, 1});
+        expectedOutput << "1, 1\n";
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -284,23 +274,20 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value); }
-    };
-
-    std::vector<Output> expectedOutput;
+    // Expected output
+    std::stringstream expectedOutput;
     for (int i = 0; i < 40; ++i) {
-        expectedOutput.push_back({1, 1});
+        expectedOutput << "1, 1\n";
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -366,23 +353,20 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value); }
-    };
-
-    std::vector<Output> expectedOutput;
+    // Expected output
+    std::stringstream expectedOutput;
     for (int i = 0; i < 40; ++i) {
-        expectedOutput.push_back({1, 1});
+        expectedOutput << "1, 1\n";
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -452,19 +436,24 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
-    struct Output {
-        uint64_t val3;
+    // Expected output
+    const auto expectedOutput = "3\n"
+                                "4\n"
+                                "3\n"
+                                "4\n"
+                                "3\n"
+                                "4\n"
+                                "3\n"
+                                "4\n";
 
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (val3 == rhs.val3); }
-    };
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    std::vector<Output> expectedOutput = {{3}, {4}, {3}, {4}, {3}, {4}, {3}, {4}};
-
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -541,31 +530,18 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevel) {
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
-    struct Output {
-        uint64_t start;
-        uint64_t end;
-        uint64_t id;
-        uint64_t value;
+    // Expected output
+    const auto expectedOutput = "1000, 2000, 1, 68\n"
+                                "2000, 3000, 2, 112\n";
 
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const {
-            return (start == rhs.start && end == rhs.end && id == rhs.id && value == rhs.value);
-        }
-    };
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
-
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
-
-    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
-    // check that the new window op "CENTRALWINDOW" is in use
-    NES_INFO("DeepHierarchyTopologyTest: Executed with plan \n{}", queryPlan->toString());
-    ASSERT_TRUE(queryPlan->toString().find("WindowComputationOperator") != std::string::npos);
-    ASSERT_TRUE(queryPlan->toString().find("SliceMergingOperator") != std::string::npos);
-    ASSERT_TRUE(queryPlan->toString().find("SliceCreationOperator") != std::string::npos);
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -653,29 +629,18 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testDistributedWindowThreeLevelNemoPl
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
-    struct Output {
-        uint64_t start;
-        uint64_t end;
-        uint64_t id;
-        uint64_t value;
+    // Expected output
+    const auto expectedOutput = "1000, 2000, 1, 68\n"
+                                "2000, 3000, 2, 112\n";
 
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const {
-            return (start == rhs.start && end == rhs.end && id == rhs.id && value == rhs.value);
-        }
-    };
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    std::vector<Output> expectedOutput = {{1000, 2000, 1, 68}, {2000, 3000, 2, 112}};
-
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
-
-    QueryPlanPtr queryPlan = testHarness.getQueryPlan();
-    // check that the new window op "CENTRALWINDOW" is in use
-    NES_INFO("DeepHierarchyTopologyTest: Executed with plan \n{}", queryPlan->toString());
-    ASSERT_TRUE(queryPlan->toString().find("CENTRALWINDOW") != std::string::npos);
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -742,23 +707,20 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 1U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1U);
 
-    struct Output {
-        uint64_t id;
-        uint64_t value;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
-    };
-
-    std::vector<Output> expectedOutput;
+    // Expected output
+    std::stringstream expectedOutput;
     for (int i = 0; i < 40; ++i) {
-        expectedOutput.push_back({1, 1});
+        expectedOutput << "1, 1\n";
     }
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -825,25 +787,22 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     ASSERT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(topology->getRoot()->getChildren()[1]->getChildren().size(), 2U);
 
-    struct Output {
-        uint64_t start;
-        uint64_t end;
-        uint64_t value;
+    // Expected output
+    const auto expectedOutput = "0, 2000, 16\n"
+                                "2000, 4000, 96\n"
+                                "4000, 6000, 80\n"
+                                "6000, 8000, 112\n"
+                                "8000, 10000, 32\n";
 
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (start == rhs.start && end == rhs.end && value == rhs.value); }
-    };
 
-    std::vector<Output> expectedOutput = {{0, 2000, 16},
-                                          {2000, 4000, 96},
-                                          {4000, 6000, 80},
-                                          {6000, 8000, 112},
-                                          {8000, 10000, 32}};
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 //TODO:add join once it is implemented correctly

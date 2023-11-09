@@ -52,24 +52,6 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
     }
 
     std::string testName = "UnionDeploymentTest";
-
-    // Without the packed attribute, Clang might use 64 bits for the uint32_t, causing an error.
-    struct __attribute__((packed)) OutputCarTruck {
-        uint32_t car$id;
-        uint64_t car$value;
-
-        bool operator==(OutputCarTruck const& rhs) const { return (car$id == rhs.car$id && car$value == rhs.car$value); }
-    };
-
-    struct __attribute__((packed)) OutputRubyDiamond {
-        uint32_t ruby$id;
-        uint32_t ruby$value;
-        uint32_t ruby$timestamp;
-
-        bool operator==(OutputRubyDiamond const& rhs) const {
-            return (ruby$id == rhs.ruby$id && ruby$value == rhs.ruby$value && ruby$timestamp == rhs.ruby$timestamp);
-        }
-    };
 };
 
 /**
@@ -86,24 +68,25 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
                                   .attachWorkerWithCSVSourceToCoordinator(sourceTruck)
                                   .validate()
                                   .setupTopology();
-    std::vector<OutputCarTruck> expectedOutput;
-    // The first 40 entries are car values (0,0 - 39,39), the last 40 entries are truck values (0,0 - 39,3900).
+
+    // Expected output the first 40 entries are car values (0,0 - 39,39), the last 40 entries are truck values (0,0 - 39,3900).
+    std::stringstream expectedOutput;
     for (uint32_t i = 0; i < 80; i++) {
         bool isCarValue = i < 40;
         // Start counting from 0 again when the 40 car values were processed.
         uint32_t id = i % 40;
         uint32_t value = (isCarValue) ? id : id * 100;
-        expectedOutput.emplace_back(OutputCarTruck{id, value});
+        expectedOutput << id << ", " << value << "\n";
     }
 
-    std::string placementStrategy = "BottomUp";
-    std::vector<OutputCarTruck> actualOutput = testHarness
-                                                   .runQuery(
-                                                       /* num output tuples expected */ expectedOutput.size(),
-                                                       /* placement strategy*/ "BottomUp")
-                                                   .getOutput<OutputCarTruck>();
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -120,23 +103,25 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
                                   .attachWorkerWithCSVSourceToCoordinator(sourceTruck)
                                   .validate()
                                   .setupTopology();
-    std::vector<OutputCarTruck> expectedOutput;
-    // The first 40 entries are car values (0,0 - 39,39), the last 40 entries are truck values (0,0 - 39,3900).
+
+    // Expected output the first 40 entries are car values (0,0 - 39,39), the last 40 entries are truck values (0,0 - 39,3900).
+    std::stringstream expectedOutput;
     for (uint32_t i = 0; i < 80; i++) {
         bool isCarValue = i < 40;
         // Start counting from 0 again when the 40 car values were processed.
         uint32_t id = i % 40;
         uint32_t value = (isCarValue) ? id : id * 100;
-        expectedOutput.emplace_back(OutputCarTruck{id, value});
+        expectedOutput << id << ", " << value << "\n";
     }
 
-    auto actualOutput = testHarness
-                            .runQuery(
-                                /* num output tuples expected */ expectedOutput.size(),
-                                /* placement strategy*/ "TopDown")
-                            .getOutput<OutputCarTruck>();
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -161,23 +146,24 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
                                   .validate()
                                   .setupTopology();
 
-    std::vector<OutputRubyDiamond> expectedOutput;
-    expectedOutput.emplace_back(OutputRubyDiamond{1, 12, 2});
-    expectedOutput.emplace_back(OutputRubyDiamond{2, 11, 2});
-    expectedOutput.emplace_back(OutputRubyDiamond{2, 16, 2});
-    expectedOutput.emplace_back(OutputRubyDiamond{3, 11, 2});
-    expectedOutput.emplace_back(OutputRubyDiamond{1, 12, 1001});
-    expectedOutput.emplace_back(OutputRubyDiamond{2, 11, 2001});
-    expectedOutput.emplace_back(OutputRubyDiamond{2, 16, 2002});
-    expectedOutput.emplace_back(OutputRubyDiamond{3, 11, 3001});
+    // Expected output
+    auto expectedOutput = "1, 12, 2\n"
+                          "2, 11, 2\n"
+                          "2, 16, 2\n"
+                          "3, 11, 2\n"
+                          "1, 12, 1001\n"
+                          "2, 11, 2001\n"
+                          "2, 16, 2002\n"
+                          "3, 11, 3001\n";
 
-    auto actualOutput = testHarness
-                            .runQuery(
-                                /* num output tuples expected */ expectedOutput.size(),
-                                /* placement strategy*/ "BottomUp")
-                            .getOutput<OutputRubyDiamond>();
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -203,24 +189,25 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
                                   .validate()
                                   .setupTopology();
 
-    std::vector<OutputRubyDiamond> expectedOutput;
-    // The first 17 entries are raw entries from the window.csv file stream.
+    // Expected output the first 17 entries are raw entries from the window.csv file stream.
     // The next 12 entries are the result of the second query of the unionWith statement.
+    std::stringstream expectedOutput;
     uint32_t numFirstQueryValues = 18;
     for (uint32_t i = 0; i < 29; i++) {
         uint32_t id = 1;
         uint32_t value = (i % numFirstQueryValues) + 4;
         uint32_t timestamp = (i < numFirstQueryValues) ? value * 1000 : 2;
-        expectedOutput.emplace_back(OutputRubyDiamond{value, id, timestamp});
+        expectedOutput << value << ", " << id << ", " << timestamp << "\n";
     }
 
-    auto actualOutput = testHarness
-                            .runQuery(
-                                /* num output tuples expected */ expectedOutput.size(),
-                                /* placement strategy*/ "TopDown")
-                            .getOutput<OutputRubyDiamond>();
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -247,23 +234,24 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
                                   .validate()
                                   .setupTopology();
 
-    std::vector<OutputRubyDiamond> expectedOutput;
-    // The first 18 entries come from the first part of the unionWith statement.
+    // Expected output the first 18 entries come from the first part of the unionWith statement.
     // The next 2 entries are the result of the second query of the unionWith statement.
+    std::stringstream expectedOutput;
     uint32_t numFirstQueryValues = 18;
     for (uint32_t i = 0; i < 20; i++) {
         uint32_t id = 1;
         uint32_t value = (i % numFirstQueryValues) + 4;
         uint32_t timestamp = (i < numFirstQueryValues) ? 2 : 1;
-        expectedOutput.emplace_back(OutputRubyDiamond{value, id, timestamp});
+        expectedOutput << value << ", " << id << ", " << timestamp << "\n";
     }
 
-    auto actualOutput = testHarness
-                            .runQuery(
-                                /* num output tuples expected */ expectedOutput.size(),
-                                /* placement strategy*/ "BottomUp")
-                            .getOutput<OutputRubyDiamond>();
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 }// namespace NES

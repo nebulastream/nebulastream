@@ -67,38 +67,6 @@ struct InputValue {
     uint64_t timestamp;
 };
 
-struct Output {
-    uint64_t start;
-    uint64_t end;
-    uint64_t value;
-    bool operator==(Output const& rhs) const { return (start == rhs.start && end == rhs.end && value == rhs.value); }
-    friend ostream& operator<<(ostream& os, const Output& output) {
-        os << "start: " << output.start << " end: " << output.end << " value: " << output.value;
-        return os;
-    }
-};
-
-struct OutputMultiAgg {
-    uint64_t start;
-    uint64_t end;
-    uint64_t value1;
-    uint64_t value2;
-    uint64_t value3;
-    uint64_t value4;
-    uint64_t value5;
-    bool operator==(const OutputMultiAgg& rhs) const {
-        return start == rhs.start && end == rhs.end && value1 == rhs.value1 && value2 == rhs.value2 && value3 == rhs.value3
-            && value4 == rhs.value4 && value5 == rhs.value5;
-    }
-    bool operator!=(const OutputMultiAgg& rhs) const { return !(rhs == *this); }
-
-    friend ostream& operator<<(ostream& os, const OutputMultiAgg& agg) {
-        os << "start: " << agg.start << " end: " << agg.end << " value1: " << agg.value1 << " value2: " << agg.value2
-           << " value3: " << agg.value3 << " value4: " << agg.value4 << " value5: " << agg.value5;
-        return os;
-    }
-};
-
 PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
                                               std::string physicalSourceName,
                                               uint64_t numberOfBuffers,
@@ -165,20 +133,23 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-
     testHarness.validate().setupTopology();
 
-    std::vector<Output> expectedOutput = {{0, 1000, 170}};
+    // Expected output
+    auto expectedOutput = "0, 1000, 170\n";
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
-    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
@@ -194,20 +165,23 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-
     testHarness.validate().setupTopology();
 
-    std::vector<Output> expectedOutput = {{0, 1000, 170}};
+    // Expected output
+    auto expectedOutput = "0, 1000, 170\n";
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
-    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
@@ -222,16 +196,23 @@ TEST_F(NonKeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
                      .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<Output> expectedOutput = {{0, 1000, 17000}};
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
-    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
-    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+
+    // Expected output
+    auto expectedOutput = "0, 1000, 17000\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
@@ -246,31 +227,35 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
                      .apply(Sum(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
 
-    std::vector<Output> expectedOutput = {};
-
+    // Expected output
+    std::stringstream expectedOutput;
     for (uint64_t windowStart = 0; windowStart <= 16000; windowStart = windowStart + 100) {
-        expectedOutput.push_back({windowStart, windowStart + 1000, 1000});
+        expectedOutput << windowStart << ", " << (windowStart + 1000) << ", 1000\n";
     }
-    expectedOutput.push_back({16100, 17100, 900});
-    expectedOutput.push_back({16200, 17200, 800});
-    expectedOutput.push_back({16300, 17300, 700});
-    expectedOutput.push_back({16400, 17400, 600});
-    expectedOutput.push_back({16500, 17500, 500});
-    expectedOutput.push_back({16600, 17600, 400});
-    expectedOutput.push_back({16700, 17700, 300});
-    expectedOutput.push_back({16800, 17800, 200});
-    expectedOutput.push_back({16900, 17900, 100});
+    expectedOutput << "16100, 17100, 900\n"
+                   << "16200, 17200, 800\n"
+                   << "16300, 17300, 700\n"
+                   << "16400, 17400, 600\n"
+                   << "16500, 17500, 500\n"
+                   << "16600, 17600, 400\n"
+                   << "16700, 17700, 300\n"
+                   << "16800, 17800, 200\n"
+                   << "16900, 17900, 100\n";
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
-    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
-    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
@@ -292,18 +277,24 @@ TEST_F(NonKeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
 
-    std::vector<Output> expectedOutput = {};
-    expectedOutput.push_back({0, 1000, 1000});
+    // Expected output
+    std::stringstream expectedOutput;
+    expectedOutput << "0, 1000, 1000\n";
     for (uint64_t windowStart = 300; windowStart <= 16000; windowStart = windowStart + 300) {
-        expectedOutput.push_back({windowStart, windowStart + 1000, 1000});
+        expectedOutput << windowStart << ", " << (windowStart + 1000) << ", 1000\n";
     }
-    expectedOutput.push_back({16200, 17200, 800});
-    expectedOutput.push_back({16500, 17500, 500});
-    expectedOutput.push_back({16800, 17800, 200});
+    expectedOutput << "16200, 17200, 800\n"
+                   << "16500, 17500, 500\n"
+                   << "16800, 17800, 200\n";
 
-    std::vector<Output> actualOutput = testHarness.runQuery(expectedOutput.size(), "BottomUp").getOutput<Output>();
-    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
-    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 }// namespace NES

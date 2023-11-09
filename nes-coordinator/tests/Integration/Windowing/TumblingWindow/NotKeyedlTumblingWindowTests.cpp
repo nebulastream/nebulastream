@@ -66,82 +66,12 @@ struct MultipleInputValues {
     uint64_t timestamp;
 };
 
-struct GlobalOutput {
-    uint64_t start;
-    uint64_t end;
-    uint64_t value;
-    bool operator==(GlobalOutput const& rhs) const { return (start == rhs.start && end == rhs.end && value == rhs.value); }
-    friend ostream& operator<<(ostream& os, const GlobalOutput& GlobalOutput) {
-        os << "start: " << GlobalOutput.start << " end: " << GlobalOutput.end << " value: " << GlobalOutput.value;
-        return os;
-    }
-};
-
-struct GlobalOutputMultiAgg {
-    uint64_t start;
-    uint64_t end;
-    uint64_t value1;
-    uint64_t value2;
-    uint64_t value3;
-    uint64_t value4;
-    uint64_t value5;
-    bool operator==(const GlobalOutputMultiAgg& rhs) const {
-        return start == rhs.start && end == rhs.end && value1 == rhs.value1 && value2 == rhs.value2 && value3 == rhs.value3
-            && value4 == rhs.value4 && value5 == rhs.value5;
-    }
-    bool operator!=(const GlobalOutputMultiAgg& rhs) const { return !(rhs == *this); }
-
-    friend ostream& operator<<(ostream& os, const GlobalOutputMultiAgg& agg) {
-        os << "start: " << agg.start << " end: " << agg.end << " value1: " << agg.value1 << " value2: " << agg.value2
-           << " value3: " << agg.value3 << " value4: " << agg.value4 << " value5: " << agg.value5;
-        return os;
-    }
-};
-
 struct InputValueMultiKeys {
     uint64_t value;
     uint64_t key1;
     uint64_t key2;
     uint64_t key3;
     uint64_t timestamp;
-};
-
-struct GlobalOutputMultiKeys {
-    uint64_t start;
-    uint64_t end;
-    uint64_t key1;
-    uint64_t key2;
-    uint64_t key3;
-    uint64_t value;
-    bool operator==(const GlobalOutputMultiKeys& rhs) const {
-        return start == rhs.start && end == rhs.end && key1 == rhs.key1 && key2 == rhs.key2 && key3 == rhs.key3
-            && value == rhs.value;
-    }
-    bool operator!=(const GlobalOutputMultiKeys& rhs) const { return !(rhs == *this); }
-    friend ostream& operator<<(ostream& os, const GlobalOutputMultiKeys& keys) {
-        os << "start: " << keys.start << " end: " << keys.end << " key1: " << keys.key1 << " key2: " << keys.key2
-           << " key3: " << keys.key3 << " value: " << keys.value;
-        return os;
-    }
-};
-
-struct GlobalOutputMultiAggSameKey {
-    uint64_t start;
-    uint64_t end;
-    uint64_t value1;
-    uint64_t value2;
-    uint64_t value3;
-    uint64_t value4;
-    bool operator==(const GlobalOutputMultiAggSameKey& rhs) const {
-        return start == rhs.start && end == rhs.end && value1 == rhs.value1 && value2 == rhs.value2 && value3 == rhs.value3
-            && value4 == rhs.value4;
-    }
-    bool operator!=(const GlobalOutputMultiAggSameKey& rhs) const { return !(rhs == *this); }
-    friend ostream& operator<<(ostream& os, const GlobalOutputMultiAggSameKey& keys) {
-        os << "start: " << keys.start << " end: " << keys.end << " value1: " << keys.value1 << " value2: " << keys.value2
-           << " value3:" << keys.value3 << " value4:" << keys.value4;
-        return os;
-    }
 };
 
 PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
@@ -279,21 +209,23 @@ TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) 
 
     auto lambdaSource = createSimpleInputStream("window", "window1", 1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
-
     testHarness.validate().setupTopology();
 
-    std::vector<GlobalOutput> expectedGlobalOutput = {{0, 1000, 170}};
+    // Expected output
+    const auto expectedOutput = "0, 1000, 170\n";
 
-    std::vector<GlobalOutput> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutput>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
@@ -308,17 +240,23 @@ TEST_F(NonKeyedTumblingWindowTests, testSingleGlobalTumblingWindowMultiBuffer) {
                      .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutput> expectedGlobalOutput = {{0, 1000, 17000}};
-    std::vector<GlobalOutput> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutput>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 17000\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer) {
@@ -333,33 +271,39 @@ TEST_F(NonKeyedTumblingWindowTests, testMultipleGlobalTumblingWindowMultiBuffer)
                      .apply(Sum(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutput> expectedGlobalOutput = {{0, 1000, 1000},
-                                                      {1000, 2000, 1000},
-                                                      {2000, 3000, 1000},
-                                                      {3000, 4000, 1000},
-                                                      {4000, 5000, 1000},
-                                                      {5000, 6000, 1000},
-                                                      {6000, 7000, 1000},
-                                                      {7000, 8000, 1000},
-                                                      {8000, 9000, 1000},
-                                                      {9000, 10000, 1000},
-                                                      {10000, 11000, 1000},
-                                                      {11000, 12000, 1000},
-                                                      {12000, 13000, 1000},
-                                                      {13000, 14000, 1000},
-                                                      {14000, 15000, 1000},
-                                                      {15000, 16000, 1000},
-                                                      {16000, 17000, 1000}};
-    std::vector<GlobalOutput> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutput>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 1000\n"
+                                "1000, 2000, 1000\n"
+                                "2000, 3000, 1000\n"
+                                "3000, 4000, 1000\n"
+                                "4000, 5000, 1000\n"
+                                "5000, 6000, 1000\n"
+                                "6000, 7000, 1000\n"
+                                "7000, 8000, 1000\n"
+                                "8000, 9000, 1000\n"
+                                "9000, 10000, 1000\n"
+                                "10000, 11000, 1000\n"
+                                "11000, 12000, 1000\n"
+                                "12000, 13000, 1000\n"
+                                "13000, 14000, 1000\n"
+                                "14000, 15000, 1000\n"
+                                "15000, 16000, 1000\n"
+                                "16000, 17000, 1000\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleKeys) {
@@ -374,18 +318,23 @@ TEST_F(NonKeyedTumblingWindowTests, testSingleTumblingWindowMultiBufferMultipleK
                      .apply(Sum(Attribute("value")));
     auto lambdaSource = createSimpleInputStream("window", "window1", 100, 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutput> expectedGlobalOutput;
-    expectedGlobalOutput.push_back({0, 1000, 17000});
-    std::vector<GlobalOutput> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutput>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 17000\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowCount) {
@@ -398,33 +347,39 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowCount) {
     auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Count());
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutput> expectedGlobalOutput = {{0, 1000, 1000},
-                                                      {1000, 2000, 1000},
-                                                      {2000, 3000, 1000},
-                                                      {3000, 4000, 1000},
-                                                      {4000, 5000, 1000},
-                                                      {5000, 6000, 1000},
-                                                      {6000, 7000, 1000},
-                                                      {7000, 8000, 1000},
-                                                      {8000, 9000, 1000},
-                                                      {9000, 10000, 1000},
-                                                      {10000, 11000, 1000},
-                                                      {11000, 12000, 1000},
-                                                      {12000, 13000, 1000},
-                                                      {13000, 14000, 1000},
-                                                      {14000, 15000, 1000},
-                                                      {15000, 16000, 1000},
-                                                      {16000, 17000, 1000}};
-    std::vector<GlobalOutput> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutput>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 1000\n"
+                                "1000, 2000, 1000\n"
+                                "2000, 3000, 1000\n"
+                                "3000, 4000, 1000\n"
+                                "4000, 5000, 1000\n"
+                                "5000, 6000, 1000\n"
+                                "6000, 7000, 1000\n"
+                                "7000, 8000, 1000\n"
+                                "8000, 9000, 1000\n"
+                                "9000, 10000, 1000\n"
+                                "10000, 11000, 1000\n"
+                                "11000, 12000, 1000\n"
+                                "12000, 13000, 1000\n"
+                                "13000, 14000, 1000\n"
+                                "14000, 15000, 1000\n"
+                                "15000, 16000, 1000\n"
+                                "16000, 17000, 1000\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMin) {
@@ -439,33 +394,39 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMin) {
                      .apply(Min(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutput> expectedGlobalOutput = {{0, 1000, 1},
-                                                      {1000, 2000, 1},
-                                                      {2000, 3000, 1},
-                                                      {3000, 4000, 1},
-                                                      {4000, 5000, 1},
-                                                      {5000, 6000, 1},
-                                                      {6000, 7000, 1},
-                                                      {7000, 8000, 1},
-                                                      {8000, 9000, 1},
-                                                      {9000, 10000, 1},
-                                                      {10000, 11000, 1},
-                                                      {11000, 12000, 1},
-                                                      {12000, 13000, 1},
-                                                      {13000, 14000, 1},
-                                                      {14000, 15000, 1},
-                                                      {15000, 16000, 1},
-                                                      {16000, 17000, 1}};
-    std::vector<GlobalOutput> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutput>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 1\n"
+                                "1000, 2000, 1\n"
+                                "2000, 3000, 1\n"
+                                "3000, 4000, 1\n"
+                                "4000, 5000, 1\n"
+                                "5000, 6000, 1\n"
+                                "6000, 7000, 1\n"
+                                "7000, 8000, 1\n"
+                                "8000, 9000, 1\n"
+                                "9000, 10000, 1\n"
+                                "10000, 11000, 1\n"
+                                "11000, 12000, 1\n"
+                                "12000, 13000, 1\n"
+                                "13000, 14000, 1\n"
+                                "14000, 15000, 1\n"
+                                "15000, 16000, 1\n"
+                                "16000, 17000, 1\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMax) {
@@ -480,33 +441,39 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMax) {
                      .apply(Max(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutput> expectedGlobalOutput = {{0, 1000, 1},
-                                                      {1000, 2000, 1},
-                                                      {2000, 3000, 1},
-                                                      {3000, 4000, 1},
-                                                      {4000, 5000, 1},
-                                                      {5000, 6000, 1},
-                                                      {6000, 7000, 1},
-                                                      {7000, 8000, 1},
-                                                      {8000, 9000, 1},
-                                                      {9000, 10000, 1},
-                                                      {10000, 11000, 1},
-                                                      {11000, 12000, 1},
-                                                      {12000, 13000, 1},
-                                                      {13000, 14000, 1},
-                                                      {14000, 15000, 1},
-                                                      {15000, 16000, 1},
-                                                      {16000, 17000, 1}};
-    std::vector<GlobalOutput> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutput>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 1\n"
+                                "1000, 2000, 1\n"
+                                "2000, 3000, 1\n"
+                                "3000, 4000, 1\n"
+                                "4000, 5000, 1\n"
+                                "5000, 6000, 1\n"
+                                "6000, 7000, 1\n"
+                                "7000, 8000, 1\n"
+                                "8000, 9000, 1\n"
+                                "9000, 10000, 1\n"
+                                "10000, 11000, 1\n"
+                                "11000, 12000, 1\n"
+                                "12000, 13000, 1\n"
+                                "13000, 14000, 1\n"
+                                "14000, 15000, 1\n"
+                                "15000, 16000, 1\n"
+                                "16000, 17000, 1\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowAVG) {
@@ -521,33 +488,39 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowAVG) {
                      .apply(Avg(Attribute("value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutput> expectedGlobalOutput = {{0, 1000, 1},
-                                                      {1000, 2000, 1},
-                                                      {2000, 3000, 1},
-                                                      {3000, 4000, 1},
-                                                      {4000, 5000, 1},
-                                                      {5000, 6000, 1},
-                                                      {6000, 7000, 1},
-                                                      {7000, 8000, 1},
-                                                      {8000, 9000, 1},
-                                                      {9000, 10000, 1},
-                                                      {10000, 11000, 1},
-                                                      {11000, 12000, 1},
-                                                      {12000, 13000, 1},
-                                                      {13000, 14000, 1},
-                                                      {14000, 15000, 1},
-                                                      {15000, 16000, 1},
-                                                      {16000, 17000, 1}};
-    std::vector<GlobalOutput> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutput>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 1\n"
+                                "1000, 2000, 1\n"
+                                "2000, 3000, 1\n"
+                                "3000, 4000, 1\n"
+                                "4000, 5000, 1\n"
+                                "5000, 6000, 1\n"
+                                "6000, 7000, 1\n"
+                                "7000, 8000, 1\n"
+                                "8000, 9000, 1\n"
+                                "9000, 10000, 1\n"
+                                "10000, 11000, 1\n"
+                                "11000, 12000, 1\n"
+                                "12000, 13000, 1\n"
+                                "13000, 14000, 1\n"
+                                "14000, 15000, 1\n"
+                                "15000, 16000, 1\n"
+                                "16000, 17000, 1\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
@@ -566,33 +539,41 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAggregate) {
                             Avg(Attribute("value"))->as(Attribute("avg_value")));
     auto dg = DataGenerator("window", "window1", 100);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutputMultiAgg> expectedGlobalOutput = {{0, 1000, 1000, 1000, 1, 1, 1},
-                                                              {1000, 2000, 1000, 1000, 1, 1, 1},
-                                                              {2000, 3000, 1000, 1000, 1, 1, 1},
-                                                              {3000, 4000, 1000, 1000, 1, 1, 1},
-                                                              {4000, 5000, 1000, 1000, 1, 1, 1},
-                                                              {5000, 6000, 1000, 1000, 1, 1, 1},
-                                                              {6000, 7000, 1000, 1000, 1, 1, 1},
-                                                              {7000, 8000, 1000, 1000, 1, 1, 1},
-                                                              {8000, 9000, 1000, 1000, 1, 1, 1},
-                                                              {9000, 10000, 1000, 1000, 1, 1, 1},
-                                                              {10000, 11000, 1000, 1000, 1, 1, 1},
-                                                              {11000, 12000, 1000, 1000, 1, 1, 1},
-                                                              {12000, 13000, 1000, 1000, 1, 1, 1},
-                                                              {13000, 14000, 1000, 1000, 1, 1, 1},
-                                                              {14000, 15000, 1000, 1000, 1, 1, 1},
-                                                              {15000, 16000, 1000, 1000, 1, 1, 1},
-                                                              {16000, 17000, 1000, 1000, 1, 1, 1}};
-    std::vector<GlobalOutputMultiAgg> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutputMultiAgg>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 1000, 1000, 1, 1, 1\n"
+                                "1000, 2000, 1000, 1000, 1, 1, 1\n"
+                                "2000, 3000, 1000, 1000, 1, 1, 1\n"
+                                "3000, 4000, 1000, 1000, 1, 1, 1\n"
+                                "4000, 5000, 1000, 1000, 1, 1, 1\n"
+                                "5000, 6000, 1000, 1000, 1, 1, 1\n"
+                                "6000, 7000, 1000, 1000, 1, 1, 1\n"
+                                "7000, 8000, 1000, 1000, 1, 1, 1\n"
+                                "8000, 9000, 1000, 1000, 1, 1, 1\n"
+                                "9000, 10000, 1000, 1000, 1, 1, 1\n"
+                                "10000, 11000, 1000, 1000, 1, 1, 1\n"
+                                "11000, 12000, 1000, 1000, 1, 1, 1\n"
+                                "12000, 13000, 1000, 1000, 1, 1, 1\n"
+                                "13000, 14000, 1000, 1000, 1, 1, 1\n"
+                                "14000, 15000, 1000, 1000, 1, 1, 1\n"
+                                "15000, 16000, 1000, 1000, 1, 1, 1\n"
+                                "16000, 17000, 1000, 1000, 1, 1, 1\n";
+
+
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -619,33 +600,39 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiAverageAndCount) {
                             Count()->as(Attribute("count_value")));
     auto dg = DataGenerator("window", "window1", this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutputMultiAggSameKey> expectedGlobalOutput = {{0, 1000, 1, 1, 1, 1000},
-                                                                     {1000, 2000, 1, 1, 1, 1000},
-                                                                     {2000, 3000, 1, 1, 1, 1000},
-                                                                     {3000, 4000, 1, 1, 1, 1000},
-                                                                     {4000, 5000, 1, 1, 1, 1000},
-                                                                     {5000, 6000, 1, 1, 1, 1000},
-                                                                     {6000, 7000, 1, 1, 1, 1000},
-                                                                     {7000, 8000, 1, 1, 1, 1000},
-                                                                     {8000, 9000, 1, 1, 1, 1000},
-                                                                     {9000, 10000, 1, 1, 1, 1000},
-                                                                     {10000, 11000, 1, 1, 1, 1000},
-                                                                     {11000, 12000, 1, 1, 1, 1000},
-                                                                     {12000, 13000, 1, 1, 1, 1000},
-                                                                     {13000, 14000, 1, 1, 1, 1000},
-                                                                     {14000, 15000, 1, 1, 1, 1000},
-                                                                     {15000, 16000, 1, 1, 1, 1000},
-                                                                     {16000, 17000, 1, 1, 1, 1000}};
-    std::vector<GlobalOutputMultiAggSameKey> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutputMultiAggSameKey>();
-    EXPECT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    EXPECT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 1, 1, 1, 1000\n"
+                                "1000, 2000, 1, 1, 1, 1000\n"
+                                "2000, 3000, 1, 1, 1, 1000\n"
+                                "3000, 4000, 1, 1, 1, 1000\n"
+                                "4000, 5000, 1, 1, 1, 1000\n"
+                                "5000, 6000, 1, 1, 1, 1000\n"
+                                "6000, 7000, 1, 1, 1, 1000\n"
+                                "7000, 8000, 1, 1, 1, 1000\n"
+                                "8000, 9000, 1, 1, 1, 1000\n"
+                                "9000, 10000, 1, 1, 1, 1000\n"
+                                "10000, 11000, 1, 1, 1, 1000\n"
+                                "11000, 12000, 1, 1, 1, 1000\n"
+                                "12000, 13000, 1, 1, 1, 1000\n"
+                                "13000, 14000, 1, 1, 1, 1000\n"
+                                "14000, 15000, 1, 1, 1, 1000\n"
+                                "15000, 16000, 1, 1, 1, 1000\n"
+                                "16000, 17000, 1, 1, 1, 1000\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /**
@@ -671,31 +658,38 @@ TEST_F(NonKeyedTumblingWindowTests, testTumblingWindowMultiplePhysicalValuesAndC
                             Avg(Attribute("value2"))->as(Attribute("avg_value_2")),
                             Avg(Attribute("value3"))->as(Attribute("avg_value_3")),
                             Count()->as(Attribute("count_value")));
-    std::vector<GlobalOutputMultiAggSameKey> expectedGlobalOutput = {{0, 1000, 1, 1, 1, 1000},
-                                                                     {1000, 2000, 1, 1, 1, 1000},
-                                                                     {2000, 3000, 1, 1, 1, 1000},
-                                                                     {3000, 4000, 1, 1, 1, 1000},
-                                                                     {4000, 5000, 1, 1, 1, 1000},
-                                                                     {5000, 6000, 1, 1, 1, 1000},
-                                                                     {6000, 7000, 1, 1, 1, 1000},
-                                                                     {7000, 8000, 1, 1, 1, 1000},
-                                                                     {8000, 9000, 1, 1, 1, 1000},
-                                                                     {9000, 10000, 1, 1, 1, 1000},
-                                                                     {10000, 11000, 1, 1, 1, 1000},
-                                                                     {11000, 12000, 1, 1, 1, 1000},
-                                                                     {12000, 13000, 1, 1, 1, 800}};
+
     auto dg = DataGeneratorMultiValue("window", "window1", this->numberOfGeneratedBuffers);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator(dg.getSource(), workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
     testHarness.validate().setupTopology();
-    std::vector<GlobalOutputMultiAggSameKey> actualGlobalOutput =
-        testHarness.runQuery(expectedGlobalOutput.size(), "BottomUp").getOutput<GlobalOutputMultiAggSameKey>();
-    ASSERT_EQ(actualGlobalOutput.size(), expectedGlobalOutput.size());
-    ASSERT_THAT(actualGlobalOutput, ::testing::UnorderedElementsAreArray(expectedGlobalOutput));
+
+    // Expected output
+    const auto expectedOutput = "0, 1000, 1, 1, 1, 1000\n"
+                                "1000, 2000, 1, 1, 1, 1000\n"
+                                "2000, 3000, 1, 1, 1, 1000\n"
+                                "3000, 4000, 1, 1, 1, 1000\n"
+                                "4000, 5000, 1, 1, 1, 1000\n"
+                                "5000, 6000, 1, 1, 1, 1000\n"
+                                "6000, 7000, 1, 1, 1, 1000\n"
+                                "7000, 8000, 1, 1, 1, 1000\n"
+                                "8000, 9000, 1, 1, 1, 1000\n"
+                                "9000, 10000, 1, 1, 1, 1000\n"
+                                "10000, 11000, 1, 1, 1, 1000\n"
+                                "11000, 12000, 1, 1, 1, 1000\n"
+                                "12000, 13000, 1, 1, 1, 800\n";
+
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 }// namespace NES

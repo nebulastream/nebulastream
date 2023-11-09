@@ -312,7 +312,7 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     return *this;
 }
 
-std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestHarness::getOutputForVariableSizeDataTypes() {
+std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestHarness::getOutput() {
     std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> receivedBuffers;
     const auto queryCatalogService = nesCoordinator->getQueryCatalogService();
     const auto schema =

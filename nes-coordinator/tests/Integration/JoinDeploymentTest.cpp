@@ -52,10 +52,10 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         bufferManager = std::make_shared<BufferManager>();
     }
 
-    template<typename ResultRecord>
-    std::vector<ResultRecord> runJoinQueryTwoLogicalStreams(const Query& query,
-                                                            const TestUtils::CsvFileParams& csvFileParams,
-                                                            const TestUtils::JoinParams& joinParams) {
+    void runJoinQueryTwoLogicalStreams(const Query& query,
+                                       const TestUtils::CsvFileParams& csvFileParams,
+                                       const TestUtils::JoinParams& joinParams) {
+
         const auto logicalSourceNameOne = "test1";
         const auto logicalSourceNameTwo = "test2";
         const auto physicalSourceNameOne = "test1_physical";
@@ -64,13 +64,8 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
             TestUtils::createSourceTypeCSV({logicalSourceNameOne, physicalSourceNameOne, csvFileParams.inputCsvFiles[0]});
         auto sourceConfig2 =
             TestUtils::createSourceTypeCSV({logicalSourceNameTwo, physicalSourceNameTwo, csvFileParams.inputCsvFiles[1]});
-        auto expectedSinkBuffer =
-            TestUtils::createExpectedBuffersFromCsv(csvFileParams.expectedFile, joinParams.outputSchema, bufferManager)[0];
-        auto expectedSinkVector = TestUtils::createVecFromTupleBuffer<ResultRecord>(expectedSinkBuffer);
-        EXPECT_EQ(sizeof(ResultRecord), joinParams.outputSchema->getSchemaSizeInBytes());
 
         TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                                       .setJoinStrategy(joinStrategy)
                                       .setWindowingStrategy(windowingStrategy)
                                       .addLogicalSource(logicalSourceNameOne, joinParams.inputSchemas[0])
@@ -80,12 +75,15 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
                                       .validate()
                                       .setupTopology();
 
-        auto actualResult = testHarness.runQuery(expectedSinkBuffer.getNumberOfTuples()).getOutput<ResultRecord>();
+        // Run the query and get the actual dynamic buffers
+        std::ifstream expectedFileStream(std::filesystem::path(TEST_DATA_DIRECTORY) / csvFileParams.expectedFile);
+        auto actualBuffers = testHarness.validate().setupTopology().runQuery(NES::Util::countLines(expectedFileStream)).getOutput();
 
-        EXPECT_EQ(actualResult.size(), expectedSinkBuffer.getNumberOfTuples());
-        EXPECT_THAT(actualResult, ::testing::UnorderedElementsAreArray(expectedSinkVector));
-
-        return actualResult;
+        // Comparing equality
+        const auto outputSchema = testHarness.getOutputSchema();
+        auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedFileStream, outputSchema, testHarness.getBufferManager());
+        auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+        EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
     }
 
     BufferManagerPtr bufferManager;
@@ -97,24 +95,6 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
 * Test deploying join with same data and same schema
  * */
 TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
-    struct ResultRecord {
-        uint64_t test1test2Start;
-        uint64_t test1test2End;
-        uint64_t test1test2Key;
-        uint64_t test1Value;
-        uint64_t test1Id;
-        uint64_t test1Timestamp;
-        uint64_t test2Value;
-        uint64_t test2Id;
-        uint64_t test2Timestamp;
-
-        bool operator==(const ResultRecord& rhs) const {
-            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
-                && test1Timestamp == rhs.test1Timestamp && test2Value == rhs.test2Value && test2Id == rhs.test2Id
-                && test2Timestamp == rhs.test2Timestamp;
-        }
-    };
     TestUtils::JoinParams joinParams(createValueIdTimeStamp(), createValueIdTimeStamp(), "id", "id");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
     auto query = Query::from("test1")
@@ -123,31 +103,13 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
                      .equalsTo(Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
  * Test deploying join with same data but different names in the schema
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
-    struct ResultRecord {
-        uint64_t test1test2Start;
-        uint64_t test1test2End;
-        uint64_t test1test2Key;
-        uint64_t test1Value;
-        uint64_t test1Id;
-        uint64_t test1Timestamp;
-        uint64_t test2Value;
-        uint64_t test2Id;
-        uint64_t test2Timestamp;
-
-        bool operator==(const ResultRecord& rhs) const {
-            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
-                && test1Timestamp == rhs.test1Timestamp && test2Value == rhs.test2Value && test2Id == rhs.test2Id
-                && test2Timestamp == rhs.test2Timestamp;
-        }
-    };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value1", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
@@ -165,31 +127,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
                      .equalsTo(Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
-    struct ResultRecord {
-        uint64_t test1test2Start;
-        uint64_t test1test2End;
-        uint64_t test1test2Key;
-        uint64_t test1Value;
-        uint64_t test1Id;
-        uint64_t test1Timestamp;
-        uint64_t test2Value;
-        uint64_t test2Id;
-        uint64_t test2Timestamp;
-
-        bool operator==(const ResultRecord& rhs) const {
-            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
-                && test1Timestamp == rhs.test1Timestamp && test2Value == rhs.test2Value && test2Id == rhs.test2Id
-                && test2Timestamp == rhs.test2Timestamp;
-        }
-    };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value1", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
@@ -207,29 +151,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
                      .equalsTo(Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
-    struct ResultRecord {
-        uint64_t test1test2Start;
-        uint64_t test1test2End;
-        uint64_t test1test2Key;
-        uint64_t test1Value;
-        uint64_t test1Id;
-        uint64_t test1Timestamp;
-        uint64_t test2Id;
-        uint64_t test2Timestamp;
-
-        bool operator==(const ResultRecord& rhs) const {
-            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
-                && test1Timestamp == rhs.test1Timestamp && test2Id == rhs.test2Id && test2Timestamp == rhs.test2Timestamp;
-        }
-    };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value1", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
@@ -246,32 +174,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
                      .equalsTo(Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
-    struct ResultRecord {
-        uint64_t test1test2Start;
-        uint64_t test1test2End;
-        uint64_t test1test2Key;
-        uint64_t test1Value;
-        uint64_t test1Id;
-        uint64_t test1Timestamp;
-        uint64_t test2Value;
-        uint64_t test2Id;
-        uint64_t test2Timestamp;
-
-        bool operator==(const ResultRecord& rhs) const {
-            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
-                && test1Timestamp == rhs.test1Timestamp && test2Value == rhs.test2Value && test2Id == rhs.test2Id
-                && test2Timestamp == rhs.test2Timestamp;
-        }
-    };
-
     TestUtils::JoinParams joinParams(createValueIdTimeStamp(), createValueIdTimeStamp(), "id", "id");
     TestUtils::CsvFileParams csvFileParams("window.csv", "window2.csv", "window_sink5.csv");
     const auto windowSize = 1000UL;
@@ -283,29 +192,13 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
             .equalsTo(Attribute("id"))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
-    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
-    struct ResultRecord {
-        uint64_t test1test2Start;
-        uint64_t test1test2End;
-        uint64_t test1test2Key;
-        uint64_t test1Value;
-        uint64_t test1Id;
-        uint64_t test1Timestamp;
-        uint64_t test2Id;
-        uint64_t test2Timestamp;
-
-        bool operator==(const ResultRecord& rhs) const {
-            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1test2Key == rhs.test1test2Key && test1Value == rhs.test1Value && test1Id == rhs.test1Id
-                && test1Timestamp == rhs.test1Timestamp && test2Id == rhs.test2Id && test2Timestamp == rhs.test2Timestamp;
-        }
-    };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("value1", BasicType::UINT64)
                                 ->addField("id1", BasicType::UINT64)
@@ -325,7 +218,7 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
             .equalsTo(Attribute("id2"))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
-    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
@@ -333,23 +226,6 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
  */
 // TODO this test can be enabled once #3638 is merged
 TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
-    struct __attribute__((packed)) ResultRecord {
-        uint64_t test1test2Start;
-        uint64_t test1test2End;
-        uint64_t test1test2Key;
-        char test1Id[7];
-        uint64_t test1Timestamp;
-        char test2Id[7];
-        uint64_t test2Timestamp;
-
-        bool operator==(const ResultRecord& rhs) const {
-            return test1test2Start == rhs.test1test2Start && test1test2End == rhs.test1test2End
-                && test1test2Key == rhs.test1test2Key && test1Timestamp == rhs.test1Timestamp
-                && (std::strcmp(test1Id, rhs.test1Id) == 0) && (std::strcmp(test2Id, rhs.test2Id) == 0)
-                && test2Timestamp == rhs.test2Timestamp;
-        }
-    };
-
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$id1", BasicType::TEXT)
                                 ->addField("test1$timestamp", BasicType::UINT64);
@@ -365,7 +241,7 @@ TEST_P(JoinDeploymentTest, DISABLED_testJoinWithFixedCharKey) {
                      .equalsTo(Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams<ResultRecord>(query, csvFileParams, joinParams);
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 INSTANTIATE_TEST_CASE_P(testJoinQueries,
