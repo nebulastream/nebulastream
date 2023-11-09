@@ -67,6 +67,12 @@ ArrowSourceType::ArrowSourceType(const std::string& logicalSourceName,
         NES_THROW_RUNTIME_ERROR("ArrowSourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");
     }
+    if (sourceConfigMap.find(Configurations::DELIMITER_CONFIG) != sourceConfigMap.end()) {
+        delimiter->setValue(sourceConfigMap.find(Configurations::DELIMITER_CONFIG)->second);
+    }
+    if (sourceConfigMap.find(Configurations::SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
+        skipHeader->setValue((sourceConfigMap.find(Configurations::SKIP_HEADER_CONFIG)->second == "true"));
+    }
     if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
         numberOfBuffersToProduce->setValue(
             std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
@@ -96,6 +102,14 @@ ArrowSourceType::ArrowSourceType(const std::string& logicalSourceName, const std
         NES_THROW_RUNTIME_ERROR("ArrowSourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");
     }
+    if (!yamlConfig[Configurations::DELIMITER_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::DELIMITER_CONFIG].As<std::string>() != "\n") {
+        delimiter->setValue(yamlConfig[Configurations::DELIMITER_CONFIG].As<std::string>());
+    }
+    if (!yamlConfig[Configurations::SKIP_HEADER_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::SKIP_HEADER_CONFIG].As<std::string>() != "\n") {
+        skipHeader->setValue(yamlConfig[Configurations::SKIP_HEADER_CONFIG].As<bool>());
+    }
     if (!yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>() != "\n") {
         numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<uint32_t>());
@@ -121,6 +135,8 @@ std::string ArrowSourceType::toString() {
     std::stringstream ss;
     ss << "ArrowSource Type => {\n";
     ss << Configurations::FILE_PATH_CONFIG + ":" + filePath->toStringNameCurrentValue();
+    ss << Configurations::SKIP_HEADER_CONFIG + ":" + skipHeader->toStringNameCurrentValue();
+    ss << Configurations::DELIMITER_CONFIG + ":" + delimiter->toStringNameCurrentValue();
     ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG + ":" + sourceGatheringInterval->toStringNameCurrentValue();
     ss << Configurations::SOURCE_GATHERING_MODE_CONFIG + ":" + std::string(magic_enum::enum_name(gatheringMode->getValue()))
        << "\n";
@@ -146,6 +162,10 @@ bool ArrowSourceType::equal(const PhysicalSourceTypePtr& other) {
 Configurations::StringConfigOption ArrowSourceType::getFilePath() const { return filePath; }
 
 Configurations::IntConfigOption ArrowSourceType::getGatheringInterval() const { return sourceGatheringInterval; }
+
+Configurations::BoolConfigOption ArrowSourceType::getSkipHeader() const { return skipHeader; }
+
+Configurations::StringConfigOption ArrowSourceType::getDelimiter() const { return delimiter; }
 
 Configurations::IntConfigOption ArrowSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 

@@ -100,6 +100,8 @@ class ArrowSource : public DataSource {
   private:
     ArrowSourceTypePtr arrowSourceType;
     std::string filePath;
+    bool skipHeader;
+    std::string delimiter;
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;
     std::vector<PhysicalTypePtr> physicalTypes;
