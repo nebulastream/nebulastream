@@ -152,13 +152,4 @@ arrow::Status ArrowFileSink::openArrowFile(std::shared_ptr<arrow::io::FileOutput
     return arrow::Status::OK();
 }
 
-arrow::Status ArrowFileSink::openCsvFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
-                                         std::shared_ptr<arrow::Schema> arrowSchema,
-                                         std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter) {
-    ARROW_ASSIGN_OR_RAISE(arrowFileOutputStream, arrow::io::FileOutputStream::Open(filePath, append));
-    auto write_options = arrow::csv::WriteOptions::Defaults();
-    ARROW_ASSIGN_OR_RAISE(arrowWriter, arrow::csv::MakeCSVWriter(arrowFileOutputStream, arrowSchema, write_options));
-    return arrow::Status::OK();
-}
-
 }// namespace NES
