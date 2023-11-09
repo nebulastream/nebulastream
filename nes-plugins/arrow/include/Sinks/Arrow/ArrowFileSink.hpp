@@ -115,13 +115,6 @@ class ArrowFileSink : public SinkMedium {
     bool writeDataToArrowFile(Runtime::TupleBuffer& inputBuffer);
 
     /**
-     * @brief method to write a TupleBuffer to a local csv file
-     * @param a tuple buffers pointer
-     * @return bool indicating if the write was complete
-     */
-    bool writeDataToCsv(Runtime::TupleBuffer& inputBuffer);
-
-    /**
      * @brief method to write a TupleBuffer to an Arrow File. Arrow opens its own filestream to write the file and therefore
      * we require and abstraction to be able to obtain this object, or otherwise we need to write our own Arrow writer.
      * @param a tuple buffers pointer
