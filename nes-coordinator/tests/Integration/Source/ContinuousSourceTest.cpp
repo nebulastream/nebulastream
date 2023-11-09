@@ -606,22 +606,20 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1ULL);
 
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-        uint64_t timestamp;
-
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
-    };
-    std::vector<Output> expectedOutput = {};
+    // Expected output
+    std::stringstream expectedOutput;
     for (uint64_t i = 0; i < numBufferToProduce; i++) {
-        expectedOutput.push_back({1, 1, (i + 1) * 100});
+        expectedOutput << "1, 1, " << (i + 1) * 100 << "\n";
     }
 
-    auto actualOutput = testHarness.runQuery(expectedOutput.size()).getOutput<Output>();
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers = TestUtils::createExpectedBufferFromStream(expectedOutput, outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 }// namespace NES

@@ -611,7 +611,7 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
 
             // As we are writing a header in the output csv file of the query, we have to subtract one line
             std::ifstream outFile(outputFilePath);
-            uint64_t currentContentSize = Util::countLinesOfStream(outFile);
+            uint64_t currentContentSize = Util::countLines(outFile);
             if (currentContentSize > 0) {
                 currentContentSize -= 1;
             }
@@ -753,9 +753,34 @@ std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(const std::string
 std::vector<Runtime::TupleBuffer> createExpectedBufferFromStream(std::istream& istream,
                                                                  const SchemaPtr& schema,
                                                                  const Runtime::BufferManagerPtr& bufferManager,
-                                                                 bool skipHeader,
+                                                                 bool skipHeader = false,
                                                                  uint64_t numTuplesPerBuffer = 0,
                                                                  const std::string& delimiter = ",");
+
+/**
+ * @brief Fills the buffer from a stream
+ * @param str
+ * @param schema
+ * @param bufferManager
+ * @param skipHeader
+ * @param numTuplesPerBuffer
+ * @param delimiter
+ * @return Vector of TupleBuffers
+ */
+std::vector<Runtime::TupleBuffer> createExpectedBufferFromCSVString(std::string str,
+                                                                    const SchemaPtr& schema,
+                                                                    const Runtime::BufferManagerPtr& bufferManager,
+                                                                    bool skipHeader = false,
+                                                                    uint64_t numTuplesPerBuffer = 0,
+                                                                    const std::string& delimiter = ",");
+
+/**
+ * @brief Counts the tuple in all buffers
+ * @param buffers
+ * @return Tuplecount
+ */
+uint64_t countTuples(std::vector<Runtime::TupleBuffer>& buffers);
+uint64_t countTuples(std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer>& buffers);
 
 /**
  * @brief Converts all of the tuple buffers to dynamic tuple buffers
