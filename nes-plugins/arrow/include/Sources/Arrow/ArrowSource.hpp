@@ -139,7 +139,8 @@ class ArrowSource : public DataSource {
     arrow::Status openCsvFile();
 
     /**
-     * TODO
+     * Iterate over schema fields and use equivalent arrow types.
+     * Arrow will not infer the types itself this way.
      * @return
      */
     void populateOptionsFromSchema(arrow::csv::ReadOptions& readOptions, arrow::csv::ConvertOptions& convertOptions);
