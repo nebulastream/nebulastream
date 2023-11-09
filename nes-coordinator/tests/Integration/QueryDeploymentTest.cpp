@@ -276,7 +276,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
                                 "1, 1\n"
                                 "1, 1\n";
 
-
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
@@ -1718,7 +1717,6 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
                                 "2000, 3000, 1, 2, 1, 2000, 2, 1, 2010\n"
                                 "2000, 3000, 11, 2, 11, 2001, 2, 11, 2301\n"
                                 "2000, 3000, 11, 2, 11, 2001, 2, 11, 2301\n";
-
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();

@@ -377,7 +377,6 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
                           "1000, 2000, 1.5, 4\n"
                           "2000, 3000, 1.7, 5\n";
 
-
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
@@ -567,7 +566,6 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar) {
     std::stringstream expectedOutput;
     expectedOutput << "1000, 2000, " << keyOne << ", 2\n"
                    << "1000, 2000, " << keyTwo << ", 4\n";
-
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();

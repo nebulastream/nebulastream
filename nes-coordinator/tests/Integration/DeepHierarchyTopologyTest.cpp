@@ -794,7 +794,6 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
                                 "6000, 8000, 112\n"
                                 "8000, 10000, 32\n";
 
-
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 

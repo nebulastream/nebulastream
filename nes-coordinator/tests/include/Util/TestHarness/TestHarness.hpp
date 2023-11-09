@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
-#include <API/Query.hpp>
 #include <API/AttributeField.hpp>
+#include <API/Query.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -26,9 +26,9 @@
 #include <Util/Core.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
+#include <cstring>
 #include <filesystem>
 #include <type_traits>
-#include <cstring>
 #include <utility>
 
 /**

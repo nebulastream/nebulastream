@@ -71,7 +71,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
                                 "30, 30, 30 \n"
                                 "71, 71, 71\n";
 
-
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
 
@@ -118,7 +117,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
                                 "21, 21, 21\n"
                                 "30, 30, 30 \n"
                                 "71, 71, 71\n";
-
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -179,7 +177,6 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
                                 "21, 21, 21\n"
                                 "30, 30, 30 \n"
                                 "71, 71, 71\n";
-
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
@@ -454,7 +451,6 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
                                 "21, 441, 21\n"
                                 "30, 900, 30\n"
                                 "71, 5041, 71\n";
-
 
     // Run the query and get the actual dynamic buffers
     auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
