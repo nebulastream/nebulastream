@@ -88,11 +88,6 @@ class ArrowSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<bool>> getSkipHeader() const;
 
     /**
-     * @brief set the value for skipHeader with the appropriate data format
-     */
-    void setSkipHeader(bool skipHeader);
-
-    /**
      * @brief gets a ConfigurationOption object with skipHeader
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getDelimiter() const;

@@ -38,6 +38,12 @@ ArrowSourceType::ArrowSourceType(const std::string& logicalSourceName, const std
       filePath(Configurations::ConfigurationOption<std::string>::create(Configurations::FILE_PATH_CONFIG,
                                                                         "",
                                                                         "file path, needed for: ArrowSource.")),
+      skipHeader(Configurations::ConfigurationOption<bool>::create(Configurations::SKIP_HEADER_CONFIG,
+                                                                   false,
+                                                                   "CSV skip header")),
+      delimiter(Configurations::ConfigurationOption<std::string>::create(Configurations::DELIMITER_CONFIG,
+                                                                  ",",
+                                                                  "CSV delimiter")),
       numberOfBuffersToProduce(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
                                                                 0,
@@ -153,6 +159,8 @@ bool ArrowSourceType::equal(const PhysicalSourceTypePtr& other) {
     }
     auto otherSourceConfig = other->as<ArrowSourceType>();
     return filePath->getValue() == otherSourceConfig->filePath->getValue()
+        && skipHeader->getValue() == otherSourceConfig->skipHeader->getValue()
+        && delimiter->getValue() == otherSourceConfig->delimiter->getValue()
         && sourceGatheringInterval->getValue() == otherSourceConfig->sourceGatheringInterval->getValue()
         && gatheringMode->getValue() == otherSourceConfig->gatheringMode->getValue()
         && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue()
