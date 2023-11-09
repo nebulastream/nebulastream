@@ -32,10 +32,10 @@ if (NES_USE_S2)
 endif ()
 if (NES_ENABLES_TESTS)
     # Add tests with command
-    add_subdirectory(test)
-    message(STATUS "Tests are enabled")
+    add_subdirectory(tests)
+    message(STATUS "Tests are enabled for nes-worker")
 else ()
-    message(STATUS "Tests are disabled")
+    message(STATUS "Tests are disabled for nes-worker")
 endif ()
 
 #Add the nes lib and headers to cpack

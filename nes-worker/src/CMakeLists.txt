@@ -14,6 +14,6 @@
 
 add_subdirectory(Exceptions)
 add_subdirectory(Components)
-add_subdirectory(GPRC)
+add_subdirectory(GRPC)
 add_subdirectory(Mobility)
 add_subdirectory(Services)
