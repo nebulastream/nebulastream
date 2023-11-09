@@ -31,19 +31,11 @@ limitations under the License.
 namespace NES::Parsers {
         class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener{
           private:
-            int32_t sourceCounter = 0;
-            //int32_t lastSeenSourcePtr = -1;
-            //int32_t nodeId = 0;
-            //bool inWhere = false;
-            //bool leftFilter = true;
             std::string currentLeftExp;
             std::string currentRightExp;
             std::stack<NebulaSQLHelper> helpers;
             QueryPlanPtr completeQueryPlan;
-            // helper erweitern das er querlyplan hat
-            // enterprimary: helper erstellen, auf stack
-            // exitprimary: helper nehmen,  queryplan basteln, helper poppen, entweder an top_helper senden, oder abspeichern
-            // getQueryPlan returned nur noch queryPlanDerEchteEtc
+
           public:
             QueryPlanPtr getQueryPlan() const;
             void enterSelectClause(NebulaSQLParser::SelectClauseContext* context) override;

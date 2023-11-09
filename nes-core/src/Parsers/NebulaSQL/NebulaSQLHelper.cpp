@@ -18,8 +18,7 @@ limitations under the License.
 namespace NES::Parsers {
 
 //Getter and Setter for the map/list entries of each clause
-const std::map<int32_t, std::string>& NebulaSQLHelper::getSources() const { return this->sourceList; }
-void NebulaSQLHelper::setSources(const std::map<int32_t, std::string>& sources) { this->sourceList = sources; }
+const std::string NebulaSQLHelper::getSource() const { return this->source; }
 const std::map<int32_t, NebulaSQLOperatorNode>& NebulaSQLHelper::getOperatorList() const { return this->operatorList; }
 void NebulaSQLHelper::setOperatorList(const std::map<int32_t, NebulaSQLOperatorNode>& operatorList) {
     this->operatorList = operatorList;
@@ -35,8 +34,7 @@ void NebulaSQLHelper::setSinks(const std::list<SinkDescriptorPtr>& sinks) { this
 const std::pair<std::string, int32_t>& NebulaSQLHelper::getWindow() const { return this->window; }
 void NebulaSQLHelper::setWindow(const std::pair<std::string, int32_t>& window) { this->window = window; }
 // methods to update the clauses maps/lists
-void NebulaSQLHelper::addSource(std::pair<int32_t, std::basic_string<char>> sourcePair) { this->sourceList.insert(sourcePair); }
-void NebulaSQLHelper::updateSource(const int32_t key, std::string sourceName) { this->sourceList[key] = sourceName; }
+void NebulaSQLHelper::addSource(std::string sourceName) { this->source=sourceName; }
 void NebulaSQLHelper::addExpression(ExpressionNodePtr expressionNode) {
     auto pos = this->expressionList.begin();
     this->expressionList.insert(pos, expressionNode);
@@ -47,30 +45,25 @@ void NebulaSQLHelper::addOperatorNode(NebulaSQLOperatorNode operatorNode) {
     this->operatorList.insert(std::pair<uint32_t, NebulaSQLOperatorNode>(operatorNode.getId(), operatorNode));
 }
 uint64_t NebulaSQLHelper::getLimit() const { return 0; }
-//const std::string& NebulaSQLHelper::getNewName() const { return <#initializer #>; }
-//const FieldAssignmentExpressionNodePtr& NebulaSQLHelper::getMapExpression() const { return <#initializer #>; }
-//const WatermarkStrategyDescriptorPtr& NebulaSQLHelper::getWatermarkStrategieDescriptor() const {return <#initializer #>;}
+
 const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const { return NES::Windowing::WindowTypePtr(); }
-/*
-const std::map<std::string, std::string> NebulaSQLHelper::getQueryMap() const { return this->queryMap; }
-void NebulaSQLHelper::setQueryMap(std::map<std::string, std::string> queryMap) { this->queryMap = queryMap; }
 
-std::string NebulaSQLHelper::getSelectClause() { return selectClause; }
-void NebulaSQLHelper::setSelectClause(std::string selectClause) { this->selectClause = selectClause; }
+// Adds a new expression to the WHERE clause
+void NebulaSQLHelper::addWhereCondition(ExpressionNodePtr whereCondition) {
+    addExpression(whereCondition);
+}
 
-std::string NebulaSQLHelper::getWhereClause() { return whereClause; }
-void NebulaSQLHelper::setWhereClause(std::string whereClause) { this->whereClause = whereClause; }
+// Sets the entire list of WHERE conditions
+void NebulaSQLHelper::setWhereConditions(const std::list<ExpressionNodePtr>& whereConditions) {
+    setExpressions(whereConditions);
+}
 
-std::string NebulaSQLHelper::getFromClause() { return fromClause; }
-void NebulaSQLHelper::setFromClause(std::string fromClause) { this->fromClause = fromClause; }
+const std::vector<ExpressionNodePtr>& NebulaSQLHelper::getWhereClauses() const {
+    return this->whereClauses;
+}
 
-std::string NebulaSQLHelper::getMapClause() { return mapClause; }
-void NebulaSQLHelper::setMapClause(std::string mapClause) { this->mapClause = mapClause; }
 
-std::string NebulaSQLHelper::getUnionClause() { return unionClause; }
-void NebulaSQLHelper::setUnionClause(std::stringstream unionClause) { this->unionClause = unionClause; }
 
-bool NebulaSQLHelper::isSelect() { return isSelect; }
-void NebulaSQLHelper::setSelect(bool select) { isSelect = select; }
-*/
+
+
 }// namespace NES::Parsers
