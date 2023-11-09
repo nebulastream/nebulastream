@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Arrow/ArrowFileSink.hpp>
@@ -35,16 +36,13 @@ ArrowFileSink::ArrowFileSink(SinkFormatPtr format,
                              bool append,
                              QueryId queryId,
                              QuerySubPlanId querySubPlanId,
-                             FaultToleranceType faultToleranceType,
                              uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  queryId,
                  querySubPlanId,
-                 faultToleranceType,
-                 numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
+                 numberOfOrigins) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
