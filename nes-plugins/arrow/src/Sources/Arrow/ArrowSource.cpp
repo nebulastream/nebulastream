@@ -53,7 +53,7 @@ ArrowSource::ArrowSource(SchemaPtr schema,
                  physicalSourceName,
                  std::move(successors)),
       fileEnded(false), arrowSourceType(arrowSourceType), filePath(arrowSourceType->getFilePath()->getValue()),
-      skipHeader(arrowSourceType->getSkipHeader()->getValue()), delimiter(arrowSourceType->getFilePath()->getValue()),
+      skipHeader(arrowSourceType->getSkipHeader()->getValue()), delimiter(arrowSourceType->getDelimiter()->getValue()),
       numberOfTuplesToProducePerBuffer(arrowSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()) {
 
     this->numberOfBuffersToProduce = arrowSourceType->getNumberOfBuffersToProduce()->getValue();
