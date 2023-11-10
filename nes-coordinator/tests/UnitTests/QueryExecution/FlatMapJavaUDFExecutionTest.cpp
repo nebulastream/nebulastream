@@ -53,7 +53,6 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_DEBUG("FlatMapJavaUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
-    std::string testDataPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "JavaUDFTestData/";
 };
 
 constexpr auto NUMBER_OF_RECORDS = 10;
@@ -70,48 +69,6 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
 }
 
 /**
- * This helper function creates a JVM and returns the JNIEnv.
- */
-void createJVM(JavaVM* jvm, JNIEnv** env) {
-    JavaVMInitArgs args{};
-    std::vector<std::string> opt{"-verbose:jni", "-verbose:class"};
-    std::vector<JavaVMOption> options;
-    for (const auto& s : opt) {
-        options.push_back(JavaVMOption{.optionString = const_cast<char*>(s.c_str())});
-    }
-    args.version = JNI_VERSION_1_8;
-    args.ignoreUnrecognized = false;
-    args.options = options.data();
-    args.nOptions = std::size(options);
-    JNI_CreateJavaVM(&jvm, (void**) env, &args);
-}
-
-/**
- * This helper function loads the class files into a buffer.
- */
-std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::string& className) {
-    // Open the file
-    std::ifstream file(path + className + ".class", std::ios::binary);
-    if (!file.is_open()) {
-        NES_ERROR("Could not open file: {}", path + className + ".class");
-        return {};
-    }
-
-    // Get the file size and allocate a buffer
-    file.seekg(0, std::ios::end);
-    std::streamsize fileSize = file.tellg();
-    std::vector<char> buffer(fileSize);
-
-    // Read the file into the buffer
-    file.seekg(0, std::ios::beg);
-    if (!file.read(buffer.data(), fileSize)) {
-        NES_ERROR("Could not read file: {}", path + className + ".class");
-        return {};
-    }
-    return buffer;
-}
-
-/**
  * @brief Test simple UDF with integer objects as input and output (IntegerMapFunction<Integer, Integer>)
  * The UDF increments incoming tuples by its current state starting from 10 and
 */
@@ -121,27 +78,16 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto testSink = executionEngine->createDataSink(fqSchema);
     auto testSourceDescriptor = executionEngine->createDataSource(fqSchema);
 
-    std::vector<std::string> classNames = {"stream/nebula/FlatMapFunction", "IntegerFlatMapFunction"};
-    auto methodName = "flatMap";
-    std::vector<char> serializedInstance = {};
-    jni::JavaUDFByteCodeList byteCodeList;
-    for (const auto& className : classNames) {
-        auto buffer = loadClassFileIntoBuffer(testDataPath, className);
-        byteCodeList.emplace_back(className, buffer);
-    }
-
-    auto className = classNames[1];
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT32);
-    NES_INFO("testDataPath:{}", testDataPath);
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
-                                 .setClassName(className)
-                                 .setMethodName(methodName)
-                                 .setInstance(serializedInstance)
-                                 .setByteCodeList(byteCodeList)
+                                 .setClassName("IntegerFlatMapFunction")
+                                 .setMethodName("flatMap")
+                                 .setInstance({})
+                                 .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"IntegerFlatMapFunction", {}}})
                                  .setInputSchema(udfSchema)
                                  .setOutputSchema(udfSchema)
                                  .setInputClassName("java.lang.Integer")
                                  .setOutputClassName("java.util.Collection")
+                                 .loadByteCodeFrom(TEST_DATA_DIRECTORY)
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).flatMapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
