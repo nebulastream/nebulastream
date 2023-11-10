@@ -312,7 +312,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     EXPECT_EQ(outputRecord.read("shortVariable"), initialShort + 10);
     EXPECT_EQ(outputRecord.read("intVariable"), initialInt + 10);
     EXPECT_EQ(outputRecord.read("longVariable"), initialLong + 10);
-    EXPECT_EQ(outputRecord.read("longVariable"), initialUnsignedLong + 10);
+    EXPECT_EQ(outputRecord.read("unsignedLongVariable"), initialUnsignedLong + 10);
     EXPECT_EQ(outputRecord.read("floatVariable"), initialFloat + 10.0);
     EXPECT_EQ(outputRecord.read("doubleVariable"), initialDouble + 10.0);
     EXPECT_EQ(outputRecord.read("stringVariable"), Value<Text>("testValueAppended String:"));
