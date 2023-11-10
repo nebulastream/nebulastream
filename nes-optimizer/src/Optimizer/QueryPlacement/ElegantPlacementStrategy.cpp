@@ -25,7 +25,11 @@
 #include <queue>
 #include <utility>
 #include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
+#include <cpp-base64/base64.h>
 
 namespace NES::Optimizer {
 
@@ -140,8 +144,25 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
     }
 }
 
+void ElegantPlacementStrategy::addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node) {
+    if (logicalOperator->instanceOf<MapUDFLogicalOperatorNode>() || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
+        const auto* udfDescriptor = dynamic_cast<Catalogs::UDF::JavaUDFDescriptor*>(logicalOperator->as<UDFLogicalOperator>()->getUDFDescriptor().get());
+        const auto& byteCode = udfDescriptor->getByteCodeList();
+        std::vector<std::pair<std::string, std::string>> base64ByteCodeList;
+        std::transform(byteCode.cbegin(),
+                       byteCode.cend(),
+                       std::back_inserter(base64ByteCodeList),
+                       [](const jni::JavaClassDefinition& classDefinition) {
+                           return std::pair<std::string, std::string>{classDefinition.first, base64_encode(std::string(classDefinition.second.data(), classDefinition.second.size()))};
+                       });
+        node[JAVA_UDF_FIELD_KEY] = base64ByteCodeList;
+    } else {
+        node[JAVA_UDF_FIELD_KEY] = "";
+    }
+}
+
 void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                                    nlohmann::json& payload) {
 
     NES_DEBUG("ElegantPlacementStrategy: Getting the json representation of the query plan");
@@ -169,6 +190,7 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             auto sourceCode = logicalOperator->getProperty(sourceCodeKey);
             node[sourceCodeKey] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
+            addJavaUdfByteCodeField(logicalOperator, node);
 
             auto found = std::find_if(pinnedUpStreamOperators.begin(),
                                       pinnedUpStreamOperators.end(),
