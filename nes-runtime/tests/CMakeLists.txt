@@ -34,7 +34,7 @@ target_compile_options(tpch-dbgen PUBLIC "-Wno-deprecated-non-prototype")
 function(add_nes_runtime_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-runtime-test-util)
+    target_link_libraries(${TARGET_NAME} nes-runtime-test-util nes-operators-test-util)
 endfunction()
 
 add_subdirectory(UnitTests)
