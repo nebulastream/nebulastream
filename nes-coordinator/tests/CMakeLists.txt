@@ -33,13 +33,13 @@ add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
         "src/Util/TestSinkProvider.cpp"
         "src/Util/TestSinkDescriptor.cpp"
         "src/Util/MetricValidator.cpp"
-        "src/Util/JavaUdfDescriptorBuilder.cpp"
         "src/Util/TestSink.cpp"
         "src/Util/PythonUDFDescriptorBuilder.cpp")
 target_include_directories(nes-core-test-util PUBLIC "./include")
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(nes-core-test-util PUBLIC nes-common nes-data-types nes-operators nes-grpc nes-catalogs nes-optimizer nes-compiler nes-runtime nes-test-util nes-client nes-worker nes-coordinator nes-configurations)
+target_link_libraries(nes-core-test-util PUBLIC nes-operators-test-util)
 target_link_libraries(nes-core-test-util PUBLIC cpr::cpr )
 find_package(oatpp REQUIRED)
 target_link_libraries(nes-core-test-util PUBLIC oatpp::oatpp oatpp::oatpp-test)
