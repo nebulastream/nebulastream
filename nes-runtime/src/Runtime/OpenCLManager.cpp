@@ -170,10 +170,10 @@ std::array<size_t, OpenCLDeviceInfo::GRID_DIMENSIONS> retrieveOpenCLMaxWorkItems
 std::string retrieveOpenCLDeviceType(const cl_device_id deviceId) {
     auto deviceType = retrieveOpenCLDeviceInfo<cl_device_type, cl_device_type>(deviceId, CL_DEVICE_TYPE, "CL_DEVICE_TYPE");
     switch (deviceType) {
-        case CL_DEVICE_TYPE_CPU: return "CL_DEVICE_TYPE_CPU";
-        case CL_DEVICE_TYPE_GPU: return "CL_DEVICE_TYPE_GPU";
-        case CL_DEVICE_TYPE_ACCELERATOR: return "CL_DEVICE_TYPE_ACCELERATOR";
-        case CL_DEVICE_TYPE_CUSTOM: return "CL_DEVICE_TYPE_CUSTOM";
+        case CL_DEVICE_TYPE_CPU: return "CPU";
+        case CL_DEVICE_TYPE_GPU: return "GPU";
+        case CL_DEVICE_TYPE_ACCELERATOR:
+        case CL_DEVICE_TYPE_CUSTOM: throw OpenCLInitializationException("Unsupported device type", deviceType);
         default: throw OpenCLInitializationException("Unknown device type", deviceType);
     }
 }
