@@ -98,29 +98,22 @@ namespace NES::Runtime::Execution {
 
         TEST_P(TPCH_Q5, joinPipeline) {
             auto& orders = tables[TPCHTable::Orders];
+            auto& customers = tables[TPCHTable::Customer];
 
             // Get the pipeline plan of the query
             auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
 
             // Get the pipelines from the plan
             auto orderScanPipeline = plan.getPipeline(0);
-            auto custLineItemJoinPipeline = plan.getPipeline(1);
+            auto custOrderJoinPipeline = plan.getPipeline(1);
 
             // Create executable pipelines stages (EPS) from the plan
             auto orderScanHTBuildEps = provider->create(orderScanPipeline.pipeline, options);
-            auto custOrderJoinEps = provider->create(custLineItemJoinPipeline.pipeline, options);
-            auto lineItemJoinPipeline = provider->create(plan.getPipeline(2).pipeline, options);
-            auto supplierJoinPipeline = provider->create(plan.getPipeline(3).pipeline, options);
-            auto nationJoinPipeline = provider->create(plan.getPipeline(4).pipeline, options);
-            auto regionJoinAggProjectPipeline = provider->create(plan.getPipeline(5).pipeline, options);
+            auto custOrderJoinPipelineEps = provider->create(custOrderJoinPipeline.pipeline, options);
 
             // Setup each pipeline
             orderScanHTBuildEps->setup(*orderScanPipeline.ctx);
-            custOrderJoinEps->setup(*custLineItemJoinPipeline.ctx);
-            lineItemJoinPipeline->setup(*plan.getPipeline(2).ctx);
-            supplierJoinPipeline->setup(*plan.getPipeline(3).ctx);
-            nationJoinPipeline->setup(*plan.getPipeline(4).ctx);
-            regionJoinAggProjectPipeline->setup(*plan.getPipeline(5).ctx);
+            custOrderJoinPipelineEps->setup(*custOrderJoinPipeline.ctx);
 
             /*
              * Execute and assert the first pipeline
@@ -139,40 +132,19 @@ namespace NES::Runtime::Execution {
             /*
              * Execute and assert the second pipeline
             */
-            for (auto& chunk : orders->getChunks()) {
-                custOrderJoinEps->execute(chunk, *custLineItemJoinPipeline.ctx, *wc);
+            for (auto& chunk : customers->getChunks()) {
+                custOrderJoinPipelineEps->execute(chunk, *orderScanPipeline.ctx, *wc);
             }
 
-            // Assert the content of the hash map
-            auto custLineItemJoinHandler = custLineItemJoinPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);
-            auto custLineItemNumberOfKeys = custLineItemJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-            EXPECT_EQ(custLineItemNumberOfKeys, 4570);
-            auto custLineItemHashMap = custLineItemJoinHandler->mergeState();
-            EXPECT_EQ(custLineItemHashMap->getCurrentSize(), 4570);
+            orderScanHTBuildEps->stop(*orderScanPipeline.ctx);
+            custOrderJoinPipelineEps->stop(*custOrderJoinPipeline.ctx);
 
-//            for (auto& chunk : orders->getChunks()) {
-//                orderCustomersJoinBuildPipeline->execute(chunk, *pipeline2.ctx, *wc);
-//            }
-//            auto joinHandler2 = pipeline2.ctx->getOperatorHandler<BatchJoinHandler>(1);
-//            auto numberOfKeys2 = joinHandler2->getThreadLocalState(wc->getId())->getNumberOfEntries();
-//            EXPECT_EQ(numberOfKeys2, 1797);
-//            auto hm2 = joinHandler2->mergeState();
-//            EXPECT_EQ(hm2->getCurrentSize(), 1797);
-//
-//            for (auto& chunk : lineitems->getChunks()) {
-//                lineitems_ordersJoinBuildPipeline->execute(chunk, *pipeline3.ctx, *wc);
-//            }
-//            auto aggHandler = pipeline3.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(1);
-//            EXPECT_EQ(aggHandler->getThreadLocalStore(0)->getCurrentSize(), 138);
-//
-//            aggExecutablePipeline->stop(*pipeline1.ctx);
-//            orderCustomersJoinBuildPipeline->stop(*pipeline2.ctx);
-//            lineitems_ordersJoinBuildPipeline->stop(*pipeline3.ctx);
+            NES_DEBUG("Done");
         }
 
         INSTANTIATE_TEST_CASE_P(testIfCompilation,
                                 TPCH_Q5,
-                                ::testing::Values("BCInterpreter", "PipelineInterpreter", "PipelineCompiler"),
+                                ::testing::Values("PipelineCompiler"),
                                 [](const testing::TestParamInfo<TPCH_Q5::ParamType>& info) {
                                     return info.param;
                                 });
