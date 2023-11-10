@@ -168,7 +168,6 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::to_string(std::any_cast<TopologyNodeId>(pinnedNodeId)) : EMPTY_STRING;
             auto sourceCode = logicalOperator->getProperty(sourceCodeKey);
             node[sourceCodeKey] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
-            nodes.push_back(node);
             node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
 
             auto found = std::find_if(pinnedUpStreamOperators.begin(),
@@ -187,6 +186,7 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
                 }
             }
             node[CHILDREN_KEY] = upstreamOperatorIds;
+            nodes.push_back(node);
         }
     }
     payload[OPERATOR_GRAPH_KEY] = nodes;
