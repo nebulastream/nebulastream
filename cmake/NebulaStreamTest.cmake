@@ -38,7 +38,7 @@ endfunction()
 function(add_nes_unit_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-core-test-util)
+    target_link_libraries(${TARGET_NAME} nes-core-test-util nes-operators-test-util)
 endfunction()
 
 function(add_nes_integration_test)
