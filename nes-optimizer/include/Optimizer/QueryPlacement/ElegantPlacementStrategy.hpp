@@ -88,6 +88,13 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                            cpr::Response& response) const;
 
+    /**
+     * @brief Add a base64-transformed Java bytecode list to the JSON representation of the operator, if the operator is a MapUDFLogicalOperatorNode or FlatMapUDFLogicalOperatorNode. Otherwise, add an empty field.
+     * @param logicalOperator The logical operator that is processed.
+     * @param node Target JSON operator.
+     */
+    void addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node);
+
     std::string serviceURL;
     float transferRate;
     float timeWeight;
@@ -100,6 +107,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     const std::string CHILDREN_KEY = "children";
     const std::string CONSTRAINT_KEY = "constraint";
     const std::string INPUT_DATA_KEY = "inputData";
+    const std::string JAVA_UDF_FIELD_KEY = "javaUdfField";
 
     //Topology payload constants
     const std::string DEVICE_ID_KEY = "deviceID";
