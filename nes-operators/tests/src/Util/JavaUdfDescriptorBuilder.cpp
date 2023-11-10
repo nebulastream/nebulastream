@@ -13,6 +13,9 @@
 */
 
 #include <Util/JavaUDFDescriptorBuilder.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <filesystem>
+#include <fstream>
 
 namespace NES::Catalogs::UDF {
 
@@ -25,6 +28,23 @@ JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::build() {
                                      outputSchema,
                                      inputClassName,
                                      outputClassName);
+}
+
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(const std::string& classFilePath) {
+    for (auto& [className, byteCode] : byteCodeList) {
+        std::string copy = className;
+        std::replace(copy.begin(), copy.end(), '.', '/');
+        const auto fileName = std::filesystem::path(classFilePath) / "JavaUDFTestData"/ fmt::format("{}.class", copy);
+        NES_DEBUG("Loading byte code: class={}, file={}", className, fileName.string());
+        std::ifstream classFile(fileName, std::fstream::binary);
+        NES_ASSERT(classFile, "Could not find class file: " << fileName);
+        classFile.seekg(0, std::ios_base::end);
+        auto fileSize = classFile.tellg();
+        classFile.seekg(0, std::ios_base::beg);
+        byteCode.resize(fileSize);
+        classFile.read(byteCode.data(), byteCode.size());
+    }
+    return *this;
 }
 
 JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setClassName(const std::string& newClassName) {

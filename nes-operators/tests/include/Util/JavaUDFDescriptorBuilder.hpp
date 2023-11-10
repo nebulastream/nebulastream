@@ -43,6 +43,12 @@ class JavaUDFDescriptorBuilder {
     JavaUDFDescriptorPtr build();
 
     /**
+     * Load the bytecode for each class specified in the byte code list.
+     * @return The JavaUDFDescriptorBuilder.
+     */
+    JavaUDFDescriptorBuilder& loadByteCodeFrom(const std::string& classFilePath);
+
+    /**
      * Set the class name of the Java UDF descriptor.
      * @param newClassName The class name of the Java UDF descriptor.
      * @return The JavaUDFDescriptorBuilder instance.
