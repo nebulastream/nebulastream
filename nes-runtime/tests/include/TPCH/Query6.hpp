@@ -123,7 +123,7 @@ class TPCH_Query6 {
         auto emit = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
         aggScan->setChild(emit);
 
-        // create aggregation pipeline
+        // create emit pipeline
         auto emitPipeline = std::make_shared<PhysicalOperatorPipeline>();
         emitPipeline->setRootOperator(aggScan);
         auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(aggregationHandler);
