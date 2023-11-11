@@ -9,3 +9,4 @@ add_library(nes-runtime-test-util SHARED
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-runtime-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(nes-runtime-test-util PUBLIC nes-common nes-data-types nes-operators nes-grpc nes-runtime nes-test-util nes-configurations)
+target_compile_definitions(nes-runtime-test-util INTERFACE JAVA_UDF_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/../testData/JavaUDFTestData")

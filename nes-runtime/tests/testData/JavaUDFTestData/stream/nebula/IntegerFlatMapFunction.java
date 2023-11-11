@@ -1,4 +1,5 @@
 // IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
+package stream.nebula;
 
 import java.io.Serializable;
 import stream.nebula.FlatMapFunction;
