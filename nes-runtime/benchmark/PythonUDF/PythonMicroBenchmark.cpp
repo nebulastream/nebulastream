@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
@@ -526,3 +527,4 @@ int main(int, char**) {
         }
     }
 }
+#endif

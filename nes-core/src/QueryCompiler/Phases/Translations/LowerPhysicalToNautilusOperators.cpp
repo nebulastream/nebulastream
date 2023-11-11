@@ -244,7 +244,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             // auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
             auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(indexForThisHandler,
                                                                                               operatorInputSchema,
-                                                                                              operatorOutputSchema);
+                                                                                              operatorOutputSchema,
+                                                                                              pythonCompiler);
             parentOperator->setChild(mapPythonUDF);
             return mapPythonUDF;
 #endif// NAUTILUS_PYTHON_UDF_ENABLED

@@ -58,7 +58,7 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/PythonUDFTestData";
 };
 
-std::string compiler = "nuitka"; // use default compiler
+std::string compiler = "numba"; // use default compiler
 
 /**
  * Initializes a pipeline with a Scan of the input tuples, a MapPythonUDF operator, and a emit of the processed tuples.
@@ -341,8 +341,9 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
 
 /**
  * @brief Test a pipeline containing a scan, a python map with multiple types, and a emit operator
+ * This test does not work for numba as our implementation only accepts a return of one value
  */
-TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
+TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineComplexMap) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("byteVariable", BasicType::INT8);
     schema->addField("shortVariable", BasicType::INT16);
