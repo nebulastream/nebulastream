@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Util/JavaUDFDescriptorBuilder.hpp"
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 
 #include <API/Schema.hpp>
 #include <BaseUnitTest.hpp>

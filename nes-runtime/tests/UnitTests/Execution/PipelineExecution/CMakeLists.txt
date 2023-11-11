@@ -26,5 +26,6 @@ add_nes_runtime_test(runtime-batch-join-pipeline-test "BatchJoinPipelineTest.cpp
 add_nes_runtime_test(runtime-limit-pipeline-test "LimitPipelineTest.cpp")
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_nes_runtime_test(runtime-javaudf-pipeline-test "MapJavaUDFPipelineTest.cpp" "FlatMapJavaUDFPipelineTest.cpp")
+    add_nes_runtime_test(runtime-javamapudf-pipeline-test "MapJavaUDFPipelineTest.cpp")
+    add_nes_runtime_test(runtime-javaflatmapudf-pipeline-test "FlatMapJavaUDFPipelineTest.cpp")
 endif ()
