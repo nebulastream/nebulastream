@@ -84,7 +84,7 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.ByteMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::INT8))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::INT8))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), initialValue + 10);
@@ -104,7 +104,7 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.ShortMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::INT16))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::INT16))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), initialValue + 10);
@@ -124,7 +124,7 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.IntegerMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::INT32))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::INT32))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), initialValue + 10);
@@ -144,7 +144,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.LongMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::INT64))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::INT64))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), initialValue + 10);
@@ -164,7 +164,7 @@ TEST_F(MapJavaUdfOperatorTest, UnsignedLongUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.LongMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::UINT64))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::INT64))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), initialValue + 10);
@@ -184,7 +184,7 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.FloatMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::FLOAT32))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::FLOAT32))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), initialValue + 10.0);
@@ -204,7 +204,7 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.DoubleMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::FLOAT64))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::FLOAT64))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), initialValue + 10.0);
@@ -224,7 +224,7 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.BooleanMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::BOOLEAN))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::BOOLEAN))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), false);
@@ -245,7 +245,7 @@ TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
                              .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.StringMapFunction"s}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::TEXT))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::TEXT))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdfWithBuffer(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), Value<Text>("Appended String:testValue"));
@@ -305,7 +305,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                                                {{"stream.nebula.ComplexPojo"}, {}}})
                              .setInputSchema(inputSchema)
                              .setOutputSchema(outputSchema)
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdfWithBuffer(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
     EXPECT_EQ(outputRecord.read("byteVariable"), initialByte + 10);
@@ -335,7 +335,7 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
                                                {{"stream.nebula.DummyRichMapFunction$RecursiveDependentClass"}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::INT32))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::INT32))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecord = setupAndExecuteMapUdf(javaUDFDescriptor, inputRecord);
     ASSERT_EQ(outputRecord.read("id"), initialValue + 10);
