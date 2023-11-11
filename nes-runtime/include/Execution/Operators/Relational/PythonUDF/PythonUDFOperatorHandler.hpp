@@ -121,7 +121,13 @@ class PythonUDFOperatorHandler : public OperatorHandler {
 
     std::string getNumbaSignature();
 
+    std::string getPyPyDataType(AttributeFieldPtr& fieldDataType);
+
+    std::string generatePyPyFunctionDeclaration();
+
     Backends::BC::Dyncall& getDynCall() const { return this->dyncall; }
+
+    std::string getModulesToImportAsString();
 
     void generatePythonFile(std::string path, std::string file, std::string pythonCode);
     void importCompiledPythonModule(std::string path);

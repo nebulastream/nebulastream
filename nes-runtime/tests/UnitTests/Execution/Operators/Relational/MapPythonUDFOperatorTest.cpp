@@ -43,7 +43,7 @@ std::string method = "map";
 SchemaPtr inputSchema, outputSchema;
 std::string function, functionName;
 std::map<std::string, std::string> modulesToImport;
-std::string pythonCompiler = "cython"; // use default compiler
+std::string pythonCompiler = "pypy"; // use default compiler
 
 /**
 * @brief Test simple UDF with integer objects as input and output

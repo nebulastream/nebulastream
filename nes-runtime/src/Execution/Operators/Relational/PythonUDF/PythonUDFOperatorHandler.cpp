@@ -87,6 +87,47 @@ std::string PythonUDFOperatorHandler::getNumbaSignature(){
     return numbaOutputSignatureString + numbaInputSignatureString;
 }
 
+std::string PythonUDFOperatorHandler::getPyPyDataType(AttributeFieldPtr& fieldDataType) {
+    // https://numba.pydata.org/numba-doc/latest/reference/types.html
+    // it looks like there are no for strings?
+    if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+        return "bool";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createInt8())) {
+        return "char";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+        return "short";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createInt32())) {
+        return "int";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+        return "long";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createFloat())) {
+        return "float";
+    } else if (fieldDataType->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+        return "double";
+    } else {
+        return "";
+    }
+}
+
+std::string PythonUDFOperatorHandler::generatePyPyFunctionDeclaration(){
+    // int do_stuff(int, int);
+    std::string pypyFunctionDeclarationString = "";
+    if (outputSchema->fields.size() == 1) {
+        auto field = outputSchema->fields[0];
+        pypyFunctionDeclarationString += this->getPyPyDataType(field) + " " + this->functionName + "(";
+    }
+
+    for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
+        auto field = inputSchema->fields[i];
+        pypyFunctionDeclarationString += this->getPyPyDataType(field) + ", ";
+    }
+
+    // remove last two characters, a whitespace and a comma
+    pypyFunctionDeclarationString.erase(pypyFunctionDeclarationString.length()-2);
+    pypyFunctionDeclarationString += ")";
+    return pypyFunctionDeclarationString;
+}
+
 void PythonUDFOperatorHandler::generatePythonFile(std::string path, std::string file, std::string pythonCode) {
     // create .pyx file
     // add python code into that file
@@ -95,7 +136,7 @@ void PythonUDFOperatorHandler::generatePythonFile(std::string path, std::string 
     }
 
     std::ofstream pyxFile;
-    pyxFile.open(file, std::ios_base::app);
+    pyxFile.open(file, std::ios::trunc);
     pyxFile << pythonCode << "\n";
     pyxFile.close();
 
@@ -119,14 +160,7 @@ void PythonUDFOperatorHandler::importCompiledPythonModule(std::string path) {
     }
 }
 
-void PythonUDFOperatorHandler::initPython() {
-    Timer initPythonTimer("Initialize Python Function");
-    Timer execPythonTimer("Execute Python Code");
-    Timer compilePythonTimer("Compile Python Code");
-    initPythonTimer.start();
-    this->moduleName = this->functionName + "Module";
-    // initialize python interpreter
-    Py_Initialize();
+std::string PythonUDFOperatorHandler::getModulesToImportAsString() {
     std::string pythonCode = "";
     if (!this->modulesToImport.empty()) {
         // import modules
@@ -151,7 +185,18 @@ void PythonUDFOperatorHandler::initPython() {
             ++it;
         }
     }
+    return pythonCode;
+}
 
+void PythonUDFOperatorHandler::initPython() {
+    Timer initPythonTimer("Initialize Python Function");
+    Timer execPythonTimer("Execute Python Code");
+    Timer compilePythonTimer("Compile Python Code");
+    initPythonTimer.start();
+    this->moduleName = this->functionName + "Module";
+    // initialize python interpreter
+    Py_Initialize();
+    std::string pythonCode = getModulesToImportAsString();
     //choose python compiler, default is the CPython compiler
     if (this->pythonCompiler == "numba") {
         // init globals and locals to be able to access the variables later when calling the function
@@ -173,7 +218,7 @@ void PythonUDFOperatorHandler::initPython() {
             + "_address = " + this->functionName + ".address";
         //PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
     } else {
-        // default, just using the CPython compiler
+        // default, just using the CPython compiler or Cython or Nuitka
         pythonCode += this->function;
     }
 
@@ -221,6 +266,42 @@ void PythonUDFOperatorHandler::initPython() {
         std::system(generateSOFile.c_str());
 
         this->importCompiledPythonModule(path);
+    } else if (pythonCompiler == "pypy") {
+        // generate c function declaration
+
+        std::string functionDeclaration = this->generatePyPyFunctionDeclaration();
+        auto path = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "tmp";
+        auto file = path + std::filesystem::path::preferred_separator + this->functionName + ".py";
+
+        // generate py file that creates shared library with cffi
+        std::string pythonFile = "import cffi\n"
+                                 "ffibuilder = cffi.FFI()\n"
+                                 "\n"
+                                 "ffibuilder.embedding_api(\"\"\"\n"
+                                 "     " + functionDeclaration + ";\n"
+                                 "\"\"\")\n"
+                                 "\n"
+                                 "ffibuilder.set_source(\"udfs\", \"\", extra_link_args=['-Wl,-rpath=/usr/lib/pypy3/bin'])\n"
+                                 "\n"
+                                 "ffibuilder.embedding_init_code(\"\"\"\n"
+                                 "from udfs import ffi\n"
+                                 + this->getModulesToImportAsString() + "\n"
+                                 "\n"
+                                 "@ffi.def_extern()\n"
+                                  + this->function +"\n"
+                                 "\"\"\")\n"
+                                 "\n"
+                                 "ffibuilder.compile(target=\"" + path + std::filesystem::path::preferred_separator + "udfs.*\", verbose=True)";
+
+
+        this->generatePythonFile(path, file, pythonFile);
+
+        // run cffiEmbedding with pypy
+        auto generateSOFile = "pypy " + file;
+        std::system(generateSOFile.c_str());
+
+        //auto soFile = path + std::filesystem::path::preferred_separator + "udfs.so";
+
     } else {
         // compile function string
         compilePythonTimer.start();

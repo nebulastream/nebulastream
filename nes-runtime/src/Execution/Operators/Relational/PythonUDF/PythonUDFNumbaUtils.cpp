@@ -112,37 +112,37 @@ T executeNumba(void* state){
     return result;
 }
 
-bool executeToBoolean(void* state) {
+bool executeToBooleanNumba(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler should not be null");
     return executeNumba<bool>(state);
 }
 
-float executeToFloat(void* state) {
+float executeToFloatNumba(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler should not be null");
     return executeNumba<float>(state);
 }
 
-double executeToDouble(void* state) {
+double executeToDoubleNumba(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler should not be null");
     return executeNumba<double>(state);
 }
 
-int8_t executeToInt8(void* state) {
+int8_t executeToInt8Numba(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler should not be null");
     return executeNumba<int8_t>(state);
 }
 
-int16_t executeToInt16(void* state) {
+int16_t executeToInt16Numba(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler should not be null");
     return executeNumba<int16_t>(state);
 }
 
-int32_t executeToInt32(void* state) {
+int32_t executeToInt32Numba(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler should not be null");
     return executeNumba<int32_t>(state);
 }
 
-int64_t executeToInt64(void* state) {
+int64_t executeToInt64Numba(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler should not be null");
     return executeNumba<int64_t>(state);
 }

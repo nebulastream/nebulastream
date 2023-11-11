@@ -18,6 +18,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFNumbaUtils.hpp>
+#include <Execution/Operators/Relational/PythonUDF/PythonUDFPyPyUtils.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFUtils.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
@@ -378,7 +379,7 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
 
     // FunctionCall("createPythonEnvironment", createPythonEnvironment, handler);
     //auto numbaActivated = FunctionCall("useNumba", useNumba, handler);
-    if (pythonCompiler == "numba") {
+    if (pythonCompiler == "numba" || pythonCompiler == "pypy") {
         // add Parameters
         for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
             auto field = inputSchema->fields[i];
@@ -403,35 +404,70 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
         }
         // execute function through function pointer and write result into record
         record = Record();
-        if (outputSchema->fields.size() == 1) {
-            auto field = outputSchema->fields[0];
-            auto fieldName = field->getName();
-            if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
-                Value<> val = FunctionCall("executeToBoolean", executeToBoolean, handler);
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
-                Value<> val = FunctionCall("executeToFloat", executeToFloat, handler);
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
-                Value<> val = FunctionCall("executeToDouble", executeToDouble, handler);
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
-                Value<> val = FunctionCall("executeToInt8", executeToInt8, handler);
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
-                Value<> val = FunctionCall("executeToInt16", executeToInt16, handler);
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
-                Value<> val = FunctionCall("executeToInt32", executeToInt32, handler);
-                record.write(fieldName, val);
-            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
-                Value<> val = FunctionCall("executeToInt64", executeToInt64, handler);
-                record.write(fieldName, val);
+        if (pythonCompiler == "numba") {
+            if (outputSchema->fields.size() == 1) {
+                auto field = outputSchema->fields[0];
+                auto fieldName = field->getName();
+                if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+                    Value<> val = FunctionCall("executeToBooleanNumba", executeToBooleanNumba, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
+                    Value<> val = FunctionCall("executeToFloatNumba", executeToFloatNumba, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+                    Value<> val = FunctionCall("executeToDoubleNumba", executeToDoubleNumba, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
+                    Value<> val = FunctionCall("executeToInt8Numba", executeToInt8Numba, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+                    Value<> val = FunctionCall("executeToInt16Numba", executeToInt16Numba, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
+                    Value<> val = FunctionCall("executeToInt32Numba", executeToInt32Numba, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+                    Value<> val = FunctionCall("executeToInt64Numba", executeToInt64Numba, handler);
+                    record.write(fieldName, val);
+                } else {
+                    NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
+                }
             } else {
-                NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
+                NES_THROW_RUNTIME_ERROR("Cannot run this function with more than one output variable");
+            }
+        } else if (pythonCompiler == "pypy") {
+            if (outputSchema->fields.size() == 1) {
+                auto field = outputSchema->fields[0];
+                auto fieldName = field->getName();
+                if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
+                    Value<> val = FunctionCall("executeToBooleanPyPy", executeToBooleanPyPy, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
+                    Value<> val = FunctionCall("executeToFloatPyPy", executeToFloatPyPy, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+                    Value<> val = FunctionCall("executeToDoublePyPy", executeToDoublePyPy, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
+                    Value<> val = FunctionCall("executeToInt8PyPy", executeToInt8PyPy, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+                    Value<> val = FunctionCall("executeToInt16PyPy", executeToInt16PyPy, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
+                    Value<> val = FunctionCall("executeToInt32PyPy", executeToInt32PyPy, handler);
+                    record.write(fieldName, val);
+                } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+                    Value<> val = FunctionCall("executeToInt64PyPy", executeToInt64PyPy, handler);
+                    record.write(fieldName, val);
+                } else {
+                    NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
+                }
+            } else {
+                NES_THROW_RUNTIME_ERROR("Cannot run this function with more than one output variable");
             }
         } else {
-            NES_THROW_RUNTIME_ERROR("Cannot run this function with more than one output variable");
+            NES_THROW_RUNTIME_ERROR("Something went wrong... Cannot execute this function.");
         }
     } else {
         FunctionCall("initPythonTupleSize", initPythonTupleSize, handler, Value<Int32>((int) inputSchema->fields.size()));

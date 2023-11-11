@@ -28,13 +28,13 @@ void createInt64Numba(void* state, int64_t value);
 
 template<typename T>
 T executeNumba(void* state);
-bool executeToBoolean(void* state);
-float executeToFloat(void* state);
-double executeToDouble(void* state);
-int8_t executeToInt8(void* state);
-int16_t executeToInt16(void* state);
-int32_t executeToInt32(void* state);
-int64_t executeToInt64(void* state);
+bool executeToBooleanNumba(void* state);
+float executeToFloatNumba(void* state);
+double executeToDoubleNumba(void* state);
+int8_t executeToInt8Numba(void* state);
+int16_t executeToInt16Numba(void* state);
+int32_t executeToInt32Numba(void* state);
+int64_t executeToInt64Numba(void* state);
 };// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_EXECUTION_OPERATORS_RELATIONAL_PYTHONNUMBAUDFUTILS_HPP
