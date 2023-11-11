@@ -83,15 +83,15 @@ TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
     auto testSourceDescriptor = executionEngine->createDataSource(fqSchema);
 
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
-                                 .setClassName("IntegerMapFunction")
+                                 .setClassName("stream.nebula.IntegerMapFunction")
                                  .setMethodName("map")
                                  .setInstance({})
-                                 .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"IntegerMapFunction", {}}})
+                                 .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.IntegerMapFunction", {}}})
                                  .setInputSchema(udfSchema)
                                  .setOutputSchema(udfSchema)
                                  .setInputClassName("java.lang.Integer")
                                  .setOutputClassName("java.lang.Integer")
-                                 .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                                 .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                  .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).mapUDF(javaUDFDescriptor).sink(testSinkDescriptor);

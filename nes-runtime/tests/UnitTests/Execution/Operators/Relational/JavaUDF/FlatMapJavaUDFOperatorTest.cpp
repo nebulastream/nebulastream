@@ -78,7 +78,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest) {
                                                {{"stream.nebula.StringFlatMapFunction"}, {}}})
                              .setInputSchema(Schema::create()->addField("id", BasicType::TEXT))
                              .setOutputSchema(Schema::create()->addField("id", BasicType::TEXT))
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecords = setupAndExecuteFlatMapUdf(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
     ASSERT_EQ(outputRecords.size(), 2);
@@ -125,7 +125,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction) {
                                                {"stream.nebula.ComplexPojo", {}}})
                              .setInputSchema(schema)
                              .setOutputSchema(schema)
-                             .loadByteCodeFrom(TEST_DATA_DIRECTORY)
+                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                              .build();
     auto outputRecords = setupAndExecuteFlatMapUdf(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
     auto result = outputRecords[0];

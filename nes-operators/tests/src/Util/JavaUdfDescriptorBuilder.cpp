@@ -34,7 +34,7 @@ JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(const std::
     for (auto& [className, byteCode] : byteCodeList) {
         std::string copy = className;
         std::replace(copy.begin(), copy.end(), '.', '/');
-        const auto fileName = std::filesystem::path(classFilePath) / "JavaUDFTestData"/ fmt::format("{}.class", copy);
+        const auto fileName = std::filesystem::path(classFilePath) / fmt::format("{}.class", copy);
         NES_DEBUG("Loading byte code: class={}, file={}", className, fileName.string());
         std::ifstream classFile(fileName, std::fstream::binary);
         NES_ASSERT(classFile, "Could not find class file: " << fileName);
