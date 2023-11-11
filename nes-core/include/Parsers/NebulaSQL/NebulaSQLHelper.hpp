@@ -103,10 +103,16 @@ namespace NES::Parsers {
             bool isJoinRelation = false;
             bool isFunctionCall = false;
             bool isSimpleCondition = true;
-
             bool hasMultipleAttributes = false;
 
             std::vector<ExpressionNodePtr> projections;
+
+            std::vector<ExpressionNodePtr> tempExpressionVectorBoolean;
+            std::string opBoolean;
+            std::vector<ExpressionNodePtr> tempExpressionVectorValue;
+            std::string opValue;
+
+
 
             // Getter and Setter
 
@@ -126,11 +132,8 @@ namespace NES::Parsers {
             void addOperatorNode(NebulaSQLOperatorNode operatorNode);
             uint64_t getLimit() const;
             const NES::Windowing::WindowTypePtr getWindowType() const;
-            void addWhereCondition(ExpressionNodePtr whereCondition);
-            void setWhereConditions(const std::list<ExpressionNodePtr>& whereConditions);
             void addSource(std::string sourceName);
             const std::string getSource() const;
-            const std::vector<ExpressionNodePtr>& getWhereClauses() const;
         };
     }// namespace NES::Parsers
 

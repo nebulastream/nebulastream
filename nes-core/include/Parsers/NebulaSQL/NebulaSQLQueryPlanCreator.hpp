@@ -50,6 +50,7 @@ namespace NES::Parsers {
             void exitWhereClause(NebulaSQLParser::WhereClauseContext* context) override;
             void enterComparisonOperator(NebulaSQLParser::ComparisonOperatorContext* context) override;
             void enterConstantDefault(NebulaSQLParser::ConstantDefaultContext* context) override;
+            void enterPredicated(NebulaSQLParser::PredicatedContext* context) override;
             void exitPredicated(NebulaSQLParser::PredicatedContext* context) override;
             void enterArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) override;
             void exitErrorCapturingIdentifier(NebulaSQLParser::ErrorCapturingIdentifierContext* context) override;
@@ -85,6 +86,10 @@ namespace NES::Parsers {
             void exitWatermarkClause(NebulaSQLParser::WatermarkClauseContext* context) override;
             void exitSingleStatement(NebulaSQLParser::SingleStatementContext* context) override;
             void poppush(NebulaSQLHelper helper);
+            static ExpressionNodePtr createComparisonNode(const std::string& left, std::string op, const std::string& right);
+            void exitComparison(NebulaSQLParser::ComparisonContext* context) override;
+            void enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) override;
+            void exitValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) override;
         };
 
 

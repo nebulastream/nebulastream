@@ -48,22 +48,4 @@ uint64_t NebulaSQLHelper::getLimit() const { return 0; }
 
 const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const { return NES::Windowing::WindowTypePtr(); }
 
-// Adds a new expression to the WHERE clause
-void NebulaSQLHelper::addWhereCondition(ExpressionNodePtr whereCondition) {
-    addExpression(whereCondition);
-}
-
-// Sets the entire list of WHERE conditions
-void NebulaSQLHelper::setWhereConditions(const std::list<ExpressionNodePtr>& whereConditions) {
-    setExpressions(whereConditions);
-}
-
-const std::vector<ExpressionNodePtr>& NebulaSQLHelper::getWhereClauses() const {
-    return this->whereClauses;
-}
-
-
-
-
-
 }// namespace NES::Parsers

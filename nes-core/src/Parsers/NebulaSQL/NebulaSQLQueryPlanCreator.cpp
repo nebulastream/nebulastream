@@ -164,6 +164,8 @@ namespace NES::Parsers {
         }
 
         void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinaryContext* context) {
+            auto temp = context->getText();
+
             auto leftExpression = NES::Attribute(context->left->getText()).getExpressionNode();
             auto rightExpression = NES::Attribute(context->right->getText()).getExpressionNode();
             NES::ExpressionNodePtr expression;
@@ -192,6 +194,8 @@ namespace NES::Parsers {
             helpers.top().addExpression(expression);
         }
         void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context) {
+            auto temp = context->getText();
+
             helpers.top().isSelect= false;
             NebulaSQLBaseListener::exitSelectClause(context);
 
@@ -203,27 +207,38 @@ namespace NES::Parsers {
         }
         void NebulaSQLQueryPlanCreator::enterWhereClause(NebulaSQLParser::WhereClauseContext* context) {
             helpers.top().isWhere= true;
-            if(context->children.size() <= 2){
-
-            }
+            std::string temp = context->getText();
             NebulaSQLBaseListener::enterWhereClause(context);
 
         }
         void NebulaSQLQueryPlanCreator::exitWhereClause(NebulaSQLParser::WhereClauseContext* context) {
             helpers.top().isWhere= false;
+            NebulaSQLHelper helper = helpers.top();
+            auto temp = helper.tempExpressionVectorBoolean.at(0);
+            for (auto& whereExpr : helper.tempExpressionVectorBoolean) {
+                helper.addExpression(whereExpr);
+            }
+
+
             NebulaSQLBaseListener::exitWhereClause(context);
 
         }
         void NebulaSQLQueryPlanCreator::enterComparisonOperator(NebulaSQLParser::ComparisonOperatorContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+
+            helper.opBoolean = context->getText();
+            auto temp = context->getText();
+            poppush(helper);
             NebulaSQLBaseListener::enterComparisonOperator(context);
         }
         void NebulaSQLQueryPlanCreator::enterConstantDefault(NebulaSQLParser::ConstantDefaultContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::enterConstantDefault(context);
         }
-        void NebulaSQLQueryPlanCreator::exitPredicated(NebulaSQLParser::PredicatedContext* context) {
-            NebulaSQLBaseListener::exitPredicated(context);
-        }
         void NebulaSQLQueryPlanCreator::enterArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::enterArithmeticBinary(context);
             NES::ExpressionNodePtr arithmeticBinaryExpr = NES::Attribute(context->getText()).getExpressionNode();
             //helper.addArithmeticBinaryExpression(arithmeticBinaryExpr);
@@ -284,7 +299,7 @@ namespace NES::Parsers {
 
             queryPlan = QueryPlanBuilder::createQueryPlan(helper.getSource());
 
-            for (auto& whereExpr : helper.getWhereClauses()) {
+            for (auto& whereExpr : helper.getExpressions()) {
                 queryPlan = QueryPlanBuilder::addFilter(whereExpr, queryPlan);
             }
 
@@ -353,41 +368,193 @@ namespace NES::Parsers {
             NebulaSQLBaseListener::exitHavingClause(context);
         }
         void NebulaSQLQueryPlanCreator::enterComparison(NebulaSQLParser::ComparisonContext* context) {
+            auto temp = context->getText();
+            NebulaSQLBaseListener::enterComparison(context);
+        }
+        void NebulaSQLQueryPlanCreator::exitComparison(NebulaSQLParser::ComparisonContext* context) {
+            /*
+            NebulaSQLHelper helper = helpers.top();
+            NES::ExpressionNodePtr expression;
+            if (helper.tempExpressionVectorValue.size() == 2) {
+                auto leftExpression = helper.tempExpressionVectorValue.at(0);
+                auto rightExpression = helper.tempExpressionVectorValue.at(1);
+
+                if (helper.opValue == "<") {
+                    expression = NES::LessExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opValue == "<=") {
+                    expression = NES::LessEqualsExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opValue == ">") {
+                    expression = NES::GreaterExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opValue == ">=") {
+                    expression = NES::GreaterEqualsExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opValue == "==") {
+                    expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opValue == "&&") {
+                    expression = NES::AndExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opValue == "||") {
+                    expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opValue == "AND") {
+                    expression = NES::AndExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opValue == "OR") {
+                    expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
+                }
+                helper.tempExpressionVectorValue.erase(helper.tempExpressionVectorValue.begin(), helper.tempExpressionVectorValue.begin() + 2);
+                helper.tempExpressionVectorValue.at(0) = expression;
+                poppush(helper);
+            }    */
             NebulaSQLBaseListener::enterComparison(context);
         }
         void NebulaSQLQueryPlanCreator::exitAggregationClause(NebulaSQLParser::AggregationClauseContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::exitAggregationClause(context);
         }
         void NebulaSQLQueryPlanCreator::enterJoinRelation(NebulaSQLParser::JoinRelationContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::enterJoinRelation(context);
         }
         void NebulaSQLQueryPlanCreator::enterColumnReference(NebulaSQLParser::ColumnReferenceContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::enterColumnReference(context);
         }
         void NebulaSQLQueryPlanCreator::enterDereference(NebulaSQLParser::DereferenceContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::enterDereference(context);
         }
         void NebulaSQLQueryPlanCreator::exitDereference(NebulaSQLParser::DereferenceContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::exitDereference(context);
         }
         void NebulaSQLQueryPlanCreator::exitJoinCriteria(NebulaSQLParser::JoinCriteriaContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::exitJoinCriteria(context);
         }
         void NebulaSQLQueryPlanCreator::enterTableName(NebulaSQLParser::TableNameContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::enterTableName(context);
         }
         void NebulaSQLQueryPlanCreator::enterWatermarkClause(NebulaSQLParser::WatermarkClauseContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::enterWatermarkClause(context);
         }
         void NebulaSQLQueryPlanCreator::enterWatermarkParameters(NebulaSQLParser::WatermarkParametersContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::enterWatermarkParameters(context);
         }
         void NebulaSQLQueryPlanCreator::exitWatermarkClause(NebulaSQLParser::WatermarkClauseContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::exitWatermarkClause(context);
         }
         void NebulaSQLQueryPlanCreator::exitSingleStatement(NebulaSQLParser::SingleStatementContext* context) {
+            auto temp = context->getText();
+
             NebulaSQLBaseListener::exitSingleStatement(context);
         }
+        void NebulaSQLQueryPlanCreator::enterPredicated(NebulaSQLParser::PredicatedContext* context){
+            NebulaSQLBaseListener::enterPredicated(context);
+        }
+
+        void NebulaSQLQueryPlanCreator::exitPredicated(NebulaSQLParser::PredicatedContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+            NES::ExpressionNodePtr expression;
+            if (helper.tempExpressionVectorBoolean.size() == 2) {
+                auto leftExpression = helper.tempExpressionVectorBoolean.at(0);
+                auto rightExpression = helper.tempExpressionVectorBoolean.at(1);
+
+                if (helper.opBoolean == "<") {
+                    expression = NES::LessExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opBoolean == "<=") {
+                    expression = NES::LessEqualsExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opBoolean == ">") {
+                    expression = NES::GreaterExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opBoolean == ">=") {
+                    expression = NES::GreaterEqualsExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opBoolean == "==") {
+                    expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opBoolean == "&&") {
+                    expression = NES::AndExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opBoolean == "||") {
+                    expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opBoolean == "AND") {
+                    expression = NES::AndExpressionNode::create(leftExpression, rightExpression);
+                }
+                else if (helper.opBoolean == "OR") {
+                    expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
+                }
+                helper.tempExpressionVectorBoolean.erase(helper.tempExpressionVectorBoolean.begin(), helper.tempExpressionVectorBoolean.begin() + 2);
+                helper.tempExpressionVectorBoolean.at(0) = expression;
+                poppush(helper);
+            }
+            NebulaSQLBaseListener::exitPredicated(context);
+
+        }
+
+
+        ExpressionNodePtr NebulaSQLQueryPlanCreator::createComparisonNode(const std::string& left, const std::string opText, const std::string& right) {
+            auto leftExpression = NES::Attribute(left).getExpressionNode();
+            auto rightExpression = NES::Attribute(right).getExpressionNode();
+            NES::ExpressionNodePtr expression;
+            if (opText == "AND") {
+                expression = NES::AndExpressionNode::create(leftExpression, rightExpression);
+            }
+            else if (opText == "OR") {
+                expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
+            }
+            else if (opText == ">") {
+                expression = NES::GreaterExpressionNode::create(leftExpression, rightExpression);
+            }
+            else if (opText == "<") {
+                expression = NES::LessExpressionNode::create(leftExpression, rightExpression);
+            }
+            else if (opText == ">=") {
+                expression = NES::GreaterEqualsExpressionNode::create(leftExpression, rightExpression);
+            }
+            else if (opText == "<=") {
+                expression = NES::LessEqualsExpressionNode::create(leftExpression, rightExpression);
+            }
+            else if (opText == "==") {
+                expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
+            }
+            return expression;
+        }
+        void NebulaSQLQueryPlanCreator::enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) {
+            auto temp = context->getText();
+            if (helpers.top().isWhere) {
+            NebulaSQLHelper helper = helpers.top();
+            helper.tempExpressionVectorBoolean.push_back(NES::Attribute(temp).getExpressionNode());
+            poppush(helper);
+            }
+
+        }
+        void NebulaSQLQueryPlanCreator::exitValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) {
+            auto temp = context->getText();
+
+        }
+
 
 
 
