@@ -28,10 +28,10 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <filesystem>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -57,22 +57,6 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 };
-
-/** Takes an byte code list that contains class names but no class definitions and loads the byte code for the classes from the test data directory. */
-void loadByteCode(jni::JavaUDFByteCodeList& byteCodeList) {
-    for (auto& [className, byteCode] : byteCodeList) {
-        const auto fileName = std::filesystem::path(TEST_DATA_DIRECTORY) / "JavaUDFTestData"
-            / fmt::format("{}.class", Operators::JavaUDFOperatorHandler::convertToJNIName(className));
-        NES_DEBUG("Loading byte code: class={}, file={}", className, fileName.string());
-        std::ifstream classFile(fileName, std::fstream::binary);
-        NES_ASSERT(classFile, "Could not find class file: " << fileName);
-        classFile.seekg(0, std::ios_base::end);
-        auto fileSize = classFile.tellg();
-        classFile.seekg(0, std::ios_base::beg);
-        byteCode.resize(fileSize);
-        classFile.read(reinterpret_cast<char*>(byteCode.data()), byteCode.size());
-    }
-}
 
 /**
  * Initializes a pipeline with a Scan of the input tuples, a FlatMapJavaUDF operator, and a emit of the processed tuples.
@@ -118,52 +102,22 @@ auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLa
 
 /**
  * Initializes the map handler for the given pipeline.
- * @param className java class name of the udf
- * @param methodName method name of the udf
- * @param inputProxyName input proxy class name
- * @param outputProxyName output proxy class name
- * @param schema schema of the input and output tuples
- * @param testDataPath path to the test data containing the udf jar
+ * @param javaUDFDescriptor Descriptor for the Java UDF under test.
  * @return operator handler
  */
-auto initMapHandler(std::string className,
-                    std::string methodName,
-                    std::string inputProxyName,
-                    std::string outputProxyName,
-                    jni::JavaUDFByteCodeList byteCodeList,
-                    SchemaPtr schema) {
-    loadByteCode(byteCodeList);
-    jni::JavaSerializedInstance serializedInstance;
-    return std::make_shared<Operators::JavaUDFOperatorHandler>(className,
-                                                               methodName,
-                                                               inputProxyName,
-                                                               outputProxyName,
-                                                               byteCodeList,
-                                                               serializedInstance,
-                                                               schema,
-                                                               schema,
+auto initMapHandler(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor) {
+    jni::JavaSerializedInstance instance;
+    return std::make_shared<Operators::JavaUDFOperatorHandler>(javaUDFDescriptor->getClassName(),
+                                                               javaUDFDescriptor->getMethodName(),
+                                                               javaUDFDescriptor->getInputClassName(),
+                                                               javaUDFDescriptor->getOutputClassName(),
+                                                               javaUDFDescriptor->getByteCodeList(),
+                                                               instance,
+                                                               javaUDFDescriptor->getInputSchema(),
+                                                               javaUDFDescriptor->getOutputSchema(),
                                                                std::nullopt);
 }
 
-/**
- * Initializes the map handler for the given pipeline.
- * @param className java class name of the udf
- * @param methodName method name of the udf
- * @param inputProxyName input proxy class name
- * @param outputProxyName output proxy class name
- * @param schema schema of the input and output tuples
- * @param testDataPath path to the test data containing the udf jar
- * @return operator handler
- */
-auto initMapHandler(std::string className,
-                    std::string methodName,
-                    std::string inputProxyName,
-                    std::string outputProxyName,
-                    SchemaPtr schema) {
-    jni::JavaUDFByteCodeList byteCodeList{{"stream.nebula.FlatMapFunction", {}}, {className, {}}};
-    jni::JavaSerializedInstance serializedInstance;
-    return initMapHandler(className, methodName, inputProxyName, outputProxyName, byteCodeList, schema);
-}
 
 /**
  * Check the output buffer for numeric values.
@@ -209,8 +163,16 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler =
-        initMapHandler("stream.nebula.StringFlatMapFunction", "flatMap", "java.lang.String", "java.util.Collection", schema);
+    auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
+        .setClassName("stream.nebula.StringFlatMapFunction")
+        .setMethodName("flatMap")
+        .setInputClassName("java.lang.String")
+        .setOutputClassName("java.util.Collection")
+        .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.StringFlatMapFunction", {}}})
+        .setInputSchema(schema)
+        .setOutputSchema(schema)
+        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+        .build());
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -277,12 +239,18 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     jni::JavaUDFByteCodeList byteCodeList{{"stream.nebula.FlatMapFunction", {}},
                                           {"stream.nebula.ComplexPojoFlatMapFunction", {}},
                                           {"stream.nebula.ComplexPojo", {}}};
-    auto handler = initMapHandler("stream.nebula.ComplexPojoFlatMapFunction",
-                                  "flatMap",
-                                  "stream.nebula.ComplexPojo",
-                                  "java.util.Collection",
-                                  byteCodeList,
-                                  schema);
+    auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
+        .setClassName("stream.nebula.ComplexPojoFlatMapFunction")
+        .setMethodName("flatMap")
+        .setInputClassName("stream.nebula.ComplexPojo")
+        .setOutputClassName("java.util.Collection")
+        .setByteCodeList({{"stream.nebula.FlatMapFunction", {}},
+                                          {"stream.nebula.ComplexPojoFlatMapFunction", {}},
+                                          {"stream.nebula.ComplexPojo", {}}})
+        .setInputSchema(schema)
+        .setOutputSchema(schema)
+        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+        .build());
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

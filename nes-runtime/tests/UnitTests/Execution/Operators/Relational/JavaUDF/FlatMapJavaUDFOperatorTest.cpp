@@ -26,7 +26,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include "Util/JavaUDFDescriptorBuilder.hpp"
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 
 using namespace std::string_literals;
 
