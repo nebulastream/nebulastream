@@ -11,7 +11,6 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
-#include "Pipeline.h"
 #include <API/Schema.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
