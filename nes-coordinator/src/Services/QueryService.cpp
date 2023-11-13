@@ -151,7 +151,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
     }
 }
 
-QueryId QueryService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
+nlohmann::json QueryService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
                                                           const Optimizer::PlacementStrategy placementStrategy) {
 
     if (enableNewRequestExecutor) {
