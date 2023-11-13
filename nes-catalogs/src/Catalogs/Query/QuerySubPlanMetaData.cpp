@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 
 namespace NES {
@@ -24,7 +25,11 @@ QuerySubPlanMetaData::create(QuerySubPlanId querySubPlanId, QueryState subQueryS
 QuerySubPlanMetaData::QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, NES::QueryState subQueryStatus, uint64_t workerId)
     : querySubPlanId(querySubPlanId), subQueryStatus(subQueryStatus), workerId(workerId) {}
 
-void QuerySubPlanMetaData::updateStatus(QueryState queryStatus) { subQueryStatus = queryStatus; }
+void QuerySubPlanMetaData::updateStatus(QueryState queryStatus) {
+    subQueryStatus = queryStatus;
+    uint64_t usSinceEpoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    history.emplace_back(usSinceEpoch, queryStatus);
+}
 
 void QuerySubPlanMetaData::updateMetaInformation(const std::string& metaInformation) { this->metaInformation = metaInformation; }
 
@@ -37,5 +42,7 @@ QueryState QuerySubPlanMetaData::getSubQueryStatus() const { return subQueryStat
 uint64_t QuerySubPlanMetaData::getWorkerId() const { return workerId; }
 
 const std::string& QuerySubPlanMetaData::getMetaInformation() const { return metaInformation; }
+
+const QueryStateHistory& QuerySubPlanMetaData::getHistory() const { return history; }
 
 }// namespace NES
