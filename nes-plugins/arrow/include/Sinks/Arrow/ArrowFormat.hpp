@@ -16,10 +16,9 @@
 #define NES_CORE_INCLUDE_SINKS_FORMATS_ARROWFORMAT_HPP_
 
 #include <Sinks/Formats/SinkFormat.hpp>
-
-#include <arrow/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
+#include <arrow/type_fwd.h>
+#include <arrow/io/type_fwd.h>
+#include <arrow/ipc/type_fwd.h>
 
 namespace NES {
 
