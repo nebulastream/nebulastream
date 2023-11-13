@@ -15,7 +15,7 @@
 #ifndef NES_EXPLAINREQUEST_HPP
 #define NES_EXPLAINREQUEST_HPP
 
-#include <Common/Identifiers.hpp>
+#include <Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <nlohmann/json.hpp>
 
@@ -107,15 +107,11 @@ class ExplainRequest : public AbstractRequest {
      * @brief Constructor
      * @param queryPlan: the query plan
      * @param queryPlacementStrategy: the placement strategy
-     * @param faultTolerance: the fault tolerance aspect of the query
-     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     ExplainRequest(const QueryPlanPtr& queryPlan,
                    const Optimizer::PlacementStrategy queryPlacementStrategy,
-                   const FaultToleranceType faultTolerance,
-                   const LineageType lineage,
                    const uint8_t maxRetries,
                    const z3::ContextPtr& z3Context);
 
@@ -123,15 +119,11 @@ class ExplainRequest : public AbstractRequest {
      * @brief creates a new AddQueryRequest object
      * @param queryPlan: the query plan
      * @param queryPlacementStrategy: the placement strategy
-     * @param faultTolerance: the fault tolerance aspect of the query
-     * @param lineage: the lineage property of the query
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     static ExplainRequestPtr create(const QueryPlanPtr& queryPlan,
                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                    const FaultToleranceType faultTolerance,
-                                    const LineageType lineage,
                                     const uint8_t maxRetries,
                                     const z3::ContextPtr& z3Context);
 
@@ -139,9 +131,9 @@ class ExplainRequest : public AbstractRequest {
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
      * @param ex: The exception encountered
-     * @param storageHandle: The storage access handle used by the request
+     * @param storageHandler: The storage access handle used by the request
      */
-    void preRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) override;
+    void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
@@ -149,25 +141,24 @@ class ExplainRequest : public AbstractRequest {
      * @param storageHandle: The storage access handle that was used by the request to modify the system state.
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    std::vector<AbstractRequestPtr> rollBack(RequestExecutionException& ex, const StorageHandlerPtr& storageHandle) override;
+    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 
     /**
      * @brief Performs request specific error handling to be done after changes to the storage are rolled back
      * @param ex: The exception encountered
-     * @param storageHandle: The storage access handle used by the request
+     * @param storageHandler: The storage access handle used by the request
      */
-    void postRollbackHandle(const RequestExecutionException& ex, const StorageHandlerPtr& storageHandler) override;
+    void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
-     * @param storageHandle: The storage access handle used by the request
-     * @param requiredResources: The resources required during the execution phase
+     * @param storageHandler: The storage access handle used by the request
      */
     void postExecution(const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Executes the request logic.
-     * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
+     * @param storageHandler: a handle to access the coordinators data structures which might be needed for executing the
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
@@ -212,8 +203,6 @@ class ExplainRequest : public AbstractRequest {
     std::string queryString;
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy queryPlacementStrategy;
-    FaultToleranceType faultTolerance;
-    LineageType lineage;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
 

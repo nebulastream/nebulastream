@@ -352,7 +352,7 @@ void AddQueryRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
-        visitingOp->setId(Util::getNextOperatorId());
+        visitingOp->setId(NES::getNextOperatorId());
     }
 }
 
