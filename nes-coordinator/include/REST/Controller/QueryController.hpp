@@ -31,6 +31,8 @@
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
+#include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
+
 namespace NES {
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
@@ -286,12 +288,10 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 }
             }
 
-            QueryId queryId =
+            auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
+            nlohmann::json response =
                 queryService->validateAndQueueExplainQueryRequest(queryPlan, placementStrategy);
 
-            //Prepare the response
-            nlohmann::json response;
-            response["queryId"] = queryId;
             return createResponse(Status::CODE_202, response.dump());
         } catch (nlohmann::json::exception& e) {
             return errorHandler->handleError(Status::CODE_500, e.what());

@@ -112,7 +112,7 @@ class QueryService {
      * @param lineage : lineage type for the given query.
      * @return query id
      */
-    QueryId validateAndQueueExplainQueryRequest(const QueryPlanPtr& queryPlan,
+    nlohmann::json validateAndQueueExplainQueryRequest(const QueryPlanPtr& queryPlan,
                                                 const Optimizer::PlacementStrategy placementStrategy);
 
     /**
