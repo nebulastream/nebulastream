@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.249](https://github.com/nebulastream/nebulastream/tree/v0.5.249) (2023-11-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.248...v0.5.249)
+
+**Implemented enhancements:**
+
+- \[TASK\] Split Java utility classes from Java test classes [\#4332](https://github.com/nebulastream/nebulastream/issues/4332)
+
+### Bug Fixes 🐛
+
+- \[BUG\] UDF execution fails if another UDF \(with different dependencies\) was called before [\#3828](https://github.com/nebulastream/nebulastream/issues/3828)
+
 ## [v0.5.248](https://github.com/nebulastream/nebulastream/tree/v0.5.248) (2023-11-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.247...v0.5.248)
