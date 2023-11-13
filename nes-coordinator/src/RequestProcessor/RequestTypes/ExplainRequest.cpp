@@ -13,41 +13,41 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/UDF/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
-#include <Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Exceptions/InvalidLogicalOperatorException.hpp>
-#include <Exceptions/InvalidQueryStateException.hpp>
-#include <Exceptions/LogicalSourceNotFoundException.hpp>
+#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
+#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
+#include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
+#include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
-#include <Exceptions/OperatorNotFoundException.hpp>
-#include <Exceptions/PhysicalSourceNotFoundException.hpp>
+#include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
+#include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
-#include <Exceptions/QueryPlacementException.hpp>
-#include <Exceptions/SharedQueryPlanNotFoundException.hpp>
-#include <Exceptions/SignatureComputationException.hpp>
-#include <Exceptions/TypeInferenceException.hpp>
-#include <Exceptions/UDFException.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Optimizer//Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
+#include <Operators/Exceptions/SignatureComputationException.hpp>
+#include <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Optimizer/Phases/QueryDeploymentPhase.hpp>
+#include <Phases/QueryDeploymentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/Phases/QueryUndeploymentPhase.hpp>
-#include <Optimizer/Phases/SampleCodeGenerationPhase.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
-#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include <QueryValidation/SemanticQueryValidation.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -57,10 +57,9 @@
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Services/QueryParsingService.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <cpr/cpr.h>
@@ -71,8 +70,6 @@ namespace NES::RequestProcessor::Experimental {
 
 ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                                const Optimizer::PlacementStrategy queryPlacementStrategy,
-                               const FaultToleranceType faultTolerance,
-                               const LineageType lineage,
                                const uint8_t maxRetries,
                                const z3::ContextPtr& z3Context)
     : AbstractRequest({ResourceType::QueryCatalogService,
@@ -84,18 +81,16 @@ ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                        ResourceType::CoordinatorConfiguration},
                       maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
-      faultTolerance(faultTolerance), lineage(lineage), z3Context(z3Context), queryParsingService(nullptr) {}
+      z3Context(z3Context), queryParsingService(nullptr) {}
 
 ExplainRequestPtr ExplainRequest::create(const QueryPlanPtr& queryPlan,
                                          const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                         const FaultToleranceType faultTolerance,
-                                         const LineageType lineage,
                                          const uint8_t maxRetries,
                                          const z3::ContextPtr& z3Context) {
-    return std::make_shared<ExplainRequest>(queryPlan, queryPlacementStrategy, faultTolerance, lineage, maxRetries, z3Context);
+    return std::make_shared<ExplainRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context);
 }
 
-void ExplainRequest::preRollbackHandle([[maybe_unused]] const RequestExecutionException& ex,
+void ExplainRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
                                        [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
 std::vector<AbstractRequestPtr> ExplainRequest::rollBack([[maybe_unused]] RequestExecutionException& exception,
@@ -141,7 +136,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::rollBack([[maybe_unused]] Reques
     return {};
 }
 
-void ExplainRequest::postRollbackHandle([[maybe_unused]] const RequestExecutionException& exception,
+void ExplainRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr ex,
                                         [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
 void ExplainRequest::postExecution([[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
@@ -167,7 +162,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
             QueryDeploymentPhase::create(globalExecutionPlan, queryCatalogService, coordinatorConfiguration);
         auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-        auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
+        auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
         auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
@@ -181,8 +176,8 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
         auto semanticQueryValidation =
             Optimizer::SemanticQueryValidation::create(sourceCatalog,
-                                                       coordinatorConfiguration->optimizer.performAdvanceSemanticValidation,
-                                                       udfCatalog);
+                                                       udfCatalog,
+                                                       coordinatorConfiguration->optimizer.performAdvanceSemanticValidation);
 
         // assign unique operator identifier to the operators in the query plan
         assignOperatorIds(queryPlan);
@@ -192,8 +187,6 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryId = PlanIdGenerator::getNextQueryId();
         queryPlan->setQueryId(queryId);
         queryPlan->setPlacementStrategy(queryPlacementStrategy);
-        queryPlan->setFaultToleranceType(faultTolerance);
-        queryPlan->setLineageType(lineage);
 
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);
@@ -290,8 +283,8 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         }
 
         //22. Fetch configurations for elegant optimizations
-        auto accelerateJavaUdFs = coordinatorConfiguration->elegantConfiguration.accelerateJavaUDFs;
-        auto accelerationServiceURL = coordinatorConfiguration->elegantConfiguration.accelerationServiceURL;
+        auto accelerateJavaUdFs = coordinatorConfiguration->elegant.accelerateJavaUDFs;
+        auto accelerationServiceURL = coordinatorConfiguration->elegant.accelerationServiceURL;
 
         //23. Compute the json response explaining the optimization steps
         auto response = getExecutionPlanForSharedQueryAsJson(sharedQueryId,
@@ -322,7 +315,7 @@ void ExplainRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
         auto visitingOp = (*itr)->as<OperatorNode>();
-        visitingOp->setId(Util::getNextOperatorId());
+        visitingOp->setId(NES::getNextOperatorId());
     }
 }
 
