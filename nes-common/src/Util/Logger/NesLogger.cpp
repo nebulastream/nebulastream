@@ -144,6 +144,10 @@ struct LoggerHolder {
 };
 std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
 
+NES::Logger::LogSink Logger::createSink(spdlog::source_loc&& sourceLoc, LogLevel level) {
+    return NES::Logger::LogSink(std::move(sourceLoc), this->impl, toSpdlogLevel(level));
+}
+
 }// namespace detail
 
 namespace Logger {
