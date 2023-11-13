@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.250](https://github.com/nebulastream/nebulastream/tree/v0.5.250) (2023-11-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.249...v0.5.250)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create and process placement request for ELEGANT Planner [\#3868](https://github.com/nebulastream/nebulastream/issues/3868)
+
 ## [v0.5.249](https://github.com/nebulastream/nebulastream/tree/v0.5.249) (2023-11-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.248...v0.5.249)
