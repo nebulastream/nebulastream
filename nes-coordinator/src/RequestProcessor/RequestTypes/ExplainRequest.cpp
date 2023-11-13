@@ -65,6 +65,7 @@
 #include <cpr/cpr.h>
 #include <string>
 #include <utility>
+#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -152,9 +153,6 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);
-
-        // respond to the calling service with the query id
-        responsePromise.set_value(std::make_shared<ExplainResponse>(queryId));
 
         // Create a new entry in the query catalog
         queryCatalogService->createNewEntry(queryString, queryPlan, queryPlacementStrategy);
@@ -321,9 +319,11 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
             auto queryPlanIterator = QueryPlanIterator(updatedSubQueryPlan);
             for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<OperatorNode>();
-                auto pipelineId = std::any_cast<uint64_t>(visitingOp->getProperty("PIPELINE_ID"));
-                if (pipelineIds.emplace(pipelineId).second) {
-                    generatedCodeSnippets.emplace_back(std::any_cast<std::string>(visitingOp->getProperty("SOURCE_CODE")));
+                if (visitingOp->hasProperty("PIPELINE_ID")) {
+                    auto pipelineId = std::any_cast<uint64_t>(visitingOp->getProperty("PIPELINE_ID"));
+                    if (pipelineIds.emplace(pipelineId).second) {
+                        generatedCodeSnippets.emplace_back(std::any_cast<std::string>(visitingOp->getProperty(Optimizer::ElegantPlacementStrategy::sourceCodeKey)));
+                    }
                 }
             }
 
