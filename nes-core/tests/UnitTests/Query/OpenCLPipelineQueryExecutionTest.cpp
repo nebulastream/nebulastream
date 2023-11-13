@@ -45,7 +45,17 @@ limitations under the License.
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <utility>
+#ifdef ENABLE_OPENCL
+#ifdef __APPLE__
 #include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+#else
+// Define some OpenCL types, so that this header file compiles, and we don't need #ifdef's everywhere.
+using cl_platform_id = unsigned;
+using cl_device_id = unsigned;
+#endif
 
 using namespace NES;
 using Runtime::TupleBuffer;
