@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.248](https://github.com/nebulastream/nebulastream/tree/v0.5.248) (2023-11-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.247...v0.5.248)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Remove Coordinator.dataPort as it doesn't influence anything [\#4320](https://github.com/nebulastream/nebulastream/issues/4320)
+
 ## [v0.5.247](https://github.com/nebulastream/nebulastream/tree/v0.5.247) (2023-11-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.246...v0.5.247)
