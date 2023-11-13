@@ -16,4 +16,5 @@ add_source_files(nes-core
         StopQueryRequest.cpp
         AbstractRequest.cpp
         AddQueryRequest.cpp
+        ExplainRequest.cpp
         )
