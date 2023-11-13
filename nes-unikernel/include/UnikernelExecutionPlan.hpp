@@ -42,11 +42,10 @@ template<typename Prev, typename Source, typename... Stages>
 class PipelineImpl;
 
 template<UnikernelBackwardsPipelineImpl Prev,
-         typename Source,
          NES::Unikernel::UnikernelStage Stage,
-         NES::Unikernel::UnikernelStage... Stages>
-class PipelineImpl<Prev, Source, Stage, Stages...> {
-    using Next = PipelineImpl<PipelineImpl, Source, Stages...>;
+         typename... Stages>
+class PipelineImpl<Prev, Stage, Stages...> {
+    using Next = PipelineImpl<PipelineImpl, Stages...>;
 
   public:
     constexpr static size_t StageId = Stage::StageId;
@@ -83,11 +82,11 @@ class PipelineImpl<Prev, Source> {
     static void stop() { Source::stop(); }
 };
 
-template<typename Source, NES::Unikernel::UnikernelStage... Stages>
+template<typename... Stages>
 class Pipeline {
   public:
     template<typename Prev>
-    using Impl = PipelineImpl<Prev, Source, Stages...>;
+    using Impl = PipelineImpl<Prev, Stages...>;
 };
 
 template<typename Sink, UnikernelPipeline<Sink> Pipeline>

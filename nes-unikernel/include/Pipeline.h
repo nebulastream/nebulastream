@@ -6,58 +6,61 @@
 #include <UnikernelStage.h>
 namespace NES::Unikernel {
 struct CTConfiguration {
-constexpr static unsigned long QueryID = 0;
-constexpr static unsigned long NodeID = 2;
-constexpr static const char * NodeIP = "127.0.0.1";
-constexpr static unsigned long NodePort = 8080;
+    constexpr static unsigned long QueryID = 0;
+    constexpr static unsigned long NodeID = 2;
+    constexpr static const char* NodeIP = "127.0.0.1";
+    constexpr static unsigned long NodePort = 8080;
 };
 struct SinkConfig15 {
-constexpr static unsigned long QueryID = 0;
-constexpr static unsigned long QuerySubplanID = 8;
-constexpr static unsigned long OutputSchemaSizeInBytes = 96;
-constexpr static unsigned long DownstreamNodeID = 1;
-constexpr static unsigned long DownstreamPartitionID = 0;
-constexpr static unsigned long DownstreamSubPartitionID = 0;
-constexpr static const char * DownstreamNodeHostname = "127.0.0.1";
-constexpr static unsigned long DownstreamOperatorID = 15;
-constexpr static unsigned int DownstreamNodePort = 8082;
-constexpr static unsigned long LocalBuffers = 100;
+    constexpr static unsigned long QueryID = 0;
+    constexpr static unsigned long QuerySubplanID = 8;
+    constexpr static unsigned long OutputSchemaSizeInBytes = 96;
+    constexpr static unsigned long DownstreamNodeID = 1;
+    constexpr static unsigned long DownstreamPartitionID = 0;
+    constexpr static unsigned long DownstreamSubPartitionID = 0;
+    constexpr static const char* DownstreamNodeHostname = "127.0.0.1";
+    constexpr static unsigned long DownstreamOperatorID = 15;
+    constexpr static unsigned int DownstreamNodePort = 8082;
+    constexpr static unsigned long LocalBuffers = 100;
 };
 using Sink15 = UnikernelSink<SinkConfig15>;
 struct SourceConfig17 {
-constexpr static unsigned long QueryID = 0;
-constexpr static unsigned long UpstreamNodeID = 3;
-constexpr static unsigned long UpstreamPartitionID = 0;
-constexpr static unsigned long UpstreamSubPartitionID = 0;
-constexpr static const char * UpstreamNodeHostname = "127.0.0.1";
-constexpr static unsigned long UpstreamOperatorID = 17;
-constexpr static unsigned int UpstreamNodePort = 8083;
-constexpr static unsigned long LocalBuffers = 100;
+    constexpr static unsigned long QueryID = 0;
+    constexpr static unsigned long UpstreamNodeID = 3;
+    constexpr static unsigned long UpstreamPartitionID = 0;
+    constexpr static unsigned long UpstreamSubPartitionID = 0;
+    constexpr static const char* UpstreamNodeHostname = "127.0.0.1";
+    constexpr static unsigned long UpstreamOperatorID = 17;
+    constexpr static unsigned int UpstreamNodePort = 8083;
+    constexpr static unsigned long LocalBuffers = 100;
 };
 using Source17 = UnikernelSource<SourceConfig17>;
 struct SourceConfig13 {
-constexpr static unsigned long QueryID = 0;
-constexpr static unsigned long UpstreamNodeID = 4;
-constexpr static unsigned long UpstreamPartitionID = 0;
-constexpr static unsigned long UpstreamSubPartitionID = 0;
-constexpr static const char * UpstreamNodeHostname = "127.0.0.1";
-constexpr static unsigned long UpstreamOperatorID = 13;
-constexpr static unsigned int UpstreamNodePort = 8081;
-constexpr static unsigned long LocalBuffers = 100;
+    constexpr static unsigned long QueryID = 0;
+    constexpr static unsigned long UpstreamNodeID = 4;
+    constexpr static unsigned long UpstreamPartitionID = 0;
+    constexpr static unsigned long UpstreamSubPartitionID = 0;
+    constexpr static const char* UpstreamNodeHostname = "127.0.0.1";
+    constexpr static unsigned long UpstreamOperatorID = 13;
+    constexpr static unsigned int UpstreamNodePort = 8081;
+    constexpr static unsigned long LocalBuffers = 100;
 };
 using Source13 = UnikernelSource<SourceConfig13>;
 struct SourceConfig19 {
-constexpr static unsigned long QueryID = 0;
-constexpr static unsigned long UpstreamNodeID = 5;
-constexpr static unsigned long UpstreamPartitionID = 0;
-constexpr static unsigned long UpstreamSubPartitionID = 0;
-constexpr static const char * UpstreamNodeHostname = "127.0.0.1";
-constexpr static unsigned long UpstreamOperatorID = 19;
-constexpr static unsigned int UpstreamNodePort = 8084;
-constexpr static unsigned long LocalBuffers = 100;
+    constexpr static unsigned long QueryID = 0;
+    constexpr static unsigned long UpstreamNodeID = 5;
+    constexpr static unsigned long UpstreamPartitionID = 0;
+    constexpr static unsigned long UpstreamSubPartitionID = 0;
+    constexpr static const char* UpstreamNodeHostname = "127.0.0.1";
+    constexpr static unsigned long UpstreamOperatorID = 19;
+    constexpr static unsigned int UpstreamNodePort = 8084;
+    constexpr static unsigned long LocalBuffers = 100;
 };
 using Source19 = UnikernelSource<SourceConfig19>;
-using SubQuery8 = SubQuery<Sink15, PipelineJoin<Stage<2>, PipelineJoin<Stage<3>, Pipeline<Source17, Stage<4>>, Pipeline<Source13, Stage<6>>>, Pipeline<Source19, Stage<8>>>>;
+using SubQuery8 = SubQuery<Sink15,
+                           PipelineJoin<Stage<2>,
+                                        PipelineJoin<Stage<3>, Pipeline<Stage<4>, Source17>, Pipeline<Stage<6>, Source13>>,
+                                        Pipeline<Stage<8>, Source19>>>;
 using QueryPlan = UnikernelExecutionPlan<SubQuery8>;
-} //NES::Unikernel
-#endif //NES_UNIKERNEL_PIPELINE_H
+}// namespace NES::Unikernel
+#endif//NES_UNIKERNEL_PIPELINE_H
