@@ -78,17 +78,18 @@ TEST_F(FlatMapJavaUDFQueryExecutionTest, FlatMapJavaUdf) {
     auto testSink = executionEngine->createDataSink(fqSchema);
     auto testSourceDescriptor = executionEngine->createDataSource(fqSchema);
 
-    auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
-                                 .setClassName("stream.nebula.IntegerFlatMapFunction")
-                                 .setMethodName("flatMap")
-                                 .setInstance({})
-                                 .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.IntegerFlatMapFunction", {}}})
-                                 .setInputSchema(udfSchema)
-                                 .setOutputSchema(udfSchema)
-                                 .setInputClassName("java.lang.Integer")
-                                 .setOutputClassName("java.util.Collection")
-                                 .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-                                 .build();
+    auto javaUDFDescriptor =
+        Catalogs::UDF::JavaUDFDescriptorBuilder{}
+            .setClassName("stream.nebula.IntegerFlatMapFunction")
+            .setMethodName("flatMap")
+            .setInstance({})
+            .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.IntegerFlatMapFunction", {}}})
+            .setInputSchema(udfSchema)
+            .setOutputSchema(udfSchema)
+            .setInputClassName("java.lang.Integer")
+            .setOutputClassName("java.util.Collection")
+            .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+            .build();
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor).flatMapUDF(javaUDFDescriptor).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
