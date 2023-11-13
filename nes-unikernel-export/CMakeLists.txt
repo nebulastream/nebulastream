@@ -11,6 +11,7 @@ target_include_directories(UnikernelQueryExport PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
 )
 target_link_libraries(UnikernelQueryExport PUBLIC
+        nes-client
         nes-common
         nes-data-types
 )
