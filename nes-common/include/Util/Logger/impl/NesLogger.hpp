@@ -156,12 +156,14 @@ class Logger {
      */
     void changeLogLevel(LogLevel newLevel);
 
+#ifndef UNIKERNEL_LIB
     /**
      * @brief create a LogSink for the given LogLevel. Use the convenience `NES_LOG_OS(LogLevel)`
      * @param newLevel
      * @param sourceLoc
      */
     NES::Logger::LogSink createSink(spdlog::source_loc&& sourceLoc, LogLevel level);
+#endif
   private:
     std::shared_ptr<spdlog::logger> impl{nullptr};
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
