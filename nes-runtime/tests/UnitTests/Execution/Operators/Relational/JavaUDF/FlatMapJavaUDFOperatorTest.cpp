@@ -20,20 +20,20 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Util/JavaUDFDescriptorBuilder.hpp>
 
 using namespace std::string_literals;
 
 namespace NES::Runtime::Execution::Operators {
 
 class FlatMapJavaUDFOperatorTest : public Testing::BaseUnitTest {
-public:
+  public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("FlatMapJavaUDFOperatorTest.log", NES::LogLevel::LOG_DEBUG); }
 
@@ -71,15 +71,15 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     auto inputRecord = Record({{"id", Value<Text>("Hallo World")}});
-    auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder()
-                             .setClassName("stream.nebula.StringFlatMapFunction")
-                             .setInputClassName("java.lang.String")
-                             .setByteCodeList({{"stream.nebula.FlatMapFunction", {}},
-                                               {{"stream.nebula.StringFlatMapFunction"}, {}}})
-                             .setInputSchema(Schema::create()->addField("id", BasicType::TEXT))
-                             .setOutputSchema(Schema::create()->addField("id", BasicType::TEXT))
-                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-                             .build();
+    auto javaUDFDescriptor =
+        Catalogs::UDF::JavaUDFDescriptorBuilder()
+            .setClassName("stream.nebula.StringFlatMapFunction")
+            .setInputClassName("java.lang.String")
+            .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {{"stream.nebula.StringFlatMapFunction"}, {}}})
+            .setInputSchema(Schema::create()->addField("id", BasicType::TEXT))
+            .setOutputSchema(Schema::create()->addField("id", BasicType::TEXT))
+            .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+            .build();
     auto outputRecords = setupAndExecuteFlatMapUdf(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
     ASSERT_EQ(outputRecords.size(), 2);
     EXPECT_EQ(outputRecords[0].read("id"), Value<Text>("Hallo"));
@@ -94,14 +94,14 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     auto schema = Schema::create()
-                  ->addField("byteVariable", BasicType::INT8)
-                  ->addField("shortVariable", BasicType::INT16)
-                  ->addField("intVariable", BasicType::INT32)
-                  ->addField("longVariable", BasicType::INT64)
-                  ->addField("floatVariable", BasicType::FLOAT32)
-                  ->addField("doubleVariable", BasicType::FLOAT64)
-                  ->addField("stringVariable", BasicType::TEXT)
-                  ->addField("booleanVariable", BasicType::BOOLEAN);
+                      ->addField("byteVariable", BasicType::INT8)
+                      ->addField("shortVariable", BasicType::INT16)
+                      ->addField("intVariable", BasicType::INT32)
+                      ->addField("longVariable", BasicType::INT64)
+                      ->addField("floatVariable", BasicType::FLOAT32)
+                      ->addField("doubleVariable", BasicType::FLOAT64)
+                      ->addField("stringVariable", BasicType::TEXT)
+                      ->addField("booleanVariable", BasicType::BOOLEAN);
     int8_t initialByte = 10;
     int16_t initialShort = 10;
     int32_t initialInt = 10;
@@ -118,15 +118,15 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction) {
                                {"stringVariable", Value<Text>("testValue")},
                                {"booleanVariable", Value<Boolean>(initialBool)}});
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder()
-                             .setClassName("stream.nebula.ComplexPojoFlatMapFunction")
-                             .setInputClassName("stream.nebula.ComplexPojo")
-                             .setByteCodeList({{"stream.nebula.FlatMapFunction", {}},
-                                               {"stream.nebula.ComplexPojoFlatMapFunction", {}},
-                                               {"stream.nebula.ComplexPojo", {}}})
-                             .setInputSchema(schema)
-                             .setOutputSchema(schema)
-                             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-                             .build();
+                                 .setClassName("stream.nebula.ComplexPojoFlatMapFunction")
+                                 .setInputClassName("stream.nebula.ComplexPojo")
+                                 .setByteCodeList({{"stream.nebula.FlatMapFunction", {}},
+                                                   {"stream.nebula.ComplexPojoFlatMapFunction", {}},
+                                                   {"stream.nebula.ComplexPojo", {}}})
+                                 .setInputSchema(schema)
+                                 .setOutputSchema(schema)
+                                 .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                                 .build();
     auto outputRecords = setupAndExecuteFlatMapUdf(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
     auto result = outputRecords[0];
     EXPECT_EQ(result.read("byteVariable"), initialByte + 10);

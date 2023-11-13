@@ -23,15 +23,15 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Util/JavaUDFDescriptorBuilder.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -118,7 +118,6 @@ auto initMapHandler(const Catalogs::UDF::JavaUDFDescriptorPtr javaUDFDescriptor)
                                                                std::nullopt);
 }
 
-
 /**
  * Check the output buffer for numeric values.
  * @tparam T type of the numeric values
@@ -163,16 +162,17 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.StringFlatMapFunction")
-        .setMethodName("flatMap")
-        .setInputClassName("java.lang.String")
-        .setOutputClassName("java.util.Collection")
-        .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.StringFlatMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+    auto handler =
+        initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
+                           .setClassName("stream.nebula.StringFlatMapFunction")
+                           .setMethodName("flatMap")
+                           .setInputClassName("java.lang.String")
+                           .setOutputClassName("java.util.Collection")
+                           .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.StringFlatMapFunction", {}}})
+                           .setInputSchema(schema)
+                           .setOutputSchema(schema)
+                           .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                           .build());
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -240,17 +240,17 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
                                           {"stream.nebula.ComplexPojoFlatMapFunction", {}},
                                           {"stream.nebula.ComplexPojo", {}}};
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.ComplexPojoFlatMapFunction")
-        .setMethodName("flatMap")
-        .setInputClassName("stream.nebula.ComplexPojo")
-        .setOutputClassName("java.util.Collection")
-        .setByteCodeList({{"stream.nebula.FlatMapFunction", {}},
-                                          {"stream.nebula.ComplexPojoFlatMapFunction", {}},
-                                          {"stream.nebula.ComplexPojo", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+                                      .setClassName("stream.nebula.ComplexPojoFlatMapFunction")
+                                      .setMethodName("flatMap")
+                                      .setInputClassName("stream.nebula.ComplexPojo")
+                                      .setOutputClassName("java.util.Collection")
+                                      .setByteCodeList({{"stream.nebula.FlatMapFunction", {}},
+                                                        {"stream.nebula.ComplexPojoFlatMapFunction", {}},
+                                                        {"stream.nebula.ComplexPojo", {}}})
+                                      .setInputSchema(schema)
+                                      .setOutputSchema(schema)
+                                      .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                                      .build());
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);

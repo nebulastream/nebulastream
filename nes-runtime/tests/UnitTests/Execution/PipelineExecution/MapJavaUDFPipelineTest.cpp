@@ -23,17 +23,17 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <Operators/OperatorForwardDeclaration.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Util/JavaUDFDescriptorBuilder.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -151,16 +151,17 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.IntegerMapFunction")
-        .setMethodName("map")
-        .setInputClassName("java.lang.Integer")
-        .setOutputClassName("java.lang.Integer")
-        .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.IntegerMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+    auto handler =
+        initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
+                           .setClassName("stream.nebula.IntegerMapFunction")
+                           .setMethodName("map")
+                           .setInputClassName("java.lang.Integer")
+                           .setOutputClassName("java.lang.Integer")
+                           .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.IntegerMapFunction", {}}})
+                           .setInputSchema(schema)
+                           .setOutputSchema(schema)
+                           .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                           .build());
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -181,16 +182,17 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineShortMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int16_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.ShortMapFunction")
-        .setMethodName("map")
-        .setInputClassName("java.lang.Short")
-        .setOutputClassName("java.lang.Short")
-        .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.ShortMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+    auto handler =
+        initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
+                           .setClassName("stream.nebula.ShortMapFunction")
+                           .setMethodName("map")
+                           .setInputClassName("java.lang.Short")
+                           .setOutputClassName("java.lang.Short")
+                           .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.ShortMapFunction", {}}})
+                           .setInputSchema(schema)
+                           .setOutputSchema(schema)
+                           .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                           .build());
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -212,15 +214,15 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineByteMap) {
     auto buffer = initInputBuffer<int8_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.ByteMapFunction")
-        .setMethodName("map")
-        .setInputClassName("java.lang.Byte")
-        .setOutputClassName("java.lang.Byte")
-        .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.ByteMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+                                      .setClassName("stream.nebula.ByteMapFunction")
+                                      .setMethodName("map")
+                                      .setInputClassName("java.lang.Byte")
+                                      .setOutputClassName("java.lang.Byte")
+                                      .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.ByteMapFunction", {}}})
+                                      .setInputSchema(schema)
+                                      .setOutputSchema(schema)
+                                      .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                                      .build());
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -242,15 +244,15 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap) {
     auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.LongMapFunction")
-        .setMethodName("map")
-        .setInputClassName("java.lang.Long")
-        .setOutputClassName("java.lang.Long")
-        .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.LongMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+                                      .setClassName("stream.nebula.LongMapFunction")
+                                      .setMethodName("map")
+                                      .setInputClassName("java.lang.Long")
+                                      .setOutputClassName("java.lang.Long")
+                                      .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.LongMapFunction", {}}})
+                                      .setInputSchema(schema)
+                                      .setOutputSchema(schema)
+                                      .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                                      .build());
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -271,16 +273,17 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.DoubleMapFunction")
-        .setMethodName("map")
-        .setInputClassName("java.lang.Double")
-        .setOutputClassName("java.lang.Double")
-        .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.DoubleMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+    auto handler =
+        initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
+                           .setClassName("stream.nebula.DoubleMapFunction")
+                           .setMethodName("map")
+                           .setInputClassName("java.lang.Double")
+                           .setOutputClassName("java.lang.Double")
+                           .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.DoubleMapFunction", {}}})
+                           .setInputSchema(schema)
+                           .setOutputSchema(schema)
+                           .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                           .build());
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -306,16 +309,17 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.BooleanMapFunction")
-        .setMethodName("map")
-        .setInputClassName("java.lang.Boolean")
-        .setOutputClassName("java.lang.Boolean")
-        .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.BooleanMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+    auto handler =
+        initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
+                           .setClassName("stream.nebula.BooleanMapFunction")
+                           .setMethodName("map")
+                           .setInputClassName("java.lang.Boolean")
+                           .setOutputClassName("java.lang.Boolean")
+                           .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.BooleanMapFunction", {}}})
+                           .setInputSchema(schema)
+                           .setOutputSchema(schema)
+                           .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                           .build());
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
     executablePipeline->setup(pipelineContext);
@@ -355,16 +359,17 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.StringMapFunction")
-        .setMethodName("map")
-        .setInputClassName("java.lang.String")
-        .setOutputClassName("java.lang.String")
-        .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.StringMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+    auto handler =
+        initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
+                           .setClassName("stream.nebula.StringMapFunction")
+                           .setMethodName("map")
+                           .setInputClassName("java.lang.String")
+                           .setOutputClassName("java.lang.String")
+                           .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.StringMapFunction", {}}})
+                           .setInputSchema(schema)
+                           .setOutputSchema(schema)
+                           .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                           .build());
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -424,15 +429,17 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
 
     auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
-        .setClassName("stream.nebula.ComplexPojoMapFunction")
-        .setMethodName("map")
-        .setInputClassName("stream.nebula.ComplexPojo")
-        .setOutputClassName("stream.nebula.ComplexPojo")
-        .setByteCodeList({{"stream.nebula.MapFunction", {}}, {"stream.nebula.ComplexPojo", {}}, {"stream.nebula.ComplexPojoMapFunction", {}}})
-        .setInputSchema(schema)
-        .setOutputSchema(schema)
-        .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
-        .build());
+                                      .setClassName("stream.nebula.ComplexPojoMapFunction")
+                                      .setMethodName("map")
+                                      .setInputClassName("stream.nebula.ComplexPojo")
+                                      .setOutputClassName("stream.nebula.ComplexPojo")
+                                      .setByteCodeList({{"stream.nebula.MapFunction", {}},
+                                                        {"stream.nebula.ComplexPojo", {}},
+                                                        {"stream.nebula.ComplexPojoMapFunction", {}}})
+                                      .setInputSchema(schema)
+                                      .setOutputSchema(schema)
+                                      .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+                                      .build());
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
