@@ -19,9 +19,9 @@
 #include <spdlog/spdlog.h>
 namespace NES::Logger {
 class LogSink : public boost::iostreams::sink {
-    std::streamsize write(const char* s, std::streamsize n);
 
   public:
+    std::streamsize write(const char* s, std::streamsize n);
     LogSink(spdlog::source_loc&& loc, std::shared_ptr<spdlog::logger> impl, spdlog::level::level_enum level);
 
   private:
