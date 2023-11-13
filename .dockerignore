@@ -9,7 +9,6 @@
 **/.DS_Store
 **/._.DS_Store
 .debs
-.github/
 
 # Build files
 build
@@ -22,3 +21,20 @@ docker/executableImage/resources/NebulaStream*.deb
 
 # Python virtual environment
 venv
+
+# Visual Studio Code Folders
+.cache
+.vscode
+compile_commands.json
+mlir_grammar.json
+nes-asp/data/*.csv
+cmake-build-debug-docker
+cmake-build-debug-system-clang-16
+cmake-build-unikernelexport-clang-16-debug
+include
+docker
+.github
+ccache
+build
+**/Dockerfile
+CMakeFiles

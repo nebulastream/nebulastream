@@ -43,7 +43,7 @@ const char* data = "Hello World!";
 int main(int argc, char* argv[]) {
     using namespace NES::Network;
     using namespace NES::Runtime;
-    NES::Logger::setupLogging("unikernel_source.log", NES::LogLevel::LOG_DEBUG);
+    NES::Logger::setupLogging("unikernel_source.log", NES::LogLevel::LOG_INFO);
     auto optionsResult = Options::fromCLI(argc, argv);
     if (optionsResult.has_error()) {
         NES_FATAL_ERROR("Failed to Parse Configuration: {}", optionsResult.error());
