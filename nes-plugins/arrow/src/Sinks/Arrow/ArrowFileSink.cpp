@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Arrow/ArrowFileSink.hpp>
 #include <Sinks/Arrow/ArrowFormat.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <arrow/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
 #include <filesystem>
 #include <iostream>
 #include <regex>
