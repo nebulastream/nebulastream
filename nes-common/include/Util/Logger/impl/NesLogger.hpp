@@ -16,6 +16,7 @@
 #define NES_COMMON_INCLUDE_UTIL_LOGGER_IMPL_NESLOGGER_HPP_
 
 #include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/LogSink.hpp>
 #include <fmt/core.h>
 #include <spdlog/fwd.h>
 #include <spdlog/logger.h>
@@ -155,6 +156,12 @@ class Logger {
      */
     void changeLogLevel(LogLevel newLevel);
 
+    /**
+     * @brief create a LogSink for the given LogLevel. Use the convenience `NES_LOG_OS(LogLevel)`
+     * @param newLevel
+     * @param sourceLoc
+     */
+    NES::Logger::LogSink createSink(spdlog::source_loc&& sourceLoc, LogLevel level);
   private:
     std::shared_ptr<spdlog::logger> impl{nullptr};
     LogLevel currentLogLevel = LogLevel::LOG_INFO;

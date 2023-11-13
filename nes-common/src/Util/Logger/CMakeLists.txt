@@ -19,6 +19,7 @@ add_source_files(unikernel-lib
 add_source_files(unikernel-test-lib
         NesLogger.cpp
         LogLevel.cpp
+        LogSink.cpp
 )
 add_source_files(nes-common
         NesLogger.cpp
