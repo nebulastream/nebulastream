@@ -26,7 +26,10 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      QueryPlanPtr inputQueryPlan,
                                      QueryState queryStatus)
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(queryPlacementStrategy),
-      inputQueryPlan(std::move(inputQueryPlan)), queryState(queryStatus) {}
+      inputQueryPlan(std::move(inputQueryPlan)) {
+    // Make sure that initial status is timestamped.
+    setQueryStatus(queryStatus);
+}
 
 QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
 
@@ -54,6 +57,8 @@ std::string QueryCatalogEntry::getQueryStatusAsString() const {
 void QueryCatalogEntry::setQueryStatus(QueryState queryStatus) {
     std::unique_lock lock(mutex);
     this->queryState = queryStatus;
+    uint64_t usSinceEpoch = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    history.emplace_back(usSinceEpoch, queryStatus);
 }
 
 void QueryCatalogEntry::setMetaInformation(std::string metaInformation) {
@@ -112,6 +117,11 @@ std::vector<QuerySubPlanMetaDataPtr> QueryCatalogEntry::getAllSubQueryPlanMetaDa
 void QueryCatalogEntry::removeAllQuerySubPlanMetaData() {
     std::unique_lock lock(mutex);
     querySubPlanMetaDataMap.clear();
+}
+
+const QueryStateHistory& QueryCatalogEntry::getHistory() const {
+    std::unique_lock lock(mutex);
+    return history;
 }
 
 }// namespace NES::Catalogs::Query

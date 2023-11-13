@@ -23,6 +23,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <Util/QueryStateHistory.hpp>
 
 namespace NES {
 
@@ -148,6 +149,9 @@ class QueryCatalogEntry {
 
     void removeAllQuerySubPlanMetaData();
 
+    /** @brief Retrieve a timestamped history of query status changes. */
+    const QueryStateHistory& getHistory() const;
+
   private:
     mutable std::mutex mutex;
     QueryId queryId;
@@ -159,6 +163,7 @@ class QueryCatalogEntry {
     std::string metaInformation;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
     std::map<QuerySubPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;
+    QueryStateHistory history;
 };
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace Catalogs::Query

@@ -29,6 +29,8 @@
 #include <utility>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
+#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
+
 namespace NES {
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
@@ -148,6 +150,12 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             response["status"] = catalogEntry->getQueryStatusAsString();
             response["queryPlan"] = catalogEntry->getInputQueryPlan()->toString();
             response["queryMetaData"] = catalogEntry->getMetaInformation();
+            response["history"] = catalogEntry->getHistory();
+            std::unordered_map<std::string, QueryStateHistory> workerHistory;
+            for (const QuerySubPlanMetaDataPtr& subPlanMetaData : catalogEntry->getAllSubQueryPlanMetaData()) {
+                workerHistory.emplace(std::to_string(subPlanMetaData->getWorkerId()), subPlanMetaData->getHistory());
+            }
+            response["workerHistory"] = workerHistory;
             return createResponse(Status::CODE_200, response.dump());
         } catch (Exceptions::QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
