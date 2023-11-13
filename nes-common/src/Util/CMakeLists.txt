@@ -24,6 +24,7 @@ add_source_files(nes-common
         StacktraceLoader.cpp
         ThreadNaming.cpp
         TimeMeasurement.cpp
+        QueryStateHistory.cpp
 )
 add_subdirectory(Logger)
 add_subdirectory(Mobility)

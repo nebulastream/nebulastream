@@ -17,6 +17,7 @@
 
 #include <Identifiers.hpp>
 #include <Util/QueryState.hpp>
+#include <Util/QueryStateHistory.hpp>
 #include <memory>
 
 namespace NES {
@@ -58,6 +59,9 @@ class QuerySubPlanMetaData {
 
     const std::string& getMetaInformation() const;
 
+    /** @brief Retrieve a timestamped history of query status changes. */
+    const QueryStateHistory& getHistory() const;
+
     QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryState subQueryStatus, uint64_t workerId);
 
   private:
@@ -70,6 +74,9 @@ class QuerySubPlanMetaData {
      * status of the sub query
      */
     QueryState subQueryStatus;
+
+    /** @brief Stores a history of QueryState updates with their timestamp in milliseconds. */
+    QueryStateHistory history;
 
     /**
      * worker id where the sub query is deployed
