@@ -82,8 +82,8 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest) {
                              .build();
     auto outputRecords = setupAndExecuteFlatMapUdf(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
     ASSERT_EQ(outputRecords.size(), 2);
-    ASSERT_EQ(outputRecords[0].read("id"), Value<Text>("Hallo"));
-    ASSERT_EQ(outputRecords[1].read("id"), Value<Text>("World"));
+    EXPECT_EQ(outputRecords[0].read("id"), Value<Text>("Hallo"));
+    EXPECT_EQ(outputRecords[1].read("id"), Value<Text>("World"));
 }
 
 /**
