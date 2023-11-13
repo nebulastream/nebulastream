@@ -135,6 +135,12 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     bool hasOperators() const;
 
     /**
+     * @brief Checks if this pipeline has an external operator
+     * @return true if pipeline has an external operator.
+     */
+    bool hasExternalOperator() const;
+
+    /**
      * @brief Indicates if this is a source pipeline.
      * @return true if source pipeline
      */

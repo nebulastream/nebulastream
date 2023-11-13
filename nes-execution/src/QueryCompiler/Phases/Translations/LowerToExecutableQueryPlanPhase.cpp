@@ -41,6 +41,7 @@
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -223,7 +224,16 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
-    auto executableOperator = rootOperator->as<ExecutableOperator>();
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
+    Runtime::Execution::ExecutablePipelineStagePtr pipelineStage;
+
+    if (auto externalOperator = rootOperator->as_if<PhysicalOperators::PhysicalExternalOperator>()) {
+        pipelineStage = externalOperator->getExecutablePipelineStage();
+    } else {
+        auto executableOperator = rootOperator->as<ExecutableOperator>();
+        pipelineStage = executableOperator->getExecutablePipelineStage();
+        operatorHandlers = executableOperator->getOperatorHandlers();
+    }
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors()) {
@@ -267,14 +277,14 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                        queryManager->getNumberOfWorkerThreads(),
                                                                        emitToSuccessorFunctionHandler,
                                                                        emitToQueryManagerFunctionHandler,
-                                                                       executableOperator->getOperatorHandlers());
+                                                                       operatorHandlers);
 
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
                                                                              pipelineQueryPlan->getQueryId(),
                                                                              pipelineQueryPlan->getQuerySubPlanId(),
                                                                              queryManager,
                                                                              executionContext,
-                                                                             executableOperator->getExecutablePipelineStage(),
+                                                                             pipelineStage,
                                                                              pipeline->getPredecessors().size(),
                                                                              executableSuccessorPipelines);
 

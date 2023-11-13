@@ -118,7 +118,7 @@ LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(const QueryCo
 
 PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize) {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
-        if (pipeline->isOperatorPipeline()) {
+        if (pipeline->isOperatorPipeline() && !pipeline->hasExternalOperator()) {
             apply(pipeline, bufferSize);
         }
     }

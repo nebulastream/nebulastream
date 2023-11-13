@@ -12,16 +12,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UDFCatalog.hpp>
 #include <BaseUnitTest.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Network/NetworkChannel.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -32,18 +26,23 @@ limitations under the License.
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <API/QueryAPI.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
+#include <Util/TestUtils.hpp>
 #include <utility>
 #ifdef ENABLE_OPENCL
 #ifdef __APPLE__
@@ -312,9 +311,8 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
 
     // Create a worker configuration for the node engine and configure a physical source.
     auto workerConfiguration = WorkerConfiguration::create();
-    auto sourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default", "default1", sourceType);
-    workerConfiguration->physicalSources.add(physicalSource);
+    workerConfiguration->physicalSourceTypes.add(DefaultSourceType::create("default_logical", "default_physical"));
+
 
     // Create a node engine to execute the OpenCL pipeline.
     // TODO Is the query status listener necessary?
@@ -365,7 +363,7 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
 
     // Insert the custom pipeline stage into the query.
     auto typeInferencePhase =
-        Optimizer::TypeInferencePhase::create(std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr()),
+        Optimizer::TypeInferencePhase::create(std::make_shared<Catalogs::Source::SourceCatalog>(),
                                               Catalogs::UDF::UDFCatalog::create());
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
@@ -402,7 +400,7 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
         // Start the query plan.
         ASSERT_TRUE(plan->setup());
         ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-        ASSERT_TRUE(plan->start(nodeEngine->getStateManager()));
+        ASSERT_TRUE(plan->start());
         ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
         // Execute the second pipeline, which is the custom pipeline?
         // TODO Why is it the second?

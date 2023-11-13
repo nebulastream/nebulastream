@@ -13,6 +13,7 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Execution/Operators/Relational/OpenCL/OpenCLPipelineStage.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
@@ -23,6 +24,7 @@
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -49,6 +51,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
@@ -169,6 +172,16 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
                                                                                       limitOperator->getOutputSchema(),
                                                                                       limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
+    } else if (operatorNode->instanceOf<OpenCLLogicalOperatorNode>()) {
+        auto openClOperator = operatorNode->as<OpenCLLogicalOperatorNode>();
+        auto pipelineStage =
+            std::make_shared<Runtime::Execution::OpenCLPipelineStage>(openClOperator->getOpenClCode(),
+                                                                      openClOperator->getInputSchema()->getSchemaSizeInBytes(),
+                                                                      openClOperator->getOutputSchema()->getSchemaSizeInBytes());
+        auto externalOperator = PhysicalOperators::PhysicalExternalOperator::create(openClOperator->getInputSchema(),
+                                                                                    openClOperator->getOutputSchema(),
+                                                                                    pipelineStage);
+        operatorNode->replace(externalOperator);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }

@@ -17,6 +17,7 @@ add_source_files(nes-execution
         ExecutableOperator.cpp
         PipelineQueryPlanIterator.cpp
         NautilusPipelineOperator.cpp
+        ../../Execution/Operators/Relational/OpenCL/OpenCLPipelineStage.cpp
 )
 
 add_subdirectory(PhysicalOperators)

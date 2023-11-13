@@ -14,6 +14,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <atomic>
@@ -72,6 +73,11 @@ std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const {
 }
 
 bool OperatorPipeline::hasOperators() const { return !this->queryPlan->getRootOperators().empty(); }
+
+bool OperatorPipeline::hasExternalOperator() const {
+    return this->queryPlan->getRootOperators().size() == 1
+        && this->queryPlan->getRootOperators()[0]->instanceOf<PhysicalOperators::PhysicalExternalOperator>();
+}
 
 void OperatorPipeline::clearPredecessors() {
     for (const auto& pre : predecessorPipelines) {

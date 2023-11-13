@@ -10,21 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregation)
-add_subdirectory(Join)
-add_subdirectory(Sort)
-if (NES_USE_OPENCL)
-    add_subdirectory(OpenCL)
-endif ()
-if (NAUTILUS_PYTHON_UDF)
-    add_subdirectory(PythonUDF)
-endif ()
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_subdirectory(JavaUDF)
-endif ()
-add_source_files(nes-execution
-        Map.cpp
-        Selection.cpp
-        Limit.cpp
-        Project.cpp
-)
+add_source_files(nes-runtime
+        OpenCLPipelineStage.cpp
+        )
