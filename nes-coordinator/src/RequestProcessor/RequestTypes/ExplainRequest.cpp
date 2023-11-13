@@ -93,47 +93,9 @@ ExplainRequestPtr ExplainRequest::create(const QueryPlanPtr& queryPlan,
 void ExplainRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
                                        [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
 
-std::vector<AbstractRequestPtr> ExplainRequest::rollBack([[maybe_unused]] RequestExecutionException& exception,
+std::vector<AbstractRequestPtr> ExplainRequest::rollBack([[maybe_unused]] std::exception_ptr ex,
                                                          [[maybe_unused]] const StorageHandlerPtr& storageHandler) {
-    try {
-        NES_TRACE("Error: {}", exception.what());
-        if (exception.instanceOf<Exceptions::QueryNotFoundException>()) {
-            NES_ERROR("{}", exception.what());
-        } else if (exception.instanceOf<Exceptions::InvalidQueryStateException>()
-                   || exception.instanceOf<MapEntryNotFoundException>() || exception.instanceOf<TypeInferenceException>()
-                   || exception.instanceOf<Exceptions::LogicalSourceNotFoundException>()
-                   || exception.instanceOf<SignatureComputationException>()
-                   || exception.instanceOf<Exceptions::PhysicalSourceNotFoundException>()
-                   || exception.instanceOf<Exceptions::SharedQueryPlanNotFoundException>() || exception.instanceOf<UDFException>()
-                   || exception.instanceOf<Exceptions::OperatorNotFoundException>()
-                   || exception.instanceOf<Exceptions::InvalidLogicalOperatorException>()
-                   || exception.instanceOf<GlobalQueryPlanUpdateException>()) {
-            NES_ERROR("{}", exception.what());
-            auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
-            queryCatalogService->updateQueryStatus(queryId,
-                                                   QueryState::FAILED,
-                                                   "Query failed due to " + std::string(exception.what()));
-        } else if (exception.instanceOf<Exceptions::QueryPlacementException>()
-                   || exception.instanceOf<Exceptions::ExecutionNodeNotFoundException>()
-                   || exception.instanceOf<QueryDeploymentException>()) {
-            NES_ERROR("{}", exception.what());
-            auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
-            globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
-            auto queryCatalogService = storageHandler->getQueryCatalogServiceHandle(requestId);
-            queryCatalogService->updateQueryStatus(queryId,
-                                                   QueryState::FAILED,
-                                                   "Query failed due to " + std::string(exception.what()));
-        } else {
-            NES_ERROR("Unknown exception: {}", exception.what());
-        }
-    } catch (RequestExecutionException& exception) {
-        if (retry()) {
-            handleError(exception, storageHandler);
-        } else {
-            NES_ERROR("StopQueryRequest: Final failure to rollback. No retries left. Error: {}", exception.what());
-        }
-    }
-    return {};
+    std::rethrow_exception(ex);
 }
 
 void ExplainRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr ex,
@@ -305,7 +267,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryCatalogService->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ExplainRequest with error {}", exception.what());
-        handleError(exception, storageHandler);
+        handleError(std::current_exception(), storageHandler);
     }
     return {};
 }
