@@ -184,11 +184,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryPlan = typeInferencePhase->execute(queryPlan);
 
         //8. Generate sample code for elegant planner
-        if (queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_BALANCED
-            || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_PERFORMANCE
-            || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_ENERGY) {
-            queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
-        }
+        queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
 
         //9. Perform signature inference phase for sharing identification among query plans
         signatureInferencePhase->execute(queryPlan);
