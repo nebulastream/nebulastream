@@ -13,6 +13,7 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <argumentum/argparse.h>
 #include <memory>
 #include <string>
@@ -33,8 +34,6 @@ class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListe
 
     void onChannelError(NES::Network::Messages::ErrorMessage) override {}
 };
-
-const char* data = "Hello World!";
 
 int main(int argc, char* argv[]) {
     using namespace NES::Network;
@@ -60,12 +59,14 @@ int main(int argc, char* argv[]) {
     NesPartition partition(options.queryId, options.operatorId, options.partitionId, options.subPartitionId);
 
     auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
-
+    boost::iostreams::stream<NES::Logger::LogSink> os(NES_LOG_OS(NES::LogLevel::LOG_INFO));
     NES::DataSinkPtr print_sink =
         std::make_shared<NES::PrintSink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
                                          1,
                                          options.subQueryId,
-                                         options.queryId);
+                                         options.queryId,
+                                         os
+                                         );
     std::vector<NES::DataSinkPtr> pipelines{print_sink};
     auto source = std::make_shared<
         NetworkSource>(options.outputSchema, buffer_manager, wc, manager, partition, location, 1000, 200ms, 20, pipelines);

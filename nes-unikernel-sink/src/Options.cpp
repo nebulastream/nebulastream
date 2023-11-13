@@ -20,19 +20,19 @@ Options::Result Options::fromCLI(int argc, char** argv) {
     using namespace argumentum;
     auto parser = argument_parser{};
     auto params = parser.params();
-
-    size_t sourceId;
-
+    std::optional<size_t> sinkId;
     std::string filepath = "./testConfig.yaml";
-
     parser.config().program(argv[0]).description("Unikernel Source");
     params.add_parameter(filepath, "-c", "--config").nargs(1).metavar("PATH").help("path to config.yaml");
-    params.add_parameter(sourceId, "N", "SOURCE_ID")
+    params.add_parameter(sinkId, "-n", "--source-id")
         .nargs(1)
-        .metavar("SOURCE_ID")
-        .help("Id of the source to use (currently index of the source in the list of sources)");
+        .metavar("SINK_ID")
+        .help("Id of the source to use (currently index of the sink in the list of sinks)");
+    auto result = parser.parse_args(argc, argv);
+    if (result.errors_were_shown()) {
+        return "Arg parsing";
+    }
 
-    parser.parse_args(argc, argv);
     if (!boost::filesystem::exists(filepath)) {
         return "\'" + filepath + "\' File does not Exists";
     }
