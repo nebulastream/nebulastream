@@ -97,32 +97,45 @@ class TPCH_Q5 : public Testing::BaseUnitTest, public AbstractPipelineExecutionTe
 };
 
 TEST_P(TPCH_Q5, joinPipeline) {
-    auto& orders = tables[TPCHTable::Orders];
     auto& customers = tables[TPCHTable::Customer];
-    auto& lineItems = tables[TPCHTable::LineItem];
+    auto& orders = tables[TPCHTable::Orders];
 
     // Get the pipeline plan of the query
     auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
 
     // Get the pipelines from the plan
     auto customerPipeline = plan.getPipeline(0);
+    auto orderPipeline = plan.getPipeline(1);
 
     // Create executable pipelines stages (EPS) from the plan
     auto customerEps = provider->create(customerPipeline.pipeline, options);
+    auto orderEps = provider->create(orderPipeline.pipeline, options);
 
     // Setup each pipeline
     customerEps->setup(*customerPipeline.ctx);
+    orderEps->setup(*orderPipeline.ctx);
 
-    // Execute and assert the first pipeline
-    for (auto& chunk : orders->getChunks()) {
-        customerEps->execute(chunk, *customerPipeline.ctx, *wc);
+    // == Execute and assert the first pipeline == //
+    for (auto& customerChunk : customers->getChunks()) {
+        customerEps->execute(customerChunk, *customerPipeline.ctx, *wc);
     }
     // Assert the content of the hash map
     auto customerJoinHandler = customerPipeline.ctx->getOperatorHandler<BatchJoinHandler>(0);
     auto customerJoinNumberOfKeys = customerJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(customerJoinNumberOfKeys, 15000);
+    EXPECT_EQ(customerJoinNumberOfKeys, 1500);
     auto customerJoinHashMap = customerJoinHandler->mergeState();
-    EXPECT_EQ(customerJoinHashMap->getCurrentSize(), 15000);
+    EXPECT_EQ(customerJoinHashMap->getCurrentSize(), 1500);
+
+    // == Execute and assert the second pipeline == //
+    for (auto& orderChunk : orders->getChunks()) {
+        customerEps->execute(orderChunk, *customerPipeline.ctx, *wc);
+    }
+    // Assert the content of the hash map
+    auto orderJoinHandler = customerPipeline.ctx->getOperatorHandler<BatchJoinHandler>(0);
+    auto orderJoinNumberOfKeys = customerJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+    EXPECT_EQ(orderJoinNumberOfKeys, 16500);
+    auto orderJoinHashMap = customerJoinHandler->mergeState();
+    EXPECT_EQ(orderJoinHashMap->getCurrentSize(), 14868);
 
     NES_DEBUG("Done");
 }
