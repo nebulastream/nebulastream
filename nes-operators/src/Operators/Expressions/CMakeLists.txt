@@ -24,5 +24,4 @@ add_source_files(nes-operators
 )
 add_subdirectory(LogicalExpressions)
 add_subdirectory(ArithmeticalExpressions)
-add_subdirectory(GeographyExpressions)
 add_subdirectory(Functions)

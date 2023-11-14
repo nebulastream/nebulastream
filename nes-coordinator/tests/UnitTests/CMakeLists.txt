@@ -127,18 +127,6 @@ add_nes_unit_test(expression-node-test "Operators/ExpressionNodeTest.cpp")
 # OperatorPropertiesTest
 add_nes_unit_test(operator-properties-tests "Operators/OperatorPropertiesTest.cpp")
 
-# SpatialExpressionNodeTest
-add_nes_unit_test(spatial-expression-node-test "Operators/SpatialExpressionNodeTest.cpp")
-
-# GeographyExpressionNodeTest
-add_nes_unit_test(geography-expression-node-test "Operators/GeographyExpressionNodeTest.cpp")
-
-### Spatial Datatype Tests ###
-add_nes_unit_test(circle-datatype-tests "Spatial/DataTypes/CircleTest.cpp")
-add_nes_unit_test(point-datatype-tests "Spatial/DataTypes/PointTest.cpp")
-add_nes_unit_test(polygon-datatype-tests "Spatial/DataTypes/PolygonTest.cpp")
-add_nes_unit_test(rectangle-datatype-tests "Spatial/DataTypes/RectangleTest.cpp")
-
 # ConvertLogicalToPhysicalSinkTest
 add_nes_unit_test(convert-logical-to-physical-sink-tests "Phases/ConvertLogicalToPhysicalSinkTest.cpp")
 

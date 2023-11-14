@@ -17,6 +17,5 @@ add_source_files(nes-operators
         SchemaSerializationUtil.cpp
         ExpressionSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
-        ShapeTypeSerializationUtil.cpp
         UDFSerializationUtil.cpp
 )
