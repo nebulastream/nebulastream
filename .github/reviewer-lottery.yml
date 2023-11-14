@@ -6,7 +6,6 @@ groups:
     reviewers: 1 # how many reviewers do you want to assign
     usernames: # github usernames of the reviewers
       - zeuchste
-      - PhilippGrulich
       - ankitgit
       - arianeziehn
       - digiou
@@ -19,3 +18,4 @@ groups:
       - kisa7
       - varpande
       - ichbinrich
+      - klauck
