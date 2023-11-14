@@ -120,8 +120,6 @@ class TPCH_Query5 {
         auto orderScanOperator = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
 
         // Probe with Customer
-        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
-        std::vector<IR::Types::StampPtr> valueStamps = {};
         std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
 
         auto orderJoinProbeOperator =
@@ -181,12 +179,13 @@ class TPCH_Query5 {
         // Scan the LineItem table
         auto lineItemMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineItemTable->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProjection = {"l_orderkey", "l_suppkey", "l_extendedprice", "l_discount"};
+        std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProjection = {"l_orderkey",
+                                                                                   "l_suppkey",
+                                                                                   "l_extendedprice",
+                                                                                   "l_discount"};
         auto lineItemScanOperator = std::make_shared<Operators::Scan>(std::move(lineItemMemoryProviderPtr), lineItemProjection);
 
         // Probe with Order
-        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
-        std::vector<IR::Types::StampPtr> valueStamps = {};
         std::vector<ExpressionPtr> lineItemProbeKeys = {std::make_shared<ReadFieldExpression>("l_orderkey")};
 
         auto lineItemJoinProbeOperator =
@@ -223,7 +222,7 @@ class TPCH_Query5 {
         return lineItemJoinHandler;
     }
 
-    // TODO:  This join is not yet added: "AND c_nationkey = s_nationkey"
+    // TODO 4240:  This join is not yet added: "AND c_nationkey = s_nationkey"
     static std::shared_ptr<BatchJoinHandler>
     createSupplierPipeline(PipelinePlan& plan,
                            std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
@@ -243,8 +242,6 @@ class TPCH_Query5 {
         auto supplierScanOperator = std::make_shared<Operators::Scan>(std::move(supplierMemoryProviderPtr), supplierProjection);
 
         // Probe with LineItem
-        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
-        std::vector<IR::Types::StampPtr> valueStamps = {};
         std::vector<ExpressionPtr> supplierProbeKeys = {std::make_shared<ReadFieldExpression>("s_suppkey")};
 
         auto supplierJoinProbeOperator =
@@ -294,12 +291,10 @@ class TPCH_Query5 {
         // Scan the Nation table
         auto nationMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(nationTable->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> nationProjection = {"n_nationkey", "n_regionkey"};
+        std::vector<Nautilus::Record::RecordFieldIdentifier> nationProjection = {"n_nationkey", "n_regionkey", "n_name"};
         auto nationScanOperator = std::make_shared<Operators::Scan>(std::move(nationMemoryProviderPtr), nationProjection);
 
         // Probe with Supplier
-        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
-        std::vector<IR::Types::StampPtr> valueStamps = {};
         std::vector<ExpressionPtr> nationProbeKeys = {std::make_shared<ReadFieldExpression>("n_nationkey")};
 
         auto nationJoinProbeOperator =
@@ -313,11 +308,12 @@ class TPCH_Query5 {
 
         // Build on Nation
         std::vector<ExpressionPtr> nationJoinBuildKeys = {std::make_shared<ReadFieldExpression>("n_regionkey")};
+        std::vector<ExpressionPtr> nameJoinBuildValues = {std::make_shared<ReadFieldExpression>("n_name")};
         auto nationJoinBuildOperator =
             std::make_shared<Operators::BatchJoinBuild>(1 /*handler index*/,
                                                         nationJoinBuildKeys,
                                                         std::vector<PhysicalTypePtr>{integerType},
-                                                        std::vector<Expressions::ExpressionPtr>(),
+                                                        nameJoinBuildValues,
                                                         std::vector<PhysicalTypePtr>{integerType, integerType},
                                                         std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
@@ -360,10 +356,7 @@ class TPCH_Query5 {
         regionScanOperator->setChild(regionSelectionOperator);
 
         // Probe with Nation
-        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
-        std::vector<IR::Types::StampPtr> valueStamps = {};
         std::vector<ExpressionPtr> regionProbeKeys = {std::make_shared<ReadFieldExpression>("r_regionkey")};
-
         auto regionJoinProbeOperator =
             std::make_shared<BatchJoinProbe>(0 /*handler index*/,
                                              regionProbeKeys,
@@ -374,7 +367,6 @@ class TPCH_Query5 {
         regionSelectionOperator->setChild(regionJoinProbeOperator);
 
         // Aggregation: sum(l_extendedprice * (1 - l_discount)) as revenue
-        // TODO: not sure if these fields are there
         auto lineItemExtendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
         auto lineItemdiscountField = std::make_shared<ReadFieldExpression>("l_discount");
         auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
@@ -382,7 +374,7 @@ class TPCH_Query5 {
         auto revenueExpression = std::make_shared<MulExpression>(lineItemExtendedpriceField, subExpression);
         auto sumRevenue =
             std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueExpression, "sum_revenue");
-        auto readNationName = std::make_shared<ReadFieldExpression>("n_name");
+        auto readNationName = std::make_shared<ReadFieldExpression>("n_name"); // TODO 4240: How to get this n_name (from Nation) here?
         std::vector<Expressions::ExpressionPtr> keyFields = {readNationName};
         std::vector<Expressions::ExpressionPtr> aggregationExpressions = {revenueExpression};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumRevenue};
