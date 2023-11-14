@@ -58,95 +58,80 @@ limitations under the License.
 #include <memory>
 
 namespace NES::Runtime::Execution {
-        using namespace Expressions;
-        using namespace Operators;
-        class TPCH_Q5 : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
+using namespace Expressions;
+using namespace Operators;
+class TPCH_Q5 : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
 
-          public:
-            TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_01;
-            Nautilus::CompilationOptions options;
-            ExecutablePipelineProvider* provider;
-            std::shared_ptr<Runtime::BufferManager> bm;
-            std::shared_ptr<Runtime::BufferManager> table_bm;
-            std::shared_ptr<WorkerContext> wc;
-            std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
+  public:
+    TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_01;
+    Nautilus::CompilationOptions options;
+    ExecutablePipelineProvider* provider;
+    std::shared_ptr<Runtime::BufferManager> bm;
+    std::shared_ptr<Runtime::BufferManager> table_bm;
+    std::shared_ptr<WorkerContext> wc;
+    std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
 
-            /* Will be called before any test in this class are executed. */
-            static void SetUpTestCase() {
-                NES::Logger::setupLogging("TPCH_Q5.log", NES::LogLevel::LOG_DEBUG);
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("TPCH_Q5.log", NES::LogLevel::LOG_DEBUG);
 
-                NES_INFO("Setup TPCH_Q5 test class.");
-            }
+        NES_INFO("Setup TPCH_Q5 test class.");
+    }
 
-            /* Will be called before a test is executed. */
-            void SetUp() override {
-                Testing::BaseUnitTest::SetUp();
-                NES_INFO("Setup TPCH_Q5 test case.");
-                if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
-                    GTEST_SKIP();
-                }
-                provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-                table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
-                bm = std::make_shared<Runtime::BufferManager>();
-                wc = std::make_shared<WorkerContext>(0, bm, 100);
-                tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
-            }
-
-            /* Will be called after all tests in this class are finished. */
-            static void TearDownTestCase() { NES_INFO("Tear down TPCH_Q5 test class."); }
-        };
-
-        TEST_P(TPCH_Q5, joinPipeline) {
-            auto& orders = tables[TPCHTable::Orders];
-            auto& customers = tables[TPCHTable::Customer];
-
-            // Get the pipeline plan of the query
-            auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
-
-            // Get the pipelines from the plan
-            auto orderScanPipeline = plan.getPipeline(0);
-            auto custOrderJoinPipeline = plan.getPipeline(1);
-
-            // Create executable pipelines stages (EPS) from the plan
-            auto orderScanHTBuildEps = provider->create(orderScanPipeline.pipeline, options);
-            auto custOrderJoinPipelineEps = provider->create(custOrderJoinPipeline.pipeline, options);
-
-            // Setup each pipeline
-            orderScanHTBuildEps->setup(*orderScanPipeline.ctx);
-            custOrderJoinPipelineEps->setup(*custOrderJoinPipeline.ctx);
-
-            /*
-             * Execute and assert the first pipeline
-            */
-            for (auto& chunk : orders->getChunks()) {
-                orderScanHTBuildEps->execute(chunk, *orderScanPipeline.ctx, *wc);
-            }
-
-            // Assert the content of the hash map
-            auto orderCustJoinHandler = orderScanPipeline.ctx->getOperatorHandler<BatchJoinHandler>(0);
-            auto orderCustJoinNumberOfKeys = orderCustJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-            EXPECT_EQ(orderCustJoinNumberOfKeys, 4570);
-            auto orderCustJoinHashMap = orderCustJoinHandler->mergeState();
-            EXPECT_EQ(orderCustJoinHashMap->getCurrentSize(), 4570);
-
-            /*
-             * Execute and assert the second pipeline
-            */
-            for (auto& chunk : customers->getChunks()) {
-                custOrderJoinPipelineEps->execute(chunk, *orderScanPipeline.ctx, *wc);
-            }
-
-            orderScanHTBuildEps->stop(*orderScanPipeline.ctx);
-            custOrderJoinPipelineEps->stop(*custOrderJoinPipeline.ctx);
-
-            NES_DEBUG("Done");
+    /* Will be called before a test is executed. */
+    void SetUp() override {
+        Testing::BaseUnitTest::SetUp();
+        NES_INFO("Setup TPCH_Q5 test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
         }
+        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
+        table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
+        bm = std::make_shared<Runtime::BufferManager>();
+        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
+    }
 
-        INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                                TPCH_Q5,
-                                ::testing::Values("PipelineCompiler"),
-                                [](const testing::TestParamInfo<TPCH_Q5::ParamType>& info) {
-                                    return info.param;
-                                });
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { NES_INFO("Tear down TPCH_Q5 test class."); }
+};
 
-    }// namespace NES::Runtime::Execution
+TEST_P(TPCH_Q5, joinPipeline) {
+    auto& orders = tables[TPCHTable::Orders];
+    auto& customers = tables[TPCHTable::Customer];
+    auto& lineItems = tables[TPCHTable::LineItem];
+
+    // Get the pipeline plan of the query
+    auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
+
+    // Get the pipelines from the plan
+    auto customerPipeline = plan.getPipeline(0);
+
+    // Create executable pipelines stages (EPS) from the plan
+    auto customerEps = provider->create(customerPipeline.pipeline, options);
+
+    // Setup each pipeline
+    customerEps->setup(*customerPipeline.ctx);
+
+    // Execute and assert the first pipeline
+    for (auto& chunk : orders->getChunks()) {
+        customerEps->execute(chunk, *customerPipeline.ctx, *wc);
+    }
+    // Assert the content of the hash map
+    auto customerJoinHandler = customerPipeline.ctx->getOperatorHandler<BatchJoinHandler>(0);
+    auto customerJoinNumberOfKeys = customerJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+    EXPECT_EQ(customerJoinNumberOfKeys, 15000);
+    auto customerJoinHashMap = customerJoinHandler->mergeState();
+    EXPECT_EQ(customerJoinHashMap->getCurrentSize(), 15000);
+
+    NES_DEBUG("Done");
+}
+
+INSTANTIATE_TEST_CASE_P(testIfCompilation,
+                        TPCH_Q5,
+                        ::testing::Values("PipelineInterpreter"),
+                        [](const testing::TestParamInfo<TPCH_Q5::ParamType>& info) {
+                            return info.param;
+                        });
+
+}// namespace NES::Runtime::Execution
