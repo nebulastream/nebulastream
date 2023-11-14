@@ -63,6 +63,7 @@ class TPCH_Query5 {
         auto orderJoinHandler = createOrderPipeline(plan, tables, customerJoinHandler);
         auto lineItemJoinHandler = createLineItemPipeline(plan, tables, orderJoinHandler);
         auto supplierJoinHandler = createSupplierPipeline(plan, tables, lineItemJoinHandler);
+        auto nationJoinHandler = createNationPipeline(plan, tables, supplierJoinHandler);
 
         return plan;
     }
@@ -71,8 +72,6 @@ class TPCH_Query5 {
     createCustomerPipeline(PipelinePlan& plan, std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables) {
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
-        PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
-        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
         auto& customerTable = tables[TPCHTable::Customer];
 
         auto c_scanMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
@@ -217,9 +216,11 @@ class TPCH_Query5 {
         std::vector<Execution::OperatorHandlerPtr> handlers = {orderJoinHandler, lineItemJoinHandler};
         auto lineItemPipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers);
         plan.appendPipeline(lineItemPipeline, lineItemPipelineContext);
+
         return lineItemJoinHandler;
     }
 
+    // TODO:  This join is not yet added: "AND c_nationkey = s_nationkey"
     static std::shared_ptr<BatchJoinHandler>
     createSupplierPipeline(PipelinePlan& plan,
                            std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
@@ -271,7 +272,63 @@ class TPCH_Query5 {
         std::vector<Execution::OperatorHandlerPtr> handlers = {lineItemJoinHandler, supplierJoinHandler};
         auto supplierPipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers);
         plan.appendPipeline(supplierPipeline, supplierPipelineContext);
+
         return supplierJoinHandler;
+    }
+
+    static std::shared_ptr<BatchJoinHandler>
+    createNationPipeline(PipelinePlan& plan,
+                           std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                           const Runtime::Execution::OperatorHandlerPtr& supplierJoinHandler) {
+        auto& nationTable = tables[TPCHTable::Nation];
+
+        auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+        PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+
+        /**
+        * Nation pipeline: Scan(Nation) -> Probe(w/Supplier) -> Build
+        */
+        // Scan the Nation table
+        auto nationMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(nationTable->getLayout()));
+        std::vector<Nautilus::Record::RecordFieldIdentifier> nationProjection = {"n_nationkey", "n_regionkey"};
+        auto nationScanOperator = std::make_shared<Operators::Scan>(std::move(nationMemoryProviderPtr), nationProjection);
+
+        // Probe with Supplier
+        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
+        std::vector<IR::Types::StampPtr> valueStamps = {};
+        std::vector<ExpressionPtr> nationProbeKeys = {std::make_shared<ReadFieldExpression>("n_nationkey")};
+
+        auto nationJoinProbeOperator =
+            std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+                                             nationProbeKeys,
+                                             std::vector<PhysicalTypePtr>{integerType},
+                                             std::vector<Record::RecordFieldIdentifier>(),
+                                             std::vector<PhysicalTypePtr>(),
+                                             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        nationScanOperator->setChild(nationJoinProbeOperator);
+
+        // Build on Nation
+        std::vector<ExpressionPtr> nationJoinBuildKeys = {std::make_shared<ReadFieldExpression>("n_regionkey")};
+        auto nationJoinBuildOperator =
+            std::make_shared<Operators::BatchJoinBuild>(1 /*handler index*/,
+                                                        nationJoinBuildKeys,
+                                                        std::vector<PhysicalTypePtr>{integerType},
+                                                        std::vector<Expressions::ExpressionPtr>(),
+                                                        std::vector<PhysicalTypePtr>{integerType, integerType},
+                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+
+        nationJoinProbeOperator->setChild(nationJoinBuildOperator);
+
+        // Create the Nation pipeline
+        auto nationPipeline = std::make_shared<PhysicalOperatorPipeline>();
+        nationPipeline->setRootOperator(nationScanOperator);
+        auto nationJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
+        std::vector<Execution::OperatorHandlerPtr> handlers = {supplierJoinHandler, nationJoinHandler};
+        auto nationPipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers);
+        plan.appendPipeline(nationPipeline, nationPipelineContext);
+
+        return nationJoinHandler;
     }
 };
 
