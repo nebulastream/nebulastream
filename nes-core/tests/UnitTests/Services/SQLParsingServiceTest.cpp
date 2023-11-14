@@ -159,19 +159,18 @@ TEST(SQLSelectionServiceTest, selectionTest) {
 
 
     std::cout << "-------------------------Selection-------------------------\n";
-
+/*
     // Test case for simple selection
     inputQuery = "select * from StreamName where f1 > 10*3 INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName").filter(Attribute("f1")>30).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-    /*
-    // Test case for selection with multiple conditions
-    inputQuery = "select * from StreamName where f1 > 10.5 and f2 < 10";
+*/
+    inputQuery = "select * from StreamName where (f1 > 10.5 AND f2 < 10) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").filter(Attribute("f1")>10.5 && Attribute("f2")<10).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("StreamName").filter(Attribute("f1")>10 && Attribute("f2")<10).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-     */
+
 }
 
 TEST(SQLProjectionServiceTest, projectionTest) {

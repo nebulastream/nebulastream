@@ -107,9 +107,8 @@ namespace NES::Parsers {
 
             std::vector<ExpressionNodePtr> projections;
 
-            std::vector<ExpressionNodePtr> tempExpressionVectorBoolean;
+            std::vector<ExpressionNodePtr> ExpressionBuilder;
             std::string opBoolean;
-            std::vector<ExpressionNodePtr> tempExpressionVectorValue;
             std::string opValue;
 
 
