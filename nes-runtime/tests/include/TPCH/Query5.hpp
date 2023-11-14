@@ -60,6 +60,7 @@ class TPCH_Query5 {
                                         Runtime::BufferManagerPtr) {
         PipelinePlan plan;
         auto customerJoinHandler = createCustomerPipeline(plan, tables);
+        auto orderJoinHandler = createOrderPipeline(plan, tables, customerJoinHandler);
 
         return plan;
     }
@@ -94,6 +95,76 @@ class TPCH_Query5 {
         auto customerPipelineContex = std::make_shared<MockedPipelineExecutionContext>(customerJoinHandler);
         plan.appendPipeline(customerPipeline, customerPipelineContex);
         return customerJoinHandler[0];
+    }
+
+    static std::shared_ptr<BatchJoinHandler>
+    createOrderPipeline(PipelinePlan& plan,
+                    std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                    const Runtime::Execution::OperatorHandlerPtr& customerJoinHandler) {
+        auto& orderTable = tables[TPCHTable::Orders];
+        auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+
+        PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+        PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+
+        /**
+        * Order pipeline: Scan (Order) -> Probe(w/Customer) -> Selection -> Build
+        */
+        auto ordersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(orderTable->getLayout()));
+        std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"o_orderkey",
+                                                                                 "o_orderdate",
+                                                                                 "o_custkey"};
+        auto orderScanOperator = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
+
+                // join probe with customers
+        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
+        std::vector<IR::Types::StampPtr> valueStamps = {};
+        std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
+
+        auto orderJoinProbeOperator = std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+                                                                   ordersProbeKeys,
+                                                                   std::vector<PhysicalTypePtr>{integerType},
+                                                                   std::vector<Record::RecordFieldIdentifier>(),
+                                                                   std::vector<PhysicalTypePtr>(),
+                                                                   std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        orderScanOperator->setChild(orderJoinProbeOperator);
+
+        auto const_1994_01_01 = std::make_shared<ConstantInt32ValueExpression>(19940101);
+        auto const_1995_01_01 = std::make_shared<ConstantInt32ValueExpression>(19950101);
+        auto readOrderDate = std::make_shared<ReadFieldExpression>("o_orderdate");
+
+        auto lessThanExpression1 = std::make_shared<GreaterEqualsExpression>(const_1994_01_01, readOrderDate);
+        auto lessThanExpression2 = std::make_shared<LessThanExpression>(readOrderDate, const_1995_01_01);
+        auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
+
+        auto orderDateSelectionOperator = std::make_shared<Selection>(andExpression);
+        orderJoinProbeOperator->setChild(orderDateSelectionOperator);
+
+        // join build for order_customers
+        std::vector<ExpressionPtr> order_customersJoinBuildKeys = {std::make_shared<ReadFieldExpression>("o_orderkey")};
+        std::vector<ExpressionPtr> order_customersJoinBuildValues = {std::make_shared<ReadFieldExpression>("o_orderdate"),
+                                                                     std::make_shared<ReadFieldExpression>("o_shippriority")};
+
+        auto order_customersJoinBuildOperator =
+            std::make_shared<Operators::BatchJoinBuild>(1 /*handler index*/,
+                                                        order_customersJoinBuildKeys,
+                                                        std::vector<PhysicalTypePtr>{integerType},
+                                                        order_customersJoinBuildValues,
+                                                        std::vector<PhysicalTypePtr>{integerType, integerType},
+                                                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+
+        orderDateSelectionOperator->setChild(order_customersJoinBuildOperator);
+
+        // create order_customersJoinBuild pipeline
+        auto orderPipeline = std::make_shared<PhysicalOperatorPipeline>();
+        orderPipeline->setRootOperator(orderScanOperator);
+        auto orderJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
+        std::vector<Execution::OperatorHandlerPtr> handlers = {customerJoinHandler, orderJoinHandler};
+        auto orderPipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers);
+        plan.appendPipeline(orderPipeline, orderPipelineContext);
+        return orderJoinHandler;
     }
 };
 
