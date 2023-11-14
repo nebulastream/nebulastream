@@ -26,26 +26,6 @@
 
 namespace NES::Runtime::Execution {
 
-// https://github.com/nebulastream/nebulastream/issues/4172
-// The benchmarking framework does not support queries with Java UDFs.
-// This code prints timing information to std::out, so we can disable logging.
-// It should be removed once better evaluation infrastructure exists.
-// Code taken from https://stacktuts.com/how-to-print-current-time-with-milliseconds-using-c-c-11
-void printTimeStamp(const std::string& function,
-                    const QueryId& queryId,
-                    const QuerySubPlanId& querySubPlanId,
-                    const std::string& message) {
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::tm* parts = std::localtime(&now_c);
-    std::stringstream str;
-    str << function << ": queryId=" << static_cast<uint64_t>(queryId)
-        << ", querySubPlanId=" << static_cast<uint64_t>(querySubPlanId) << "; " << message;
-    std::cout << std::put_time(parts, "%Y-%m-%d %H:%M:%S.")
-              << std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000 << " " << str.str()
-              << std::endl;
-}
-
 ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
                                          QuerySubPlanId querySubPlanId,
                                          std::vector<DataSourcePtr>&& sources,
@@ -122,7 +102,6 @@ bool ExecutableQueryPlan::fail() {
 ExecutableQueryPlanStatus ExecutableQueryPlan::getStatus() { return qepStatus.load(); }
 
 bool ExecutableQueryPlan::setup() {
-    printTimeStamp("setup", queryId, querySubPlanId, "");
     NES_DEBUG("QueryExecutionPlan: setup queryId={} querySubPlanId={}", queryId, querySubPlanId);
     auto expected = Execution::ExecutableQueryPlanStatus::Created;
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Deployed)) {
@@ -140,7 +119,6 @@ bool ExecutableQueryPlan::setup() {
 }
 
 bool ExecutableQueryPlan::start() {
-    printTimeStamp("start", queryId, querySubPlanId, "");
     NES_DEBUG("QueryExecutionPlan: start query={} subplan={}", queryId, querySubPlanId);
     auto expected = Execution::ExecutableQueryPlanStatus::Deployed;
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Running)) {
@@ -211,10 +189,6 @@ bool ExecutableQueryPlan::stop() {
 }
 
 void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& task) {
-    printTimeStamp("postReconfigurationCallback",
-                   queryId,
-                   querySubPlanId,
-                   getQueryManager()->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case ReconfigurationType::FailEndOfStream: {
