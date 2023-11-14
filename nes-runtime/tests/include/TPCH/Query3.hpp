@@ -183,7 +183,7 @@ class TPCH_Query3 {
         PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
 
         /**
-   * Pipeline 3 with scan lineitem -> selection -> JoinPrope with order_customers from pipeline 2 -> aggregation
+   * Pipeline 3 with scan lineitem -> selection -> JoinProbe with order_customers from pipeline 2 -> aggregation
    */
         auto lineitemsMP = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));

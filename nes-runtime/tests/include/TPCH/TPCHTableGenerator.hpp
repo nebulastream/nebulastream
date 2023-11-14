@@ -141,12 +141,13 @@ class TPCHTableGenerator {
 
     const SchemaPtr nationSchema = Schema::create()
                                        ->addField("n_nationkey", BasicType::INT32)
-                                       // ->addField("n_name", BasicType::INT32)
+                                       ->addField("n_name", BasicType::INT32)
                                        ->addField("n_regionkey", BasicType::INT32);
     // ->addField("n_comment", BasicType::INT32);
 
-    const SchemaPtr regionSchema = Schema::create()->addField("r_regionkey", BasicType::INT32);
-    // ->addField("r_name", BasicType::INT32)
+    const SchemaPtr regionSchema = Schema::create()
+                                       ->addField("r_regionkey", BasicType::INT32)
+                                       ->addField("r_name", BasicType::INT32);
     //->addField("r_comment", BasicType::INT32);
 
     const std::unordered_map<TPCHTable, SchemaPtr> tableSchemas = {{TPCHTable::Part, partSchema},

@@ -64,6 +64,7 @@ class TPCH_Query5 {
         auto lineItemJoinHandler = createLineItemPipeline(plan, tables, orderJoinHandler);
         auto supplierJoinHandler = createSupplierPipeline(plan, tables, lineItemJoinHandler);
         auto nationJoinHandler = createNationPipeline(plan, tables, supplierJoinHandler);
+        createRegionPipeline(plan, tables, nationJoinHandler);
 
         return plan;
     }
@@ -180,7 +181,7 @@ class TPCH_Query5 {
         // Scan the LineItem table
         auto lineItemMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineItemTable->getLayout()));
-        std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProjection = {"l_orderkey", "l_suppkey"};
+        std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProjection = {"l_orderkey", "l_suppkey", "l_extendedprice", "l_discount"};
         auto lineItemScanOperator = std::make_shared<Operators::Scan>(std::move(lineItemMemoryProviderPtr), lineItemProjection);
 
         // Probe with Order
@@ -199,11 +200,13 @@ class TPCH_Query5 {
 
         // Build on LineItem
         std::vector<ExpressionPtr> lineItemJoinBuildKeys = {std::make_shared<ReadFieldExpression>("l_suppkey")};
+        std::vector<ExpressionPtr> lineItemJoinBuildValues = {std::make_shared<ReadFieldExpression>("l_extendedprice"),
+                                                              std::make_shared<ReadFieldExpression>("l_discount")};
         auto lineItemJoinBuildOperator =
             std::make_shared<Operators::BatchJoinBuild>(1 /*handler index*/,
                                                         lineItemJoinBuildKeys,
                                                         std::vector<PhysicalTypePtr>{integerType},
-                                                        std::vector<Expressions::ExpressionPtr>(),
+                                                        lineItemJoinBuildValues,
                                                         std::vector<PhysicalTypePtr>{integerType, integerType},
                                                         std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
@@ -278,8 +281,8 @@ class TPCH_Query5 {
 
     static std::shared_ptr<BatchJoinHandler>
     createNationPipeline(PipelinePlan& plan,
-                           std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
-                           const Runtime::Execution::OperatorHandlerPtr& supplierJoinHandler) {
+                         std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                         const Runtime::Execution::OperatorHandlerPtr& supplierJoinHandler) {
         auto& nationTable = tables[TPCHTable::Nation];
 
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -329,6 +332,79 @@ class TPCH_Query5 {
         plan.appendPipeline(nationPipeline, nationPipelineContext);
 
         return nationJoinHandler;
+    }
+
+    static void createRegionPipeline(PipelinePlan& plan,
+                                     std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                                     const Runtime::Execution::OperatorHandlerPtr& nationJoinHandler) {
+        auto& regionTable = tables[TPCHTable::Region];
+
+        auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+        PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
+
+        /**
+        * Region pipeline: Scan(Region) -> Probe(w/Nation) -> Selection --> Build
+        */
+        // Scan the Region table
+        auto regionMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(regionTable->getLayout()));
+        std::vector<Nautilus::Record::RecordFieldIdentifier> regionProjection = {"r_name", "r_regionkey"};
+        auto regionScanOperator = std::make_shared<Operators::Scan>(std::move(regionMemoryProviderPtr), regionProjection);
+
+        // Selection r_name = 'ASIA' -> currently modeled as 1 (as in Query 3)
+        auto asia = std::make_shared<ConstantInt32ValueExpression>(1);
+        auto readRName = std::make_shared<ReadFieldExpression>("r_name");
+        auto equalsExpression = std::make_shared<EqualsExpression>(readRName, asia);
+        auto regionSelectionOperator = std::make_shared<Selection>(equalsExpression);
+        regionScanOperator->setChild(regionSelectionOperator);
+
+        // Probe with Nation
+        std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
+        std::vector<IR::Types::StampPtr> valueStamps = {};
+        std::vector<ExpressionPtr> regionProbeKeys = {std::make_shared<ReadFieldExpression>("r_regionkey")};
+
+        auto regionJoinProbeOperator =
+            std::make_shared<BatchJoinProbe>(0 /*handler index*/,
+                                             regionProbeKeys,
+                                             std::vector<PhysicalTypePtr>{integerType},
+                                             std::vector<Record::RecordFieldIdentifier>(),
+                                             std::vector<PhysicalTypePtr>(),
+                                             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        regionSelectionOperator->setChild(regionJoinProbeOperator);
+
+        // Aggregation: sum(l_extendedprice * (1 - l_discount)) as revenue
+        // TODO: not sure if these fields are there
+        auto lineItemExtendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
+        auto lineItemdiscountField = std::make_shared<ReadFieldExpression>("l_discount");
+        auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
+        auto subExpression = std::make_shared<SubExpression>(oneConst, lineItemdiscountField);
+        auto revenueExpression = std::make_shared<MulExpression>(lineItemExtendedpriceField, subExpression);
+        auto sumRevenue =
+            std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueExpression, "sum_revenue");
+        auto readNationName = std::make_shared<ReadFieldExpression>("n_name");
+        std::vector<Expressions::ExpressionPtr> keyFields = {readNationName};
+        std::vector<Expressions::ExpressionPtr> aggregationExpressions = {revenueExpression};
+        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumRevenue};
+
+        PhysicalTypePtr smallType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
+
+        auto aggregation = std::make_shared<Operators::BatchKeyedAggregation>(
+            1 /*handler index*/,
+            keyFields,
+            std::vector<PhysicalTypePtr>{integerType, integerType, integerType},
+            aggregationFunctions,
+            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+
+        regionJoinProbeOperator->setChild(aggregation);
+
+        // Create Region Pipeline
+        auto regionPipeline = std::make_shared<PhysicalOperatorPipeline>();
+        regionPipeline->setRootOperator(regionScanOperator);
+        auto regionAggregationHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
+        std::vector<Execution::OperatorHandlerPtr> handlers = {nationJoinHandler, regionAggregationHandler};
+        auto regionPipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers);
+        plan.appendPipeline(regionPipeline, regionPipelineContext);
     }
 };
 
