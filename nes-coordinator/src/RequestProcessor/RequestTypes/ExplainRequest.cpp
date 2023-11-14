@@ -65,7 +65,9 @@
 #include <cpr/cpr.h>
 #include <string>
 #include <utility>
+#include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Runtime/OpenCLDeviceInfo.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -328,12 +330,7 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
             }
 
             // Added generated code snippets to the response
-            nlohmann::json generatedPipelineCodeSnippets{};
-            for (const auto& generatedCodeSnippet : generatedCodeSnippets){
-                generatedPipelineCodeSnippets.emplace_back(generatedCodeSnippet);
-            }
-
-            currentQuerySubPlanMetaData["Pipelines"] = generatedPipelineCodeSnippets;
+            currentQuerySubPlanMetaData["Pipelines"] = generatedCodeSnippets;
 
             scheduledSubQueries.push_back(currentQuerySubPlanMetaData);
         }
@@ -358,50 +355,21 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
     //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {
 
-        // FIXME: populate information from node with the correct property keys
-        // FIXME: pick a naming + id scheme for deviceName
         //3. Fetch the topology node and compute the topology node payload
         nlohmann::json payload;
-        nlohmann::json deviceInfo;
-        deviceInfo[DEVICE_INFO_NAME_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_NAME"));
-        deviceInfo[DEVICE_INFO_DOUBLE_FP_SUPPORT_KEY] =
-            std::any_cast<bool>(topologyNode->getNodeProperty("DEVICE_DOUBLE_FP_SUPPORT"));
-        nlohmann::json maxWorkItems{};
-        maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM1_KEY] =
-            std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM1"));
-        maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM2_KEY] =
-            std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM2"));
-        maxWorkItems[DEVICE_MAX_WORK_ITEMS_DIM3_KEY] =
-            std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_MAX_WORK_ITEMS_DIM3"));
-        deviceInfo[DEVICE_MAX_WORK_ITEMS_KEY] = maxWorkItems;
-        deviceInfo[DEVICE_INFO_ADDRESS_BITS_KEY] =
-            std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_ADDRESS_BITS"));
-        deviceInfo[DEVICE_INFO_EXTENSIONS_KEY] = std::any_cast<std::string>(topologyNode->getNodeProperty("DEVICE_EXTENSIONS"));
-        deviceInfo[DEVICE_INFO_AVAILABLE_PROCESSORS_KEY] =
-            std::any_cast<uint64_t>(topologyNode->getNodeProperty("DEVICE_AVAILABLE_PROCESSORS"));
-        payload[DEVICE_INFO_KEY] = deviceInfo;
+        payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(
+             topologyNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
 
         //4. Extract the Java UDF metadata
         auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
         payload["functionCode"] = javaDescriptor->getMethodName();
 
-        //find the bytecode for the udf class
-        auto className = javaDescriptor->getClassName();
-        auto byteCodeList = javaDescriptor->getByteCodeList();
-        auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
-            return c.first == className;
-        });
-
-        if (classByteCode == byteCodeList.end()) {
-            throw QueryDeploymentException(queryId,
-                                           "The bytecode list of classes implementing the "
-                                           "UDF must contain the fully-qualified name of the UDF");
-        }
-        jni::JavaByteCode javaByteCode = classByteCode->second;
+        // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
+        jni::JavaByteCode javaByteCode = javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
 
         //5. Prepare the multi-part message
-        cpr::Part part1 = {"firstPayload", to_string(payload)};
-        cpr::Part part2 = {"secondPayload", &javaByteCode[0]};
+        cpr::Part part1 = {"jsonFile", to_string(payload)};
+        cpr::Part part2 = {"codeFile", &javaByteCode[0]};
         cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
 
         //6. Make Acceleration Service Call
@@ -411,7 +379,7 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
                                            cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {
             throw QueryDeploymentException(queryPlan->getQueryId(),
-                                           "ExplainRequest: Error in call to Elegant acceleration service with code "
+                                           "Error in call to Elegant acceleration service with code "
                                                + std::to_string(response.status_code) + " and msg " + response.reason);
         }
 

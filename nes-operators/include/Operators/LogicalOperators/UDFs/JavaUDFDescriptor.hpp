@@ -17,6 +17,7 @@
 
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -131,6 +132,17 @@ class JavaUDFDescriptor : public UDFDescriptor {
      * @return Fully-qualified class name of the return type of the UDF method.
      */
     const std::string& getOutputClassName() const { return outputClassName; }
+
+    /**
+     * \brief Return the stored byte code of a Java class.
+     *
+     * The Java UDF descriptor guarantees that this method always returns the byte code of the UDF class.
+     * For other classes (e.g., input/output classes), this method may return std::nullopt.
+     *
+     * \param className The Java class.
+     * \return The byte code of the class if it exists in the byte code list, or std::nullopt.
+     */
+    const std::optional<jni::JavaByteCode> getClassByteCode(const std::string& className) const;
 
     /**
      * @brief Generates the infer string signature required for the logical operator
