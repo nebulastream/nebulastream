@@ -102,6 +102,7 @@ TEST_P(TPCH_Q5, joinPipeline) {
     auto& lineItems = tables[TPCHTable::LineItem];
     auto& suppliers = tables[TPCHTable::Supplier];
     auto& nations = tables[TPCHTable::Nation];
+    auto& regions = tables[TPCHTable::Region];
 
     // Get the pipeline plan of the query
     auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
@@ -112,6 +113,7 @@ TEST_P(TPCH_Q5, joinPipeline) {
     auto lineItemPipeline = plan.getPipeline(2);
     auto supplierPipeline = plan.getPipeline(3);
     auto nationPipeline = plan.getPipeline(4);
+    auto regionPipeline = plan.getPipeline(5);
 
     // Create executable pipelines stages (EPS) from the plan
     auto customerEps = provider->create(customerPipeline.pipeline, options);
@@ -119,6 +121,7 @@ TEST_P(TPCH_Q5, joinPipeline) {
     auto lineItemEps = provider->create(lineItemPipeline.pipeline, options);
     auto supplierEps = provider->create(supplierPipeline.pipeline, options);
     auto nationEps = provider->create(nationPipeline.pipeline, options);
+    auto regionEps = provider->create(regionPipeline.pipeline, options);
 
     // Setup each pipeline
     customerEps->setup(*customerPipeline.ctx);
@@ -126,6 +129,7 @@ TEST_P(TPCH_Q5, joinPipeline) {
     lineItemEps->setup(*lineItemPipeline.ctx);
     supplierEps->setup(*supplierPipeline.ctx);
     nationEps->setup(*nationPipeline.ctx);
+    regionEps->setup(*regionPipeline.ctx);
 
     // == Execute and assert the first pipeline (Customer) == //
     for (auto& customerChunk : customers->getChunks()) {
@@ -162,7 +166,7 @@ TEST_P(TPCH_Q5, joinPipeline) {
 
     // == Execute and assert the fourth pipeline (Supplier) == //
     for (auto& supplierChunk : suppliers->getChunks()) {
-        lineItemEps->execute(supplierChunk, *supplierPipeline.ctx, *wc);
+        supplierEps->execute(supplierChunk, *supplierPipeline.ctx, *wc);
     }
     // Assert the content of the hash map
     auto supplierJoinHandler = supplierPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
@@ -173,16 +177,22 @@ TEST_P(TPCH_Q5, joinPipeline) {
 
     // == Execute and assert the fifth pipeline (Nation) == //
     for (auto& nationChunk : nations->getChunks()) {
-        lineItemEps->execute(nationChunk, *nationPipeline.ctx, *wc);
+        nationEps->execute(nationChunk, *nationPipeline.ctx, *wc);
     }
     // Assert the content of the hash map
     auto nationJoinHandler = nationPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
     auto nationJoinNumberOfKeys = nationJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(nationJoinNumberOfKeys, 1);
+    EXPECT_EQ(nationJoinNumberOfKeys, 25);
     auto nationJoinHashMap = nationJoinHandler->mergeState();
-    EXPECT_EQ(nationJoinHashMap->getCurrentSize(), 1);
+    EXPECT_EQ(nationJoinHashMap->getCurrentSize(), 25);
 
-    NES_DEBUG("Done");
+    // == Execute and assert the sixth pipeline (Region) == //
+    for (auto& regionChunk : regions->getChunks()) {
+        regionEps->execute(regionChunk, *regionPipeline.ctx, *wc);
+    }
+    // Assert the content in the aggregation handler
+    auto aggHandler = regionPipeline.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(1); // the aggregation handler is at index 1
+    EXPECT_EQ(aggHandler->getThreadLocalStore(0)->getCurrentSize(), 0);
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
