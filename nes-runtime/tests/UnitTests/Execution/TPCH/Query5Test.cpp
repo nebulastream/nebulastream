@@ -99,6 +99,7 @@ class TPCH_Q5 : public Testing::BaseUnitTest, public AbstractPipelineExecutionTe
 TEST_P(TPCH_Q5, joinPipeline) {
     auto& customers = tables[TPCHTable::Customer];
     auto& orders = tables[TPCHTable::Orders];
+    auto& lineItems = tables[TPCHTable::Orders];
 
     // Get the pipeline plan of the query
     auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
@@ -106,16 +107,19 @@ TEST_P(TPCH_Q5, joinPipeline) {
     // Get the pipelines from the plan
     auto customerPipeline = plan.getPipeline(0);
     auto orderPipeline = plan.getPipeline(1);
+    auto lineItemPipeline = plan.getPipeline(2);
 
     // Create executable pipelines stages (EPS) from the plan
     auto customerEps = provider->create(customerPipeline.pipeline, options);
     auto orderEps = provider->create(orderPipeline.pipeline, options);
+    auto lineItemEps = provider->create(orderPipeline.pipeline, options);
 
     // Setup each pipeline
     customerEps->setup(*customerPipeline.ctx);
     orderEps->setup(*orderPipeline.ctx);
+    lineItemEps->setup(*lineItemPipeline.ctx);
 
-    // == Execute and assert the first pipeline == //
+    // == Execute and assert the first pipeline (Customer) == //
     for (auto& customerChunk : customers->getChunks()) {
         customerEps->execute(customerChunk, *customerPipeline.ctx, *wc);
     }
@@ -126,16 +130,27 @@ TEST_P(TPCH_Q5, joinPipeline) {
     auto customerJoinHashMap = customerJoinHandler->mergeState();
     EXPECT_EQ(customerJoinHashMap->getCurrentSize(), 1500);
 
-    // == Execute and assert the second pipeline == //
+    // == Execute and assert the second pipeline (Order) == //
     for (auto& orderChunk : orders->getChunks()) {
-        customerEps->execute(orderChunk, *customerPipeline.ctx, *wc);
+        orderEps->execute(orderChunk, *orderPipeline.ctx, *wc);
     }
     // Assert the content of the hash map
-    auto orderJoinHandler = customerPipeline.ctx->getOperatorHandler<BatchJoinHandler>(0);
-    auto orderJoinNumberOfKeys = customerJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(orderJoinNumberOfKeys, 16500);
-    auto orderJoinHashMap = customerJoinHandler->mergeState();
-    EXPECT_EQ(orderJoinHashMap->getCurrentSize(), 14868);
+    auto orderJoinHandler = orderPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1); // the build handler is at index 1
+    auto orderJoinNumberOfKeys = orderJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+    EXPECT_EQ(orderJoinNumberOfKeys, 4570);
+    auto orderJoinHashMap = orderJoinHandler->mergeState();
+    EXPECT_EQ(orderJoinHashMap->getCurrentSize(), 4570);
+
+    // == Execute and assert the third pipeline (LineItem) == //
+    for (auto& lineItemChunk : lineItems->getChunks()) {
+        lineItemEps->execute(lineItemChunk, *lineItemPipeline.ctx, *wc);
+    }
+    // Assert the content of the hash map
+    auto lineItemJoinHandler = lineItemPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
+    auto lineItemJoinNumberOfKeys = lineItemJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+    EXPECT_EQ(lineItemJoinNumberOfKeys, 333);
+    auto lineItemJoinHashMap = lineItemJoinHandler->mergeState();
+    EXPECT_EQ(lineItemJoinHashMap->getCurrentSize(), 333);
 
     NES_DEBUG("Done");
 }
