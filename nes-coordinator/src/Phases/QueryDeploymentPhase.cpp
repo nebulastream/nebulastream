@@ -137,8 +137,6 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                 //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
                 for (const auto& openCLOperator : openCLOperators) {
 
-                    // FIXME: populate information from node with the correct property keys
-                    // FIXME: pick a naming + id scheme for deviceName
                     //3. Fetch the topology node and compute the topology node payload
                     nlohmann::json payload;
                     payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(
@@ -148,20 +146,8 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
                     payload["functionCode"] = javaDescriptor->getMethodName();
 
-                    //find the bytecode for the udf class
-                    auto className = javaDescriptor->getClassName();
-                    auto byteCodeList = javaDescriptor->getByteCodeList();
-                    auto classByteCode =
-                        std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
-                            return c.first == className;
-                        });
-
-                    if (classByteCode == byteCodeList.end()) {
-                        throw QueryDeploymentException(queryId,
-                                                       "The bytecode list of classes implementing the "
-                                                       "UDF must contain the fully-qualified name of the UDF");
-                    }
-                    jni::JavaByteCode javaByteCode = classByteCode->second;
+                    // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
+                    jni::JavaByteCode javaByteCode = javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
 
                     //5. Prepare the multi-part message
                     cpr::Part part1 = {"jsonFile", to_string(payload)};
@@ -176,7 +162,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     if (response.status_code != 200) {
                         throw QueryDeploymentException(
                             queryId,
-                            "QueryDeploymentPhase::deployQuery: Error in call to Elegant acceleration service with code "
+                            "Error in call to Elegant acceleration service with code "
                                 + std::to_string(response.status_code) + " and msg " + response.reason);
                     }
 

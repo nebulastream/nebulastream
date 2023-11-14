@@ -45,10 +45,7 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
     if (byteCodeList.empty()) {
         throw UDFException("The bytecode list of classes implementing the UDF must not be empty");
     }
-    auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
-        return c.first == className;
-    });
-    if (classByteCode == byteCodeList.end()) {
+    if (!getClassByteCode(getClassName()).has_value()) {
         throw UDFException("The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF");
         // We could also check whether the input and output types are contained in the bytecode list.
         // But then we would have to distinguish between custom types (i.e., newly defined POJOs) and existing Java types.
@@ -60,6 +57,13 @@ JavaUDFDescriptor::JavaUDFDescriptor(const std::string& className,
             throw UDFException("The bytecode of a class must not not be empty");
         }
     }
+}
+
+ const std::optional<jni::JavaByteCode> JavaUDFDescriptor::getClassByteCode(const std::string& className) const {
+    const auto classByteCode = std::find_if(byteCodeList.cbegin(), byteCodeList.cend(), [&](const jni::JavaClassDefinition& c) {
+        return c.first == className;
+    });
+    return classByteCode == byteCodeList.end() ? std::nullopt : std::optional(classByteCode->second);
 }
 
 std::stringstream JavaUDFDescriptor::generateInferStringSignature() {
