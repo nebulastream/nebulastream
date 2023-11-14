@@ -19,11 +19,11 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/Arrow/ArrowSourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
-#include <arrow/type_fwd.h>
 #include <arrow/csv/api.h>
 #include <arrow/csv/type_fwd.h>
 #include <arrow/io/type_fwd.h>
 #include <arrow/ipc/type_fwd.h>
+#include <arrow/type_fwd.h>
 #include <string>
 
 namespace NES {
