@@ -192,12 +192,12 @@ TEST_P(TPCH_Q5, joinPipeline) {
     }
     // Assert the content in the aggregation handler
     auto aggHandler = regionPipeline.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(1); // the aggregation handler is at index 1
-    EXPECT_EQ(aggHandler->getThreadLocalStore(0)->getCurrentSize(), 0);
+    EXPECT_EQ(aggHandler->getThreadLocalStore(0)->getCurrentSize(), 0);         // TODO 4240: not sure if we should expect 0
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q5,
-                        ::testing::Values("PipelineInterpreter"),
+                        ::testing::Values("BCInterpreter", "PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q5::ParamType>& info) {
                             return info.param;
                         });
