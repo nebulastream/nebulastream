@@ -101,6 +101,7 @@ TEST_P(TPCH_Q5, joinPipeline) {
     auto& orders = tables[TPCHTable::Orders];
     auto& lineItems = tables[TPCHTable::LineItem];
     auto& suppliers = tables[TPCHTable::Supplier];
+    auto& nations = tables[TPCHTable::Nation];
 
     // Get the pipeline plan of the query
     auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
@@ -110,18 +111,21 @@ TEST_P(TPCH_Q5, joinPipeline) {
     auto orderPipeline = plan.getPipeline(1);
     auto lineItemPipeline = plan.getPipeline(2);
     auto supplierPipeline = plan.getPipeline(3);
+    auto nationPipeline = plan.getPipeline(4);
 
     // Create executable pipelines stages (EPS) from the plan
     auto customerEps = provider->create(customerPipeline.pipeline, options);
     auto orderEps = provider->create(orderPipeline.pipeline, options);
     auto lineItemEps = provider->create(lineItemPipeline.pipeline, options);
     auto supplierEps = provider->create(supplierPipeline.pipeline, options);
+    auto nationEps = provider->create(nationPipeline.pipeline, options);
 
     // Setup each pipeline
     customerEps->setup(*customerPipeline.ctx);
     orderEps->setup(*orderPipeline.ctx);
     lineItemEps->setup(*lineItemPipeline.ctx);
     supplierEps->setup(*supplierPipeline.ctx);
+    nationEps->setup(*nationPipeline.ctx);
 
     // == Execute and assert the first pipeline (Customer) == //
     for (auto& customerChunk : customers->getChunks()) {
@@ -166,6 +170,17 @@ TEST_P(TPCH_Q5, joinPipeline) {
     EXPECT_EQ(supplierJoinNumberOfKeys, 100);
     auto supplierJoinHashMap = supplierJoinHandler->mergeState();
     EXPECT_EQ(supplierJoinHashMap->getCurrentSize(), 100);
+
+    // == Execute and assert the fifth pipeline (Nation) == //
+    for (auto& nationChunk : nations->getChunks()) {
+        lineItemEps->execute(nationChunk, *nationPipeline.ctx, *wc);
+    }
+    // Assert the content of the hash map
+    auto nationJoinHandler = nationPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
+    auto nationJoinNumberOfKeys = nationJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+    EXPECT_EQ(nationJoinNumberOfKeys, 1);
+    auto nationJoinHashMap = nationJoinHandler->mergeState();
+    EXPECT_EQ(nationJoinHashMap->getCurrentSize(), 1);
 
     NES_DEBUG("Done");
 }
