@@ -99,7 +99,8 @@ class TPCH_Q5 : public Testing::BaseUnitTest, public AbstractPipelineExecutionTe
 TEST_P(TPCH_Q5, joinPipeline) {
     auto& customers = tables[TPCHTable::Customer];
     auto& orders = tables[TPCHTable::Orders];
-    auto& lineItems = tables[TPCHTable::Orders];
+    auto& lineItems = tables[TPCHTable::LineItem];
+    auto& suppliers = tables[TPCHTable::Supplier];
 
     // Get the pipeline plan of the query
     auto plan = TPCH_Query5::getPipelinePlan(tables, bm);
@@ -108,16 +109,19 @@ TEST_P(TPCH_Q5, joinPipeline) {
     auto customerPipeline = plan.getPipeline(0);
     auto orderPipeline = plan.getPipeline(1);
     auto lineItemPipeline = plan.getPipeline(2);
+    auto supplierPipeline = plan.getPipeline(3);
 
     // Create executable pipelines stages (EPS) from the plan
     auto customerEps = provider->create(customerPipeline.pipeline, options);
     auto orderEps = provider->create(orderPipeline.pipeline, options);
-    auto lineItemEps = provider->create(orderPipeline.pipeline, options);
+    auto lineItemEps = provider->create(lineItemPipeline.pipeline, options);
+    auto supplierEps = provider->create(supplierPipeline.pipeline, options);
 
     // Setup each pipeline
     customerEps->setup(*customerPipeline.ctx);
     orderEps->setup(*orderPipeline.ctx);
     lineItemEps->setup(*lineItemPipeline.ctx);
+    supplierEps->setup(*supplierPipeline.ctx);
 
     // == Execute and assert the first pipeline (Customer) == //
     for (auto& customerChunk : customers->getChunks()) {
@@ -148,9 +152,20 @@ TEST_P(TPCH_Q5, joinPipeline) {
     // Assert the content of the hash map
     auto lineItemJoinHandler = lineItemPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
     auto lineItemJoinNumberOfKeys = lineItemJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(lineItemJoinNumberOfKeys, 333);
+    EXPECT_EQ(lineItemJoinNumberOfKeys, 18444);
     auto lineItemJoinHashMap = lineItemJoinHandler->mergeState();
-    EXPECT_EQ(lineItemJoinHashMap->getCurrentSize(), 333);
+    EXPECT_EQ(lineItemJoinHashMap->getCurrentSize(), 18444);
+
+    // == Execute and assert the fourth pipeline (Supplier) == //
+    for (auto& supplierChunk : suppliers->getChunks()) {
+        lineItemEps->execute(supplierChunk, *supplierPipeline.ctx, *wc);
+    }
+    // Assert the content of the hash map
+    auto supplierJoinHandler = supplierPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
+    auto supplierJoinNumberOfKeys = supplierJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
+    EXPECT_EQ(supplierJoinNumberOfKeys, 100);
+    auto supplierJoinHashMap = supplierJoinHandler->mergeState();
+    EXPECT_EQ(supplierJoinHashMap->getCurrentSize(), 100);
 
     NES_DEBUG("Done");
 }
