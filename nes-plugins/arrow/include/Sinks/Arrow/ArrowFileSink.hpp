@@ -16,10 +16,10 @@
 #define NES_CORE_INCLUDE_SINKS_MEDIUMS_ArrowFileSink_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <arrow/type_fwd.h>
 #include <arrow/csv/type_fwd.h>
 #include <arrow/io/type_fwd.h>
 #include <arrow/ipc/type_fwd.h>
+#include <arrow/type_fwd.h>
 #include <cstdint>
 #include <memory>
 #include <string>

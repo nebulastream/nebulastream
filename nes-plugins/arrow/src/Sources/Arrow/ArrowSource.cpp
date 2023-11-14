@@ -237,8 +237,7 @@ arrow::Status ArrowSource::openCsvFile() {
     return arrow::Status::OK();
 }
 
-void ArrowSource::populateOptionsFromSchema(arrow::csv::ReadOptions& readOptions,
-                                            arrow::csv::ConvertOptions& convertOptions) {
+void ArrowSource::populateOptionsFromSchema(arrow::csv::ReadOptions& readOptions, arrow::csv::ConvertOptions& convertOptions) {
     auto fields = schema->fields;
     uint64_t numberOfSchemaFields = schema->getSize();
     for (uint64_t schemaFieldIdx = 0; schemaFieldIdx < numberOfSchemaFields; ++schemaFieldIdx) {
@@ -252,42 +251,18 @@ void ArrowSource::populateOptionsFromSchema(arrow::csv::ReadOptions& readOptions
         }
         auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicPhysicalType->nativeType) {
-            case BasicPhysicalType::NativeType::UINT_8:
-                convertOptions.column_types[fieldName] = arrow::uint8();
-                break;
-            case BasicPhysicalType::NativeType::UINT_16:
-                convertOptions.column_types[fieldName] = arrow::uint16();
-                break;
-            case BasicPhysicalType::NativeType::UINT_32:
-                convertOptions.column_types[fieldName] = arrow::uint32();
-                break;
-            case BasicPhysicalType::NativeType::UINT_64:
-                convertOptions.column_types[fieldName] = arrow::uint64();
-                break;
-            case BasicPhysicalType::NativeType::INT_8:
-                convertOptions.column_types[fieldName] = arrow::int8();
-                break;
-            case BasicPhysicalType::NativeType::INT_16:
-                convertOptions.column_types[fieldName] = arrow::int16();
-                break;
-            case BasicPhysicalType::NativeType::INT_32:
-                convertOptions.column_types[fieldName] = arrow::int32();
-                break;
-            case BasicPhysicalType::NativeType::INT_64:
-                convertOptions.column_types[fieldName] = arrow::int64();
-                break;
-            case BasicPhysicalType::NativeType::FLOAT:
-                convertOptions.column_types[fieldName] = arrow::float32();
-                break;
-            case BasicPhysicalType::NativeType::DOUBLE:
-                convertOptions.column_types[fieldName] = arrow::float64();
-                break;
-            case BasicPhysicalType::NativeType::BOOLEAN:
-                convertOptions.column_types[fieldName] = arrow::boolean();
-                break;
-            case BasicPhysicalType::NativeType::TEXT:
-                convertOptions.column_types[fieldName] = arrow::utf8();
-                break;
+            case BasicPhysicalType::NativeType::UINT_8: convertOptions.column_types[fieldName] = arrow::uint8(); break;
+            case BasicPhysicalType::NativeType::UINT_16: convertOptions.column_types[fieldName] = arrow::uint16(); break;
+            case BasicPhysicalType::NativeType::UINT_32: convertOptions.column_types[fieldName] = arrow::uint32(); break;
+            case BasicPhysicalType::NativeType::UINT_64: convertOptions.column_types[fieldName] = arrow::uint64(); break;
+            case BasicPhysicalType::NativeType::INT_8: convertOptions.column_types[fieldName] = arrow::int8(); break;
+            case BasicPhysicalType::NativeType::INT_16: convertOptions.column_types[fieldName] = arrow::int16(); break;
+            case BasicPhysicalType::NativeType::INT_32: convertOptions.column_types[fieldName] = arrow::int32(); break;
+            case BasicPhysicalType::NativeType::INT_64: convertOptions.column_types[fieldName] = arrow::int64(); break;
+            case BasicPhysicalType::NativeType::FLOAT: convertOptions.column_types[fieldName] = arrow::float32(); break;
+            case BasicPhysicalType::NativeType::DOUBLE: convertOptions.column_types[fieldName] = arrow::float64(); break;
+            case BasicPhysicalType::NativeType::BOOLEAN: convertOptions.column_types[fieldName] = arrow::boolean(); break;
+            case BasicPhysicalType::NativeType::TEXT: convertOptions.column_types[fieldName] = arrow::utf8(); break;
             case BasicPhysicalType::NativeType::CHAR:
             case BasicPhysicalType::NativeType::UNDEFINED:
                 NES_THROW_RUNTIME_ERROR("ArrowSource::writeArrowArrayToTupleBuffer: illegal type");
