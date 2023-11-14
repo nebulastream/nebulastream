@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.251](https://github.com/nebulastream/nebulastream/tree/v0.5.251) (2023-11-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.250...v0.5.251)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add csv parser from Arrow [\#4349](https://github.com/nebulastream/nebulastream/issues/4349)
+
 ## [v0.5.250](https://github.com/nebulastream/nebulastream/tree/v0.5.250) (2023-11-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.249...v0.5.250)
