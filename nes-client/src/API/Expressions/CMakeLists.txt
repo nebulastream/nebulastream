@@ -15,5 +15,4 @@ add_source_files(nes-client
         Expressions.cpp
         ArithmeticExpressions.cpp
         LogicalExpressions.cpp
-        GeographyExpressions.cpp
 )

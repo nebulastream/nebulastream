@@ -133,23 +133,6 @@ message SerializableExpression {
     SerializableExpression left = 1;
     SerializableExpression right = 2;
   }
-  message GeographyFieldsAccessExpression{
-    FieldAccessExpression latitude = 1;
-    FieldAccessExpression longitude = 2;
-  }
-  message ST_WithinExpression{
-    GeographyFieldsAccessExpression point = 1;
-    SerializableShapeType shape = 2;
-  }
-  message ST_DWithinExpression{
-    GeographyFieldsAccessExpression point = 1;
-    SerializableShapeType shape = 2;
-  }
-  message ST_KNNExpression{
-    GeographyFieldsAccessExpression point = 1;
-    SerializableShapeType shape = 2;
-    ConstantValueExpression k = 3;
-  }
   message UdfCallExpression{
     ConstantValueExpression udfName = 1;
     repeated SerializableExpression functionArguments = 2;
