@@ -52,9 +52,9 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>

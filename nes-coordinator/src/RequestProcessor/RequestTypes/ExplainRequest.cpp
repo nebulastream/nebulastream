@@ -12,62 +12,62 @@
     limitations under the License.
 */
 
-#include <Catalogs/Query/QueryCatalog.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Exceptions/ExecutionNodeNotFoundException.hpp>
-#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
-#include <Exceptions/MapEntryNotFoundException.hpp>
-#include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
-#include <Exceptions/QueryDeploymentException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
-#include <Optimizer//Exceptions/QueryPlacementException.hpp>
-#include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Exceptions/ExecutionNodeNotFoundException.hpp>
+#include <Exceptions/MapEntryNotFoundException.hpp>
+#include <Exceptions/QueryDeploymentException.hpp>
+#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Optimizer//Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
+#include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
+#include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Phases/QueryDeploymentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Phases/QueryUndeploymentPhase.hpp>
-#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryValidation/SemanticQueryValidation.hpp>
-#include <QueryValidation/SyntacticQueryValidation.hpp>
+#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Phases/QueryDeploymentPhase.hpp>
+#include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryValidation/SemanticQueryValidation.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <cpr/cpr.h>
 #include <string>
 #include <utility>
-#include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
-#include <Runtime/OpenCLDeviceInfo.hpp>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -324,7 +324,8 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
                 if (visitingOp->hasProperty("PIPELINE_ID")) {
                     auto pipelineId = std::any_cast<uint64_t>(visitingOp->getProperty("PIPELINE_ID"));
                     if (pipelineIds.emplace(pipelineId).second) {
-                        generatedCodeSnippets.emplace_back(std::any_cast<std::string>(visitingOp->getProperty(Optimizer::ElegantPlacementStrategy::sourceCodeKey)));
+                        generatedCodeSnippets.emplace_back(std::any_cast<std::string>(
+                            visitingOp->getProperty(Optimizer::ElegantPlacementStrategy::sourceCodeKey)));
                     }
                 }
             }
@@ -358,7 +359,7 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
         //3. Fetch the topology node and compute the topology node payload
         nlohmann::json payload;
         payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(
-             topologyNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
+            topologyNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
 
         //4. Extract the Java UDF metadata
         auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();

@@ -101,8 +101,8 @@ class QueryService {
      * @return query id
      */
     QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
-                            const QueryPlanPtr& queryPlan,
-                            const Optimizer::PlacementStrategy placementStrategy);
+                                            const QueryPlanPtr& queryPlan,
+                                            const Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -113,7 +113,7 @@ class QueryService {
      * @return query id
      */
     nlohmann::json validateAndQueueExplainQueryRequest(const QueryPlanPtr& queryPlan,
-                                                const Optimizer::PlacementStrategy placementStrategy);
+                                                       const Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.
