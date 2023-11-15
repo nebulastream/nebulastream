@@ -187,6 +187,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     jni::jmethodID udfMethodId;
     jni::jobject udfInstance;
     jni::jobject classLoader;
+    jni::jmethodID injectClassMethod;
     jni::jmethodID loadClassMethod;
 };
 
