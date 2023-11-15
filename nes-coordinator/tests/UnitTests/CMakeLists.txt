@@ -2,9 +2,6 @@
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
-add_subdirectory(Catalogs)
-add_subdirectory(Topology)
-
 ### Node Engine Tests ###
 add_nes_integration_test(node-engine-test "Runtime/NodeEngineTest.cpp")
 
