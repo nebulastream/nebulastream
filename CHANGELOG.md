@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.255](https://github.com/nebulastream/nebulastream/tree/v0.5.255) (2023-11-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.254...v0.5.255)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Error during injection of Java class [\#4364](https://github.com/nebulastream/nebulastream/issues/4364)
+
+## [v0.5.254](https://github.com/nebulastream/nebulastream/tree/v0.5.254) (2023-11-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.253...v0.5.254)
+
 ## [v0.5.253](https://github.com/nebulastream/nebulastream/tree/v0.5.253) (2023-11-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.252...v0.5.253)
