@@ -560,7 +560,8 @@ void NebulaSQLQueryPlanCreator::exitRealIdent(NebulaSQLParser::RealIdentContext*
             helper.expressionBuilder.pop_back();
             auto innerExpression = helper.expressionBuilder.back();
             helper.expressionBuilder.pop_back();
-
+            NebulaSQLBaseListener::exitRealIdent(context);
+            
 
 }
 
