@@ -23,4 +23,4 @@ void to_json(nlohmann::json& json, const QueryStateHistoryEntry& queryState) {
     json["queryState"] = magic_enum::enum_name<QueryState>(queryState.queryState);
 }
 
-}
+}// namespace NES
