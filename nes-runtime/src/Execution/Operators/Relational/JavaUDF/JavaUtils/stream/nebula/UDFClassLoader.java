@@ -2,9 +2,9 @@ package stream.nebula;
 
 import java.io.*;
 import java.lang.ClassNotFoundException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Private class loader for a Java UDF.
@@ -19,6 +19,8 @@ import java.lang.reflect.Method;
  * See also: https://docs.oracle.com/javase/8/docs/api/java/io/ObjectInputStream.html#resolveClass-java.io.ObjectStreamClass-
  */
 public class UDFClassLoader extends ClassLoader {
+
+    Map<String, byte[]> classes = new HashMap<>();
 
     static class ClassLoaderObjectInputStream extends ObjectInputStream {
 
@@ -52,4 +54,23 @@ public class UDFClassLoader extends ClassLoader {
         }
     }
 
+    /**
+     * Inject a class into the UDF class loader.
+     * @param className The name of the class.
+     * @param byteCode The byte code of the class.
+     */
+    void injectClass(String className, byte[] byteCode) {
+        // Store a copy of the byteCode because the parameter will be released by the calling code.
+        byte[] copy = Arrays.copyOf(byteCode, byteCode.length);
+        classes.put(className, copy);
+    }
+
+    @Override
+    protected Class<?> findClass(final String name) throws ClassNotFoundException {
+        byte[] byteCode = classes.get(name);
+        if (byteCode == null) {
+            throw new ClassNotFoundException(name);
+        }
+        return defineClass(name, byteCode, 0, byteCode.length);
+    }
 }

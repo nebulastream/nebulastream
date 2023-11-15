@@ -148,23 +148,23 @@ void JavaUDFOperatorHandler::setupClassLoader() {
     auto loaderClazz = jni::findClass("stream/nebula/UDFClassLoader");
     auto constructor = jni::getMethod(loaderClazz, "<init>", "()V");
     loadClassMethod = jni::getMethod(loaderClazz, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+    injectClassMethod = jni::getMethod(loaderClazz, "injectClass", "(Ljava/lang/String;[B)V");
     classLoader = env->NewGlobalRef(env->NewObject(loaderClazz, constructor));
     jni::jniErrorCheck();
 }
 
 void JavaUDFOperatorHandler::injectClassesIntoClassLoader() const {
     auto env = jni::getEnv();
-    for (auto& [className, byteCode] : byteCodeList) {
+    for (const auto& [className, byteCode] : byteCodeList) {
         jbyteArray jData = env->NewByteArray(byteCode.size());
         jni::jniErrorCheck();
-        jbyte* jCode = env->GetByteArrayElements(jData, nullptr);
+        env->SetByteArrayRegion(jData, 0, byteCode.size(), (jbyte*) byteCode.data());
         jni::jniErrorCheck();
-        std::memcpy(jCode, byteCode.data(), byteCode.size());// copy the byte array into the JVM byte array
-        const auto jniName = convertToJNIName(className);
+        auto jClassName = jni::createString(className);
         NES_DEBUG("Injecting Java class into JVM: {}", className);
-        env->DefineClass(jniName.c_str(), classLoader, jCode, (jint) byteCode.size());
+        env->CallVoidMethod(classLoader, injectClassMethod, jClassName, jData);
         jni::jniErrorCheck();
-        env->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
+        jni::freeObject(jData);
         jni::jniErrorCheck();
     }
 }
