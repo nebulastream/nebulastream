@@ -13,4 +13,7 @@
 # limitations under the License.
 
 include(ExternalProject)
+
+add_subdirectory(Catalogs)
+
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
