@@ -240,7 +240,7 @@ TEST(SQLMappingServiceTest, mapTest) {
     std::cout << "-------------------------Map-------------------------\n";
 
     // Test case for simple map
-    inputQuery = "select f1*f2 as newfield from StreamName";
+    inputQuery = "select f1*f2 as newfield from StreamName INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("streamname").map(Attribute("newfield")=Attribute("f1")*Attribute("f2")).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
