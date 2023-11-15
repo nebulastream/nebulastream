@@ -109,8 +109,8 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
 }
 
 QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
-                                      const QueryPlanPtr& queryPlan,
-                                      const Optimizer::PlacementStrategy placementStrategy) {
+                                                      const QueryPlanPtr& queryPlan,
+                                                      const Optimizer::PlacementStrategy placementStrategy) {
 
     if (!enableNewRequestExecutor) {
         QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -152,13 +152,10 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
 }
 
 nlohmann::json QueryService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
-                                                          const Optimizer::PlacementStrategy placementStrategy) {
+                                                                 const Optimizer::PlacementStrategy placementStrategy) {
 
     if (enableNewRequestExecutor) {
-        auto explainRequest = RequestProcessor::Experimental::ExplainRequest::create(queryPlan,
-                                                                                     placementStrategy,
-                                                                                     1,
-                                                                                     z3Context);
+        auto explainRequest = RequestProcessor::Experimental::ExplainRequest::create(queryPlan, placementStrategy, 1, z3Context);
         asyncRequestExecutor->runAsync(explainRequest);
         auto future = explainRequest->getFuture();
         return std::static_pointer_cast<RequestProcessor::Experimental::ExplainResponse>(future.get())->jsonResponse;

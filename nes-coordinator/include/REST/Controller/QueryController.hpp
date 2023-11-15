@@ -289,8 +289,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
 
             auto placementStrategy = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategyString).value();
-            nlohmann::json response =
-                queryService->validateAndQueueExplainQueryRequest(queryPlan, placementStrategy);
+            nlohmann::json response = queryService->validateAndQueueExplainQueryRequest(queryPlan, placementStrategy);
 
             return createResponse(Status::CODE_202, response.dump());
         } catch (nlohmann::json::exception& e) {
