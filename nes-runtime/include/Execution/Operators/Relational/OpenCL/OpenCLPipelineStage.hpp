@@ -30,7 +30,7 @@ namespace NES::Runtime::Execution {
 
 class OpenCLPipelineStage : public ExecutablePipelineStage {
   public:
-    OpenCLPipelineStage(const std::string& openCLKernelCode, uint64_t inputRecordSize, uint64_t outputRecordSize);
+    OpenCLPipelineStage(const std::string& openCLKernelCode, size_t deviceIdIndex, uint64_t inputRecordSize, uint64_t outputRecordSize);
     virtual uint32_t setup(PipelineExecutionContext& pipelineExecutionContext);
 
     /**
@@ -55,8 +55,10 @@ class OpenCLPipelineStage : public ExecutablePipelineStage {
 
   private:
     const std::string openCLKernelCode;
+    const size_t deviceIdIndex;
     const uint64_t inputRecordSize;
     const uint64_t outputRecordSize;
+    cl_device_id deviceId;
     cl_context context;
     cl_program program;
     cl_kernel kernel;

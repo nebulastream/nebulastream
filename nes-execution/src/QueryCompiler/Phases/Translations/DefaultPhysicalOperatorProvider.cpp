@@ -176,6 +176,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         auto openClOperator = operatorNode->as<OpenCLLogicalOperatorNode>();
         auto pipelineStage =
             std::make_shared<Runtime::Execution::OpenCLPipelineStage>(openClOperator->getOpenClCode(),
+                                                                      openClOperator->getDeviceId(),
                                                                       openClOperator->getInputSchema()->getSchemaSizeInBytes(),
                                                                       openClOperator->getOutputSchema()->getSchemaSizeInBytes());
         auto externalOperator = PhysicalOperators::PhysicalExternalOperator::create(openClOperator->getInputSchema(),

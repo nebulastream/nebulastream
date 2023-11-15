@@ -62,7 +62,7 @@ class OpenCLLogicalOperatorNode : public UDFLogicalOperator {
 
   private:
     std::string openCLCode;
-    size_t deviceId;
+    size_t deviceId = 0;
 };
 }// namespace NES
 #endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_OPENCLLOGICALOPERATORNODE_HPP_

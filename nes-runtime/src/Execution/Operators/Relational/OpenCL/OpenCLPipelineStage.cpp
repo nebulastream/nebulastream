@@ -14,6 +14,7 @@
 
 
 #include <Execution/Operators/Relational/OpenCL/OpenCLPipelineStage.hpp>
+#include <Runtime/OpenCLManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -37,83 +38,43 @@ namespace NES::Runtime::Execution {
             return returnValue;                                                                                                  \
         }                                                                                                                        \
     } while (false)
-#define ASSERT_OPENCL_SUCCESS(status, message) ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, true)
-#define ASSERT_OPENCL_SUCCESS_OK(status, message) ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, ExecutionResult::Ok)
+#define ASSERT_OPENCL_SUCCESS(status, message) ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, ExecutionResult::Error)
+#define ASSERT_OPENCL_SUCCESS2(status, message) ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, 1)
 
 OpenCLPipelineStage::OpenCLPipelineStage(const std::string& openCLKernelCode,
+                                         const size_t deviceIdIndex,
                                          uint64_t inputRecordSize,
                                          uint64_t outputRecordSize)
-    : ExecutablePipelineStage(), openCLKernelCode(openCLKernelCode), inputRecordSize(inputRecordSize),
-      outputRecordSize(outputRecordSize) {}
+    : ExecutablePipelineStage(), openCLKernelCode(openCLKernelCode), deviceIdIndex(deviceIdIndex),
+      inputRecordSize(inputRecordSize), outputRecordSize(outputRecordSize) {}
 
 uint32_t OpenCLPipelineStage::setup(NES::Runtime::Execution::PipelineExecutionContext&) {
-    // Get OpenCL platform and device
-    cl_int status;
-    cl_uint numPlatforms = 0;
-    status = clGetPlatformIDs(0, nullptr, &numPlatforms);
-    ASSERT_OPENCL_SUCCESS(status, "Failed to get number of OpenCL platforms");
-    if (numPlatforms == 0) {
-        NES_DEBUG("Did not find any OpenCL platforms.");
-        return false;
-    }
-
-    auto platforms = std::vector<cl_platform_id>(numPlatforms);
-    status = clGetPlatformIDs(numPlatforms, platforms.data(), nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Failed to get OpenCL platform IDs");
-
-    for (auto i = 0u; i < numPlatforms; ++i) {
-        char buffer[1024];
-        status = clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, nullptr);
-        ASSERT_OPENCL_SUCCESS(status, "Failed to get platform vendor");
-        std::stringstream platformInformation;
-        platformInformation << i << ": " << platforms[i] << ": " << buffer << " ";
-        status = clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, nullptr);
-        ASSERT_OPENCL_SUCCESS(status, "Failed to get platform name");
-        platformInformation << buffer;
-        NES_DEBUG("{}", platformInformation.str());
-    }
-
-    cl_uint numDevices = 0;
-    cl_platform_id platform = platforms[0];
-    NES_DEBUG("Using OpenCL platform: {}", static_cast<void*>(platform));
-
-    status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices);
-    ASSERT_OPENCL_SUCCESS(status, "Failed to get number of devices");
-    if (numDevices == 0) {
-        NES_DEBUG("Did not find any OpenCL device.");
-        return false;
-    }
-
-    auto devices = std::vector<cl_device_id>(numDevices);
-    status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices.data(), nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Failed to get OpenCL device IDs");
-
-    for (auto i = 0u; i < numDevices; ++i) {
-        char buffer[1024];
-        status = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(buffer), buffer, nullptr);
-        ASSERT_OPENCL_SUCCESS(status, "Could not get device name");
-        NES_DEBUG("{}: {}: {}", i, static_cast<void*>(devices[i]), buffer);
-    }
-    cl_device_id device = devices[0];
-    NES_DEBUG("Using OpenCL device: {}", static_cast<void*>(device));
+    // Retrieving the OpenCL device ID from a new OpenCLManager assumes that the order in which platforms and devices are
+    // enumerated by the OpenCL runtime is stable.
+    OpenCLManager openCLManager;
+    auto openCLDevice = openCLManager.getDevices()[deviceIdIndex];
+    NES_DEBUG("Using OpenCL device: {}", openCLDevice.deviceInfo.deviceName);
+    deviceId = openCLDevice.deviceId;
 
     // Create OpenCL context
-    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &status);
-    ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL context");
+    cl_int status;
+    context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, &status);
+    ASSERT_OPENCL_SUCCESS2(status, "Could not create OpenCL context");
 
     // Create OpenCL command queue
-    commandQueue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &status);
-    ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL command queue");
+    commandQueue = clCreateCommandQueue(context, deviceId, CL_QUEUE_PROFILING_ENABLE, &status);
+    ASSERT_OPENCL_SUCCESS2(status, "Could not create OpenCL command queue");
 
     // Compile kernel sources and create kernel.
     const char* kernelSourcePtr = openCLKernelCode.c_str();
     program = clCreateProgramWithSource(context, 1, &kernelSourcePtr, nullptr, &status);
-    ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL program");
-    status = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
-    ASSERT_OPENCL_SUCCESS(status, "Could not build OpenCL program");
+    ASSERT_OPENCL_SUCCESS2(status, "Could not create OpenCL program");
+    status = clBuildProgram(program, 1, &deviceId, nullptr, nullptr, nullptr);
+    ASSERT_OPENCL_SUCCESS2(status, "Could not build OpenCL program");
+    // TODO How to determine the kernel name?
     kernel = clCreateKernel(program, "computeNesMap", &status);
-    ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL kernel");
-    return 1;
+    ASSERT_OPENCL_SUCCESS2(status, "Could not create OpenCL kernel");
+    return 0;
 }
 
 ExecutionResult OpenCLPipelineStage::execute(NES::Runtime::TupleBuffer& inputTupleBuffer,
@@ -127,9 +88,9 @@ ExecutionResult OpenCLPipelineStage::execute(NES::Runtime::TupleBuffer& inputTup
     NES_DEBUG("numberOfTuples = {}; inputSize = {}; outputSize = {}", numberOfTuples, inputSize, outputSize);
     cl_int status;
     cl_mem inputDeviceBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, inputSize, nullptr, &status);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not create OpenCL device input buffer");
+    ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL device input buffer");
     cl_mem outputDeviceBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, outputSize, nullptr, &status);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not create OpenCL device output buffer");
+    ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL device output buffer");
 
     // Enqueue a write operation of the input to the device.
     cl_event writeEvent;
@@ -142,36 +103,36 @@ ExecutionResult OpenCLPipelineStage::execute(NES::Runtime::TupleBuffer& inputTup
                                   0,
                                   nullptr,
                                   &writeEvent);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not buffer write operation");
+    ASSERT_OPENCL_SUCCESS(status, "Could not buffer write operation");
     status = clFinish(commandQueue);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after writing buffer");
+    ASSERT_OPENCL_SUCCESS(status, "Could not finish command queue after writing buffer");
 
     // Setup OpenCL kernel call.
     status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputDeviceBuffer);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not set OpenCL kernel parameter (inputTuples)");
+    ASSERT_OPENCL_SUCCESS(status, "Could not set OpenCL kernel parameter (inputTuples)");
     status = clSetKernelArg(kernel, 1, sizeof(cl_mem), &outputDeviceBuffer);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not set OpenCL kernel parameter (resultTuples)");
+    ASSERT_OPENCL_SUCCESS(status, "Could not set OpenCL kernel parameter (resultTuples)");
     status = clSetKernelArg(kernel, 2, sizeof(cl_ulong), &numberOfTuples);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not set OpenCL kernel parameter (numberOfTuples)");
+    ASSERT_OPENCL_SUCCESS(status, "Could not set OpenCL kernel parameter (numberOfTuples)");
 
     // Enqueue the kernel.
     // TODO Use kernel wait list.
     cl_event executionEvent;
     size_t globalSize = numberOfTuples;
     status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, nullptr, &globalSize, nullptr, 0, nullptr, &executionEvent);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not enqueue kernel execution");
+    ASSERT_OPENCL_SUCCESS(status, "Could not enqueue kernel execution");
     status = clWaitForEvents(1, &executionEvent);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Waiting for execution event failed");
+    ASSERT_OPENCL_SUCCESS(status, "Waiting for execution event failed");
     cl_ulong start;
     cl_ulong end;
     status = clGetEventProfilingInfo(executionEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not read kernel execution start time");
+    ASSERT_OPENCL_SUCCESS(status, "Could not read kernel execution start time");
     status = clGetEventProfilingInfo(executionEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not read kernel execution end time");
+    ASSERT_OPENCL_SUCCESS(status, "Could not read kernel execution end time");
     // Profiling information is in nanoseconds = 1e-9 seconds.
     NES_DEBUG("Kernel execution time = {} ms", (end - start) / (1000 * 1000.0));
     status = clFinish(commandQueue);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after executing kernel");
+    ASSERT_OPENCL_SUCCESS(status, "Could not finish command queue after executing kernel");
 
     // Obtain an output buffer.
     auto outputBuffer = workerContext.allocateTupleBuffer();
@@ -190,9 +151,9 @@ ExecutionResult OpenCLPipelineStage::execute(NES::Runtime::TupleBuffer& inputTup
                                  0,
                                  nullptr,
                                  &readEvent);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not enqueue read buffer operation");
+    ASSERT_OPENCL_SUCCESS(status, "Could not enqueue read buffer operation");
     status = clFinish(commandQueue);
-    ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after reading output buffer");
+    ASSERT_OPENCL_SUCCESS(status, "Could not finish command queue after reading output buffer");
 
     // Release memory objects
     clReleaseMemObject(inputDeviceBuffer);
@@ -210,7 +171,7 @@ uint32_t OpenCLPipelineStage::stop(Runtime::Execution::PipelineExecutionContext&
     clReleaseCommandQueue(commandQueue);
     clReleaseContext(context);
     // Done
-    return 1;
+    return 0;
 }
 
 }// namespace NES::Runtime::Execution

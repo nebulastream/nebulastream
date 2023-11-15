@@ -33,6 +33,7 @@
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 #include <utility>
+#include <cpp-base64/base64.h>
 
 namespace NES {
 
@@ -209,6 +210,18 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
     //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {
 
+        const auto fileName = std::filesystem::path("/Users/hesk/my/work/nes/nebulastream/nes-coordinator/tests/test_data/computeNesMap.cl");
+        std::ifstream openCLFile(fileName, std::fstream::in);
+        openCLFile.seekg(0, std::ios_base::end);
+        auto fileSize = openCLFile.tellg();
+        openCLFile.seekg(0, std::ios_base::beg);
+        std::vector<char> fileContents = std::vector<char>(fileSize);
+        openCLFile.read(fileContents.data(), fileContents.size());
+        openCLOperator->setOpenClCode(std::string(fileContents.data(), fileContents.size()));
+        if (true) {
+            continue;
+        }
+
         //3. Fetch the topology node and compute the topology node payload
         auto topologyNode = executionNode->getTopologyNode();
         nlohmann::json payload;
@@ -224,12 +237,12 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
 
         //5. Prepare the multi-part message
         cpr::Part part1 = {"jsonFile", to_string(payload)};
-        cpr::Part part2 = {"codeFile", &javaByteCode[0]};
+        cpr::Part part2 = {"codeFile", base64_encode(reinterpret_cast<unsigned char const*>(javaByteCode.data()), javaByteCode.size())};
         cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
 
         //6. Make Acceleration Service Call
         cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
-                                           cpr::Header{{"Content-Type", "application/json"}},
+                                           cpr::Header{{"Content-Type", "multipart/form-data"}},
                                            multipartPayload,
                                            cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {

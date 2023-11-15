@@ -53,7 +53,7 @@ class ElegantConfigurations : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&accelerateJavaUDFs, &plannerServiceURL, &transferRate};
+        return {&accelerateJavaUDFs, &plannerServiceURL, &accelerationServiceURL, &transferRate};
     }
 };
 }// namespace NES::Configurations
