@@ -142,12 +142,9 @@ namespace NES::Parsers {
     }
 
     void NebulaSQLQueryPlanCreator::exitNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context) {
-        ExpressionNodePtr expressionNode;
-        NebulaSQLHelper helper = helpers.top();
-        for (const ExpressionNodePtr& namedExpression : helper.expressionBuilder) {
-            helper.addProjectionField(namedExpression);
-        }
-        poppush(helper);
+
+        NebulaSQLBaseListener::exitNamedExpressionSeq(context);
+
 
     }
     void NebulaSQLQueryPlanCreator::enterNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context) {
@@ -180,8 +177,12 @@ namespace NES::Parsers {
         helpers.top().addExpression(expression);
     }
     void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context) {
-        auto temp = context->getText();
-
+        ExpressionNodePtr expressionNode;
+        NebulaSQLHelper helper = helpers.top();
+        for (const ExpressionNodePtr& selectExpression : helper.expressionBuilder) {
+            helper.addProjectionField(selectExpression);
+        }
+        poppush(helper);
         helpers.top().isSelect= false;
         NebulaSQLBaseListener::exitSelectClause(context);
 
@@ -327,8 +328,12 @@ namespace NES::Parsers {
                 queryPlan = QueryPlanBuilder::addFilter(whereExpr, queryPlan);
             }
 
-            if(!helper.projections.empty()){
-                queryPlan = QueryPlanBuilder::addProjection(helper.projections, queryPlan);
+            if(!helper.getProjectionFields().empty()){
+                queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
+            }
+
+            for (const auto& mapExpr : helper.mapBuilder) {
+                queryPlan = QueryPlanBuilder::addMap(mapExpr, queryPlan);
             }
 
             queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinks().front());
@@ -547,7 +552,17 @@ void NebulaSQLQueryPlanCreator::exitConstantDefault(NebulaSQLParser::ConstantDef
             poppush(helper);
 }
 
+void NebulaSQLQueryPlanCreator::exitRealIdent(NebulaSQLParser::RealIdentContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+            NES::ExpressionNodePtr expression;
+            //rename logic implementieren
+            auto newName = helper.expressionBuilder.back();
+            helper.expressionBuilder.pop_back();
+            auto innerExpression = helper.expressionBuilder.back();
+            helper.expressionBuilder.pop_back();
 
+
+}
 
 
     }// namespace NES::Parsers

@@ -109,7 +109,7 @@ namespace NES::Parsers {
 
             std::vector<ExpressionNodePtr> expressionBuilder;
 
-            std::vector<ExpressionNodePtr> mapBuilder;
+            std::vector<FieldAssignmentExpressionNodePtr> mapBuilder;
 
             std::string opBoolean;
             std::string opValue;
@@ -136,6 +136,11 @@ namespace NES::Parsers {
             const NES::Windowing::WindowTypePtr getWindowType() const;
             void addSource(std::string sourceName);
             const std::string getSource() const;
+
+
+            void addMapExpression(FieldAssignmentExpressionNodePtr expressionNode);
+            std::vector<FieldAssignmentExpressionNodePtr> getMapExpressions() const;
+            void setMapExpressions(std::vector<FieldAssignmentExpressionNodePtr> expressions);
         };
     }// namespace NES::Parsers
 

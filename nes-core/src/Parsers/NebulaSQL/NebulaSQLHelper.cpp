@@ -48,4 +48,11 @@ uint64_t NebulaSQLHelper::getLimit() const { return 0; }
 
 const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const { return NES::Windowing::WindowTypePtr(); }
 
+void NebulaSQLHelper::addMapExpression(FieldAssignmentExpressionNodePtr expressionNode) {
+    auto pos = this->mapBuilder.begin();
+    this->mapBuilder.insert(pos, expressionNode);
+}
+std::vector<FieldAssignmentExpressionNodePtr> NebulaSQLHelper::getMapExpressions() const { return this->mapBuilder; }
+void NebulaSQLHelper::setMapExpressions(const std::vector<FieldAssignmentExpressionNodePtr> expressions) { this->mapBuilder = expressions; }
+
 }// namespace NES::Parsers

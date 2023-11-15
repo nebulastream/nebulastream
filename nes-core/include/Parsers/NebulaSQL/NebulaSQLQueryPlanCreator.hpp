@@ -91,6 +91,7 @@ namespace NES::Parsers {
             void exitArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) override;
             void exitLogicalNot(NebulaSQLParser::LogicalNotContext*) override;
             void exitConstantDefault(NebulaSQLParser::ConstantDefaultContext* context) override;
+            void exitRealIdent(NebulaSQLParser::RealIdentContext* context);
         };
 
 
