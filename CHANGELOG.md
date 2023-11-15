@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.252](https://github.com/nebulastream/nebulastream/tree/v0.5.252) (2023-11-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.251...v0.5.252)
+
+**Implemented enhancements:**
+
+- \[TASK\] Log timings of different query stages [\#4249](https://github.com/nebulastream/nebulastream/issues/4249)
+- \[TASK\] Add API to track query runtimes [\#3454](https://github.com/nebulastream/nebulastream/issues/3454)
+
 ## [v0.5.251](https://github.com/nebulastream/nebulastream/tree/v0.5.251) (2023-11-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.250...v0.5.251)
