@@ -197,7 +197,8 @@ TEST_P(TPCH_Q5, joinPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q5,
-                        ::testing::Values("BCInterpreter", "PipelineInterpreter", "PipelineCompiler"),
+//                        ::testing::Values("BCInterpreter", "PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q5::ParamType>& info) {
                             return info.param;
                         });

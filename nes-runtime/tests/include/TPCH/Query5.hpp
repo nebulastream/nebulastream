@@ -172,6 +172,7 @@ class TPCH_Query5 {
 
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
 
         /**
         * LineItem pipeline: Scan(LineItem) -> Probe(w/Order) -> Build
@@ -187,13 +188,13 @@ class TPCH_Query5 {
 
         // Probe with Order
         std::vector<ExpressionPtr> lineItemProbeKeys = {std::make_shared<ReadFieldExpression>("l_orderkey")};
-
+        std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProbeFieldIdentifier = {"l_extendedprice", "l_discount"};
         auto lineItemJoinProbeOperator =
             std::make_shared<BatchJoinProbe>(0 /*handler index*/,
                                              lineItemProbeKeys,
                                              std::vector<PhysicalTypePtr>{integerType},
-                                             std::vector<Record::RecordFieldIdentifier>(),
-                                             std::vector<PhysicalTypePtr>(),
+                                             lineItemProbeFieldIdentifier,
+                                             std::vector<PhysicalTypePtr>{floatType, floatType},
                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         lineItemScanOperator->setChild(lineItemJoinProbeOperator);
 
@@ -206,7 +207,7 @@ class TPCH_Query5 {
                                                         lineItemJoinBuildKeys,
                                                         std::vector<PhysicalTypePtr>{integerType},
                                                         lineItemJoinBuildValues,
-                                                        std::vector<PhysicalTypePtr>{integerType, integerType},
+                                                        std::vector<PhysicalTypePtr>{floatType, floatType},
                                                         std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
         lineItemJoinProbeOperator->setChild(lineItemJoinBuildOperator);
@@ -231,6 +232,7 @@ class TPCH_Query5 {
 
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
 
         /**
         * Supplier pipeline: Scan(Supplier) -> Probe(w/LineItem) -> Build
@@ -243,24 +245,27 @@ class TPCH_Query5 {
 
         // Probe with LineItem
         std::vector<ExpressionPtr> supplierProbeKeys = {std::make_shared<ReadFieldExpression>("s_suppkey")};
+        std::vector<Nautilus::Record::RecordFieldIdentifier> supplierProbeFieldIdentifier = {"l_extendedprice", "l_discount"};
 
         auto supplierJoinProbeOperator =
             std::make_shared<BatchJoinProbe>(0 /*handler index*/,
                                              supplierProbeKeys,
                                              std::vector<PhysicalTypePtr>{integerType},
-                                             std::vector<Record::RecordFieldIdentifier>(),
-                                             std::vector<PhysicalTypePtr>(),
+                                             supplierProbeFieldIdentifier,
+                                             std::vector<PhysicalTypePtr>{floatType, floatType},
                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         supplierScanOperator->setChild(supplierJoinProbeOperator);
 
         // Build on Supplier
         std::vector<ExpressionPtr> supplierJoinBuildKeys = {std::make_shared<ReadFieldExpression>("s_nationkey")};
+        std::vector<ExpressionPtr> supplierJoinBuildValues = {std::make_shared<ReadFieldExpression>("l_extendedprice"),
+                                                              std::make_shared<ReadFieldExpression>("l_discount")};
         auto supplierJoinBuildOperator =
             std::make_shared<Operators::BatchJoinBuild>(1 /*handler index*/,
                                                         supplierJoinBuildKeys,
                                                         std::vector<PhysicalTypePtr>{integerType},
-                                                        std::vector<Expressions::ExpressionPtr>(),
-                                                        std::vector<PhysicalTypePtr>{integerType, integerType},
+                                                        supplierJoinBuildValues,
+                                                        std::vector<PhysicalTypePtr>{floatType, floatType},
                                                         std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
         supplierJoinProbeOperator->setChild(supplierJoinBuildOperator);
@@ -284,6 +289,7 @@ class TPCH_Query5 {
 
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+        PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
 
         /**
         * Nation pipeline: Scan(Nation) -> Probe(w/Supplier) -> Build
@@ -296,25 +302,27 @@ class TPCH_Query5 {
 
         // Probe with Supplier
         std::vector<ExpressionPtr> nationProbeKeys = {std::make_shared<ReadFieldExpression>("n_nationkey")};
-
+        std::vector<Nautilus::Record::RecordFieldIdentifier> nationProbeFieldIdentifier = {"l_extendedprice", "l_discount"};
         auto nationJoinProbeOperator =
             std::make_shared<BatchJoinProbe>(0 /*handler index*/,
                                              nationProbeKeys,
                                              std::vector<PhysicalTypePtr>{integerType},
-                                             std::vector<Record::RecordFieldIdentifier>(),
-                                             std::vector<PhysicalTypePtr>(),
+                                             nationProbeFieldIdentifier,
+                                             std::vector<PhysicalTypePtr>{floatType, floatType},
                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         nationScanOperator->setChild(nationJoinProbeOperator);
 
         // Build on Nation
         std::vector<ExpressionPtr> nationJoinBuildKeys = {std::make_shared<ReadFieldExpression>("n_regionkey")};
-        std::vector<ExpressionPtr> nameJoinBuildValues = {std::make_shared<ReadFieldExpression>("n_name")};
+        std::vector<ExpressionPtr> nationJoinBuildValues = {std::make_shared<ReadFieldExpression>("n_name"),
+                                                            std::make_shared<ReadFieldExpression>("l_extendedprice"),
+                                                            std::make_shared<ReadFieldExpression>("l_discount")};
         auto nationJoinBuildOperator =
             std::make_shared<Operators::BatchJoinBuild>(1 /*handler index*/,
                                                         nationJoinBuildKeys,
                                                         std::vector<PhysicalTypePtr>{integerType},
-                                                        nameJoinBuildValues,
-                                                        std::vector<PhysicalTypePtr>{integerType, integerType},
+                                                        nationJoinBuildValues,
+                                                        std::vector<PhysicalTypePtr>{integerType, floatType, floatType},
                                                         std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
         nationJoinProbeOperator->setChild(nationJoinBuildOperator);
@@ -357,12 +365,14 @@ class TPCH_Query5 {
 
         // Probe with Nation
         std::vector<ExpressionPtr> regionProbeKeys = {std::make_shared<ReadFieldExpression>("r_regionkey")};
+        std::vector<Record::RecordFieldIdentifier> regionProbeFieldNames = {"n_name", "l_extendedprice", "l_discount"};
+
         auto regionJoinProbeOperator =
             std::make_shared<BatchJoinProbe>(0 /*handler index*/,
                                              regionProbeKeys,
                                              std::vector<PhysicalTypePtr>{integerType},
-                                             std::vector<Record::RecordFieldIdentifier>(),
-                                             std::vector<PhysicalTypePtr>(),
+                                             regionProbeFieldNames,
+                                             std::vector<PhysicalTypePtr>{integerType, floatType, floatType},
                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         regionSelectionOperator->setChild(regionJoinProbeOperator);
 
@@ -374,7 +384,8 @@ class TPCH_Query5 {
         auto revenueExpression = std::make_shared<MulExpression>(lineItemExtendedpriceField, subExpression);
         auto sumRevenue =
             std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueExpression, "sum_revenue");
-        auto readNationName = std::make_shared<ReadFieldExpression>("n_name"); // TODO 4240: How to get this n_name (from Nation) here?
+        auto readNationName =
+            std::make_shared<ReadFieldExpression>("n_name");
         std::vector<Expressions::ExpressionPtr> keyFields = {readNationName};
         std::vector<Expressions::ExpressionPtr> aggregationExpressions = {revenueExpression};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumRevenue};
