@@ -63,7 +63,7 @@ using namespace Operators;
 class TPCH_Q5 : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
 
   public:
-    TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_01;
+    TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_1;
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -138,9 +138,9 @@ TEST_P(TPCH_Q5, joinPipeline) {
     // Assert the content of the hash map
     auto customerJoinHandler = customerPipeline.ctx->getOperatorHandler<BatchJoinHandler>(0);
     auto customerJoinNumberOfKeys = customerJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(customerJoinNumberOfKeys, 1500);
+    EXPECT_EQ(customerJoinNumberOfKeys, 15000);
     auto customerJoinHashMap = customerJoinHandler->mergeState();
-    EXPECT_EQ(customerJoinHashMap->getCurrentSize(), 1500);
+    EXPECT_EQ(customerJoinHashMap->getCurrentSize(), 15000);
 
     // == Execute and assert the second pipeline (Order) == //
     for (auto& orderChunk : orders->getChunks()) {
@@ -149,9 +149,9 @@ TEST_P(TPCH_Q5, joinPipeline) {
     // Assert the content of the hash map
     auto orderJoinHandler = orderPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1); // the build handler is at index 1
     auto orderJoinNumberOfKeys = orderJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(orderJoinNumberOfKeys, 4570);
+    EXPECT_EQ(orderJoinNumberOfKeys, 45232);
     auto orderJoinHashMap = orderJoinHandler->mergeState();
-    EXPECT_EQ(orderJoinHashMap->getCurrentSize(), 4570);
+    EXPECT_EQ(orderJoinHashMap->getCurrentSize(), 45232);
 
     // == Execute and assert the third pipeline (LineItem) == //
     for (auto& lineItemChunk : lineItems->getChunks()) {
@@ -160,9 +160,9 @@ TEST_P(TPCH_Q5, joinPipeline) {
     // Assert the content of the hash map
     auto lineItemJoinHandler = lineItemPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
     auto lineItemJoinNumberOfKeys = lineItemJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(lineItemJoinNumberOfKeys, 18444);
+    EXPECT_EQ(lineItemJoinNumberOfKeys, 181055);
     auto lineItemJoinHashMap = lineItemJoinHandler->mergeState();
-    EXPECT_EQ(lineItemJoinHashMap->getCurrentSize(), 18444);
+    EXPECT_EQ(lineItemJoinHashMap->getCurrentSize(), 181055);
 
     // == Execute and assert the fourth pipeline (Supplier) == //
     for (auto& supplierChunk : suppliers->getChunks()) {
@@ -171,9 +171,9 @@ TEST_P(TPCH_Q5, joinPipeline) {
     // Assert the content of the hash map
     auto supplierJoinHandler = supplierPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
     auto supplierJoinNumberOfKeys = supplierJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(supplierJoinNumberOfKeys, 100);
+    EXPECT_EQ(supplierJoinNumberOfKeys, 27);
     auto supplierJoinHashMap = supplierJoinHandler->mergeState();
-    EXPECT_EQ(supplierJoinHashMap->getCurrentSize(), 100);
+    EXPECT_EQ(supplierJoinHashMap->getCurrentSize(), 27);
 
     // == Execute and assert the fifth pipeline (Nation) == //
     for (auto& nationChunk : nations->getChunks()) {
@@ -182,9 +182,9 @@ TEST_P(TPCH_Q5, joinPipeline) {
     // Assert the content of the hash map
     auto nationJoinHandler = nationPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
     auto nationJoinNumberOfKeys = nationJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_EQ(nationJoinNumberOfKeys, 25);
+    EXPECT_EQ(nationJoinNumberOfKeys, 1);
     auto nationJoinHashMap = nationJoinHandler->mergeState();
-    EXPECT_EQ(nationJoinHashMap->getCurrentSize(), 25);
+    EXPECT_EQ(nationJoinHashMap->getCurrentSize(), 1);
 
     // == Execute and assert the sixth pipeline (Region) == //
     for (auto& regionChunk : regions->getChunks()) {
@@ -192,13 +192,12 @@ TEST_P(TPCH_Q5, joinPipeline) {
     }
     // Assert the content in the aggregation handler
     auto aggHandler = regionPipeline.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(1); // the aggregation handler is at index 1
-    EXPECT_EQ(aggHandler->getThreadLocalStore(0)->getCurrentSize(), 0);         // TODO 4240: not sure if we should expect 0
+    EXPECT_EQ(aggHandler->getThreadLocalStore(0)->getCurrentSize(), 0);
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q5,
-//                        ::testing::Values("BCInterpreter", "PipelineInterpreter", "PipelineCompiler"),
-                        ::testing::Values("PipelineCompiler"),
+                        ::testing::Values("BCInterpreter", "PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q5::ParamType>& info) {
                             return info.param;
                         });
