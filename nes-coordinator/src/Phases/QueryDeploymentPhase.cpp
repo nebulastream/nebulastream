@@ -160,10 +160,10 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                                                        multipartPayload,
                                                        cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
                     if (response.status_code != 200) {
-                        throw QueryDeploymentException(
-                            queryId,
-                            "Error in call to Elegant acceleration service with code "
-                                + std::to_string(response.status_code) + " and msg " + response.reason);
+                        throw QueryDeploymentException(queryId,
+                                                       "Error in call to Elegant acceleration service with code "
+                                                           + std::to_string(response.status_code) + " and msg "
+                                                           + response.reason);
                     }
 
                     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
