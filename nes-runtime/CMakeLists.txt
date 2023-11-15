@@ -250,7 +250,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     if (NES_JAVA_UDF_UTILS_PATH)
         # Use explicit path to Java helpers when building Debian package for the nes-executable-image Docker image.
         SET(JAVA_UDF_UTILS_JAR "${CMAKE_INSTALL_PREFIX}/${NES_JAVA_UDF_UTILS_PATH}/JavaUtils.jar")
-        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS_JAR=${JAVA_UDF_UTILS_JAR})
+        target_compile_definitions(nes-runtime PUBLIC JAVA_UDF_UTILS_JAR="${JAVA_UDF_UTILS_JAR}")
         message(STATUS "Setting JAR with Java helpers to: ${JAVA_UDF_UTILS_JAR}")
         # Install Java Utils JAR
         INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/${NES_JAVA_UTILS_SRC_PATH}/JavaUtils.jar" DESTINATION ${NES_JAVA_UDF_UTILS_PATH})
