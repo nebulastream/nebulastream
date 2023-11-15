@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.253](https://github.com/nebulastream/nebulastream/tree/v0.5.253) (2023-11-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.252...v0.5.253)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create request type to EXPLAIN query [\#4091](https://github.com/nebulastream/nebulastream/issues/4091)
+
 ## [v0.5.252](https://github.com/nebulastream/nebulastream/tree/v0.5.252) (2023-11-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.251...v0.5.252)
