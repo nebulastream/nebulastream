@@ -16,7 +16,6 @@
 #define NES_CLIENT_INCLUDE_API_QUERYAPI_HPP_
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/GeographyExpressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
