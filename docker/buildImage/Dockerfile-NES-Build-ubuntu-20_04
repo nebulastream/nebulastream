@@ -30,7 +30,9 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   ccache \
   opencl-headers \
   ocl-icd-opencl-dev \
-  && apt-get clean -qq && pip install lcov_cobertura && update-alternatives --quiet --set cc /usr/bin/clang
+  && apt-get clean -qq && pip install lcov_cobertura \
+  && update-alternatives --quiet --install /usr/bin/c++ c++ /usr/bin/clang++ 1000 \
+  && update-alternatives --quiet --install /usr/bin/cc cc /usr/bin/clang 1000
 
 RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
     && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
