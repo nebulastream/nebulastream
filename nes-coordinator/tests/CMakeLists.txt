@@ -13,8 +13,8 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 # Copy Test Data --------------------------------------------------------------
-file(COPY test_data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
+file(COPY TestData DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/TestData/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
 #-------------------------------##############----------------------------------
