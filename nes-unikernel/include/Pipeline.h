@@ -1,9 +1,9 @@
 #ifndef NES_UNIKERNEL_PIPELINE_H
 #define NES_UNIKERNEL_PIPELINE_H
 #include <UnikernelExecutionPlan.hpp>
-#include <UnikernelSink.h>
-#include <UnikernelSource.h>
-#include <UnikernelStage.h>
+#include <UnikernelSink.hpp>
+#include <UnikernelSource.hpp>
+#include <UnikernelStage.hpp>
 namespace NES::Unikernel {
 struct CTConfiguration {
     constexpr static unsigned long QueryID = 0;

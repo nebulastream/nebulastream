@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
 
-#include "Runtime/Execution/UnikernelPipelineExecutionContext.h"
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 #include "Sources/DataSource.hpp"// for NES_CORE_INCLUDE_SOURCES_DATASOURC...
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>

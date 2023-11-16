@@ -11,8 +11,8 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
-#ifndef NES_UNIKERNELSINK_H
-#define NES_UNIKERNELSINK_H
+#ifndef NES_UNIKERNELSINK_HPP
+#define NES_UNIKERNELSINK_HPP
 
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -50,4 +50,4 @@ template<typename T>
 std::optional<NES::Network::NetworkSink> UnikernelSink<T>::sink = std::nullopt;
 }// namespace
 
-#endif//NES_UNIKERNELSINK_H
+#endif//NES_UNIKERNELSINK_HPP

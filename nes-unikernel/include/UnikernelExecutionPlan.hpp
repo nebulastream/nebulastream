@@ -14,11 +14,11 @@
 #ifndef NES_UNIKERNELEXECUTIONPLAN_H
 #define NES_UNIKERNELEXECUTIONPLAN_H
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <UnikernelSink.h>
-#include <UnikernelSource.h>
-#include <UnikernelStage.h>
+#include <Runtime/WorkerContext.hpp>
+#include <UnikernelSink.hpp>
+#include <UnikernelSource.hpp>
+#include <UnikernelStage.hpp>
 #include <functional>
 #include <iostream>
 #include <string>

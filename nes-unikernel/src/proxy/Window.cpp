@@ -13,7 +13,7 @@
 */
 #include "fmt.hpp"
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-#include <Runtime/Execution/UnikernelPipelineExecutionContext.h>
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 
 namespace fmt {
 template<>
