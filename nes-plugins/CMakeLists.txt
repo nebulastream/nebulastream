@@ -8,7 +8,7 @@ target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-if (NES_BUILD_PLUGIN_ARROW)
+if (NES_BUILD_PLUGIN_ARROW AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch"))
     add_subdirectory(arrow)
 endif ()
 
