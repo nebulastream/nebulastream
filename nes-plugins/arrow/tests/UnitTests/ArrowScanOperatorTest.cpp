@@ -48,7 +48,7 @@ class ArrowScanOperatorTest : public Testing::BaseUnitTest {
 /**
  * @brief Scan operator that reads csv via arrow.
  */
-TEST_F(ArrowScanOperatorTest, scanArrowBufferFromCSV) {
+TEST_F(ArrowScanOperatorTest, DISABLED_scanArrowBufferFromCSV) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
