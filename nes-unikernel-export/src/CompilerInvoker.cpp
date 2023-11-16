@@ -4,6 +4,7 @@
 
 #define BOOST_PROCESS_NO_DEPRECATED 1
 #include "CompilerInvoker.h"
+#include <Util/Logger/Logger.hpp>
 #include <boost/asio.hpp>
 #include <boost/outcome.hpp>
 #include <boost/process.hpp>
@@ -18,18 +19,12 @@ Result CompilerInvoker::compileToObject(const std::string& sourceCode, const std
 
     std::error_code ec;
 
-    std::vector<std::string> args{"-x",
-                                  "c++",
-                                  "-",
-                                  "-DUNIKERNEL_LIB",
-                                  "-DNES_COMPILE_TIME_LOG_LEVEL=1",
-                                  "-c",
-                                  "-std=c++20",
-                                  "-o",
-                                  outputPath};
+    std::vector<std::string>
+        args{"-x", "c++", "-", "-DUNIKERNEL_LIB", "-DNES_COMPILE_TIME_LOG_LEVEL=1", "-c", "-std=c++20", "-o", outputPath};
 
     for (const auto& include : includePaths) {
         args.emplace_back("-I");
+        NES_INFO("Including: {}", include);
         args.push_back(include);
     }
 
@@ -65,19 +60,12 @@ Result CompilerInvoker::compile(const std::string& sourceCode) const {
 
     std::error_code ec;
 
-    std::vector<std::string> args{"-x",
-                                  "c++",
-                                  "-",
-                                  "-DUNIKERNEL_LIB",
-                                  "-DNES_COMPILE_TIME_LOG_LEVEL=1",
-                                  "-std=c++20",
-                                  "-emit-llvm",
-                                  "-S",
-                                  "-o",
-                                  "-"};
+    std::vector<std::string>
+        args{"-x", "c++", "-", "-DUNIKERNEL_LIB", "-DNES_COMPILE_TIME_LOG_LEVEL=1", "-std=c++20", "-emit-llvm", "-S", "-o", "-"};
 
     for (const auto& include : includePaths) {
         args.emplace_back("-I");
+        NES_INFO("Including: {}", include);
         args.push_back(include);
     }
 

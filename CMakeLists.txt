@@ -15,7 +15,7 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v30)
-set(LLVM_BINARY_VERSION v2)
+set(LLVM_BINARY_VERSION vls-llvm-rtti)
 set(LLVM_VERSION 16)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)

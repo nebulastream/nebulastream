@@ -173,13 +173,9 @@ CLIResult Options::getCLIOptions(int argc, char** argv) {
     std::string input;
     std::string output;
     std::string yamlOutput;
-    int bufferSize;
+    int bufferSize = 8192;
     params.add_parameter(input, "input").nargs(1).metavar("INPUT PATH").help("Input path (use - for stdin)");
-    params.add_parameter(bufferSize, "--bufferSize", "-b")
-        .nargs(1)
-        .default_value(8192)
-        .metavar("BUFFER SIZE")
-        .help("Buffer size");
+    params.add_parameter(bufferSize, "--bufferSize", "-b").nargs(1).metavar("BUFFER SIZE").help("Buffer size");
     params.add_parameter(output, "--output", "-o").nargs(1).metavar("OUTPUT PATH").help("Output path");
     params.add_parameter(yamlOutput, "--yaml", "-y")
         .nargs(1)

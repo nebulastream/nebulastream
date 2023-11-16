@@ -21,11 +21,10 @@
 #include <vector>
 
 class UnikernelExport {
-    CompilerInvoker ci{{"/home/ls/DIMA/nebulastream/nes-unikernel-export/include",
-                        "/home/ls/DIMA/nebulastream/nes-unikernel/include",
-                        "/home/ls/DIMA/nebulastream/nes-common/include",
-                        "/home/ls/DIMA/nebulastream/cmake-build-debug-system-clang-16/include/nebulastream",
-                        "/home/ls/DIMA/nebulastream/nes-runtime/include"}};
+    CompilerInvoker ci{{PATH_TO_BINARY_DIR "/nes-unikernel-export/include",
+                        PATH_TO_BINARY_DIR "/nes-unikernel/include",
+                        PATH_TO_BINARY_DIR "/nes-common/include",
+                        PATH_TO_BINARY_DIR "/nes-runtime/include"}};
 
   public:
     void exportPipelineStageToObjectFile(std::string outputPath,

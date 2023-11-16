@@ -1,6 +1,9 @@
 find_package(Argumentum REQUIRED)
 
 add_subdirectory(src)
+set(BOOST_ROOT "${_VCPKG_INSTALLED_DIR}/x64-linux-nes")
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(Argumentum REQUIRED)
 get_source(unikernel-query-export UNIKERNEL_QUERY_EXPORT_SOURCES)
 add_library(UnikernelQueryExport SHARED ${UNIKERNEL_QUERY_EXPORT_SOURCES})
 target_include_directories(UnikernelQueryExport PUBLIC
@@ -44,6 +47,7 @@ llvm_map_components_to_libnames(llvm_libs support core x86codegen)
 target_link_libraries(UnikernelLLVMExport PRIVATE
         nes-common
         nes-data-types
+        Boost::system
         ${conversion_libs}
         ${dialect_libs}
         ${mlir_libs}
@@ -87,7 +91,7 @@ find_package(yaml-cpp REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=unused-parameter -Wno-error=unused-private-field -DUNIKERNEL_EXPORT=1 -std=c++20")
 
 target_link_libraries(NesUnikernelExporter PUBLIC
-        argumentum
+        Argumentum::argumentum
         yaml-cpp
         UnikernelCommon
         nes-common
@@ -97,4 +101,4 @@ target_link_libraries(NesUnikernelExporter PUBLIC
 )
 
 
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L /usr/local/lib")
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L /usr/local/lib -fuse-ld=lld")
