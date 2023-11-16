@@ -11,11 +11,11 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
-#ifndef NES_UNIKERNELSOURCE_H
-#define NES_UNIKERNELSOURCE_H
+#ifndef NES_UNIKERNELSOURCE_HPP
+#define NES_UNIKERNELSOURCE_HPP
 
 #include <Network/NetworkSource.hpp>
-#include <Runtime/Execution/UnikernelPipelineExecutionContext.h>
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 
 namespace NES::Unikernel {
 template<typename Config>
@@ -49,4 +49,4 @@ template<typename T>
 std::optional<NES::Network::NetworkSource> UnikernelSource<T>::source = std::nullopt;
 }// namespace NES::Unikernel
 
-#endif//NES_UNIKERNELSOURCE_H
+#endif//NES_UNIKERNELSOURCE_HPP

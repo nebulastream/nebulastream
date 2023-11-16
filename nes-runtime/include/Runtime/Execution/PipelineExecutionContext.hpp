@@ -23,7 +23,7 @@
 #include <memory>
 #include <vector>
 #ifdef UNIKERNEL_LIB
-#include <Runtime/Execution/UnikernelPipelineExecutionContext.h>
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 #else
 namespace NES::Runtime::Execution {
 

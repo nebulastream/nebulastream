@@ -2,9 +2,9 @@
 // Created by ls on 09.09.23.
 //
 
-#ifndef NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_H
-#define NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_H
-#include "../../../../nes-unikernel/include/UnikernelStage.h"
+#ifndef NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_HPP
+#define NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_HPP
+#include <UnikernelStage.hpp>
 #include "Runtime/TupleBuffer.hpp"
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -60,4 +60,4 @@ class UnikernelPipelineExecutionContext {
     size_t getNumberOfWorkerThreads() { return 1; }
 };
 }// namespace NES::Unikernel
-#endif//NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_H
+#endif//NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_HPP

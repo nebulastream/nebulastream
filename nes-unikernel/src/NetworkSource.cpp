@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Network/NetworkSource.hpp>
-#include <Runtime/Execution/UnikernelPipelineExecutionContext.h>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
+#include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>

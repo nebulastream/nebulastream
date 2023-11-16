@@ -2,8 +2,8 @@
 // Created by ls on 09.09.23.
 //
 
-#ifndef NES_UNIKERNELSTAGE_H
-#define NES_UNIKERNELSTAGE_H
+#ifndef NES_UNIKERNELSTAGE_HPP
+#define NES_UNIKERNELSTAGE_HPP
 #include <cstdint>
 #include <cstddef>
 #include <type_traits>
@@ -49,4 +49,4 @@ class Stage {
     static void terminate(NES::Unikernel::UnikernelPipelineExecutionContext& context, NES::Runtime::WorkerContext* workerContext);
 };
 };    // namespace NES::Unikernel
-#endif//NES_UNIKERNELSTAGE_H
+#endif//NES_UNIKERNELSTAGE_HPP
