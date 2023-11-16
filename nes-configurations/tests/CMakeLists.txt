@@ -14,8 +14,8 @@
 
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
-
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
-
+file(COPY TestData DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/TestData/")
 ### Config Tests ###
-add_nes_unit_test(configuration-tests "Configurations/ConfigurationTests.cpp")
+add_nes_unit_test(configuration-tests "UnitTests/Configurations/ConfigurationTests.cpp")
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
