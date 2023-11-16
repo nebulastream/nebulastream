@@ -709,7 +709,7 @@ set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
 set(CPACK_PACKAGE_HOMEPAGE_URL "http://nebula.stream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libdwarf-dev, libdwarf1, binutils-dev, libdw-dev")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libdwarf-dev, libdwarf1, binutils-dev, libdw-dev, liblz4-dev")
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}-${CMAKE_SYSTEM_NAME}.${CMAKE_SYSTEM_PROCESSOR}")
 
 ##This allows call to ldconfig to load the configuration after installation

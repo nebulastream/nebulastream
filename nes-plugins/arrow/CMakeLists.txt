@@ -21,7 +21,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "
         message(FATAL_ERROR "Unable to find Arrow library")
     endif ()
     set(ARROW_LIBRARIES ${ARROW_LIBRARIES} arrow_static)
-    set(ARROW_LIBRARIES ${ARROW_LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libutf8proc.a)
 
     # explicitly find the brotli package from Arrow and include it
     find_package(unofficial-brotli REQUIRED)
