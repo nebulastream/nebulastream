@@ -48,6 +48,18 @@ add_nes_unit_test(optimizer-unit-tests "UnitTests/Optimizer/Phases/TypeInference
         "UnitTests/Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/BinaryOperatorSortRuleTest.cpp")
 
+### Global Query Plan Tests ###
+add_nes_unit_test(global-query-plan-tests "UnitTests/Plans/Global/Query/GlobalQueryPlanTest.cpp")
+
+### Thread Naming Test ###
+add_nes_unit_test(global-execution-plan-tests "UnitTests/Plans/Global/Execution/GlobalExecutionPlanTest.cpp")
+
+### ChangeLog Test ###
+add_nes_unit_test(change-log-test "UnitTests/Plans/ChangeLog/ChangeLogTest.cpp")
+
+### ChangeLogEntry Test ###
+add_nes_unit_test(change-log-entry-test "UnitTests/Plans/ChangeLog/ChangeLogEntryTest.cpp")
+
 if (NES_USE_TF)
     add_nes_unit_test(ml-heuristic-placement-test "UnitTests/Optimizer/QueryPlacement/MlHeuristicPlacementTest.cpp")
 endif ()
