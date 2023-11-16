@@ -8,6 +8,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     libdw-dev \
     libssl-dev \
     build-essential \
+    clang \
     clang-format \
     libnuma-dev \
     numactl \
