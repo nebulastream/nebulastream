@@ -153,6 +153,10 @@ std::string OperatorHandlerTracer::generateFile(std::vector<EitherSharedOrLocal>
 
     ss << generateRuntimeIncludes();
 
+    for (const auto& descriptor : descriptors) {
+        ss << descriptor.generateInclude();
+    }
+
     if (!sharedHandlers.empty()) {
         ss << "template<size_t SubQueryId>\n";
         ss << "extern NES::Runtime::Execution::OperatorHandler* getSharedOperatorHandler(int index);\n";

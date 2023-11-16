@@ -6,4 +6,4 @@ function ctrl_c() {
         echo "** Trapped CTRL-C"
 }
 
-/app/exporter -c /config/export.yaml
+/app/exporter /input/query.yaml --yaml /output/export.yaml
