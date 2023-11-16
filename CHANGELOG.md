@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.256](https://github.com/nebulastream/nebulastream/tree/v0.5.256) (2023-11-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.255...v0.5.256)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add plugins in the released Docker images / deb packages [\#4373](https://github.com/nebulastream/nebulastream/issues/4373)
+
 ## [v0.5.255](https://github.com/nebulastream/nebulastream/tree/v0.5.255) (2023-11-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.254...v0.5.255)
