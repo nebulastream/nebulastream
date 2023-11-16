@@ -16,7 +16,9 @@
 #define NES_COMMON_INCLUDE_UTIL_LOGGER_IMPL_NESLOGGER_HPP_
 
 #include <Util/Logger/LogLevel.hpp>
+#ifndef UNIKERNEL_LIB
 #include <Util/Logger/LogSink.hpp>
+#endif
 #include <fmt/core.h>
 #include <spdlog/fwd.h>
 #include <spdlog/logger.h>
