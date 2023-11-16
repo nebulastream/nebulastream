@@ -114,6 +114,8 @@ namespace NES::Parsers {
             std::string opBoolean;
             std::string opValue;
 
+            std::string newSourceName;
+
 
 
             // Getter and Setter

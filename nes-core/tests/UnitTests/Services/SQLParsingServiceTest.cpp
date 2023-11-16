@@ -109,7 +109,7 @@ TEST(SQLParsingServiceTest, projectionTest3) {
 TEST(SQLParsingServiceTest, projectionTest4) {
     std::string inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT;";
     std::shared_ptr<QueryParsingService> SQLParsingService;
-    //BUG Hier wird Fehler geworfen, warum?
+    //BUG Hier wird Fehler geworfen beim Tree walken, warum?
     QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     QueryPlanPtr queryPlan = QueryPlan::create();
     Query query=Query::from("streamname").project(Attribute("column1").as("c1"),Attribute("column2").as("c2")).sink(PrintSinkDescriptor::create());
@@ -166,7 +166,7 @@ TEST(SQLSelectionServiceTest, selectionTest) {
     Query query = Query::from("StreamName").filter(Attribute("f1")>30).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 */
-    inputQuery = "select * from StreamName where (f1 > 10.5 AND f2 < 10) INTO PRINT";
+    inputQuery = "select * from StreamName where (f1 > 10 AND f2 < 10) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName").filter(Attribute("f1")>10 && Attribute("f2")<10).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
