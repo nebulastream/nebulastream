@@ -26,7 +26,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "
     find_package(unofficial-brotli REQUIRED)
     if (unofficial-brotli_FOUND)
         message(STATUS "Brotli lib required by Arrow found.")
-        set(ARROW_LIBRARIES ${ARROW_LIBRARIES} unofficial::brotli::brotlienc-static unofficial::brotli::brotlidec-static unofficial::brotli::brotlicommon-static lz4)
+        set(ARROW_LIBRARIES ${ARROW_LIBRARIES} unofficial::brotli::brotlienc-static unofficial::brotli::brotlidec-static unofficial::brotli::brotlicommon-static lz4::lz4)
         set(ARROW_LIBRARIES ${ARROW_LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libutf8proc.a)
     else ()
         message(FATAL_ERROR "Brotli lib required by Arrow not found.")

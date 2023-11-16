@@ -28,7 +28,6 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     openjdk-17-jdk \
     ccache \
     opencl-headers \
-    liblz4-dev \
     ocl-icd-opencl-dev && update-alternatives --quiet --set cc /usr/bin/clang
 
 RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
