@@ -16,11 +16,14 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEPREAGGREGATIONHANDLER_HPP_
 #include <Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <handler/AbstractSlicePreAggregationHandler.hpp>
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
 
 class MultiOriginWatermarkProcessor;
 class State;
+class NonKeyedSlice;
+class NonKeyedThreadLocalSliceStore;
 /**
  * @brief The GlobalThreadLocalPreAggregationOperatorHandler provides an operator handler to perform slice-based pre-aggregation
  * of global non-keyed tumbling and sliding windows.
@@ -28,7 +31,7 @@ class State;
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-class NonKeyedSlicePreAggregationHandler : public OperatorHandler {
+class NonKeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore> {
   public:
     /**
      * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
