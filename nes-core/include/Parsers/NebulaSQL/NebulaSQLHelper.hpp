@@ -27,69 +27,24 @@ namespace NES::Parsers {
 * @brief This class represents the results from parsing the ANTLR AST tree
 * Attributes of this class represent the different clauses and a merge into a query after parsing the AST
 */
+enum NebulaSQLWindowType{
+    WINDOW_SLIDING,
+    WINDOW_TUMBLING,
+    WINDOW_THRESHOLD
+};
         class NebulaSQLHelper {
           private:
             std::vector<ExpressionNodePtr> projectionFields;
             SinkDescriptorPtr sinkDescriptor;
             std::vector<ExpressionNodePtr> whereClauses;
             std::string source;
-            std::map<int32_t, NebulaSQLOperatorNode> operatorList;// contains the operators from the PATTERN clause
             std::list<ExpressionNodePtr> expressionList;
-            std::list<SinkDescriptorPtr> sinkList; // INTO
-            std::pair<std::string, int32_t> window;// WITHIN
 
 
 
 
 
-            /*
-            std::map<std::string, std::string> queryMap;
 
-            std::string selectClause;
-            std::string whereClause;
-            std::string fromClause;
-            std::string mapClause;
-            std::string unionClause;
-
-
-
-
-            std::string timeUnit;
-            std::string timestampParameter;
-            std::string sizeParameter;
-            std::string advancebyParameter;
-            std::string watermarkParameter;
-            std::string countWindow;
-            std::string globalWindow;
-            std::string tumblingWindow;
-            std::string slidingWindow;
-
-            std::vector<std::string> aggregateFunctionList;
-            std::string aggregateFunction;
-            std::string groupByAttribute;
-
-            bool isWindowTumbling = false;
-            bool isWindowSliding = false;
-            bool isFunctionCall = false;
-
-            int childCountForAlias = 0; // child count for aggregate function alias
-            std::string aggregateFuncForAlias;
-
-            bool isJoinRelation = false;
-            std::string joinCriteria;
-            std::vector<std::string> joinRelationList;
-            std::map<std::string, std::string> joinCriteriaMap;
-            std::string secondRelation;
-
-            bool isJoinCriteriaDereference = false;
-            bool isHavingClause = false;
-            std::string havingClause = "";
-            bool isSinkClause = false;
-            std::string sinkType;
-            bool isWatermarkClause = false;
-            std::string watermarkClause;
-
-             */
 
           public:
             //Constructors
@@ -115,6 +70,11 @@ namespace NES::Parsers {
             std::string opValue;
 
             std::string newSourceName;
+
+            std::string timestamp;
+            int size = -1;
+            std::string timeUnit;
+            NebulaSQLWindowType windowType;
 
 
 

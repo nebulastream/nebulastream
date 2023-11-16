@@ -88,53 +88,6 @@ TEST(SQLParsingServiceTest, projectionTest1) {
 
 }
 
-TEST(SQLParsingServiceTest, projectionTest2) {
-    std::string inputQuery = "select * from StreamName as sn INTO PRINT;";
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query = Query::from("StreamName").as("sn").sink(PrintSinkDescriptor::create());
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(sqlPlan));
-}
-TEST(SQLParsingServiceTest, projectionTest3) {
-    std::string inputQuery = "select f1,f2 from StreamName INTO PRINT;";
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query=Query::from("StreamName").project(Attribute("f1"),Attribute("f2")).sink(PrintSinkDescriptor::create());
-
-    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
-}
-
-//BUG Hier wird Fehler geworfen, warum?
-TEST(SQLParsingServiceTest, projectionTest4) {
-    std::string inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT;";
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    //BUG Hier wird Fehler geworfen beim Tree walken, warum?
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    Query query=Query::from("streamname").project(Attribute("column1").as("c1"),Attribute("column2").as("c2")).sink(PrintSinkDescriptor::create());
-
-    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
-}
-
-TEST(SQLParsingServiceTest, selectTest1) {
-    std::string inputQuery = "select * from StreamName where f1 > 10 INTO PRINT";
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query=Query::from("streamname").filter(Attribute("f1")>10).sink(PrintSinkDescriptor::create());
-
-    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
-}
-
-//BUG Hier wird Fehler geworfen, warum?
-TEST(SQLParsingServiceTest, selectTest2) {
-    std::string inputQuery = "select * from StreamName where f1 > 10.5 and f2 < 10 INTO PRINT;";
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query=Query::from("streamname").filter(Attribute("f1")>10.5 && Attribute("f2")<10).sink(PrintSinkDescriptor::create());
-
-    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
-}
 TEST(SQLParsingServiceTest, unionTest1) {
     std::string inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT;";
     std::shared_ptr<QueryParsingService> SQLParsingService;
@@ -159,16 +112,16 @@ TEST(SQLSelectionServiceTest, selectionTest) {
 
 
     std::cout << "-------------------------Selection-------------------------\n";
-/*
+
     // Test case for simple selection
     inputQuery = "select * from StreamName where f1 > 10*3 INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName").filter(Attribute("f1")>30).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-*/
+
     inputQuery = "select * from StreamName where (f1 > 10 AND f2 < 10) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query = Query::from("StreamName").filter(Attribute("f1")>10 && Attribute("f2")<10).sink(PrintSinkDescriptor::create());
+    query = Query::from("StreamName").filter(Attribute("f1")>10 && Attribute("f2")<10).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
 }
@@ -197,14 +150,28 @@ TEST(SQLProjectionServiceTest, projectionTest) {
     // Test case for projection of specific fields
     inputQuery = "select f1,f2 from StreamName INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").project(Attribute("f1"),Attribute("f2")).sink(PrintSinkDescriptor::create());
+    query = Query::from("StreamName").project(Attribute("f1"),Attribute("f2")).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for projection with renaming
-    inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT";
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").project(Attribute("column1").as("c1"),Attribute("column2").as("c2")).sink(PrintSinkDescriptor::create());
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    // Test case for projection with rename
+    inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT;";
+    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    query=Query::from("StreamName").project(Attribute("column1").as("c1"),Attribute("column2").as("c2")).sink(PrintSinkDescriptor::create());
+    //std::cout << sqlPlan->getRootOperators()[0]->getChildren() <<
+    std::shared_ptr<Node> sqlCurrentNode = sqlPlan->getRootOperators()[0];
+    std::shared_ptr<Node> queryCurrentNode = query.getQueryPlan()->getRootOperators()[0];
+
+    while ( queryCurrentNode->getChildren().size() > 0){
+        EXPECT_NE(sqlCurrentNode->getChildren().size(), 0);
+        EXPECT_TRUE(sqlCurrentNode->isIdentical(queryCurrentNode));
+        std::cout << queryCurrentNode->toString() << "\t\t" << sqlCurrentNode->toString() << "\n";
+        sqlCurrentNode = sqlCurrentNode->getChildren()[0];
+        queryCurrentNode = queryCurrentNode->getChildren()[0];
+    }
+    EXPECT_TRUE(sqlCurrentNode->isIdentical(queryCurrentNode));
+
+    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
+
 
 }
 
@@ -242,42 +209,42 @@ TEST(SQLMappingServiceTest, mapTest) {
     // Test case for simple map
     inputQuery = "select f1*f2 as newfield from StreamName INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query = Query::from("streamname").map(Attribute("newfield")=Attribute("f1")*Attribute("f2")).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("StreamName").map(Attribute("newfield")=Attribute("f1")*Attribute("f2")).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for parenthesis expression for map
     inputQuery = "select (f1*f2)/(f3+f4) as f5 from StreamName";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").map(Attribute("f5")=(Attribute("f1")*Attribute("f2"))/(Attribute("f3")+Attribute("f4"))).sink(PrintSinkDescriptor::create());
+    query = Query::from("StreamName").map(Attribute("f5")=(Attribute("f1")*Attribute("f2"))/(Attribute("f3")+Attribute("f4"))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for complex map expression
     inputQuery = "select f1*f2/f3+f4 as f5 from StreamName";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").map(Attribute("f5")=Attribute("f1")*Attribute("f2")/Attribute("f3")+Attribute("f4")).sink(PrintSinkDescriptor::create());
+    query = Query::from("StreamName").map(Attribute("f5")=Attribute("f1")*Attribute("f2")/Attribute("f3")+Attribute("f4")).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for two maps
     inputQuery = "select f1*f2 as newfield, f1+5 as newfield2 from StreamName";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").map(Attribute("newfield")=Attribute("f1")*Attribute("f2")).map(Attribute("newfield2")=Attribute("f1")+5.0).sink(PrintSinkDescriptor::create());
+    query = Query::from("StreamName").map(Attribute("newfield")=Attribute("f1")*Attribute("f2")).map(Attribute("newfield2")=Attribute("f1")+5.0).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for projection and map together
     inputQuery = "select f1*f2 as newfield, f1+5 as newfield2, f1 as f from StreamName";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").project(Attribute("f1").as("f")).map(Attribute("newfield")=Attribute("f1")*Attribute("f2")).map(Attribute("newfield2")=Attribute("f1")+5.0).sink(PrintSinkDescriptor::create());
+    query = Query::from("StreamName").project(Attribute("f1").as("f")).map(Attribute("newfield")=Attribute("f1")*Attribute("f2")).map(Attribute("newfield2")=Attribute("f1")+5.0).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for when alias is not provided
     inputQuery = "select f1*f2 from StreamName";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").map(Attribute("mapField0")=Attribute("f1")*Attribute("f2")).sink(PrintSinkDescriptor::create());
+    query = Query::from("StreamName").map(Attribute("mapField0")=Attribute("f1")*Attribute("f2")).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     inputQuery = "select f1*f2, f1+5 from StreamName";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("streamname").map(Attribute("mapField1")=Attribute("f1")*Attribute("f2")).map(Attribute("mapField2")=Attribute("f1")+5.0).sink(PrintSinkDescriptor::create());
+    query = Query::from("StreamName").map(Attribute("mapField1")=Attribute("f1")*Attribute("f2")).map(Attribute("mapField2")=Attribute("f1")+5.0).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 TEST(SQLWindowServiceTest, globalWindowTest) {
@@ -290,7 +257,7 @@ TEST(SQLWindowServiceTest, globalWindowTest) {
 
     inputQuery = "select sum(f2) from StreamName window tumbling (size 10 ms)";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query = Query::from("streamname").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10))).apply(Sum(Attribute("f2"))).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10))).apply(Sum(Attribute("f2"))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     inputQuery = "select sum(f2), max(f3) from StreamName as sn window tumbling (timestamp, size 10 ms)";
@@ -309,7 +276,7 @@ TEST(SQLWindowServiceTest, countWindowTest){
     std::string inputQuery = "select sum(f2) from StreamName group by f2 window tumbling (10)";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     //ToDo herausffindne ob Timestap optional ist oder nicht
-    //Query query = Query::from("streamname").window(TumblingWindow::of(EventTime(Attribute("timestamp")).(Attribute("f2"),, sum(Attribute("f2"))).sink(PrintSinkDescriptor::create());
+    //Query query = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")).(Attribute("f2"),, sum(Attribute("f2"))).sink(PrintSinkDescriptor::create());
     /*
      Query query = Query::from("StreamName")
                       .window(TumblingWindow::of(SystemTime(), Seconds(10)))
