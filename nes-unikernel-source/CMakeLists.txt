@@ -7,4 +7,4 @@ target_include_directories(unikernel-source PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-target_link_libraries(unikernel-source PUBLIC argumentum yaml-cpp UnikernelCommon UnikernelTest)
+target_link_libraries(unikernel-source PUBLIC Argumentum::argumentum yaml-cpp UnikernelCommon UnikernelTest)
