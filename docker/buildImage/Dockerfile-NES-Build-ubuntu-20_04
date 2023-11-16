@@ -30,6 +30,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   ccache \
   opencl-headers \
   ocl-icd-opencl-dev \
+  g++-10 \
   && apt-get clean -qq && pip install lcov_cobertura \
   && update-alternatives --quiet --install /usr/bin/c++ c++ /usr/bin/clang++ 1000 \
   && update-alternatives --quiet --install /usr/bin/cc cc /usr/bin/clang 1000
