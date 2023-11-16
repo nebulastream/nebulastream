@@ -17,3 +17,5 @@ include(ExternalProject)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
 
+### Config Tests ###
+add_nes_unit_test(configuration-tests "Configurations/ConfigurationTests.cpp")
