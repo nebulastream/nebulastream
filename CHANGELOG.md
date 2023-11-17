@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.257](https://github.com/nebulastream/nebulastream/tree/v0.5.257) (2023-11-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.256...v0.5.257)
+
+**Implemented enhancements:**
+
+- \[TASK\] Move catalog unit tests to nes-catalog [\#4374](https://github.com/nebulastream/nebulastream/issues/4374)
+
 ## [v0.5.256](https://github.com/nebulastream/nebulastream/tree/v0.5.256) (2023-11-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.255...v0.5.256)
