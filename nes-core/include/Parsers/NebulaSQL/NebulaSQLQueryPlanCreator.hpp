@@ -91,6 +91,7 @@ namespace NES::Parsers {
             void exitConstantDefault(NebulaSQLParser::ConstantDefaultContext* context) override;
             void exitRealIdent(NebulaSQLParser::RealIdentContext* context) override;
             void exitIdentifier(NebulaSQLParser::IdentifierContext* context) override;
+            TimeMeasure buildTimeMeasure(int size, const std::string& timebase);
         };
 
 

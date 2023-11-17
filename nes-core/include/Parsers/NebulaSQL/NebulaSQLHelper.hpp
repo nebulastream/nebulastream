@@ -28,9 +28,10 @@ namespace NES::Parsers {
 * Attributes of this class represent the different clauses and a merge into a query after parsing the AST
 */
 enum NebulaSQLWindowType{
+    NO_WINDOW,
     WINDOW_SLIDING,
     WINDOW_TUMBLING,
-    WINDOW_THRESHOLD
+    WINDOW_COUNT,
 };
         class NebulaSQLHelper {
           private:
@@ -71,10 +72,10 @@ enum NebulaSQLWindowType{
 
             std::string newSourceName;
 
-            std::string timestamp;
+            std::string timestamp = "timestamp";
             int size = -1;
             std::string timeUnit;
-            NebulaSQLWindowType windowType;
+            NebulaSQLWindowType windowType = NO_WINDOW;
 
 
 

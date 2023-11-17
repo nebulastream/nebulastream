@@ -221,6 +221,7 @@ watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE 
 windowSpec:
     timeWindow #timeBasedWindow
     | countWindow #countBasedWindow
+    | thresholdWindow #thresholdBasedWindow
     ;
 
 timeWindow
@@ -232,7 +233,12 @@ countWindow:
     TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
     ;
 
+thresholdWindow
+    : THRESHOLD '(' conditionParameter (',' thresholdMinSizeParameter)? ')'
+    ;
 
+conditionParameter: expression;
+thresholdMinSizeParameter: INTEGER_VALUE;
 
 sizeParameter: SIZE INTEGER_VALUE timeUnit;
 
@@ -554,6 +560,7 @@ WINDOW: 'WINDOW' | 'window';
 WITH: 'WITH';
 TUMBLING: 'TUMBLING' | 'tumbling';
 SLIDING: 'SLIDING' | 'sliding';
+THRESHOLD : 'THRESHOLD'|'threshold';
 SIZE: 'SIZE' | 'size';
 ADVANCE: 'ADVANCE' | 'advance';
 MS: 'MS' | 'ms';
