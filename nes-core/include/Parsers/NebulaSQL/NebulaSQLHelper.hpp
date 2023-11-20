@@ -36,7 +36,6 @@ enum NebulaSQLWindowType{
         class NebulaSQLHelper {
           private:
             std::vector<ExpressionNodePtr> projectionFields;
-            SinkDescriptorPtr sinkDescriptor;
             std::vector<ExpressionNodePtr> whereClauses;
             std::string source;
             std::list<ExpressionNodePtr> expressionList;
@@ -61,7 +60,9 @@ enum NebulaSQLWindowType{
             bool isSimpleCondition = true;
             bool hasMultipleAttributes = false;
 
+
             std::vector<ExpressionNodePtr> projections;
+            std::vector<SinkDescriptorPtr> sinkDescriptor;
 
             std::vector<ExpressionNodePtr> expressionBuilder;
 
@@ -82,25 +83,13 @@ enum NebulaSQLWindowType{
             // Getter and Setter
 
             const std::map<int32_t, NebulaSQLOperatorNode>& getOperatorList() const;
-            void setOperatorList(const std::map<int32_t, NebulaSQLOperatorNode>& operatorList);
             const std::list<ExpressionNodePtr>& getExpressions() const;
-            void setExpressions(const std::list<ExpressionNodePtr>& expressions);
             const std::vector<ExpressionNodePtr>& getProjectionFields() const;
-            void setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields);
-            const std::list<SinkDescriptorPtr>& getSinks() const;
-            void setSinks(const std::list<SinkDescriptorPtr>& sinks);
-            const std::pair<std::string, int>& getWindow() const;
-            void setWindow(const std::pair<std::string, int>& window);
             void addExpression(ExpressionNodePtr expressionNode);
-            void addSink(SinkDescriptorPtr sinkDescriptor);
             void addProjectionField(ExpressionNodePtr expressionNode);
-            void addOperatorNode(NebulaSQLOperatorNode operatorNode);
-            uint64_t getLimit() const;
             const NES::Windowing::WindowTypePtr getWindowType() const;
             void addSource(std::string sourceName);
             const std::string getSource() const;
-
-
             void addMapExpression(FieldAssignmentExpressionNodePtr expressionNode);
             std::vector<FieldAssignmentExpressionNodePtr> getMapExpressions() const;
             void setMapExpressions(std::vector<FieldAssignmentExpressionNodePtr> expressions);

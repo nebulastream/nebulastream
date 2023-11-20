@@ -5,7 +5,7 @@
 
 
 #include "antlr4-runtime.h"
-#include "NebulaSQLListener.h"
+#include <Parsers/NebulaSQL/gen/NebulaSQLListener.h>
 
 
 namespace NES::Parsers {

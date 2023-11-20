@@ -158,7 +158,7 @@ namespace NES::Parsers {
                 sinkDescriptor = NES::NullOutputSinkDescriptor::create();
             }
             NebulaSQLHelper helper = helpers.top();
-            helper.addSink(sinkDescriptor);
+            helper.sinkDescriptor.push_back(sinkDescriptor);
             poppush(helper);
         }
     }
@@ -398,7 +398,6 @@ namespace NES::Parsers {
                 }else if(helper.windowType == WINDOW_COUNT){
                     NES_WARNING("Threshold Window not implemented");
                     TimeMeasure timeMeasure = buildTimeMeasure(helper.size, helper.timeUnit);
-                    windowType = Windowing::TumblingWindow::of(Windowing::Count(5));
                 }
 
 
@@ -408,7 +407,7 @@ namespace NES::Parsers {
                 auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
                 auto distributionType = Windowing::DistributionCharacteristic::createCompleteWindowType();
                 auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-
+                /*
                 auto windowDefinition = Windowing::LogicalWindowDefinition::create(windowAggs,
                                                                                    windowType,
                                                                                    distributionType,
@@ -418,11 +417,14 @@ namespace NES::Parsers {
 
                 auto op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
                 queryPlan->appendOperatorAsNewRoot(op);
+                 */
 
             }
 
 
-            queryPlan = QueryPlanBuilder::addSink(queryPlan,helper.getSinks().front());
+            for (auto& sink : helper.sinkDescriptor) {
+                queryPlan = QueryPlanBuilder::addSink(queryPlan, sink);
+            }
 
             for(const QueryPlanPtr& qp : helper.queryPlans){
                 QueryId subQueryId = qp->getQueryId();

@@ -82,13 +82,13 @@ public:
     /**
      * When true, the behavior of keywords follows ANSI SQL standard.
      */
-    public boolean SQL_standard_keyword_behavior = false;
+  bool SQL_standard_keyword_behavior = false;
 
       /**
        * When false, a literal with an exponent would be converted into
        * double type rather than decimal type.
        */
-      public boolean legacy_exponent_literal_as_decimal_enabled = false;
+  bool legacy_exponent_literal_as_decimal_enabled = false;
 
 
   class SingleStatementContext;

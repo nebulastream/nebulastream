@@ -20,11 +20,7 @@ namespace NES::Parsers {
 //Getter and Setter for the map/list entries of each clause
 const std::string NebulaSQLHelper::getSource() const { return this->source; }
 const std::list<ExpressionNodePtr>& NebulaSQLHelper::getExpressions() const { return this->expressionList; }
-void NebulaSQLHelper::setExpressions(const std::list<ExpressionNodePtr>& expressions) { this->expressionList = expressions; }
 const std::vector<ExpressionNodePtr>& NebulaSQLHelper::getProjectionFields() const { return this->projectionFields; }
-void NebulaSQLHelper::setProjectionFields(const std::vector<ExpressionNodePtr>& projectionFields) {
-    this->projectionFields = projectionFields;
-}
 
 // methods to update the clauses maps/lists
 void NebulaSQLHelper::addSource(std::string sourceName) { this->source=sourceName; }
@@ -33,7 +29,6 @@ void NebulaSQLHelper::addExpression(ExpressionNodePtr expressionNode) {
     this->expressionList.insert(pos, expressionNode);
 }
 void NebulaSQLHelper::addProjectionField(ExpressionNodePtr expressionNode) { this->projectionFields.push_back(expressionNode); }
-uint64_t NebulaSQLHelper::getLimit() const { return 0; }
 
 const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const { return NES::Windowing::WindowTypePtr(); }
 

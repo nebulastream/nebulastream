@@ -76,8 +76,8 @@ queryPrimary
     | inlineTable                                                           #inlineTableDefault1
     | '(' query ')'                                                         #subquery
     ;
-
-querySpecification: selectClause fromClause whereClause? sinkClause windowedAggregationClause? havingClause?;
+//new layout to be closer to traditional SQL
+querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? sinkClause?;
 
 
 fromClause: FROM relation (',' relation)*;
@@ -217,7 +217,7 @@ windowClause
 watermarkClause: WATERMARK '(' watermarkParameters ')';
 
 watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE watermarkTimeUnit=timeUnit;
-
+//Adding Threshold Windows and removing Count Windows
 windowSpec:
     timeWindow #timeBasedWindow
     | countWindow #countBasedWindow
@@ -579,7 +579,7 @@ KAFKA: 'KAFKA' | 'kafka';
 FILE: 'FILE';
 MQTT: 'MQTT';
 OPC: 'OPC';
-PRINT: 'PRINT';
+PRINT: 'PRINT' | 'print';
 LOCALHOST: 'LOCALHOST' | 'localhost';
 CSV_FORMAT : 'CSV_FORMAT';
 NES_FORMAT : 'NES_FORMAT';
