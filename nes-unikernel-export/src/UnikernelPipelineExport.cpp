@@ -118,7 +118,6 @@ void importFunction(llvm::Module& module, llvm::StringRef name, llvm::Module& ll
     auto old_fn = llvmModule.getFunction("execute");
     auto exec_fn_callee = module.getOrInsertFunction(name, old_fn->getFunctionType());
     auto exec_fn = llvm::dyn_cast<llvm::Function>(exec_fn_callee.getCallee());
-    exec_fn->addMetadata(UNIKERNEL_FUNCTION_TAG, *llvm::dyn_cast<llvm::MDNode>(llvm::MDString::get(module.getContext(), "yes")));
     exec_fn->deleteBody();
 
     mapper[old_fn] = exec_fn;
