@@ -14,8 +14,8 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Identifiers.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <handler/JoinOperatorHandlerInterfaceSlicing.hpp>
 
@@ -48,10 +48,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
 
     ~StreamJoinOperatorHandler() override = default;
 
-    virtual void start(PipelineExecutionContextPtr pipelineExecutionContext,
-               uint32_t localStateVariableId) override;
+    virtual void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
-
 
     /**
      * @brief Triggers all slices/windows that have not been already emitted to the probe

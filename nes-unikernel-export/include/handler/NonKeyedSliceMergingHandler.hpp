@@ -24,6 +24,9 @@ class NonKeyedSliceMergingHandler : public OperatorHandler {
      * @param windowDefinition
      */
     NonKeyedSliceMergingHandler();
+
+    void start(PipelineExecutionContextPtr, uint32_t);
+    void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr ctx);
 };
 
 }// namespace NES::Runtime::Execution::Operators
