@@ -21,9 +21,26 @@
 #include <map>
 
 namespace NES::Benchmark {
+/**
+ * @brief all configurations that are constant over all runs
+ */
 class E2EBenchmarkConfigOverAllRuns {
 
   public:
+    /**
+     * @brief encapsulates the query and the custom delay for query config
+     */
+    class E2EBenchmarkQueryConfig {
+      public:
+        E2EBenchmarkQueryConfig(std::string queryString, uint32_t customDelayInSeconds) : queryString(std::move(queryString)), customDelayInSeconds(customDelayInSeconds) {}
+        friend std::ostream &operator<< (std::ostream& os, const E2EBenchmarkQueryConfig& config) {
+            os << fmt::format("query: {}, customDelayInSeconds: {}", config.queryString, config.customDelayInSeconds);
+            return os;
+        }
+        const std::string queryString;
+        const uint32_t customDelayInSeconds;
+    };
+
     /**
      * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
      */
@@ -33,7 +50,7 @@ class E2EBenchmarkConfigOverAllRuns {
      * @brief creates a string representation of this object
      * @return the string representation
      */
-    std::string toString();
+    [[nodiscard]] std::string toString() const;
 
     /**
      * @brief parses and generates the config for the parameters constant over all
@@ -53,11 +70,14 @@ class E2EBenchmarkConfigOverAllRuns {
      * @brief creates a string representation of mapLogicalSrcNameToDataGenerator
      * @return string representation
      */
-    std::string getStrLogicalSrcDataGenerators();
+    [[nodiscard]] std::string getStrLogicalSrcDataGenerators() const;
 
     /**
-     * @brief all configurations that are constant over all runs
+     * @brief creates a string representation of queries vector
+     * @return string representation
      */
+    [[nodiscard]] std::string getStrQueries() const;
+
   public:
     Configurations::IntConfigOption startupSleepIntervalInSeconds;
     Configurations::IntConfigOption numMeasurementsToCollect;
@@ -75,7 +95,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption benchmarkName;
     Configurations::StringConfigOption inputType;
     Configurations::StringConfigOption sourceSharing;
-    Configurations::StringConfigOption query;
+    std::vector<E2EBenchmarkQueryConfig> queries;
     Configurations::StringConfigOption dataProviderMode;
     std::map<std::string, DataGeneration::DataGeneratorPtr> sourceNameToDataGenerator;
     Configurations::StringConfigOption connectionString;

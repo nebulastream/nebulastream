@@ -55,6 +55,22 @@ namespace NES::Benchmark {
     }
 
     /**
+     * @brief Testing if a yaml file with concurrent queries can be run without any error
+     */
+    TEST_F(E2ERunnerTest, ConcurrentQueries) {
+        std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/e2e_concurrent_queries_test_config.yaml";
+        std::string logPath = "E2ERunnerTest_ConcurrentQueries.log";
+
+        auto e2EBenchmarkConfig = parseYamlConfig(configPath, logPath);
+        NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
+
+        for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
+            NES::Benchmark::executeSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(),
+                                             *rpcCoordinatorPort, *restPort);
+        }
+    }
+
+    /**
      * @brief Testing if a yaml file with multiple sources can be run without any error
      * TODO enable this with issue #3941
      */

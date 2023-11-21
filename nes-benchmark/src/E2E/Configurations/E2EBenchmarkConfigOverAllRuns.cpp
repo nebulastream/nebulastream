@@ -16,6 +16,8 @@
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Util/yaml/Yaml.hpp>
 
+constexpr auto defaultCustomDelayInSeconds = 0;
+
 namespace NES::Benchmark {
 E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     using namespace Configurations;
@@ -32,7 +34,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfPreAllocatedBuffer = ConfigurationOption<uint32_t>::create("numberOfPreAllocatedBuffer", 1, "Pre-allocated buffer");
     outputFile = ConfigurationOption<std::string>::create("outputFile", "e2eBenchmarkRunner", "Filename of the output");
     benchmarkName = ConfigurationOption<std::string>::create("benchmarkName", "E2ERunner", "Name of the benchmark");
-    query = ConfigurationOption<std::string>::create("query", "", "Query to be run");
+    queries.emplace_back("", defaultCustomDelayInSeconds);
     inputType = ConfigurationOption<std::string>::create("inputType", "Auto", "If sources are shared");
     sourceSharing = ConfigurationOption<std::string>::create("sourceSharing", "off", "How to read the input data");
     dataProviderMode =
@@ -54,7 +56,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     joinStrategy = ConfigurationOption<std::string>::create("joinStrategy", "HASH_JOIN_LOCAL", "Applied Join Algorithm");
 }
 
-std::string E2EBenchmarkConfigOverAllRuns::toString() {
+std::string E2EBenchmarkConfigOverAllRuns::toString() const {
     std::stringstream oss;
     oss << "- startupSleepIntervalInSeconds: " << startupSleepIntervalInSeconds->getValueAsString() << std::endl
         << "- numMeasurementsToCollect: " << numMeasurementsToCollect->getValueAsString() << std::endl
@@ -63,7 +65,7 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- benchmarkName: " << benchmarkName->getValue() << std::endl
         << "- inputType: " << inputType->getValue() << std::endl
         << "- sourceSharing: " << sourceSharing->getValue() << std::endl
-        << "- query: " << query->getValue() << std::endl
+        << "- query: " << getStrQueries() << std::endl
         << "- numberOfPreAllocatedBuffer: " << numberOfPreAllocatedBuffer->getValueAsString() << std::endl
         << "- numberOfBuffersToProduce: " << numberOfBuffersToProduce->getValueAsString() << std::endl
         << "- batchSize: " << batchSize->getValueAsString() << std::endl
@@ -89,7 +91,6 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.experimentMeasureIntervalInSeconds->setValueIfDefined(yamlConfig["experimentMeasureIntervalInSeconds"]);
     configOverAllRuns.outputFile->setValueIfDefined(yamlConfig["outputFile"]);
     configOverAllRuns.benchmarkName->setValueIfDefined(yamlConfig["benchmarkName"]);
-    configOverAllRuns.query->setValueIfDefined(yamlConfig["query"]);
     configOverAllRuns.dataProviderMode->setValueIfDefined(yamlConfig["dataProviderMode"]);
     configOverAllRuns.joinStrategy->setValueIfDefined(yamlConfig["joinStrategy"]);
     configOverAllRuns.connectionString->setValueIfDefined(yamlConfig["connectionString"]);
@@ -130,16 +131,40 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
         NES_DEBUG("No additional sources have been added!");
     }
 
+    configOverAllRuns.queries.clear();
+    if (!yamlConfig["query"].IsNone()) {
+        configOverAllRuns.queries.push_back({yamlConfig["query"].As<std::string>(), defaultCustomDelayInSeconds});
+    } else if (!yamlConfig["querySet"].IsNone() && yamlConfig["querySet"].Size() > 0) {
+        Yaml::Node queriesNode = yamlConfig["querySet"];
+        for (size_t i = 0; i < queriesNode.Size(); i++) {
+            configOverAllRuns.queries.push_back({queriesNode[i]["query"].As<std::string>(), queriesNode[i]["customDelayInSeconds"].IsNone() ? 0 : queriesNode[i]["customDelayInSeconds"].As<uint32_t>()});
+        }
+    } else {
+        NES_THROW_RUNTIME_ERROR("No query or queries defined!");
+    }
+
     return configOverAllRuns;
 }
 
-std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
+std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() const {
     std::stringstream stringStream;
     for (auto it = sourceNameToDataGenerator.begin(); it != sourceNameToDataGenerator.end(); ++it) {
         if (it != sourceNameToDataGenerator.begin()) {
             stringStream << ", ";
         }
         stringStream << it->first << ": " << it->second->getName();
+    }
+
+    return stringStream.str();
+}
+
+std::string E2EBenchmarkConfigOverAllRuns::getStrQueries() const {
+    std::stringstream stringStream;
+    for (auto it = queries.begin(); it != queries.end(); ++it) {
+        if (it != queries.begin()) {
+            stringStream << "\n";
+        }
+        stringStream << *it;
     }
 
     return stringStream.str();

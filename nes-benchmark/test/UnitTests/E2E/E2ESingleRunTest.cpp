@@ -168,7 +168,7 @@ TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
     configOverAllRuns.sourceNameToDataGenerator[zipfianDataGeneratorName] = std::move(zipfianDataGenerator);
     configOverAllRuns.inputType->setValue(inputType);
     configOverAllRuns.dataProviderMode->setValue(dataProviderMode);
-    configOverAllRuns.query->setValue(queryString);
+    configOverAllRuns.queries[0] = {queryString, 0};
     configOverAllRuns.outputFile->setValue(csvFile);
     std::filesystem::remove(csvFile);
 

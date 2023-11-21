@@ -70,24 +70,30 @@ class E2ESingleRun {
     [[nodiscard]] const CoordinatorConfigurationPtr& getCoordinatorConf() const;
 
     /**
-     * @brief sets up the coordinator config and worker config
-     */
+    * @brief sets up the coordinator config and worker config
+    */
     void setupCoordinatorConfig();
 
     /**
      * @brief creates all sources and the data generator and provider for each
      */
     void createSources();
+    /**
+     * @brief Submits all queries to the coordinator
+     * @param queryService The query service to use
+     * @param queryCatalog The query catalog to use
+     */
+    void submitQueries(QueryServicePtr queryService, QueryCatalogServicePtr queryCatalog);
 
     /**
-     * @brief starts all everything necessary for running the query and measures for a single query
+     * @brief starts all everything necessary for running the queries and measures for a single query
      */
-    void runQuery();
+    void runQueries();
 
     /**
-     * @brief stops the query and everything else, such as coordinator
+     * @brief stops the queries and everything else, such as coordinator
      */
-    void stopQuery();
+    void stopQueries();
 
     /**
      * @brief writes the measurement to the csv file
