@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nes-worker
+  labels:
+    app: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: Worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: Worker
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: worker-config
+      containers:
+        - name: worker
+          image: nebulastream/nes-executable-image:latest
+          volumeMounts:
+            - mountPath: config-volume
+              name: /config/worker.yaml
+          ports:
+            - containerPort: 8081
+              name: rest-api
+            - containerPort: 4000
+              name: rpc-api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-service
+spec:
+  selector:
+    app.kubernetes.io/name: Worker
+  ports:
+  - name: data-grpc
+    protocol: TCP
+    port: 4000
+    targetPort: rpc-api
