@@ -25,30 +25,30 @@
 namespace NES::Benchmark {
 
 /**
-     * @brief this class saves all the configuration parameters and
-     * creates benchmarks from a provided yaml file
-     */
+ * @brief this class saves all the configuration parameters and
+ * creates benchmarks from a provided yaml file
+ */
 class E2EBenchmarkConfig {
 
   public:
     /**
-         * @brief creates benchmarks from the yaml file. Expects that yamlConfigFile exists
-         * @param configPath
-         * @return
-         */
+     * @brief creates benchmarks from the yaml file. Expects that yamlConfigFile exists
+     * @param configPath
+     * @return
+     */
     static E2EBenchmarkConfig createBenchmarks(const std::string& yamlConfigFile);
 
     /**
-         * @brief reads the logging level from the config file. Expects that yamlConfigFile exists
-         * @param yamlConfigFile
-         * @return loglevel
-         */
+     * @brief reads the logging level from the config file. Expects that yamlConfigFile exists
+     * @param yamlConfigFile
+     * @return loglevel
+     */
     static NES::LogLevel getLogLevel(const std::string& yamlConfigFile, NES::LogLevel defaultLogLevel = NES::LogLevel::LOG_DEBUG);
 
     /**
-         * @brief creates a string representation of this object
-         * @return the string representation
-         */
+     * @brief creates a string representation of this object
+     * @return the string representation
+     */
     std::string toString();
 
     [[nodiscard]] std::vector<E2EBenchmarkConfigPerRun>& getAllConfigPerRuns() { return allConfigPerRuns; }

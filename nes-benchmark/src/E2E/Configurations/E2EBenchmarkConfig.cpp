@@ -48,21 +48,18 @@ LogLevel Benchmark::E2EBenchmarkConfig::getLogLevel(const std::string& yamlConfi
 Benchmark::E2EBenchmarkConfig Benchmark::E2EBenchmarkConfig::createBenchmarks(const std::string& yamlConfigFile) {
 
     E2EBenchmarkConfig e2EBenchmarkConfig;
-
+    Yaml::Node configFile;
     try {
-        Yaml::Node configFile;
         Yaml::Parse(configFile, yamlConfigFile.c_str());
-
-        NES_INFO("Generating configOverAllRuns...");
-        e2EBenchmarkConfig.configOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(configFile);
-
-        NES_INFO("Generating configsPerRun...");
-        e2EBenchmarkConfig.allConfigPerRuns = E2EBenchmarkConfigPerRun::generateAllConfigsPerRun(configFile);
-
     } catch (std::exception& e) {
-        std::cerr << "Error while trying to create the benchmarks" << std::endl;
-        throw;
+        NES_THROW_RUNTIME_ERROR("Error while trying to parse the yaml config file: " << e.what());
     }
+
+    NES_INFO("Generating configOverAllRuns...");
+    e2EBenchmarkConfig.configOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(configFile);
+
+    NES_INFO("Generating configsPerRun...");
+    e2EBenchmarkConfig.allConfigPerRuns = E2EBenchmarkConfigPerRun::generateAllConfigsPerRun(configFile);
 
     return e2EBenchmarkConfig;
 }

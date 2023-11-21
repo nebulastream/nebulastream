@@ -1,0 +1,26 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+numberOfWorkerThreads: 1
+numberOfQueriesToDeploy: 1
+bufferSizeInBytes: 1024
+numberOfPreAllocatedBuffer: 100
+
+# ~~~ Benchmark parameter for the entire run ~~~
+numberOfBuffersToProduce: 500
+logLevel: LOG_DEBUG
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 1
+numberOfMeasurementsToCollect: 1
+
+logicalSources:
+  - name: input1
+    type: ysb
+    numberOfPhysicalSources: 1
+
+dataProviderMode: ZeroCopy
+outputFile: FilterOneSource.csv
+benchmarkName: FilterOneSource
+querySet:
+  - query: 'Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());'
+    customDelayInSeconds: 0
+  - query: 'Query::from("input1").filter(Attribute("event_type") < 50).sink(NullOutputSinkDescriptor::create());'
+    customDelayInSeconds: 1

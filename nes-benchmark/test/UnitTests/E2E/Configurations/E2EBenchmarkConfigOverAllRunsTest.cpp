@@ -99,7 +99,8 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterOneSource.csv");
         ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterOneSource");
-        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[0].queryString, R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[0].customDelayInSeconds, 0);
         ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
         ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "Auto");
@@ -134,7 +135,8 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterWithDynamicIngestionRate.csv");
         ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterWithDynamicIngestionRate");
-        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[0].queryString, R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[0].customDelayInSeconds, 0);
         ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
         ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "MemoryMode");
@@ -169,7 +171,8 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterWithCustomIngestionRate.csv");
         ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterWithCustomIngestionRate");
-        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[0].queryString, R"(Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[0].customDelayInSeconds, 0);
         ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
         ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "MemoryMode");
@@ -184,6 +187,44 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.customValues->getValue(), "10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 90000, 80000, 70000, 60000, 50000, 40000, 30000, 20000");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProvider->getValue(), "External");
         ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: Uniform");
+    }
+
+    /**
+     * @brief Testing if E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns() is correct by parsing
+     * a yaml file with concurrent queries and comparing against a hardcoded truth
+     */
+    TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsConcurrentQueriesTest) {
+        E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
+        Yaml::Node yamlConfig;
+
+        std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/e2e_concurrent_queries_test_config.yaml";
+        Yaml::Parse(yamlConfig, configPath.c_str());
+
+        defaultConfigOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(yamlConfig);
+
+        ASSERT_EQ(defaultConfigOverAllRuns.startupSleepIntervalInSeconds->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.numMeasurementsToCollect->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 2);
+        ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterOneSource.csv");
+        ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterOneSource");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[0].queryString, R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[0].customDelayInSeconds, 0);
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[1].queryString, R"(Query::from("input1").filter(Attribute("event_type") < 50).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[1].customDelayInSeconds, 0);
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[2].queryString, R"(Query::from("input1").filter(Attribute("event_type") < 25).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.queries[2].customDelayInSeconds, 2);
+        ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
+        ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
+        ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "Auto");
+        ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), "off");
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValue(), 100);
+        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValue(), 500);
+        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateInBuffers->getValue(), 50000);
+        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCount->getValue(), 10000);
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfPeriods->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.dataProvider->getValue(), "Internal");
+        ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: YSB");
     }
 
     /**

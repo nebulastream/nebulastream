@@ -130,7 +130,27 @@ void E2ESingleRun::createSources() {
     NES_INFO("Created sources and the accommodating data generation and data providing!");
 }
 
-void E2ESingleRun::runQuery() {
+void E2ESingleRun::submitQueries(QueryServicePtr queryService, QueryCatalogServicePtr queryCatalog) {
+    for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
+        for (const auto &query : configOverAllRuns.queries) {
+
+            // If custom delay is set introduce a delay before submitting
+            std::this_thread::sleep_for(std::chrono::seconds(query.customDelayInSeconds));
+
+            NES_INFO("E2EBase: Submitting query = {}", query.queryString);
+            auto queryId = queryService->validateAndQueueAddQueryRequest(query.queryString,
+                                                                         Optimizer::PlacementStrategy::BottomUp);
+            submittedIds.push_back(queryId);
+
+            if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {
+                NES_THROW_RUNTIME_ERROR("E2EBase: Could not start query with id = " << queryId);
+            }
+            NES_INFO("E2EBase: Query with id = {} started", queryId);
+        }
+    }
+}
+
+void E2ESingleRun::runQueries() {
     NES_INFO("Starting nesCoordinator...");
     coordinator = std::make_shared<NesCoordinator>(coordinatorConf);
     auto rpcPort = coordinator->startCoordinator(/* blocking */ false);
@@ -139,17 +159,7 @@ void E2ESingleRun::runQuery() {
     auto queryService = coordinator->getQueryService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
-    for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
-        NES_INFO("E2EBase: Submitting query = {}", configOverAllRuns.query->getValue());
-        auto queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(),
-                                                                     Optimizer::PlacementStrategy::BottomUp);
-        submittedIds.push_back(queryId);
-
-        if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {
-            NES_THROW_RUNTIME_ERROR("E2EBase: Could not start query with id = " << queryId);
-        }
-        NES_INFO("E2EBase: Query with id = {} started", queryId);
-    }
+    submitQueries(queryService, queryCatalog);
 
     NES_DEBUG("Starting the data providers...");
     for (auto& dataProvider : allDataProviders) {
@@ -186,8 +196,8 @@ void E2ESingleRun::runQuery() {
     NES_INFO("Done with single run!");
 }
 
-void E2ESingleRun::stopQuery() {
-    NES_INFO("Stopping the query...");
+void E2ESingleRun::stopQueries() {
+    NES_INFO("Stopping the queries...");
     auto queryService = coordinator->getQueryService();
     auto queryCatalog = coordinator->getQueryCatalogService();
 
@@ -238,14 +248,14 @@ void E2ESingleRun::stopQuery() {
     waitThreadCoordinator.join();
     NES_INFO("Coordinator stopped!");
 
-    NES_INFO("Stopped the query!");
+    NES_INFO("Stopped the queries!");
 }
 
 void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to {}", configOverAllRuns.outputFile->getValue());
     std::stringstream resultOnConsole;
     auto schemaSizeInB = configOverAllRuns.getTotalSchemaSize();
-    std::string queryString = configOverAllRuns.query->getValue();
+    std::string queryString = configOverAllRuns.getStrQueries();
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
     std::stringstream outputCsvStream;
@@ -302,8 +312,8 @@ E2ESingleRun::~E2ESingleRun() {
 void E2ESingleRun::run() {
     setupCoordinatorConfig();
     createSources();
-    runQuery();
-    stopQuery();
+    runQueries();
+    stopQueries();
     writeMeasurementsToCsv();
 }
 
