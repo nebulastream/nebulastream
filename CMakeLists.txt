@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v30)
+set(VCPKG_BINARY_VERSION vls-boot_iostream2)
 set(LLVM_BINARY_VERSION vls-llvm-rtti)
 set(LLVM_VERSION 16)
 # Activate self hosting, such that the compiler from the dependencies is taken
@@ -693,12 +693,13 @@ add_subdirectory(nes-client)
 # Add targets for plugins
 add_subdirectory(nes-plugins)
 
+if (NES_USE_UNIKERNEL)
 add_subdirectory(nes-unikernel-export)
 add_subdirectory(nes-unikernel-source)
 add_subdirectory(nes-unikernel-sink)
 add_subdirectory(nes-unikernel)
 add_subdirectory(nes-unikernel-common)
-
+endif ()
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
     add_subdirectory(nes-benchmark)
