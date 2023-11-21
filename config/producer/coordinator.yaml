@@ -1,0 +1,23 @@
+### General configuration
+###
+logLevel: LOG_INFO
+#logLevel: LOG_WARNING
+#logLevel: LOG_DEBUG
+optimizer:
+  distributedWindowChildThreshold: 3
+###
+### Network configuration
+###
+restIp: 127.0.0.1
+coordinatorIp: 127.0.0.1
+restPort: 8081
+###
+### Logical source configuration
+###
+logicalSources:
+  - logicalSourceName: "points"
+    fields:
+      - name: "x"
+        type: "FLOAT64"
+      - name: "y"
+        type: "FLOAT64"
