@@ -32,7 +32,7 @@ constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 class MapQueryExecutionTest
     : public Testing::BaseUnitTest,
       public ::testing::WithParamInterface<
-          std::tuple<QueryCompilation::QueryCompilerType, std::string, std::vector<string>, std::vector<string>, int>> {
+          std::tuple<QueryCompilation::QueryCompilerType, std::string, std::vector<string>, std::vector<string>, double>> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -82,6 +82,13 @@ class MapQueryExecutionTest
                                std::vector<string>{"log10", "log2", "ln"},
                                1);
     }
+    static auto createRoundTestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapRoundFunctions",
+                               std::vector<string>{"test$id", "test$round", "test$ceil", "test$floor"},
+                               std::vector<string>{"round", "ceil", "floor"},
+                               1.6);
+    }
     static auto createTwoMapQueryTestData() {
         return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
                                "TwoMapQuery",
@@ -121,6 +128,12 @@ static auto getExpression(const std::string expression) {// Includes the names f
         return LOG2(Attribute("id"));
     } else if (expression == "ln") {
         return LN(Attribute("id"));
+    } else if (expression == "round") {// MapRoundFunctions
+        return ROUND(Attribute("id"));
+    } else if (expression == "ceil") {
+        return CEIL(Attribute("id"));
+    } else if (expression == "floor") {
+        return FLOOR(Attribute("id"));
     } else if (expression == "test$new1") {// TwoMapQuery
         return Attribute("test$id") * 2;
     } else if (expression == "test$new2") {
@@ -139,7 +152,7 @@ static auto getExpression(const std::string expression) {// Includes the names f
         return EXP(Attribute("id"));
     }
 }
-static auto getFunction(const std::string function, int input) {// Includes the names for the EXPECT_EQ statement
+static auto getFunction(const std::string function, double input) {// Includes the names for the EXPECT_EQ statement
     if (function == "test$one") {                               // MapQueryArithmetic
         return (double) input * 2;
     } else if (function == "test$log10") {// MapLogarithmicFunctions
@@ -148,6 +161,12 @@ static auto getFunction(const std::string function, int input) {// Includes the 
         return std::log2(input);
     } else if (function == "test$ln") {
         return std::log(input);
+    } else if (function == "test$round") {// MapRoundFunctions
+        return std::round(input);
+    } else if (function == "test$ceil") {
+        return std::ceil(input);
+    } else if (function == "test$floor") {
+        return std::floor(input);
     } else if (function == "test$new1") {// TwoMapQuery
         return (double) input * 2;
     } else if (function == "test$new2") {
@@ -183,9 +202,9 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
     }
 
     auto testSink = executionEngine->createDataSink(resultSchema);
-    if (resultArray[1] == "test$one") {
+    if (resultArray[1] == "test$one") {// for MapQueryArithmetic
         testSink = executionEngine->createDataSink(schema);
-    }// for MapQueryArithmetic
+    }
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -210,7 +229,7 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
     auto inputBuffer = executionEngine->getBuffer(schema);
 
     string testCase = std::get<1>(GetParam());
-    int sign = std::get<4>(GetParam());
+    double sign = std::get<4>(GetParam());
     if (testCase == "MapQueryArithmetic") {
         fillBuffer(inputBuffer);
 
@@ -276,6 +295,7 @@ INSTANTIATE_TEST_CASE_P(testMapQueries,
                         MapQueryExecutionTest,
                         ::testing::Values(MapQueryExecutionTest::createMapQueryArithmeticTestData(),
                                           MapQueryExecutionTest::createLogTestData(),
+                                          MapQueryExecutionTest::createRoundTestData(),
                                           MapQueryExecutionTest::createTwoMapQueryTestData(),
                                           MapQueryExecutionTest::createAbsTestData(),
                                           MapQueryExecutionTest::createPowerTestData(),

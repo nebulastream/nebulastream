@@ -22,4 +22,7 @@ add_source_files(nes-operators
         SinFunction.cpp
         CosFunction.cpp
         RadiansFunction.cpp
+        FloorFunction.cpp
+        CeilFunction.cpp
+        RoundFunction.cpp
         )

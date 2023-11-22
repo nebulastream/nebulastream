@@ -16,13 +16,10 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Operators/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Operators/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
@@ -91,11 +88,17 @@ ExpressionNodePtr RADIANS(const ExpressionNodePtr& exp) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "radians", {exp});
 }
 
-ExpressionNodePtr ROUND(const ExpressionNodePtr& exp) { return RoundExpressionNode::create(exp); }
+ExpressionNodePtr ROUND(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "round", {exp});
+}
 
-ExpressionNodePtr CEIL(const ExpressionNodePtr& exp) { return CeilExpressionNode::create(exp); }
+ExpressionNodePtr CEIL(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "ceil", {exp});
+}
 
-ExpressionNodePtr FLOOR(const ExpressionNodePtr& exp) { return FloorExpressionNode::create(exp); }
+ExpressionNodePtr FLOOR(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "floor", {exp});
+}
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp) {
     return std::move(leftExp)
