@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.258](https://github.com/nebulastream/nebulastream/tree/v0.5.258) (2023-11-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.257...v0.5.258)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Remove worker.localWorkerIp as it doesn't influence anything [\#4319](https://github.com/nebulastream/nebulastream/issues/4319)
+
 ## [v0.5.257](https://github.com/nebulastream/nebulastream/tree/v0.5.257) (2023-11-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.256...v0.5.257)
