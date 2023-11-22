@@ -37,8 +37,35 @@ class E2EBenchmarkConfigOverAllRuns {
             os << fmt::format("query: {}, customDelayInSeconds: {}", config.queryString, config.customDelayInSeconds);
             return os;
         }
-        const std::string queryString;
-        const uint32_t customDelayInSeconds;
+
+        E2EBenchmarkQueryConfig(const E2EBenchmarkQueryConfig& other)
+            : queryString(other.queryString),
+              customDelayInSeconds(other.customDelayInSeconds) {
+        }
+
+        E2EBenchmarkQueryConfig(E2EBenchmarkQueryConfig&& other) noexcept
+            : queryString(std::move(other.queryString)),
+              customDelayInSeconds(other.customDelayInSeconds) {
+        }
+
+        E2EBenchmarkQueryConfig& operator=(const E2EBenchmarkQueryConfig& other) {
+            if (this == &other)
+                return *this;
+            queryString = other.queryString;
+            customDelayInSeconds = other.customDelayInSeconds;
+            return *this;
+        }
+
+        E2EBenchmarkQueryConfig& operator=(E2EBenchmarkQueryConfig&& other) noexcept {
+            if (this == &other)
+                return *this;
+            queryString = std::move(other.queryString);
+            customDelayInSeconds = other.customDelayInSeconds;
+            return *this;
+        }
+
+        std::string queryString;
+        uint32_t customDelayInSeconds;
     };
 
     /**
