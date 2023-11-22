@@ -50,6 +50,8 @@ using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 class AbstractRequest;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
+const uint8_t DEFAULT_RETRIES =1;
+
 class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
   public:
     /**
