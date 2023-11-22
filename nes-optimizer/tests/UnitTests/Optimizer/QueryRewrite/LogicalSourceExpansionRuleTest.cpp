@@ -19,23 +19,26 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
+#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -81,8 +84,7 @@ class LogicalSourceExpansionRuleTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -104,8 +106,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     const std::string logicalSourceName = "default_logical";
 
@@ -139,8 +140,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
     const std::string logicalSourceName = "default_logical";
 
@@ -176,9 +176,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFilterAndMap) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -200,9 +199,8 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMergeOperator) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithUnionOperator) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -230,4 +228,49 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     auto mergeOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
     EXPECT_EQ(mergeOperators.size(), 1U);
     EXPECT_EQ(mergeOperators[0]->getChildren().size(), 4U);
+}
+
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFlatMapOperator) {
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    const std::string logicalSourceName = "default_logical";
+    auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
+    auto javaUDFDescriptor =
+        Catalogs::UDF::JavaUDFDescriptorBuilder{}
+            .setClassName("stream.nebula.IntegerFlatMapFunction")
+            .setMethodName("flatMap")
+            .setInstance({})
+            .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {"stream.nebula.IntegerFlatMapFunction", {}}})
+            .setInputSchema(udfSchema)
+            .setOutputSchema(udfSchema)
+            .setInputClassName("java.lang.Integer")
+            .setOutputClassName("java.util.Collection")
+            .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
+            .build();
+
+    Query query =
+        Query::from(logicalSourceName).map(Attribute("value") = 40).flatMapUDF(javaUDFDescriptor).sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    // Execute
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+    const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
+
+    // Validate
+    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+    EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
+    std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
+    EXPECT_EQ(rootOperators.size(), 1U);
+    EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
+    auto flatMapOperators = queryPlan->getOperatorByType<FlatMapUDFLogicalOperatorNode>();
+    EXPECT_EQ(flatMapOperators.size(), 1U);
+    EXPECT_EQ(flatMapOperators[0]->getChildren().size(), 2U);
+
+    //Validate that FlatMap is connected to two map logical operators
+    for (const auto& childOperator : flatMapOperators[0]->getChildren()) {
+        EXPECT_TRUE(childOperator->as_if<LogicalOperatorNode>()->instanceOf<MapLogicalOperatorNode>());
+    }
 }
