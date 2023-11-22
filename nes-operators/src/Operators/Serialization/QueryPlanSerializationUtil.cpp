@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Operators/Serialization/OperatorSerializationUtil.hpp>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/Serialization/OperatorSerializationUtil.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
@@ -87,19 +87,15 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     }
 
     //set properties of the query plan
-    uint64_t queryId;
-    uint64_t querySubPlanId;
+    uint64_t queryId = INVALID_QUERY_ID;
+    uint64_t querySubPlanId = INVALID_QUERY_SUB_PLAN_ID;
 
     if (serializedQueryPlan->has_queryid()) {
         queryId = serializedQueryPlan->queryid();
-    } else {
-        queryId = PlanIdGenerator::getNextQueryId();
     }
 
     if (serializedQueryPlan->has_querysubplanid()) {
         querySubPlanId = serializedQueryPlan->querysubplanid();
-    } else {
-        querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
     }
 
     return QueryPlan::create(queryId, querySubPlanId, rootOperators);
