@@ -93,11 +93,9 @@ struct ErrorHandlerLoader {
         std::set_terminate(nesTerminateHandler);
         std::set_new_handler(nesTerminateHandler);
 #ifdef __linux__
-        std::set_unexpected(nesUnexpectedException);
-#elif defined(__APPLE__)
-        // unexpected was removed in C++17 but only apple clang libc did actually remove it..
-#else
-#error "Unknown platform"
+#ifdef NES_ENABLE_CXA_THROW_HOOK
+        folly::exception_tracer::registerCxaThrowCallback(nesCxaThrowHook);
+#endif
 #endif
         std::signal(SIGABRT, nesErrorHandler);
         std::signal(SIGSEGV, nesErrorHandler);
