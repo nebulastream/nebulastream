@@ -58,7 +58,7 @@ QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan) {
         const ExpressionNodePtr filterPredicate = filter->getPredicate();
         ExpressionNodePtr updatedPredicate;
         while (updatedPredicate != filterPredicate) {
-            updatedPredicate = eliminateRedundancy(filterPredicate);
+            updatedPredicate = eliminatePredicateRedundancy(filterPredicate);
         }
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
         filter->replace(updatedFilter);
@@ -69,7 +69,7 @@ QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan) {
         const ExpressionNodePtr mapExpression = map->getMapExpression();
         ExpressionNodePtr updatedMapExpression;
         while (updatedMapExpression != mapExpression) {
-            updatedMapExpression = eliminateRedundancy(mapExpression);
+            updatedMapExpression = eliminatePredicateRedundancy(mapExpression);
         }
         auto updatedMap = LogicalOperatorFactory::createFilterOperator(updatedMapExpression);
         mapExpression->replace(updatedMap);
@@ -77,7 +77,7 @@ QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-NES::ExpressionNodePtr RedundancyEliminationRule::eliminateRedundancy(const ExpressionNodePtr& predicate) {
+NES::ExpressionNodePtr RedundancyEliminationRule::eliminatePredicateRedundancy(const ExpressionNodePtr& predicate) {
     // Given a predicate, perform a series of optimizations by calling specific rewrite methods
     if (predicate->instanceOf<EqualsExpressionNode>() || predicate->instanceOf<GreaterEqualsExpressionNode>()
         || predicate->instanceOf<GreaterExpressionNode>() || predicate->instanceOf<LessEqualsExpressionNode>()

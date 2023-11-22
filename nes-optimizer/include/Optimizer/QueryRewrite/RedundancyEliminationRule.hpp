@@ -62,7 +62,7 @@ class RedundancyEliminationRule : public BaseRewriteRule {
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr eliminateRedundancy(const ExpressionNodePtr& predicate);
+    static NES::ExpressionNodePtr eliminatePredicateRedundancy(const ExpressionNodePtr& predicate);
 
     /**
      * @note Currently not implemented
