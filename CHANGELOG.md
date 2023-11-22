@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.259](https://github.com/nebulastream/nebulastream/tree/v0.5.259) (2023-11-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.258...v0.5.259)
+
+### Bug Fixes 🐛
+
+- \[BUG\] execute-query-ex API returns query IDs 2, 4, 6 but log output contains query IDs 1, 2, 3 [\#4379](https://github.com/nebulastream/nebulastream/issues/4379)
+
 ## [v0.5.258](https://github.com/nebulastream/nebulastream/tree/v0.5.258) (2023-11-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.257...v0.5.258)
