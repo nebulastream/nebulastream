@@ -35,7 +35,7 @@ public:
      * @brief destructor
      */
     virtual ~AbstractSubRequest() = default;
-    virtual std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandler) = 0;
+    virtual void execute(const StorageHandlerPtr& storageHandler) = 0;
 
     std::future<std::any> getFuture();
 protected:

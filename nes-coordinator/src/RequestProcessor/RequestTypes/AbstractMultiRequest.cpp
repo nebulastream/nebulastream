@@ -22,7 +22,8 @@
 
 namespace NES::RequestProcessor::Experimental {
 
-AbstractMultiRequest::AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries) : AbstractRequest(requiredResources, maxRetries) {}
+AbstractMultiRequest::AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
+    : AbstractRequest(requiredResources, maxRetries) {}
 std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandlerPtr& storageHandle) {
     std::vector<AbstractRequestPtr> result;
 
@@ -38,40 +39,39 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
     }
 
     while (!done) {
-        result = executeSubRequest(storageHandle);
-        if (!result.empty()) {
-            break;
-        }
+        executeSubRequest(storageHandle);
     }
-    return result;
+    return {};
 }
 
 bool AbstractMultiRequest::isDone() { return done; }
 
-std::vector<AbstractRequestPtr> AbstractMultiRequest::executeSubRequest(const StorageHandlerPtr& storageHandle) {
+bool AbstractMultiRequest::executeSubRequest(const StorageHandlerPtr& storageHandle) {
     std::unique_lock lock(workMutex);
     while (subRequestQueue.empty()) {
         cv.wait(lock);
         if (done) {
-            return {};
+            return false;
         }
     }
-        AbstractSubRequestPtr subRequest = subRequestQueue.front();
-        subRequestQueue.pop_front();
-        lock.unlock();
-        return subRequest->execute(storageHandle);
+    const AbstractSubRequestPtr subRequest = subRequestQueue.front();
+    subRequestQueue.pop_front();
+    lock.unlock();
+    subRequest->execute(storageHandle);
+    return true;
 }
 
-std::vector<AbstractRequestPtr> AbstractMultiRequest::executeSubRequestIfExists(const StorageHandlerPtr& storageHandle) {
+bool AbstractMultiRequest::executeSubRequestIfExists(const StorageHandlerPtr& storageHandle) {
     std::unique_lock lock(workMutex);
     if (subRequestQueue.empty()) {
-        return {};
+        return false;
     }
     AbstractSubRequestPtr subRequest = subRequestQueue.front();
     subRequestQueue.pop_front();
     lock.unlock();
 
-    return subRequest->execute(storageHandle);
+    subRequest->execute(storageHandle);
+    return true;
 }
 
 std::future<std::any> AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {

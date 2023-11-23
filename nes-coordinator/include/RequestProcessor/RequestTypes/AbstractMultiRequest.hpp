@@ -37,11 +37,11 @@ class AbstractMultiRequest : public AbstractRequest {
 
 protected:
     //virtual std::vector<AbstractRequestPtr> executeMainRequestLogic(const StorageHandlerPtr& storageHandle) = 0;
-    std::vector<AbstractRequestPtr> executeSubRequestIfExists(const StorageHandlerPtr& storageHandle);
+  bool executeSubRequestIfExists(const StorageHandlerPtr& storageHandle);
     std::future<std::any> scheduleSubRequest(AbstractSubRequestPtr subRequest);
 
   private:
-    std::vector<AbstractRequestPtr> executeSubRequest(const StorageHandlerPtr& storageHandle);
+    bool executeSubRequest(const StorageHandlerPtr& storageHandle);
     std::atomic<bool> done;
     std::atomic<bool> initialThreadAcquired = false;
 
