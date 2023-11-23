@@ -240,7 +240,7 @@ void PythonUDFOperatorHandler::initPython() {
         std::string oFile = path + std::filesystem::path::preferred_separator + this->functionName + ".o";
 
         // compile .c file
-        auto generateOFile = "gcc -pthread -fPIC -I/usr/include/python3.8 -g -c " + cFile + " -o " + oFile;
+        auto generateOFile = "gcc -pthread -fPIC -I/usr/include/python3.10 -g -c " + cFile + " -o " + oFile;
         std::system(generateOFile.c_str());
 
         // link file against the Python library
@@ -280,7 +280,7 @@ void PythonUDFOperatorHandler::initPython() {
                                  "     " + functionDeclaration + ";\n"
                                  "\"\"\")\n"
                                  "\n"
-                                 "ffibuilder.set_source(\"udfs\", \"\", extra_link_args=['-Wl,-rpath=/home/phm98/pypy2.7-v7.3.13-linux64/bin'])\n"
+                                 "ffibuilder.set_source(\"udfs\", \"\", extra_link_args=['-Wl,-rpath=/home/hpham/pypy2.7-v7.3.13-linux64/bin'])\n"
                                  "\n"
                                  "ffibuilder.embedding_init_code(\"\"\"\n"
                                  "from udfs import ffi\n"
@@ -290,7 +290,7 @@ void PythonUDFOperatorHandler::initPython() {
                                   + this->function +"\n"
                                  "\"\"\")\n"
                                  "\n"
-                                 "ffibuilder.compile(target=\"" + path + std::filesystem::path::preferred_separator + "udfs.*\", verbose=True)";
+                                 "ffibuilder.compile(target=\"udfs.*\", verbose=True)";
 
 
         this->generatePythonFile(path, file, pythonFile);

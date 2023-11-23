@@ -61,6 +61,7 @@ class MicroBenchmarkRunner {
         double sumCompilation = 0;
         double sumExecution = 0;
         double sumPythonCompilation = 0;
+        double sumPythonExecution = 0;
         for (uint64_t i = 0; i < iterations; i++) {
             Timer compileTimeTimer("Compilation");
             Timer executionTimeTimer("Execution");
@@ -171,7 +172,7 @@ class MicroBenchmarkRunner {
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
     std::shared_ptr<WorkerContext> wc;
-    uint64_t bufferSize = 100;
+    uint64_t bufferSize = 1024;
     // NES vs UDF 12500 Buffer
     // NES vs UDF Projection 4167 Buffer
     // black scholes 2500 Buffer
@@ -181,7 +182,7 @@ class MicroBenchmarkRunner {
     // linear reg 12500 Buffer
     // kmeans 6250 Buffer
 
-    uint64_t numberOfBuffers = 12500;
+    uint64_t numberOfBuffers = 1000;
     //std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
 };
 
@@ -1390,9 +1391,19 @@ void deleteContentInFile(std::string filePath) {
 
 int main(int, char**) {
     std::vector<std::string> compilers = {"PipelineCompiler", "CPPPipelineCompiler"};
-    std::vector<std::string> pythonCompilers = {"cpython"};
+    std::vector<std::string> pythonCompilers = {"cpython", "cython", "nuitka", "numba", "pypy"};
     auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
     deleteContentInFile(executeFile);
+
+    // NES vs UDF 12500 Buffer
+    // NES vs UDF Projection 4167 Buffer
+    // black scholes 2500 Buffer
+    // concat string 6250 Buffer
+    // word count and avg word length 400 Buffer
+    // boolean 10000 Buffer
+    // linear reg 12500 Buffer
+    // kmeans 6250 Buffer
+
     for (const auto& c : compilers) {
         for (const auto& pythonCompiler : pythonCompilers) {
             std::ofstream outputFileExecute;
@@ -1400,22 +1411,30 @@ int main(int, char**) {
             outputFileExecute << pythonCompiler << "-" << c << "\n";
             outputFileExecute.close();
 
-            //NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
+            NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
+
             //NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();
+
+            // nicht das
             //NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
+
             //NES::Runtime::Execution::BlackScholesNumPyUDF(c, pythonCompiler).run();
+
             //NES::Runtime::Execution::BlackScholesUDF(c, pythonCompiler).run();
 
-            NES::Runtime::Execution::StringConcatUDF(c, pythonCompiler).run();
+            //NES::Runtime::Execution::StringConcatUDF(c, pythonCompiler).run();
+
             //NES::Runtime::Execution::StringWordCountUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::StringAverageWordLengthUDF(c, pythonCompiler).run();
 
             //NES::Runtime::Execution::BooleanUDF(c, pythonCompiler).run();
+
             //NES::Runtime::Execution::LinearRegression(c, pythonCompiler).run();
+
             //NES::Runtime::Execution::KMeansUDF(c, pythonCompiler).run();
         }
     }

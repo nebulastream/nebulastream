@@ -104,11 +104,7 @@ T executeNumba(void* state){
     dyncall.reset();
     executeNumbaTimer.snapshot("execute numba");
     executeNumbaTimer.pause();
-    auto path = std::filesystem::current_path().string() + "/dump/executepython.txt";
-    std::ofstream outputFile;
-    outputFile.open(path, std::ios_base::app);
-    outputFile << executeNumbaTimer.getPrintTime() << "\n";
-    outputFile.close();
+    handler->addSumExecution(executeNumbaTimer.getPrintTime());
     return result;
 }
 

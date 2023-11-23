@@ -24,11 +24,14 @@ namespace NES::Runtime::Execution::Operators {
 
 template<typename T>
 T executePyPy(void* state){
+    Timer pythonUDFExecutionTimeTimer("PythonUDFExecution");
+    pythonUDFExecutionTimeTimer.start();
+
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     auto dyncall = handler->getDynCall();
 
-    void *udfSO = dlopen("/home/phm98/nebulastream/nebulastream/cmake-build-debug/nes-runtime/benchmark/tmp/udfs.so", RTLD_LAZY | RTLD_DEEPBIND);
+    void *udfSO = dlopen("udfs.so", RTLD_LAZY | RTLD_DEEPBIND);
     if(udfSO == NULL){
         NES_THROW_RUNTIME_ERROR("Could not load udfs.so", dlerror());
     }
@@ -56,6 +59,9 @@ T executePyPy(void* state){
     }
     // reset all variables for next call
     dyncall.reset();
+    pythonUDFExecutionTimeTimer.snapshot("executePythonUDF");
+    pythonUDFExecutionTimeTimer.pause();
+    handler->addSumExecution(pythonUDFExecutionTimeTimer.getPrintTime());
     return result;
 }
 
