@@ -77,7 +77,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
     nlohmann::json res;
-    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
+    EXPECT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Incorrect or missing key word for user query, use 'userQuery'") != std::string::npos);
     stopCoordinator();
@@ -97,7 +97,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
     nlohmann::json res;
-    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
+    EXPECT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("No placement strategy specified. Specify a placement strategy using 'placement'.")
@@ -120,7 +120,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
     nlohmann::json res;
-    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
+    EXPECT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG("{}", res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid Placement Strategy: ") != std::string::npos);
@@ -157,9 +157,9 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     auto response = future.get();
     EXPECT_EQ(response.status_code, 202l);
     nlohmann::json res;
-    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
+    EXPECT_NO_THROW(res = nlohmann::json::parse(response.text));
     auto queryId = res["queryId"];
-    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
+    EXPECT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -225,7 +225,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     ASSERT_NO_THROW(response3 = nlohmann::json::parse(r3.text));
     NES_DEBUG("{}", response3.dump());
     EXPECT_EQ(response3["message"], "No query with given ID: 0");
-    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
+    EXPECT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -274,9 +274,9 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     auto r2 = f2.get();
     EXPECT_EQ(r2.status_code, 404l);
     nlohmann::json response2;
-    ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
+    EXPECT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
-    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
+    EXPECT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -318,7 +318,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     uint64_t queryId = response1["queryId"];
     NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
-    ASSERT_TRUE(started);
+    EXPECT_TRUE(started);
 
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
                             cpr::Parameters{{"queryId", std::to_string(queryId)}});
@@ -326,14 +326,14 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     auto r2 = f2.get();
     EXPECT_EQ(r2.status_code, 200l);
     nlohmann::json response2;
-    ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
+    EXPECT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     for (auto edge : response2["edges"]) {
         EXPECT_TRUE(edge.contains("source") && edge.contains("target"));
     }
     for (auto node : response2["nodes"]) {
         EXPECT_TRUE(node.contains("id") && node.contains("name") && node.contains("nodeType"));
     }
-    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
+    EXPECT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -350,11 +350,11 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     workerConfiguration->physicalSourceTypes.add(DefaultSourceType::create("default_logical", "default_physical"));
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
-    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    EXPECT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     nlohmann::json request;
     request["userQuery"] =
@@ -370,11 +370,11 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     EXPECT_EQ(r1.status_code, 202l);
 
     nlohmann::json response1;
-    ASSERT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
+    EXPECT_NO_THROW(response1 = nlohmann::json::parse(r1.text));
     uint64_t queryId = response1["queryId"];
     NES_DEBUG("{}", queryId);
     auto started = TestUtils::waitForQueryToStart(queryId, coordinator->getQueryCatalogService());
-    ASSERT_TRUE(started);
+    EXPECT_TRUE(started);
     auto f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/query-plan"},
                             cpr::Parameters{{"queryId", std::to_string(0)}});
     f2.wait();
@@ -383,7 +383,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     nlohmann::json response2 = nlohmann::json::parse(r2.text);
     NES_DEBUG("{}", response2.dump());
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
-    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
+    EXPECT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 }// namespace NES
