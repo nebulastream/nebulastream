@@ -15,7 +15,6 @@
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
-#include <Util/Timer.hpp>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -27,8 +26,9 @@ PythonUDFOperatorHandler::PythonUDFOperatorHandler(const std::string& function,
                          const std::map<std::string, std::string> modulesToImport,
                          const std::string& pythonCompiler,
                          SchemaPtr inputSchema,
-                         SchemaPtr outputSchema)
-    : function(function), functionName(functionName), modulesToImport(modulesToImport), pythonCompiler(pythonCompiler), inputSchema(inputSchema), outputSchema(outputSchema) {
+                         SchemaPtr outputSchema,
+                         Timer<>& pythonUDFCompilationTimeTimer)
+    : function(function), functionName(functionName), modulesToImport(modulesToImport), pythonCompiler(pythonCompiler), inputSchema(inputSchema), outputSchema(outputSchema), pythonUDFCompilationTimeTimer(pythonUDFCompilationTimeTimer){
     this->initPython();
 }
 
@@ -189,10 +189,7 @@ std::string PythonUDFOperatorHandler::getModulesToImportAsString() {
 }
 
 void PythonUDFOperatorHandler::initPython() {
-    Timer initPythonTimer("Initialize Python Function");
-    Timer execPythonTimer("Execute Python Code");
-    Timer compilePythonTimer("Compile Python Code");
-    initPythonTimer.start();
+    pythonUDFCompilationTimeTimer.start();
     this->moduleName = this->functionName + "Module";
     // initialize python interpreter
     Py_Initialize();
@@ -212,10 +209,12 @@ void PythonUDFOperatorHandler::initPython() {
         // udf_function_address = udf_function.address
         std::string numbaSignature = this->getNumbaSignature();
         pythonCode += "import numba"
+                      "\n" +
+                      getModulesToImportAsString() +
                       "\n"
-                      "@numba.cfunc(\""
-            + numbaSignature + "\", nopython=True)\n" + this->function + "\n" + this->functionName
-            + "_address = " + this->functionName + ".address";
+                      "@numba.cfunc(\"" + numbaSignature + "\", nopython=True)\n" +
+                      this->function + "\n" +
+                      this->functionName + "_address = " + this->functionName + ".address";
         //PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
     } else {
         // default, just using the CPython compiler or Cython or Nuitka
@@ -262,7 +261,7 @@ void PythonUDFOperatorHandler::initPython() {
         this->generatePythonFile(path, file, pythonCode);
 
         // python3 -m nuitka --module some_module.py
-        auto generateSOFile = "python3 -m nuitka --module " + path + std::filesystem::path::preferred_separator + this->functionName + ".py";
+        auto generateSOFile = "python3 -m nuitka --plugin-enable=numpy --module " + path + std::filesystem::path::preferred_separator + this->functionName + ".py";
         std::system(generateSOFile.c_str());
 
         this->importCompiledPythonModule(path);
@@ -281,7 +280,7 @@ void PythonUDFOperatorHandler::initPython() {
                                  "     " + functionDeclaration + ";\n"
                                  "\"\"\")\n"
                                  "\n"
-                                 "ffibuilder.set_source(\"udfs\", \"\", extra_link_args=['-Wl,-rpath=/usr/lib/pypy3/bin'])\n"
+                                 "ffibuilder.set_source(\"udfs\", \"\", extra_link_args=['-Wl,-rpath=/home/phm98/pypy2.7-v7.3.13-linux64/bin'])\n"
                                  "\n"
                                  "ffibuilder.embedding_init_code(\"\"\"\n"
                                  "from udfs import ffi\n"
@@ -297,14 +296,13 @@ void PythonUDFOperatorHandler::initPython() {
         this->generatePythonFile(path, file, pythonFile);
 
         // run cffiEmbedding with pypy
-        auto generateSOFile = "pypy " + file;
+        auto generateSOFile = "$HOME/pypy2.7-v7.3.13-linux64/bin/pypy " + file;
         std::system(generateSOFile.c_str());
 
         //auto soFile = path + std::filesystem::path::preferred_separator + "udfs.so";
 
     } else {
         // compile function string
-        compilePythonTimer.start();
         PyObject* compiledPythonCode = Py_CompileString(pythonCode.c_str(), "", Py_file_input);
         if (compiledPythonCode == NULL) {
             if (PyErr_Occurred()) {
@@ -313,9 +311,6 @@ void PythonUDFOperatorHandler::initPython() {
                 NES_THROW_RUNTIME_ERROR("Could not compile function string.");
             }
         }
-        compilePythonTimer.snapshot("compiledPythonCode");
-        compilePythonTimer.pause();
-        execPythonTimer.start();
         // add python code into our module
         this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), compiledPythonCode);
         if (this->pythonModule == NULL) {
@@ -325,28 +320,9 @@ void PythonUDFOperatorHandler::initPython() {
             }
             NES_THROW_RUNTIME_ERROR("Cannot add function " << this->functionName << " to module " << this->moduleName);
         }
-        execPythonTimer.snapshot("addedCodeintoModule");
-        execPythonTimer.pause();
-        initPythonTimer.snapshot("init");
-        initPythonTimer.pause();
-        auto path = std::filesystem::current_path().string() + "/dump/initpython.txt";
-        std::ofstream outputFile;
-        outputFile.open(path, std::ios_base::app);
-        outputFile << initPythonTimer.getPrintTime() << "\n";
-        outputFile.close();
-
-        path = std::filesystem::current_path().string() + "/dump/initcompilepython.txt";
-        std::ofstream outputCompileFile;
-        outputCompileFile.open(path, std::ios_base::app);
-        outputCompileFile << compilePythonTimer.getPrintTime() << "\n";
-        outputCompileFile.close();
-
-        path = std::filesystem::current_path().string() + "/dump/initexecutepython.txt";
-        std::ofstream outputExecuteFile;
-        outputExecuteFile.open(path, std::ios_base::app);
-        outputExecuteFile << execPythonTimer.getPrintTime() << "\n";
-        outputExecuteFile.close();
     }
+    pythonUDFCompilationTimeTimer.snapshot("init");
+    pythonUDFCompilationTimeTimer.pause();
 }
 
 void PythonUDFOperatorHandler::finalize() {
@@ -364,6 +340,10 @@ void PythonUDFOperatorHandler::finalize() {
             NES_THROW_RUNTIME_ERROR("Something went wrong with finalizing Python");
         }
     }
+}
+
+void PythonUDFOperatorHandler::addSumExecution(double printTime) {
+    sumExecution += printTime;
 }
 
 }// namespace NES::Runtime::Execution::Operators

@@ -44,6 +44,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TPCH/Query6.hpp>
+#include <TPCH/Query6PythonUDF.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -98,6 +99,57 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
     auto& lineitems = tables[TPCHTable::LineItem];
 
     auto plan = TPCH_Query6::getPipelinePlan(tables, bm);
+
+    // process table
+    NES_INFO("Process {} chunks", lineitems->getChunks().size());
+    Timer timer("Q6");
+    timer.start();
+    auto pipeline1 = plan.getPipeline(0);
+    auto pipeline2 = plan.getPipeline(1);
+    auto aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
+    auto emitExecutablePipeline = provider->create(pipeline2.pipeline, options);
+    aggExecutablePipeline->setup(*pipeline1.ctx);
+    emitExecutablePipeline->setup(*pipeline2.ctx);
+    timer.snapshot("setup");
+    for (auto& chunk : lineitems->getChunks()) {
+        aggExecutablePipeline->execute(chunk, *pipeline1.ctx, *wc);
+    }
+    timer.snapshot("execute agg");
+    auto dummyBuffer = TupleBuffer();
+    emitExecutablePipeline->execute(dummyBuffer, *pipeline2.ctx, *wc);
+    timer.snapshot("execute emit");
+
+    aggExecutablePipeline->stop(*pipeline1.ctx);
+    emitExecutablePipeline->stop(*pipeline2.ctx);
+    timer.snapshot("stop");
+    timer.pause();
+    std::stringstream timerAsString;
+    timerAsString << timer;
+    NES_INFO("Query Runtime:\n{}", timerAsString.str());
+    // compare results
+    auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    resultSchema->addField("revenue", BasicType::FLOAT32);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(resultLayout, pipeline2.ctx->buffers[0]);
+    if (targetScaleFactor == TPCH_Scale_Factor::F1) {
+        NES_INFO("{:f}", resultDynamicBuffer[0][0].read<float>());
+        EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 122817720.0f, 200);
+    } else if (targetScaleFactor == TPCH_Scale_Factor::F0_01) {
+        NES_INFO("{:f}", resultDynamicBuffer[0][0].read<float>());
+        EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 1192973.625f, 200);
+    } else {
+        GTEST_FAIL();
+    }
+}
+
+/**
+ * @brief Emit operator that emits a row oriented tuple buffer.
+ */
+TEST_P(TPCH_Q6, aggregationPipelinePython) {
+
+    auto& lineitems = tables[TPCHTable::LineItem];
+
+    auto plan = TPCH_Query6_Python::getPipelinePlan(tables, bm, "default");
 
     // process table
     NES_INFO("Process {} chunks", lineitems->getChunks().size());

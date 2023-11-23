@@ -25,6 +25,7 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Util/Dyncall.hpp>
+#include <Util/Timer.hpp>
 #include <mutex>
 #include <utility>
 
@@ -40,7 +41,8 @@ class PythonUDFOperatorHandler : public OperatorHandler {
                                       const std::map<std::string, std::string> modulesToImport,
                                       const std::string& pythonCompiler,
                                       SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema);
+                                      SchemaPtr outputSchema,
+                                      Timer<>& pythonUDFCompilationTimeTimer);
 
     /**
      * @brief This method returns the udf as a string
@@ -132,6 +134,9 @@ class PythonUDFOperatorHandler : public OperatorHandler {
     void generatePythonFile(std::string path, std::string file, std::string pythonCode);
     void importCompiledPythonModule(std::string path);
 
+    double getSumExecution() const { return this->sumExecution;}
+    void addSumExecution(double printTime);
+
     /**
      * @brief Initializes the python udf in a module
      */
@@ -160,6 +165,8 @@ class PythonUDFOperatorHandler : public OperatorHandler {
     PyObject* locals; // python local variables
     PyObject* globals; // python global variables
     Backends::BC::Dyncall& dyncall = Backends::BC::Dyncall::getVM();
+    Timer<>& pythonUDFCompilationTimeTimer;
+    double sumExecution = 0;
 };
 
 }// namespace NES::Runtime::Execution::Operators

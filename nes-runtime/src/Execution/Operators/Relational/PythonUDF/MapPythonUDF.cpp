@@ -40,8 +40,8 @@ namespace NES::Runtime::Execution::Operators {
  * @return the result of the python udf
  */
 void* executeMapUdf(void* state) {
-    Timer executeCPython("executeCPython");
-    executeCPython.start();
+    Timer pythonUDFExecutionTimeTimer("PythonUDFExecution");
+    pythonUDFExecutionTimeTimer.start();
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     // get module and python arguments for the udf
@@ -73,14 +73,11 @@ void* executeMapUdf(void* state) {
     pythonInterpreterErrorCheck(pythonArguments,
                                 __func__,
                                 __LINE__,
-                                "Something went wrong. Result of the Python UDF is NULL");
-    executeCPython.snapshot("Executed CPython");
-    executeCPython.pause();
-    auto path = std::filesystem::current_path().string() + "/dump/executepython.txt";
-    std::ofstream outputFile;
-    outputFile.open(path, std::ios_base::app);
-    outputFile << executeCPython.getPrintTime() << "\n";
-    outputFile.close();
+                               "Something went wrong. Result of the Python UDF is NULL");
+
+    pythonUDFExecutionTimeTimer.snapshot("executePythonUDF");
+    pythonUDFExecutionTimeTimer.pause();
+    handler->addSumExecution(pythonUDFExecutionTimeTimer.getPrintTime());
     return result;
 }
 
@@ -97,6 +94,17 @@ void createBooleanPythonObject(void* state, bool value) {
     } else {
         handler->setPythonVariable(Py_False);
     }
+}
+
+/**
+ * @brief Creates the string object for the python udf argument
+ * @param state PythonUDFOperatorHandler
+ * @param value TextValue value
+ */
+void createStringPythonObject(void* state, TextValue* value) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    auto handler = static_cast<PythonUDFOperatorHandler*>(state);
+    handler->setPythonVariable(PyUnicode_FromString(value->strn_copy().data()));
 }
 
 /**
@@ -195,8 +203,8 @@ void createPythonEnvironment(void* state) {
 void initPythonTupleSize(void* state, int size) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    PyObject* pythonArguments = handler->getPythonArguments();
-    pythonArguments = PyTuple_New(size);
+    //PyObject* pythonArguments = handler->getPythonArguments();
+    PyObject* pythonArguments = PyTuple_New(size);
     handler->setPythonArguments(pythonArguments);
 }
 
@@ -254,6 +262,9 @@ T transformOutputType(void* outputPtr, int position, int tupleSize) {
         value = PyLong_AsLong(output);
     } else if constexpr (std::is_same<T, int8_t>::value) {
         value = PyLong_AsLong(output);
+    } else if constexpr (std::is_same<T, TextValue*>::value) {
+        auto string = PyUnicode_AsUTF8(output);
+        value = TextValue::create(string);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
@@ -270,6 +281,18 @@ T transformOutputType(void* outputPtr, int position, int tupleSize) {
 bool transformBooleanType(void* outputPtr, int position, int tupleSize) {
     NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
     return transformOutputType<bool>(outputPtr, position, tupleSize);
+}
+
+/**
+ * @brief Transforms the PyObject into a TextValue
+ * @param outputPtr pyObject as a python tuple
+ * @param position position in the pyObject tuple
+ * @param tupleSize size of the tuple
+ * @return transformed output as a c++  data type
+ */
+TextValue* transformStringType(void* outputPtr, int position, int tupleSize) {
+    NES_ASSERT2_FMT(outputPtr != nullptr, "OutputPtr should not be null");
+    return transformOutputType<TextValue*>(outputPtr, position, tupleSize);
 }
 
 /**
@@ -376,7 +399,6 @@ bool useNumba(void* state) {
  */
 void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-
     // FunctionCall("createPythonEnvironment", createPythonEnvironment, handler);
     //auto numbaActivated = FunctionCall("useNumba", useNumba, handler);
     if (pythonCompiler == "numba" || pythonCompiler == "pypy") {
@@ -494,6 +516,8 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
                 FunctionCall("createShortPythonObject", createShortPythonObject, handler, record.read(fieldName).as<Int16>());// Short
             } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
                 FunctionCall("createBytePythonObject", createBytePythonObject, handler, record.read(fieldName).as<Int8>());// Byte
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+                FunctionCall<>("createStringPythonObject", createStringPythonObject, handler, record.read(fieldName).as<Text>()->getReference()); // String
             } else {
                 NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
             }
@@ -536,6 +560,9 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
                 Value<> val =
                     FunctionCall("transformByteType", transformByteType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
                 record.write(fieldName, val);// Byte
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+                Value<> val = FunctionCall<>("transformStringType", transformStringType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
+                record.write(fieldName, val);// String
             } else {
                 NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
             }

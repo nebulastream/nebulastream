@@ -58,7 +58,7 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/PythonUDFTestData";
 };
 
-std::string compiler = "numba"; // use default compiler
+std::string compiler = "default"; // use default compiler
 
 /**
  * Initializes a pipeline with a Scan of the input tuples, a MapPythonUDF operator, and a emit of the processed tuples.
@@ -295,7 +295,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
  * @brief Test a pipeline containing a scan, a python map with strings, and a emit operator
  *
  */
-TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineStringMap) {
     auto variableName = "stringVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -305,7 +305,7 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++) {
-        std::string value = "X";
+        std::string value = "Appended String:";
         auto varLengthBuffer = bm->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
@@ -343,7 +343,7 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
  * @brief Test a pipeline containing a scan, a python map with multiple types, and a emit operator
  * This test does not work for numba as our implementation only accepts a return of one value
  */
-TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineComplexMap) {
+TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("byteVariable", BasicType::INT8);
     schema->addField("shortVariable", BasicType::INT16);

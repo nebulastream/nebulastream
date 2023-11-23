@@ -28,10 +28,9 @@ T executePyPy(void* state){
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
     auto dyncall = handler->getDynCall();
 
-    void *udfSO = dlopen("udfs.so", RTLD_LAZY | RTLD_DEEPBIND);
+    void *udfSO = dlopen("/home/phm98/nebulastream/nebulastream/cmake-build-debug/nes-runtime/benchmark/tmp/udfs.so", RTLD_LAZY | RTLD_DEEPBIND);
     if(udfSO == NULL){
-        std::cout << "Could not load udfs.so" << '\n';
-        fprintf(stderr, "dlopen failed: %s\n", dlerror());
+        NES_THROW_RUNTIME_ERROR("Could not load udfs.so", dlerror());
     }
     //int hello = (int)dlsym( lib, "integer_test" );
     auto functionAddress = dlsym(udfSO, handler->getFunctionName().c_str());
@@ -44,7 +43,6 @@ T executePyPy(void* state){
         result = dyncall.callF((void*) functionAddress);
     }  else if constexpr (std::is_same<T, double>::value) {
         result = dyncall.callD((void*) functionAddress);
-        std::cout << result << '\n';
     } else if constexpr (std::is_same<T, int64_t>::value) {
         result = dyncall.callI64((void*) functionAddress);
     } else if constexpr (std::is_same<T, int32_t>::value) {
