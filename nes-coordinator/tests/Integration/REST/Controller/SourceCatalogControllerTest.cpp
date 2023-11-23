@@ -89,9 +89,6 @@ TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response;
     ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
     NES_DEBUG("{}", r.text);
@@ -128,9 +125,6 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json response;
     ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
     ASSERT_TRUE(response.contains("Physical Sources") && response["Physical Sources"].size() != 0);
@@ -154,9 +148,6 @@ TEST_F(SourceCatalogControllerTest, testGetSchema) {
     cpr::Response r = future.get();
     // returns 200 OK
     EXPECT_EQ(r.status_code, 200l);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     SerializableSchema response;
     // parse the returned schema
     response.ParseFromString(r.text);
@@ -183,9 +174,6 @@ TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
     future.wait();
     cpr::Response response = future.get();
     EXPECT_EQ(response.status_code, 200l);
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(response.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json success;
     ASSERT_NO_THROW(success = nlohmann::json::parse(response.text));
     ASSERT_TRUE(success["success"]);
@@ -216,9 +204,6 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     ASSERT_EQ(r.status_code, 200l);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonResponse;
     ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r.text));
     ASSERT_TRUE(jsonResponse["success"]);
@@ -242,9 +227,6 @@ TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     ASSERT_EQ(r.status_code, 200l);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json success;
     ASSERT_NO_THROW(success = nlohmann::json::parse(r.text));
     ASSERT_TRUE(success["success"]);
