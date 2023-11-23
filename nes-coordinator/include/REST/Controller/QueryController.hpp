@@ -66,11 +66,13 @@ class QueryController : public oatpp::web::server::api::ApiController {
     QueryController(const std::shared_ptr<ObjectMapper>& objectMapper,
                     const QueryServicePtr& queryService,
                     const QueryCatalogServicePtr& queryCatalogService,
+                    const GlobalQueryPlanPtr& globalQueryPlan,
                     const GlobalExecutionPlanPtr& globalExecutionPlan,
                     const std::string& completeRouterPrefix,
                     const ErrorHandlerPtr& errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(queryService),
-          queryCatalogService(queryCatalogService), globalExecutionPlan(globalExecutionPlan), errorHandler(errorHandler) {}
+          queryCatalogService(queryCatalogService), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
+          errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -80,6 +82,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     static std::shared_ptr<QueryController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
                                                    const QueryServicePtr& queryService,
                                                    const QueryCatalogServicePtr& queryCatalogService,
+                                                   const GlobalQueryPlanPtr& globalQueryPlan,
                                                    const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    const std::string& routerPrefixAddition,
                                                    const ErrorHandlerPtr& errorHandler) {
@@ -87,6 +90,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         return std::make_shared<QueryController>(objectMapper,
                                                  queryService,
                                                  queryCatalogService,
+                                                 globalQueryPlan,
                                                  globalExecutionPlan,
                                                  completeRouterPrefix,
                                                  errorHandler);
@@ -94,8 +98,12 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/execution-plan", getExecutionPlan, QUERY(UInt64, queryId, "queryId")) {
         try {
-            const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
+            //throws an exception if query with the provided id does not exists
+            queryCatalogService->getEntryForQuery(queryId);
+            //find the shared query plan id hosting the query
+            auto sharedQueryPlanId = globalQueryPlan->getSharedQueryId(queryId);
+            //Return the execution nodes running the shared query plan
+            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, sharedQueryPlanId);
             NES_DEBUG("QueryController:: execution-plan: {}", executionPlanJson.dump());
             return createResponse(Status::CODE_200, executionPlanJson.dump());
         } catch (Exceptions::QueryNotFoundException& e) {
@@ -372,6 +380,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
 
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
+    GlobalQueryPlanPtr globalQueryPlan;
     GlobalExecutionPlanPtr globalExecutionPlan;
     ErrorHandlerPtr errorHandler;
 };

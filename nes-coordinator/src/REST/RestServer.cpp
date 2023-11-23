@@ -119,6 +119,7 @@ void RestServer::run() {
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      queryService,
                                                                      queryCatalogService,
+                                                                     globalQueryPlan,
                                                                      globalExecutionPlan,
                                                                      "/query",
                                                                      errorHandler);
