@@ -22,6 +22,10 @@ file(COPY test-configs DESTINATION .)
 add_compile_definitions(TEST_CONFIGS_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test-configs/")
 message(STATUS "Test Data Directory: ${TEST_CONFIGS_DIRECTORY}/test-configs")
 
+# Adding unit test for GenericDataGenerator
+add_nes_unit_test(generic-data-generator-test "UnitTests/DataGeneration/GenericDataGeneratorDebug.cpp")
+target_link_libraries(generic-data-generator-test nes-benchmark)
+
 # Adding unit test for DefaultDataGenerator
 add_nes_unit_test(default-data-generator-test "UnitTests/DataGeneration/DefaultDataGeneratorTest.cpp")
 target_link_libraries(default-data-generator-test nes-benchmark)

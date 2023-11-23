@@ -1,0 +1,62 @@
+{
+  "num_benchmark_iterations": 1,
+  "benchmark_name": "Test Col Verti",
+  "memory_layout": "ColumnLayout",
+  "compression_mode": "vertical",
+  "num_buffers": 1,
+  "buffer_size": 500,
+  "data_types": [
+    {
+      "data_type": "INT8",
+      "min_value": 55,
+      "max_value": 100
+    },
+    {
+      "data_type": "FLOAT64",
+      "min_value": 3.131,
+      "max_value": 99.0002
+    },
+    {
+      "data_type": "TEXT",
+      "min_value": 0,
+      "max_value": 88,
+      "data_set": "IPSUM_WORDS"
+    },
+    {
+      "data_type": "TEXT",
+      "min_value": 0,
+      "max_value": 10,
+      "data_set": "IPSUM_Sentences"
+    }
+  ],
+  "distributions": [
+    {
+      "distribution_name": "REPEATING_VALUES",
+      "seed": 42,
+      "sort": false,
+      "num_repeats": 5,
+      "sigma": 10,
+      "change_probability": 0.3
+    },
+    {
+      "distribution_name": "UNIFORM",
+      "seed": 42,
+      "sort": false
+    },
+    {
+      "distribution_name": "BINOMIAL",
+      "seed": 42,
+      "sort": false,
+      "probability": 0.5
+    },
+    {
+      "distribution_name": "ZIPF",
+      "seed": 42,
+      "sort": false,
+      "alpha": 0.5
+    }
+  ],
+  "compression_algorithms": [
+    "LZ4"
+  ]
+}

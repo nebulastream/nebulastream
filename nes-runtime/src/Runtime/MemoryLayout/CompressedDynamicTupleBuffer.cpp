@@ -29,7 +29,8 @@ namespace NES::Runtime::MemoryLayouts {
 
 CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer)
     : DynamicTupleBuffer(memoryLayout, std::move(buffer)) {
-    baseDstPointer = (uint8_t*) malloc(getBuffer().getBufferSize());
+    baseDstPointer = (uint8_t*) calloc(1, getBuffer().getBufferSize());
+    //baseDstPointer = (uint8_t*) malloc(getBuffer().getBufferSize());
     offsets = getOffsets(memoryLayout);
     compressedSizes = std::vector<size_t>(offsets.size(), 0);
     compressionAlgorithms = std::vector<CompressionAlgorithm>(offsets.size(), CompressionAlgorithm::NONE);
@@ -49,7 +50,8 @@ CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr
                                                            TupleBuffer buffer,
                                                            const CompressionMode& compressionMode)
     : DynamicTupleBuffer(memoryLayout, std::move(buffer)) {
-    baseDstPointer = (uint8_t*) malloc(getBuffer().getBufferSize());
+    baseDstPointer = (uint8_t*) calloc(1, getBuffer().getBufferSize());
+    //baseDstPointer = (uint8_t*) malloc(getBuffer().getBufferSize());
     offsets = getOffsets(memoryLayout);
     compressedSizes = std::vector<size_t>(offsets.size(), 0);
     compressionAlgorithms = std::vector<CompressionAlgorithm>(offsets.size(), CompressionAlgorithm::NONE);
@@ -57,21 +59,30 @@ CompressedDynamicTupleBuffer::CompressedDynamicTupleBuffer(const MemoryLayoutPtr
     this->compressionMode = compressionMode;
 }
 
-CompressedDynamicTupleBuffer::~CompressedDynamicTupleBuffer() { free(baseDstPointer); }
+CompressedDynamicTupleBuffer::~CompressedDynamicTupleBuffer() {
+    // TODO
+    /*
+    if (baseDstPointer != nullptr)
+        free(baseDstPointer);
+    */
+}
 
 std::vector<CompressionAlgorithm> CompressedDynamicTupleBuffer::getCompressionAlgorithms() { return compressionAlgorithms; }
 CompressionMode CompressedDynamicTupleBuffer::getCompressionMode() { return compressionMode; }
 std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets() { return offsets; }
 std::vector<size_t> CompressedDynamicTupleBuffer::getCompressedSizes() { return compressedSizes; }
 size_t CompressedDynamicTupleBuffer::getTotalCompressedSize() {
-    return std::reduce(compressedSizes.begin(), compressedSizes.end());// sum
-}
-size_t CompressedDynamicTupleBuffer::getTotalOriginalSize() { return getMemoryLayout()->getTupleSize() * getNumberOfTuples(); }
-double CompressedDynamicTupleBuffer::getCompressionRatio() {
     size_t compressedSize = 0;
     for (const auto& s : compressedSizes)
         compressedSize += s;
-    return (double) getTotalOriginalSize() / (double) compressedSize;
+    return compressedSize;
+}
+size_t CompressedDynamicTupleBuffer::getTotalOriginalSize() {
+    // TODO invalid
+    return getMemoryLayout()->getTupleSize() * getNumberOfTuples();
+}
+double CompressedDynamicTupleBuffer::getCompressionRatio() {
+    return (double) getTotalOriginalSize() / (double) getTotalCompressedSize();
 }
 
 void CompressedDynamicTupleBuffer::clearBuffer(uint8_t* buf, const size_t start, const size_t end) {
@@ -79,10 +90,7 @@ void CompressedDynamicTupleBuffer::clearBuffer(uint8_t* buf, const size_t start,
         buf[i] = '\0';
 }
 
-void CompressedDynamicTupleBuffer::clearBuffer(uint8_t* buf, const size_t size) {
-    for (size_t i = 0; i < size; i++)
-        buf[i] = '\0';
-}
+void CompressedDynamicTupleBuffer::clearBuffer(uint8_t* buf, const size_t size) { clearBuffer(buf, 0, size); }
 
 std::vector<uint64_t> CompressedDynamicTupleBuffer::getOffsets(const MemoryLayoutPtr& memoryLayout) {
     if (auto rowLayout = dynamic_cast<RowLayout*>(memoryLayout.get())) {

@@ -1,9 +1,18 @@
 #ifndef NES_GENERICDATADISTRIBUTION_HPP
 #define NES_GENERICDATADISTRIBUTION_HPP
 
+#include "Util/Logger/Logger.hpp"
+#include <nlohmann/json.hpp>
+#include <random>
+
 namespace NES::Benchmark::DataGeneration {
 
 enum class DistributionName { REPEATING_VALUES, UNIFORM, BINOMIAL, ZIPF };
+NLOHMANN_JSON_SERIALIZE_ENUM(DistributionName,
+                             {{DistributionName::REPEATING_VALUES, "REPEATING_VALUES"},
+                              {DistributionName::UNIFORM, "UNIFORM"},
+                              {DistributionName::BINOMIAL, "BINOMIAL"},
+                              {DistributionName::ZIPF, "ZIPF"}})
 
 [[maybe_unused]] static std::string getDistributionName(enum DistributionName dn) {
     switch (dn) {
@@ -22,6 +31,17 @@ class GenericDataDistribution {
     virtual DistributionName getName() { return distributionName; }
     size_t seed = rd();
     bool sort = false;
+
+    // RepeatingValues
+    int numRepeats = -1;
+    uint8_t sigma = -1;
+    double changeProbability = -1;
+
+    // Binomial
+    double probability = -1;
+
+    // Zipf
+    double alpha = -1;
 
   protected:
     DistributionName distributionName;
@@ -47,15 +67,6 @@ class RepeatingValues : public GenericDataDistribution {
         this->sigma = sigma;
         this->changeProbability = changeProbability;
     }
-    virtual ~RepeatingValues() {
-        numRepeats = 0;
-        sigma = 0;
-        changeProbability = 0;
-    }
-
-    int numRepeats;
-    uint8_t sigma;
-    double changeProbability;
 };
 
 class Uniform : public GenericDataDistribution {
@@ -74,8 +85,6 @@ class Binomial : public GenericDataDistribution {
         distributionName = DistributionName::BINOMIAL;
         this->probability = probability;
     }
-
-    double probability;
 };
 
 class Zipf : public GenericDataDistribution {
@@ -86,8 +95,6 @@ class Zipf : public GenericDataDistribution {
         distributionName = DistributionName::ZIPF;
         this->alpha = alpha;
     }
-
-    double alpha;
 };
 }// namespace NES::Benchmark::DataGeneration
 

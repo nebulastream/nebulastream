@@ -32,40 +32,33 @@ limitations under the License.
 #include <random>
 
 namespace NES::Benchmark::DataGeneration {
+
 // ====================================================================================================
 // Data Generator
 // ====================================================================================================
-template<typename... Args>
+template<typename... Args>// TODO remove Args
 class GenericDataGenerator : public DataGenerator {
   public:
-    explicit GenericDataGenerator(Schema::MemoryLayoutType layoutType, const Args&... tupleArgs) {
+    explicit GenericDataGenerator(Schema::MemoryLayoutType layoutType,
+                                  std::vector<std::shared_ptr<GenericDataGeneratorParameter>> parameters) {
+        this->parameters = parameters;
         this->schema = Schema::create();
         schema->setLayoutType(layoutType);
-        size_t i = 0;
-        (
-            [&] {
-                GenericDataGeneratorParameter baseParameter = (GenericDataGeneratorParameter&&) tupleArgs;
-                if (baseParameter.nesType == BasicType::TEXT) {
-                    TextParameter textParameter = (TextParameter&&) tupleArgs;
-                    DataTypePtr dataType = std::make_shared<FixedChar>(textParameter.fixedCharLength);
-                    std::string str = "f_" + std::to_string(i);
-                    schema->addField(str, dataType);
-                } else {
-                    std::string str = "f_" + std::to_string(i);
-                    schema->addField(str, baseParameter.nesType);
-                }
-                i++;
-            }(),
-            ...);
+        for (size_t i = 0; i < parameters.size(); i++) {
+            if (parameters[i]->nesType == NES::BasicType::TEXT) {
+                TextParameter textParameter = (TextParameter&&) parameters[i];
+                DataTypePtr dataType = std::make_shared<FixedChar>(textParameter.fixedCharLength);
+                std::string str = "f_" + std::to_string(i);
+                schema->addField(str, dataType);
+            } else {
+                std::string str = "f_" + std::to_string(i);
+                schema->addField(str, parameters[i]->nesType);
+            }
+        }
     }
 
     std::string getName() override { return "Bytes"; }
-    std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override {
-        (void) numberOfBuffers;
-        (void) bufferSize;
-        NES_NOT_IMPLEMENTED();
-    }
-    std::vector<Runtime::TupleBuffer> createData(size_t numBuffers, size_t bufferSize, const Args&... tupleArgs) {
+    std::vector<Runtime::TupleBuffer> createData(size_t numBuffers, size_t bufferSize) override {
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numBuffers);
 
@@ -73,36 +66,33 @@ class GenericDataGenerator : public DataGenerator {
             Runtime::TupleBuffer bufferRef = DataGenerator::allocateBuffer();
             auto dynamicBuffer = Runtime::MemoryLayouts::CompressedDynamicTupleBuffer(getMemoryLayout(bufferSize), bufferRef);
 
-            size_t columnIndex = 0;
-            (// iterate over tupleArgs
-                [&] {
-                    GenericDataGeneratorParameter baseParameter = (GenericDataGeneratorParameter&&) tupleArgs;
-                    switch (baseParameter.nesType) {
-                        case BasicType::INT8: break;
-                        case BasicType::UINT8: break;
-                        case BasicType::INT16: break;
-                        case BasicType::UINT16: break;
-                        case BasicType::INT32: {
-                            Int32Parameter parameter = (Int32Parameter&&) tupleArgs;
-                            fillColumnInt32(dynamicBuffer, columnIndex, parameter);
-                            break;
-                        }
-                        case BasicType::UINT32: break;
-                        case BasicType::INT64: break;
-                        case BasicType::FLOAT32: break;
-                        case BasicType::UINT64: break;
-                        case BasicType::FLOAT64: break;
-                        case BasicType::BOOLEAN: break;
-                        case BasicType::CHAR: break;
-                        case BasicType::TEXT: {
-                            TextParameter parameter = (TextParameter&&) tupleArgs;
-                            fillColumnText(dynamicBuffer, columnIndex, parameter);
-                            break;
-                        }
+            for (size_t i = 0; i < parameters.size(); i++) {
+                auto baseParameter = parameters[i];
+                switch (baseParameter->nesType) {// TODO == 112
+                    case BasicType::INT8: NES_NOT_IMPLEMENTED();
+                    case BasicType::UINT8: NES_NOT_IMPLEMENTED();
+                    case BasicType::INT16: NES_NOT_IMPLEMENTED();
+                    case BasicType::UINT16: NES_NOT_IMPLEMENTED();
+                    case BasicType::INT32: {
+                        Int32Parameter parameter = (Int32Parameter&&) parameters[i];
+                        fillColumnInt32(dynamicBuffer, i, parameter);
+                        break;
                     }
-                    columnIndex++;
-                }(),
-                ...);
+                    case BasicType::UINT32: NES_NOT_IMPLEMENTED();
+                    case BasicType::INT64: NES_NOT_IMPLEMENTED();
+                    case BasicType::FLOAT32: NES_NOT_IMPLEMENTED();
+                    case BasicType::UINT64: NES_NOT_IMPLEMENTED();
+                    case BasicType::FLOAT64: NES_NOT_IMPLEMENTED();
+                    case BasicType::BOOLEAN: NES_NOT_IMPLEMENTED();
+                    case BasicType::CHAR: NES_NOT_IMPLEMENTED();
+                    case BasicType::TEXT: {
+                        TextParameter parameter = (TextParameter&&) parameters[i];
+                        fillColumnText(dynamicBuffer, i, parameter);
+                        break;
+                    }
+                    default: NES_THROW_RUNTIME_ERROR("Invalid argument");
+                }
+            }
             createdBuffers.push_back(bufferRef);
         }
         return createdBuffers;
@@ -118,6 +108,7 @@ class GenericDataGenerator : public DataGenerator {
 
   private:
     SchemaPtr schema;
+    std::vector<std::shared_ptr<GenericDataGeneratorParameter>> parameters;
     template<typename T>
     static void randomizeHistogramOrder(std::map<T, size_t>& histogram, size_t seed) {
         std::mt19937 gen(seed);
@@ -281,6 +272,17 @@ class GenericDataGenerator : public DataGenerator {
                     NES_THROW_RUNTIME_ERROR("maxIndexValue cannot be larger than " << IpsumSentences::maxIndexValue);
                 break;
             }
+            case TOP_500_DOMAINS: {
+                if (maxIndexValue > Top500Urls::maxIndexValue)
+                    NES_THROW_RUNTIME_ERROR("maxIndexValue cannot be larger than " << Top500Urls::maxIndexValue);
+                break;
+            }
+            case WIKI_TITLES_10000: {
+                if (maxIndexValue > WikiTitles10000::maxIndexValue)
+                    NES_THROW_RUNTIME_ERROR("maxIndexValue cannot be larger than " << WikiTitles10000::maxIndexValue);
+                break;
+            }
+            case INVALID: NES_NOT_IMPLEMENTED();
         }
         std::mt19937 gen(distribution->seed);
         std::uniform_int_distribution<size_t> randomIndex(minIndexValue, maxIndexValue);
@@ -317,6 +319,29 @@ class GenericDataGenerator : public DataGenerator {
                     }
                     break;
                 }
+                case TOP_500_DOMAINS: {
+                    while (curRun < repeats[columnIndex] && row < buffer.getCapacity()) {
+                        char* textValue = (char*) malloc(sizeof(char) * Top500Urls::maxValueLength);
+                        getTextValue(textValue, Top500Urls::filePath, lineNumber);
+                        ExecutableTypes::Array<char, Top500Urls::maxValueLength> value(textValue);
+                        buffer[row][columnIndex].write<ExecutableTypes::Array<char, Top500Urls::maxValueLength>>(value);
+                        curRun++;
+                        row++;
+                    }
+                    break;
+                }
+                case WIKI_TITLES_10000: {
+                    while (curRun < repeats[columnIndex] && row < buffer.getCapacity()) {
+                        char* textValue = (char*) malloc(sizeof(char) * WikiTitles10000::maxValueLength);
+                        getTextValue(textValue, WikiTitles10000::filePath, lineNumber);
+                        ExecutableTypes::Array<char, WikiTitles10000::maxValueLength> value(textValue);
+                        buffer[row][columnIndex].write<ExecutableTypes::Array<char, WikiTitles10000::maxValueLength>>(value);
+                        curRun++;
+                        row++;
+                    }
+                    break;
+                }
+                case INVALID: NES_NOT_IMPLEMENTED();
             }
             auto newLineNumber = randomIndex(gen);
             while (newLineNumber == lineNumber)
@@ -331,7 +356,8 @@ class GenericDataGenerator : public DataGenerator {
 
     static void
     fillColumnInt32(Runtime::MemoryLayouts::CompressedDynamicTupleBuffer& buffer, size_t columnIndex, Int32Parameter parameter) {
-        switch (parameter.dataDistribution->getName()) {
+        auto p = parameter.dataDistribution->getName();// TODO FAILS
+        switch (p) {
             case DistributionName::REPEATING_VALUES: {
                 auto distribution = (RepeatingValues&&) parameter.dataDistribution;
                 fillColumnRepeatingValues<int32_t>(buffer, columnIndex, distribution, parameter.minValue, parameter.maxValue);
@@ -352,6 +378,7 @@ class GenericDataGenerator : public DataGenerator {
                 fillColumnZipf<int32_t>(buffer, columnIndex, distribution, parameter.minValue, parameter.maxValue);
                 break;
             }
+            default: NES_THROW_RUNTIME_ERROR("Invalid argument");
         }
         //buffer.setNumberOfTuples(dynamicBuffer.getCapacity()); // TODO set capacity
     }
@@ -378,6 +405,7 @@ class GenericDataGenerator : public DataGenerator {
                 fillColumnZipf<int64_t>(buffer, columnIndex, distribution, parameter.minValue, parameter.maxValue);
                 break;
             }
+            default: NES_THROW_RUNTIME_ERROR("Invalid argument");
         }
         //buffer.setNumberOfTuples(dynamicBuffer.getCapacity()); // TODO set capacity
     }
@@ -405,6 +433,7 @@ class GenericDataGenerator : public DataGenerator {
                 fillColumnZipf<double>(buffer, columnIndex, distribution, parameter.minValue, parameter.maxValue);
                 break;
             }
+            default: NES_THROW_RUNTIME_ERROR("Invalid argument");
         }
         //buffer.setNumberOfTuples(dynamicBuffer.getCapacity()); // TODO set capacity
     }
@@ -418,7 +447,7 @@ class GenericDataGenerator : public DataGenerator {
                                               distribution,
                                               parameter.minValue,
                                               parameter.maxValue,
-                                              DataSet::IPSUM_WORDS);
+                                              DataSet::IPSUM_WORDS);// TODO generic
                 break;
             }
             default:

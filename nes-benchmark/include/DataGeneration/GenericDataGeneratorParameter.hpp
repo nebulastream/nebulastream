@@ -9,12 +9,21 @@
 namespace NES::Benchmark::DataGeneration {
 class GenericDataGeneratorParameter {
   public:
+    BasicType nesType;
+    GenericDataDistribution* dataDistribution;
+    GenericDataDistribution dataDistribution2;
+  protected:
     explicit GenericDataGeneratorParameter(BasicType nesType, GenericDataDistribution* dataDistribution) {
         this->nesType = nesType;
         this->dataDistribution = dataDistribution;
     }
-    BasicType nesType;
-    GenericDataDistribution* dataDistribution;
+    explicit GenericDataGeneratorParameter(BasicType nesType, const GenericDataDistribution& dataDistribution) {
+        this->nesType = nesType;
+        this->dataDistribution2 = dataDistribution;
+    }
+    size_t minValue{};
+    size_t maxValue{};
+    size_t fixedCharLength = -1; // only needed for TextParameter, but needed here for memory allocation
 };
 
 class Int8Parameter : public GenericDataGeneratorParameter {
@@ -64,6 +73,11 @@ class Uint16Parameter : public GenericDataGeneratorParameter {
 class Int32Parameter : public GenericDataGeneratorParameter {
   public:
     Int32Parameter(int32_t minValue, int32_t maxValue, GenericDataDistribution* dataDistribution)
+        : GenericDataGeneratorParameter(BasicType::INT32, dataDistribution) {
+        this->minValue = minValue;
+        this->maxValue = maxValue;
+    }
+    Int32Parameter(int32_t minValue, int32_t maxValue, const GenericDataDistribution& dataDistribution)
         : GenericDataGeneratorParameter(BasicType::INT32, dataDistribution) {
         this->minValue = minValue;
         this->maxValue = maxValue;

@@ -19,13 +19,27 @@ limitations under the License.
 #include "Runtime/MemoryLayout/Compression/fsst.h"
 #include <cstring>
 #include <lz4.h>
+#include <nlohmann/json.hpp>
 #include <snappy.h>
 #include <string>
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
 enum CompressionAlgorithm { NONE, LZ4, SNAPPY, RLE, BINARY_RLE, FSST, SPRINTZ };
+NLOHMANN_JSON_SERIALIZE_ENUM(CompressionAlgorithm,
+                             {{NONE, "none"},
+                              {LZ4, "LZ4"},
+                              {SNAPPY, "Snappy"},
+                              {RLE, "RLE"},
+                              {BINARY_RLE, "Binary RLE"},
+                              {FSST, "FSST"},
+                              {SPRINTZ, "Sprintz"}})
 enum CompressionMode { HORIZONTAL, VERTICAL };
+NLOHMANN_JSON_SERIALIZE_ENUM(CompressionMode,
+                             {
+                                 {HORIZONTAL, "horizontal"},
+                                 {VERTICAL, "vertical"},
+                             })
 
 const char* getCompressionAlgorithmName(enum CompressionAlgorithm ca) {
     switch (ca) {
