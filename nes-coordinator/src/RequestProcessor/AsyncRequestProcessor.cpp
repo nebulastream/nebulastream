@@ -107,15 +107,17 @@ void AsyncRequestProcessor::runningRoutine() {
         if (running) {
             AbstractRequestPtr abstractRequest = asyncRequestQueue.front();
 
-            if (abstractRequest->instanceOf<AbstractMultiRequest>()) {
-                //remove the request from the queue only if it is done, leave it in and execute it otherwise
-                if (abstractRequest->as<AbstractMultiRequest>()->isDone()) {
-                    asyncRequestQueue.pop_front();
-                    //todo: do this while keeping the lock?
-                    lock.unlock();
-                    continue;
-                }
-            } else {
+            //todo: update comment
+            //remove the request from the queue only if it is done, leave it in and execute it otherwise
+            if (abstractRequest->instanceOf<AbstractMultiRequest>() && abstractRequest->as<AbstractMultiRequest>()->isDone()) {
+                asyncRequestQueue.pop_front();
+                //todo: do this while keeping the lock?
+                lock.unlock();
+                continue;
+            }
+
+            //todo: comment
+            if (!abstractRequest->instanceOf<AbstractMultiRequest>()) {
                 asyncRequestQueue.pop_front();
             }
 

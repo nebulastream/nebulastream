@@ -24,6 +24,7 @@ class AbstractMultiRequest : public AbstractRequest {
 
   public:
     AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries);
+
     //todo: adjust function doc
     /**
      * @brief Executes the request logic.
@@ -35,9 +36,9 @@ class AbstractMultiRequest : public AbstractRequest {
 
     bool isDone();
 
-protected:
-    //virtual std::vector<AbstractRequestPtr> executeMainRequestLogic(const StorageHandlerPtr& storageHandle) = 0;
-  bool executeSubRequestIfExists(const StorageHandlerPtr& storageHandle);
+  protected:
+    void executeSubRequestWhileQueueNotEmpty(const StorageHandlerPtr& storageHandle);
+
     std::future<std::any> scheduleSubRequest(AbstractSubRequestPtr subRequest);
 
   private:
@@ -49,5 +50,5 @@ protected:
     std::mutex workMutex;
     std::condition_variable cv;
 };
-}
+}// namespace NES::RequestProcessor::Experimental
 #endif// NES_CORE_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTITHREADEDREQUEST_HPP_

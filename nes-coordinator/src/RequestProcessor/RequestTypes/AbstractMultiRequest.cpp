@@ -30,7 +30,7 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
     //let the first acquired thread execute the main thread and set the done memver afterwards
     bool expected = false;
     if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
-        //result = executeMainRequestLogic(storageHandle);
+        //todo: this is not possible
         result = AbstractRequest::execute(storageHandle);
         NES_ASSERT(subRequestQueue.empty(), "Multi request main logic terminated but sub request queue is not empty");
         done = true;
@@ -61,21 +61,23 @@ bool AbstractMultiRequest::executeSubRequest(const StorageHandlerPtr& storageHan
     return true;
 }
 
-bool AbstractMultiRequest::executeSubRequestIfExists(const StorageHandlerPtr& storageHandle) {
-    std::unique_lock lock(workMutex);
-    if (subRequestQueue.empty()) {
-        return false;
-    }
-    AbstractSubRequestPtr subRequest = subRequestQueue.front();
-    subRequestQueue.pop_front();
-    lock.unlock();
+void AbstractMultiRequest::executeSubRequestWhileQueueNotEmpty(const StorageHandlerPtr& storageHandle) {
+    while (true) {
+        std::unique_lock lock(workMutex);
+        if (subRequestQueue.empty()) {
+            break;
+        }
+        AbstractSubRequestPtr subRequest = subRequestQueue.front();
+        subRequestQueue.pop_front();
+        lock.unlock();
 
-    subRequest->execute(storageHandle);
-    return true;
+        subRequest->execute(storageHandle);
+    }
 }
 
 std::future<std::any> AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {
     NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
+    //todo: set id on subrequest
     auto future = subRequest->getFuture();
     subRequestQueue.emplace_back(std::move(subRequest));
     cv.notify_all();
