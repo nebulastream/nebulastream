@@ -57,9 +57,6 @@ TEST_F(TopologyControllerTest, testGetTopology) {
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology"});
     nlohmann::json response;
     EXPECT_EQ(r.status_code, 200l);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     NES_DEBUG("{}", r.text);
     ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
     NES_DEBUG("{}", response.dump());

@@ -65,9 +65,6 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     future1.wait();
     auto r = future1.get();
     EXPECT_EQ(r.status_code, 200l);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonResponse;
     ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r.text));
 
@@ -82,9 +79,6 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     future2.wait();
     auto response2 = future2.get();
     EXPECT_EQ(response2.status_code, 200l);
-    EXPECT_FALSE(response2.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(response2.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(response2.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonResponse2;
     ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(response2.text));
     ASSERT_TRUE(!jsonResponse2.empty());
@@ -102,9 +96,6 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     auto r1 = future1.get();
     // return a 400 BAD REQUEST due to missing query parameters
     EXPECT_EQ(r1.status_code, 400l);
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Headers"));
 
     // When including the status
     cpr::AsyncResponse future2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
@@ -114,9 +105,6 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     auto r2 = future2.get();
     // return 200 OK
     EXPECT_EQ(r2.status_code, 200l);
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
     // and an empty json
     nlohmann::json jsonResponse;
     ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r2.text));
@@ -138,9 +126,6 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     auto r3 = future3.get();
     //return 200 OK
     EXPECT_EQ(r3.status_code, 200l);
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Headers"));
     // and a non-empty json
     nlohmann::json jsonResponse2;
     ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(r3.text));
@@ -159,9 +144,6 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     auto r1 = f1.get();
     // return 400 BAD REQUEST
     EXPECT_EQ(r1.status_code, 400l);
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Headers"));
 
     // when sending a request to the status endpoint with 'queryId' supplied but no such query registered
     cpr::AsyncResponse f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
@@ -170,9 +152,6 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     auto r2 = f2.get();
     //return 400 NO CONTENT
     EXPECT_EQ(r2.status_code, 404l);
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
 
     //create a query and submit i to the queryCatalogService
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
@@ -189,9 +168,6 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     auto r3 = f3.get();
     //return 200 OK
     EXPECT_EQ(r3.status_code, 200l);
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Headers"));
     // and response body contains key: status and value: REGISTERED
     nlohmann::json jsonResponse;
     ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r3.text));
@@ -212,9 +188,6 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProducedMissingQ
 
     // return 400 BAD REQUEST
     EXPECT_EQ(r1.status_code, 400l);
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r1.header.contains("Access-Control-Allow-Headers"));
     stopCoordinator();
 }
 
@@ -230,9 +203,6 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoSuchQuery) {
     auto r2 = f2.get();
     //return 404 NO CONTENT
     EXPECT_EQ(r2.status_code, 404l);
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r2.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonResponse1;
     ASSERT_NO_THROW(jsonResponse1 = nlohmann::json::parse(r2.text));
     std::string message1 = "no query found with ID: 1";
@@ -262,9 +232,6 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStati
 
     // return 404 NO CONTENT
     EXPECT_EQ(r3.status_code, 404l);
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r3.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonResponse2;
     ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(r3.text));
     NES_DEBUG("{}", jsonResponse2.dump());

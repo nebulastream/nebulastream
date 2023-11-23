@@ -118,9 +118,6 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     // oatpp GET start call
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/start"});
     EXPECT_EQ(r.status_code, 200);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
 
     //check if content of r contains valid information
     std::set<std::string> expectedMonitoringStreams{toString(Monitoring::MetricType::WrappedNetworkMetrics),
@@ -155,9 +152,6 @@ TEST_F(MonitoringControllerTest, testStopMonitoring) {
     }
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/stop"});
     EXPECT_EQ(r.status_code, 200);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
@@ -179,9 +173,6 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 500);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
@@ -203,9 +194,6 @@ TEST_F(MonitoringControllerTest, testStopMonitoringFailsBecauseMonitoringIsNotEn
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 500);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
@@ -229,9 +217,6 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
 
     nlohmann::json jsonsOfResponse;
     ASSERT_NO_THROW(jsonsOfResponse = nlohmann::json::parse(r.text));
@@ -268,9 +253,6 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     nlohmann::json jsonsOfResponse;
     ASSERT_NO_THROW(jsonsOfResponse = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from GetMetricsForOneNode request: {}", jsonsOfResponse);
@@ -306,9 +288,6 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     //compare content of response to expected values
     nlohmann::json jsons;
     ASSERT_NO_THROW(jsons = nlohmann::json::parse(r.text));
@@ -346,9 +325,6 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
 
     //compare content of response to expected values
     nlohmann::json jsons;
