@@ -34,6 +34,12 @@ class QueryControllerTest : public Testing::BaseIntegrationTest {
         NES_INFO("Setup QueryControllerTest test class.");
     }
 
+    void SetUp() override {
+        Testing::BaseIntegrationTest::SetUp();
+        //Increment the query id so that the shared query and query plan ids are different before the start of each test
+        PlanIdGenerator::getNextQueryId();
+    }
+
     static void TearDownTestCase() { NES_INFO("Tear down QueryControllerTest test class."); }
 
     void startCoordinator() {
@@ -152,8 +158,8 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     EXPECT_EQ(response.status_code, 202l);
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
-    EXPECT_EQ(res["queryId"], 1);
-    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(1, std::to_string(coordinatorConfig->restPort.getValue())));
+    auto queryId = res["queryId"];
+    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -289,6 +295,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("QueryControllerTest: Coordinator started successfully");
+
     auto sourceCatalog = coordinator->getSourceCatalog();
     auto topologyNode = coordinator->getTopology()->getRoot();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
