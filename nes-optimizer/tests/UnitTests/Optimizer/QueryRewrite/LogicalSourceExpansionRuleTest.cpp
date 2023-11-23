@@ -25,11 +25,11 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
@@ -231,11 +231,11 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithFlatMapOperator) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
-    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
     const std::string logicalSourceName = "default_logical";
     auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
     auto javaUDFDescriptor =
@@ -251,18 +251,17 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
             .build();
 
-    Query query =
-        Query::from(logicalSourceName).map(Attribute("value") = 40).flatMapUDF(javaUDFDescriptor).sink(printSinkDescriptor);
-    QueryPlanPtr queryPlan = query.getQueryPlan();
+    auto query = Query::from(logicalSourceName).mapUDF(javaUDFDescriptor).flatMapUDF(javaUDFDescriptor).sink(printSinkDescriptor);
+    auto queryPlan = query.getQueryPlan();
 
     // Execute
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+    auto sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
-    std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
+    auto rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1U);
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 1U);
     auto flatMapOperators = queryPlan->getOperatorByType<FlatMapUDFLogicalOperatorNode>();
@@ -271,6 +270,6 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 
     //Validate that FlatMap is connected to two map logical operators
     for (const auto& childOperator : flatMapOperators[0]->getChildren()) {
-        EXPECT_TRUE(childOperator->as_if<LogicalOperatorNode>()->instanceOf<MapLogicalOperatorNode>());
+        EXPECT_TRUE(childOperator->as_if<LogicalOperatorNode>()->instanceOf<MapUDFLogicalOperatorNode>());
     }
 }
