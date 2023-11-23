@@ -305,11 +305,6 @@ class QueryController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("OPTIONS", "/stop-query", catchPreflightMessageForStopRequest) {
-        nlohmann::json response;
-        return createResponse(Status::CODE_202, "Query Stop Request Accepted");
-    }
-
     ENDPOINT("DELETE", "/stop-query", stopQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
             bool success = queryService->validateAndQueueStopQueryRequest(queryId);
