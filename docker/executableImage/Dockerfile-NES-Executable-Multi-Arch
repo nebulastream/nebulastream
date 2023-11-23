@@ -21,7 +21,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  
     openjdk-17-jre \
     libopencv4.5-java \
     libopencv4.5d-jni \
-    net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -qq  ./nes.deb &&  rm nes.deb
+    net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -y -qq  ./nes.deb &&  rm nes.deb
 
 COPY ./docker/executableImage/entrypoint-nes-executable.sh /entrypoint.sh
 
