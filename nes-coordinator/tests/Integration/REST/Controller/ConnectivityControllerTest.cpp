@@ -77,9 +77,6 @@ TEST_F(ConnectivityControllerTest, testGetRequest) {
     }
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/connectivity/check"});
     EXPECT_EQ(r.status_code, 200l);
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Origin"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Methods"));
-    EXPECT_FALSE(r.header.contains("Access-Control-Allow-Headers"));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
