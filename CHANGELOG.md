@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.260](https://github.com/nebulastream/nebulastream/tree/v0.5.260) (2023-11-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.259...v0.5.260)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable Query Stop Request from UI [\#4156](https://github.com/nebulastream/nebulastream/issues/4156)
+
 ## [v0.5.259](https://github.com/nebulastream/nebulastream/tree/v0.5.259) (2023-11-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.258...v0.5.259)
