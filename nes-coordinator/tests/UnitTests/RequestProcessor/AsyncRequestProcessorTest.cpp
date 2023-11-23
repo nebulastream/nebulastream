@@ -85,12 +85,12 @@ class DummyMultiResponse : public AbstractRequestResponse {
 
 class DummySubRequest : public AbstractSubRequest {
   public:
-    DummySubRequest(uint32_t& additionTarget, uint32_t returnNewRequestFrequency) : additionTarget(additionTarget), returnNewRequestFrequency(returnNewRequestFrequency) {}
+    DummySubRequest(std::atomic_ref<uint32_t> additionTarget, uint32_t returnNewRequestFrequency) : additionTarget(additionTarget), returnNewRequestFrequency(returnNewRequestFrequency) {}
     void execute(const StorageHandlerPtr&) override {
         auto lastValue = ++additionTarget;
         responsePromise.set_value(true);
     }
-    uint32_t& additionTarget;
+    std::atomic_ref<uint32_t> additionTarget;
     uint32_t returnNewRequestFrequency;
 };
 class DummyMultiRequest : public AbstractMultiRequest {
@@ -104,7 +104,7 @@ class DummyMultiRequest : public AbstractMultiRequest {
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override {
         std::vector<std::future<std::any>> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
-            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(responseValue, returnNewRequestFrequency)));
+            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency)));
         }
         for (auto& f : futures) {
             f.wait();
@@ -114,6 +114,7 @@ class DummyMultiRequest : public AbstractMultiRequest {
     }
 
     std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
+    //std::atomic<uint32_t> responseValue;
     uint32_t responseValue;
 
   protected:
@@ -137,10 +138,12 @@ class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
         std::vector<std::future<std::any>> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
-            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(responseValue, returnNewRequestFrequency)));
+            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency)));
         }
 
-        while(executeSubRequestIfExists(storageHandler)) {}
+        //release
+        executeSubRequestWhileQueueNotEmpty(storageHandler);
+        //reacquire
 
         for (auto& f : futures) {
             f.wait();
