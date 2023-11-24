@@ -35,6 +35,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              std::chrono::milliseconds waitTime,
                              uint8_t retryTimes,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                             OperatorVersionNumber initialVersion,
                              const std::string& physicalSourceName)
 
     : DataSource(std::move(schema),
@@ -47,7 +48,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  physicalSourceName,
                  std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)),
-      waitTime(waitTime), retryTimes(retryTimes) {
+      waitTime(waitTime), retryTimes(retryTimes), initialVersion(initialVersion) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
 }
 
@@ -257,6 +258,10 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     } else {
         NES_WARNING("Ignoring forceful EoS on {}", nesPartition);
     }
+}
+
+OperatorVersionNumber NetworkSource::getInitialVersion() {
+    return initialVersion;
 }
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {

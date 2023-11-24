@@ -46,6 +46,14 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
         // we got a connection from a data channel: it means there is/will be a partition consumer running locally
         if (auto status = partitionManager->getConsumerRegistrationStatus(nesPartition);
             status == PartitionRegistrationStatus::Registered) {
+
+            //check version
+            if (partitionManager->getVersion(nesPartition) != msg.getVersionNumber()) {
+                //todo: implment another message here
+                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}", partitionManager->getVersion(nesPartition), msg.getVersionNumber());
+                return Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError);
+            }
+
             // increment the counter
             partitionManager->pinSubpartitionConsumer(nesPartition);
             NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for DataChannel {} REGISTERED",
@@ -124,7 +132,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
             //todo #4313: count connects instead of disconnects and implement timeout
         } else if (partitionManager->getSubpartitionConsumerDisconnectCount(partition).value()
-                   < expectedTotalConnectionsInPartitionManager) {
+                   < expectedTotalConnectionsInPartitionManager /*todo: && !timeout*/) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total channel "
                       "disconnects for "
                       "subpartition: {} has not been reached: {}/{}",
@@ -132,11 +140,10 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()),
                       partitionManager->getSubpartitionConsumerDisconnectCount(partition).value(),
                       expectedTotalConnectionsInPartitionManager);
-        } else {
+        } else if (!partitionManager->startNewVersion(partition)) {
             partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
                 ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
             protocolListener->onEndOfStream(endOfStreamMessage);
-            partitionManager->decreaseSubpartitionConsumerDisconnectCount(partition, expectedTotalConnectionsInPartitionManager);
         }
     } else if (partitionManager->getProducerRegistrationStatus(endOfStreamMessage.getChannelId().getNesPartition())
                == PartitionRegistrationStatus::Registered) {

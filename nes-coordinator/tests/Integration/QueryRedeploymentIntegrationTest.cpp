@@ -373,7 +373,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
                                                                                 networkSourceWrk2Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
     queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
     //create network sink connected to coordinator
@@ -400,7 +400,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
                                                                             networkSourceCrdPartition,
                                                                             sinkLocation,
                                                                             std::chrono::milliseconds(1000),
-                                                                            5);
+                                                                            5, 0);
     auto sourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSrcCrdId);
     queryPlan->addRootOperator(sourceOperatorNode);
     //create file sink at coordinator
@@ -453,7 +453,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
                                                                                 networkSourceWrk3Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk3 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk3, networkSrcWrk3Id);
     queryPlan3->addRootOperator(sourceOperatorNodeWrk3);
     //create network sink connected to coordinator
@@ -701,7 +701,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
                                                                                 networkSourceWrk2Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
     queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
     //create network sink connected to coordinator
@@ -728,7 +728,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
                                                                             networkSourceCrdPartition,
                                                                             sinkLocation,
                                                                             std::chrono::milliseconds(1000),
-                                                                            5);
+                                                                            5, 0);
     auto sourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSrcCrdId);
     queryPlan->addRootOperator(sourceOperatorNode);
     //create file sink at coordinator
@@ -778,7 +778,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
                                                                                 networkSourceWrk3Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk3 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk3, networkSrcWrk3Id);
     queryPlan3->addRootOperator(sourceOperatorNodeWrk3);
     //create network sink connected to coordinator
@@ -998,7 +998,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
                                                                                 networkSourceWrk2Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
     queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
     //create network sink connected to coordinator
@@ -1025,7 +1025,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
                                                                             networkSourceCrdPartition,
                                                                             sinkLocation,
                                                                             std::chrono::milliseconds(1000),
-                                                                            5);
+                                                                            5, 0);
     auto sourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSrcCrdId);
     queryPlan->addRootOperator(sourceOperatorNode);
     //create file sink at coordinator
@@ -1119,7 +1119,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
                                                                                     networkSourceWrk3Partition,
                                                                                     sinkLocationWrk1,
                                                                                     std::chrono::milliseconds(1000),
-                                                                                    5);
+                                                                                    5, 0);
         auto sourceOperatorNodeWrk3 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk3, networkSrcWrk3Id);
         queryPlan3->addRootOperator(sourceOperatorNodeWrk3);
         //create network sink connected to coordinator
@@ -1372,7 +1372,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
                                                                                 networkSourceWrk2Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
     queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
     //create network sink connected to coordinator
@@ -1399,7 +1399,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
                                                                             networkSourceCrdPartition,
                                                                             sinkLocation,
                                                                             std::chrono::milliseconds(1000),
-                                                                            5);
+                                                                            5, 0);
     auto sourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSrcCrdId);
     queryPlan->addRootOperator(sourceOperatorNode);
     //create file sink at coordinator
@@ -1454,7 +1454,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testEndOfStreamWhileBuffering) {
                                                                                 networkSourceWrk3Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk3 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk3, networkSrcWrk3Id);
     queryPlan3->addRootOperator(sourceOperatorNodeWrk3);
     //create network sink connected to coordinator
@@ -1688,7 +1688,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
                                                                                 networkSourceWrk2Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
     queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
     //create network sink connected to coordinator
@@ -1715,7 +1715,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
                                                                             networkSourceCrdPartition,
                                                                             sinkLocation,
                                                                             std::chrono::milliseconds(1000),
-                                                                            5);
+                                                                            5, 0);
     auto sourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSrcCrdId);
     queryPlan->addRootOperator(sourceOperatorNode);
     //create file sink at coordinator
@@ -1781,7 +1781,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
                                                                                 networkSourceWrk3Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5);
+                                                                                5, 0);
     auto sourceOperatorNodeWrk3 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk3, networkSrcWrk3Id);
     queryPlan3->addRootOperator(sourceOperatorNodeWrk3);
     //create network sink connected to coordinator

@@ -129,7 +129,7 @@ class NetworkManager {
                                                    const NesPartition& nesPartition,
                                                    Runtime::BufferManagerPtr bufferManager,
                                                    std::chrono::milliseconds waitTime,
-                                                   uint8_t retryTimes);
+                                                   uint8_t retryTimes, OperatorVersionNumber versionNumber = 0);
 
     /**
      * @brief This method is called on the sender side to asynchronously register a SubpartitionProducer. It returns a future
@@ -153,7 +153,7 @@ class NetworkManager {
                                       std::chrono::milliseconds waitTime,
                                       uint8_t retryTimes,
                                       Runtime::ReconfigurationMessage reconfigurationMessage,
-                                      Runtime::QueryManagerPtr queryManager);
+                                      Runtime::QueryManagerPtr queryManager, OperatorVersionNumber versionNumber = 0);
 
     /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to
