@@ -397,6 +397,7 @@ TEST_F(NetworkStackTest, testEosPropagation) {
 
         ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>()));
 
+        auto nextVersion = 1;
         uint64_t i = 1;
         //register and close one channel at a time
         for (; i <= numSendingThreads / 2; ++i) {
@@ -406,6 +407,11 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             exchangeProtocol.onClientAnnouncement(clientAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
 
+            //registering with a different version number should fail (consumer count should not change)
+            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
+
             auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
                                                                    Messages::ChannelType::DataChannel,
                                                                    Runtime::QueryTerminationType::Graceful,
@@ -413,16 +419,134 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
+
+            //registering with a different version number should fail (consumer count should not change)
+            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
         }
 
+        //opening many channels
         for (uint64_t j = i; j <= numSendingThreads; ++j) {
             ASSERT_EQ(receiveListener->numReceivedEoS, 0);
             auto channelId = ChannelId(nesPartition, j);
             auto clientAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel);
             exchangeProtocol.onClientAnnouncement(clientAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
+
+            //registering with a different version number should fail (consumer count should not change)
+            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
         }
 
+        //closing channels
+        for (uint64_t j = i; j <= numSendingThreads; ++j) {
+            ASSERT_EQ(receiveListener->numReceivedEoS, 0);
+            auto channelId = ChannelId(nesPartition, j);
+            auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
+                                                                   Messages::ChannelType::DataChannel,
+                                                                   Runtime::QueryTerminationType::Graceful,
+                                                                   numSendingThreads);
+            exchangeProtocol.onEndOfStream(endOfStreamMessage);
+
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
+
+            //registering with a different version number should fail (consumer count should not change)
+            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
+        }
+
+        //received eos = numSendingThreads: check if the exchange protocol propagated the eos
+        ASSERT_EQ(receiveListener->numReceivedEoS, 1);
+
+        partMgrRecv->unregisterSubpartitionConsumer(nesPartition);
+    } catch (...) {
+        FAIL();
+    }
+    ASSERT_EQ(true, true);
+}
+
+TEST_F(NetworkStackTest, testVersionTransition) {
+    try {
+
+        class InternalListener : public Network::ExchangeProtocolListener {
+          public:
+            explicit InternalListener() : numReceivedEoS(0) {}
+
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage) override { numReceivedEoS++; }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onChannelError(Messages::ErrorMessage) override {}
+            std::atomic<uint32_t> numReceivedEoS;
+        };
+
+        constexpr auto numSendingThreads = 32;
+        auto partMgrRecv = std::make_shared<PartitionManager>();
+        auto receiveListener = std::make_shared<InternalListener>();
+        auto exchangeProtocol = ExchangeProtocol(partMgrRecv, receiveListener);
+
+        auto senderPort = getAvailablePort();
+        auto senderLocation = NodeLocation(0, "127.0.0.1", *senderPort);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
+        auto nesPartition = NesPartition(0, 0, 0, 0);
+        NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
+
+        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>()));
+
+        auto nextVersion = 1;
+        partMgrRecv->addPendingVersion(nesPartition, nextVersion);
+        uint64_t i = 1;
+        //register and close one channel at a time
+        for (; i <= numSendingThreads / 2; ++i) {
+            ASSERT_EQ(receiveListener->numReceivedEoS, 0);
+            auto channelId = ChannelId(nesPartition, i);
+            auto clientAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel);
+            exchangeProtocol.onClientAnnouncement(clientAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
+
+            //registering with a different version number should fail (consumer count should not change)
+            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
+
+            auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
+                                                                   Messages::ChannelType::DataChannel,
+                                                                   Runtime::QueryTerminationType::Graceful,
+                                                                   numSendingThreads);
+            exchangeProtocol.onEndOfStream(endOfStreamMessage);
+
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
+
+            //registering with a different version number should fail (consumer count should not change)
+            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), i);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
+        }
+
+        //opening many channels
+        for (uint64_t j = i; j <= numSendingThreads; ++j) {
+            ASSERT_EQ(receiveListener->numReceivedEoS, 0);
+            auto channelId = ChannelId(nesPartition, j);
+            auto clientAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel);
+            exchangeProtocol.onClientAnnouncement(clientAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
+
+            //registering with a different version number should fail (consumer count should not change)
+            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+            ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
+        }
+
+        //closing channels
         for (uint64_t j = i; j <= numSendingThreads; ++j) {
             ASSERT_EQ(receiveListener->numReceivedEoS, 0);
             auto channelId = ChannelId(nesPartition, j);
@@ -434,13 +558,35 @@ TEST_F(NetworkStackTest, testEosPropagation) {
 
             if (j < numSendingThreads) {
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
+                //registering with a different version number should fail (consumer count should not change)
+                auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+                exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+                ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
+                ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), numSendingThreads - j + 1);
             } else {
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 0);
+                ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
+                //registering with a different version number should work now
+                auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+                exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
+                ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 0);
+                ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
             }
+
         }
 
-        //received eos = numSendingThreads: check if the exchange protocol propagated the eos
+        ASSERT_EQ(receiveListener->numReceivedEoS, 0);
+
+        //closing next version
+        auto channelId = ChannelId(nesPartition, 1);
+        auto endOfStreamMessage = Messages::EndOfStreamMessage(channelId,
+                                                               Messages::ChannelType::DataChannel,
+                                                               Runtime::QueryTerminationType::Graceful,
+                                                               1);
+        exchangeProtocol.onEndOfStream(endOfStreamMessage);
+
         ASSERT_EQ(receiveListener->numReceivedEoS, 1);
+
 
         partMgrRecv->unregisterSubpartitionConsumer(nesPartition);
     } catch (...) {

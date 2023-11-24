@@ -327,7 +327,7 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryI
                                                                                                   nesPartition,
                                                                                                   upstreamNodeLocation,
                                                                                                   SOURCE_RETRY_WAIT,
-                                                                                                  SOURCE_RETRIES);
+                                                                                                  SOURCE_RETRIES, 0);
     return LogicalOperatorFactory::createSourceOperator(networkSourceDescriptor, operatorId);
 }
 

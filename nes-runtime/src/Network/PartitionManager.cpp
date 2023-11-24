@@ -13,6 +13,7 @@
 */
 
 #include <Network/PartitionManager.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,7 +27,13 @@ namespace NES::Network {
 
 PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& senderLocation, DataEmitterPtr&& emitter)
     : senderLocation(std::move(senderLocation)), consumer(std::move(emitter)) {
-    // nop
+    //todo: test
+    auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(emitter);
+    if (networkSource) {
+        versionNumber = networkSource->getInitialVersion();
+    } else {
+        versionNumber = 0;
+    }
 }
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
@@ -40,12 +47,25 @@ void PartitionManager::PartitionConsumerEntry::unpin() {
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
+OperatorVersionNumber PartitionManager::PartitionConsumerEntry::getVersionNumber() { return versionNumber; }
+
 uint64_t PartitionManager::PartitionConsumerEntry::getDisconnectCount() const { return disconnectCount; }
 
-void PartitionManager::PartitionConsumerEntry::decreaseDisconnectCountBy(uint64_t decreaseAmount) {
-    NES_ASSERT2_FMT(decreaseAmount <= disconnectCount,
-                    "Trying to decrease disconnect count of value " << disconnectCount << " by " << decreaseAmount);
-    disconnectCount -= decreaseAmount;
+bool PartitionManager::PartitionConsumerEntry::startNewVersion() {
+    if (!pendingVersion.has_value()) {
+        return false;
+    }
+    versionNumber = pendingVersion.value();
+    pendingVersion = std::nullopt;
+    disconnectCount = 0;
+    return true;
+}
+
+void PartitionManager::PartitionConsumerEntry::addPendingVersion(OperatorVersionNumber pendingVersion) {
+    if (this->pendingVersion.has_value()) {
+        NES_NOT_IMPLEMENTED();
+    }
+    this->pendingVersion = pendingVersion;
 }
 
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
@@ -132,10 +152,27 @@ std::optional<uint64_t> PartitionManager::getSubpartitionConsumerDisconnectCount
     return std::nullopt;
 }
 
-void PartitionManager::decreaseSubpartitionConsumerDisconnectCount(NesPartition partition, uint64_t decreaseAmount) {
+bool PartitionManager::startNewVersion(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        it->second.decreaseDisconnectCountBy(decreaseAmount);
+        return it->second.startNewVersion();
+    }
+    return false;
+}
+
+OperatorVersionNumber PartitionManager::getVersion(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
+        return it->second.getVersionNumber();
+    }
+    NES_ASSERT(false, "Trying to check version of inexistent partition");
+    return false;
+}
+
+void PartitionManager::addPendingVersion(NesPartition partition, OperatorVersionNumber pendingVersion) {
+    std::unique_lock lock(consumerPartitionsMutex);
+    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
+        it->second.addPendingVersion(pendingVersion);
     }
 }
 
