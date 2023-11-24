@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.261](https://github.com/nebulastream/nebulastream/tree/v0.5.261) (2023-11-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.260...v0.5.261)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Execution plan contains empty execution nodes while query is running [\#4386](https://github.com/nebulastream/nebulastream/issues/4386)
+
+#### User Defined Functions
+
+- \[Feature\] Adapt query rewrite rules to UDFs [\#3072](https://github.com/nebulastream/nebulastream/issues/3072)
+
 ## [v0.5.260](https://github.com/nebulastream/nebulastream/tree/v0.5.260) (2023-11-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.259...v0.5.260)
