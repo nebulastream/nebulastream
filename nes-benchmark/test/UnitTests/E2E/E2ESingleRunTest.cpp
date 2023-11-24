@@ -219,7 +219,7 @@ TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
                             << numberOfWorkerThreads << "," << numberOfQueriesToDeploy << ","
                             << "\"" << configPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << "\""
                             << "," << bufferSizeInBytes << "," << inputType << "," << dataProviderMode << ","
-                            << "\"" << queryString << "\"" << std::endl;
+                            << "\"" << configOverAllRuns.getStrQueries() << "\"" << std::endl;
         }
     }
 

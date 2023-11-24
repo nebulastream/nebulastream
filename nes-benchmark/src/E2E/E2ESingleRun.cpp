@@ -135,11 +135,11 @@ void E2ESingleRun::submitQueries(QueryServicePtr queryService, QueryCatalogServi
         for (const auto &query : configOverAllRuns.queries) {
 
             // If custom delay is set introduce a delay before submitting
-            std::this_thread::sleep_for(std::chrono::seconds(query.customDelayInSeconds));
+            std::this_thread::sleep_for(std::chrono::seconds(query.getCustomDelayInSeconds()));
 
-            NES_INFO("E2EBase: Submitting query = {}", query.queryString);
-            auto queryId = queryService->validateAndQueueAddQueryRequest(query.queryString,
-                                                                         Optimizer::PlacementStrategy::BottomUp);
+            NES_INFO("E2EBase: Submitting query = {}", query.getQueryString());
+            auto queryId =
+                queryService->validateAndQueueAddQueryRequest(query.getQueryString(), Optimizer::PlacementStrategy::BottomUp);
             submittedIds.push_back(queryId);
 
             if (!waitForQueryToStart(queryId, queryCatalog, defaultStartQueryTimeout)) {
@@ -255,7 +255,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to {}", configOverAllRuns.outputFile->getValue());
     std::stringstream resultOnConsole;
     auto schemaSizeInB = configOverAllRuns.getTotalSchemaSize();
-    std::string queryString = configOverAllRuns.getStrQueries();
+    std::string queryString = configOverAllRuns.queries[0].getQueryString();
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
     std::stringstream outputCsvStream;

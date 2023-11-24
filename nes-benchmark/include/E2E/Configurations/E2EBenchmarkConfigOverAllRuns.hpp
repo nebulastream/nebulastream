@@ -34,7 +34,7 @@ class E2EBenchmarkConfigOverAllRuns {
       public:
         E2EBenchmarkQueryConfig(std::string queryString, uint32_t customDelayInSeconds) : queryString(std::move(queryString)), customDelayInSeconds(customDelayInSeconds) {}
         friend std::ostream &operator<< (std::ostream& os, const E2EBenchmarkQueryConfig& config) {
-            os << fmt::format("query: {}, customDelayInSeconds: {}", config.queryString, config.customDelayInSeconds);
+            os << config.queryString;
             return os;
         }
 
@@ -64,6 +64,10 @@ class E2EBenchmarkConfigOverAllRuns {
             return *this;
         }
 
+        [[nodiscard]] const std::string& getQueryString() const { return queryString; }
+        [[nodiscard]] uint32_t getCustomDelayInSeconds() const { return customDelayInSeconds; }
+
+      private:
         std::string queryString;
         uint32_t customDelayInSeconds;
     };
