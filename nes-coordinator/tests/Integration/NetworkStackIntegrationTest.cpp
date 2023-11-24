@@ -322,7 +322,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           64,
                                                           NSOURCE_RETRY_WAIT,
                                                           NSOURCE_RETRIES,
-                                                          std::move(succ));
+                                                          std::move(succ), 0);
             auto qep = Runtime::Execution::ExecutableQueryPlan::create(0,
                                                                        0,
                                                                        {source},
@@ -520,7 +520,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                        numSourceLocalBuffers,
                                                        NSOURCE_RETRY_WAIT,
                                                        NSOURCE_RETRIES,
-                                                       successors);
+                                                       successors, 0);
             });
 
         auto testSink =
@@ -807,7 +807,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                                    numSourceLocalBuffers,
                                                    NSOURCE_RETRY_WAIT,
                                                    NSOURCE_RETRIES,
-                                                   successors);
+                                                   successors, 0);
         });
 
     class TestSourceEvent : public GeneratorSource {

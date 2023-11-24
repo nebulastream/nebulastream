@@ -56,6 +56,7 @@ class NetworkSource : public DataSource {
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                  OperatorVersionNumber initialVersion,
                   const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**
@@ -135,6 +136,8 @@ class NetworkSource : public DataSource {
      */
     void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
 
+    OperatorVersionNumber getInitialVersion();
+
     bool bind();
 
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
@@ -146,6 +149,8 @@ class NetworkSource : public DataSource {
     // for event channel
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
+
+    const OperatorVersionNumber initialVersion;
 };
 
 }// namespace NES::Network

@@ -105,10 +105,12 @@ class PartitionManager {
         [[nodiscard]] uint64_t getDisconnectCount() const;
 
         /**
-         * @brief decrease the recorded number of disconnects that have occurred for the partition
-         * @param decreaseAmount the amount by which to decrease the disconnect count
+         * @brief update the version number and reset the recorded number of disconnects that have occurred for the partition
+         * @return true if a pending version was found and set as the current version, false otherwise
          */
-        void decreaseDisconnectCountBy(uint64_t decreaseAmount);
+        bool startNewVersion();
+
+        void addPendingVersion(OperatorVersionNumber pendingVersion);
 
         /**
          * @brief increment ref cnt by 1
@@ -125,9 +127,16 @@ class PartitionManager {
          */
         DataEmitterPtr getConsumer();
 
+        /**
+         * @return the version number
+         */
+        OperatorVersionNumber getVersionNumber();
+
       private:
         uint64_t partitionCounter{1};
         uint64_t disconnectCount{0};
+        OperatorVersionNumber versionNumber;
+        std::optional<OperatorVersionNumber> pendingVersion{std::nullopt};
         NodeLocation senderLocation;
         DataEmitterPtr consumer{nullptr};
     };
@@ -155,7 +164,7 @@ class PartitionManager {
     /**
      * @brief Unregisters a subpartition in the PartitionManager. If the subpartition does not exist or the current
      * counter is 0 an error is thrown.
-     * @param the partition
+     * @param partition the partition of the consumer
      * @return true if the partition counter got to zero, false otherwise
      */
     bool unregisterSubpartitionConsumer(NesPartition partition);
@@ -178,9 +187,12 @@ class PartitionManager {
     /**
      * @brief decrease the recorded number of disconnects that have occurred for a given partition
      * @param partition the partition
-     * @param decreaseAmount the amount by which to decrease the disconnect count
      */
-    void decreaseSubpartitionConsumerDisconnectCount(NesPartition partition, uint64_t decreaseAmount);
+    bool startNewVersion(NesPartition partition);
+
+    OperatorVersionNumber getVersion(NesPartition partition);
+
+    void addPendingVersion(NesPartition partition, OperatorVersionNumber pendingVersion);
 
     /**
      * @brief checks if a partition is registered

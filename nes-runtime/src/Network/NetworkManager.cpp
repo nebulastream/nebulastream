@@ -96,7 +96,7 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                                                const NesPartition& nesPartition,
                                                                Runtime::BufferManagerPtr bufferManager,
                                                                std::chrono::milliseconds waitTime,
-                                                               uint8_t retryTimes) {
+                                                               uint8_t retryTimes, OperatorVersionNumber versionNumber) {
     NES_DEBUG("NetworkManager: Registering SubpartitionProducer: {}", nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
     return NetworkChannel::create(server->getContext(),
@@ -106,7 +106,8 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                   std::move(bufferManager),
                                   senderHighWatermark,
                                   waitTime,
-                                  retryTimes);
+                                  retryTimes,
+                                  versionNumber);
 }
 
 std::pair<std::future<NetworkChannelPtr>, std::promise<bool>>
@@ -116,7 +117,7 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
                                                   std::chrono::milliseconds waitTime,
                                                   uint8_t retryTimes,
                                                   Runtime::ReconfigurationMessage reconfigurationMessage,
-                                                  Runtime::QueryManagerPtr queryManager) {
+                                                  Runtime::QueryManagerPtr queryManager, OperatorVersionNumber versionNumber) {
     NES_DEBUG("NetworkManager: Asynchronously registering SubpartitionProducer: {}", nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
 
@@ -141,6 +142,7 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
                         promise = std::move(promise),
                         queryManager,
                         reconfigurationMessage,
+                        versionNumber,
                         abortConnectionFuture = std::move(abortConnectionFuture)]() mutable {
         //wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
         auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
@@ -154,6 +156,7 @@ NetworkManager::registerSubpartitionProducerAsync(const NodeLocation& nodeLocati
                                               highWaterMark,
                                               waitTime,
                                               retryTimes,
+                                              versionNumber,
                                               std::move(future_optional));
 
         //pass channel back to calling thread via promise
