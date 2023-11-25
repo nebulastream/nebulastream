@@ -28,7 +28,7 @@ namespace NES::Network {
 PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& senderLocation, DataEmitterPtr&& emitter)
     : senderLocation(std::move(senderLocation)), consumer(std::move(emitter)) {
     //todo: test
-    auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(emitter);
+    auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(consumer);
     if (networkSource) {
         versionNumber = networkSource->getInitialVersion();
     } else {

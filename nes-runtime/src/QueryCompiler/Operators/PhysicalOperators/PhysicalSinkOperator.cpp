@@ -21,28 +21,24 @@ namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
                                            SchemaPtr inputSchema,
                                            SchemaPtr outputSchema,
-                                           SinkDescriptorPtr sinkDescriptor,
-                                           uint16_t numberOfInputSources)
+                                           SinkDescriptorPtr sinkDescriptor)
     : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-      sinkDescriptor(std::move(sinkDescriptor)), numberOfInputSources(numberOfInputSources) {}
+      sinkDescriptor(std::move(sinkDescriptor)) {}
 
 PhysicalOperatorPtr PhysicalSinkOperator::create(SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema,
-                                                 SinkDescriptorPtr sinkDescriptor,
-                                                 uint16_t numberOfInputSources) {
+                                                 SinkDescriptorPtr sinkDescriptor) {
     return create(getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
-                  std::move(sinkDescriptor),
-                  numberOfInputSources);
+                  std::move(sinkDescriptor));
 }
 
 PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId id,
                                                  const SchemaPtr& inputSchema,
                                                  const SchemaPtr& outputSchema,
-                                                 const SinkDescriptorPtr& sinkDescriptor,
-                                                 uint16_t numberOfInputSources) {
-    return std::make_shared<PhysicalSinkOperator>(id, inputSchema, outputSchema, sinkDescriptor, numberOfInputSources);
+                                                 const SinkDescriptorPtr& sinkDescriptor) {
+    return std::make_shared<PhysicalSinkOperator>(id, inputSchema, outputSchema, sinkDescriptor);
 }
 
 SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() { return sinkDescriptor; }
@@ -60,10 +56,9 @@ std::string PhysicalSinkOperator::toString() const {
 }
 
 OperatorNodePtr PhysicalSinkOperator::copy() {
-    auto result = create(id, inputSchema, outputSchema, sinkDescriptor, numberOfInputSources);
+    auto result = create(id, inputSchema, outputSchema, sinkDescriptor);
     result->addAllProperties(properties);
     return result;
 }
 
-uint16_t PhysicalSinkOperator::getNumberOfInputSources() const { return numberOfInputSources; }
 }// namespace NES::QueryCompilation::PhysicalOperators

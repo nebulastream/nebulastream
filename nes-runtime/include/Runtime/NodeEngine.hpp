@@ -324,7 +324,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             uint32_t newPort,
                                             QuerySubPlanId querySubPlanId,
                                             uint64_t uniqueNetworkSinkDescriptorId,
-                                            Network::NesPartition newPartition);
+                                            Network::NesPartition newPartition,
+                                            OperatorVersionNumber versionNumber);
 
     /**
      * @brief retrieve the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish
