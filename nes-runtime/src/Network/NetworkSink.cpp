@@ -23,6 +23,13 @@
 #include <Util/Core.hpp>
 
 namespace NES::Network {
+
+struct VersionUpdate {
+    NodeLocation nodeLocation;
+    NesPartition partition;
+    OperatorVersionNumber version;
+};
+
 NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
                          QueryId queryId,
@@ -34,7 +41,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
-                         uint16_t numberOfInputSources)
+                         OperatorVersionNumber versionNumber)
     : SinkMedium(
           std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
           nodeEngine,
@@ -46,8 +53,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), numberOfInputSources(numberOfInputSources),
-      receivedVersionDrainEvents(0) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), versionNumber(versionNumber) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
 }
@@ -130,7 +136,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                                               waitTime,
                                                                                               retryTimes,
                                                                                               reconf,
-                                                                                              queryManager);
+                                                                                              queryManager,
+                                                                                              versionNumber);
                 workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
                 workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             } else {
@@ -165,7 +172,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
             //retrieve information about which source to connect to
-            auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
+            //auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
+            auto versionUpdate = task.getUserData<VersionUpdate>();
+            auto newReceiverLocation = versionUpdate.nodeLocation;
+            auto newPartition = versionUpdate.partition;
+            auto newVersion = versionUpdate.version;
             if (newReceiverLocation == receiverLocation && newPartition == nesPartition) {
                 NES_THROW_RUNTIME_ERROR("Attempting reconnect but the new source descriptor equals the old one");
             }
@@ -174,7 +185,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 workerContext.abortConnectionProcess(getUniqueNetworkSinkDescriptorId());
             }
 
-            clearOldAndConnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition);
+            //todo: pass version here
+            clearOldAndConnectToNewChannelAsync(workerContext, newReceiverLocation, newPartition, newVersion);
             break;
         }
         case Runtime::ReconfigurationType::ConnectionEstablished: {
@@ -237,16 +249,15 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
     switch (task.getType()) {
         //update info about receiving network source to new target
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
-            auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
+            //auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
+            auto versionUpdate = task.getUserData<VersionUpdate>();
             networkManager->unregisterSubpartitionProducer(nesPartition);
 
-            //todo: check if we have to move this to the connection established reconfig
-//            NES_ASSERT2_FMT(networkManager->registerSubpartitionEventConsumer(newReceiverLocation,
-//                                                                              newPartition,
-//                                                                              inherited1::shared_from_this()),
-//                            "Cannot register event listener " << nesPartition.toString());
-            receiverLocation = newReceiverLocation;
-            nesPartition = newPartition;
+            receiverLocation = versionUpdate.nodeLocation;
+            nesPartition = versionUpdate.partition;
+            //todo: update version now only when we actuelly started reconnecting to all new channels?
+            versionNumber = versionUpdate.version;
+
             break;
         }
         default: {
@@ -275,14 +286,11 @@ OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() const { return unique
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
-//todo: consider removing this whole function
-void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation) {
-    std::pair newReceiverTuple = {newReceiverLocation, newPartition};
-//    NES_ASSERT2_FMT(!pendingReconfiguration.has_value() || pendingReconfiguration.value() == newReceiverTuple,
-//                    "Cannot reconfigure receiver to " << newPartition << " because a reconnect to "
-//                                                      << pendingReconfiguration.value().second << " is already pending");
-    //register event consumer for new source
-    //todo: register consumer here?
+void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition,
+                                                   const NodeLocation& newReceiverLocation,
+                                                   OperatorVersionNumber newVersion) {
+    VersionUpdate newReceiverTuple = {newReceiverLocation, newPartition, newVersion};
+    //register event consumer for new source. It has to be registered before any data channels connect
     NES_ASSERT2_FMT(
         networkManager->registerSubpartitionEventConsumer(newReceiverLocation, newPartition, inherited1::shared_from_this()),
         "Cannot register event listener " << nesPartition.toString());
@@ -296,7 +304,8 @@ void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition, co
 
 void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                                       const NodeLocation& newNodeLocation,
-                                                      NesPartition newNesPartition) {
+                                                      NesPartition newNesPartition,
+                                                      OperatorVersionNumber newVersion) {
     NES_DEBUG("NetworkSink: method clearOldAndConnectToNewChannelAsync() called {} qep {}, by thread {}",
               nesPartition.toString(),
               querySubPlanId,
@@ -316,12 +325,12 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                                                                   waitTime,
                                                                                   retryTimes,
                                                                                   reconf,
-                                                                                  queryManager);
+                                                                                  queryManager, newVersion);
     //todo: #4282 use QueryTerminationType::Redeployment
     workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
     //todo #4310: do release and storing of nullptr in one call
     workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
-                                        Runtime::QueryTerminationType::HardStop,
+                                        Runtime::QueryTerminationType::Graceful,
                                         queryManager->getNumberOfWorkerThreads());
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
 }
@@ -377,6 +386,6 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
 //    pendingReconfiguration = {newReceiverLocation, newPartition};
 //}
 
-uint16_t NetworkSink::getNumberOfInputSources() const { return numberOfInputSources; }
+//uint16_t NetworkSink::getNumberOfInputSources() const { return numberOfInputSources; }
 
 }// namespace NES::Network

@@ -136,7 +136,7 @@ class NetworkSource : public DataSource {
      */
     void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
 
-    OperatorVersionNumber getInitialVersion();
+    OperatorVersionNumber getInitialVersion() const;
 
     bool bind();
 

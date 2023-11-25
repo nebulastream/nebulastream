@@ -50,7 +50,7 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             //check version
             if (partitionManager->getVersion(nesPartition) != msg.getVersionNumber()) {
                 //todo: implment another message here
-                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}", partitionManager->getVersion(nesPartition), msg.getVersionNumber());
+                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}", msg.getVersionNumber(), partitionManager->getVersion(nesPartition));
                 return Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError);
             }
 

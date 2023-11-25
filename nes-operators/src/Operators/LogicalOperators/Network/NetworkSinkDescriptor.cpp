@@ -21,19 +21,22 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
+                                             OperatorVersionNumber initialVersion,
                                              uint64_t numberOfOrigins)
     : SinkDescriptor(numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes) {}
+      waitTime(waitTime), retryTimes(retryTimes), initialVersion(initialVersion) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
+                                                OperatorVersionNumber initialVersion,
                                                 uint64_t numberOfOrigins) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
                                                                          nesPartition,
                                                                          waitTime,
                                                                          retryTimes,
+                                                                         initialVersion,
                                                                          numberOfOrigins));
 }
 
@@ -57,5 +60,7 @@ NesPartition NetworkSinkDescriptor::getNesPartition() const { return nesPartitio
 std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return waitTime; }
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
+
+uint16_t NetworkSinkDescriptor::getInitialVersion() const { return initialVersion; }
 
 }// namespace NES::Network

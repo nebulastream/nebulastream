@@ -30,29 +30,20 @@ class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOp
     PhysicalSinkOperator(OperatorId id,
                          SchemaPtr inputSchema,
                          SchemaPtr outputSchema,
-                         SinkDescriptorPtr sinkDescriptor,
-                         uint16_t numberOfInputSources);
+                         SinkDescriptorPtr sinkDescriptor);
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const SinkDescriptorPtr& sinkDescriptor,
-                                      uint16_t numberOfInputSources);
+                                      const SinkDescriptorPtr& sinkDescriptor);
     static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor, uint16_t numberOfInputSources);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     SinkDescriptorPtr getSinkDescriptor();
-
-    /**
-     * @brief get the number of sources that produce data consumed by this sink
-     * @return the number of input sources
-     */
-    uint16_t getNumberOfInputSources() const;
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
     SinkDescriptorPtr sinkDescriptor;
-    uint16_t numberOfInputSources;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

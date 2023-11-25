@@ -600,7 +600,8 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
                                                     uint32_t newPort,
                                                     QuerySubPlanId querySubPlanId,
                                                     uint64_t uniqueNetworkSinkDescriptorId,
-                                                    Network::NesPartition newPartition) {
+                                                    Network::NesPartition newPartition,
+                                                    OperatorVersionNumber versionNumber) {
     NES_ERROR("NodeEngine: Received request to reconfigure Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
@@ -620,7 +621,7 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
                                        && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
                                });
         if (it != networkSinks.end()) {
-            networkSink->configureNewReceiverAndPartition(newPartition, newNodeLocation);
+            networkSink->configureNewReceiverAndPartition(newPartition, newNodeLocation, versionNumber);
             return true;
         }
         //query sub plan did not have network sink with specified id

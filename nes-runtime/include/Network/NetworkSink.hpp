@@ -49,7 +49,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins = 0,
-                         uint16_t numberOfInputSources = 0);
+                         OperatorVersionNumber versionNumber = 0);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -133,7 +133,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newPartition the partition of the new downstram source
      * @param newReceiverLocation the location of the node where the new downstream source is located
      */
-    void configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation);
+    void configureNewReceiverAndPartition(NesPartition newPartition,
+                                          const NodeLocation& newReceiverLocation,
+                                          OperatorVersionNumber newVersion);
 
     /**
      * @brief returns the number of sources which produce data that is consumed by this sink
@@ -154,7 +156,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     void clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                              const NodeLocation& newNodeLocation,
-                                             NesPartition newNesPartition);
+                                             NesPartition newNesPartition,
+                                             OperatorVersionNumber newVersion);
 
     /**
      * @brief write all data from the reconnect buffer to the currently active network channel
@@ -179,9 +182,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    uint16_t numberOfInputSources;
-    std::atomic<uint16_t> receivedVersionDrainEvents;
+    //uint16_t numberOfInputSources;
+    //std::atomic<uint16_t> receivedVersionDrainEvents;
     //std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
+    OperatorVersionNumber versionNumber;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

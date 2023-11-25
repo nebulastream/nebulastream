@@ -260,7 +260,7 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
-OperatorVersionNumber NetworkSource::getInitialVersion() {
+OperatorVersionNumber NetworkSource::getInitialVersion() const {
     return initialVersion;
 }
 
