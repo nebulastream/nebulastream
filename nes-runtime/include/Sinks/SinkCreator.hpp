@@ -221,9 +221,9 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               size_t numOfProducers,
                               std::chrono::milliseconds waitTime,
+                              OperatorVersionNumber versionNumber,
                               uint64_t numberOfOrigins = 1,
-                              uint8_t retryTimes = 5,
-                              uint16_t numberOfInputSources = 0);
+                              uint8_t retryTimes = 5);
 
 /**
  * @brief create a monitoring data sink

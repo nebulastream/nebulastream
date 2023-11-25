@@ -136,14 +136,9 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         auto logicalSinkOperator = operatorNode->as<SinkLogicalOperatorNode>();
 
-        //set number of input sources
-        auto sinkDescriptor = logicalSinkOperator->getSinkDescriptor();
-        auto numberOfInputSources = queryPlan->getSourceOperators().size();
-
         auto physicalSinkOperator = PhysicalOperators::PhysicalSinkOperator::create(logicalSinkOperator->getInputSchema(),
                                                                                     logicalSinkOperator->getOutputSchema(),
-                                                                                    logicalSinkOperator->getSinkDescriptor(),
-                                                                                    numberOfInputSources);
+                                                                                    logicalSinkOperator->getSinkDescriptor());
         physicalSinkOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSinkOperator);
         queryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
