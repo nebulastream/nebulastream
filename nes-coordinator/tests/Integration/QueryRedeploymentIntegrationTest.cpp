@@ -755,9 +755,10 @@ TEST_P(QueryRedeploymentIntegrationTest, testPlannedReconnectWithVersionDrainEve
         wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front());
     Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-    networkSink->addPendingReconfiguration(networkSourceWrk3Partition, newNodeLocation);
+    //networkSink->addPendingReconfiguration(networkSourceWrk3Partition, newNodeLocation);
+    std::pair newReceiverTuple = {newNodeLocation, networkSourceWrk3Partition};
     auto message =
-        Runtime::ReconfigurationMessage(sharedQueryId, subPlanIdWrk1, Runtime::ReconfigurationType::DrainVersion, networkSink);
+        Runtime::ReconfigurationMessage(sharedQueryId, subPlanIdWrk1, Runtime::ReconfigurationType::ConnectToNewReceiver, networkSink, newReceiverTuple);
     wrk1->getNodeEngine()->getQueryManager()->addReconfigurationMessage(sharedQueryId, subPlanIdWrk1, message, true);
 
     //reconfig performed but new network source not started yet. tuples are buffered at wrk1
@@ -1094,10 +1095,11 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnectWithVersion
         networkSrcWrk3Id += 10;
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-        networkSink->addPendingReconfiguration(networkSourceWrk3Partition, newNodeLocation);
+        //networkSink->addPendingReconfiguration(networkSourceWrk3Partition, newNodeLocation);
+        std::pair newReceiverTuple = {newNodeLocation, networkSourceWrk3Partition};
         auto message = Runtime::ReconfigurationMessage(sharedQueryId,
                                                        subPlanIdWrk1,
-                                                       Runtime::ReconfigurationType::DrainVersion,
+                                                       Runtime::ReconfigurationType::ConnectToNewReceiver,
                                                        networkSink);
         wrk1->getNodeEngine()->getQueryManager()->addReconfigurationMessage(sharedQueryId, subPlanIdWrk1, message, true);
 
