@@ -229,6 +229,15 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId qu
 
 bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus) {
     std::unique_lock lock(serviceMutex);
+
+
+    //todo: remove this
+    if (markedForRedeployment.contains(sharedQueryId)) {
+        return true;
+    }
+
+
+
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
               "plan with id {}",
               std::string(magic_enum::enum_name(subQueryStatus)),
@@ -382,5 +391,31 @@ std::vector<QueryId> QueryCatalogService::getQueryIdsForSharedQueryId(SharedQuer
     }
     return queryIds;
 }
+bool QueryCatalogService::checkAndMarkForRedeployment(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId, OperatorId operatorId) {
+    //todo: this is a hack until a real solution is implemented
+    markedForRedeployment.insert(sharedQueryId);
+    return true;
+    std::unique_lock lock(serviceMutex);
 
+    NES_INFO("checkAndMarkForSoftStop sharedQueryId={} subQueryId={} source={}", sharedQueryId, subPlanId, operatorId);
+    //Fetch query catalog entries
+    auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
+    for (auto& queryCatalogEntry : queryCatalogEntries) {
+        //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
+        auto currentQueryState = queryCatalogEntry->getQueryState();
+        if (currentQueryState == QueryState::MARKED_FOR_HARD_STOP || currentQueryState == QueryState::FAILED
+            || currentQueryState == QueryState::STOPPED) {
+            NES_WARNING("QueryCatalogService: Soft stop can not be initiated as query in {} status.",
+                        queryCatalogEntry->getQueryStatusAsString());
+            return false;
+            }
+    }
+
+    //Mark queries for soft stop and return
+    for (auto& queryCatalogEntry : queryCatalogEntries) {
+        queryCatalogEntry->setQueryStatus(QueryState::MARKED_FOR_SOFT_STOP);
+    }
+    NES_INFO("QueryCatalogService: Shared query id {} is marked as soft stopped", sharedQueryId);
+    return true;
+}
 }// namespace NES
