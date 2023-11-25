@@ -36,18 +36,18 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t numberOfOrigins,
                          uint16_t numberOfInputSources)
     : SinkMedium(
-        std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
-        nodeEngine,
-        numOfProducers,
-        queryId,
-        querySubPlanId,
-        numberOfOrigins),
+          std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
+          nodeEngine,
+          numOfProducers,
+          queryId,
+          querySubPlanId,
+          numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), numberOfInputSources(numberOfInputSources),
-      receivedVersionDrainEvents(0), pendingReconfiguration(std::nullopt) {
+      receivedVersionDrainEvents(0) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
 }
@@ -163,10 +163,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
-        case Runtime::ReconfigurationType::DrainVersion: {
-            NES_DEBUG("NetworkSink: Thread {} received version drain message", Runtime::NesThread::getId());
-            break;
-        }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
             //retrieve information about which source to connect to
             auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
@@ -243,28 +239,14 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
             auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
             networkManager->unregisterSubpartitionProducer(nesPartition);
+
+            //todo: check if we have to move this to the connection established reconfig
+//            NES_ASSERT2_FMT(networkManager->registerSubpartitionEventConsumer(newReceiverLocation,
+//                                                                              newPartition,
+//                                                                              inherited1::shared_from_this()),
+//                            "Cannot register event listener " << nesPartition.toString());
             receiverLocation = newReceiverLocation;
             nesPartition = newPartition;
-            break;
-        }
-        case Runtime::ReconfigurationType::DrainVersion: {
-            auto currentCount = ++receivedVersionDrainEvents;
-            if (currentCount == numberOfInputSources) {
-                NES_DEBUG("NetworkSink: postReconfigurationCallback() received {} of {} expected version drain events",
-                          currentCount,
-                          numberOfInputSources);
-                receivedVersionDrainEvents = 0;
-                if (pendingReconfiguration.has_value()) {
-                    auto [newReceiverLocation, newPartition] = pendingReconfiguration.value();
-                    configureNewReceiverAndPartition(newPartition, newReceiverLocation);
-                    pendingReconfiguration = std::nullopt;
-                } else {
-                    //todo #4282: propagate version drain event to downstream source without reconfiguring sink
-                }
-            } else {
-                NES_ASSERT2_FMT(currentCount <= numberOfInputSources,
-                                "Number of received version drain events is higher than the expected maximum");
-            }
             break;
         }
         default: {
@@ -293,12 +275,14 @@ OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() const { return unique
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
+//todo: consider removing this whole function
 void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation) {
     std::pair newReceiverTuple = {newReceiverLocation, newPartition};
-    NES_ASSERT2_FMT(!pendingReconfiguration.has_value() || pendingReconfiguration.value() == newReceiverTuple,
-                    "Cannot reconfigure receiver to " << newPartition << " because a reconnect to "
-                                                      << pendingReconfiguration.value().second << " is already pending");
+//    NES_ASSERT2_FMT(!pendingReconfiguration.has_value() || pendingReconfiguration.value() == newReceiverTuple,
+//                    "Cannot reconfigure receiver to " << newPartition << " because a reconnect to "
+//                                                      << pendingReconfiguration.value().second << " is already pending");
     //register event consumer for new source
+    //todo: register consumer here?
     NES_ASSERT2_FMT(
         networkManager->registerSubpartitionEventConsumer(newReceiverLocation, newPartition, inherited1::shared_from_this()),
         "Cannot register event listener " << nesPartition.toString());
@@ -389,9 +373,9 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     return true;
 }
 
-void NetworkSink::addPendingReconfiguration(NesPartition newPartition, const NodeLocation& newReceiverLocation) {
-    pendingReconfiguration = {newReceiverLocation, newPartition};
-}
+//void NetworkSink::addPendingReconfiguration(NesPartition newPartition, const NodeLocation& newReceiverLocation) {
+//    pendingReconfiguration = {newReceiverLocation, newPartition};
+//}
 
 uint16_t NetworkSink::getNumberOfInputSources() const { return numberOfInputSources; }
 

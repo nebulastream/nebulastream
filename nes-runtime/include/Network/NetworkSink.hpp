@@ -126,7 +126,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newReceiverLocation the location of the node hosting the new source
      * @param newPartition the partition of the new source
      */
-    void addPendingReconfiguration(NesPartition newPartition, const NodeLocation& newReceiverLocation);
+    //void addPendingReconfiguration(NesPartition newPartition, const NodeLocation& newReceiverLocation);
 
     /**
      * @brief reconfigure this sink to point to another downstream network source
@@ -181,7 +181,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     uint16_t numberOfInputSources;
     std::atomic<uint16_t> receivedVersionDrainEvents;
-    std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
+    //std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

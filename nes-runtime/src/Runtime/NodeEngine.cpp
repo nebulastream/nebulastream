@@ -254,7 +254,6 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
 
         switch (terminationType) {
             case QueryTerminationType::Graceful:
-            case QueryTerminationType::Drain:
             case QueryTerminationType::HardStop: {
                 for (auto querySubPlanId : querySubPlanIds) {
                     try {
