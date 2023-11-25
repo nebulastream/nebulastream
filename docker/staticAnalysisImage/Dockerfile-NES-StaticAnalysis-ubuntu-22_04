@@ -1,0 +1,47 @@
+FROM ubuntu:22.04
+
+RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
+  libdwarf-dev \
+    libdwarf1 \
+    binutils-dev \
+    libunwind-dev \
+    libdw-dev \
+    libssl-dev \
+    build-essential \
+    clang-format \
+    libnuma-dev \
+    numactl \
+    libmbedtls-dev \
+    libjemalloc-dev \
+    git \
+    wget \
+    python3 \
+    libsodium-dev \
+    tar \
+    p7zip \
+    doxygen \
+    graphviz \
+    libbsd-dev \
+    cmake \
+    software-properties-common \
+    openjdk-8-jdk \
+    opencl-headers \
+    ocl-icd-opencl-dev \
+    && apt-get clean -qq
+
+# docker buildx, TARGETARCH,TARGETOS available in the intermediate container during build time
+# We store new env variables for use during runtime/entrypoint
+# more info: https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
+ARG TARGETARCH
+ARG TARGETOS
+# Docker's architectures do not map to the Debian ones (amd64=x86_64, arm64=aarch64)
+# These are needed for defining lib paths later on CMake
+RUN [ "$TARGETARCH" = "amd64" ] && echo "x86_64-linux-gnu" > /debian-triple || echo "aarch64-linux-gnu" > /debian-triple
+ENV ACTUAL_TRIPLE='cat /debian-triple'
+
+ # download from here as long as the official release is not updated
+RUN wget -O - "https://github.com/adrianmichalke/infer/releases/download/v17/infer-linux64-clang17.tar.xz" | tar xvJ
+ADD ./entrypoint-nes-static-analysis.sh /entrypoint.sh
+
+RUN chmod +x entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
