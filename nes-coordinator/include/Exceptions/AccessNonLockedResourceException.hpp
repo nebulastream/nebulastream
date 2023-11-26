@@ -15,7 +15,7 @@
 #define NES_COORDINATOR_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 namespace NES {
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
 enum class ResourceType : uint8_t;
 }
 namespace Exceptions {
@@ -25,16 +25,16 @@ namespace Exceptions {
 class AccessNonLockedResourceException : public RequestExecutionException {
   public:
     explicit AccessNonLockedResourceException(const std::string& message,
-                                              RequestProcessor::Experimental::ResourceType resourceType);
+                                              RequestProcessor::ResourceType resourceType);
 
     /**
      * @brief Access the type of the resource which could not be accessed
      * @return the resource type
      */
-    RequestProcessor::Experimental::ResourceType getResourceType();
+    RequestProcessor::ResourceType getResourceType();
 
   private:
-    RequestProcessor::Experimental::ResourceType resourceType;
+    RequestProcessor::ResourceType resourceType;
 };
 }// namespace Exceptions
 }// namespace NES

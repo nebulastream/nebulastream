@@ -121,7 +121,7 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
 
     // Create add request
     auto addQueryRequest =
-        RequestProcessor::Experimental::AddQueryRequest::create(queryPlan, TEST_PLACEMENT_STRATEGY, ZERO_RETRIES, z3Context);
+        RequestProcessor::AddQueryRequest::create(queryPlan, TEST_PLACEMENT_STRATEGY, ZERO_RETRIES, z3Context);
     addQueryRequest->setId(requestId);
 
     // Execute add request until deployment phase

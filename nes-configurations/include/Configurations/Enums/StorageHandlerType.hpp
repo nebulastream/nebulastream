@@ -16,7 +16,7 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_
 #include <cstdint>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 /**
  * @brief Represents various storage handler types.

@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 /**
  * @brief This class is used by coordinator side requests to indicate which data structures they need to access to

@@ -46,7 +46,7 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
 
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
 /**
  * @brief This struct contains smart pointers to the data structures which coordinator requests operate on.
  */

@@ -106,7 +106,7 @@ class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
 }// namespace Optimizer
 
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
 
 //a response to the creator of the request
 struct AddQueryResponse : public AbstractRequestResponse {
@@ -193,13 +193,6 @@ class AddQueryRequest : public AbstractRequest {
      * @param storageHandle: The storage access handle used by the request
      */
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandler) override;
-
-    /**
-     * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
-     * @param storageHandle: The storage access handle used by the request
-     * @param requiredResources: The resources required during the execution phase
-     */
-    void postExecution(const StorageHandlerPtr& storageHandler) override;
 
     /**
      * @brief Executes the request logic.

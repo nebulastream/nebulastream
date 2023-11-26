@@ -13,7 +13,7 @@
 */
 #include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
 
-namespace NES ::RequestProcessor::Experimental {
+namespace NES ::RequestProcessor {
 UnlockDeleter::UnlockDeleter() = default;
 
 UnlockDeleter::UnlockDeleter(std::mutex& mutex) : lock(mutex) {}

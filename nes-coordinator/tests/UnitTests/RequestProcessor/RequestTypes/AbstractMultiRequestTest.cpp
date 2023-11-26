@@ -18,7 +18,7 @@
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <gtest/gtest.h>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 class DummyResponse : public AbstractRequestResponse {
   public:
@@ -28,8 +28,9 @@ class DummyResponse : public AbstractRequestResponse {
 
 class DummySubRequest : public AbstractSubRequest {
   public:
-    DummySubRequest(std::atomic_ref<uint32_t> additionTarget, uint32_t returnNewRequestFrequency) : additionTarget(additionTarget), returnNewRequestFrequency(returnNewRequestFrequency) {}
-    void execute(const StorageHandlerPtr&) override {
+    DummySubRequest(std::atomic_ref<uint32_t> additionTarget, uint32_t returnNewRequestFrequency)
+        : AbstractSubRequest({}), additionTarget(additionTarget), returnNewRequestFrequency(returnNewRequestFrequency) {}
+    void executeSubRequestLogic(const StorageHandlerPtr&) override {
         auto lastValue = ++additionTarget;
         responsePromise.set_value(true);
     }
@@ -42,13 +43,17 @@ class DummyRequest : public AbstractMultiRequest {
     DummyRequest(const std::vector<ResourceType>& requiredResources,
                  uint8_t maxRetries,
                  uint32_t initialValue,
-                 uint32_t additionValue, uint32_t returnNewRequestFrequency)
-        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue), returnNewRequestFrequency(returnNewRequestFrequency) {};
+                 uint32_t additionValue,
+                 uint32_t returnNewRequestFrequency)
+        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue),
+          returnNewRequestFrequency(returnNewRequestFrequency){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override {
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
         std::vector<std::future<std::any>> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
-            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency)));
+            futures.push_back(scheduleSubRequest(
+                std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency),
+                storageHandler));
         }
         for (auto& f : futures) {
             f.wait();
@@ -73,15 +78,19 @@ class DummyRequest : public AbstractMultiRequest {
 class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
   public:
     DummyRequestMainThreadHelpsExecution(const std::vector<ResourceType>& requiredResources,
-                 uint8_t maxRetries,
-                 uint32_t initialValue,
-                 uint32_t additionValue, uint32_t returnNewRequestFrequency)
-        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue), returnNewRequestFrequency(returnNewRequestFrequency) {};
+                                         uint8_t maxRetries,
+                                         uint32_t initialValue,
+                                         uint32_t additionValue,
+                                         uint32_t returnNewRequestFrequency)
+        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue),
+          returnNewRequestFrequency(returnNewRequestFrequency){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
         std::vector<std::future<std::any>> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
-            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency)));
+            futures.push_back(scheduleSubRequest(
+                std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency),
+                storageHandler));
         }
 
         executeSubRequestWhileQueueNotEmpty(storageHandler);
@@ -165,15 +174,9 @@ TEST_F(AbstractMultiRequestTest, testOneMainThreadTwoExecutors) {
         request.execute(storageHandler);
     });
     auto thread2 = std::make_shared<std::thread>([&request, &storageHandler]() {
-        // for (uint32_t i = 0; i < iterations / 2; ++i) {
-        //     NES_DEBUG("Executing subrequest: {}", i);
-            request.execute(storageHandler);
-        // }
-    });
-    // for (uint32_t i = 0; i < iterations / 2; ++i) {
-        // NES_DEBUG("Executing subrequest: {}", i);
         request.execute(storageHandler);
-    // }
+    });
+    request.execute(storageHandler);
     thread2->join();
     thread->join();
     ASSERT_TRUE(request.isDone());

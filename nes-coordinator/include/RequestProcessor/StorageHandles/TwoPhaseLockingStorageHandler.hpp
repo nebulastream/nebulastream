@@ -16,9 +16,11 @@
 
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <atomic>
+#include <deque>
+#include <future>
 #include <vector>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 struct StorageDataStructures;
 
 /**
@@ -26,6 +28,12 @@ struct StorageDataStructures;
  * until the handle goes out of scope.
  */
 class TwoPhaseLockingStorageHandler : public StorageHandler {
+    struct ResourceHolderData {
+        RequestId holderId{INVALID_REQUEST_ID};
+        std::deque<std::promise<std::unique_lock<std::mutex>>> waitingQueue;
+        std::mutex queueMutex;
+    };
+
   public:
     /**
      * @brief constructor
@@ -64,7 +72,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param requestId the id of the request calling this function
      * @param requiredResources the types of the resources to be locked
      */
-    void acquireResources(RequestId requestId, const std::vector<ResourceType>& requiredResources) override;
+    void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources) override;
 
     /**
      * Releases all the locks a request holds on any data structure
@@ -122,6 +130,8 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
 
     CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
 
+    uint32_t getWaitingCount(ResourceType resource);
+
   private:
     /**
      * @brief Locks the resource for the calling request and maintains the lock until resources are released on request of the request
@@ -136,7 +146,7 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
      * @param resourceType type of the resource for which the lock info is requested
      * @return an atomic containing the id of the lock holding request or INVALID_REQUEST_ID if the resource is not currently locked
      */
-    std::atomic<RequestId>& getHolder(ResourceType resourceType);
+    ResourceHolderData& getHolder(ResourceType resourceType);
 
     /**
      * @brief indicates if a request holds a lock on any resource
@@ -154,13 +164,13 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 
-    std::atomic<RequestId> coordinatorConfigurationHolder;
-    std::atomic<RequestId> topologyHolder;
-    std::atomic<RequestId> globalExecutionPlanHolder;
-    std::atomic<RequestId> queryCatalogServiceHolder;
-    std::atomic<RequestId> globalQueryPlanHolder;
-    std::atomic<RequestId> sourceCatalogHolder;
-    std::atomic<RequestId> udfCatalogHolder;
+    ResourceHolderData coordinatorConfigurationHolder;
+    ResourceHolderData topologyHolder;
+    ResourceHolderData globalExecutionPlanHolder;
+    ResourceHolderData queryCatalogServiceHolder;
+    ResourceHolderData globalQueryPlanHolder;
+    ResourceHolderData sourceCatalogHolder;
+    ResourceHolderData udfCatalogHolder;
 };
 }// namespace NES::RequestProcessor::Experimental
 

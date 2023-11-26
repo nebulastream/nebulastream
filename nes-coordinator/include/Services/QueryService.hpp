@@ -62,7 +62,7 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 }// namespace Catalogs
 
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
 class AsyncRequestProcessor;
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 }// namespace RequestProcessor::Experimental
@@ -80,7 +80,7 @@ class QueryService {
                           const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
                           const QueryParsingServicePtr& queryParsingService,
                           const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                          const NES::RequestProcessor::Experimental::AsyncRequestProcessorPtr& asyncRequestExecutor,
+                          const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                           const z3::ContextPtr& z3Context);
 
     /**
@@ -151,7 +151,7 @@ class QueryService {
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
-    NES::RequestProcessor::Experimental::AsyncRequestProcessorPtr asyncRequestExecutor;
+    NES::RequestProcessor::AsyncRequestProcessorPtr asyncRequestExecutor;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
 };

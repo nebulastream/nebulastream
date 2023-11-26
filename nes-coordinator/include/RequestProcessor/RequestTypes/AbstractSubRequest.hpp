@@ -17,32 +17,34 @@
 #include <future>
 #include <memory>
 #include <vector>
+#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 class AbstractRequest;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
-
-// class AbstractRequestResponse;
-// using AbstractRequestResponsePtr = std::shared_ptr<AbstractRequestResponse>;
 
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
+class AbstractSubRequest : public StorageResourceLocker {
+  public:
+    explicit AbstractSubRequest(std::vector<ResourceType> requiredResources);
 
-class AbstractSubRequest {
-public:
     /**
      * @brief destructor
      */
     virtual ~AbstractSubRequest() = default;
 
-    virtual void execute(const StorageHandlerPtr& storageHandler) = 0;
+    void execute(const StorageHandlerPtr& storageHandler);
+
+    virtual void executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
 
     std::future<std::any> getFuture();
-protected:
+
+  protected:
     std::promise<std::any> responsePromise;
 };
 
-}
+}// namespace NES::RequestProcessor::Experimental
 
 #endif//NES_ABSTRACTSUBREQUEST_HPP

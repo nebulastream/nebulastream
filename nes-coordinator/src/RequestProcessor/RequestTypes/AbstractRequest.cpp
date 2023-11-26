@@ -19,10 +19,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
-    : requestId(INVALID_REQUEST_ID), responsePromise(), maxRetries(maxRetries), actualRetries(0),
-      requiredResources(requiredResources) {}
+    : StorageResourceLocker(requiredResources), responsePromise(), maxRetries(maxRetries) {}
 
 std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exception_ptr& ex,
                                                              const StorageHandlerPtr& storageHandle) {
@@ -63,14 +62,8 @@ std::vector<AbstractRequestPtr> AbstractRequest::execute(const StorageHandlerPtr
     return followUpRequests;
 }
 
-//template<ConceptResponse ResponseType>
-void AbstractRequest::preExecution(const StorageHandlerPtr& storageHandle) {
-    storageHandle->acquireResources(requestId, requiredResources);
-}
-
 std::future<AbstractRequestResponsePtr> AbstractRequest::getFuture() { return responsePromise.get_future(); }
 
-void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
 
 void AbstractRequest::trySetExceptionInPromise(std::exception_ptr exception) {
     try {

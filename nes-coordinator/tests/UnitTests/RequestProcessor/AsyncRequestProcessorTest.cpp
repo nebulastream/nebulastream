@@ -19,7 +19,10 @@
 #include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <Util/TestUtils.hpp>
+#include <algorithm>
 #include <gtest/gtest.h>
+#include <utility>
 
 namespace NES::RequestProcessor::Experimental {
 
@@ -77,6 +80,54 @@ class DummyConcatRequest : public AbstractRequest {
     uint32_t min;
 };
 
+class DummyWaitOnFutureResponse : public AbstractRequestResponse {
+  public:
+    explicit DummyWaitOnFutureResponse(StorageHandlerPtr storageHandler) : storageHandler(std::move(storageHandler)) {}
+    StorageHandlerPtr storageHandler;
+};
+
+class DummyWaitOnFutureRequest : public AbstractRequest {
+  public:
+    DummyWaitOnFutureRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, std::future<bool> future)
+        : AbstractRequest(requiredResources, maxRetries), future(std::move(future)){};
+
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
+        if (future.get()) {
+            auto response = std::make_shared<DummyWaitOnFutureResponse>(storageHandler);
+
+            responsePromise.set_value(response);
+        }
+        return {};
+    }
+
+    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
+
+  protected:
+    void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
+    void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
+    void postExecution(const StorageHandlerPtr& storageHandler) override { storageHandler->releaseResources(requestId); }
+
+  private:
+    std::future<bool> future;
+};
+
+class DummyWaitOnFutureSubRequest : public AbstractSubRequest {
+  public:
+    DummyWaitOnFutureSubRequest(const std::vector<ResourceType>& requiredResources, std::future<bool> future)
+        : AbstractSubRequest(requiredResources), future(std::move(future)){};
+
+    void executeSubRequestLogic(const StorageHandlerPtr& storageHandler) override {
+        if (future.get()) {
+            auto response = std::make_shared<DummyWaitOnFutureResponse>(storageHandler);
+
+            responsePromise.set_value(response);
+        }
+    }
+
+  private:
+    std::future<bool> future;
+};
+
 class DummyMultiResponse : public AbstractRequestResponse {
   public:
     explicit DummyMultiResponse(uint32_t number) : number(number){};
@@ -85,26 +136,32 @@ class DummyMultiResponse : public AbstractRequestResponse {
 
 class DummySubRequest : public AbstractSubRequest {
   public:
-    DummySubRequest(std::atomic_ref<uint32_t> additionTarget, uint32_t returnNewRequestFrequency) : additionTarget(additionTarget), returnNewRequestFrequency(returnNewRequestFrequency) {}
-    void execute(const StorageHandlerPtr&) override {
+    DummySubRequest(std::atomic_ref<uint32_t> additionTarget, uint32_t returnNewRequestFrequency)
+        : AbstractSubRequest({}), additionTarget(additionTarget), returnNewRequestFrequency(returnNewRequestFrequency) {}
+    void executeSubRequestLogic(const StorageHandlerPtr&) override {
         auto lastValue = ++additionTarget;
         responsePromise.set_value(true);
     }
     std::atomic_ref<uint32_t> additionTarget;
     uint32_t returnNewRequestFrequency;
 };
+
 class DummyMultiRequest : public AbstractMultiRequest {
   public:
     DummyMultiRequest(const std::vector<ResourceType>& requiredResources,
-                 uint8_t maxRetries,
-                 uint32_t initialValue,
-                 uint32_t additionValue, uint32_t returnNewRequestFrequency)
-        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue), returnNewRequestFrequency(returnNewRequestFrequency) {};
+                      uint8_t maxRetries,
+                      uint32_t initialValue,
+                      uint32_t additionValue,
+                      uint32_t returnNewRequestFrequency)
+        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue),
+          returnNewRequestFrequency(returnNewRequestFrequency){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override {
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
         std::vector<std::future<std::any>> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
-            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency)));
+            futures.push_back(scheduleSubRequest(
+                std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency),
+                storageHandler));
         }
         for (auto& f : futures) {
             f.wait();
@@ -114,7 +171,6 @@ class DummyMultiRequest : public AbstractMultiRequest {
     }
 
     std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
-    //std::atomic<uint32_t> responseValue;
     uint32_t responseValue;
 
   protected:
@@ -130,20 +186,22 @@ class DummyMultiRequest : public AbstractMultiRequest {
 class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
   public:
     DummyRequestMainThreadHelpsExecution(const std::vector<ResourceType>& requiredResources,
-                 uint8_t maxRetries,
-                 uint32_t initialValue,
-                 uint32_t additionValue, uint32_t returnNewRequestFrequency)
-        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue), returnNewRequestFrequency(returnNewRequestFrequency) {};
+                                         uint8_t maxRetries,
+                                         uint32_t initialValue,
+                                         uint32_t additionValue,
+                                         uint32_t returnNewRequestFrequency)
+        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue),
+          returnNewRequestFrequency(returnNewRequestFrequency){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
         std::vector<std::future<std::any>> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
-            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency)));
+            futures.push_back(scheduleSubRequest(
+                std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency),
+                storageHandler));
         }
 
-        //release
         executeSubRequestWhileQueueNotEmpty(storageHandler);
-        //reacquire
 
         for (auto& f : futures) {
             f.wait();
@@ -172,14 +230,15 @@ class AsyncRequestProcessorTest : public Testing::BaseUnitTest, public testing::
 
   protected:
     AsyncRequestProcessorPtr processor{nullptr};
+    Configurations::CoordinatorConfigurationPtr coordinatorConfig;
 
   public:
     void SetUp() override {
         Base::SetUp();
-        auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
+        coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
         coordinatorConfig->requestExecutorThreads = GetParam();
         StorageDataStructures storageDataStructures = {coordinatorConfig, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-        processor = std::make_shared<Experimental::AsyncRequestProcessor>(storageDataStructures);
+        processor = std::make_shared<AsyncRequestProcessor>(storageDataStructures);
     }
 
     void TearDown() override {
@@ -194,6 +253,395 @@ TEST_P(AsyncRequestProcessorTest, startAndDestroy) {
     //it should not be possible to submit a request after destruction
     auto request = std::make_shared<DummyConcatRequest>(std::vector<ResourceType>{}, 0, 10, 10);
     EXPECT_FALSE(processor->runAsync(request));
+}
+
+TEST_P(AsyncRequestProcessorTest, testWaitingForLock) {
+    constexpr uint32_t responseValue = 20;
+    try {
+        //using the same value for response value and min value will create a single request with no follow up requests
+        std::promise<bool> promise1;
+        auto request1 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::Topology},
+                                                                   0,
+                                                                   promise1.get_future());
+
+        std::promise<bool> promise2;
+        auto request2 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::QueryCatalogService},
+                                                                   0,
+                                                                   promise2.get_future());
+
+        std::promise<bool> promise3;
+        auto request3 = std::make_shared<DummyWaitOnFutureRequest>(
+            std::vector<ResourceType>{ResourceType::QueryCatalogService, ResourceType::Topology},
+            0,
+            promise3.get_future());
+
+        std::promise<bool> promise4;
+        auto request4 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::Topology},
+                                                                   0,
+                                                                   promise4.get_future());
+
+        std::promise<bool> promise5;
+        auto request5 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::QueryCatalogService},
+                                                                   0,
+                                                                   promise5.get_future());
+
+        //get 2pl handler
+        std::promise<bool> handlerGetterPromise;
+        auto handlerGetterRequest =
+            std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{}, 0, handlerGetterPromise.get_future());
+        auto handlerGetterResponseFuture = handlerGetterRequest->getFuture();
+        auto handlerGetterId = processor->runAsync(handlerGetterRequest);
+        EXPECT_NE(handlerGetterId, INVALID_REQUEST_ID);
+        handlerGetterPromise.set_value(true);
+        auto twoplhandler = std::dynamic_pointer_cast<TwoPhaseLockingStorageHandler>(
+            std::static_pointer_cast<DummyWaitOnFutureResponse>(handlerGetterResponseFuture.get())->storageHandler);
+
+        auto future1 = request1->getFuture();
+        auto future2 = request2->getFuture();
+        auto future3 = request3->getFuture();
+        auto future4 = request4->getFuture();
+        auto future5 = request5->getFuture();
+
+        auto queryId1 = processor->runAsync(request1);
+        EXPECT_NE(queryId1, INVALID_REQUEST_ID);
+
+        while (true) {
+            try {
+                twoplhandler->getTopologyHandle(queryId1);
+                NES_DEBUG("Request {} has locked the topology", queryId1);
+                break;
+            } catch (std::exception& e) {
+                NES_DEBUG("Request {} has not yet locked the topology", queryId1);
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        auto queryId2 = processor->runAsync(request2);
+        EXPECT_NE(queryId2, INVALID_REQUEST_ID);
+        while (coordinatorConfig->requestExecutorThreads.getValue() > 1) {
+            try {
+                twoplhandler->getQueryCatalogServiceHandle(queryId2);
+                NES_DEBUG("Request {} has locked the query catalog", queryId2);
+                break;
+            } catch (std::exception& e) {
+                NES_DEBUG("Request {} has not yet locked the query catalog", queryId2);
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        auto threadCount = coordinatorConfig->requestExecutorThreads.getValue();
+        auto queryId3 = processor->runAsync(request3);
+        EXPECT_NE(queryId3, INVALID_REQUEST_ID);
+        auto expectedTopologyWaitingCount = 1;
+        if (threadCount < 3) {
+            expectedTopologyWaitingCount = 0;
+        }
+        auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) < expectedTopologyWaitingCount) {
+            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        auto queryId4 = processor->runAsync(request4);
+        EXPECT_NE(queryId4, INVALID_REQUEST_ID);
+        expectedTopologyWaitingCount = 2;
+        if (threadCount < 3) {
+            expectedTopologyWaitingCount = 0;
+        } else if (threadCount < 4) {
+            expectedTopologyWaitingCount = 1;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) < expectedTopologyWaitingCount) {
+            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        auto queryId5 = processor->runAsync(request5);
+        EXPECT_NE(queryId5, INVALID_REQUEST_ID);
+        auto expectedQueryCatalogWaitingCount = 1;
+        if (threadCount < 5) {
+            expectedQueryCatalogWaitingCount = 0;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) < expectedQueryCatalogWaitingCount) {
+            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+
+        promise1.set_value(true);
+        future1.get();
+        //when request one gets executed, the wating count on the topology will eventually decrease
+        if (expectedTopologyWaitingCount > 0) {
+            expectedTopologyWaitingCount--;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) != expectedTopologyWaitingCount) {
+            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        //because one lock on the topology gets released, request 3 can qcquire it and will then start waiting on the query catalog as well
+        expectedQueryCatalogWaitingCount = 2;
+        if (threadCount < 2) {
+            expectedQueryCatalogWaitingCount = 0;
+        } else if (threadCount < 4) {
+            expectedQueryCatalogWaitingCount = 1;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) < expectedQueryCatalogWaitingCount) {
+            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        promise2.set_value(true);
+        future2.get();
+
+        //when request two gets executed, the wating count on the query catalog will eventually decrease
+        expectedQueryCatalogWaitingCount = 1;
+        if (threadCount < 3) {
+            expectedQueryCatalogWaitingCount = 0;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) > expectedQueryCatalogWaitingCount) {
+            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        promise3.set_value(true);
+        //nothing changes, request 3 is still waiting on the query catalog
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        promise4.set_value(true);
+        //nothing changes, request 4 is waiting on toplogy which is still held by request 3 which is waiting on query catalog
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        promise5.set_value(true);
+        future3.get();
+        future4.get();
+        future5.get();
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        EXPECT_TRUE(processor->stop());
+    } catch (std::exception const& ex) {
+        NES_DEBUG("{}", ex.what());
+        FAIL();
+    }
+}
+
+
+TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
+    constexpr uint32_t responseValue = 20;
+    try {
+        //using the same value for response value and min value will create a single request with no follow up requests
+        std::promise<bool> promise1;
+        auto request1 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::Topology},
+                                                                   0,
+                                                                   promise1.get_future());
+
+        std::promise<bool> promise2;
+        auto request2 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::QueryCatalogService},
+                                                                   0,
+                                                                   promise2.get_future());
+
+        std::promise<bool> promise3;
+        auto request3 = std::make_shared<DummyWaitOnFutureRequest>(
+            std::vector<ResourceType>{ResourceType::QueryCatalogService, ResourceType::Topology},
+            0,
+            promise3.get_future());
+
+        std::promise<bool> promise4;
+        auto request4 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::Topology},
+                                                                   0,
+                                                                   promise4.get_future());
+
+        std::promise<bool> promise5;
+        auto request5 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::QueryCatalogService},
+                                                                   0,
+                                                                   promise5.get_future());
+
+        //get 2pl handler
+        std::promise<bool> handlerGetterPromise;
+        auto handlerGetterRequest =
+            std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{}, 0, handlerGetterPromise.get_future());
+        auto handlerGetterResponseFuture = handlerGetterRequest->getFuture();
+        auto handlerGetterId = processor->runAsync(handlerGetterRequest);
+        EXPECT_NE(handlerGetterId, INVALID_REQUEST_ID);
+        handlerGetterPromise.set_value(true);
+        auto twoplhandler = std::dynamic_pointer_cast<TwoPhaseLockingStorageHandler>(
+            std::static_pointer_cast<DummyWaitOnFutureResponse>(handlerGetterResponseFuture.get())->storageHandler);
+
+        auto future1 = request1->getFuture();
+        auto future2 = request2->getFuture();
+        auto future3 = request3->getFuture();
+        auto future4 = request4->getFuture();
+        auto future5 = request5->getFuture();
+
+        auto queryId1 = processor->runAsync(request1);
+        EXPECT_NE(queryId1, INVALID_REQUEST_ID);
+
+        while (true) {
+            try {
+                twoplhandler->getTopologyHandle(queryId1);
+                NES_DEBUG("Request {} has locked the topology", queryId1);
+                break;
+            } catch (std::exception& e) {
+                NES_DEBUG("Request {} has not yet locked the topology", queryId1);
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        auto queryId2 = processor->runAsync(request2);
+        EXPECT_NE(queryId2, INVALID_REQUEST_ID);
+        while (coordinatorConfig->requestExecutorThreads.getValue() > 1) {
+            try {
+                twoplhandler->getQueryCatalogServiceHandle(queryId2);
+                NES_DEBUG("Request {} has locked the query catalog", queryId2);
+                break;
+            } catch (std::exception& e) {
+                NES_DEBUG("Request {} has not yet locked the query catalog", queryId2);
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        auto threadCount = coordinatorConfig->requestExecutorThreads.getValue();
+        auto queryId3 = processor->runAsync(request3);
+        EXPECT_NE(queryId3, INVALID_REQUEST_ID);
+        auto expectedTopologyWaitingCount = 1;
+        if (threadCount < 3) {
+            expectedTopologyWaitingCount = 0;
+        }
+        auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) < expectedTopologyWaitingCount) {
+            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        auto queryId4 = processor->runAsync(request4);
+        EXPECT_NE(queryId4, INVALID_REQUEST_ID);
+        expectedTopologyWaitingCount = 2;
+        if (threadCount < 3) {
+            expectedTopologyWaitingCount = 0;
+        } else if (threadCount < 4) {
+            expectedTopologyWaitingCount = 1;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) < expectedTopologyWaitingCount) {
+            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        auto queryId5 = processor->runAsync(request5);
+        EXPECT_NE(queryId5, INVALID_REQUEST_ID);
+        auto expectedQueryCatalogWaitingCount = 1;
+        if (threadCount < 5) {
+            expectedQueryCatalogWaitingCount = 0;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) < expectedQueryCatalogWaitingCount) {
+            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+
+        promise1.set_value(true);
+        future1.get();
+        //when request one gets executed, the wating count on the topology will eventually decrease
+        if (expectedTopologyWaitingCount > 0) {
+            expectedTopologyWaitingCount--;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) != expectedTopologyWaitingCount) {
+            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        //because one lock on the topology gets released, request 3 can qcquire it and will then start waiting on the query catalog as well
+        expectedQueryCatalogWaitingCount = 2;
+        if (threadCount < 2) {
+            expectedQueryCatalogWaitingCount = 0;
+        } else if (threadCount < 4) {
+            expectedQueryCatalogWaitingCount = 1;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) < expectedQueryCatalogWaitingCount) {
+            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        promise2.set_value(true);
+        future2.get();
+
+        //when request two gets executed, the wating count on the query catalog will eventually decrease
+        expectedQueryCatalogWaitingCount = 1;
+        if (threadCount < 3) {
+            expectedQueryCatalogWaitingCount = 0;
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) > expectedQueryCatalogWaitingCount) {
+            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        promise3.set_value(true);
+        //nothing changes, request 3 is still waiting on the query catalog
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        promise4.set_value(true);
+        //nothing changes, request 4 is waiting on toplogy which is still held by request 3 which is waiting on query catalog
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        promise5.set_value(true);
+        future3.get();
+        future4.get();
+        future5.get();
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
+        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+
+        EXPECT_TRUE(processor->stop());
+    } catch (std::exception const& ex) {
+        NES_DEBUG("{}", ex.what());
+        FAIL();
+    }
 }
 
 TEST_P(AsyncRequestProcessorTest, submitRequest) {
@@ -251,8 +699,11 @@ TEST_P(AsyncRequestProcessorTest, submitMultiRequest) {
     constexpr uint32_t additionsPerIteration = 3;
     constexpr uint32_t responseValue = iterations * additionsPerIteration;
     try {
-        //auto request = std::make_shared<DummyMultiRequest>(std::vector<ResourceType>{}, 0, 0, responseValue, additionsPerIteration);
-        auto request = std::make_shared<DummyRequestMainThreadHelpsExecution>(std::vector<ResourceType>{}, 0, 0, responseValue, additionsPerIteration);
+        auto request = std::make_shared<DummyRequestMainThreadHelpsExecution>(std::vector<ResourceType>{},
+                                                                              0,
+                                                                              0,
+                                                                              responseValue,
+                                                                              additionsPerIteration);
         auto future = request->getFuture();
         auto queryId = processor->runAsync(request);
         EXPECT_NE(queryId, INVALID_REQUEST_ID);
@@ -262,9 +713,9 @@ TEST_P(AsyncRequestProcessorTest, submitMultiRequest) {
         NES_DEBUG("{}", ex.what());
         FAIL();
     }
+    //todo: problem occurs here
     EXPECT_TRUE(processor->stop());
 }
 
 INSTANTIATE_TEST_CASE_P(AsyncRequestExecutorMTTest, AsyncRequestProcessorTest, ::testing::Values(1, 4, 8));
-
 }// namespace NES::RequestProcessor::Experimental

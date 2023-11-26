@@ -17,6 +17,7 @@
 #include <future>
 #include <memory>
 #include <vector>
+#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 
 namespace NES {
 namespace Exceptions {
@@ -31,17 +32,12 @@ class OptimizerConfiguration;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-namespace RequestProcessor::Experimental {
-
-using RequestId = uint64_t;
-enum class ResourceType : uint8_t;
+namespace RequestProcessor {
 
 //the base class for the responses to be given to the creator of the request
 struct AbstractRequestResponse {};
 using AbstractRequestResponsePtr = std::shared_ptr<AbstractRequestResponse>;
 
-class StorageHandler;
-using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
 /**
  * @brief is the abstract base class for any kind of coordinator side request to deploy or undeploy queries, change the topology or perform
@@ -53,7 +49,7 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 const uint8_t DEFAULT_RETRIES = 1;
 
 //todo: rename this to UniRequest
-class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
+class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>, public StorageResourceLocker {
   public:
     /**
      * @brief constructor
@@ -102,12 +98,6 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * @return a future containing a pointer to the response object
      */
     std::future<AbstractRequestResponsePtr> getFuture();
-
-    /**
-     * @brief set the id of this request. This has to be done before the request is executed.
-     * @param requestId
-     */
-    void setId(RequestId requestId);
 
     /**
      * @brief destructor
@@ -160,18 +150,6 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
     virtual void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) = 0;
 
     /**
-     * @brief Performs steps to be done before execution of the request logic, e.g. locking the required data structures
-     * @param storageHandle: The storage access handle used by the request
-     */
-    virtual void preExecution(const StorageHandlerPtr& storageHandle);
-
-    /**
-     * @brief Performs steps to be done after execution of the request logic, e.g. unlocking the required data structures
-     * @param storageHandle: The storage access handle used by the request
-     */
-    virtual void postExecution(const StorageHandlerPtr& storageHandle) = 0;
-
-    /**
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
      * request
@@ -193,14 +171,10 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      */
     void setExceptionInPromiseOrRethrow(std::exception_ptr exception);
 
-  protected:
-    RequestId requestId;
     std::promise<AbstractRequestResponsePtr> responsePromise;
-
   private:
     uint8_t maxRetries;
-    uint8_t actualRetries;
-    std::vector<ResourceType> requiredResources;
+    uint8_t actualRetries{0};
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

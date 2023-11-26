@@ -15,9 +15,9 @@
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
-void StorageHandler::acquireResources(const RequestId, const std::vector<ResourceType>&) {}
+void StorageHandler::acquireResources(const RequestId, std::vector<ResourceType>) {}
 
 void StorageHandler::releaseResources(const RequestId) {}
 
@@ -34,5 +34,12 @@ SourceCatalogHandle StorageHandler::getSourceCatalogHandle(RequestId) { NES_NOT_
 UDFCatalogHandle StorageHandler::getUDFCatalogHandle(RequestId) { NES_NOT_IMPLEMENTED(); }
 
 CoordinatorConfigurationHandle StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
+
+RequestId StorageHandler::generateRequestId() {
+    RequestId requestId;
+    requestId = nextFreeRequestId;
+    nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
+    return requestId;
+}
 
 }// namespace NES::RequestProcessor::Experimental

@@ -12,8 +12,28 @@
     limitations under the License.
 */
 #include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
-namespace NES::RequestProcessor::Experimental {
+#include <RequestProcessor/StorageHandles/ResourceType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <utility>
+namespace NES::RequestProcessor {
+
+AbstractSubRequest::AbstractSubRequest(std::vector<ResourceType> requiredResources) : StorageResourceLocker(std::move(requiredResources)) {
+
+}
 
 std::future<std::any> AbstractSubRequest::getFuture() { return responsePromise.get_future(); }
+void AbstractSubRequest::execute(const StorageHandlerPtr& storageHandler) {
+    if (requestId == INVALID_REQUEST_ID) {
+        NES_THROW_RUNTIME_ERROR("Trying to execute a subrequest before its id has been set");
+    }
+    //acquire locks and perform other tasks to prepare for execution
+    preExecution(storageHandler);
+
+    //execute the request logic
+    executeSubRequestLogic(storageHandler);
+
+    //release locks
+    postExecution(storageHandler);
+}
 
 }

@@ -14,9 +14,9 @@
 #include <Exceptions/AccessNonLockedResourceException.hpp>
 namespace NES::Exceptions {
 AccessNonLockedResourceException::AccessNonLockedResourceException(const std::string& message,
-                                                                   RequestProcessor::Experimental::ResourceType resourceType)
+                                                                   RequestProcessor::ResourceType resourceType)
     : RequestExecutionException(message), resourceType(resourceType) {}
 
-RequestProcessor::Experimental::ResourceType AccessNonLockedResourceException::getResourceType() { return resourceType; }
+RequestProcessor::ResourceType AccessNonLockedResourceException::getResourceType() { return resourceType; }
 
 }// namespace NES::Exceptions
