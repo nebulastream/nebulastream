@@ -64,7 +64,9 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace Catalogs::UDF
 using UDFCatalogHandle = ResourceHandle<Catalogs::UDF::UDFCatalog>;
 
-namespace RequestProcessor::Experimental {
+namespace RequestProcessor {
+
+static constexpr RequestId MAX_REQUEST_ID = INT_MAX;
 
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
@@ -84,7 +86,7 @@ class StorageHandler {
      * @param requestId The id of the request which calls this function
      * @param requiredResources The resources required for executing the request.
      */
-    virtual void acquireResources(RequestId requestId, const std::vector<ResourceType>& requiredResources);
+    virtual void acquireResources(RequestId requestId, std::vector<ResourceType> requiredResources);
 
     /**
      * This function is called after the request finished executing. The base class implementation is empty. Derived classes need
@@ -141,6 +143,9 @@ class StorageHandler {
      * @return  a handle to the coordinator configuration
      */
     virtual CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId);
+
+    RequestId generateRequestId();
+    RequestId nextFreeRequestId{1};
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES

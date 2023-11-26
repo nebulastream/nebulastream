@@ -20,7 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 AbstractMultiRequest::AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
     : AbstractRequest(requiredResources, maxRetries) {}
@@ -30,10 +30,11 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
     //let the first acquired thread execute the main thread and set the done memver afterwards
     bool expected = false;
     if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
-        //todo: this is not possible
         result = AbstractRequest::execute(storageHandle);
         NES_ASSERT(subRequestQueue.empty(), "Multi request main logic terminated but sub request queue is not empty");
+        std::unique_lock lock(workMutex);
         done = true;
+        lock.unlock();
         cv.notify_all();
         return result;
     }
@@ -49,10 +50,10 @@ bool AbstractMultiRequest::isDone() { return done; }
 bool AbstractMultiRequest::executeSubRequest(const StorageHandlerPtr& storageHandle) {
     std::unique_lock lock(workMutex);
     while (subRequestQueue.empty()) {
-        cv.wait(lock);
         if (done) {
             return false;
         }
+        cv.wait(lock);
     }
     const AbstractSubRequestPtr subRequest = subRequestQueue.front();
     subRequestQueue.pop_front();
@@ -75,10 +76,13 @@ void AbstractMultiRequest::executeSubRequestWhileQueueNotEmpty(const StorageHand
     }
 }
 
-std::future<std::any> AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {
+std::future<std::any> AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest,
+                                                               const StorageHandlerPtr& storageHandler) {
     NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
     //todo: set id on subrequest
+    std::unique_lock lock(workMutex);
     auto future = subRequest->getFuture();
+    subRequest->setId(storageHandler->generateRequestId());
     subRequestQueue.emplace_back(std::move(subRequest));
     cv.notify_all();
     return future;

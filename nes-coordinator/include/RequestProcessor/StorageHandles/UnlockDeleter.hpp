@@ -16,7 +16,7 @@
 
 #include <mutex>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 /**
  * @brief This class holds a lock on the supplied mutex on only releases it when it is destructed. It can be supplied as a

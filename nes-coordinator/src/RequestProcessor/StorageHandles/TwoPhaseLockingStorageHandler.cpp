@@ -20,7 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 TwoPhaseLockingStorageHandler::TwoPhaseLockingStorageHandler(StorageDataStructures storageDataStructures)
     : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration)),
@@ -38,14 +38,16 @@ TwoPhaseLockingStorageHandler::create(StorageDataStructures storageDataStructure
     return std::make_shared<TwoPhaseLockingStorageHandler>(storageDataStructures);
 }
 
-void TwoPhaseLockingStorageHandler::acquireResources(const RequestId requestId,
-                                                     const std::vector<ResourceType>& requiredResources) {
+void TwoPhaseLockingStorageHandler::acquireResources(const RequestId requestId, std::vector<ResourceType> requiredResources) {
     //do not allow performing resource acquisition more than once
     if (isLockHolder(requestId)) {
         throw Exceptions::StorageHandlerAcquireResourcesException(
             "Attempting to call acquireResources on a 2 phase locking storage handler but some resources are already locked by "
             "this request");
     }
+
+    //sort the resource list to ensure that resources are acquired in a deterministic order for deadlock prevention
+    std::sort(requiredResources.begin(), requiredResources.end());
 
     //lock the resources
     for (const auto& type : requiredResources) {
@@ -57,21 +59,33 @@ void TwoPhaseLockingStorageHandler::acquireResources(const RequestId requestId,
 void TwoPhaseLockingStorageHandler::releaseResources(const RequestId requestId) {
     for (const auto resourceType : resourceTypeList) {
         auto& holder = getHolder(resourceType);
-        auto expected = requestId;
-        holder.compare_exchange_strong(expected, INVALID_REQUEST_ID);
+        if (holder.holderId != requestId) {
+            continue;
+        }
+        //if the waiting queue is not empty, signal to the next request in line, that it can overwrite this holders id
+        std::unique_lock lock(holder.queueMutex);
+        auto& queue = holder.waitingQueue;
+        holder.holderId = INVALID_REQUEST_ID;
+
+        //if another request is waiting on this resource, we pass the lock held by this request to the waiting one
+        if (!queue.empty()) {
+            auto promise = std::move(queue.front());
+            queue.pop_front();
+            promise.set_value(std::move(lock));
+        }
     }
 }
 
 bool TwoPhaseLockingStorageHandler::isLockHolder(const RequestId requestId) {
     if (std::any_of(resourceTypeList.cbegin(), resourceTypeList.cend(), [this, requestId](const ResourceType resourceType) {
-            return this->getHolder(resourceType) == requestId;
+            return this->getHolder(resourceType).holderId == requestId;
         })) {
         return true;
     }
     return false;
 }
 
-std::atomic<RequestId>& TwoPhaseLockingStorageHandler::getHolder(const ResourceType resourceType) {
+TwoPhaseLockingStorageHandler::ResourceHolderData& TwoPhaseLockingStorageHandler::getHolder(const ResourceType resourceType) {
     switch (resourceType) {
         case ResourceType::CoordinatorConfiguration: return coordinatorConfigurationHolder;
         case ResourceType::Topology: return topologyHolder;
@@ -84,14 +98,31 @@ std::atomic<RequestId>& TwoPhaseLockingStorageHandler::getHolder(const ResourceT
 }
 
 void TwoPhaseLockingStorageHandler::lockResource(const ResourceType resourceType, const RequestId requestId) {
-    auto expected = INVALID_REQUEST_ID;
-    if (!getHolder(resourceType).compare_exchange_strong(expected, requestId)) {
-        throw Exceptions::ResourceLockingException("Failed to lock resource", resourceType);
+    auto& holder = getHolder(resourceType);
+    auto& holderId = holder.holderId;
+    std::unique_lock lock(holder.queueMutex);
+
+    //check if the resource is free
+    if (holderId == INVALID_REQUEST_ID) {
+        holderId = requestId;
+        return;
     }
+
+    //if another thread holds the resource, insert a promise into the queue and weit for previous requests to fullfill that promise
+    std::promise<std::unique_lock<std::mutex>> promise;
+    auto future = promise.get_future();
+    holder.waitingQueue.push_back(std::move(promise));
+    lock.unlock();
+
+    //wait for previous request to pass the lock and then set this requests id as the holder id
+    auto newLock = future.get();
+    NES_ASSERT(holderId == INVALID_REQUEST_ID, "Request id does not match holder id");
+    holderId = requestId;
+    newLock.unlock();
 }
 
 GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanHandle(const RequestId requestId) {
-    if (globalExecutionPlanHolder != requestId) {
+    if (globalExecutionPlanHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::GlobalExecutionPlan);
     }
@@ -99,7 +130,7 @@ GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanH
 }
 
 TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle(const RequestId requestId) {
-    if (topologyHolder != requestId) {
+    if (topologyHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::Topology);
     }
@@ -107,7 +138,7 @@ TopologyHandle TwoPhaseLockingStorageHandler::getTopologyHandle(const RequestId 
 }
 
 QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceHandle(const RequestId requestId) {
-    if (queryCatalogServiceHolder != requestId) {
+    if (queryCatalogServiceHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::QueryCatalogService);
     }
@@ -115,7 +146,7 @@ QueryCatalogServiceHandle TwoPhaseLockingStorageHandler::getQueryCatalogServiceH
 }
 
 GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle(const RequestId requestId) {
-    if (globalQueryPlanHolder != requestId) {
+    if (globalQueryPlanHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::GlobalQueryPlan);
     }
@@ -123,7 +154,7 @@ GlobalQueryPlanHandle TwoPhaseLockingStorageHandler::getGlobalQueryPlanHandle(co
 }
 
 SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle(const RequestId requestId) {
-    if (sourceCatalogHolder != requestId) {
+    if (sourceCatalogHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::SourceCatalog);
     }
@@ -131,7 +162,7 @@ SourceCatalogHandle TwoPhaseLockingStorageHandler::getSourceCatalogHandle(const 
 }
 
 UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(const RequestId requestId) {
-    if (udfCatalogHolder != requestId) {
+    if (udfCatalogHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::UdfCatalog);
     }
@@ -139,10 +170,16 @@ UDFCatalogHandle TwoPhaseLockingStorageHandler::getUDFCatalogHandle(const Reques
 }
 
 CoordinatorConfigurationHandle TwoPhaseLockingStorageHandler::getCoordinatorConfiguration(RequestId requestId) {
-    if (coordinatorConfigurationHolder != requestId) {
+    if (coordinatorConfigurationHolder.holderId != requestId) {
         throw Exceptions::AccessNonLockedResourceException("Attempting to access resource which has not been locked",
                                                            ResourceType::CoordinatorConfiguration);
     }
     return coordinatorConfiguration;
+}
+
+uint32_t TwoPhaseLockingStorageHandler::getWaitingCount(ResourceType resource) {
+    auto& holder = getHolder(resource);
+    std::unique_lock lock(holder.queueMutex);
+    return holder.waitingQueue.size();
 }
 }// namespace NES::RequestProcessor::Experimental

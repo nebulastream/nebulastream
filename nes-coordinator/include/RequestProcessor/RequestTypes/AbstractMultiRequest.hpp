@@ -17,13 +17,13 @@
 #include <any>
 #include <deque>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 class AbstractSubRequest;
 using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
 class AbstractMultiRequest : public AbstractRequest {
 
   public:
-    AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries);
+    AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
     //todo: adjust function doc
     /**
@@ -39,7 +39,7 @@ class AbstractMultiRequest : public AbstractRequest {
   protected:
     void executeSubRequestWhileQueueNotEmpty(const StorageHandlerPtr& storageHandle);
 
-    std::future<std::any> scheduleSubRequest(AbstractSubRequestPtr subRequest);
+    std::future<std::any> scheduleSubRequest(AbstractSubRequestPtr subRequest, const StorageHandlerPtr& storageHandler);
 
   private:
     bool executeSubRequest(const StorageHandlerPtr& storageHandle);

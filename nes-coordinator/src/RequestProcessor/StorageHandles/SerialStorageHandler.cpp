@@ -17,7 +17,7 @@
 #include <memory>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 SerialStorageHandler::SerialStorageHandler(StorageDataStructures storageDataStructures)
     : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration)),

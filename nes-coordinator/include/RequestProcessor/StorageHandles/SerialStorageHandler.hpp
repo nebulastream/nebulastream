@@ -16,7 +16,7 @@
 
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 struct StorageDataStructures;
 /**
  * @brief This class is intended for serial access and does not perform any locking before creating a resource handle.

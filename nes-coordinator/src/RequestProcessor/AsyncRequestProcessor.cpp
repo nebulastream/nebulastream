@@ -25,10 +25,10 @@
 #include <deque>
 #include <numeric>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 AsyncRequestProcessor::AsyncRequestProcessor(const StorageDataStructures& storageDataStructures)
-    : running(true), nextFreeRequestId(1) {
+    : running(true) {
 
     numOfThreads = storageDataStructures.coordinatorConfiguration->requestExecutorThreads.getValue();
     auto storageHandlerType = storageDataStructures.coordinatorConfiguration->storageHandlerType.getValue();
@@ -61,11 +61,9 @@ RequestId AsyncRequestProcessor::runAsync(AbstractRequestPtr request) {
         NES_WARNING("Cannot execute request, Async request executor is not running");
         return INVALID_REQUEST_ID;
     }
-    RequestId requestId;
+    RequestId requestId = storageHandler->generateRequestId();
     std::unique_lock lock(workMutex);
-    requestId = nextFreeRequestId;
     request->setId(requestId);
-    nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
     asyncRequestQueue.emplace_back(std::move(request));
     cv.notify_all();
     return requestId;
@@ -111,7 +109,6 @@ void AsyncRequestProcessor::runningRoutine() {
             //remove the request from the queue only if it is done, leave it in and execute it otherwise
             if (abstractRequest->instanceOf<AbstractMultiRequest>() && abstractRequest->as<AbstractMultiRequest>()->isDone()) {
                 asyncRequestQueue.pop_front();
-                //todo: do this while keeping the lock?
                 lock.unlock();
                 continue;
             }
@@ -131,6 +128,7 @@ void AsyncRequestProcessor::runningRoutine() {
                 runAsync(std::move(followUpRequest));
             }
         } else {
+            cv.notify_all();
             break;
         }
     }

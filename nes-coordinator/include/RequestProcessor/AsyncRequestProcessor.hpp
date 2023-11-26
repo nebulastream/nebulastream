@@ -18,9 +18,8 @@
 #include <deque>
 #include <limits.h>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
-static constexpr RequestId MAX_REQUEST_ID = INT_MAX;
 struct StorageDataStructures;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
@@ -82,7 +81,6 @@ class AsyncRequestProcessor {
     std::vector<std::future<bool>> completionFutures;
     std::deque<AbstractRequestPtr> asyncRequestQueue;
     uint32_t numOfThreads;
-    RequestId nextFreeRequestId;
     StorageHandlerPtr storageHandler;
 };
 

@@ -64,7 +64,7 @@
 #include <string>
 #include <utility>
 
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 
 AddQueryRequest::AddQueryRequest(const std::string& queryString,
                                  const Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -174,8 +174,6 @@ void AddQueryRequest::markAsFailedInQueryCatalog(std::exception& e, const Storag
 
 void AddQueryRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr exception,
                                          [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
-
-void AddQueryRequest::postExecution(const StorageHandlerPtr& storageHandler) { storageHandler->releaseResources(requestId); }
 
 std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
     try {

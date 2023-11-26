@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
-namespace NES::RequestProcessor::Experimental {
+namespace NES::RequestProcessor {
 StorageDataStructures::StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
                                              TopologyPtr topology,
                                              GlobalExecutionPlanPtr globalExecutionPlan,
