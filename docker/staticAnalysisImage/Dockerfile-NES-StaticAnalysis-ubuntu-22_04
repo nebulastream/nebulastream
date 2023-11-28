@@ -40,7 +40,7 @@ RUN [ "$TARGETARCH" = "amd64" ] && echo "x86_64-linux-gnu" > /debian-triple || e
 ENV ACTUAL_TRIPLE='cat /debian-triple'
 
  # download from here as long as the official release is not updated
-RUN wget -O - "https://github.com/adrianmichalke/infer/releases/download/v17/infer-linux64-clang17.tar.xz" | tar xvJ
+RUN wget -O - "https://github.com/nebulastream/nebulastream-dependencies/releases/download/infer/infer-linux64-clang17.tar.xz" | tar xvJ
 ADD ./entrypoint-nes-static-analysis.sh /entrypoint.sh
 
 RUN chmod +x entrypoint.sh
