@@ -33,8 +33,8 @@ enum class ReconfigurationType : uint8_t {
     ConnectToNewReceiver,
     /// indicate successful establishment of a network connection
     ConnectionEstablished,
-    /// indicates that the old version of a query has been drained, and can be reconfigured or stopped depending on the situation
-    //DrainVersion
+    /// Indicates that the version of the operator is updated due to reconfiguration as part of query redeployment
+    UpdateVersion,
 };
 }
 

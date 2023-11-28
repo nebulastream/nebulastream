@@ -197,5 +197,6 @@ bool NetworkManager::registerSubpartitionEventConsumer(const NodeLocation& nodeL
     NES_DEBUG("NetworkManager: Registering Subpartition Event Consumer: {}", nesPartition.toString());
     return partitionManager->addSubpartitionEventListener(nesPartition, nodeLocation, eventListener);
 }
+bool NetworkManager::startNewVersion(NesPartition partition) { return partitionManager->startNewVersion(partition); }
 
 }// namespace NES::Network
