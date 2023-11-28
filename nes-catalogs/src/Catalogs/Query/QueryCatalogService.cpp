@@ -229,15 +229,6 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId qu
 
 bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus) {
     std::unique_lock lock(serviceMutex);
-
-
-    //todo: remove this
-    if (markedForRedeployment.contains(sharedQueryId)) {
-        return true;
-    }
-
-
-
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
               "plan with id {}",
               std::string(magic_enum::enum_name(subQueryStatus)),
@@ -250,7 +241,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
         auto queryId = queryCatalogEntry->getQueryId();
         //Check if query is in correct status
         auto currentQueryStatus = queryCatalogEntry->getQueryState();
-        if (currentQueryStatus != QueryState::MARKED_FOR_SOFT_STOP) {
+        if (currentQueryStatus != QueryState::MARKED_FOR_SOFT_STOP && currentQueryStatus != QueryState::MIGRATING) {
             NES_WARNING("Found query in {} but received {} for the sub query with id {} for query id {}",
                         queryCatalogEntry->getQueryStatusAsString(),
                         std::string(magic_enum::enum_name(subQueryStatus)),
@@ -308,6 +299,44 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
                 NES_INFO("Query with id {} is now stopped", queryCatalogEntry->getQueryId());
             }
         }
+        if (subQueryStatus == QueryState::MIGRATING) {
+            //todo: what to do here?
+        }
+    }
+    return true;
+}
+bool QueryCatalogService::handleMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus) {
+    std::unique_lock lock(serviceMutex);
+    NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
+              "plan with id {}",
+              std::string(magic_enum::enum_name(subQueryStatus)),
+              querySubPlanId,
+              sharedQueryId);
+
+    //Fetch query catalog entries
+    auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
+    for (auto& queryCatalogEntry : queryCatalogEntries) {
+        auto queryId = queryCatalogEntry->getQueryId();
+
+        //Check if query is in correct status
+        auto currentQueryStatus = queryCatalogEntry->getQueryState();
+        if (currentQueryStatus != QueryState::DEPLOYED && currentQueryStatus != QueryState::RUNNING
+            && currentQueryStatus != QueryState::REGISTERED && currentQueryStatus != QueryState::OPTIMIZING
+            && currentQueryStatus != QueryState::MIGRATING) {
+            NES_WARNING("Found query in {} but received {} for the sub query with id {} for query id {}",
+                        queryCatalogEntry->getQueryStatusAsString(),
+                        std::string(magic_enum::enum_name(subQueryStatus)),
+                        querySubPlanId,
+                        queryId);
+            //FIXME: fix what to do when this occurs
+            NES_ASSERT(false,
+                       "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
+                                         << std::string(magic_enum::enum_name(subQueryStatus)) << " for the sub query with id "
+                                         << querySubPlanId << " for query id " << queryId);
+        }
+
+        //todo: set status for subqueryplans
+        queryCatalogEntry->setQueryStatus(subQueryStatus);
     }
     return true;
 }
@@ -320,6 +349,7 @@ bool QueryCatalogService::updateQuerySubPlanStatus(SharedQueryId sharedQueryId,
     switch (subQueryStatus) {
         case QueryState::SOFT_STOP_TRIGGERED:
         case QueryState::SOFT_STOP_COMPLETED: handleSoftStop(sharedQueryId, querySubPlanId, subQueryStatus); break;
+        case QueryState::MIGRATING: handleMigration(sharedQueryId, querySubPlanId, subQueryStatus); break;
         default:
             throw Exceptions::InvalidQueryStateException({QueryState::SOFT_STOP_TRIGGERED, QueryState::SOFT_STOP_COMPLETED},
                                                          subQueryStatus);
@@ -390,32 +420,5 @@ std::vector<QueryId> QueryCatalogService::getQueryIdsForSharedQueryId(SharedQuer
         queryIds.emplace_back(queryCatalogEntry->getQueryId());
     }
     return queryIds;
-}
-bool QueryCatalogService::checkAndMarkForRedeployment(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId, OperatorId operatorId) {
-    //todo: this is a hack until a real solution is implemented
-    markedForRedeployment.insert(sharedQueryId);
-    return true;
-    std::unique_lock lock(serviceMutex);
-
-    NES_INFO("checkAndMarkForSoftStop sharedQueryId={} subQueryId={} source={}", sharedQueryId, subPlanId, operatorId);
-    //Fetch query catalog entries
-    auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
-    for (auto& queryCatalogEntry : queryCatalogEntries) {
-        //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
-        auto currentQueryState = queryCatalogEntry->getQueryState();
-        if (currentQueryState == QueryState::MARKED_FOR_HARD_STOP || currentQueryState == QueryState::FAILED
-            || currentQueryState == QueryState::STOPPED) {
-            NES_WARNING("QueryCatalogService: Soft stop can not be initiated as query in {} status.",
-                        queryCatalogEntry->getQueryStatusAsString());
-            return false;
-            }
-    }
-
-    //Mark queries for soft stop and return
-    for (auto& queryCatalogEntry : queryCatalogEntries) {
-        queryCatalogEntry->setQueryStatus(QueryState::MARKED_FOR_SOFT_STOP);
-    }
-    NES_INFO("QueryCatalogService: Shared query id {} is marked as soft stopped", sharedQueryId);
-    return true;
 }
 }// namespace NES
