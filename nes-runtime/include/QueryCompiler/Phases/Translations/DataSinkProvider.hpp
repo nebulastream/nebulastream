@@ -38,7 +38,6 @@ class DataSinkProvider {
      * @param schema the schema of the sink
      * @param nodeEngine the node engine
      * @param querySubPlanId
-     * @param numberOfInputSources: the amount of sources feeding data into the sink
      * @return DataSinkPtr
      */
     virtual DataSinkPtr lower(OperatorId sinkId,

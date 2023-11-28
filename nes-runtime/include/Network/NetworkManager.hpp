@@ -123,6 +123,7 @@ class NetworkManager {
      * @param nesPartition indicates the partition
      * @param waitTime time in seconds to wait until a retry is called
      * @param retryTimes times to retry a connection
+     * @param versionNumber the version number which will be used by the receiver to determine if this channel will be accepted
      * @return the data network channel
      */
     NetworkChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
@@ -143,6 +144,7 @@ class NetworkManager {
      * @param reconfigurationMessage a message to be inserted into the query manager on completion, to inform the caller about
      * the completion of the operation
      * @param queryManager a pointer to the query manager which will hand over the reconfiguration message to the caller
+     * @param versionNumber the version number which will be used by the receiver to determine if this channel will be accepted
      * @return a pair consisting of a future containing the data network channel on completion and a promise that aborts the connection process when
      * its value is set
      */
@@ -198,7 +200,18 @@ class NetworkManager {
      */
     uint16_t getServerDataPort() const;
 
+    /**
+     * @brief update the version number and reset the recorded number of disconnects that have occurred for the partition
+     * @return true if a pending version was found and was set as the current version, false otherwise
+     */
     bool startNewVersion(NesPartition partition);
+
+    /**
+     * @brief get the node location of the new sender after the next version change. Will throw an error if no pending version exists
+     * @param partition the partition for which to query the pending sender
+     * @return the node location of the sink that will be sending to this partition when the new version gets started
+     */
+    NodeLocation getPendingVersionSenderLocation(NesPartition partition);
 
   private:
     NodeLocation nodeLocation;

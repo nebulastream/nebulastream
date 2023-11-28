@@ -34,7 +34,6 @@ class ConvertLogicalToPhysicalSink {
      * @param sinkDescriptor: logical sink descriptor
      * @param nodeEngine: the running node engine where the sink is deployed
      * @param querySubPlanId: the id of the owning subplan
-     * @param numberOfInputSources: the amount of sources feeding data into the sink
      * @return Data sink pointer representing the physical sink
      */
     static DataSinkPtr createDataSink(NES::OperatorId operatorId,

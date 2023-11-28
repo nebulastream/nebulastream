@@ -27,7 +27,6 @@ namespace NES::Network {
 
 PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& senderLocation, DataEmitterPtr&& emitter)
     : senderLocation(std::move(senderLocation)), consumer(std::move(emitter)) {
-    //todo: test
     auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(consumer);
     if (networkSource) {
         versionNumber = networkSource->getInitialVersion();
@@ -55,19 +54,23 @@ bool PartitionManager::PartitionConsumerEntry::startNewVersion() {
     if (!pendingVersion.has_value()) {
         return false;
     }
-    versionNumber = pendingVersion.value();
+    versionNumber = pendingVersion.value().first;
     pendingVersion = std::nullopt;
     disconnectCount = 0;
     return true;
 }
 
-bool PartitionManager::PartitionConsumerEntry::newVersionExists() { return pendingVersion.has_value(); }
+NodeLocation PartitionManager::PartitionConsumerEntry::getPendingVersionSenderLocation() {
+    return pendingVersion->second;
+}
 
-void PartitionManager::PartitionConsumerEntry::addPendingVersion(OperatorVersionNumber pendingVersion) {
+bool PartitionManager::PartitionConsumerEntry::pendingVersionExists() { return pendingVersion.has_value(); }
+
+void PartitionManager::PartitionConsumerEntry::addPendingVersion(OperatorVersionNumber pendingVersionNumber, NodeLocation pendingSenderLocation) {
     if (this->pendingVersion.has_value()) {
         NES_NOT_IMPLEMENTED();
     }
-    this->pendingVersion = pendingVersion;
+    this->pendingVersion = {pendingVersionNumber, pendingSenderLocation};
 }
 
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
@@ -162,10 +165,19 @@ bool PartitionManager::startNewVersion(NesPartition partition) {
     return false;
 }
 
-bool PartitionManager::newVersionExists(NesPartition partition) {
+NodeLocation PartitionManager::getPendingVersionSenderLocation(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        return it->second.newVersionExists();
+        return it->second.getPendingVersionSenderLocation();
+    }
+    NES_ASSERT(false, "Trying to get the the pending sender location but no pending version exists");
+    return NodeLocation();
+}
+
+bool PartitionManager::pendingVersionExists(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
+        return it->second.pendingVersionExists();
     }
     return false;
 }
@@ -179,10 +191,10 @@ OperatorVersionNumber PartitionManager::getVersion(NesPartition partition) {
     return false;
 }
 
-void PartitionManager::addPendingVersion(NesPartition partition, OperatorVersionNumber pendingVersion) {
+void PartitionManager::addPendingVersion(NesPartition partition, OperatorVersionNumber pendingVersionNumber, NodeLocation pendingSenderLocation) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        it->second.addPendingVersion(pendingVersion);
+        it->second.addPendingVersion(pendingVersionNumber, pendingSenderLocation);
     }
 }
 

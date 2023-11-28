@@ -37,6 +37,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param networkManager
     * @param nodeLocation
     * @param nesPartition
+    * @param versionNumber The initial version of this sink when it starts
     */
     explicit NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
@@ -122,26 +123,14 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     Runtime::NodeEnginePtr getNodeEngine();
 
     /**
-     * @brief schedule a reconfiguration which lets this sink reconnect to the specified source once it has been drained
-     * @param newReceiverLocation the location of the node hosting the new source
-     * @param newPartition the partition of the new source
-     */
-    //void addPendingReconfiguration(NesPartition newPartition, const NodeLocation& newReceiverLocation);
-
-    /**
      * @brief reconfigure this sink to point to another downstream network source
      * @param newPartition the partition of the new downstram source
      * @param newReceiverLocation the location of the node where the new downstream source is located
+     * @param newVersion The new version number assigned to this sink
      */
     void configureNewReceiverAndPartition(NesPartition newPartition,
                                           const NodeLocation& newReceiverLocation,
                                           OperatorVersionNumber newVersion);
-
-    /**
-     * @brief returns the number of sources which produce data that is consumed by this sink
-     * @return the number of input sources
-     */
-    [[maybe_unused]] uint16_t getNumberOfInputSources() const;
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
@@ -153,6 +142,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param workerContext the worker context to store the future in
      * @param newNodeLocation the location of the node to which the connection is to be established
      * @param newNesPartition the partition of the source to which the connection is to be established
+     * @param newVersion The new version number used by the receiver to determine if it can already accept this channel
      */
     void clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                              const NodeLocation& newNodeLocation,
@@ -182,9 +172,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    //uint16_t numberOfInputSources;
-    //std::atomic<uint16_t> receivedVersionDrainEvents;
-    //std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
     OperatorVersionNumber versionNumber;
 };
 }// namespace NES::Network

@@ -273,6 +273,7 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
 
 void NetworkSource::onVersionUpdate() {
     NES_DEBUG("Updating version for network source {}", nesPartition);
+    sinkLocation = networkManager->getPendingVersionSenderLocation(nesPartition);
     auto reconfMessage = Runtime::ReconfigurationMessage(-1, -1, Runtime::ReconfigurationType::UpdateVersion, Runtime::Reconfigurable::shared_from_this());
     queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
 }
