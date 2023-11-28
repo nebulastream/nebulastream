@@ -94,17 +94,17 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
         }
         const auto type = field->getDataType();
         const auto childType = fieldInChild->getDataType();
-        if (type->isEquals(DataTypeFactory::createInt64()) && childType->isEquals(DataTypeFactory::createUInt64())) {
+        if (type->equals(DataTypeFactory::createInt64()) && childType->equals(DataTypeFactory::createUInt64())) {
             // This is not an error condition because we need to map timestamps, which are always UINT64, to Java long.
             NES_WARNING("Mapping UINT64 field in child operator output schema to signed Java long in UDF input schema: {}",
                         fieldName)
-        } else if ((type->isEquals(DataTypeFactory::createInt8()) && childType->isEquals(DataTypeFactory::createUInt8()))
-            || (type->isEquals(DataTypeFactory::createInt16()) && childType->isEquals(DataTypeFactory::createUInt16()))
-            || (type->isEquals(DataTypeFactory::createInt32()) && childType->isEquals(DataTypeFactory::createUInt32()))) {
+        } else if ((type->equals(DataTypeFactory::createInt8()) && childType->equals(DataTypeFactory::createUInt8()))
+            || (type->equals(DataTypeFactory::createInt16()) && childType->equals(DataTypeFactory::createUInt16()))
+            || (type->equals(DataTypeFactory::createInt32()) && childType->equals(DataTypeFactory::createUInt32()))) {
             errors.push_back(fmt::format(
                 "Field data type is unsigned integer in child operator output schema; UDFs only support signed integers: {}",
                 fieldName));
-        } else if (!type->isEquals(childType)) {
+        } else if (!type->equals(childType)) {
             errors.push_back(fmt::format("Field data type differs in UDF input schema and child operator output schema: "
                                          "fieldName={}, udfType={}, parentType={}",
                                          fieldName,

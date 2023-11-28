@@ -17,7 +17,7 @@
 
 namespace NES {
 
-bool Boolean::isEquals(DataTypePtr otherDataType) { return otherDataType->isBoolean(); }
+bool Boolean::equals(DataTypePtr otherDataType) { return otherDataType->isBoolean(); }
 
 DataTypePtr Boolean::join(DataTypePtr otherDataType) {
     if (otherDataType->isBoolean()) {

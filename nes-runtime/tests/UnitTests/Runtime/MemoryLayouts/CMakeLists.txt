@@ -11,6 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Execution)
-add_subdirectory(Nautilus)
-add_subdirectory(Runtime)
+### Row Layout Tests ###
+add_nes_runtime_test(row-memory-layout-tests "RowMemoryLayoutTest.cpp")
+
+### Row Layout Tests ###
+add_nes_runtime_test(columnar-memory-layout-tests "ColumnarMemoryLayoutTest.cpp")
+
+### Dynamic Memory Layout Tests ###
+add_nes_runtime_test(dynamic-memory-layout-tests "DynamicMemoryLayoutTest.cpp")
+
+### Dynamic TupleBuffer Tests ###
+add_nes_runtime_test(dynamic-tuple-buffer-tests "DynamicTupleBufferTest.cpp")

@@ -18,10 +18,10 @@
 
 namespace NES {
 
-bool ArrayType::isEquals(DataTypePtr otherDataType) {
+bool ArrayType::equals(DataTypePtr otherDataType) {
     if (otherDataType->isArray()) {
         auto const otherArray = as<ArrayType>(otherDataType);
-        return length == otherArray->length && component->isEquals(otherArray->component);
+        return length == otherArray->length && component->equals(otherArray->component);
     }
     return false;
 }

@@ -17,7 +17,7 @@
 
 namespace NES {
 
-bool Char::isEquals(DataTypePtr otherDataType) { return otherDataType->isChar(); }
+bool Char::equals(DataTypePtr otherDataType) { return otherDataType->isChar(); }
 
 DataTypePtr Char::join(DataTypePtr otherDataType) {
     if (otherDataType->isChar()) {

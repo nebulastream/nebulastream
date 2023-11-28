@@ -91,7 +91,7 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
 
     // infer stamp using schema
     attribute->inferStamp(schema);
-    EXPECT_TRUE(attribute->getStamp()->isEquals(DataTypeFactory::createInt8()));
+    EXPECT_TRUE(attribute->getStamp()->equals(DataTypeFactory::createInt8()));
 
     // test inference with undefined attribute
     auto notValidAttribute = Attribute("f2").getExpressionNode();
@@ -111,17 +111,17 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
     auto addExpression = Attribute("f1") + 10;
     EXPECT_TRUE(addExpression->getStamp()->isUndefined());
     addExpression->inferStamp(schema);
-    EXPECT_TRUE(addExpression->getStamp()->isEquals(DataTypeFactory::createType(BasicType::INT32)));
+    EXPECT_TRUE(addExpression->getStamp()->equals(DataTypeFactory::createType(BasicType::INT32)));
 
     auto mulExpression = Attribute("f2") * 10;
     EXPECT_TRUE(mulExpression->getStamp()->isUndefined());
     mulExpression->inferStamp(schema);
-    EXPECT_TRUE(mulExpression->getStamp()->isEquals(DataTypeFactory::createType(BasicType::INT64)));
+    EXPECT_TRUE(mulExpression->getStamp()->equals(DataTypeFactory::createType(BasicType::INT64)));
 
     auto increment = Attribute("f3")++;
     EXPECT_TRUE(increment->getStamp()->isUndefined());
     increment->inferStamp(schema);
-    EXPECT_TRUE(increment->getStamp()->isEquals(DataTypeFactory::createType(BasicType::FLOAT64)));
+    EXPECT_TRUE(increment->getStamp()->equals(DataTypeFactory::createType(BasicType::FLOAT64)));
 
     // We expect that you can't increment an array
     auto incrementArray = Attribute("f4")++;
@@ -173,7 +173,7 @@ TEST_F(ExpressionNodeTest, inferAssertionTest) {
 
     auto assertion = Attribute("f1") = 10 * (33 + Attribute("f1"));
     assertion->inferStamp(schema);
-    EXPECT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(BasicType::INT8)));
+    EXPECT_TRUE(assertion->getField()->getStamp()->equals(DataTypeFactory::createType(BasicType::INT8)));
 }
 
 TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
