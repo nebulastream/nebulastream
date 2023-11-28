@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
@@ -24,14 +23,13 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-#define VAR_SIZED_DATA_TYPES  uint16_t, std::string, double, std::string
-#define FIXED_SIZED_DATA_TYPES  uint16_t, bool, double
+#define VAR_SIZED_DATA_TYPES uint16_t, std::string, double, std::string
+#define FIXED_SIZED_DATA_TYPES uint16_t, bool, double
 
 using VarSizeDataTuple = std::tuple<VAR_SIZED_DATA_TYPES>;
 using FixedSizedDataTuple = std::tuple<FIXED_SIZED_DATA_TYPES>;
 
-class DynamicTupleBufferTest : public Testing::BaseUnitTest,
-                               public testing::WithParamInterface<Schema::MemoryLayoutType> {
+class DynamicTupleBufferTest : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType> {
   public:
     BufferManagerPtr bufferManager;
     SchemaPtr schema, varSizedDataSchema;
@@ -51,16 +49,17 @@ class DynamicTupleBufferTest : public Testing::BaseUnitTest,
                      ->addField("test$t3", BasicType::FLOAT64);
 
         varSizedDataSchema = Schema::create(memoryLayout)
-                     ->addField("test$t1", BasicType::UINT16)
-                     ->addField("test$t2", BasicType::TEXT)
-                     ->addField("test$t3", BasicType::FLOAT64)
-                     ->addField("test$t4", BasicType::TEXT);
+                                 ->addField("test$t1", BasicType::UINT16)
+                                 ->addField("test$t2", BasicType::TEXT)
+                                 ->addField("test$t3", BasicType::FLOAT64)
+                                 ->addField("test$t4", BasicType::TEXT);
 
         auto tupleBuffer = bufferManager->getBufferBlocking();
         auto tupleBufferVarSizedData = bufferManager->getBufferBlocking();
 
         dynamicBuffer = std::make_unique<DynamicTupleBuffer>(DynamicTupleBuffer::createDynamicTupleBuffer(tupleBuffer, schema));
-        dynamicBufferVarSize = std::make_unique<DynamicTupleBuffer>(DynamicTupleBuffer::createDynamicTupleBuffer(tupleBufferVarSizedData, varSizedDataSchema));
+        dynamicBufferVarSize = std::make_unique<DynamicTupleBuffer>(
+            DynamicTupleBuffer::createDynamicTupleBuffer(tupleBufferVarSizedData, varSizedDataSchema));
     }
 };
 
@@ -102,18 +101,17 @@ TEST_P(DynamicTupleBufferTest, countOccurrencesTest) {
         uint64_t occurrences;
     };
 
-    std::vector<TupleOccurrences> vec = {
-        {{1, true,  rand()},  5},
-        {{2, false, rand()},  6},
-        {{3, false, rand()}, 20},
-        {{4, true,  rand()},  5}
-    };
+    std::vector<TupleOccurrences> vec = {{{1, true, rand()}, 5},
+                                         {{2, false, rand()}, 6},
+                                         {{3, false, rand()}, 20},
+                                         {{4, true, rand()}, 5}};
 
     auto posTuple = 0_u64;
     for (auto item : vec) {
         for (auto i = 0_u64; i < item.occurrences; ++i) {
             dynamicBuffer->pushRecordToBuffer(item.tuple);
-            ASSERT_EQ((dynamicBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(dynamicBuffer->getNumberOfTuples() - 1)), item.tuple);
+            ASSERT_EQ((dynamicBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(dynamicBuffer->getNumberOfTuples() - 1)),
+                      item.tuple);
         }
 
         auto dynamicTuple = (*dynamicBuffer)[posTuple];
@@ -128,18 +126,18 @@ TEST_P(DynamicTupleBufferTest, countOccurrencesTestVarSizeData) {
         uint64_t occurrences;
     };
 
-    std::vector<TupleOccurrences> vec = {
-        {{1, "true",  rand(), "aaaaa"}, 5},
-        {{2, "false", rand(), "bbbbb"}, 6},
-        {{4, "true",  rand(), "ccccc"}, 20},
-        {{3, "false", rand(), "ddddd"}, 5}
-    };
+    std::vector<TupleOccurrences> vec = {{{1, "true", rand(), "aaaaa"}, 5},
+                                         {{2, "false", rand(), "bbbbb"}, 6},
+                                         {{4, "true", rand(), "ccccc"}, 20},
+                                         {{3, "false", rand(), "ddddd"}, 5}};
 
     auto posTuple = 0_u64;
     for (auto item : vec) {
         for (auto i = 0_u64; i < item.occurrences; ++i) {
             dynamicBufferVarSize->pushRecordToBuffer(item.tuple, bufferManager.get());
-            ASSERT_EQ((dynamicBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(dynamicBufferVarSize->getNumberOfTuples() - 1)), item.tuple);
+            ASSERT_EQ(
+                (dynamicBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(dynamicBufferVarSize->getNumberOfTuples() - 1)),
+                item.tuple);
         }
 
         auto dynamicTuple = (*dynamicBufferVarSize)[posTuple];
@@ -150,10 +148,10 @@ TEST_P(DynamicTupleBufferTest, countOccurrencesTestVarSizeData) {
 
 TEST_P(DynamicTupleBufferTest, DynamicTupleCompare) {
     std::vector<std::tuple<FIXED_SIZED_DATA_TYPES>> tuples = {
-        {1, true,  42}, // 0
-        {2, false, 43}, // 1
-        {1, true,  42}, // 2
-        {2, false, 43}, // 3
+        {1, true, 42}, // 0
+        {2, false, 43},// 1
+        {1, true, 42}, // 2
+        {2, false, 43},// 3
 
     };
 
@@ -179,18 +177,19 @@ TEST_P(DynamicTupleBufferTest, DynamicTupleCompare) {
     ASSERT_TRUE((*dynamicBuffer)[1] == (*dynamicBuffer)[3]);
 }
 
-
 TEST_P(DynamicTupleBufferTest, DynamicTupleCompareVarSizeData) {
     std::vector<std::tuple<VAR_SIZED_DATA_TYPES>> tuples = {
-        {1, "true",  42, "aaaaa"}, // 0
-        {2, "false", 43, "bbbbb"}, // 1
-        {1, "true",  42, "aaaaa"}, // 2
-        {2, "false", 43, "bbbbb"}, // 3
+        {1, "true", 42, "aaaaa"}, // 0
+        {2, "false", 43, "bbbbb"},// 1
+        {1, "true", 42, "aaaaa"}, // 2
+        {2, "false", 43, "bbbbb"},// 3
     };
 
     for (auto tuple : tuples) {
         dynamicBufferVarSize->pushRecordToBuffer(tuple, bufferManager.get());
-        ASSERT_EQ((dynamicBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(dynamicBufferVarSize->getNumberOfTuples() - 1)), tuple);
+        ASSERT_EQ(
+            (dynamicBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(dynamicBufferVarSize->getNumberOfTuples() - 1)),
+            tuple);
     }
 
     // Check if the same tuple is equal to itself
@@ -209,7 +208,6 @@ TEST_P(DynamicTupleBufferTest, DynamicTupleCompareVarSizeData) {
     ASSERT_TRUE((*dynamicBufferVarSize)[0] == (*dynamicBufferVarSize)[2]);
     ASSERT_TRUE((*dynamicBufferVarSize)[1] == (*dynamicBufferVarSize)[3]);
 }
-
 
 INSTANTIATE_TEST_CASE_P(TestInputs,
                         DynamicTupleBufferTest,

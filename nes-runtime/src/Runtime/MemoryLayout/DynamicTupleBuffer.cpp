@@ -15,11 +15,11 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <numeric>
@@ -119,8 +119,8 @@ std::string DynamicField::toString() {
 }
 
 bool DynamicField::equal(const DynamicField& rhs) const {
-    NES_ASSERT(*physicalType == *rhs.physicalType, "Physical types have to be the same but are " + physicalType->toString()
-                   + " and " + rhs.physicalType->toString());
+    NES_ASSERT(*physicalType == *rhs.physicalType,
+               "Physical types have to be the same but are " + physicalType->toString() + " and " + rhs.physicalType->toString());
 
     return std::memcmp(address, rhs.address, physicalType->size()) == 0;
 }
