@@ -250,7 +250,9 @@ class TPCH_Query5 {
 
         // Probe with LineItem
         std::vector<ExpressionPtr> supplierProbeKeys = {std::make_shared<ReadFieldExpression>("s_suppkey")};
-        std::vector<Nautilus::Record::RecordFieldIdentifier> supplierProbeFieldIdentifier = {"l_extendedprice", "l_discount", "c_nationkey"};
+        std::vector<Nautilus::Record::RecordFieldIdentifier> supplierProbeFieldIdentifier = {"l_extendedprice",
+                                                                                             "l_discount",
+                                                                                             "c_nationkey"};
 
         auto supplierJoinProbeOperator =
             std::make_shared<BatchJoinProbe>(0 /*handler index*/,
