@@ -34,6 +34,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @param schema
      * @param nesPartition
      * @param nodeLocation
+     * @param initialVersion the initial versio of the source
      * @return instance of network source descriptor
      */
     static SourceDescriptorPtr create(SchemaPtr schema,
@@ -74,6 +75,11 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @return the retry times
      */
     uint8_t getRetryTimes() const;
+
+    /**
+     * @brief getter for the initial version
+     * @return the initial version
+     */
     uint16_t getInitialVersion() const;
 
     SourceDescriptorPtr copy() override;

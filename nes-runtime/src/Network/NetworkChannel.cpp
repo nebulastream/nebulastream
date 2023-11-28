@@ -128,6 +128,12 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                             return nullptr;
                         }
                     }
+                    if (errorMsg.isVersionMismatch()) {
+                        NES_INFO("Receiver version does not match. Keep retrying until the new version has been started on the "
+                                 "receiver side",
+                                 socketAddr);
+                        break;
+                    }
 
                     NES_WARNING("{}: Received error from server-> {}", channelName, errorMsg.getErrorTypeAsString());
                     protocol.onChannelError(errorMsg);

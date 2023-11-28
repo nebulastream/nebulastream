@@ -416,6 +416,10 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
             NES_WARNING("Runtime: Requesting deleted NES Partition {}", err.getChannelId());
             break;
         }
+        case Network::Messages::ErrorType::VersionMismatchError: {
+            NES_INFO("Runtime: Version mismatch for requested partition {}", err.getChannelId());
+            break;
+        }
         default: {
             NES_ASSERT(false, err.getErrorTypeAsString());
             break;
@@ -431,6 +435,10 @@ void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
         }
         case Network::Messages::ErrorType::DeletedPartitionError: {
             NES_WARNING("Runtime: Requesting deleted NES Partition {}", err.getChannelId());
+            break;
+        }
+        case Network::Messages::ErrorType::VersionMismatchError: {
+            NES_INFO("Runtime: Expected version is not running yet for channel {}", err.getChannelId());
             break;
         }
         default: {
