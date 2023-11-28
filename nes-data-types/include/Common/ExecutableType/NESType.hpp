@@ -33,10 +33,8 @@ concept IsNesType =
  * @brief This concept checks via tuple unpacking if Types contains at least one string.
  * @tparam Types
  */
-template <class... Types>
-concept ContainsString = requires {
-    requires (std::is_same_v<std::string, Types> || ...);
-};
+template<class... Types>
+concept ContainsString = requires { requires(std::is_same_v<std::string, Types> || ...); };
 
 template<class Type>
 concept IsInt8 = std::is_same_v<std::remove_cvref_t<Type>, std::int8_t>;

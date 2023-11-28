@@ -35,7 +35,6 @@ namespace NES::Runtime::MemoryLayouts {
 class MemoryLayoutTupleBuffer;
 using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
 
-
 /**
  * @brief Reads the variable sized data from the child buffer at the provided index
  * @param buffer
@@ -379,7 +378,6 @@ class DynamicTupleBuffer {
         pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
     }
 
-
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.
               Boundary checks are performed by the write function of the DynamicTupleBuffer.
@@ -393,8 +391,6 @@ class DynamicTupleBuffer {
     void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager) {
         pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), bufferManager);
     }
-
-
 
     /**
      * @brief Push a record to the underlying tuple buffer at given recordIndex. Boundary checks are performed by the 
@@ -426,7 +422,8 @@ class DynamicTupleBuffer {
                      } else {
                          (*this)[recordIndex][fieldIndex++].write(fieldValue);
                      }
-                 }()), ...);
+                 }()),
+                 ...);
             },
             record);
         if (recordIndex + 1 > numberOfRecords) {
@@ -485,7 +482,8 @@ class DynamicTupleBuffer {
                 std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
             } else {
                 // Get type of current tuple element and cast field value to this type. Add value to return tuple.
-                std::get<I>(record) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
+                std::get<I>(record) =
+                    ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
             }
 
             // Recursive call to copyRecordFromBufferToTuple with the field index (I) increased by 1.
