@@ -17,7 +17,7 @@
 
 namespace NES {
 
-bool Text::isEquals(DataTypePtr otherDataType) { return otherDataType->isText(); }
+bool Text::equals(DataTypePtr otherDataType) { return otherDataType->isText(); }
 
 DataTypePtr Text::join(DataTypePtr otherDataType) {
     if (otherDataType->isText()) {

@@ -100,68 +100,68 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     // serialize and deserialize int8
     auto serializedInt8 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt8(), new SerializableDataType());
     auto deserializedInt8 = DataTypeSerializationUtil::deserializeDataType(*serializedInt8);
-    EXPECT_TRUE(DataTypeFactory::createInt8()->isEquals(deserializedInt8));
+    EXPECT_TRUE(DataTypeFactory::createInt8()->equals(deserializedInt8));
 
     // serialize and deserialize int16
     auto serializedInt16 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt16(), new SerializableDataType());
     auto deserializedInt16 = DataTypeSerializationUtil::deserializeDataType(*serializedInt16);
-    EXPECT_TRUE(DataTypeFactory::createInt16()->isEquals(deserializedInt16));
+    EXPECT_TRUE(DataTypeFactory::createInt16()->equals(deserializedInt16));
 
     // serialize and deserialize int32
     auto serializedInt32 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt32(), new SerializableDataType());
     auto deserializedInt32 = DataTypeSerializationUtil::deserializeDataType(*serializedInt32);
-    EXPECT_TRUE(DataTypeFactory::createInt32()->isEquals(deserializedInt32));
+    EXPECT_TRUE(DataTypeFactory::createInt32()->equals(deserializedInt32));
 
     // serialize and deserialize int64
     auto serializedInt64 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt64(), new SerializableDataType());
     auto deserializedInt64 = DataTypeSerializationUtil::deserializeDataType(*serializedInt64);
-    EXPECT_TRUE(DataTypeFactory::createInt64()->isEquals(deserializedInt64));
+    EXPECT_TRUE(DataTypeFactory::createInt64()->equals(deserializedInt64));
 
     // serialize and deserialize uint8
     auto serializedUInt8 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt8(), new SerializableDataType());
     auto deserializedUInt8 = DataTypeSerializationUtil::deserializeDataType(*serializedUInt8);
-    EXPECT_TRUE(DataTypeFactory::createUInt8()->isEquals(deserializedUInt8));
+    EXPECT_TRUE(DataTypeFactory::createUInt8()->equals(deserializedUInt8));
 
     // serialize and deserialize uint16
     auto serializedUInt16 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt16(), new SerializableDataType());
     auto deserializedUInt16 = DataTypeSerializationUtil::deserializeDataType(*serializedUInt16);
-    EXPECT_TRUE(DataTypeFactory::createUInt16()->isEquals(deserializedUInt16));
+    EXPECT_TRUE(DataTypeFactory::createUInt16()->equals(deserializedUInt16));
 
     // serialize and deserialize uint32
     auto serializedUInt32 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt32(), new SerializableDataType());
     auto deserializedUInt32 = DataTypeSerializationUtil::deserializeDataType(*serializedUInt32);
-    EXPECT_TRUE(DataTypeFactory::createUInt32()->isEquals(deserializedUInt32));
+    EXPECT_TRUE(DataTypeFactory::createUInt32()->equals(deserializedUInt32));
 
     // serialize and deserialize uint64
     auto serializedUInt64 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt64(), new SerializableDataType());
     auto deserializedUInt64 = DataTypeSerializationUtil::deserializeDataType(*serializedUInt64);
-    EXPECT_TRUE(DataTypeFactory::createUInt64()->isEquals(deserializedUInt64));
+    EXPECT_TRUE(DataTypeFactory::createUInt64()->equals(deserializedUInt64));
 
     // serialize and deserialize float32
     auto serializedFloat32 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createFloat(), new SerializableDataType());
     auto deserializedFloat32 = DataTypeSerializationUtil::deserializeDataType(*serializedFloat32);
-    EXPECT_TRUE(DataTypeFactory::createFloat()->isEquals(deserializedFloat32));
+    EXPECT_TRUE(DataTypeFactory::createFloat()->equals(deserializedFloat32));
 
     // serialize and deserialize float64
     auto serializedFloat64 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createDouble(), new SerializableDataType());
     auto deserializedFloat64 = DataTypeSerializationUtil::deserializeDataType(*serializedFloat64);
-    EXPECT_TRUE(DataTypeFactory::createDouble()->isEquals(deserializedFloat64));
+    EXPECT_TRUE(DataTypeFactory::createDouble()->equals(deserializedFloat64));
 
     // serialize and deserialize float64
     auto serializedArray =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createArray(42, DataTypeFactory::createInt8()),
                                                      new SerializableDataType());
     auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(*serializedArray);
-    EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->isEquals(deserializedArray));
+    EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->equals(deserializedArray));
 
     /*
    std::string json_string;

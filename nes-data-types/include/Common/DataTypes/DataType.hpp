@@ -84,7 +84,7 @@ class DataType {
      * @param otherDataType
      * @return
      */
-    virtual bool isEquals(DataTypePtr otherDataType) = 0;
+    virtual bool equals(DataTypePtr otherDataType) = 0;
 
     /**
      * @brief Calculates the joined data type between this data type and the other.

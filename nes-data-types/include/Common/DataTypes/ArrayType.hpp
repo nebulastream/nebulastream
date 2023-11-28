@@ -50,7 +50,7 @@ class ArrayType : public DataType {
      * @param otherDataType
      * @return
      */
-    bool isEquals(DataTypePtr otherDataType) final;
+    bool equals(DataTypePtr otherDataType) final;
 
     /**
      * @brief Calculates the joined data type between this data type and the other.

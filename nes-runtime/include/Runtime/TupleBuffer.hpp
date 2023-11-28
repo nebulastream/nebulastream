@@ -282,10 +282,10 @@ class TupleBuffer {
     }
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
-    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) noexcept;
+    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;
 
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
-    [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) noexcept;
+    [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept;
 
     [[nodiscard]] constexpr uint32_t getNumberOfChildrenBuffer() const noexcept {
         return controlBlock->getNumberOfChildrenBuffer();

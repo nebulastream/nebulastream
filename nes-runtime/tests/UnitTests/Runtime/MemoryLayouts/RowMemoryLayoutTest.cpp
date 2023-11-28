@@ -16,7 +16,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>

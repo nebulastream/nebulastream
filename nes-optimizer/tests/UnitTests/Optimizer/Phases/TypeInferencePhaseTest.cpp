@@ -383,12 +383,12 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
     auto powFloat32 = mapOutputSchema->get("default_logical$powFloat32");
     auto powInt64 = mapOutputSchema->get("default_logical$powInt64");
 
-    EXPECT_TRUE(f1->getDataType()->isEquals(DataTypeFactory::createInt32()));
-    EXPECT_TRUE(f2->getDataType()->isEquals(DataTypeFactory::createDouble()));
-    EXPECT_TRUE(f3->getDataType()->isEquals(DataTypeFactory::createInt64()));
-    EXPECT_TRUE(powInt32->getDataType()->isEquals(DataTypeFactory::createDouble()));
-    EXPECT_TRUE(powFloat32->getDataType()->isEquals(DataTypeFactory::createDouble()));
-    EXPECT_TRUE(powInt64->getDataType()->isEquals(DataTypeFactory::createDouble()));
+    EXPECT_TRUE(f1->getDataType()->equals(DataTypeFactory::createInt32()));
+    EXPECT_TRUE(f2->getDataType()->equals(DataTypeFactory::createDouble()));
+    EXPECT_TRUE(f3->getDataType()->equals(DataTypeFactory::createInt64()));
+    EXPECT_TRUE(powInt32->getDataType()->equals(DataTypeFactory::createDouble()));
+    EXPECT_TRUE(powFloat32->getDataType()->equals(DataTypeFactory::createDouble()));
+    EXPECT_TRUE(powInt64->getDataType()->equals(DataTypeFactory::createDouble()));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 6);

@@ -144,7 +144,7 @@ bool Schema::hasEqualTypes(const SchemaPtr& otherSchema) {
     for (uint32_t i = 0; i < fields.size(); i++) {
         auto thisField = fields.at(i);
         auto otherField = otherFields.at(i);
-        if (!thisField->getDataType()->isEquals(otherField->getDataType())) {
+        if (!thisField->getDataType()->equals(otherField->getDataType())) {
             return false;
         }
     }
