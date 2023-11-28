@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.263](https://github.com/nebulastream/nebulastream/tree/v0.5.263) (2023-11-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.262...v0.5.263)
+
+**Implemented enhancements:**
+
+- \[TASK\] DynamicTupleBuffer Test [\#4329](https://github.com/nebulastream/nebulastream/issues/4329)
+
 ## [v0.5.262](https://github.com/nebulastream/nebulastream/tree/v0.5.262) (2023-11-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.261...v0.5.262)
