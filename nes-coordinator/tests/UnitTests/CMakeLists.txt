@@ -94,15 +94,8 @@ add_nes_unit_test(grpc-test "gRPC/grpcTests.cpp")
 
 ### Sensor Bus Tests ###
 #add_nes_unit_test(sensor-bus-tests "SensorBusTest.cpp")
-
-### Row Layout Tests ###
-add_nes_unit_test(row-memory-layout-tests "Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")
-
-### Row Layout Tests ###
-add_nes_unit_test(columnar-memory-layout-tests "Runtime/MemoryLayouts/ColumnarMemoryLayoutTest.cpp")
-
-### Dynamic Memory Layout Tests ###
-add_nes_unit_test(dynamic-memory-layout-tests "Runtime/MemoryLayouts/DynamicMemoryLayoutTest.cpp")
+#
+#
 
 ### QueryCatalog Tests ###
 add_nes_unit_test(query-catalog-service-tests "Services/QueryCatalogServiceTest.cpp")

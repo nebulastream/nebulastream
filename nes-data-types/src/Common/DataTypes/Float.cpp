@@ -19,7 +19,7 @@
 #include <cmath>
 namespace NES {
 
-bool Float::isEquals(DataTypePtr otherDataType) {
+bool Float::equals(DataTypePtr otherDataType) {
     if (otherDataType->isFloat()) {
         auto otherFloat = as<Float>(otherDataType);
         return bits == otherFloat->bits && lowerBound == otherFloat->lowerBound && upperBound == otherFloat->upperBound;

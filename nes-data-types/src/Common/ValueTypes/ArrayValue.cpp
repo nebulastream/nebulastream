@@ -20,7 +20,7 @@ namespace NES {
 std::string ArrayValue::toString() const noexcept { return "ArrayValue"; }
 
 bool ArrayValue::isEquals(ValueTypePtr other) const noexcept {
-    return dataType->isEquals(other->dataType) && values == std::dynamic_pointer_cast<ArrayValue>(other)->values;
+    return dataType->equals(other->dataType) && values == std::dynamic_pointer_cast<ArrayValue>(other)->values;
 }
 
 }// namespace NES

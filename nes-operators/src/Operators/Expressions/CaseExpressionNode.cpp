@@ -54,7 +54,7 @@ void CaseExpressionNode::inferStamp( SchemaPtr schema) {
                                    + elem->toString() + " is not a when expression.");
         }
         //all elements must have same stamp as defaultExp value
-        if (!defaultExp->getStamp()->isEquals(elem->getStamp())) {
+        if (!defaultExp->getStamp()->equals(elem->getStamp())) {
             throw std::logic_error("CaseExpressionNode: Error during stamp inference."
                                    "All elements must have same stamp as defaultExp default value, but element "
                                    + elem->toString() + " has:" + elem->getStamp()->toString()

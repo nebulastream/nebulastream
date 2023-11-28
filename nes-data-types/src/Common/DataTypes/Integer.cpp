@@ -20,7 +20,7 @@
 
 namespace NES {
 
-bool Integer::isEquals(DataTypePtr otherDataType) {
+bool Integer::equals(DataTypePtr otherDataType) {
     if (otherDataType->isInteger()) {
         auto otherInteger = as<Integer>(otherDataType);
         return bits == otherInteger->bits && lowerBound == otherInteger->lowerBound && upperBound == otherInteger->upperBound;

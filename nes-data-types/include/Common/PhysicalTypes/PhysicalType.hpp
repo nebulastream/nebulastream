@@ -14,6 +14,7 @@
 
 #ifndef NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_
 #define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_
+#include <Common/DataTypes/DataType.hpp>
 
 #include <memory>
 #include <utility>
@@ -77,6 +78,14 @@ class PhysicalType {
 
     /// @brief true only for arrays which contain chars as their immediate child type.
     [[nodiscard]] virtual bool isCharArrayType() const noexcept { return false; };
+
+    /**
+     * @brief Comparator method
+     * @param rhs
+     * @return True if equal, otherwise false
+     */
+    bool operator==(const PhysicalType& rhs) const { return type->equals(rhs.type); }
+    bool operator!=(const PhysicalType& rhs) const { return !(rhs == *this); }
 
     /// Type that is contained by this PhysicalType container
     DataTypePtr const type;

@@ -19,6 +19,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <numeric>
@@ -47,6 +48,20 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const {
 DynamicTuple::DynamicTuple(const uint64_t tupleIndex, MemoryLayoutPtr memoryLayout, TupleBuffer buffer)
     : tupleIndex(tupleIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer)) {}
 
+void DynamicTuple::writeVarSized(const uint64_t fieldIndex, std::string value, BufferManager* bufferManager) {
+    const auto valueLength = value.length();
+    auto childBuffer = bufferManager->getUnpooledBuffer(valueLength);
+    if (childBuffer.has_value()) {
+        auto& childBufferVal = childBuffer.value();
+        *childBufferVal.getBuffer<uint32_t>() = valueLength;
+        std::strncpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
+        auto index = buffer.storeChildBuffer(childBufferVal);
+        (*this)[fieldIndex].write(index);
+    } else {
+        NES_ERROR("Could not store string {}", value);
+    }
+}
+
 std::string DynamicTuple::toString(const SchemaPtr& schema) {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
@@ -55,6 +70,12 @@ std::string DynamicTuple::toString(const SchemaPtr& schema) {
         ss << currentField.toString() << "|";
     }
     return ss.str();
+}
+
+std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx) {
+    auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
+    auto stringSize = *childBuffer.getBuffer<uint32_t>();
+    return std::string(static_cast<const char*>(childBuffer.getBuffer<char>() + sizeof(uint32_t)), stringSize);
 }
 
 bool DynamicTuple::operator!=(const DynamicTuple& other) const { return !(*this == other); }
@@ -74,8 +95,16 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const {
         auto thisDynamicField = this->operator[](field->getName());
         auto otherDynamicField = other.operator[](field->getName());
 
-        if (thisDynamicField != otherDynamicField) {
-            return false;
+        if (field->getDataType()->isText()) {
+            const auto thisString = readVarSizedData(buffer, thisDynamicField.read<TupleBuffer::NestedTupleBufferKey>());
+            const auto otherString = readVarSizedData(other.buffer, otherDynamicField.read<TupleBuffer::NestedTupleBufferKey>());
+            if (thisString != otherString) {
+                return false;
+            }
+        } else {
+            if (thisDynamicField != otherDynamicField) {
+                return false;
+            }
         }
     }
 
@@ -84,14 +113,15 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const {
 
 std::string DynamicField::toString() {
     std::stringstream ss;
-
     std::string currentFieldContentAsString = this->physicalType->convertRawToString(this->address);
     ss << currentFieldContentAsString;
     return ss.str();
 }
 
 bool DynamicField::equal(const DynamicField& rhs) const {
-    NES_ASSERT(physicalType->size() == rhs.physicalType->size(), "Size of physical type has to be the same!");
+    NES_ASSERT(*physicalType == *rhs.physicalType, "Physical types have to be the same but are " + physicalType->toString()
+                   + " and " + rhs.physicalType->toString());
+
     return std::memcmp(address, rhs.address, physicalType->size()) == 0;
 }
 

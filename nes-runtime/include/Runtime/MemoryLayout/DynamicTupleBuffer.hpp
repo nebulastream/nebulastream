@@ -35,6 +35,15 @@ namespace NES::Runtime::MemoryLayouts {
 class MemoryLayoutTupleBuffer;
 using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
 
+
+/**
+ * @brief Reads the variable sized data from the child buffer at the provided index
+ * @param buffer
+ * @param childBufferIdx
+ * @return Variable sized data as a string
+ */
+std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx);
+
 /**
  * @brief The DynamicField allows to read and write a field at a
  * specific address and a specific data type.
@@ -172,6 +181,14 @@ class DynamicTuple {
     DynamicField operator[](std::string fieldName) const;
 
     /**
+     * @brief Writes the variable sized value to this tuple at the fieldIndex
+     * @param fieldIndex
+     * @param value
+     * @param bufferManager
+     */
+    void writeVarSized(const uint64_t fieldIndex, std::string value, BufferManager* bufferManager);
+
+    /**
      * @brief get a string representation of this dynamic tuple
      * @return a string
      */
@@ -188,7 +205,7 @@ class DynamicTuple {
   private:
     const uint64_t tupleIndex;
     const MemoryLayoutPtr memoryLayout;
-    TupleBuffer buffer;
+    const TupleBuffer buffer;
 };
 
 /**
@@ -355,12 +372,29 @@ class DynamicTupleBuffer {
      * @note Recursive templates have a limited depth. The recommended (C++ standard) depth is 1024.
      *       Thus, a record with more than 1024 fields might not be supported.
      * @param record: The record to be pushed to the buffer.
-     * @return true if the record was pushed successfully, false otherwise.
      */
     template<typename... Types>
+        requires(!ContainsString<Types> && ...)
     void pushRecordToBuffer(std::tuple<Types...> record) {
         pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
     }
+
+
+    /**
+     * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.
+              Boundary checks are performed by the write function of the DynamicTupleBuffer.
+     * @note  Recursive templates have a limited depth. The recommended (C++ standard) depth is 1024.
+              Thus, a record with more than 1024 fields might not be supported.
+     * @param record: The record to be pushed to the buffer.
+     * @param bufferManager: BufferManager required for storing the variable sized data in the child buffers
+     */
+    template<typename... Types>
+        requires(ContainsString<Types> || ...)
+    void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager) {
+        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), bufferManager);
+    }
+
+
 
     /**
      * @brief Push a record to the underlying tuple buffer at given recordIndex. Boundary checks are performed by the 
@@ -373,7 +407,7 @@ class DynamicTupleBuffer {
      * @return true if the record was pushed successfully, false otherwise.
      */
     template<typename... Types>
-    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex) {
+    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, BufferManager* bufferManager = nullptr) {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
         if (recordIndex >= buffer.getBufferSize()) {
@@ -382,9 +416,17 @@ class DynamicTupleBuffer {
         }
         // std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
         // On each iteration, the lambda function is called with the current field value, and the field index is increased.
+        // If the value is a std::string, we call writeVarSized() instead of write().
         std::apply(
             [&](auto&&... fieldValue) {
-                ((*this)[recordIndex][fieldIndex++].write(fieldValue), ...);
+                (([&]() {
+                     if constexpr (IsString<decltype(fieldValue)>) {
+                         NES_ASSERT(bufferManager != nullptr, "BufferManager can not be null while using variable sized data!");
+                         (*this)[recordIndex].writeVarSized(fieldIndex++, fieldValue, bufferManager);
+                     } else {
+                         (*this)[recordIndex][fieldIndex++].write(fieldValue);
+                     }
+                 }()), ...);
             },
             record);
         if (recordIndex + 1 > numberOfRecords) {
@@ -438,8 +480,14 @@ class DynamicTupleBuffer {
     void copyRecordFromBufferToTuple(std::tuple<Types...>& record, uint64_t recordIndex) {
         // Check if I matches the size of the tuple, which means that all fields of the record have been processed.
         if constexpr (I != sizeof...(Types)) {
-            // Get type of current tuple element and cast field value to this type. Add value to return tuple.
-            std::get<I>(record) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
+            if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>) {
+                auto childBufferIdx = (*this)[recordIndex][I].read<TupleBuffer::NestedTupleBufferKey>();
+                std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
+            } else {
+                // Get type of current tuple element and cast field value to this type. Add value to return tuple.
+                std::get<I>(record) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
+            }
+
             // Recursive call to copyRecordFromBufferToTuple with the field index (I) increased by 1.
             copyRecordFromBufferToTuple<I + 1>(record, recordIndex);
         }

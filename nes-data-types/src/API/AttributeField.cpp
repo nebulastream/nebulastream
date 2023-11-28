@@ -43,7 +43,7 @@ bool AttributeField::isEqual(const AttributeFieldPtr& attr) {
     }
 
     const bool equalDataType = (this->dataType == nullptr && attr->dataType == nullptr)
-        || (this->dataType != nullptr && attr->dataType != nullptr && this->dataType->isEquals(attr->dataType));
+        || (this->dataType != nullptr && attr->dataType != nullptr && this->dataType->equals(attr->dataType));
     return (attr->name == name) && equalDataType;
 }
 

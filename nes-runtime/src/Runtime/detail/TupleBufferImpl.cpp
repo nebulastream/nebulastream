@@ -281,7 +281,7 @@ uint32_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control) {
     return children.size() - 1;
 }
 
-bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) {
+bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const {
     NES_ASSERT2_FMT(index < children.size(), "Invalid index");
 
     auto* child = children[index];

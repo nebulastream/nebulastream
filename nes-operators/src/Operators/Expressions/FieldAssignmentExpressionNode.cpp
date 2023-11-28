@@ -84,7 +84,7 @@ void FieldAssignmentExpressionNode::inferStamp(
         field->setStamp(getAssignment()->getStamp());
     } else {
         // the field already has a type, check if it is compatible with the assignment
-        field->getStamp()->isEquals(getAssignment()->getStamp());
+        field->getStamp()->equals(getAssignment()->getStamp());
     }
 }
 ExpressionNodePtr FieldAssignmentExpressionNode::copy() {
