@@ -175,8 +175,6 @@ class QueryCatalogService {
      */
     void checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
-    bool checkAndMarkForRedeployment(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, OperatorId operatorId);
-
   private:
     /**
      * Handle soft stop for sub query plans
@@ -187,10 +185,10 @@ class QueryCatalogService {
      */
     bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
 
+    bool handleMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
+
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     std::recursive_mutex serviceMutex;
-    //todo: remove this when proper solution exists
-    std::set<SharedQueryId> markedForRedeployment;
 };
 }// namespace NES
 
