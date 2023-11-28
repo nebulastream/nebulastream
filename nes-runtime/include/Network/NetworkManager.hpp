@@ -198,6 +198,8 @@ class NetworkManager {
      */
     uint16_t getServerDataPort() const;
 
+    bool startNewVersion(NesPartition partition);
+
   private:
     NodeLocation nodeLocation;
     ZmqServerPtr server;

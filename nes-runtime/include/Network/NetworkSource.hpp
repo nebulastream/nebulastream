@@ -140,6 +140,8 @@ class NetworkSource : public DataSource {
 
     bool bind();
 
+    void onVersionUpdate() override;
+
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:

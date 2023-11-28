@@ -50,7 +50,9 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             //check version
             if (partitionManager->getVersion(nesPartition) != msg.getVersionNumber()) {
                 //todo: implment another message here
-                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}", msg.getVersionNumber(), partitionManager->getVersion(nesPartition));
+                NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}",
+                          msg.getVersionNumber(),
+                          partitionManager->getVersion(nesPartition));
                 return Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError);
             }
 
@@ -140,7 +142,9 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()),
                       partitionManager->getSubpartitionConsumerDisconnectCount(partition).value(),
                       expectedTotalConnectionsInPartitionManager);
-        } else if (!partitionManager->startNewVersion(partition)) {
+        } else if (partitionManager->newVersionExists(partition)) {
+                partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())->onVersionUpdate();
+        } else {
             partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
                 ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
             protocolListener->onEndOfStream(endOfStreamMessage);

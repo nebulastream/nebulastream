@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Network/PartitionManager.hpp>
 #include <Network/NetworkSource.hpp>
+#include <Network/PartitionManager.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -60,6 +60,8 @@ bool PartitionManager::PartitionConsumerEntry::startNewVersion() {
     disconnectCount = 0;
     return true;
 }
+
+bool PartitionManager::PartitionConsumerEntry::newVersionExists() { return pendingVersion.has_value(); }
 
 void PartitionManager::PartitionConsumerEntry::addPendingVersion(OperatorVersionNumber pendingVersion) {
     if (this->pendingVersion.has_value()) {
@@ -156,6 +158,14 @@ bool PartitionManager::startNewVersion(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
         return it->second.startNewVersion();
+    }
+    return false;
+}
+
+bool PartitionManager::newVersionExists(NesPartition partition) {
+    std::unique_lock lock(consumerPartitionsMutex);
+    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
+        return it->second.newVersionExists();
     }
     return false;
 }

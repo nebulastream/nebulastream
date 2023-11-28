@@ -657,6 +657,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     //create network sink
     auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
     auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
+    auto currentWrk1TargetPartition = networkSourceWrk2Partition;
     OperatorVersionNumber firstVersion = 0;
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes, firstVersion);
@@ -811,6 +812,15 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         ASSERT_TRUE(success_register_wrk3);
         auto success_start_wrk3 = wrk3->getNodeEngine()->startQuery(sharedQueryId);
         ASSERT_TRUE(success_start_wrk3);
+
+        //todo: add timeout
+        while (wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition) == Network::PartitionRegistrationStatus::Registered) {
+            NES_DEBUG("Partition {} has not yet been unregistered", currentWrk1TargetPartition);
+        }
+        ASSERT_NE(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition), Network::PartitionRegistrationStatus::Registered);
+        ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition), Network::PartitionRegistrationStatus::Registered);
+        currentWrk1TargetPartition = networkSourceWrk3Partition;
+
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
