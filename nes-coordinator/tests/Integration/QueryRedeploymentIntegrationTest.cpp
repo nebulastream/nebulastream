@@ -423,7 +423,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
 
     //reconfiguration
-    crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
+    //crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
+    //todo: insert subplan id here?
+    crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
 
     OperatorVersionNumber nextVersion = 1;
     //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
@@ -722,9 +724,12 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
     std::vector<NesWorkerPtr> reconnectParents;
     //reconfiguration
-    crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
+    //crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
     auto subPlanIdWrk3 = 30;
+    auto oldSubplanId = subPlanIdWrk2;
     while (actualReconnects < numberOfReconnectsToPerform) {
+        crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
+        oldSubplanId = subPlanIdWrk3;
         subPlanIdWrk3++;
 
         //wait for data to be written
@@ -1099,7 +1104,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
 
     //reconfiguration
-    crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
+    //crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
+    crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, 0, QueryState::MIGRATING);
 
     OperatorVersionNumber nextVersion = 1;
     //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
@@ -1420,7 +1426,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     //reconfiguration
     OperatorVersionNumber nextVersion = 1;
     crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion);
-    crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
+    //crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
+    crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
     //retrieve data about running network sink at wrk1
     auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
     EXPECT_EQ(subQueryIds.size(), 1);
