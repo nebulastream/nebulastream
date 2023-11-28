@@ -147,7 +147,7 @@ TEST_P(TPCH_Q5, joinPipeline) {
         orderEps->execute(orderChunk, *orderPipeline.ctx, *wc);
     }
     // Assert the content of the hash map
-    auto orderJoinHandler = orderPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1); // the build handler is at index 1
+    auto orderJoinHandler = orderPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);// the build handler is at index 1
     auto orderJoinNumberOfKeys = orderJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
     EXPECT_EQ(orderJoinNumberOfKeys, 45232);
     auto orderJoinHashMap = orderJoinHandler->mergeState();
@@ -158,7 +158,7 @@ TEST_P(TPCH_Q5, joinPipeline) {
         lineItemEps->execute(lineItemChunk, *lineItemPipeline.ctx, *wc);
     }
     // Assert the content of the hash map
-    auto lineItemJoinHandler = lineItemPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
+    auto lineItemJoinHandler = lineItemPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);// the build handler is at index 1
     auto lineItemJoinNumberOfKeys = lineItemJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
     EXPECT_EQ(lineItemJoinNumberOfKeys, 181055);
     auto lineItemJoinHashMap = lineItemJoinHandler->mergeState();
@@ -169,18 +169,18 @@ TEST_P(TPCH_Q5, joinPipeline) {
         supplierEps->execute(supplierChunk, *supplierPipeline.ctx, *wc);
     }
     // Assert the content of the hash map
-    auto supplierJoinHandler = supplierPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
+    auto supplierJoinHandler = supplierPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);// the build handler is at index 1
     auto supplierJoinNumberOfKeys = supplierJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
-    EXPECT_NEAR(supplierJoinNumberOfKeys, 25, 5); // TODO #4384: Assert the query result instead
+    EXPECT_NEAR(supplierJoinNumberOfKeys, 25, 5);// TODO #4384: Assert the query result instead
     auto supplierJoinHashMap = supplierJoinHandler->mergeState();
-    EXPECT_NEAR(supplierJoinNumberOfKeys, 25, 5); // TODO #4384: Assert the query result instead
+    EXPECT_NEAR(supplierJoinNumberOfKeys, 25, 5);// TODO #4384: Assert the query result instead
 
     // == Execute and assert the fifth pipeline (Nation) == //
     for (auto& nationChunk : nations->getChunks()) {
         nationEps->execute(nationChunk, *nationPipeline.ctx, *wc);
     }
     // Assert the content of the hash map
-    auto nationJoinHandler = nationPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);  // the build handler is at index 1
+    auto nationJoinHandler = nationPipeline.ctx->getOperatorHandler<BatchJoinHandler>(1);// the build handler is at index 1
     auto nationJoinNumberOfKeys = nationJoinHandler->getThreadLocalState(wc->getId())->getNumberOfEntries();
     EXPECT_EQ(nationJoinNumberOfKeys, 1);
     auto nationJoinHashMap = nationJoinHandler->mergeState();
@@ -191,7 +191,8 @@ TEST_P(TPCH_Q5, joinPipeline) {
         regionEps->execute(regionChunk, *regionPipeline.ctx, *wc);
     }
     // Assert the content in the aggregation handler
-    auto aggHandler = regionPipeline.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(1); // the aggregation handler is at index 1
+    auto aggHandler =
+        regionPipeline.ctx->getOperatorHandler<BatchKeyedAggregationHandler>(1);// the aggregation handler is at index 1
     EXPECT_EQ(aggHandler->getThreadLocalStore(0)->getCurrentSize(), 0);
 }
 
