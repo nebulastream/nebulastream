@@ -68,7 +68,6 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
     std::chrono::duration<int64_t, std::milli> defaultTimeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
 };
 
-//todo #4272: re-enable tests when EOS is guaranteed to come after last tuples
 /**
  * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
  * network channel to become available
@@ -177,7 +176,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
     ASSERT_TRUE(retStopCord);
 }
 
-//todo: test for reconnect of data channels
 /**
  * @brief This tests inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
@@ -423,8 +421,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
 
     //reconfiguration
-    //crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
-    //todo: insert subplan id here?
     crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
 
     OperatorVersionNumber nextVersion = 1;
@@ -438,7 +434,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
 
     //add a pending version to the subplan containing the file sink
-    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion);
+    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion, newNodeLocation);
     networkSink->configureNewReceiverAndPartition(networkSourceWrk3Partition, newNodeLocation, nextVersion);
 
     //reconfig performed but new network source not started yet. tuples are buffered at wrk1
@@ -450,8 +446,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
         ;
 
     //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
-
-
     //start query on wrk3
     auto subPlanIdWrk3 = 30;
     auto queryPlan3 = QueryPlan::create(sharedQueryId, subPlanIdWrk3);
@@ -480,7 +474,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     waitForFinalCount = true;
 
     //send the last tuples, after which the lambda source shuts down
-
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
     //worker 2 did not receive any soft stop, because the node reconnected
@@ -519,11 +512,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     const uint64_t numBuffersToProduceBeforeReconnect = 10;
     const uint64_t numBuffersToProduceWhileBuffering = 10;
     const uint64_t numBuffersToProduceAfterReconnect = 10;
-    //these buffers are sent after the final count, they make sure that no eos comes before the reconnect succeeded
-    //const uint64_t numBuffersToProduceAfterFinalCount = 10;
     const uint64_t buffersToProducePerReconnectCycle =
         (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
-         + numBuffersToProduceWhileBuffering /*+ numBuffersToProduceAfterFinalCount*/);
+         + numBuffersToProduceWhileBuffering);
     const uint64_t totalBuffersToProduce = numberOfReconnectsToPerform * buffersToProducePerReconnectCycle;
     const uint64_t gatheringValue = 10;
     const std::chrono::seconds waitTime(10);
@@ -723,8 +714,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     ASSERT_TRUE(success_start);
 
     std::vector<NesWorkerPtr> reconnectParents;
+
     //reconfiguration
-    //crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
     auto subPlanIdWrk3 = 30;
     auto oldSubplanId = subPlanIdWrk2;
     while (actualReconnects < numberOfReconnectsToPerform) {
@@ -782,7 +773,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
         OperatorVersionNumber nextVersion = actualReconnects + 1;
-        crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion);
+        crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion, newNodeLocation);
         networkSink->configureNewReceiverAndPartition(networkSourceWrk3Partition, newNodeLocation, nextVersion);
 
         //reconfig performed but new network source not started yet. tuples are buffered at wrk1
@@ -818,14 +809,18 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto success_start_wrk3 = wrk3->getNodeEngine()->startQuery(sharedQueryId);
         ASSERT_TRUE(success_start_wrk3);
 
-        //todo: add timeout
+        //verify that the old partition get unregistered
+        auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
+        auto start_timestamp = std::chrono::system_clock::now();
         while (wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition) == Network::PartitionRegistrationStatus::Registered) {
             NES_DEBUG("Partition {} has not yet been unregistered", currentWrk1TargetPartition);
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
         }
         ASSERT_NE(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition), Network::PartitionRegistrationStatus::Registered);
         ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition), Network::PartitionRegistrationStatus::Registered);
         currentWrk1TargetPartition = networkSourceWrk3Partition;
-
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
@@ -1104,7 +1099,6 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
 
     //reconfiguration
-    //crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
     crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, 0, QueryState::MIGRATING);
 
     OperatorVersionNumber nextVersion = 1;
@@ -1117,7 +1111,8 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     auto uniqueNetworkSinkDescriptorId = networkSink->getUniqueNetworkSinkDescriptorId();
     //trigger sink reconnection to new source on wrk2
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion);
+    Network::NodeLocation newNodeLocation(wrk3->getWorkerId(), "localhost", *wrk3DataPort);
+    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion, newNodeLocation);
     wrk1->getNodeEngine()->experimentalReconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
                                                               "localhost",
                                                               *wrk3DataPort,
@@ -1167,9 +1162,9 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
     //worker 2 did not receive any soft stop, because the node reconnected
-    ASSERT_TRUE(wrk2->getNodeEngine()->stopQuery(sharedQueryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk2));
     //worker at coordinator expects double number of threads to send soft stop because source reconfig is not implemented yet
-    ASSERT_TRUE(crd->getNesWorker()->getNodeEngine()->stopQuery(sharedQueryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, crd->getNesWorker()));
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
@@ -1425,8 +1420,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
 
     //reconfiguration
     OperatorVersionNumber nextVersion = 1;
-    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion);
-    //crd->getQueryCatalogService()->checkAndMarkForRedeployment(sharedQueryId, 0, 0);
+    Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
+    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion, newNodeLocation);
     crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
     //retrieve data about running network sink at wrk1
     auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
@@ -1493,15 +1488,14 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     ASSERT_TRUE(success_start_wrk3);
 
     //check that all tuples arrived and that query terminated successfully
-
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
 
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk3));
     //worker 2 did not receive any soft stop, because the node reconnected
-    ASSERT_TRUE(wrk2->getNodeEngine()->stopQuery(sharedQueryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk2));
     //worker at coordinator expects double number of threads to send soft stop because source reconfig is not implemented yet
-    ASSERT_TRUE(crd->getNesWorker()->getNodeEngine()->stopQuery(sharedQueryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, crd->getNesWorker()));
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);

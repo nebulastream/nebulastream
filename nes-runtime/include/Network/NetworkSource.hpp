@@ -44,6 +44,7 @@ class NetworkSource : public DataSource {
    * @param waitTime
    * @param retryTimes
    * @param successors
+   * @param versionNumber The initial version number of this source when it starts
    * @param physicalSourceName
    */
     NetworkSource(SchemaPtr schema,
@@ -136,11 +137,19 @@ class NetworkSource : public DataSource {
      */
     void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
 
+    /**
+     * @brief Reconfigures this sink with ReconfigurationType::UpdateVersion causing it to close event channels to the old
+     * upstream sink and open channels to the new one
+     */
+    void onVersionUpdate() override;
+
+   /**
+    * @brief Getter for the initial version.
+    * @return The version this source was started with
+    */
     OperatorVersionNumber getInitialVersion() const;
 
     bool bind();
-
-    void onVersionUpdate() override;
 
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 

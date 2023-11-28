@@ -35,6 +35,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @param nesPartition
      * @param waitTime
      * @param retryTimes
+     * @param initialVersion The version number of the sink when it is started
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr create(NodeLocation nodeLocation,
@@ -81,6 +82,10 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      */
     uint8_t getRetryTimes() const;
 
+    /**
+     * @brief getter for the initial version
+     * @return the initial version
+     */
     uint16_t getInitialVersion() const;
 
   private:

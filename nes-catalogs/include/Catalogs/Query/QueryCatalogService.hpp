@@ -19,7 +19,6 @@
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
 #include <map>
-#include <set>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -185,6 +184,13 @@ class QueryCatalogService {
      */
     bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
 
+    /**
+     * Handle migration for sub query plans
+     * @param sharedQueryId: the query id
+     * @param querySubPlanId : query sub plan id
+     * @param subQueryStatus : the new status
+     * @return true if successful else false
+     */
     bool handleMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
 
     Catalogs::Query::QueryCatalogPtr queryCatalog;

@@ -43,12 +43,12 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t numberOfOrigins,
                          OperatorVersionNumber versionNumber)
     : SinkMedium(
-          std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
-          nodeEngine,
-          numOfProducers,
-          queryId,
-          querySubPlanId,
-          numberOfOrigins),
+        std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
+        nodeEngine,
+        numOfProducers,
+        queryId,
+        querySubPlanId,
+        numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
@@ -172,7 +172,6 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
             //retrieve information about which source to connect to
-            //auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
             auto versionUpdate = task.getUserData<VersionUpdate>();
             auto newReceiverLocation = versionUpdate.nodeLocation;
             auto newPartition = versionUpdate.partition;
@@ -249,7 +248,6 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
     switch (task.getType()) {
         //update info about receiving network source to new target
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
-            //auto [newReceiverLocation, newPartition] = task.getUserData<std::pair<NodeLocation, NesPartition>>();
             auto versionUpdate = task.getUserData<VersionUpdate>();
             networkManager->unregisterSubpartitionProducer(nesPartition);
 
@@ -324,7 +322,8 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
                                                                                   waitTime,
                                                                                   retryTimes,
                                                                                   reconf,
-                                                                                  queryManager, newVersion);
+                                                                                  queryManager,
+                                                                                  newVersion);
     //todo: #4282 use QueryTerminationType::Redeployment
     workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
     //todo #4310: do release and storing of nullptr in one call
@@ -380,11 +379,4 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     unbuffer(workerContext);
     return true;
 }
-
-//void NetworkSink::addPendingReconfiguration(NesPartition newPartition, const NodeLocation& newReceiverLocation) {
-//    pendingReconfiguration = {newReceiverLocation, newPartition};
-//}
-
-//uint16_t NetworkSink::getNumberOfInputSources() const { return numberOfInputSources; }
-
 }// namespace NES::Network

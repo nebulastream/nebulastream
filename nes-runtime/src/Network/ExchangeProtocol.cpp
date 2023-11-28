@@ -49,11 +49,10 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
 
             //check version
             if (partitionManager->getVersion(nesPartition) != msg.getVersionNumber()) {
-                //todo: implment another message here
                 NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}",
                           msg.getVersionNumber(),
                           partitionManager->getVersion(nesPartition));
-                return Messages::ErrorMessage(msg.getChannelId(), ErrorType::PartitionNotRegisteredError);
+                return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
             }
 
             // increment the counter
@@ -134,7 +133,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
             //todo #4313: count connects instead of disconnects and implement timeout
         } else if (partitionManager->getSubpartitionConsumerDisconnectCount(partition).value()
-                   < expectedTotalConnectionsInPartitionManager /*todo: && !timeout*/) {
+                   < expectedTotalConnectionsInPartitionManager /*todo #4313: check timeout here*/) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} expected number of total channel "
                       "disconnects for "
                       "subpartition: {} has not been reached: {}/{}",
@@ -142,7 +141,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()),
                       partitionManager->getSubpartitionConsumerDisconnectCount(partition).value(),
                       expectedTotalConnectionsInPartitionManager);
-        } else if (partitionManager->newVersionExists(partition)) {
+        } else if (partitionManager->pendingVersionExists(partition)) {
                 partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())->onVersionUpdate();
         } else {
             partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())

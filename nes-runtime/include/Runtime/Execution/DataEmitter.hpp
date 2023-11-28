@@ -46,6 +46,9 @@ class DataEmitter : public Runtime::RuntimeEventListener {
      */
     virtual void onEvent(Runtime::BaseEvent&) override {}
 
+    /**
+     * @brief reconfigure with sink to perform an update of its version
+     */
     virtual void onVersionUpdate() {};
 };
 }// namespace NES

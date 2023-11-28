@@ -39,7 +39,6 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -460,7 +459,7 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
         }
 
-        //received eos = numSendingThreads: check if the exchange protocol propagated the eos
+        //once received eos == numSendingThreads: check if the exchange protocol propagated the eos
         ASSERT_EQ(receiveListener->numReceivedEoS, 1);
 
         partMgrRecv->unregisterSubpartitionConsumer(nesPartition);
@@ -493,7 +492,6 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         auto senderPort = getAvailablePort();
         auto senderLocation = NodeLocation(0, "127.0.0.1", *senderPort);
 
-        //todo: this will have to be a network source or we move the logic to the data emitter
         struct DataEmitterImpl : public DataEmitter {
             DataEmitterImpl(PartitionManagerPtr partitionManager, NesPartition nesPartition) : partitionManager(partitionManager), nesPartition(nesPartition) {}
             void emitWork(TupleBuffer&) override {}
@@ -511,7 +509,7 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>(partMgrRecv, nesPartition)));
 
         auto nextVersion = 1;
-        partMgrRecv->addPendingVersion(nesPartition, nextVersion);
+        partMgrRecv->addPendingVersion(nesPartition, nextVersion, nodeLocation);
         uint64_t i = 1;
         //register and close one channel at a time
         for (; i <= numSendingThreads / 2; ++i) {

@@ -57,6 +57,8 @@ enum class ErrorType : uint8_t {
     UnknownPartitionError,
     /// error raised when requesting a partition that has been previously deleted
     DeletedPartitionError,
+    /// error raised when the version expected by the receiver does not match the one in the client anouncement
+    VersionMismatchError,
     /// error raised when there is no known reason
     UnknownError,
 };
@@ -124,7 +126,7 @@ class ClientAnnounceMessage : public ExchangeMessage {
 
     explicit ClientAnnounceMessage(ChannelId channelId, ChannelType mode, OperatorVersionNumber versionNumber = 0) : ExchangeMessage(channelId), mode(mode), versionNumber(versionNumber) {}
 
-    [[nodiscard]] OperatorVersionNumber getVersionNumber() const {return versionNumber; }
+    [[nodiscard]] OperatorVersionNumber getVersionNumber() const { return versionNumber; }
 
     ChannelType getMode() const { return mode; }
 
@@ -206,6 +208,12 @@ class ErrorMessage : public ExchangeMessage {
      * @return true if the message contains a DeletedPartitionError
      */
     [[nodiscard]] bool isPartitionDeleted() const { return errorCode == ErrorType::DeletedPartitionError; }
+
+    /**
+     * @brief this checks if the message contains a VersionMismatchError
+     * @return true if the message contains a VersionMismatchError
+     */
+    [[nodiscard]] bool isVersionMismatch() const { return errorCode == ErrorType::VersionMismatchError; }
 
   private:
     const ErrorType errorCode;

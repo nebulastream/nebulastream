@@ -241,6 +241,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
         auto queryId = queryCatalogEntry->getQueryId();
         //Check if query is in correct status
         auto currentQueryStatus = queryCatalogEntry->getQueryState();
+        //todo #4396: when query migration has its own termination type, this function will not be called during migratin. remove MIGRATING below
         if (currentQueryStatus != QueryState::MARKED_FOR_SOFT_STOP && currentQueryStatus != QueryState::MIGRATING) {
             NES_WARNING("Found query in {} but received {} for the sub query with id {} for query id {}",
                         queryCatalogEntry->getQueryStatusAsString(),
@@ -300,7 +301,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
             }
         }
         if (subQueryStatus == QueryState::MIGRATING) {
-            //todo: what to do here?
+            //todo #4089: what to do here?
         }
     }
     return true;
@@ -335,7 +336,7 @@ bool QueryCatalogService::handleMigration(SharedQueryId sharedQueryId, QuerySubP
                                          << querySubPlanId << " for query id " << queryId);
         }
 
-        //todo: set status for subqueryplans
+        //todo #4089: set status for subqueryplans
         queryCatalogEntry->setQueryStatus(subQueryStatus);
     }
     return true;

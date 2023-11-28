@@ -209,7 +209,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
  * @param nesPartition
  * @param waitTime
  * @param retryTimes
- * @param numberOfInputSources: the amount of sources feeding data into the sink
+ * @param versionNumber the initial version number of the network sink
  * @return a data sink pointer
  */
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
