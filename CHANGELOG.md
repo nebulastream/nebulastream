@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.262](https://github.com/nebulastream/nebulastream/tree/v0.5.262) (2023-11-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.261...v0.5.262)
+
+**Implemented enhancements:**
+
+- \[TASK\] TPC-H Query 5 for Nautilus [\#4240](https://github.com/nebulastream/nebulastream/issues/4240)
+
 ## [v0.5.261](https://github.com/nebulastream/nebulastream/tree/v0.5.261) (2023-11-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.260...v0.5.261)
