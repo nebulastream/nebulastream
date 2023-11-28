@@ -132,6 +132,7 @@ class PartitionManager {
          */
         OperatorVersionNumber getVersionNumber();
 
+        bool newVersionExists();
       private:
         uint64_t partitionCounter{1};
         uint64_t disconnectCount{0};
@@ -268,6 +269,7 @@ class PartitionManager {
      */
     void clear();
 
+    bool newVersionExists(NesPartition partition);
   private:
     std::unordered_map<NesPartition, PartitionProducerEntry> producerPartitions;
     std::unordered_map<NesPartition, PartitionConsumerEntry> consumerPartitions;

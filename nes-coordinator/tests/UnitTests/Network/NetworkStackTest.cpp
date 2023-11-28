@@ -39,6 +39,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -492,14 +493,22 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         auto senderPort = getAvailablePort();
         auto senderLocation = NodeLocation(0, "127.0.0.1", *senderPort);
 
+        //todo: this will have to be a network source or we move the logic to the data emitter
         struct DataEmitterImpl : public DataEmitter {
+            DataEmitterImpl(PartitionManagerPtr partitionManager, NesPartition nesPartition) : partitionManager(partitionManager), nesPartition(nesPartition) {}
             void emitWork(TupleBuffer&) override {}
+            void onVersionUpdate() override {
+                NES_DEBUG("Updating version for data emitter");
+                partitionManager->startNewVersion(nesPartition);
+            }
+            PartitionManagerPtr partitionManager;
+            NesPartition nesPartition;
         };
 
         auto nesPartition = NesPartition(0, 0, 0, 0);
         NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
 
-        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>()));
+        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>(partMgrRecv, nesPartition)));
 
         auto nextVersion = 1;
         partMgrRecv->addPendingVersion(nesPartition, nextVersion);

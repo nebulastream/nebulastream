@@ -255,7 +255,6 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
 
             receiverLocation = versionUpdate.nodeLocation;
             nesPartition = versionUpdate.partition;
-            //todo: update version now only when we actuelly started reconnecting to all new channels?
             versionNumber = versionUpdate.version;
 
             break;

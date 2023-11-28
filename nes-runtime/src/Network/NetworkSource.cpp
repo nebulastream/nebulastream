@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -155,6 +156,13 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Failure;
     ;
     switch (task.getType()) {
+        case Runtime::ReconfigurationType::UpdateVersion: {
+            workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
+            NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
+                      nesPartition.toString(),
+                      Runtime::NesThread::getId());
+            //there is not break here because the code for initialized is supposed to be executed after the old channel was released
+        }
         case Runtime::ReconfigurationType::Initialize: {
             // we need to check again because between the invocations of
             // NetworkSource::start() and NetworkSource::reconfigure() the query might have
@@ -219,6 +227,10 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
     NES::DataSource::postReconfigurationCallback(task);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
+        case Runtime::ReconfigurationType::UpdateVersion: {
+            NES_ASSERT(networkManager->startNewVersion(nesPartition), "Could not start new version");
+            break;
+        }
         case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
@@ -251,13 +263,18 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runti
 }
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
     // propagate EOS to the locally running QEPs that use the network source
-    //todo #4088: take care of reconfiguring the event channel to the new upstream sink in case of redeployment
     NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
     if (Runtime::QueryTerminationType::Graceful == terminationType) {
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
     } else {
         NES_WARNING("Ignoring forceful EoS on {}", nesPartition);
     }
+}
+
+void NetworkSource::onVersionUpdate() {
+    NES_DEBUG("Updating version for network source {}", nesPartition);
+    auto reconfMessage = Runtime::ReconfigurationMessage(-1, -1, Runtime::ReconfigurationType::UpdateVersion, Runtime::Reconfigurable::shared_from_this());
+    queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
 }
 
 OperatorVersionNumber NetworkSource::getInitialVersion() const {
