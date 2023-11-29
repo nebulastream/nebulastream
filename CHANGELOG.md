@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.264](https://github.com/nebulastream/nebulastream/tree/v0.5.264) (2023-11-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.263...v0.5.264)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove spatial to move to a separate module [\#4363](https://github.com/nebulastream/nebulastream/issues/4363)
+
 ## [v0.5.263](https://github.com/nebulastream/nebulastream/tree/v0.5.263) (2023-11-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.262...v0.5.263)
