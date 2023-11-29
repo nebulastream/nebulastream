@@ -21,11 +21,8 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Util/JNI/JNI.hpp>
-#include <Util/JNI/JNIUtils.hpp>
 #include <filesystem>
 #include <fstream>
-#include <jni.h>
 #include <utility>
 #if not(defined(__APPLE__))
 #include <experimental/source_location>
@@ -268,13 +265,12 @@ void* next(void* outputPtr, int index) {
     return element;
 }
 
-int32_t getLengthOfOutputList(void* outputPtr) {
+uint64_t getLengthOfOutputList(void*, void* outputPtr) {
     NES_ASSERT2_FMT(outputPtr != nullptr, "op handler context should not be null");
     auto output = static_cast<PyObject*>(outputPtr);
     if (PyList_Check(output)) {
         auto pyListSize = PyList_Size(output);
-        int32_t value = (int32_t) pyListSize;
-        return value;
+        return pyListSize;
     } else {
         return -1;
     }
@@ -294,9 +290,9 @@ void FlatMapPythonUDF::execute(ExecutionContext& ctx, Record& record) const {
     } else {
         // returns a list
         auto outputPojoPtr = FunctionCall<>("executeFlatMapUDF", executeFlatMapUDF, handler);
-        auto getLengthOfOutputPtr = FunctionCall<>("getLengthOfOutputList", getLengthOfOutputList, outputPojoPtr);
-        for (int32_t i = 0; i < getLengthOfOutputPtr; i++) {
-            auto element = FunctionCall("next", next, outputPojoPtr, Value<Int32>(i));
+        auto getLengthOfOutputPtr = FunctionCall("getLengthOfOutputList", getLengthOfOutputList, handler, outputPojoPtr);
+        for (Value<UInt64> i = 0_u64; i < getLengthOfOutputPtr; i = i + 1_u64) {
+            auto element = FunctionCall("next", next, outputPojoPtr, i);
             auto resultRecord = extractRecordFromObject(handler, element);
             // Trigger execution of next operator
             child->execute(ctx, resultRecord);
