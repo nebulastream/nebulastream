@@ -380,7 +380,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
                                                                                 5,
-                                                                                firstVersion);
+                                                                                0);
     auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
     queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
     //create network sink connected to coordinator
@@ -597,12 +597,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
     auto schema = Schema::create()->addField(createField("value", BasicType::UINT64));
     crd->getSourceCatalog()->addLogicalSource("seq", schema);
-    QueryId sharedQueryId = 800;
-    QueryId queryId = 900;
-    auto crdQueryPlan = QueryPlan::create();
-    crdQueryPlan->setQueryId(queryId);
-    crd->getQueryCatalogService()->createNewEntry("test_query", crdQueryPlan, Optimizer::PlacementStrategy::BottomUp);
-    crd->getQueryCatalogService()->mapSharedQueryPlanId(sharedQueryId, queryId);
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -610,6 +604,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     wrkConf1->numWorkerThreads.setValue(GetParam());
     wrkConf1->connectSinksAsync.setValue(true);
     wrkConf1->bufferSizeInBytes.setValue(tuplesPerBuffer * bytesPerTuple);
+    //wrkConf1->numberOfSlots.setValue(1);
 
     wrkConf1->physicalSourceTypes.add(lambdaSourceType);
 
@@ -633,121 +628,148 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     ASSERT_TRUE(retStart2);
     ASSERT_TRUE(waitForNodes(5, 3, topology));
 
+    wrk1->replaceParent(crd->getNesWorker()->getWorkerId(), wrk2->getWorkerId());
+
     //start query
+    //QueryId sharedQueryId = 800;
+    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        Optimizer::PlacementStrategy::BottomUp);
+    //QueryId queryId = 900;
+    //    auto crdQueryPlan = QueryPlan::create();
+    //    crdQueryPlan->setQueryId(queryId);
+    //    crd->getQueryCatalogService()->createNewEntry("test_query", crdQueryPlan, Optimizer::PlacementStrategy::BottomUp);
+    //    crd->getQueryCatalogService()->mapSharedQueryPlanId(sharedQueryId, queryId);
 
     //set operator ids
-    auto fileSinkCrdId = 91;
-    auto networkSrcCrdId = 92;
-    auto networkSinkWrk1Id = 11;
-    auto lambdaSourceId = 12;
-    auto networkSinkWrk2Id = 21;
-    auto networkSrcWrk2Id = 22;
+    //    auto fileSinkCrdId = 91;
+    //    auto networkSrcCrdId = 92;
+    //    auto networkSinkWrk1Id = 11;
+    //    auto lambdaSourceId = 12;
+    //    auto networkSinkWrk2Id = 21;
+    //    auto networkSrcWrk2Id = 22;
     auto networkSinkWrk3Id = 31;
     auto networkSrcWrk3Id = 32;
 
+    //todo: we do not need to start the query on worker one because the coordinator deploys that
     //start query on wrk1
-    auto subPlanIdWrk1 = 10;
-    auto queryPlan1 = QueryPlan::create(sharedQueryId, subPlanIdWrk1);
-    //create lambda source
-    auto lambdaSourceDescriptor = LambdaSourceDescriptor::create(schema,
-                                                                 lambdaSourceFunction,
-                                                                 totalBuffersToProduce,
-                                                                 gatheringValue,
-                                                                 GatheringMode::INTERVAL_MODE,
-                                                                 0,
-                                                                 0,
-                                                                 "seq",
-                                                                 "test_stream");
-    auto lambdaSourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(lambdaSourceDescriptor, lambdaSourceId);
-    queryPlan1->addRootOperator(lambdaSourceOperatorNode);
-    //create network sink
-    auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
-    auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
-    auto currentWrk1TargetPartition = networkSourceWrk2Partition;
-    Version firstVersion = 0;
-    auto networkSinkDescriptor1 = Network::NetworkSinkDescriptor::create(networkSourceWrk2Location,
-                                                                         networkSourceWrk2Partition,
-                                                                         waitTime,
-                                                                         retryTimes,
-                                                                         firstVersion);
-    auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
-    queryPlan1->appendOperatorAsNewRoot(networkSinkOperatorNode1);
-    queryPlan1->getSinkOperators().front()->inferSchema();
-    //register and start query on worker 1
-    auto success_register_wrk1 = wrk1->getNodeEngine()->registerQueryInNodeEngine(queryPlan1);
-    ASSERT_TRUE(success_register_wrk1);
-    auto success_start_wrk1 = wrk1->getNodeEngine()->startQuery(sharedQueryId);
-    ASSERT_TRUE(success_start_wrk1);
+    //    auto subPlanIdWrk1 = 10;
+    //    auto queryPlan1 = QueryPlan::create(sharedQueryId, subPlanIdWrk1);
+    //    //create lambda source
+    //    auto lambdaSourceDescriptor = LambdaSourceDescriptor::create(schema,
+    //                                                                 lambdaSourceFunction,
+    //                                                                 totalBuffersToProduce,
+    //                                                                 gatheringValue,
+    //                                                                 GatheringMode::INTERVAL_MODE,
+    //                                                                 0,
+    //                                                                 0,
+    //                                                                 "seq",
+    //                                                                 "test_stream");
+    //    auto lambdaSourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(lambdaSourceDescriptor, lambdaSourceId);
+    //    queryPlan1->addRootOperator(lambdaSourceOperatorNode);
+    //    //create network sink
+    //    auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
+    //    auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
+    //    auto currentWrk1TargetPartition = networkSourceWrk2Partition;
+    //    OperatorVersionNumber firstVersion = 0;
+    //    auto networkSinkDescriptor1 =
+    //        Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes, firstVersion);
+    //    auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
+    //    queryPlan1->appendOperatorAsNewRoot(networkSinkOperatorNode1);
+    //    queryPlan1->getSinkOperators().front()->inferSchema();
+    //    //register and start query on worker 1
+    //    auto success_register_wrk1 = wrk1->getNodeEngine()->registerQueryInNodeEngine(queryPlan1);
+    //    ASSERT_TRUE(success_register_wrk1);
+    //    auto success_start_wrk1 = wrk1->getNodeEngine()->startQuery(sharedQueryId);
+    //    ASSERT_TRUE(success_start_wrk1);
 
-    //start query on wrk2
-    auto subPlanIdWrk2 = 20;
-    auto queryPlan2 = QueryPlan::create(sharedQueryId, subPlanIdWrk2);
-    //create network source getting data from sink at wrk1
+    //todo: we do not need to start the query on worker two because the coordinator deploys that
+    //    //start query on wrk2
+    //    auto subPlanIdWrk2 = 20;
+    //    auto queryPlan2 = QueryPlan::create(sharedQueryId, subPlanIdWrk2);
+    //    //create network source getting data from sink at wrk1
+    //todo: we need this one
     auto sinkLocationWrk1 = NES::Network::NodeLocation(wrk1->getWorkerId(), "localhost", *wrk1DataPort);
-    auto networkSourceDescriptorWrk2 = Network::NetworkSourceDescriptor::create(schema,
-                                                                                networkSourceWrk2Partition,
-                                                                                sinkLocationWrk1,
-                                                                                std::chrono::milliseconds(1000),
-                                                                                5,
-                                                                                0);
-    auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
-    queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
-    //create network sink connected to coordinator
+    //    auto networkSourceDescriptorWrk2 = Network::NetworkSourceDescriptor::create(schema,
+    //                                                                                networkSourceWrk2Partition,
+    //                                                                                sinkLocationWrk1,
+    //                                                                                std::chrono::milliseconds(1000),
+    //                                                                                5, 0);
+    //    auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
+    //    queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
+    //    //create network sink connected to coordinator
+    //todo: the locations are not touched by the deployment
     auto networkSourceCrdLocation =
         NES::Network::NodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *crdWorkerDataPort);
-    auto networkSourceCrdPartition = NES::Network::NesPartition(sharedQueryId, networkSrcCrdId, 0, 0);
-    auto networkSinkDescriptorWrk2 = Network::NetworkSinkDescriptor::create(networkSourceCrdLocation,
-                                                                            networkSourceCrdPartition,
-                                                                            waitTime,
-                                                                            retryTimes,
-                                                                            firstVersion);
-    auto networkSinkOperatorNodeWrk2 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk2, networkSinkWrk2Id);
-    queryPlan2->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk2);
-    queryPlan2->getSinkOperators().front()->inferSchema();
-    //register and start query on worker 2
-    auto success_register_wrk2 = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan2);
-    ASSERT_TRUE(success_register_wrk2);
-    auto success_start_wrk2 = wrk2->getNodeEngine()->startQuery(sharedQueryId);
-    ASSERT_TRUE(success_start_wrk2);
+    //    auto networkSourceCrdPartition = NES::Network::NesPartition(sharedQueryId, networkSrcCrdId, 0, 0);
+    //    auto networkSinkDescriptorWrk2 =
+    //        Network::NetworkSinkDescriptor::create(networkSourceCrdLocation, networkSourceCrdPartition, waitTime, retryTimes, firstVersion);
+    //    auto networkSinkOperatorNodeWrk2 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk2, networkSinkWrk2Id);
+    //    queryPlan2->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk2);
+    //    queryPlan2->getSinkOperators().front()->inferSchema();
+    //    //register and start query on worker 2
+    //    auto success_register_wrk2 = wrk2->getNodeEngine()->registerQueryInNodeEngine(queryPlan2);
+    //    ASSERT_TRUE(success_register_wrk2);
+    //    auto success_start_wrk2 = wrk2->getNodeEngine()->startQuery(sharedQueryId);
+    //    ASSERT_TRUE(success_start_wrk2);
 
-    //deploy to coordinator
-    auto subPlanId = 90;
-    auto queryPlan = QueryPlan::create(sharedQueryId, subPlanId);
-    //create network source operator at coordinator
-    auto sinkLocation = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
-    auto networkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
-                                                                            networkSourceCrdPartition,
-                                                                            sinkLocation,
-                                                                            std::chrono::milliseconds(1000),
-                                                                            5,
-                                                                            0);
-    auto sourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSrcCrdId);
-    queryPlan->addRootOperator(sourceOperatorNode);
-    //create file sink at coordinator
-    auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, "CSV_FORMAT", "APPEND");
-    auto sinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, fileSinkCrdId);
-    queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
-    queryPlan->getSinkOperators().front()->inferSchema();
-    //deploy and start query at coordinator
-    auto success_register = crd->getNesWorker()->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
-    ASSERT_TRUE(success_register);
-    auto success_start = crd->getNesWorker()->getNodeEngine()->startQuery(sharedQueryId);
-    ASSERT_TRUE(success_start);
+    //todo: we do not need to start the query on worker at coordinator because the coordinator deploys that
+    //    //deploy to coordinator
+    //    auto subPlanId = 90;
+    //    auto queryPlan = QueryPlan::create(sharedQueryId, subPlanId);
+    //    //create network source operator at coordinator
+    //    auto sinkLocation = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
+    //    auto networkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
+    //                                                                            networkSourceCrdPartition,
+    //                                                                            sinkLocation,
+    //                                                                            std::chrono::milliseconds(1000),
+    //                                                                            5, 0);
+    //    auto sourceOperatorNode = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptor, networkSrcCrdId);
+    //    queryPlan->addRootOperator(sourceOperatorNode);
+    //    //create file sink at coordinator
+    //    auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, "CSV_FORMAT", "APPEND");
+    //    auto sinkOperatorNode = std::make_shared<SinkLogicalOperatorNode>(fileSinkDescriptor, fileSinkCrdId);
+    //    queryPlan->appendOperatorAsNewRoot(sinkOperatorNode);
+    //    queryPlan->getSinkOperators().front()->inferSchema();
+    //    //deploy and start query at coordinator
+    //    auto success_register = crd->getNesWorker()->getNodeEngine()->registerQueryInNodeEngine(queryPlan);
+    //    ASSERT_TRUE(success_register);
+    //    auto success_start = crd->getNesWorker()->getNodeEngine()->startQuery(sharedQueryId);
+    //    ASSERT_TRUE(success_start);
 
     std::vector<NesWorkerPtr> reconnectParents;
 
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalogService()));
+    SharedQueryId sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
+    ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
     //reconfiguration
     auto subPlanIdWrk3 = 30;
-    auto oldSubplanId = subPlanIdWrk2;
+    //auto oldSubplanId = subPlanIdWrk2;
+    ASSERT_EQ(wrk2->getNodeEngine()->getSubQueryIds(queryId).size(), 1);
+    auto oldSubplanId = wrk2->getNodeEngine()->getSubQueryIds(queryId).front();
+    //auto currentWrk1TargetPartition = networkSourceWrk2Partition;
+    auto wrk2Source = wrk2->getNodeEngine()->getExecutableQueryPlan(oldSubplanId)->getSources().front();
+    Network::NesPartition currentWrk1TargetPartition(queryId, wrk2Source->getOperatorId(), 0, 0);
+
+    ASSERT_EQ(crd->getNesWorker()->getNodeEngine()->getSubQueryIds(queryId).size(), 1);
+    auto coordinatorSubplanId = crd->getNesWorker()->getNodeEngine()->getSubQueryIds(queryId).front();
+    auto coordinatorSource =
+        crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
+    Network::NesPartition networkSourceCrdPartition(queryId, coordinatorSource->getOperatorId(), 0, 0);
+
+
+    crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
     while (actualReconnects < numberOfReconnectsToPerform) {
-        crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
+        //todo: this will crash because subplans do not exist
+        //crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
         oldSubplanId = subPlanIdWrk3;
         subPlanIdWrk3++;
 
         //wait for data to be written
         std::string compareStringBefore;
         std::ostringstream oss;
-        oss << "value:INTEGER(64 bits)" << std::endl;
+        //oss << "value:INTEGER(64 bits)" << std::endl;
+        oss << "seq$value:INTEGER(64 bits)" << std::endl;
         for (uint64_t i = 0; i < (numBuffersToProduceBeforeReconnect
                                   + (actualReconnects
                                      * (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect
@@ -774,7 +796,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
         std::string compareStringAfter;
         std::ostringstream ossAfter;
-        ossAfter << "value:INTEGER(64 bits)" << std::endl;
+        //ossAfter << "value:INTEGER(64 bits)" << std::endl;
+        ossAfter << "seq$value:INTEGER(64 bits)" << std::endl;
         for (uint64_t i = 0;
              i < (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering)
                  * tuplesPerBuffer * (actualReconnects + 1);
@@ -836,7 +859,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto success_start_wrk3 = wrk3->getNodeEngine()->startQuery(sharedQueryId);
         ASSERT_TRUE(success_start_wrk3);
 
-        //verify that the old partition get unregistered
+        //verify that the old partition gets unregistered
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(currentWrk1TargetPartition)
