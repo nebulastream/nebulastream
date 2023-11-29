@@ -12,6 +12,12 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <filesystem>
+#include <fstream>
+#include <Python.h>
+
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_
@@ -26,15 +32,30 @@ namespace NES::Runtime::Execution::Operators {
      * @param line_number line number where the error occurred: should be __LINE__
      * @param errorMessage error message that is shown
      */
-inline void pythonInterpreterErrorCheck(PyObject* pyObject, const char* func_name, int line_number, std::string errorMessage) {
-    if (pyObject == NULL) {
-        if (PyErr_Occurred()) {
-            PyErr_Print();
-            PyErr_Clear();
-        }
-        NES_THROW_RUNTIME_ERROR("[" << func_name << ": line " << line_number << "] " << errorMessage);
-    }
-}
+void pythonInterpreterErrorCheck(PyObject* pyObject, const char* func_name, int line_number, std::string errorMessage);
+
+void createBooleanPythonObject(void* state, bool value);
+void createStringPythonObject(void* state, TextValue* value);
+void createFloatPythonObject(void* state, float value);
+void createDoublePythonObject(void* state, double value);
+void createIntegerPythonObject(void* state, int32_t value);
+void createLongPythonObject(void* state, int64_t value);
+void createShortPythonObject(void* state, int16_t value);
+void createBytePythonObject(void* state, int8_t value);
+void createPythonEnvironment(void* state);
+void initPythonTupleSize(void* state, int size);
+void setPythonArgumentAtPosition(void* state, int position);
+template<typename T>
+T transformOutputType(void* outputPtr, int position, int tupleSize);
+bool transformBooleanType(void* outputPtr, int position, int tupleSize);
+TextValue* transformStringType(void* outputPtr, int position, int tupleSize);
+float transformFloatType(void* outputPtr, int position, int tupleSize);
+double transformDoubleType(void* outputPtr, int position, int tupleSize);
+int32_t transformIntegerType(void* outputPtr, int position, int tupleSize);
+int64_t transformLongType(void* outputPtr, int position, int tupleSize);
+int16_t transformShortType(void* outputPtr, int position, int tupleSize);
+int8_t transformByteType(void* outputPtr, int position, int tupleSize);
+void finalizePython(void* state);
 };// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_
