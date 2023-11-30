@@ -21,7 +21,7 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
-                                             OperatorVersionNumber initialVersion,
+                                             Version initialVersion,
                                              uint64_t numberOfOrigins)
     : SinkDescriptor(numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
       waitTime(waitTime), retryTimes(retryTimes), initialVersion(initialVersion) {}
@@ -30,7 +30,7 @@ SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
-                                                OperatorVersionNumber initialVersion,
+                                                Version initialVersion,
                                                 uint64_t numberOfOrigins) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
                                                                          nesPartition,

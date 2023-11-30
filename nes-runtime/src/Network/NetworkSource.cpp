@@ -36,7 +36,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              std::chrono::milliseconds waitTime,
                              uint8_t retryTimes,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                             OperatorVersionNumber initialVersion,
+                             Version initialVersion,
                              const std::string& physicalSourceName)
 
     : DataSource(std::move(schema),
@@ -49,7 +49,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  physicalSourceName,
                  std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)),
-      waitTime(waitTime), retryTimes(retryTimes), initialVersion(initialVersion) {
+      waitTime(waitTime), retryTimes(retryTimes), version(initialVersion) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
 }
 
@@ -228,7 +228,6 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::UpdateVersion: {
-            NES_ASSERT(networkManager->startNewVersion(nesPartition), "Could not start new version");
             break;
         }
         case Runtime::ReconfigurationType::FailEndOfStream: {
@@ -271,15 +270,16 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
-void NetworkSource::onVersionUpdate() {
+void NetworkSource::onVersionUpdate(Version newVersion, Network::NodeLocation newSenderLocation) {
     NES_DEBUG("Updating version for network source {}", nesPartition);
-    sinkLocation = networkManager->getPendingVersionSenderLocation(nesPartition);
+    version = newVersion;
+    sinkLocation = newSenderLocation;
     auto reconfMessage = Runtime::ReconfigurationMessage(-1, -1, Runtime::ReconfigurationType::UpdateVersion, Runtime::Reconfigurable::shared_from_this());
     queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
 }
 
-OperatorVersionNumber NetworkSource::getInitialVersion() const {
-    return initialVersion;
+Version NetworkSource::getVersion() const {
+    return version;
 }
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {

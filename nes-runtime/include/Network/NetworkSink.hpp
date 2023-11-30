@@ -50,7 +50,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins = 0,
-                         OperatorVersionNumber versionNumber = 0);
+                         Version versionNumber = 0);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -129,8 +129,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newVersion The new version number assigned to this sink
      */
     void configureNewReceiverAndPartition(NesPartition newPartition,
-                                          const NodeLocation& newReceiverLocation,
-                                          OperatorVersionNumber newVersion);
+                                          const NodeLocation& newReceiverLocation, Version newVersion);
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
@@ -147,7 +146,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     void clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                              const NodeLocation& newNodeLocation,
                                              NesPartition newNesPartition,
-                                             OperatorVersionNumber newVersion);
+                                             Version newVersion);
 
     /**
      * @brief write all data from the reconnect buffer to the currently active network channel
@@ -172,7 +171,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    OperatorVersionNumber versionNumber;
+    Version versionNumber;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

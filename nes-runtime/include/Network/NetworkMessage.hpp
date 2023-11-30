@@ -124,15 +124,15 @@ class ClientAnnounceMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::ClientAnnouncement;
 
-    explicit ClientAnnounceMessage(ChannelId channelId, ChannelType mode, OperatorVersionNumber versionNumber = 0) : ExchangeMessage(channelId), mode(mode), versionNumber(versionNumber) {}
+    explicit ClientAnnounceMessage(ChannelId channelId, ChannelType mode, Version versionNumber = 0) : ExchangeMessage(channelId), mode(mode), versionNumber(versionNumber) {}
 
-    [[nodiscard]] OperatorVersionNumber getVersionNumber() const { return versionNumber; }
+    [[nodiscard]] Version getVersionNumber() const { return versionNumber; }
 
     ChannelType getMode() const { return mode; }
 
   private:
     ChannelType mode;
-    OperatorVersionNumber versionNumber;
+    Version versionNumber;
 };
 
 /**
