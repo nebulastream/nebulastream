@@ -18,13 +18,11 @@
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <OperatorHandlerTracer.hpp>
 #include <string>
+#include <Compiler/Util/ExecutablePath.hpp>
 #include <vector>
 
 class UnikernelExport {
-    CompilerInvoker ci{{PATH_TO_BINARY_DIR "/nes-unikernel-export/include",
-                        PATH_TO_BINARY_DIR "/nes-unikernel/include",
-                        PATH_TO_BINARY_DIR "/nes-common/include",
-                        PATH_TO_BINARY_DIR "/nes-runtime/include"}};
+    CompilerInvoker ci{NES::Compiler::ExecutablePath::loadRuntimePathConfig()};
 
   public:
     void exportPipelineStageToObjectFile(std::string outputPath,
