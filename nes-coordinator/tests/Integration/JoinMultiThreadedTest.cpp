@@ -51,10 +51,8 @@ class JoinMultiThreadedTest
         const auto joinStrategy = std::get<0>(JoinMultiThreadedTest::GetParam());
         const auto windowingStrategy = std::get<1>(JoinMultiThreadedTest::GetParam());
         const uint64_t numberOfWorkerThreads = std::get<2>(JoinMultiThreadedTest::GetParam());
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpNone,
-                                                                         numberOfWorkerThreads,
-                                                                         joinStrategy,
-                                                                         windowingStrategy);
+        executionEngine =
+            std::make_shared<Testing::TestExecutionEngine>(dumpNone, numberOfWorkerThreads, joinStrategy, windowingStrategy);
     }
 
     /* Will be called after a test is executed. */

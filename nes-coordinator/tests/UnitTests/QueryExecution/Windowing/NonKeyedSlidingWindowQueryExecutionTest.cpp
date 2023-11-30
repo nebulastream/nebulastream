@@ -41,11 +41,10 @@ class NonKeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
         auto windowStrategy = this->GetParam();
-        executionEngine =
-            std::make_shared<Testing::TestExecutionEngine>(dumpMode,
-                                                           1,
-                                                           QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                           windowStrategy);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode,
+                                                                         1,
+                                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+                                                                         windowStrategy);
     }
 
     /* Will be called before a test is executed. */
