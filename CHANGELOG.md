@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.266](https://github.com/nebulastream/nebulastream/tree/v0.5.266) (2023-11-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.265...v0.5.266)
+
+**Implemented enhancements:**
+
+- Remove unnecessary parameterization for query compilers [\#4302](https://github.com/nebulastream/nebulastream/issues/4302)
+
 ## [v0.5.265](https://github.com/nebulastream/nebulastream/tree/v0.5.265) (2023-11-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.264...v0.5.265)
