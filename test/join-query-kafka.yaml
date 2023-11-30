@@ -1,0 +1,58 @@
+query: |
+  Query::from("input1").joinWith(Query::from("input2"))
+                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .joinWith(Query::from("input3"))
+                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .sink(NullOutputSinkDescriptor::create());
+topology:
+  sink:
+    type: kafka
+    broker: "127.0.0.1"
+    topic: "crazy"
+  workers:
+    - node:
+        ip: 127.0.0.1
+        port: 8080
+        resources: 90
+      links: [ sink ]
+    - node:
+        resources: 1
+        ip: "127.0.0.1"
+        port: 8083
+      sources:
+        - name: "input1"
+          schema:
+            fields:
+              - name: id
+                type: INT64
+              - name: timestamp
+                type: INT64
+      links: [ 2 ]
+    - node:
+        ip: "127.0.0.1"
+        port: 8081
+        resources: 1
+      sources:
+        - name: "input2"
+          schema:
+            fields:
+              - name: id
+                type: INT64
+              - name: timestamp
+                type: INT64
+      links: [ 2 ]
+    - node:
+        ip: "127.0.0.1"
+        port: 8084
+        resources: 1
+      sources:
+        - name: "input3"
+          schema:
+            fields:
+              - name: id
+                type: INT64
+              - name: timestamp
+                type: INT64
+      links: [ 2 ]
