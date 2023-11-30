@@ -758,6 +758,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     Network::NesPartition networkSourceCrdPartition(queryId, coordinatorSource->getOperatorId(), 0, 0);
 
 
+    auto oldWorker = wrk2;
     crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
     while (actualReconnects < numberOfReconnectsToPerform) {
         //todo: this will crash because subplans do not exist
@@ -874,6 +875,15 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
                   Network::PartitionRegistrationStatus::Registered);
         currentWrk1TargetPartition = networkSourceWrk3Partition;
+
+        //verify that query has been undeployed from old parent
+        while (oldWorker->getNodeEngine()->getQueryStatus(queryId) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+            NES_DEBUG("Query has not yet stopped on worker {}", oldWorker->getWorkerId());
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(oldWorker->getNodeEngine()->getQueryStatus(queryId), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
