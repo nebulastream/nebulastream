@@ -201,6 +201,4 @@ bool NetworkManager::registerSubpartitionEventConsumer(const NodeLocation& nodeL
 }
 
 bool NetworkManager::startNewVersion(NesPartition partition) { return partitionManager->startNewVersion(partition); }
-
-NodeLocation NetworkManager::getPendingVersionSenderLocation(NesPartition partition) { return partitionManager->getPendingVersionSenderLocation(partition); }
 }// namespace NES::Network

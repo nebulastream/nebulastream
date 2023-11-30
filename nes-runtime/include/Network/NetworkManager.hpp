@@ -208,13 +208,6 @@ class NetworkManager {
      */
     bool startNewVersion(NesPartition partition);
 
-    /**
-     * @brief get the node location of the new sender after the next version change. Will throw an error if no pending version exists
-     * @param partition the partition for which to query the pending sender
-     * @return the node location of the sink that will be sending to this partition when the new version gets started
-     */
-    NodeLocation getPendingVersionSenderLocation(NesPartition partition);
-
   private:
     NodeLocation nodeLocation;
     ZmqServerPtr server;
