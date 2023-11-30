@@ -40,8 +40,7 @@ class KeyedTumblingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -71,7 +70,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(10);
 }
 
-TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
+TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -109,7 +108,7 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjection) {
+TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjection) {
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -157,7 +156,7 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
+TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -208,10 +207,3 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-
-INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
-                        KeyedTumblingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<KeyedTumblingWindowQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });

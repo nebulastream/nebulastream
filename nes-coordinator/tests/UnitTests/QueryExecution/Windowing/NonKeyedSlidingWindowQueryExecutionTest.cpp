@@ -42,8 +42,7 @@ class NonKeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
         Testing::BaseUnitTest::SetUp();
         auto windowStrategy = this->GetParam();
         executionEngine =
-            std::make_shared<Testing::TestExecutionEngine>(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
-                                                           dumpMode,
+            std::make_shared<Testing::TestExecutionEngine>(dumpMode,
                                                            1,
                                                            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
                                                            windowStrategy);

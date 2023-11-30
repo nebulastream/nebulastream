@@ -34,8 +34,7 @@ class UnionQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
 
         // Setup default parameters.
         defaultSchema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
@@ -91,7 +90,7 @@ class UnionQueryExecutionTest : public Testing::BaseUnitTest,
     static constexpr uint64_t defaultTimeoutInMilliseconds = 5000;
 };
 
-TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnUnionResult) {
+TEST_F(UnionQueryExecutionTest, unionOperatorWithFilterOnUnionResult) {
     // Setup test parameters.
     constexpr uint64_t numInputRecords = 10;
     constexpr uint64_t numResultRecords = 8;
@@ -120,7 +119,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnUnionResult) {
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
-TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
+TEST_F(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
     // Setup test parameters.
     constexpr uint64_t numInputRecords = 10;
     constexpr uint64_t numResultRecords = 8;
@@ -148,7 +147,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithFilterOnSources) {
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
-TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
+TEST_F(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
     // Setup test parameters.
     constexpr uint64_t numInputRecords = 10;
     constexpr uint64_t numResultRecords = 20;
@@ -174,7 +173,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutExecution) {
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
-TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualProject) {
+TEST_F(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualProject) {
     // Setup test parameters.
     constexpr uint64_t numInputRecords = 10;
     constexpr uint64_t numResultRecords = 20;
@@ -206,7 +205,7 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutDifferentSchemasAndManualPro
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
 
-TEST_P(UnionQueryExecutionTest, unionOperatorWithoutResults) {
+TEST_F(UnionQueryExecutionTest, unionOperatorWithoutResults) {
     // Setup test parameters.
     constexpr uint64_t numInputRecords = 10;
     constexpr uint64_t numResultRecords = 0;
@@ -230,10 +229,3 @@ TEST_P(UnionQueryExecutionTest, unionOperatorWithoutResults) {
     EXPECT_EQ(resultRecords.size(), numResultRecords);
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
-
-INSTANTIATE_TEST_CASE_P(testFilterQueries,
-                        UnionQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<UnionQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });
