@@ -1,9 +1,9 @@
 FROM debian:sid-slim as Builder
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y libboost-all-dev libdw-dev p7zip-full cmake git wget libzstd-dev ninja-build
-RUN wget https://github.com/nebulastream/nebulastream-dependencies/releases/download/vls-boot_iostream2/nes-dependencies-vls-boot_iostream2-x64-linux-ubuntu-22.04-nes.7z && \
-                                                           /usr/lib/p7zip/7z x nes-dependencies-vls-boot_iostream2-x64-linux-ubuntu-22.04-nes.7z && \
-                                                          rm nes-dependencies-vls-boot_iostream2-x64-linux-ubuntu-22.04-nes.7z
+RUN apt-get update && apt-get install -y libstdc++-13-dev libdw-dev p7zip-full cmake git wget libzstd-dev ninja-build
+RUN wget https://github.com/nebulastream/nebulastream-dependencies/releases/download/vls-mt-unikernel/nes-dependencies-vls-mt-unikernel-x64-linux-ubuntu-22.04-nes.7z && \
+                                                           /usr/lib/p7zip/7z x nes-dependencies-vls-mt-unikernel-x64-linux-ubuntu-22.04-nes.7z && \
+                                                          rm nes-dependencies-vls-mt-unikernel-x64-linux-ubuntu-22.04-nes.7z
 
 RUN wget https://github.com/nebulastream/clang-binaries/releases/download/vls-llvm-rtti/nes-clang-16-ubuntu-22.04-X64.7z && \
                                                            /usr/lib/p7zip/7z x nes-clang-16-ubuntu-22.04-X64.7z && \
@@ -18,8 +18,9 @@ RUN cd nebulastream && mkdir build && cd build && cmake .. -GNinja -DNES_ENABLE_
                                                            -DClang_DIR=/clang/lib/cmake/clang \
                                                            -DMLIR_DIR=/clang/lib/cmake/mlir \
                                                            -DLLVM_DIR=/clang/lib/cmake/llvm \
+                                                           -DNES_USE_UNIKERNEL=ON \
                                                            -DNES_SELF_HOSTING=OFF \
-                                                           -DCMAKE_TOOLCHAIN_FILE=/nes-dependencies-vls-boot_iostream2-x64-linux-nes/scripts/buildsystems/vcpkg.cmake
+                                                           -DCMAKE_TOOLCHAIN_FILE=/nes-dependencies-vls-mt-unikernel-x64-linux-nes/scripts/buildsystems/vcpkg.cmake
 
 RUN cd nebulastream/build && cmake --build . --target unikernel-source -j$(nproc)
 
