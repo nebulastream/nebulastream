@@ -40,8 +40,7 @@ class NonKeyedTumblingWindowQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -70,7 +69,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(10);
 }
 
-TEST_P(NonKeyedTumblingWindowQueryExecutionTest, testTumblingWindow) {
+TEST_F(NonKeyedTumblingWindowQueryExecutionTest, testTumblingWindow) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
@@ -103,7 +102,7 @@ TEST_P(NonKeyedTumblingWindowQueryExecutionTest, testTumblingWindow) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(NonKeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProjection) {
+TEST_F(NonKeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProjection) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
@@ -139,10 +138,3 @@ TEST_P(NonKeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProje
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-
-INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
-                        NonKeyedTumblingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<NonKeyedTumblingWindowQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });

@@ -43,8 +43,7 @@ class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
         sourceSchema = Schema::create()->addField("test$ts", BasicType::UINT64)->addField("test$value", BasicType::INT64);
     }
 
@@ -84,7 +83,7 @@ class WindowAggregationFunctionTest : public Testing::BaseUnitTest,
     }
 };
 
-TEST_P(WindowAggregationFunctionTest, testSumAggregation) {
+TEST_F(WindowAggregationFunctionTest, testSumAggregation) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -115,7 +114,7 @@ TEST_P(WindowAggregationFunctionTest, testSumAggregation) {
     EXPECT_EQ(results[1].value, 4950UL);
 }
 
-TEST_P(WindowAggregationFunctionTest, testAvgAggregation) {
+TEST_F(WindowAggregationFunctionTest, testAvgAggregation) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -146,7 +145,7 @@ TEST_P(WindowAggregationFunctionTest, testAvgAggregation) {
     EXPECT_EQ(results[1].value, 49UL);
 }
 
-TEST_P(WindowAggregationFunctionTest, testMinAggregation) {
+TEST_F(WindowAggregationFunctionTest, testMinAggregation) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -177,7 +176,7 @@ TEST_P(WindowAggregationFunctionTest, testMinAggregation) {
     EXPECT_EQ(results[1].value, 0UL);
 }
 
-TEST_P(WindowAggregationFunctionTest, testMaxAggregation) {
+TEST_F(WindowAggregationFunctionTest, testMaxAggregation) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -208,7 +207,7 @@ TEST_P(WindowAggregationFunctionTest, testMaxAggregation) {
     EXPECT_EQ(results[1].value, 99UL);
 }
 
-TEST_P(WindowAggregationFunctionTest, testMultiAggregationFunctions) {
+TEST_F(WindowAggregationFunctionTest, testMultiAggregationFunctions) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -248,10 +247,3 @@ TEST_P(WindowAggregationFunctionTest, testMultiAggregationFunctions) {
     EXPECT_EQ(results[0].max, 99UL);
     EXPECT_EQ(results[0].avg, 49UL);
 }
-
-INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
-                        WindowAggregationFunctionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<WindowAggregationFunctionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });

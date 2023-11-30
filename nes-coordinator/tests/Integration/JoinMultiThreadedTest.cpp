@@ -33,7 +33,6 @@ class JoinMultiThreadedTest
           std::tuple<QueryCompilation::StreamJoinStrategy, QueryCompilation::WindowingStrategy, uint64_t>> {
   public:
     const uint64_t numTuplesPerBuffer = 2;
-    static constexpr auto queryCompiler = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     static constexpr auto dumpNone = QueryCompilation::DumpMode::NONE;
     static constexpr auto waitTillStoppingQuery = std::chrono::milliseconds(100);
 
@@ -52,8 +51,7 @@ class JoinMultiThreadedTest
         const auto joinStrategy = std::get<0>(JoinMultiThreadedTest::GetParam());
         const auto windowingStrategy = std::get<1>(JoinMultiThreadedTest::GetParam());
         const uint64_t numberOfWorkerThreads = std::get<2>(JoinMultiThreadedTest::GetParam());
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler,
-                                                                         dumpNone,
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpNone,
                                                                          numberOfWorkerThreads,
                                                                          joinStrategy,
                                                                          windowingStrategy);

@@ -73,7 +73,6 @@ constexpr auto DEFAULT_NO_BUFFERS_IN_SOURCE_BM_PER_THREAD = 512;
 class TestExecutionEngine {
   public:
     explicit TestExecutionEngine(
-        const QueryCompilation::QueryCompilerType& compiler,
         const QueryCompilation::DumpMode& dumpMode = QueryCompilation::DumpMode::NONE,
         const uint64_t numWorkerThreads = 1,
         const QueryCompilation::StreamJoinStrategy& joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
