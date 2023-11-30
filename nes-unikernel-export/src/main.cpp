@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     }
 
     auto options = cliResult.value();
-    YamlExport yamlExport;
+    YamlExport yamlExport(options.useKafka() ? std::make_optional<>(options.getKafkaConfiguration()) : std::nullopt);
 
     auto [topology, sourcesCatalog, physicalSources] = options.getTopologyAndSources();
     NESProvider nesProvider(physicalSources, topology, sourcesCatalog);
