@@ -43,10 +43,8 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
         Testing::BaseUnitTest::SetUp();
         const auto joinStrategy = std::get<0>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
         const auto windowingStrategy = std::get<1>(NES::Runtime::Execution::StreamJoinQueryExecutionTest::GetParam());
-        const auto queryCompiler = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
         const auto numWorkerThreads = 1;
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler,
-                                                                         queryCompilerDumpMode,
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompilerDumpMode,
                                                                          numWorkerThreads,
                                                                          joinStrategy,
                                                                          windowingStrategy);

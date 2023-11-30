@@ -31,7 +31,6 @@ class MultiThreadedTest : public Testing::BaseIntegrationTest,
                           public ::testing::WithParamInterface<uint64_t> {
   public:
     const uint64_t numTuplesPerBuffer = 1;
-    static constexpr auto queryCompiler = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     static constexpr auto dumpNone = QueryCompilation::DumpMode::NONE;
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
@@ -47,7 +46,7 @@ class MultiThreadedTest : public Testing::BaseIntegrationTest,
 
         // Creating the execution engine
         const uint64_t numberOfWorkerThreads = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpNone, numberOfWorkerThreads);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpNone, numberOfWorkerThreads);
     }
 
     /* Will be called after a test is executed. */

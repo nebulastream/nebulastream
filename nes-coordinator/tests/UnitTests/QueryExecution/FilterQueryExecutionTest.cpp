@@ -39,8 +39,7 @@ class FilterQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -64,7 +63,7 @@ class FilterQueryExecutionTest : public Testing::BaseUnitTest,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-TEST_P(FilterQueryExecutionTest, filterQueryLessThan) {
+TEST_F(FilterQueryExecutionTest, filterQueryLessThan) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
@@ -89,7 +88,7 @@ TEST_P(FilterQueryExecutionTest, filterQueryLessThan) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
+TEST_F(FilterQueryExecutionTest, filterQueryEquals) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
@@ -113,10 +112,3 @@ TEST_P(FilterQueryExecutionTest, filterQueryEquals) {
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-
-INSTANTIATE_TEST_CASE_P(testFilterQueries,
-                        FilterQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<FilterQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });

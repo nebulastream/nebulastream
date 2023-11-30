@@ -38,8 +38,7 @@ class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -77,7 +76,7 @@ class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
     std::shared_ptr<TestUtils::TestSinkDescriptor> testSinkDescriptor;
 };
 
-TEST_P(DemoCityQueryExecutionTest, demoQueryWithUnions) {
+TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==---------------------------------------==//
     //==-------- SETUP TEST PARAMETERS --------==//
     //==---------------------------------------==//
@@ -181,10 +180,3 @@ TEST_P(DemoCityQueryExecutionTest, demoQueryWithUnions) {
 
     ASSERT_TRUE(executionEngine->stopQuery(queryPlan));
 }
-
-INSTANTIATE_TEST_CASE_P(testFilterQueries,
-                        DemoCityQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<DemoCityQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });

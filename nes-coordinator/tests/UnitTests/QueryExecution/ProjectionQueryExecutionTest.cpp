@@ -38,8 +38,7 @@ class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -65,7 +64,7 @@ class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-TEST_P(ProjectionQueryExecutionTest, projectField) {
+TEST_F(ProjectionQueryExecutionTest, projectField) {
     auto schema = Schema::create()
                       ->addField("test$id", BasicType::INT64)
                       ->addField("test$one", BasicType::INT64)
@@ -93,7 +92,7 @@ TEST_P(ProjectionQueryExecutionTest, projectField) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(ProjectionQueryExecutionTest, projectTwoFields) {
+TEST_F(ProjectionQueryExecutionTest, projectTwoFields) {
     auto schema = Schema::create()
                       ->addField("test$id", BasicType::INT64)
                       ->addField("test$one", BasicType::INT64)
@@ -122,7 +121,7 @@ TEST_P(ProjectionQueryExecutionTest, projectTwoFields) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_P(ProjectionQueryExecutionTest, projectNonExistingFields) {
+TEST_F(ProjectionQueryExecutionTest, projectNonExistingFields) {
     auto schema = Schema::create()
                       ->addField("test$id", BasicType::INT64)
                       ->addField("test$one", BasicType::INT64)
@@ -134,10 +133,3 @@ TEST_P(ProjectionQueryExecutionTest, projectNonExistingFields) {
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("x")).sink(testSinkDescriptor);
     ASSERT_ANY_THROW(executionEngine->submitQuery(query.getQueryPlan()));
 }
-
-INSTANTIATE_TEST_CASE_P(testProjectionQueries,
-                        ProjectionQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<ProjectionQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });

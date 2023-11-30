@@ -38,8 +38,7 @@ class MergeQueryExecutionTest : public Testing::BaseUnitTest,
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -68,7 +67,7 @@ class MergeQueryExecutionTest : public Testing::BaseUnitTest,
 // P1 = Source1 -> filter1
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
-TEST_P(MergeQueryExecutionTest, mergeQuery) {
+TEST_F(MergeQueryExecutionTest, mergeQuery) {
     auto schema = Schema::create()
                       ->addField("test$id", BasicType::INT64)
                       ->addField("test$one", BasicType::INT64)
@@ -108,10 +107,3 @@ TEST_P(MergeQueryExecutionTest, mergeQuery) {
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-
-INSTANTIATE_TEST_CASE_P(testMergeQueries,
-                        MergeQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<MergeQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });

@@ -18,15 +18,14 @@
 
 namespace NES::Testing {
 
-TestExecutionEngine::TestExecutionEngine(const QueryCompilation::QueryCompilerType& compiler,
-                                         const QueryCompilation::DumpMode& dumpMode,
+TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpMode,
                                          const uint64_t numWorkerThreads,
                                          const QueryCompilation::StreamJoinStrategy& joinStrategy,
                                          const QueryCompilation::WindowingStrategy& windowingStrategy) {
     auto workerConfiguration = WorkerConfiguration::create();
 
     workerConfiguration->queryCompiler.joinStrategy = joinStrategy;
-    workerConfiguration->queryCompiler.queryCompilerType = compiler;
+    workerConfiguration->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     workerConfiguration->queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
     workerConfiguration->queryCompiler.queryCompilerDumpMode = dumpMode;
     workerConfiguration->queryCompiler.windowingStrategy = windowingStrategy;
