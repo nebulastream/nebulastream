@@ -44,4 +44,4 @@ class JITCompiler {
                      const DumpHelper& dumpHelper);
 };
 }// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
+#define NES_COORDINATOR_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 namespace NES {
 namespace RequestProcessor::Experimental {
@@ -38,4 +38,4 @@ class AccessNonLockedResourceException : public RequestExecutionException {
 };
 }// namespace Exceptions
 }// namespace NES
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_EXCEPTIONS_ACCESSNONLOCKEDRESOURCEEXCEPTION_HPP_

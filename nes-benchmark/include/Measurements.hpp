@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MEASUREMENTS_HPP
-#define NES_MEASUREMENTS_HPP
+#ifndef NES_BENCHMARK_INCLUDE_MEASUREMENTS_HPP_
+#define NES_BENCHMARK_INCLUDE_MEASUREMENTS_HPP_
 
 #include <cstdint>
 #include <map>
@@ -139,4 +139,4 @@ class Measurements {
     std::map<size_t, size_t> allAvailFixedBufferSum;
 };
 }// namespace NES::Benchmark::Measurements
-#endif//NES_MEASUREMENTS_HPP
+#endif  // NES_BENCHMARK_INCLUDE_MEASUREMENTS_HPP_

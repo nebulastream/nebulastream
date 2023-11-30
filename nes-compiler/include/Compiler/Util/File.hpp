@@ -67,4 +67,4 @@ class File {
 
 }// namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_FILE_HPP_
+#endif  // NES_COMPILER_INCLUDE_COMPILER_UTIL_FILE_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
-#define NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
 
 #include <Util/yaml/Yaml.hpp>
 #include <map>
@@ -46,4 +46,4 @@ class GeoLocationFactory {
     static NES::Spatial::DataTypes::Experimental::GeoLocation createFromYaml(Yaml::Node& yamlConfig);
 };
 }// namespace NES::Configurations::Spatial::Index::Experimental
-#endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_

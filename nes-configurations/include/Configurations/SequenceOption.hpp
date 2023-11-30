@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
-#define NES_COMMON_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
 
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ConfigurationException.hpp>
@@ -142,4 +142,4 @@ std::string SequenceOption<T>::toString() {
 
 }// namespace NES::Configurations
 
-#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_

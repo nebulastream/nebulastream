@@ -32,4 +32,4 @@ class ConstBooleanOperation : public Operation {
 };
 
 }// namespace NES::Nautilus::IR::Operations
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTBOOLEANOPERATION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTBOOLEANOPERATION_HPP_

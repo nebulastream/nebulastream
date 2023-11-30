@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef TOPOLOGY_PREDICTION_EDGE_HPP_
-#define TOPOLOGY_PREDICTION_EDGE_HPP_
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_EDGE_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_EDGE_HPP_
 #include <cstdint>
 #include <string>
 
@@ -42,4 +42,4 @@ class Edge {
 };
 }// namespace Experimental::TopologyPrediction
 }// namespace NES
-#endif//TOPOLOGY_PREDICTION_EDGE_HPP_
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_EDGE_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
-#define NES_CORE_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
+#define NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
@@ -257,4 +257,4 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_

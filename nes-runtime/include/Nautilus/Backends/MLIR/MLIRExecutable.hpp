@@ -34,4 +34,4 @@ class MLIRExecutable : public Executable {
     std::unique_ptr<mlir::ExecutionEngine> engine;
 };
 }// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_

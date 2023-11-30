@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_
 
 #include <Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
@@ -30,4 +30,4 @@ class PhysicalSourceNotFoundException : public RequestExecutionException {
     explicit PhysicalSourceNotFoundException(const std::string& message);
 };
 }// namespace NES::Exceptions
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_PHYSICALSOURCENOTFOUNDEXCEPTION_HPP_

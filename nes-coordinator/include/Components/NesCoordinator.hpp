@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
-#define NES_CORE_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
+#define NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -264,4 +264,4 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_

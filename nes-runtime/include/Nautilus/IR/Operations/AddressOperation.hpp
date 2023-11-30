@@ -47,4 +47,4 @@ class AddressOperation : public Operation {
 };
 }// namespace NES::Nautilus::IR::Operations
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_

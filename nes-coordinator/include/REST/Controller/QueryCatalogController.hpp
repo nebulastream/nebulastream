@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
-#define NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
+#define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
@@ -202,4 +202,4 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
 #include OATPP_CODEGEN_END(ApiController)
 
-#endif// NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_

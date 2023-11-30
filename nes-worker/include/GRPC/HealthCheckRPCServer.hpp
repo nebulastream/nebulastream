@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_
-#define NES_CORE_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_
+#ifndef NES_WORKER_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_
+#define NES_WORKER_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_
 #include <map>
 #include <mutex>
 
@@ -63,4 +63,4 @@ class HealthCheckRPCServer : public grpc::health::v1::Health::Service {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_
+#endif  // NES_WORKER_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_

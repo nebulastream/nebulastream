@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_
-#define NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
+#define NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
@@ -184,4 +184,4 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
 };
 }// namespace NES::Network
-#endif// NES_CORE_INCLUDE_NETWORK_NETWORKSINK_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_EXTERNALPROVIDER_HPP
-#define NES_EXTERNALPROVIDER_HPP
+#ifndef NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_
+#define NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_
 
 #include <DataProvider/DataProvider.hpp>
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
@@ -134,4 +134,4 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
 };
 }// namespace NES::Benchmark::DataProvision
 
-#endif//NES_EXTERNALPROVIDER_HPP
+#endif  // NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_

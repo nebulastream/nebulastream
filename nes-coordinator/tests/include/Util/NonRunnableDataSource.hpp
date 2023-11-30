@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
-#define NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
 
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
@@ -59,4 +59,4 @@ createNonRunnableSource(const SchemaPtr& schema,
                         NES::Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 }// namespace NES::Testing
 
-#endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_

@@ -14,9 +14,9 @@
 add_subdirectory(src)
 include(GNUInstallDirs)
 
-# Add nes-core library
-get_source(nes-core NES_CORE_SOURCE_FILES)
-add_library(nes-coordinator SHARED ${NES_CORE_SOURCE_FILES})
+# Add nes-coordinator library
+get_source(nes-coordinator NES_COORDINATOR_SOURCE_FILES)
+add_library(nes-coordinator SHARED ${NES_COORDINATOR_SOURCE_FILES})
 
 target_include_directories(nes-coordinator PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

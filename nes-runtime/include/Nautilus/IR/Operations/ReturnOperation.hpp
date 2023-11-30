@@ -34,4 +34,4 @@ class ReturnOperation : public Operation {
     OperationWPtr returnValue;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_

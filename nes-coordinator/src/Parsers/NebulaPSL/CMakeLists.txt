@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-add_source_files(nes-core
+add_source_files(nes-coordinator
         NesCEPQueryPlanCreator.cpp
         NebulaPSLOperatorNode.cpp
         NebulaPSLPattern.cpp

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_TOPOLOGY_LINKPROPERTY_HPP_
-#define NES_CORE_INCLUDE_TOPOLOGY_LINKPROPERTY_HPP_
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_LINKPROPERTY_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_LINKPROPERTY_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -38,4 +38,4 @@ class LinkProperty {
 
 using LinkPropertyPtr = std::shared_ptr<LinkProperty>;
 
-#endif// NES_CORE_INCLUDE_TOPOLOGY_LINKPROPERTY_HPP_
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_LINKPROPERTY_HPP_

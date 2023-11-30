@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
-#define NES_CORE_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Sources/DataSource.hpp>
@@ -82,4 +82,4 @@ class MonitoringSource : public DataSource {
 using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;
 };// namespace NES
 
-#endif// NES_CORE_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_E2ESINGLERUN_HPP
-#define NES_E2ESINGLERUN_HPP
+#ifndef NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_
+#define NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_
 
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -171,4 +171,4 @@ class E2ESingleRun {
 };
 }// namespace NES::Benchmark
 
-#endif//NES_E2ESINGLERUN_HPP
+#endif  // NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_

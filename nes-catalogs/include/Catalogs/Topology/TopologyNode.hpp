@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
-#define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
 
 #include <Catalogs/Topology/LinkProperty.hpp>
 #include <Nodes/Node.hpp>
@@ -225,4 +225,4 @@ struct formatter<NES::TopologyNode> : formatter<std::string> {
 };
 }//namespace fmt
 
-#endif// NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_

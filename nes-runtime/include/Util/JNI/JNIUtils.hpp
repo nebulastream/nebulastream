@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
-#define NES_COMMON_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
+#define NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
 #include <Util/JNI/JNI.hpp>
 #include <Util/SourceLocation.hpp>
 #include <string_view>
@@ -182,4 +182,4 @@ const std::string convertToJNIName(const std::string& javaClassName);
 
 }// namespace NES::jni
 
-#endif// NES_COMMON_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
+#endif  // NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_

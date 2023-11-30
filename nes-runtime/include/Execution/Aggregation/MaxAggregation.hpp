@@ -35,4 +35,4 @@ class MaxAggregationFunction : public AggregationFunction {
 
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_MAXAGGREGATION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_MAXAGGREGATION_HPP_

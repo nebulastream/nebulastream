@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
-#define NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
+#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
+#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_
 
 #include <Identifiers.hpp>
 #include <cstdint>
@@ -86,4 +86,4 @@ struct formatter<NES::Network::NesPartition> : formatter<std::string> {
     auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out());
 };
 }//namespace fmt
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_

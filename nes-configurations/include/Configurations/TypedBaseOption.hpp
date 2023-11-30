@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
-#define NES_COMMON_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
 #include <Configurations/BaseOption.hpp>
 namespace NES::Configurations {
 
@@ -109,4 +109,4 @@ void TypedBaseOption<T>::clear() {
 
 }// namespace NES::Configurations
 
-#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_

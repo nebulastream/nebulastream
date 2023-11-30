@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
-#define NES_CORE_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
+#define NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
 
 #include <Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
@@ -100,4 +100,4 @@ class MonitoringAgent {
 
 }// namespace NES::Monitoring
 
-#endif// NES_CORE_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_

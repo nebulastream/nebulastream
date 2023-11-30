@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
-#define NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_REQUEST_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_REQUEST_HPP_
 
 #include <Identifiers.hpp>
 #include <Util/RequestType.hpp>
@@ -70,4 +70,4 @@ class Request : public std::enable_shared_from_this<Request> {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_REQUEST_HPP_

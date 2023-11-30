@@ -566,4 +566,4 @@ double tdigest<Values, Weight>::cumulative_distribution(Values x) const {
 
 }// namespace digestible
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_UTIL_DIGESTIBLE_H_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_UTIL_DIGESTIBLE_H_

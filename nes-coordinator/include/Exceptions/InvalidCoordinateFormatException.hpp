@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_
+#define NES_COORDINATOR_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_
 #include <exception>
 
 namespace NES::Spatial::Index::Experimental {
@@ -25,4 +25,4 @@ class InvalidCoordinateFormatException : public std::exception {
 };
 
 }// namespace NES::Spatial::Index::Experimental
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_

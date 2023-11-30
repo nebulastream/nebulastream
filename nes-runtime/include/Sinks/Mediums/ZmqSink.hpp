@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
-#define NES_CORE_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
+#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -85,4 +85,4 @@ struct formatter<NES::ZmqSink> : formatter<std::string> {
 };
 }//namespace fmt
 
-#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_

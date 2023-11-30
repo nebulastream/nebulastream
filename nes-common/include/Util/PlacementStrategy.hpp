@@ -38,4 +38,4 @@ enum class PlacementStrategy : uint8_t {
     // HighAvailability
 };
 }// namespace NES::Optimizer
-#endif// NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_

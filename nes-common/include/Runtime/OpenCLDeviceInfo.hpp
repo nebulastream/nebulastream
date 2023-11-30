@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPENCLDEVICEINFO_CPP_H
-#define NES_OPENCLDEVICEINFO_CPP_H
+#ifndef NES_COMMON_INCLUDE_RUNTIME_OPENCLDEVICEINFO_HPP_
+#define NES_COMMON_INCLUDE_RUNTIME_OPENCLDEVICEINFO_HPP_
 
 #include <array>
 #include <nlohmann/json.hpp>
@@ -70,4 +70,4 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OpenCLDeviceInfo,
 
 }// namespace NES::Runtime
 
-#endif//NES_OPENCLDEVICEINFO_CPP_H
+#endif  // NES_COMMON_INCLUDE_RUNTIME_OPENCLDEVICEINFO_HPP_

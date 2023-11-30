@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_
-#define NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_
+#define NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -107,4 +107,4 @@ nlohmann::json asJson(const DiskMetrics& metrics);
 
 }// namespace Monitoring
 }// namespace NES
-#endif// NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
-#define NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
+#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/MetricCollectorType.hpp>
@@ -94,4 +94,4 @@ using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_

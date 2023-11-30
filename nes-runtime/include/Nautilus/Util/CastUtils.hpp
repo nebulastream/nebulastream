@@ -134,4 +134,4 @@ T* cast_if(Typed* typed) {
 
 }// namespace NES::Nautilus
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_

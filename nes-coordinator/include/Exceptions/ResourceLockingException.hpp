@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_
+#define NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 
 /**
@@ -39,4 +39,4 @@ class ResourceLockingException : public RequestExecutionException {
 };
 }// namespace Exceptions
 }// namespace NES
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_

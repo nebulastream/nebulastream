@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
-#define NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
 
 #include <Identifiers.hpp>
 #include <Util/PlacementStrategy.hpp>
@@ -114,4 +114,4 @@ class QueryPlacementPhase {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
 }// namespace NES::Optimizer
-#endif// NES_CORE_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

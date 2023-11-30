@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
+#ifndef NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_
+#define NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_
 
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Exceptions/RuntimeException.hpp>
@@ -47,4 +47,4 @@ class UDFException : public Exceptions::RequestExecutionException {
 };
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
+#endif  // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_

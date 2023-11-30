@@ -34,4 +34,4 @@ class AtanExpression : public Expression {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATANEXPRESSION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATANEXPRESSION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TESTS_UTIL_TEST_SINK_HPP_
-#define NES_TESTS_UTIL_TEST_SINK_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -250,4 +250,4 @@ class CollectTestSink : public SinkMedium {
 
 }// namespace NES
 
-#endif// NES_TESTS_UTIL_TEST_SINK_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINK_HPP_

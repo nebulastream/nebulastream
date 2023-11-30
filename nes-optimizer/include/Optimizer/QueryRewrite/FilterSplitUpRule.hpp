@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_FILTERSPLITUPRULE_HPP
-#define NES_FILTERSPLITUPRULE_HPP
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERSPLITUPRULE_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERSPLITUPRULE_HPP_
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
@@ -60,4 +60,4 @@ class FilterSplitUpRule : public BaseRewriteRule {
 
 }// namespace NES::Optimizer
 
-#endif//NES_FILTERSPLITUPRULE_HPP
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERSPLITUPRULE_HPP_

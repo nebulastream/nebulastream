@@ -41,4 +41,4 @@ class FlounderExecutable : public Executable {
     std::unique_ptr<flounder::Executable> engine;
 };
 }// namespace NES::Nautilus::Backends::Flounder
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDEREXECUTABLE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDEREXECUTABLE_HPP_
