@@ -128,4 +128,4 @@ std::string trim(const std::string& str);
 }// namespace Util
 }// namespace NES
 
-#endif  // NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
+#endif// NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_

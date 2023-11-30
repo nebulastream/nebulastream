@@ -35,4 +35,4 @@ class Selection : public ExecutableOperator {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SELECTION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SELECTION_HPP_

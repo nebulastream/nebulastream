@@ -47,4 +47,4 @@ class NautilusOperatorLoweringPlugin {
 using NautilusOperatorLoweringPluginRegistry = Util::PluginRegistry<NautilusOperatorLoweringPlugin>;
 }// namespace NES::QueryCompilation
 
-#endif  // NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_
+#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_

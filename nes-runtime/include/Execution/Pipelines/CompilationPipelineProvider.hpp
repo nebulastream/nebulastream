@@ -26,4 +26,4 @@ class CompilationPipelineProvider : public ExecutablePipelineProvider {
                                                     const Nautilus::CompilationOptions& options) override;
 };
 }// namespace NES::Runtime::Execution
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_

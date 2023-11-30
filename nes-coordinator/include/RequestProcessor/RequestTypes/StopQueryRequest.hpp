@@ -165,4 +165,4 @@ class StopQueryRequest : public AbstractRequest {
 }// namespace RequestProcessor::Experimental
 }// namespace NES
 
-#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STOPQUERYREQUEST_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STOPQUERYREQUEST_HPP_

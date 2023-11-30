@@ -88,4 +88,4 @@ class AsyncRequestProcessor {
 
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 }// namespace NES::RequestProcessor::Experimental
-#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_

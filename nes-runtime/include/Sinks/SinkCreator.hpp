@@ -304,4 +304,4 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
 #endif
 
 }// namespace NES
-#endif  // NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
+#endif// NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_

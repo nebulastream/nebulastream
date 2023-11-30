@@ -34,4 +34,4 @@ class StoreOperation : public Operation {
     OperationWPtr address;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_

@@ -81,4 +81,4 @@ class RequestQueue {
 };
 using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 }// namespace NES
-#endif  // NES_COORDINATOR_INCLUDE_WORKQUEUES_REQUESTQUEUE_HPP_
+#endif// NES_COORDINATOR_INCLUDE_WORKQUEUES_REQUESTQUEUE_HPP_

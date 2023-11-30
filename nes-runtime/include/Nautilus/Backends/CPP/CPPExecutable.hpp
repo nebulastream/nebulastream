@@ -40,4 +40,4 @@ class CPPExecutable : public Executable {
 };
 }// namespace NES::Nautilus::Backends::CPP
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_

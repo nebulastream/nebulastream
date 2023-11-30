@@ -60,4 +60,4 @@ class BatchJoinBuild : public ExecutableOperator {
     void storeValues(std::vector<Value<>> keys, Value<MemRef> valuePtr) const;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_

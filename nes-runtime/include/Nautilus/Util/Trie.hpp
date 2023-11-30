@@ -53,4 +53,4 @@ class TrieNode {
 };
 }// namespace NES::Nautilus::Tracing
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_TRIE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_TRIE_HPP_

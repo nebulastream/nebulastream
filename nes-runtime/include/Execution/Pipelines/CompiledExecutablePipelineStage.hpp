@@ -55,4 +55,4 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
 
 }// namespace NES::Runtime::Execution
 
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_

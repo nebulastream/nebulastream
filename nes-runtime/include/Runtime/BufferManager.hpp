@@ -228,4 +228,4 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
 
 }// namespace NES::Runtime
 
-#endif  // NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_

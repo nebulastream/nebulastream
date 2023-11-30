@@ -49,4 +49,4 @@ struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string> {
 };
 }//namespace fmt
 
-#endif  // NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_

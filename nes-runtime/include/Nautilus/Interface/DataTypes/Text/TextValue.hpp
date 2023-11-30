@@ -115,4 +115,4 @@ class TextValue final : public BaseVariableSizeType {
     const uint32_t size;
 };
 }// namespace NES::Nautilus
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_

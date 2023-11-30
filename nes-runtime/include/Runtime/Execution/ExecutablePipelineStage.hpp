@@ -114,4 +114,4 @@ struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<s
 };
 }//namespace fmt
 
-#endif  // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_
