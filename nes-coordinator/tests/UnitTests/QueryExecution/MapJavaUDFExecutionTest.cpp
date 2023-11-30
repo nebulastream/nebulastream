@@ -41,8 +41,7 @@ class MapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        executionEngine =
-            std::make_shared<NES::Testing::TestExecutionEngine>(dumpMode);
+        executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */

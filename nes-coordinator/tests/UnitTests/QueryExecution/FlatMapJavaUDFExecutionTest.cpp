@@ -38,8 +38,7 @@ class FlatMapJavaUDFQueryExecutionTest : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::BaseUnitTest::SetUp();
-        executionEngine =
-            std::make_shared<NES::Testing::TestExecutionEngine>();
+        executionEngine = std::make_shared<NES::Testing::TestExecutionEngine>();
     }
 
     /* Will be called before a test is executed. */
