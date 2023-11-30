@@ -19,7 +19,7 @@ target_include_directories(unikernel-lib PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>)
 target_compile_options(unikernel-lib PRIVATE ${UNIKERNEL_COMPILE_OPTIONS})
-target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork Folly::folly)
+target_link_libraries(unikernel-lib PUBLIC spdlog::spdlog zmq-fork Folly::folly cppkafka::cppkafka RdKafka::rdkafka RdKafka::rdkafka++)
 
 SET(UNIKERNEL_WORKER_ID 0)
 SET(UNIKERNEL_CONFIGURATION_FILE /home/ls/DIMA/nebulastream/cmake-build-unikernelexport-clang-16-debug/nes-unikernel-export/export.yaml)
