@@ -224,22 +224,22 @@ struct convert<WorkerStageConfiguration> {
 }// namespace YAML
 
 enum WorkerDownStreamLinkConfigurationType {
-    Worker,
-    Kafka,
+    node,
+    kafka,
 };
 
 struct KafkaSinkConfiguration {
-   SchemaConfiguration schema;
-   std::string broker;
-   std::string topic;
+    SchemaConfiguration schema;
+    std::string broker;
+    std::string topic;
 
-   void setSchema(const NES::SchemaPtr& newSchema) {
-       this->schema.fields.clear();
-       for (const auto& field : newSchema->fields) {
-           this->schema.fields.emplace_back(field->getName(),
-                                            std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
-       }
-   }
+    void setSchema(const NES::SchemaPtr& newSchema) {
+        this->schema.fields.clear();
+        for (const auto& field : newSchema->fields) {
+            this->schema.fields.emplace_back(field->getName(),
+                                             std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
+        }
+    }
 };
 
 namespace YAML {
@@ -262,7 +262,6 @@ struct convert<KafkaSinkConfiguration> {
 };
 }// namespace YAML
 
-
 struct WorkerSubQueryConfiguration {
     WorkerStageConfiguration stages;
     NES::QuerySubPlanId subQueryId;
@@ -281,9 +280,10 @@ struct convert<WorkerSubQueryConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(stages);
         UNIKERNEL_MODEL_YAML_ENCODE(subQueryId);
         UNIKERNEL_MODEL_YAML_ENCODE(outputSchemaSizeInBytes);
+        node["type"] = std::string(magic_enum::enum_name(rhs.type));
         switch (rhs.type) {
-            case Worker: node["downstream"] = rhs.worker.value(); break;
-            case Kafka: node["downstream"] = rhs.kafka.value(); break;
+            case WorkerDownStreamLinkConfigurationType::node: node["downstream"] = rhs.worker.value(); break;
+            case kafka: node["downstream"] = rhs.kafka.value(); break;
         }
         return node;
     };
@@ -295,9 +295,10 @@ struct convert<WorkerSubQueryConfiguration> {
         auto type = magic_enum::enum_cast<WorkerDownStreamLinkConfigurationType>(node["type"].as<std::string>());
         NES_ASSERT(type.has_value(), "Missing or Invalid type Discriminator");
         switch (type.value()) {
-            case Worker: rhs.worker.emplace(node["downstream"].as<WorkerLinkConfiguration>()); break;
-            case Kafka: rhs.kafka.emplace(node["downstream"].as<KafkaSinkConfiguration>()); break;
+            case WorkerDownStreamLinkConfigurationType::node: rhs.worker.emplace(node["downstream"].as<WorkerLinkConfiguration>()); break;
+            case kafka: rhs.kafka.emplace(node["downstream"].as<KafkaSinkConfiguration>()); break;
         }
+        rhs.type = type.value();
         return node;
     };
 };
