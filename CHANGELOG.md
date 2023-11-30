@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.265](https://github.com/nebulastream/nebulastream/tree/v0.5.265) (2023-11-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.264...v0.5.265)
+
+### Miscellaneous Issues ✌️
+
+- \[TASK\] Refactoring of remaining nes-core references [\#4342](https://github.com/nebulastream/nebulastream/issues/4342)
+
 ## [v0.5.264](https://github.com/nebulastream/nebulastream/tree/v0.5.264) (2023-11-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.263...v0.5.264)
