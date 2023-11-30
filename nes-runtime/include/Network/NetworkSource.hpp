@@ -57,7 +57,7 @@ class NetworkSource : public DataSource {
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                  OperatorVersionNumber initialVersion,
+                  Version initialVersion,
                   const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**
@@ -141,13 +141,13 @@ class NetworkSource : public DataSource {
      * @brief Reconfigures this sink with ReconfigurationType::UpdateVersion causing it to close event channels to the old
      * upstream sink and open channels to the new one
      */
-    void onVersionUpdate() override;
+    void onVersionUpdate(Version newVersion, Network::NodeLocation newSenderLocation) override;
 
    /**
     * @brief Getter for the initial version.
     * @return The version this source was started with
     */
-    OperatorVersionNumber getInitialVersion() const;
+    Version getVersion() const override;
 
     bool bind();
 
@@ -161,7 +161,7 @@ class NetworkSource : public DataSource {
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
 
-    const OperatorVersionNumber initialVersion;
+    Version version;
 };
 
 }// namespace NES::Network

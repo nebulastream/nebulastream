@@ -141,9 +141,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                       *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()),
                       partitionManager->getSubpartitionConsumerDisconnectCount(partition).value(),
                       expectedTotalConnectionsInPartitionManager);
-        } else if (partitionManager->pendingVersionExists(partition)) {
-                partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())->onVersionUpdate();
-        } else {
+        } else if (!partitionManager->startNewVersion(partition)) {
             partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
                 ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
             protocolListener->onEndOfStream(endOfStreamMessage);

@@ -15,10 +15,14 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 
+#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES {
+namespace Network {
+class NodeLocation;
+}
 namespace Runtime {
 class TupleBuffer;
 }
@@ -46,10 +50,15 @@ class DataEmitter : public Runtime::RuntimeEventListener {
      */
     virtual void onEvent(Runtime::BaseEvent&) override {}
 
+    virtual Version getVersion() const {
+        NES_WARNING("Trying to get version of a data emitter that does not carry version information, returning 0");
+        return 0;
+    };
+
     /**
      * @brief reconfigure with sink to perform an update of its version
      */
-    virtual void onVersionUpdate() {};
+    virtual void onVersionUpdate(Version, Network::NodeLocation){};
 };
 }// namespace NES
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

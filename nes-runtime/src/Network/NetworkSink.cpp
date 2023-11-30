@@ -27,7 +27,7 @@ namespace NES::Network {
 struct VersionUpdate {
     NodeLocation nodeLocation;
     NesPartition partition;
-    OperatorVersionNumber version;
+    Version version;
 };
 
 NetworkSink::NetworkSink(const SchemaPtr& schema,
@@ -41,7 +41,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
-                         OperatorVersionNumber versionNumber)
+                         Version versionNumber)
     : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
@@ -285,7 +285,7 @@ Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
 void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition,
                                                    const NodeLocation& newReceiverLocation,
-                                                   OperatorVersionNumber newVersion) {
+                                                   Version newVersion) {
     VersionUpdate newReceiverTuple = {newReceiverLocation, newPartition, newVersion};
     //register event consumer for new source. It has to be registered before any data channels connect
     NES_ASSERT2_FMT(
@@ -302,7 +302,7 @@ void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition,
 void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                                       const NodeLocation& newNodeLocation,
                                                       NesPartition newNesPartition,
-                                                      OperatorVersionNumber newVersion) {
+                                                      Version newVersion) {
     NES_DEBUG("NetworkSink: method clearOldAndConnectToNewChannelAsync() called {} qep {}, by thread {}",
               nesPartition.toString(),
               querySubPlanId,
