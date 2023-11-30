@@ -4,6 +4,7 @@
 
 #ifndef NES_YAMLEXPORT_H
 #define NES_YAMLEXPORT_H
+#include "CLIOptions.h"
 #include "Execution/Pipelines/CompiledExecutablePipelineStage.hpp"
 #include "Util/Logger/Logger.hpp"
 #include <API/AttributeField.hpp>
@@ -11,11 +12,12 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler.h>
 #include <Util/magicenum/magic_enum.hpp>
 #include <YAMLModel.h>
 #include <fstream>
@@ -24,7 +26,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <QueryCompiler.h>
 #include <yaml-cpp/yaml.h>
 
 struct WorkerSubQueryStage {
@@ -43,12 +44,14 @@ struct WorkerSubQuery {
 
 class YamlExport {
     Configuration configuration;
+    std::optional<ExportKafkaConfiguration> exportToKafka;
+    const NES::NodeId SINK_NODE = 1;
 
   public:
+    explicit YamlExport(const std::optional<ExportKafkaConfiguration>& exportToKafka);
     void setQueryPlan(NES::QueryPlanPtr queryPlan, NES::GlobalExecutionPlanPtr gep);
 
-    void addWorker(const std::vector<WorkerSubQuery>& subqueries,
-                   const NES::ExecutionNodePtr& workerNode);
+    void addWorker(const std::vector<WorkerSubQuery>& subqueries, const NES::ExecutionNodePtr& workerNode);
 
     void setSinkSchema(NES::SchemaPtr schema) {
         configuration.sink.schema.fields.clear();
@@ -57,7 +60,6 @@ class YamlExport {
                                                           std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
         }
     }
-
     void writeToOutputFile(std::string filepath) {
         std::ofstream f(filepath);
         YAML::Node yaml;

@@ -223,11 +223,54 @@ struct convert<WorkerStageConfiguration> {
 };
 }// namespace YAML
 
+enum WorkerDownStreamLinkConfigurationType {
+    Worker,
+    Kafka,
+};
+
+struct KafkaSinkConfiguration {
+   SchemaConfiguration schema;
+   std::string broker;
+   std::string topic;
+
+   void setSchema(const NES::SchemaPtr& newSchema) {
+       this->schema.fields.clear();
+       for (const auto& field : newSchema->fields) {
+           this->schema.fields.emplace_back(field->getName(),
+                                            std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
+       }
+   }
+};
+
+namespace YAML {
+template<>
+struct convert<KafkaSinkConfiguration> {
+    static Node encode(const KafkaSinkConfiguration& rhs) {
+        Node node;
+        UNIKERNEL_MODEL_YAML_ENCODE(schema);
+        UNIKERNEL_MODEL_YAML_ENCODE(broker);
+        UNIKERNEL_MODEL_YAML_ENCODE(topic);
+        return node;
+    };
+
+    static Node decode(const Node& node, KafkaSinkConfiguration& rhs) {
+        UNIKERNEL_MODEL_YAML_DECODE(schema);
+        UNIKERNEL_MODEL_YAML_DECODE(broker);
+        UNIKERNEL_MODEL_YAML_DECODE(topic);
+        return node;
+    };
+};
+}// namespace YAML
+
+
 struct WorkerSubQueryConfiguration {
     WorkerStageConfiguration stages;
     NES::QuerySubPlanId subQueryId;
     size_t outputSchemaSizeInBytes;
-    WorkerLinkConfiguration downstream;
+    WorkerDownStreamLinkConfigurationType type;
+
+    std::optional<WorkerLinkConfiguration> worker = std::nullopt;
+    std::optional<KafkaSinkConfiguration> kafka = std::nullopt;
 };
 
 namespace YAML {
@@ -238,7 +281,10 @@ struct convert<WorkerSubQueryConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(stages);
         UNIKERNEL_MODEL_YAML_ENCODE(subQueryId);
         UNIKERNEL_MODEL_YAML_ENCODE(outputSchemaSizeInBytes);
-        UNIKERNEL_MODEL_YAML_ENCODE(downstream);
+        switch (rhs.type) {
+            case Worker: node["downstream"] = rhs.worker.value(); break;
+            case Kafka: node["downstream"] = rhs.kafka.value(); break;
+        }
         return node;
     };
 
@@ -246,7 +292,12 @@ struct convert<WorkerSubQueryConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(stages);
         UNIKERNEL_MODEL_YAML_DECODE(subQueryId);
         UNIKERNEL_MODEL_YAML_DECODE(outputSchemaSizeInBytes);
-        UNIKERNEL_MODEL_YAML_DECODE(downstream);
+        auto type = magic_enum::enum_cast<WorkerDownStreamLinkConfigurationType>(node["type"].as<std::string>());
+        NES_ASSERT(type.has_value(), "Missing or Invalid type Discriminator");
+        switch (type.value()) {
+            case Worker: rhs.worker.emplace(node["downstream"].as<WorkerLinkConfiguration>()); break;
+            case Kafka: rhs.kafka.emplace(node["downstream"].as<KafkaSinkConfiguration>()); break;
+        }
         return node;
     };
 };

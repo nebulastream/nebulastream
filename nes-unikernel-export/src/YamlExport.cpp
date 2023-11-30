@@ -12,10 +12,10 @@
      limitations under the License.
 */
 
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <YamlExport.h>
 #include <ranges>
 
@@ -128,24 +128,37 @@ WorkerStageConfiguration buildTree(const SinkStage& sink,
 
 void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const NES::ExecutionNodePtr& workerNode) {
     std::vector<WorkerSubQueryConfiguration> subQueryConfiguration;
-    std::ranges::transform(subQueries, std::back_inserter(subQueryConfiguration), [](const WorkerSubQuery& subQuery) {
+    std::ranges::transform(subQueries, std::back_inserter(subQueryConfiguration), [this](const WorkerSubQuery& subQuery) {
         auto sink = subQuery.subplan->getOperatorByType<NES::SinkLogicalOperatorNode>();
         auto sources = subQuery.subplan->getOperatorByType<NES::SourceLogicalOperatorNode>();
         NES_ASSERT2_FMT(sink.size() == 1, "Expected Single Sink: {}", subQuery.subplan->toString());
         auto networkSinkDescriptor = sink[0]->getSinkDescriptor()->as<NES::Network::NetworkSinkDescriptor>();
+        auto type = WorkerDownStreamLinkConfigurationType::Worker;
+        std::optional<KafkaSinkConfiguration> kafkaSinkConfig = std::nullopt;
+        std::optional<WorkerLinkConfiguration> workerLink = std::nullopt;
+        if (exportToKafka.has_value() && networkSinkDescriptor->getNodeLocation().getNodeId() == SINK_NODE) {
+            type = WorkerDownStreamLinkConfigurationType::Kafka;
+            kafkaSinkConfig.emplace(KafkaSinkConfiguration{{}, exportToKafka->broker, exportToKafka->topic});
+            kafkaSinkConfig->setSchema(sink[0]->getOutputSchema());
+        } else {
+            type = WorkerDownStreamLinkConfigurationType::Worker;
+            workerLink.emplace(WorkerLinkConfiguration{
+                networkSinkDescriptor->getNodeLocation().getHostname(),
+                networkSinkDescriptor->getNodeLocation().getPort(),
+                networkSinkDescriptor->getNodeLocation().getNodeId(),
+                networkSinkDescriptor->getNesPartition().getPartitionId(),
+                networkSinkDescriptor->getNesPartition().getSubpartitionId(),
+                networkSinkDescriptor->getNesPartition().getOperatorId(),
+            });
+        }
 
         NES_ASSERT2_FMT(subQuery.sinks.size() == 1, "Expected exactly one Sink");
         return WorkerSubQueryConfiguration{buildTree(subQuery.sinks.begin()->second, subQuery.stages, subQuery.sources),
                                            subQuery.subplan->getQuerySubPlanId(),
                                            sink[0]->getOutputSchema()->getSchemaSizeInBytes(),
-                                           WorkerLinkConfiguration{
-                                               networkSinkDescriptor->getNodeLocation().getHostname(),
-                                               networkSinkDescriptor->getNodeLocation().getPort(),
-                                               networkSinkDescriptor->getNodeLocation().getNodeId(),
-                                               networkSinkDescriptor->getNesPartition().getPartitionId(),
-                                               networkSinkDescriptor->getNesPartition().getSubpartitionId(),
-                                               networkSinkDescriptor->getNesPartition().getOperatorId(),
-                                           }};
+                                           type,
+                                           workerLink,
+                                           kafkaSinkConfig};
     });
 
     this->configuration.workers.emplace_back(workerNode->getTopologyNode()->getIpAddress(),
@@ -153,3 +166,4 @@ void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const 
                                              workerNode->getTopologyNode()->getId(),
                                              subQueryConfiguration);
 }
+YamlExport::YamlExport(const std::optional<ExportKafkaConfiguration>& exportToKafka) : exportToKafka(exportToKafka) {}
