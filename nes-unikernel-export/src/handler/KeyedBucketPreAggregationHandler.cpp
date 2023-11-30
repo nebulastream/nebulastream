@@ -38,6 +38,6 @@ void KeyedBucketPreAggregationHandler::setup(Runtime::Execution::PipelineExecuti
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-KeyedBucketPreAggregationHandler::~KeyedBucketPreAggregationHandler() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
+KeyedBucketPreAggregationHandler::~KeyedBucketPreAggregationHandler() { assert(false && "Not Implemented"); }
 
 }// namespace NES::Runtime::Execution::Operators
