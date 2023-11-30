@@ -31,7 +31,7 @@ enum NebulaSQLWindowType{
     NO_WINDOW,
     WINDOW_SLIDING,
     WINDOW_TUMBLING,
-    WINDOW_COUNT,
+    WINDOW_THRESHOLD,
 };
         class NebulaSQLHelper {
           private:
@@ -54,12 +54,16 @@ enum NebulaSQLWindowType{
             bool isSelect = false;
             bool isWhere = false;
             bool isFrom = false;
+            bool isWindow = false;
             bool isArithmeticBinary = false;
             bool isJoinRelation = false;
             bool isFunctionCall = false;
             bool isSimpleCondition = true;
             bool hasMultipleAttributes = false;
+            std::shared_ptr<Windowing::WindowType> windowType;
+            bool isTimeBasedWindow = true;
 
+            std::vector<WindowAggregationDescriptorPtr> windowAggs;
 
             std::vector<ExpressionNodePtr> projections;
             std::vector<SinkDescriptorPtr> sinkDescriptor;
@@ -76,7 +80,10 @@ enum NebulaSQLWindowType{
             std::string timestamp = "timestamp";
             int size = -1;
             std::string timeUnit;
-            NebulaSQLWindowType windowType = NO_WINDOW;
+            int minimumCount = -1;
+
+            int identCountHelper = 0;
+            int implicitMapCountHelper = 0;
 
 
 

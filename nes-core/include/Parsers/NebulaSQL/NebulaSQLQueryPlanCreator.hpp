@@ -63,8 +63,10 @@ namespace NES::Parsers {
             void exitWindowedAggregationClause(NebulaSQLParser::WindowedAggregationClauseContext* context) override;
             void exitTumblingWindow(NebulaSQLParser::TumblingWindowContext* context) override;
             void exitSlidingWindow(NebulaSQLParser::SlidingWindowContext* context) override;
+            /*
             void exitCountBasedWindow(NebulaSQLParser::CountBasedWindowContext* context) override;
             void exitCountBasedTumbling(NebulaSQLParser::CountBasedTumblingContext* context) override;
+             */
             void enterNamedExpression(NebulaSQLParser::NamedExpressionContext* context) override;
             void exitNamedExpression(NebulaSQLParser::NamedExpressionContext* context) override;
             void enterFunctionCall(NebulaSQLParser::FunctionCallContext* context) override;
@@ -92,6 +94,11 @@ namespace NES::Parsers {
             void exitRealIdent(NebulaSQLParser::RealIdentContext* context) override;
             void exitIdentifier(NebulaSQLParser::IdentifierContext* context) override;
             TimeMeasure buildTimeMeasure(int size, const std::string& timebase);
+            void exitThresholdBasedWindow(NebulaSQLParser::ThresholdBasedWindowContext* context) override;
+            void exitWindowClause(NebulaSQLParser::WindowClauseContext* context) override;
+            void enterWindowClause(NebulaSQLParser::WindowClauseContext* context) override;
+            void exitThresholdMinSizeParameter(NebulaSQLParser::ThresholdMinSizeParameterContext* context) override;
+            void enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) override;
         };
 
 
