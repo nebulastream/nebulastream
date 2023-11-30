@@ -493,20 +493,24 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         auto senderLocation = NodeLocation(0, "127.0.0.1", *senderPort);
 
         struct DataEmitterImpl : public DataEmitter {
-            DataEmitterImpl(PartitionManagerPtr partitionManager, NesPartition nesPartition) : partitionManager(partitionManager), nesPartition(nesPartition) {}
+            DataEmitterImpl(PartitionManagerPtr partitionManager, Version version) : partitionManager(partitionManager), version(version) {}
             void emitWork(TupleBuffer&) override {}
-            void onVersionUpdate() override {
+            void onVersionUpdate(Version newVersion, NodeLocation) override {
                 NES_DEBUG("Updating version for data emitter");
-                partitionManager->startNewVersion(nesPartition);
+                version = newVersion;
+            }
+            Version getVersion() const override {
+                return version;
             }
             PartitionManagerPtr partitionManager;
-            NesPartition nesPartition;
+            Version version;
         };
 
         auto nesPartition = NesPartition(0, 0, 0, 0);
         NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
 
-        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>(partMgrRecv, nesPartition)));
+        auto initialVersion = 0;
+        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>(partMgrRecv, initialVersion)));
 
         auto nextVersion = 1;
         partMgrRecv->addPendingVersion(nesPartition, nextVersion, nodeLocation);

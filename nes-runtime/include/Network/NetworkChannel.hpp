@@ -89,7 +89,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
                                     int highWaterMark,
                                     std::chrono::milliseconds waitTime,
                                     uint8_t retryTimes,
-                                    OperatorVersionNumber versionNumber,
+                                    Version versionNumber,
                                     std::optional<std::future<bool>> abortConnection = std::nullopt);
 };
 

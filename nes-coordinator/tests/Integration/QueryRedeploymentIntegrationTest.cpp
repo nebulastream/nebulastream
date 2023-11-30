@@ -355,7 +355,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     //create network sink
     auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
     auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
-    OperatorVersionNumber firstVersion = 0;
+    Version firstVersion = 0;
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes, firstVersion);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
@@ -423,7 +423,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     //reconfiguration
     crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
 
-    OperatorVersionNumber nextVersion = 1;
+    Version nextVersion = 1;
     //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
     auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
     EXPECT_EQ(subQueryIds.size(), 1);
@@ -651,7 +651,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
     auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
     auto currentWrk1TargetPartition = networkSourceWrk2Partition;
-    OperatorVersionNumber firstVersion = 0;
+    Version firstVersion = 0;
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes, firstVersion);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
@@ -772,7 +772,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         networkSrcWrk3Id += 10;
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
-        OperatorVersionNumber nextVersion = actualReconnects + 1;
+        Version nextVersion = actualReconnects + 1;
         crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion, newNodeLocation);
         networkSink->configureNewReceiverAndPartition(networkSourceWrk3Partition, newNodeLocation, nextVersion);
 
@@ -1033,7 +1033,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     //create network sink
     auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
     auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
-    OperatorVersionNumber firstVersion = 0;
+    Version firstVersion = 0;
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes, firstVersion);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
@@ -1101,7 +1101,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     //reconfiguration
     crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, 0, QueryState::MIGRATING);
 
-    OperatorVersionNumber nextVersion = 1;
+    Version nextVersion = 1;
     //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
     auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
     EXPECT_EQ(subQueryIds.size(), 1);
@@ -1353,7 +1353,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     //create network sink
     auto networkSourceWrk2Location = NES::Network::NodeLocation(wrk2->getWorkerId(), "localhost", *wrk2DataPort);
     auto networkSourceWrk2Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk2Id, 0, 0);
-    OperatorVersionNumber firstVersion = 0;
+    Version firstVersion = 0;
     auto networkSinkDescriptor1 =
         Network::NetworkSinkDescriptor::create(networkSourceWrk2Location, networkSourceWrk2Partition, waitTime, retryTimes, firstVersion);
     auto networkSinkOperatorNode1 = std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptor1, networkSinkWrk1Id);
@@ -1419,7 +1419,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
 
     //reconfiguration
-    OperatorVersionNumber nextVersion = 1;
+    Version nextVersion = 1;
     Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
     crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition, nextVersion, newNodeLocation);
     crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);

@@ -28,11 +28,6 @@ namespace NES::Network {
 PartitionManager::PartitionConsumerEntry::PartitionConsumerEntry(NodeLocation&& senderLocation, DataEmitterPtr&& emitter)
     : senderLocation(std::move(senderLocation)), consumer(std::move(emitter)) {
     auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(consumer);
-    if (networkSource) {
-        versionNumber = networkSource->getInitialVersion();
-    } else {
-        versionNumber = 0;
-    }
 }
 
 uint64_t PartitionManager::PartitionConsumerEntry::count() const { return partitionCounter; }
@@ -46,7 +41,9 @@ void PartitionManager::PartitionConsumerEntry::unpin() {
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
-OperatorVersionNumber PartitionManager::PartitionConsumerEntry::getVersionNumber() { return versionNumber; }
+Version PartitionManager::PartitionConsumerEntry::getVersionNumber() {
+    return consumer->getVersion();
+}
 
 uint64_t PartitionManager::PartitionConsumerEntry::getDisconnectCount() const { return disconnectCount; }
 
@@ -54,7 +51,7 @@ bool PartitionManager::PartitionConsumerEntry::startNewVersion() {
     if (!pendingVersion.has_value()) {
         return false;
     }
-    versionNumber = pendingVersion.value().first;
+    consumer->onVersionUpdate(pendingVersion.value().first, pendingVersion->second);
     pendingVersion = std::nullopt;
     disconnectCount = 0;
     return true;
@@ -66,7 +63,7 @@ NodeLocation PartitionManager::PartitionConsumerEntry::getPendingVersionSenderLo
 
 bool PartitionManager::PartitionConsumerEntry::pendingVersionExists() { return pendingVersion.has_value(); }
 
-void PartitionManager::PartitionConsumerEntry::addPendingVersion(OperatorVersionNumber pendingVersionNumber, NodeLocation pendingSenderLocation) {
+void PartitionManager::PartitionConsumerEntry::addPendingVersion(Version pendingVersionNumber, NodeLocation pendingSenderLocation) {
     if (this->pendingVersion.has_value()) {
         NES_NOT_IMPLEMENTED();
     }
@@ -182,7 +179,7 @@ bool PartitionManager::pendingVersionExists(NesPartition partition) {
     return false;
 }
 
-OperatorVersionNumber PartitionManager::getVersion(NesPartition partition) {
+Version PartitionManager::getVersion(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
         return it->second.getVersionNumber();
@@ -191,7 +188,8 @@ OperatorVersionNumber PartitionManager::getVersion(NesPartition partition) {
     return false;
 }
 
-void PartitionManager::addPendingVersion(NesPartition partition, OperatorVersionNumber pendingVersionNumber, NodeLocation pendingSenderLocation) {
+void PartitionManager::addPendingVersion(NesPartition partition,
+                                         Version pendingVersionNumber, NodeLocation pendingSenderLocation) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
         it->second.addPendingVersion(pendingVersionNumber, pendingSenderLocation);
