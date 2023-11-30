@@ -22,6 +22,7 @@ RUN cd nebulastream && mkdir build && cd build && cmake .. -GNinja -DNES_ENABLE_
                                                            -DNES_SELF_HOSTING=OFF \
                                                            -DCMAKE_TOOLCHAIN_FILE=/nes-dependencies-vls-mt-unikernel-x64-linux-nes/scripts/buildsystems/vcpkg.cmake
 
+RUN cd nebulastream/build && cmake --build . --target nes -j$(nproc)
 RUN cd nebulastream/build && cmake --build . --target NesUnikernelExporter -j$(nproc)
 
 FROM debian:sid-slim as APP
