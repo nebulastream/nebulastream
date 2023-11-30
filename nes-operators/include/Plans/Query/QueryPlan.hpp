@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
-#define NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+#ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+#define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
 
 #include <Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
@@ -295,4 +295,4 @@ class QueryPlan {
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_
+#endif  // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

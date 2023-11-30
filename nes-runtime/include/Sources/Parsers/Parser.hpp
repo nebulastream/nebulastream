@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
-#define NES_CORE_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 
 #include <string>
 
@@ -73,4 +73,4 @@ class Parser {
     std::vector<PhysicalTypePtr> physicalTypes;
 };
 }//namespace NES
-#endif// NES_CORE_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_

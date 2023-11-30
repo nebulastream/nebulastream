@@ -76,4 +76,4 @@ class Block {
 
 }// namespace NES::Nautilus::Tracing
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_

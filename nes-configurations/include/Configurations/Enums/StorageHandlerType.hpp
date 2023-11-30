@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_STORAGEHANDLERTYPE_HPP_
-#define NES_CORE_INCLUDE_UTIL_STORAGEHANDLERTYPE_HPP_
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_
 #include <cstdint>
 
 namespace NES::RequestProcessor::Experimental {
@@ -25,4 +25,4 @@ enum class StorageHandlerType : uint8_t { SerialHandler = 0, TwoPhaseLocking };
 
 }// namespace NES::RequestProcessor::Experimental
 
-#endif// NES_CORE_INCLUDE_UTIL_STORAGEHANDLERTYPE_HPP_
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_

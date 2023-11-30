@@ -94,4 +94,4 @@ inline NesThread::ThreadId::ThreadId() : id(InvalidId) { id = NesThread::reserve
 inline NesThread::ThreadId::~ThreadId() { NesThread::releaseEntry(id); }
 
 }// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_

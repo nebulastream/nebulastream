@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
-#define NES_CORE_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
 
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -142,4 +142,4 @@ using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;
 }// namespace Experimental
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_

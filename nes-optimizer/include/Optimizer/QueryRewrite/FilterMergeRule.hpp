@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
-#define NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
 
 #include <Operators/Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
@@ -79,4 +79,4 @@ class FilterMergeRule : public BaseRewriteRule {
     static std::vector<FilterLogicalOperatorNodePtr> getConsecutiveFilters(const NES::FilterLogicalOperatorNodePtr& firstFilter);
 };
 }// namespace NES::Optimizer
-#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERMERGERULE_HPP_

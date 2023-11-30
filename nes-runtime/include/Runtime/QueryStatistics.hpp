@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
-#define NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
 #include <atomic>
 #include <folly/Synchronized.h>
 #include <map>
@@ -244,4 +244,4 @@ class QueryStatistics {
 
 }// namespace NES::Runtime
 
-#endif// NES_CORE_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_

@@ -56,4 +56,4 @@ constexpr uint64_t getLogLevel(const LogLevel value) { return static_cast<std::u
 
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_

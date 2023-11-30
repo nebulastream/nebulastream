@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ZIPFIANGENERATOR_HPP
-#define NES_ZIPFIANGENERATOR_HPP
+#ifndef NES_BENCHMARK_INCLUDE_UTIL_ZIPFIANGENERATOR_HPP_
+#define NES_BENCHMARK_INCLUDE_UTIL_ZIPFIANGENERATOR_HPP_
 
 #include <random>
 
@@ -116,4 +116,4 @@ class ZipfianGenerator {
     uint64_t countForZeta;
     std::uniform_real_distribution<double> dist;
 };
-#endif//NES_ZIPFIANGENERATOR_HPP
+#endif  // NES_BENCHMARK_INCLUDE_UTIL_ZIPFIANGENERATOR_HPP_

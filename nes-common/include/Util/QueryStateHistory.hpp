@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef QUERYSTATEHISTORY_HPP
-#define QUERYSTATEHISTORY_HPP
+#ifndef NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_
+#define NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_
 
 #include <Util/QueryState.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -48,4 +48,4 @@ class QueryStateHistoryEntry {
 
 }// namespace NES
 
-#endif//QUERYSTATEHISTORY_HPP
+#endif  // NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_

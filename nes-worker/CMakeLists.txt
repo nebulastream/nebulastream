@@ -14,7 +14,7 @@
 add_subdirectory(src)
 include(GNUInstallDirs)
 
-# Add nes-core library
+# Add nes-worker library
 get_source(nes-worker NES_WORKER_SOURCE_FILES)
 add_library(nes-worker ${NES_WORKER_SOURCE_FILES})
 

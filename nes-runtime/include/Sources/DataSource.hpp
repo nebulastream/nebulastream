@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
-#define NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_
 
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
@@ -330,4 +330,4 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SOURCES_DATASOURCE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_

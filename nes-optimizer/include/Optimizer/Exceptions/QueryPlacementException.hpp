@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
 
 #include <Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
@@ -33,4 +33,4 @@ class QueryPlacementException : public Exceptions::RequestExecutionException {
     const char* what() const noexcept override;
 };
 }// namespace NES::Exceptions
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTEXCEPTION_HPP_

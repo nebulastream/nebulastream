@@ -27,4 +27,4 @@ class InterpreterPipelineProvider : public ExecutablePipelineProvider {
 };
 }// namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_

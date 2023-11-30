@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_DATAGENERATORS_NEAUCTIONDATAGENERATOR_HPP_
-#define NES_INCLUDE_DATAGENERATORS_NEAUCTIONDATAGENERATOR_HPP_
+#ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEAUCTIONDATAGENERATOR_HPP_
+#define NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEAUCTIONDATAGENERATOR_HPP_
 #include <DataGeneration/DataGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration {
@@ -30,4 +30,4 @@ class NEAuctionDataGenerator : public DataGenerator {
 
 }// namespace NES::Benchmark::DataGeneration
 
-#endif// NES_INCLUDE_DATAGENERATORS_NEAUCTIONDATAGENERATOR_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEAUCTIONDATAGENERATOR_HPP_

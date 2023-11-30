@@ -25,4 +25,4 @@ class ClientException : public Exceptions::RuntimeException {
 
 }// namespace NES::Client
 
-#endif// NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
+#endif  // NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
-#define NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -157,4 +157,4 @@ class NodeEngineBuilder {
 };
 }// namespace Runtime
 }// namespace NES
-#endif// NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

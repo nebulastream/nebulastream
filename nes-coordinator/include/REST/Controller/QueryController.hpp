@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
-#define NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
 
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
@@ -387,4 +387,4 @@ class QueryController : public oatpp::web::server::api::ApiController {
 }// namespace REST::Controller
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_

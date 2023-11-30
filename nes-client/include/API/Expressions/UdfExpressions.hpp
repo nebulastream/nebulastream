@@ -30,4 +30,4 @@ ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, std::vector<Expressio
 
 }// namespace NES
 
-#endif// NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_
+#endif  // NES_CLIENT_INCLUDE_API_EXPRESSIONS_UDFEXPRESSIONS_HPP_

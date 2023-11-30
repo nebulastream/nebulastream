@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DEFAULTDATAGENERATOR_HPP
-#define NES_DEFAULTDATAGENERATOR_HPP
+#ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_DEFAULTDATAGENERATOR_HPP_
+#define NES_BENCHMARK_INCLUDE_DATAGENERATION_DEFAULTDATAGENERATOR_HPP_
 
 #include <DataGeneration/DataGenerator.hpp>
 
@@ -68,4 +68,4 @@ class DefaultDataGenerator : public DataGenerator {
     uint64_t maxValue;
 };
 }// namespace NES::Benchmark::DataGeneration
-#endif//NES_DEFAULTDATAGENERATOR_HPP
+#endif  // NES_BENCHMARK_INCLUDE_DATAGENERATION_DEFAULTDATAGENERATOR_HPP_

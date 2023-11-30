@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
-#define NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
+#ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
+#define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
 #include <Plans/Query/QueryPlan.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
@@ -177,4 +177,4 @@ class QueryPlanBuilder {
                                                               QueryPlanPtr rightQueryPlan);
 };
 }// end namespace NES
-#endif// NES_CORE_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
+#endif  // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_

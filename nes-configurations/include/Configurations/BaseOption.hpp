@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
-#define NES_COMMON_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
 #include <Util/yaml/Yaml.hpp>
 #include <string>
 namespace NES::Configurations {
@@ -85,4 +85,4 @@ class BaseOption {
 };
 }// namespace NES::Configurations
 
-#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_

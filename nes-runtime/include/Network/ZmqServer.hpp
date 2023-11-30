@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_
-#define NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#define NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -169,4 +169,4 @@ struct formatter<NES::Network::ZmqServer> : formatter<std::string> {
 };
 }// namespace fmt
 
-#endif// NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_

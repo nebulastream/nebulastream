@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
-#define NES_CORE_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
+#define NES_RUNTIME_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Util/MetricCollectorType.hpp>
@@ -55,4 +55,4 @@ using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 }//namespace Monitoring
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_

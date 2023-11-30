@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
 #include <Identifiers.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
 
@@ -37,4 +37,4 @@ class SharedQueryPlanNotFoundException : public RequestExecutionException {
     SharedQueryId id;
 };
 }// namespace NES::Exceptions
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_SHAREDQUERYPLANNOTFOUNDEXCEPTION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
-#define NES_CORE_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
 
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/Parser.hpp>
@@ -52,4 +52,4 @@ class JSONParser : public Parser {
     std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_

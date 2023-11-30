@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_COMPONENTS_NESWORKER_HPP_
-#define NES_CORE_INCLUDE_COMPONENTS_NESWORKER_HPP_
+#ifndef NES_WORKER_INCLUDE_COMPONENTS_NESWORKER_HPP_
+#define NES_WORKER_INCLUDE_COMPONENTS_NESWORKER_HPP_
 
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -313,4 +313,4 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_COMPONENTS_NESWORKER_HPP_
+#endif  // NES_WORKER_INCLUDE_COMPONENTS_NESWORKER_HPP_

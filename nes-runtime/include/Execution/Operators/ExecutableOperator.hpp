@@ -35,4 +35,4 @@ class ExecutableOperator : public Operator {
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTABLEOPERATOR_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTABLEOPERATOR_HPP_

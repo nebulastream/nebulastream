@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_H
-#define TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_H
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_
 
 #include <cstdint>
 #include <unordered_map>
@@ -106,4 +106,4 @@ class TopologyChangeLog {
 };
 }// namespace Experimental::TopologyPrediction
 }// namespace NES
-#endif//TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_H
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYCHANGELOG_HPP_

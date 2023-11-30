@@ -26,4 +26,4 @@ class CPPCompilationBackend : public CompilationBackend {
 };
 
 }// namespace NES::Nautilus::Backends::CPP
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_

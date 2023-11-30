@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_GRPC_CALLDATA_HPP_
-#define NES_CORE_INCLUDE_GRPC_CALLDATA_HPP_
+#ifndef NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_
+#define NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_
 
 #include <stdint.h>
 
@@ -57,4 +57,4 @@ class CallData {
 };
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_GRPC_CALLDATA_HPP_
+#endif  // NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_

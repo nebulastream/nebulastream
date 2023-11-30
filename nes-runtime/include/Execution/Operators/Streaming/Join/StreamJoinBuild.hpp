@@ -80,4 +80,4 @@ class StreamJoinBuild : public StreamJoinOperator, public ExecutableOperator {
 };
 }// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILD_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILD_HPP_

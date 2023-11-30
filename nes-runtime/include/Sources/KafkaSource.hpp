@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
-#define NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
@@ -168,4 +168,4 @@ class KafkaSource : public DataSource {
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
-#endif// NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_KAFKASOURCE_HPP_

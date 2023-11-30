@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_
+#define NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_
 #include <Exceptions/RequestExecutionException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <vector>
@@ -54,4 +54,4 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
     RpcClientModes mode;
 };
 }// namespace NES::Exceptions
-#endif// NES_CORE_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCQUERYUNDEPLOYMENTEXCEPTION_HPP_

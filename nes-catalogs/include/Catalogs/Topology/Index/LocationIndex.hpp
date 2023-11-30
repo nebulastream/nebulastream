@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_
 
 #include <Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
@@ -143,4 +143,4 @@ class LocationIndex {
 #endif
 };
 }// namespace NES::Spatial::Index::Experimental
-#endif// NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_INDEX_LOCATIONINDEX_HPP_

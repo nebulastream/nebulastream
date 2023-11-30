@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
-#define NES_CORE_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
+#define NES_RUNTIME_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
 #include <memory>
 namespace NES {
 
@@ -21,4 +21,4 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_

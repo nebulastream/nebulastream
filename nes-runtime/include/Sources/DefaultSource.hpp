@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
-#define NES_CORE_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <chrono>
@@ -55,4 +55,4 @@ class DefaultSource : public GeneratorSource {
 using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_

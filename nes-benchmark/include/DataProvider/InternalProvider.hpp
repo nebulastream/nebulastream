@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INTERNALPROVIDER_HPP
-#define NES_INTERNALPROVIDER_HPP
+#ifndef NES_BENCHMARK_INCLUDE_DATAPROVIDER_INTERNALPROVIDER_HPP_
+#define NES_BENCHMARK_INCLUDE_DATAPROVIDER_INTERNALPROVIDER_HPP_
 
 #include <DataProvider/DataProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -81,4 +81,4 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
 };
 }// namespace NES::Benchmark::DataProvision
 
-#endif//NES_INTERNALPROVIDER_HPP
+#endif  // NES_BENCHMARK_INCLUDE_DATAPROVIDER_INTERNALPROVIDER_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
-#define NES_CORE_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -253,4 +253,4 @@ using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
 }// namespace NES::Runtime
 
-#endif// NES_CORE_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_

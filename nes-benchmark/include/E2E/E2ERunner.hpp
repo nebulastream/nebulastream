@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_E2ERUNNER_HPP
-#define NES_E2ERUNNER_HPP
+#ifndef NES_BENCHMARK_INCLUDE_E2E_E2ERUNNER_HPP_
+#define NES_BENCHMARK_INCLUDE_E2E_E2ERUNNER_HPP_
 
 #include <E2E/E2ESingleRun.hpp>
 
@@ -45,4 +45,4 @@ void executeSingleRun(E2EBenchmarkConfigPerRun& configPerRun,
 void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
 
 }// namespace NES::Benchmark
-#endif//NES_E2ERUNNER_HPP
+#endif  // NES_BENCHMARK_INCLUDE_E2E_E2ERUNNER_HPP_

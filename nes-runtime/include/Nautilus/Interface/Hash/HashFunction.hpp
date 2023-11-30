@@ -72,4 +72,4 @@ class HashFunction {
     virtual HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) = 0;
 };
 }// namespace NES::Nautilus::Interface
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_

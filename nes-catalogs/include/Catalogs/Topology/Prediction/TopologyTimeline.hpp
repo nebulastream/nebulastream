@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef TOPOLOGYPREDICTION__TOPOLOGYTIMELINE_HPP_
-#define TOPOLOGYPREDICTION__TOPOLOGYTIMELINE_HPP_
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYTIMELINE_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYTIMELINE_HPP_
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <absl/container/btree_map.h>
 #include <memory>
@@ -100,4 +100,4 @@ class TopologyTimeline {
 };
 }// namespace Experimental::TopologyPrediction
 }// namespace NES
-#endif//TOPOLOGYPREDICTION__TOPOLOGYTIMELINE_HPP_
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYTIMELINE_HPP_
