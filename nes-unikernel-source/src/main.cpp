@@ -1,7 +1,7 @@
-#include "AutomaticDataGenerator.h"
-#include "CSVDataGenerator.h"
-#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
-#include "Runtime/WorkerContext.hpp"
+#include <AutomaticDataGenerator.h>
+#include <CSVDataGenerator.h>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkChannel.hpp>
