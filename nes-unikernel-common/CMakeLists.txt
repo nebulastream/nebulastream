@@ -2,20 +2,18 @@ find_package(yaml-cpp REQUIRED)
 add_subdirectory(src)
 set(BOOST_ROOT "${_VCPKG_INSTALLED_DIR}/x64-linux-nes")
 find_package(Boost REQUIRED COMPONENTS system iostreams)
-get_source(unikernel-common UNIKERNEL_COMMON_SRC)
-add_library(UnikernelCommon STATIC ${UNIKERNEL_COMMON_SRC})
-target_link_libraries(UnikernelCommon PUBLIC
+add_library(UnikernelCommon INTERFACE)
+target_link_libraries(UnikernelCommon INTERFACE
         nes-common
         nes-data-types
         yaml-cpp
         Boost::iostreams
 )
-target_include_directories(UnikernelCommon PRIVATE
+target_include_directories(UnikernelCommon INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
-        PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
