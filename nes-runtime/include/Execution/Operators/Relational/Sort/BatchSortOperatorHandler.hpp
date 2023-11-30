@@ -99,4 +99,4 @@ class BatchSortOperatorHandler : public Runtime::Execution::OperatorHandler,
     uint64_t entrySize;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTOPERATORHANDLER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTOPERATORHANDLER_HPP_

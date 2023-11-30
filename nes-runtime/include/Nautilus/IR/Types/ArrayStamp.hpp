@@ -41,4 +41,4 @@ class ArrayStamp : public Stamp {
 
 }// namespace NES::Nautilus::IR::Types
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_ARRAYSTAMP_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_ARRAYSTAMP_HPP_

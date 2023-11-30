@@ -814,4 +814,4 @@ static inline void* rte_memcpy(void* dst, const void* src, size_t n) {
 }
 #endif
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_RTE_MEMORY_H_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_INTERNAL_RTE_MEMORY_H_

@@ -40,4 +40,4 @@ using ExecutablePipelineProviderRegistry = NES::Util::NamedPluginRegistry<Execut
 
 }// namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_

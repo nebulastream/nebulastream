@@ -72,4 +72,4 @@ class IngestionTimeFunction final : public TimeFunction {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_

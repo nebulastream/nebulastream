@@ -29,4 +29,4 @@ class BasicBlockArgument : public Operation {
 
 }// namespace NES::Nautilus::IR::Operations
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKARGUMENT_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKARGUMENT_HPP_

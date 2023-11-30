@@ -78,4 +78,4 @@ struct std::formatter<E, std::enable_if_t<std::is_enum_v<E> && magic_enum::custo
 #endif// MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
 
 // clang-format on
-#endif// NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_FORMAT_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_FORMAT_HPP_

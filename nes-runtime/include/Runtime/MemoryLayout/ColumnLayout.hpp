@@ -70,4 +70,4 @@ class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<Co
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUT_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUT_HPP_

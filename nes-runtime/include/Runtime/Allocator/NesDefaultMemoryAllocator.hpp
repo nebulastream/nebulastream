@@ -34,4 +34,4 @@ class NesDefaultMemoryAllocator : public std::pmr::memory_resource {
 };
 using NesDefaultMemoryAllocatorPtr = std::shared_ptr<NesDefaultMemoryAllocator>;
 }// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_

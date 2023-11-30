@@ -136,4 +136,4 @@ using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
 }// namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
