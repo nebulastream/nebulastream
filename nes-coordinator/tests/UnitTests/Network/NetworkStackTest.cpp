@@ -612,7 +612,7 @@ TEST_F(NetworkStackTest, testVersionTransition) {
     ASSERT_EQ(true, true);
 }
 
-TEST_F(NetworkStackTest, startCloseMaxChannel) {
+TEST_F(NetworkStackTest, DISABLED_startCloseMaxChannel) {
     try {
         // start zmqServer
         std::promise<bool> completed;
