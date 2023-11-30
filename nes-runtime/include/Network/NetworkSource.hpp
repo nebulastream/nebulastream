@@ -150,4 +150,4 @@ class NetworkSource : public DataSource {
 
 }// namespace NES::Network
 
-#endif  // NES_RUNTIME_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSOURCE_HPP_

@@ -29,4 +29,4 @@ class LoadOperation : public Operation {
     OperationWPtr address;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOADOPERATION_HPP_

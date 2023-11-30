@@ -43,4 +43,4 @@ class NonKeyedBucketStore : public BucketStore<NonKeyedSlice> {
     const std::unique_ptr<State>& defaultState;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_

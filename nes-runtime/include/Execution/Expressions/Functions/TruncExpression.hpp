@@ -34,4 +34,4 @@ class TruncExpression : public Expression {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_TRUNCEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_TRUNCEXPRESSION_HPP_

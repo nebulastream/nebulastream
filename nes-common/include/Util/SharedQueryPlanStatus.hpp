@@ -34,4 +34,4 @@ enum class SharedQueryPlanStatus : uint8_t { Created = 0, Deployed, Updated, Sto
 
 }// namespace NES
 
-#endif  // NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_

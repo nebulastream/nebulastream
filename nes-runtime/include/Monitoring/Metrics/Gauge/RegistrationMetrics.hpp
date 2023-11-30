@@ -134,4 +134,4 @@ nlohmann::json asJson(const RegistrationMetrics& metrics);
 
 }// namespace Monitoring
 }// namespace NES
-#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_REGISTRATIONMETRICS_HPP_
+#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_REGISTRATIONMETRICS_HPP_

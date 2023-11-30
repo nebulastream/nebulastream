@@ -39,4 +39,4 @@ using ReadFieldExpressionPtr = std::shared_ptr<Runtime::Execution::Expressions::
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_

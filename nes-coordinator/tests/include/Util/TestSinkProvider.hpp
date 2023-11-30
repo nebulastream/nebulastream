@@ -49,4 +49,4 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
                       uint16_t numberOfInputSources) override;
 };
 }// namespace NES::TestUtils
-#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
+#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_

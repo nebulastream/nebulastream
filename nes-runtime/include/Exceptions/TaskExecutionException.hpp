@@ -39,4 +39,4 @@ class TaskExecutionException : public Exceptions::RuntimeException {
     const Runtime::Execution::SuccessorExecutablePipeline pipeline;
 };
 }// namespace NES
-#endif  // NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_

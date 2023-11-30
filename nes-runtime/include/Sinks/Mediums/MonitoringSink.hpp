@@ -94,4 +94,4 @@ using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 
 }// namespace NES
 
-#endif  // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
+#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_

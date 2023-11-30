@@ -52,4 +52,4 @@ class CompilerFlags {
 
 }// namespace NES::Compiler
 
-#endif  // NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_
+#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_

@@ -64,4 +64,4 @@ class RequestExecutionException : public std::enable_shared_from_this<RequestExe
 };
 }// namespace NES::Exceptions
 
-#endif  // NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
+#endif// NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_

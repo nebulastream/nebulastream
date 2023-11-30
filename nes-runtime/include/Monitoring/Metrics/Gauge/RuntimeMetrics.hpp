@@ -109,4 +109,4 @@ nlohmann::json asJson(const RuntimeMetrics& metrics);
 
 }// namespace Monitoring
 }// namespace NES
-#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_RUNTIMEMETRICS_HPP_
+#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_RUNTIMEMETRICS_HPP_

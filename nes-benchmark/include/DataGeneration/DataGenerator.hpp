@@ -107,4 +107,4 @@ class DataGenerator {
 };
 }// namespace NES::Benchmark::DataGeneration
 
-#endif  // NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_
+#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_

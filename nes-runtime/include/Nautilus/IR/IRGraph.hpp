@@ -64,4 +64,4 @@ class IRGraph {
 
 }// namespace NES::Nautilus::IR
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_

@@ -65,4 +65,4 @@ class PhaseFactory {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_
+#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_

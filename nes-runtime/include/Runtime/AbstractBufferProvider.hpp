@@ -112,4 +112,4 @@ class AbstractPoolProvider {
 TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
 
 }// namespace NES::Runtime
-#endif  // NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_

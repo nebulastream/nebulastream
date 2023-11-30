@@ -44,4 +44,4 @@ enum class RequestType : uint8_t {
 
 }// namespace NES
 
-#endif  // NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_

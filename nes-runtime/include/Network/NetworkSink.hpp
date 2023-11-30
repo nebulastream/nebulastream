@@ -184,4 +184,4 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     std::optional<std::pair<NodeLocation, NesPartition>> pendingReconfiguration;
 };
 }// namespace NES::Network
-#endif  // NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
+#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

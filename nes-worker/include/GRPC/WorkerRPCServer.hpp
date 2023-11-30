@@ -87,4 +87,4 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
 }// namespace NES
 
-#endif  // NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
+#endif// NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_

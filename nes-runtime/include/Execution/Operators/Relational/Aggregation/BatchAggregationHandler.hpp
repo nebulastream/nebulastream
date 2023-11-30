@@ -61,4 +61,4 @@ class BatchAggregationHandler : public Runtime::Execution::OperatorHandler,
     std::vector<State> threadLocalStateStores;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONHANDLER_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONHANDLER_HPP_

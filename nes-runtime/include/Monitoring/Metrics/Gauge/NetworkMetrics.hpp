@@ -128,4 +128,4 @@ nlohmann::json asJson(const NetworkMetrics& metrics);
 
 }// namespace Monitoring
 }// namespace NES
-#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_
+#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_

@@ -35,4 +35,4 @@ class ModExpression : public Expression {
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_MODEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_MODEXPRESSION_HPP_

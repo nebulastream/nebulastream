@@ -59,4 +59,4 @@ class ExecutableOperator : public UnaryOperatorNode {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
+#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
