@@ -25,62 +25,21 @@
 #include <sys/stat.h>
 #include <yaml-cpp/yaml.h>
 
-YAML::Node& Options::loadInputYaml() {
-    if (yamlRoot.has_value()) {
-        return yamlRoot.value();
-    }
-    YAML::Node node;
-    std::string fileContent;
-    if (input) {
-        std::ifstream f(input->c_str());
-        node = YAML::LoadFile(input->c_str());
-    } else {
-        node = YAML::Load(std::cin);
-    }
+std::string Options::getQueryString() { return configuration.query; }
 
-    this->yamlRoot.emplace(std::move(node));
-    return yamlRoot.value();
-}
-std::string Options::getQueryString() {
-    auto& yaml = loadInputYaml();
-    return yaml["query"].as<std::string>();
+bool Options::useKafka() const { return std::holds_alternative<ExportKafkaConfiguration>(configuration.topology.sink); }
+ExportKafkaConfiguration Options::getKafkaConfiguration() const {
+    return std::get<ExportKafkaConfiguration>(configuration.topology.sink);
 }
 
-NES::SchemaPtr Options::parseSchema(YAML::Node schemaNode) {
+NES::SchemaPtr parseSchema(const SchemaConfiguration& schemaConfig) {
     auto schema = NES::Schema::create();
-    for (const auto& field : schemaNode) {
-        assert(field.IsMap());
-        assert(!field["name"].IsNull());
-        assert(!field["type"].IsNull());
-        auto type = magic_enum::enum_cast<NES::BasicType>(field["type"].as<std::string>());
-        schema = schema->addField(field["name"].as<std::string>(), type.value());
+    for (const auto& field : schemaConfig.fields) {
+        auto type = magic_enum::enum_cast<NES::BasicType>(field.type);
+        schema = schema->addField(field.name, type.value());
     }
 
     return schema;
-}
-
-size_t toNodeId(std::string nodeIdString) {
-    if (nodeIdString.empty())
-        NES_THROW_RUNTIME_ERROR("Failed to parse NodeID: Empty String");
-
-    bool isNumeric = std::find_if(nodeIdString.begin(),
-                                  nodeIdString.end(),
-                                  [](unsigned char c) {
-                                      return !std::isdigit(c);
-                                  })
-        == nodeIdString.end();
-    if (isNumeric)
-        return std::stol(nodeIdString);
-
-    std::transform(nodeIdString.begin(), nodeIdString.end(), nodeIdString.begin(), [](unsigned char c) {
-        return std::tolower(c);
-    });
-
-    if (nodeIdString == "sink") {
-        return 1;
-    }
-
-    NES_THROW_RUNTIME_ERROR("Failed to parse NodeID: " + nodeIdString);
 }
 
 std::tuple<NES::TopologyPtr, NES::Catalogs::Source::SourceCatalogPtr, std::vector<NES::PhysicalSourceTypePtr>>
@@ -88,54 +47,56 @@ Options::getTopologyAndSources() {
     auto sourceCatalog = std::make_shared<NES::Catalogs::Source::SourceCatalog>();
     std::vector<NES::PhysicalSourceTypePtr> physicalSources;
     auto topology = NES::Topology::create();
-    auto& root = loadInputYaml();
-    YAML::Node yamlTopology = root["topology"];
 
     std::unordered_map<size_t, NES::TopologyNodePtr> nodes;
 
-    nodes[1] = NES::TopologyNode::create(1,
-                                         yamlTopology["sink"]["ip"].as<std::string>(),
-                                         yamlTopology["sink"]["port"].as<uint16_t>(),
-                                         yamlTopology["sink"]["port"].as<uint16_t>(),
-                                         yamlTopology["sink"]["resources"].as<uint16_t>(),
-                                         {{NES::Worker::Properties::MAINTENANCE, false}});
+    if (useKafka()) {
+        nodes[1] = NES::TopologyNode::create(1, "0.0.0.0", 0, 0, 1, {{NES::Worker::Properties::MAINTENANCE, false}});
+    } else {
+        const auto& sink = std::get<ExportTopologyNodeConfiguration>(configuration.topology.sink);
+        nodes[1] = NES::TopologyNode::create(1,
+                                             sink.ip,
+                                             sink.port,
+                                             sink.port,
+                                             sink.resources,
+                                             {{NES::Worker::Properties::MAINTENANCE, false}});
+    }
+
     topology->setAsRoot(nodes[1]);
 
-    assert(yamlTopology["workers"].IsSequence());
-    for (size_t i = 0; i < yamlTopology["workers"].size(); ++i) {
-        YAML::Node workerYaml = yamlTopology["workers"][i];
+    size_t i = 0;
+    for (const auto& workerConfiguration : configuration.topology.workers) {
         auto worker = NES::TopologyNode::create(i + 2,
-                                                workerYaml["ip"].as<std::string>(),
-                                                workerYaml["port"].as<uint16_t>(),
-                                                workerYaml["port"].as<uint16_t>(),
-                                                workerYaml["resources"].as<uint16_t>(),
+                                                workerConfiguration.node.ip,
+                                                workerConfiguration.node.port,
+                                                workerConfiguration.node.port,
+                                                workerConfiguration.node.resources,
                                                 {{NES::Worker::Properties::MAINTENANCE, false}});
-        for (const auto& source : workerYaml["sources"]) {
-            auto sourceName = source["name"].as<std::string>();
-            auto schema = parseSchema(source["schema"]);
-            sourceCatalog->addLogicalSource(sourceName, schema);
-            auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
-            auto physicalSourceType = std::make_shared<NES::NoOpPhysicalSourceType>(sourceName, sourceName);
+        for (const auto& source : workerConfiguration.sources) {
+            sourceCatalog->addLogicalSource(source.name, parseSchema(source.schema));
+            auto logicalSource = sourceCatalog->getLogicalSource(source.name);
+            auto physicalSourceType = std::make_shared<NES::NoOpPhysicalSourceType>(source.name, source.name);
             auto physicalSource = NES::PhysicalSource::create(physicalSourceType);
             sourceCatalog->addPhysicalSource(
-                sourceName,
+                source.name,
                 NES::Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, worker));
             physicalSources.push_back(physicalSourceType);
         }
 
         nodes[i + 2] = std::move(worker);
+        i++;
     }
 
-    for (size_t i = 0; i < yamlTopology["workers"].size(); ++i) {
-        YAML::Node workerYaml = yamlTopology["workers"][i];
-        assert(workerYaml["links"].IsSequence());
-        for (size_t linkIdx = 0; linkIdx < workerYaml["links"].size(); linkIdx++) {
-            auto otherNodeId = toNodeId(workerYaml["links"][linkIdx].as<std::string>());
+    i = 0;
+    for (const auto& workerConfiguration : configuration.topology.workers) {
+        for (const auto& otherNode : workerConfiguration.links) {
+            auto otherNodeId = getOtherNodeIdFromLink(otherNode);
             auto parent = std::min(otherNodeId, i + 2);
             auto child = std::max(otherNodeId, i + 2);
             topology->addNewTopologyNodeAsChild(nodes[parent], nodes[child]);
             nodes[parent]->addLinkProperty(nodes[child], std::make_shared<LinkProperty>(100, 100));
         }
+        i++;
     }
 
     return {topology, sourceCatalog, physicalSources};
@@ -150,7 +111,7 @@ std::string Options::getOutputPathForFile(const std::string& file) {
 }
 
 static bool isDirectoryExists(const std::string& path) {
-    struct stat info;
+    struct stat info {};
 
     if (stat(path.c_str(), &info) != 0) {
         // If stat fails, the file/directory does not exist.
@@ -185,12 +146,24 @@ CLIResult Options::getCLIOptions(int argc, char** argv) {
         exit(1);
 
     Options options;
-    if (input == "-") {
-        options.input = std::nullopt;
-    } else {
-        if (!exists(input))
-            return "Input file does not exist";
-        options.input = input;
+    YAML::Node yamlConfig;
+    try {
+        if (input == "-") {
+            yamlConfig = YAML::Load(std::cin);
+        } else {
+            if (!exists(input))
+                return "Input file does not exist";
+            yamlConfig = YAML::LoadFile(input.c_str());
+        }
+    } catch (const YAML::ParserException& pe) {
+        return "Could not parse YAML File: " + pe.msg;
+    } catch (const YAML::BadFile& be) {
+        return "Could not open YAML File: " + be.msg;
+    }
+    try {
+        options.configuration = yamlConfig.as<ExportConfiguration>();
+    } catch (const YAML::BadConversion& bc) {
+        return "Could not parse ExportConfiguration: " + bc.msg;
     }
 
     options.bufferSize = bufferSize;
@@ -213,3 +186,10 @@ CLIResult Options::getCLIOptions(int argc, char** argv) {
 }
 size_t Options::getBufferSize() const { return bufferSize; }
 std::string Options::getYAMLOutputPath() const { return this->yamlOutput; }
+size_t Options::getOtherNodeIdFromLink(const std::variant<std::string, size_t>& variant) {
+    if (std::holds_alternative<std::string>(variant)) {
+        assert(std::get<std::string>(variant) == "sink" && "'sink' is the only accepted string parameter for links");
+        return 1;
+    }
+    return std::get<size_t>(variant);
+}
