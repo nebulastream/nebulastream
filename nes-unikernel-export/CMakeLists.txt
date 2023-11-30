@@ -9,6 +9,7 @@ add_library(UnikernelQueryExport SHARED ${UNIKERNEL_QUERY_EXPORT_SOURCES})
 target_include_directories(UnikernelQueryExport PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-common/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-compiler/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-client/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/include>
@@ -32,6 +33,7 @@ target_include_directories(UnikernelLLVMExport PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/tests/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-data-types/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-compiler/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-runtime/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-operators/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../nes-catalogs/include>
@@ -89,6 +91,15 @@ target_include_directories(NesUnikernelExporter PUBLIC
 
 find_package(yaml-cpp REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=unused-parameter -Wno-error=unused-private-field -DUNIKERNEL_EXPORT=1 -std=c++20")
+
+# Copy Public Headers
+register_public_header_file(NesUnikernelExporter ${CMAKE_CURRENT_SOURCE_DIR}/include/OperatorHandler.hpp OperatorHandler.hpp)
+register_public_header_file(NesUnikernelExporter ${CMAKE_CURRENT_SOURCE_DIR}/../nes-unikernel/include/UnikernelStage.hpp UnikernelStage.hpp)
+file(GLOB HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/handler/*.hpp)
+foreach(HEADER_FILE ${HEADER_FILES})
+    get_filename_component(HEADER_NAME ${HEADER_FILE} NAME)
+    register_public_header_file(NesUnikernelExporter ${CMAKE_CURRENT_SOURCE_DIR}/include/handler/${HEADER_NAME} handler/${HEADER_NAME})
+endforeach()
 
 target_link_libraries(NesUnikernelExporter PUBLIC
         Argumentum::argumentum

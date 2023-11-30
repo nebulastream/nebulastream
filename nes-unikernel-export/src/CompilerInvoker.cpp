@@ -22,10 +22,9 @@ Result CompilerInvoker::compileToObject(const std::string& sourceCode, const std
     std::vector<std::string>
         args{"-x", "c++", "-", "-DUNIKERNEL_LIB", "-DNES_COMPILE_TIME_LOG_LEVEL=1", "-c", "-std=c++20", "-o", outputPath};
 
-    for (const auto& include : includePaths) {
-        args.emplace_back("-I");
-        NES_INFO("Including: {}", include);
-        args.push_back(include);
+    // add includes
+    for (auto includePath : this->pathConfig.includePaths) {
+        args.push_back("-I" + includePath);
     }
 
     bp::child c(bp::search_path("clang++"), bp::args(args), (bp::std_err & bp::std_out) > out_pipe, bp::std_in < in_pipe, ec);
@@ -63,10 +62,9 @@ Result CompilerInvoker::compile(const std::string& sourceCode) const {
     std::vector<std::string>
         args{"-x", "c++", "-", "-DUNIKERNEL_LIB", "-DNES_COMPILE_TIME_LOG_LEVEL=1", "-std=c++20", "-emit-llvm", "-S", "-o", "-"};
 
-    for (const auto& include : includePaths) {
-        args.emplace_back("-I");
-        NES_INFO("Including: {}", include);
-        args.push_back(include);
+    // add includes
+    for (auto includePath : this->pathConfig.includePaths) {
+        args.push_back("-I" + includePath);
     }
 
     bp::child c(bp::search_path("clang++"), bp::args(args), (bp::std_err & bp::std_out) > out_pipe, bp::std_in < in_pipe, ec);
