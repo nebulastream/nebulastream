@@ -136,19 +136,6 @@ class PartitionManager {
          */
         Version getVersionNumber();
 
-        /**
-         * @brief indicates if a pending version update has been deployed for this partition
-         * @param partition the partition for which to query the existence of a pending version
-         * @return true if a pending version exists
-         */
-        bool pendingVersionExists();
-
-        /**
-         * @brief get the node location of the new sender after the next version change. Will throw an error if no pending version exists
-         * @param partition the partition for which to query the pending sender
-         * @return the node location of the sink that will be sending to this partition when the new version gets started
-         */
-        NodeLocation getPendingVersionSenderLocation();
       private:
         uint64_t partitionCounter{1};
         uint64_t disconnectCount{0};
@@ -296,19 +283,6 @@ class PartitionManager {
      */
     void clear();
 
-    /**
-     * @brief indicates if a pending version update has been deployed for this partition
-     * @param partition the partition for which to query the existence of a pending version
-     * @return true if a pending version exists
-     */
-    bool pendingVersionExists(NesPartition partition);
-
-    /**
-     * @brief get the node location of the new sender after the next version change. Will throw an error if no pending version exists
-     * @param partition the partition for which to query the pending sender
-     * @return the node location of the sink that will be sending to this partition when the new version gets started
-     */
-    NodeLocation getPendingVersionSenderLocation(NesPartition partition);
   private:
     std::unordered_map<NesPartition, PartitionProducerEntry> producerPartitions;
     std::unordered_map<NesPartition, PartitionConsumerEntry> consumerPartitions;
