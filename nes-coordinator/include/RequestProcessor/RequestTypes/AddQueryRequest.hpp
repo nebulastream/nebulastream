@@ -224,4 +224,4 @@ class AddQueryRequest : public AbstractRequest {
 };
 }// namespace RequestProcessor::Experimental
 }// namespace NES
-#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_
+#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_

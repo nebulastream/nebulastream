@@ -75,4 +75,4 @@ void traceStoreOperation(const Tracing::ValueRef& memRef, const Tracing::ValueRe
 
 }// namespace NES::Nautilus::Tracing::TraceUtil
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_

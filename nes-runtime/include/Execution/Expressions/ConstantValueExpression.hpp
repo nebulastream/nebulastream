@@ -47,4 +47,4 @@ using ConstantBooleanValueExpression = ConstantValueExpression<bool>;
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_

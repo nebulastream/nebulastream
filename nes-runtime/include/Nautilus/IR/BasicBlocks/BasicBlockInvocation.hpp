@@ -47,4 +47,4 @@ class BasicBlockInvocation : public Operation {
 };
 
 }// namespace NES::Nautilus::IR::Operations
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_

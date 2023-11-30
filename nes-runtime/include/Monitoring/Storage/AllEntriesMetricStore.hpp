@@ -68,4 +68,4 @@ class AllEntriesMetricStore : public AbstractMetricStore {
 
 }// namespace NES::Monitoring
 
-#endif  // NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ALLENTRIESMETRICSTORE_HPP_
+#endif// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ALLENTRIESMETRICSTORE_HPP_

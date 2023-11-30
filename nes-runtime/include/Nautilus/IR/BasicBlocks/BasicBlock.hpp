@@ -85,4 +85,4 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 
 }// namespace NES::Nautilus::IR
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_

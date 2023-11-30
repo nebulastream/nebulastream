@@ -150,4 +150,4 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_RUNTIME_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_
+#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_

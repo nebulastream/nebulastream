@@ -86,4 +86,4 @@ class LocationProvider {
 };
 }// namespace Spatial::Mobility::Experimental
 }// namespace NES
-#endif  // NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_
+#endif// NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_

@@ -67,4 +67,4 @@ using ExecutableFunctionRegistry = Util::PluginFactory<FunctionExpressionProvide
 
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXECUTABLEFUNCTIONREGISTRY_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXECUTABLEFUNCTIONREGISTRY_HPP_

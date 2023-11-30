@@ -135,4 +135,4 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
 };
 
 }// namespace NES::Runtime::Execution
-#endif  // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_

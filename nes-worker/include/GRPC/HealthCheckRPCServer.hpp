@@ -63,4 +63,4 @@ class HealthCheckRPCServer : public grpc::health::v1::Health::Service {
 
 }// namespace NES
 
-#endif  // NES_WORKER_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_
+#endif// NES_WORKER_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_

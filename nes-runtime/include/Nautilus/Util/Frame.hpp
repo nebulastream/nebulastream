@@ -44,4 +44,4 @@ class Frame {
 
 }// namespace NES::Nautilus
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_

@@ -62,4 +62,4 @@ class LocalHashTable : public StreamJoinHashTable {
     virtual uint8_t* insert(uint64_t key) const override;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_LOCALHASHTABLE_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_LOCALHASHTABLE_HPP_

@@ -82,4 +82,4 @@ class StreamJoinOperator {
     QueryCompilation::WindowingStrategy windowingStrategy;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_

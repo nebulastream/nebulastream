@@ -45,4 +45,4 @@ class FunctionOperation : public Operation {
 };
 }// namespace NES::Nautilus::IR::Operations
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_

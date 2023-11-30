@@ -176,4 +176,4 @@ std::shared_ptr<detail::Logger> getInstance();// singleton is ok here
 }// namespace Logger
 
 }// namespace NES
-#endif  // NES_COMMON_INCLUDE_UTIL_LOGGER_IMPL_NESLOGGER_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_IMPL_NESLOGGER_HPP_

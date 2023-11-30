@@ -55,4 +55,4 @@ class BatchSort : public ExecutableOperator {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORT_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORT_HPP_

@@ -49,4 +49,4 @@ using InvocationPluginRegistry = Util::PluginRegistry<InvocationPlugin>;
 
 }// namespace NES::Nautilus
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_

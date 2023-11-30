@@ -31,4 +31,4 @@
 #include <unordered_map>
 #include <vector>
 
-#endif  // NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_
+#endif// NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_

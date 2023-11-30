@@ -28,4 +28,4 @@ class DegreesExpression : public Expression {
     const ExpressionPtr SubExpression;
 };
 }// namespace NES::Runtime::Execution::Expressions
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_DEGREESEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_DEGREESEXPRESSION_HPP_

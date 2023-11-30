@@ -142,4 +142,4 @@ using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;
 }// namespace Experimental
 }// namespace NES
 
-#endif  // NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
+#endif// NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_

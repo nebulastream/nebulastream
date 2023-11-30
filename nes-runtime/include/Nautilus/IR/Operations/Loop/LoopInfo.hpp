@@ -37,4 +37,4 @@ class CountedLoopInfo : public LoopInfo {
 
 }// namespace NES::Nautilus::IR::Operations
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_

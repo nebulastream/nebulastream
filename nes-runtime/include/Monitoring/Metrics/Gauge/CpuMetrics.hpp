@@ -131,4 +131,4 @@ nlohmann::json asJson(const CpuMetrics& metrics);
 
 }// namespace Monitoring
 }// namespace NES
-#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
+#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_

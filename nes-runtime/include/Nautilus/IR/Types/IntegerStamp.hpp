@@ -78,4 +78,4 @@ class IntegerStamp : public Stamp {
 
 }// namespace NES::Nautilus::IR::Types
 
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_

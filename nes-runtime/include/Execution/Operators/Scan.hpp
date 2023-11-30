@@ -42,4 +42,4 @@ class Scan : public Operator {
 };
 
 }// namespace NES::Runtime::Execution::Operators
-#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_

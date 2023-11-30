@@ -39,4 +39,4 @@ class AbstractQueryStatusListener {
 };
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 }// namespace NES
-#endif  // NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
+#endif// NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_

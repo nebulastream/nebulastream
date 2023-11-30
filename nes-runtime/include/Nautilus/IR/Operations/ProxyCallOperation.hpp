@@ -45,4 +45,4 @@ class ProxyCallOperation : public Operation {
     std::vector<OperationWPtr> inputArguments;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_
