@@ -16,6 +16,7 @@
 
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Sinks/Mediums/KafkaSink.hpp>
 extern NES::Runtime::WorkerContextPtr TheWorkerContext;
 namespace {
 using namespace std::chrono_literals;
@@ -23,23 +24,26 @@ template<typename Config>
 class UnikernelSink {
   public:
     static constexpr size_t StageId = 1;
-    static std::optional<NES::Network::NetworkSink> sink;
-    static void setup() {
-        UnikernelSink::sink.emplace(
-            1,
-            Config::QueryID,
-            Config::QuerySubplanID,
-            NES::Network::NodeLocation(Config::DownstreamNodeID, Config::DownstreamNodeHostname, Config::DownstreamNodePort),
-            NES::Network::NesPartition(Config::QueryID,
-                                       Config::DownstreamOperatorID,
-                                       Config::DownstreamPartitionID,
-                                       Config::DownstreamSubPartitionID),
-            Config::OutputSchemaSizeInBytes,
-            1,
-            200ms,
-            100);
+    static std::optional<typename Config::SinkType> sink;
 
-        UnikernelSink::sink->setup();
+    static void setup() {
+        if constexpr (std::is_same_v<typename Config::SinkType, NES::Network::NetworkSink>) {
+            UnikernelSink::sink.emplace(
+                1,
+                Config::QueryID,
+                Config::QuerySubplanID,
+                NES::Network::NodeLocation(Config::DownstreamNodeID, Config::DownstreamNodeHostname, Config::DownstreamNodePort),
+                NES::Network::NesPartition(Config::QueryID,
+                                           Config::DownstreamOperatorID,
+                                           Config::DownstreamPartitionID,
+                                           Config::DownstreamSubPartitionID),
+                Config::OutputSchemaSizeInBytes,
+                1,
+                200ms,
+                100);
+        } else {
+            UnikernelSink::sink.emplace(1, Config::Broker, Config::Topic, Config::QueryID, Config::QuerySubplanID);
+        }
     }
 
     static void execute(NES::Runtime::TupleBuffer& tupleBuffer) { sink->writeData(tupleBuffer, *TheWorkerContext); }
@@ -47,7 +51,7 @@ class UnikernelSink {
     static void stop() { sink->shutdown(); }
 };
 template<typename T>
-std::optional<NES::Network::NetworkSink> UnikernelSink<T>::sink = std::nullopt;
+std::optional<typename T::SinkType> UnikernelSink<T>::sink = std::nullopt;
 }// namespace
 
 #endif//NES_UNIKERNELSINK_HPP

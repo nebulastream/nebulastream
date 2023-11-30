@@ -25,6 +25,7 @@ namespace NES {
 
 enum class SinkMediumTypes : uint8_t {
     NETWORK_SINK,
+    KAFKA_SINK,
 };
 
 /**

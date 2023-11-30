@@ -4,6 +4,10 @@
 #include <UnikernelSink.hpp>
 #include <UnikernelSource.hpp>
 #include <UnikernelStage.hpp>
+#include <Sinks/Formats/CsvFormat.hpp>
+#include <Sinks/Mediums/KafkaSink.hpp>
+#include <Network/NetworkSink.hpp>
+
 namespace NES::Unikernel {
 struct CTConfiguration {
     constexpr static unsigned long QueryID = 0;
@@ -11,8 +15,18 @@ struct CTConfiguration {
     constexpr static const char* NodeIP = "127.0.0.1";
     constexpr static unsigned long NodePort = 8080;
 };
+struct KafkaSinkConfig15 {
+    constexpr static unsigned long QueryID = 0;
+    using KafkaSchema = Schema<Field<INT8>, Field<TEXT>, Field<FLOAT32>>;
+    using SinkType = typename NES::KafkaSink<KafkaSchema>;
+    constexpr static unsigned long QuerySubplanID = 8;
+    constexpr static const char* Broker = "Broker";
+    constexpr static const char* Topic = "Topic";
+};
+
 struct SinkConfig15 {
     constexpr static unsigned long QueryID = 0;
+    using SinkType = typename NES::Network::NetworkSink;
     constexpr static unsigned long QuerySubplanID = 8;
     constexpr static unsigned long OutputSchemaSizeInBytes = 96;
     constexpr static unsigned long DownstreamNodeID = 1;
@@ -23,7 +37,7 @@ struct SinkConfig15 {
     constexpr static unsigned int DownstreamNodePort = 8082;
     constexpr static unsigned long LocalBuffers = 100;
 };
-using Sink15 = UnikernelSink<SinkConfig15>;
+using Sink15 = UnikernelSink<KafkaSinkConfig15>;
 struct SourceConfig17 {
     constexpr static unsigned long QueryID = 0;
     constexpr static unsigned long UpstreamNodeID = 3;

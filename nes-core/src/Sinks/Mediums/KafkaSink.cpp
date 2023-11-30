@@ -14,6 +14,7 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <cppkafka/cppkafka.h>
