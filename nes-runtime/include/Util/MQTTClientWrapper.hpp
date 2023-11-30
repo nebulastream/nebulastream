@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
-#define NES_CORE_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
+#define NES_RUNTIME_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
 
 #include <mqtt/callback.h>
 #include <mqtt/client.h>
@@ -94,4 +94,4 @@ class MQTTClientWrapper {
 using MQTTClientWrapperPtr = std::shared_ptr<MQTTClientWrapper>;
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_

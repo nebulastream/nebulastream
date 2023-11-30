@@ -23,4 +23,4 @@ enum class GatheringMode : uint8_t { INTERVAL_MODE = 0, INGESTION_RATE_MODE = 1,
 
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_GATHERINGMODE_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_GATHERINGMODE_HPP_

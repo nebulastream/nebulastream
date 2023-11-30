@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_
-#define NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_
+#ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_
+#define NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
@@ -60,4 +60,4 @@ class NetworkCollector : public MetricCollector {
 using NetworkCollectorPtr = std::shared_ptr<NetworkCollector>;
 
 }// namespace NES::Monitoring
-#endif// NES_CORE_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_
+#endif  // NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_NETWORKCOLLECTOR_HPP_

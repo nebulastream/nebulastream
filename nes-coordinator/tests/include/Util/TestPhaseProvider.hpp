@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
-#define NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
 
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -27,4 +27,4 @@ class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
 };
 }// namespace NES::TestUtils
 
-#endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTPHASEPROVIDER_HPP_

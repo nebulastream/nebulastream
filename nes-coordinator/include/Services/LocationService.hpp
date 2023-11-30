@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
-#define NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
+#define NES_COORDINATOR_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
 
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
@@ -158,4 +158,4 @@ class LocationService {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_

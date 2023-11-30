@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BENCHMARKUTILS_HPP
-#define NES_BENCHMARKUTILS_HPP
+#ifndef NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_
+#define NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
@@ -78,4 +78,4 @@ static void createRangeVectorPowerOfTwo(std::vector<T>& vector, T start, T stop)
 }
 
 }// namespace NES::Benchmark::Util
-#endif//NES_BENCHMARKUTILS_HPP
+#endif  // NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_

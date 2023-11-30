@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
-#define NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -49,4 +49,4 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
                       uint16_t numberOfInputSources) override;
 };
 }// namespace NES::TestUtils
-#endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_

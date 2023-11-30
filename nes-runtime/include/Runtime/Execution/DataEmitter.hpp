@@ -47,4 +47,4 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     virtual void onEvent(Runtime::BaseEvent&) override {}
 };
 }// namespace NES
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

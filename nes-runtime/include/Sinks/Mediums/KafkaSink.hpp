@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
-#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#define NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -98,4 +98,4 @@ using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
 
 }// namespace NES
 #endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

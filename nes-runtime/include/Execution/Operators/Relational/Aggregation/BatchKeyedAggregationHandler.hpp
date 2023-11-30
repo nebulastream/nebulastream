@@ -59,4 +59,4 @@ class BatchKeyedAggregationHandler : public Runtime::Execution::OperatorHandler,
     std::vector<std::unique_ptr<Nautilus::Interface::ChainedHashMap>> threadLocalSliceStores;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_

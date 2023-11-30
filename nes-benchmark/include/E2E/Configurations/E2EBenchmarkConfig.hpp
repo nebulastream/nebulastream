@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_E2EBENCHMARKCONFIG_HPP
-#define NES_E2EBENCHMARKCONFIG_HPP
+#ifndef NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIG_HPP_
+#define NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIG_HPP_
 
 #include <Configurations/ConfigurationOption.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
@@ -60,4 +60,4 @@ class E2EBenchmarkConfig {
 };
 }// namespace NES::Benchmark
 
-#endif//NES_E2EBENCHMARKCONFIG_HPP
+#endif  // NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIG_HPP_

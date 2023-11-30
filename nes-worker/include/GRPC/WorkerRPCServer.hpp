@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
-#define NES_CORE_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
+#ifndef NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
+#define NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -76,4 +76,4 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
+#endif  // NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_

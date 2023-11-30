@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DATAGENERATOR_HPP
-#define NES_DATAGENERATOR_HPP
+#ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_
+#define NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -107,4 +107,4 @@ class DataGenerator {
 };
 }// namespace NES::Benchmark::DataGeneration
 
-#endif//NES_DATAGENERATOR_HPP
+#endif  // NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_

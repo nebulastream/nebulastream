@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
-#define NES_CORE_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+#ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+#define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
@@ -165,4 +165,4 @@ class SourceCatalog {
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace Catalogs::Source
 }// namespace NES
-#endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+#endif  // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

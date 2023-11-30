@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TUPLEBUFFERHOLDER_HPP
-#define NES_TUPLEBUFFERHOLDER_HPP
+#ifndef NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_
+#define NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
 #include <memory>
@@ -62,4 +62,4 @@ class TupleBufferHolder {
 };
 }// namespace NES::Benchmark::DataProvision
 
-#endif//NES_TUPLEBUFFERHOLDER_HPP
+#endif  // NES_BENCHMARK_INCLUDE_DATAPROVIDER_TUPLEBUFFERHOLDER_HPP_

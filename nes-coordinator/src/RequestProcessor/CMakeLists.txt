@@ -13,6 +13,6 @@
 
 add_subdirectory(RequestTypes)
 add_subdirectory(StorageHandles)
-add_source_files(nes-core
+add_source_files(nes-coordinator
         AsyncRequestProcessor.cpp
 )

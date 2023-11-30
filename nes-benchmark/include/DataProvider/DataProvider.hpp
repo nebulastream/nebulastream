@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DATAPROVIDER_HPP
-#define NES_DATAPROVIDER_HPP
+#ifndef NES_BENCHMARK_INCLUDE_DATAPROVIDER_DATAPROVIDER_HPP_
+#define NES_BENCHMARK_INCLUDE_DATAPROVIDER_DATAPROVIDER_HPP_
 
 #include <DataProvider/TupleBufferHolder.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
@@ -86,4 +86,4 @@ class DataProvider {
 };
 }// namespace NES::Benchmark::DataProvision
 
-#endif//NES_DATAPROVIDER_HPP
+#endif  // NES_BENCHMARK_INCLUDE_DATAPROVIDER_DATAPROVIDER_HPP_

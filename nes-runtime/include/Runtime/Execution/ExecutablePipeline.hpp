@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
-#define NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #include <Identifiers.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/ExecutionResult.hpp>
@@ -202,4 +202,4 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
 
 }// namespace NES::Runtime::Execution
 
-#endif// NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_

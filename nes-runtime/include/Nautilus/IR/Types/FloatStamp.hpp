@@ -48,4 +48,4 @@ class FloatStamp : public Stamp {
 
 }// namespace NES::Nautilus::IR::Types
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_

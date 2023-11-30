@@ -4471,4 +4471,4 @@ public:
 
 } // namespace backward
 
-#endif // NES_COMMON_INCLUDE_UTIL_BACKWARD_BACKWARD_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_BACKWARD_BACKWARD_HPP_

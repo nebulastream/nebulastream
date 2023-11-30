@@ -52,4 +52,4 @@ class LoopOperation : public Operation {
     std::shared_ptr<LoopInfo> loopInfo;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SOURCES_BINARYSOURCE_HPP_
-#define NES_CORE_INCLUDE_SOURCES_BINARYSOURCE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_
 
 #include <Sources/DataSource.hpp>
 #include <fstream>
@@ -85,4 +85,4 @@ class BinarySource : public DataSource {
 using BinarySourcePtr = std::shared_ptr<BinarySource>;
 
 }// namespace NES
-#endif// NES_CORE_INCLUDE_SOURCES_BINARYSOURCE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_

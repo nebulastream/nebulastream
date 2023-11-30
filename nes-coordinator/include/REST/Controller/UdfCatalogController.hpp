@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
-#define NES_CORE_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
+#define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
@@ -184,4 +184,4 @@ class UDFCatalogController : public oatpp::web::server::api::ApiController {
 }// namespace REST
 }// namespace NES
 #include OATPP_CODEGEN_END(ApiController)
-#endif// NES_CORE_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_UDFCATALOGCONTROLLER_HPP_

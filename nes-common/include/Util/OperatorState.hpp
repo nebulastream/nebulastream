@@ -33,4 +33,4 @@ enum class OperatorState : uint8_t { TO_BE_PLACED = 0, TO_BE_REMOVED, TO_BE_REPL
 
 }// namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_

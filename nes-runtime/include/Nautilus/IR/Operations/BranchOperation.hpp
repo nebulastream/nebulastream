@@ -36,4 +36,4 @@ class BranchOperation : public Operation {
     BasicBlockInvocation basicBlock;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_

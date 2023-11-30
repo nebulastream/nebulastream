@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
-#define NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
@@ -113,4 +113,4 @@ class TestExecutionEngine {
 
 }// namespace NES::Testing
 
-#endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_

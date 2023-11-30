@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_
-#define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_
+#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_
+#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 
 namespace NES::QueryCompilation::Phases {
@@ -34,4 +34,4 @@ class DefaultPhaseFactory : public PhaseFactory {
 
 }// namespace NES::QueryCompilation::Phases
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_
+#endif  // NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_

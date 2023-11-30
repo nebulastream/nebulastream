@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_
-#define NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_
 
 #include <cstdint>
 #include <vector>
@@ -42,4 +42,4 @@ const std::vector<ResourceType> resourceTypeList = {ResourceType::Topology,
                                                     ResourceType::UdfCatalog};
 }// namespace NES::RequestProcessor::Experimental
 
-#endif// NES_CORE_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_RESOURCETYPE_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
-#define NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
+#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
+#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
@@ -73,4 +73,4 @@ class PlacementStrategyFactory {
                                                 const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 };
 }// namespace NES::Optimizer
-#endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
+#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_

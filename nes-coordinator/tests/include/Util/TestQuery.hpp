@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TESTS_UTIL_TEST_QUERY_HPP_
-#define NES_TESTS_UTIL_TEST_QUERY_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_
 
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -55,4 +55,4 @@ class TestQuery : public Query {
 
 }// namespace NES
 
-#endif// NES_TESTS_UTIL_TEST_QUERY_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_

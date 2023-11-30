@@ -38,4 +38,4 @@ class [[nodiscard]] BasicValue final : public ValueType {
 
 }// namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_BASICVALUE_HPP_
+#endif  // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_BASICVALUE_HPP_

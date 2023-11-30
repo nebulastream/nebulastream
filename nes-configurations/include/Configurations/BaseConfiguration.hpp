@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
-#define NES_COMMON_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ConfigurationException.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
@@ -86,4 +86,4 @@ class BaseConfiguration : public BaseOption {
 
 }// namespace NES::Configurations
 
-#endif// NES_COMMON_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_

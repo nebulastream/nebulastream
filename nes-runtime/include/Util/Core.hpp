@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_UTIL_CORE_HPP_
-#define NES_CORE_INCLUDE_UTIL_CORE_HPP_
+#ifndef NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
+#define NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
 
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -128,4 +128,4 @@ std::string trim(const std::string& str);
 }// namespace Util
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_UTIL_CORE_HPP_
+#endif  // NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_

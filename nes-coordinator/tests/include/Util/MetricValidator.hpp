@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TESTS_UTIL_METRICVALIDATOR_HPP_
-#define NES_TESTS_UTIL_METRICVALIDATOR_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_
 
 #include <API/Schema.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
@@ -79,4 +79,4 @@ class MetricValidator {
 
 }// namespace NES
 
-#endif//NES_TESTS_UTIL_METRICVALIDATOR_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
-#define NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
 
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 namespace NES::TestUtils {
@@ -41,4 +41,4 @@ class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override;
 };
 }// namespace NES::TestUtils
-#endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_

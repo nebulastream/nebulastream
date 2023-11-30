@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
-#define NES_CORE_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
+#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
 #include <Exceptions/RuntimeException.hpp>
 #include <stdexcept>
 namespace NES {
@@ -30,4 +30,4 @@ class QueryCompilationException : public Exceptions::RuntimeException {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_

@@ -26,4 +26,4 @@ class CompilerException : public Exceptions::RuntimeException {
 
 }// namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
+#endif  // NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_

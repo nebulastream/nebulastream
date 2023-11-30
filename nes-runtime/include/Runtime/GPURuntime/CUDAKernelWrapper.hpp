@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
-#define NES_CORE_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
 
 #include <Util/jitify/jitify.hpp>
 #include <cuda.h>
@@ -114,4 +114,4 @@ class CUDAKernelWrapper {
     uint64_t gpuBufferSize;
 };
 
-#endif// NES_CORE_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_
+#endif  // NES_RUNTIME_INCLUDE_RUNTIME_GPURUNTIME_CUDAKERNELWRAPPER_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TESTS_UTIL_DUMMY_SINK_HPP_
-#define NES_TESTS_UTIL_DUMMY_SINK_HPP_
+#ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_
+#define NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <memory>
 #include <string>
@@ -27,4 +27,4 @@ class DummySink : public SinkDescriptor {
     [[nodiscard]] bool equal(SinkDescriptorPtr const&) override { return false; }
 };
 }// namespace NES
-#endif// NES_TESTS_UTIL_DUMMY_SINK_HPP_
+#endif  // NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_

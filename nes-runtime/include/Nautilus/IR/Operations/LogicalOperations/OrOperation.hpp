@@ -35,4 +35,4 @@ class OrOperation : public Operation {
     OperationWPtr rightInput;
 };
 }// namespace NES::Nautilus::IR::Operations
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_OROPERATION_HPP_
+#endif  // NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_OROPERATION_HPP_

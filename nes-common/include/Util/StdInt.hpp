@@ -49,4 +49,4 @@ constexpr HelperStructLiterals<int8_t> operator"" _s8(unsigned long long value) 
 constexpr HelperStructLiterals<int16_t> operator"" _s16(unsigned long long value) { return HelperStructLiterals<int16_t>(value); }
 constexpr HelperStructLiterals<int32_t> operator"" _s32(unsigned long long value) { return HelperStructLiterals<int32_t>(value); }
 constexpr HelperStructLiterals<int64_t> operator"" _s64(unsigned long long value) { return HelperStructLiterals<int64_t>(value); }
-#endif// NES_COMMON_INCLUDE_UTIL_STDINT_HPP_
+#endif  // NES_COMMON_INCLUDE_UTIL_STDINT_HPP_

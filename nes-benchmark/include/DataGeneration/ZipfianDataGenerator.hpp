@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ZIPFIANDATAGENERATOR_HPP
-#define NES_ZIPFIANDATAGENERATOR_HPP
+#ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_
+#define NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_
 
 #include <DataGeneration/DataGenerator.hpp>
 
@@ -61,4 +61,4 @@ class ZipfianDataGenerator : public DataGenerator {
     uint64_t maxValue;
 };
 }// namespace NES::Benchmark::DataGeneration
-#endif//NES_ZIPFIANDATAGENERATOR_HPP
+#endif  // NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_

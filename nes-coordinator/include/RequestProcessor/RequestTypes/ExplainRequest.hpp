@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPLAINREQUEST_HPP
-#define NES_EXPLAINREQUEST_HPP
+#ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_
+#define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_
 
 #include <Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
@@ -224,4 +224,4 @@ class ExplainRequest : public AbstractRequest {
 }// namespace RequestProcessor::Experimental
 }// namespace NES
 
-#endif//NES_EXPLAINREQUEST_HPP
+#endif  // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_REST_HANDLERS_ERRORHANDLER_HPP_
-#define NES_CORE_INCLUDE_REST_HANDLERS_ERRORHANDLER_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_REST_HANDLERS_ERRORHANDLER_HPP_
+#define NES_COORDINATOR_INCLUDE_REST_HANDLERS_ERRORHANDLER_HPP_
 
 #include <oatpp/web/protocol/http/outgoing/ResponseFactory.hpp>
 #include <oatpp/web/server/handler/ErrorHandler.hpp>
@@ -37,4 +37,4 @@ class ErrorHandler : public oatpp::web::server::handler::ErrorHandler {
 };
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 }// namespace NES
-#endif// NES_CORE_INCLUDE_REST_HANDLERS_ERRORHANDLER_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_REST_HANDLERS_ERRORHANDLER_HPP_

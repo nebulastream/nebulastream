@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
-#define NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#define NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
 #include <Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -234,4 +234,4 @@ class WorkerRPCClient {
 };
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_

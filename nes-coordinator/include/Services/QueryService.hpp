@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
-#define NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_SERVICES_QUERYSERVICE_HPP_
+#define NES_COORDINATOR_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers.hpp>
@@ -158,4 +158,4 @@ class QueryService {
 
 };// namespace NES
 
-#endif// NES_CORE_INCLUDE_SERVICES_QUERYSERVICE_HPP_
+#endif  // NES_COORDINATOR_INCLUDE_SERVICES_QUERYSERVICE_HPP_

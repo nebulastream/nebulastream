@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_
-#define NES_CORE_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_
+#define NES_RUNTIME_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_
 
 #include <memory>
 namespace NES {
@@ -40,4 +40,4 @@ class MemorySegment;
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_
+#endif  // NES_RUNTIME_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_
