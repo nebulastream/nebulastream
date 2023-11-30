@@ -133,15 +133,15 @@ void YamlExport::addWorker(const std::vector<WorkerSubQuery>& subQueries, const 
         auto sources = subQuery.subplan->getOperatorByType<NES::SourceLogicalOperatorNode>();
         NES_ASSERT2_FMT(sink.size() == 1, "Expected Single Sink: {}", subQuery.subplan->toString());
         auto networkSinkDescriptor = sink[0]->getSinkDescriptor()->as<NES::Network::NetworkSinkDescriptor>();
-        auto type = WorkerDownStreamLinkConfigurationType::Worker;
+        auto type = WorkerDownStreamLinkConfigurationType::node;
         std::optional<KafkaSinkConfiguration> kafkaSinkConfig = std::nullopt;
         std::optional<WorkerLinkConfiguration> workerLink = std::nullopt;
         if (exportToKafka.has_value() && networkSinkDescriptor->getNodeLocation().getNodeId() == SINK_NODE) {
-            type = WorkerDownStreamLinkConfigurationType::Kafka;
+            type = WorkerDownStreamLinkConfigurationType::kafka;
             kafkaSinkConfig.emplace(KafkaSinkConfiguration{{}, exportToKafka->broker, exportToKafka->topic});
             kafkaSinkConfig->setSchema(sink[0]->getOutputSchema());
         } else {
-            type = WorkerDownStreamLinkConfigurationType::Worker;
+            type = WorkerDownStreamLinkConfigurationType::node;
             workerLink.emplace(WorkerLinkConfiguration{
                 networkSinkDescriptor->getNodeLocation().getHostname(),
                 networkSinkDescriptor->getNodeLocation().getPort(),
