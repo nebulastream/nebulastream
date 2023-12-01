@@ -272,7 +272,7 @@ class TPCH_Query6_Python_Multiple_UDFs {
         // cannot do aggregations with a Map UDF bc it has nothing to aggregate with
 
         std::map<std::string, std::string> modulesToImport;
-        auto functionShipdate = "def tpch_query_6_shipdate(l_extendedprice, l_shipdate, l_discount, l_quantity):\n"
+        auto functionShipdate = "def tpch_query_6_shipdate(l_shipdate, l_discount, l_quantity, l_extendedprice):\n"
                                 "\tif (l_shipdate >= 19940101) and (l_shipdate < 19950101):\n"
                                 "\t\treturn (l_extendedprice, l_shipdate, l_discount, l_quantity)\n"
                                 "\telse:\n"
@@ -281,7 +281,7 @@ class TPCH_Query6_Python_Multiple_UDFs {
         auto functionNameShipdate = "tpch_query_6_shipdate";
         auto pythonUdfOperatorHandlerShipdate = initMapHandler(functionShipdate, functionNameShipdate, modulesToImport, pythonCompiler, inputSchema, inputSchema, pythonUDFCompilationTimeTimerShipdate);
 
-        auto functionDiscount = "def tpch_query_6_discount(l_extendedprice, l_shipdate, l_discount, l_quantity):\n"
+        auto functionDiscount = "def tpch_query_6_discount(l_shipdate, l_discount, l_quantity, l_extendedprice):\n"
                                  "\tif l_discount >= 0.05 and l_discount <= 0.07:\n"
                                  "\t\treturn (l_extendedprice, l_shipdate, l_discount, l_quantity)\n"
                                  "\telse:\n"
@@ -290,7 +290,7 @@ class TPCH_Query6_Python_Multiple_UDFs {
         auto functionNameDiscount = "tpch_query_6_discount";
         auto pythonUdfOperatorHandlerDiscount = initMapHandler(functionDiscount, functionNameDiscount, modulesToImport, pythonCompiler, inputSchema, inputSchema, pythonUDFCompilationTimeTimerDiscount);
 
-        auto functionQuantity = "def tpch_query_6_quantity(l_extendedprice, l_shipdate, l_discount, l_quantity):\n"
+        auto functionQuantity = "def tpch_query_6_quantity(l_shipdate, l_discount, l_quantity, l_extendedprice):\n"
                                  "\tif l_quantity < 24:\n"
                                  "\t\treturn l_extendedprice * l_discount\n"
                                  "\telse:\n"
@@ -309,9 +309,9 @@ class TPCH_Query6_Python_Multiple_UDFs {
         std::vector<std::string> projections = {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"};
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr), projections);
 
-        auto udfOperatorShipdate = std::make_shared<Operators::MapPythonUDF>(1, inputSchema, outputSchema, pythonCompiler);
+        auto udfOperatorShipdate = std::make_shared<Operators::MapPythonUDF>(1, inputSchema, inputSchema, pythonCompiler);
         scanOperator->setChild(udfOperatorShipdate);
-        auto udfOperatorDiscount = std::make_shared<Operators::MapPythonUDF>(2, inputSchema, outputSchema, pythonCompiler);
+        auto udfOperatorDiscount = std::make_shared<Operators::MapPythonUDF>(2, inputSchema, inputSchema, pythonCompiler);
         udfOperatorShipdate->setChild(udfOperatorDiscount);
         auto udfOperatorQuantity = std::make_shared<Operators::MapPythonUDF>(3, inputSchema, outputSchema, pythonCompiler);
         udfOperatorDiscount->setChild(udfOperatorQuantity);

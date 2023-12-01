@@ -51,9 +51,9 @@ class MicroBenchmarkRunner {
 
         NES::Logger::setupLogging("MicroBenchmarkRunner.log", NES::LogLevel::LOG_DEBUG);
         provider = ExecutablePipelineProviderRegistry::getPlugin(compiler).get();
-        table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(0, bm, 100);
+        table_bm = std::make_shared<Runtime::BufferManager>(100 * 1024 * 1024, 2048);
+        bm = std::make_shared<Runtime::BufferManager>(10 * 1024 * 1024, 1024);
+        wc = std::make_shared<WorkerContext>(0, bm, 1000);
         options.setOptimize(true);
         options.setDumpToFile(false);
     }
@@ -173,16 +173,16 @@ class MicroBenchmarkRunner {
     std::shared_ptr<Runtime::BufferManager> table_bm;
     std::shared_ptr<WorkerContext> wc;
     uint64_t bufferSize = 1024;
-    // NES vs UDF 12500 Buffer
-    // NES vs UDF Projection 4167 Buffer
-    // black scholes 2500 Buffer
-    // concat string 6250 Buffer
-    // word count and avg word length 400 Buffer
-    // boolean 10000 Buffer
-    // linear reg 12500 Buffer
-    // kmeans 6250 Buffer
+    // NES vs UDF 1250.0 Buffer
+    // NES vs UDF Projection 350 Buffer
+    // black scholes 250.0 Buffer
+    // concat string 95 Buffer
+    // word count and avg word length 95 Buffer
+    // boolean 1000.0 Buffer
+    // linear reg 1250.0 Buffer
+    // kmeans 625.0 Buffer
 
-    uint64_t numberOfBuffers = 1000;
+    uint64_t numberOfBuffers = 95;
     //std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
 };
 
@@ -333,9 +333,9 @@ class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
         auto buffer = bm->getBufferBlocking();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
         for (uint64_t i = 0; i < bufferSize; i++) {
-            dynamicBuffer[i]["x"].write(i % 10_s64);
-            dynamicBuffer[i]["y"].write(+1_s64);
-            dynamicBuffer[i]["z"].write(+1_s64);
+            dynamicBuffer[i]["x"].write((int64_t) i % 10_s64);
+            dynamicBuffer[i]["y"].write((int64_t) +1_s64);
+            dynamicBuffer[i]["z"].write((int64_t) +1_s64);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
 
@@ -502,9 +502,9 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
         auto buffer = bm->getBufferBlocking();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
         for (uint64_t i = 0; i < bufferSize; i++) {
-            dynamicBuffer[i]["x"].write(i % 10_s64);
-            dynamicBuffer[i]["y"].write(+1_s64);
-            dynamicBuffer[i]["z"].write(+1_s64);
+            dynamicBuffer[i]["x"].write((int64_t) i % 10_s64);
+            dynamicBuffer[i]["y"].write((int64_t) +1_s64);
+            dynamicBuffer[i]["z"].write((int64_t) +1_s64);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
 
@@ -892,12 +892,14 @@ class StringConcatUDF : public MicroBenchmarkRunner {
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scanOperator);
 
-        auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
+        auto bufferMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, table_bm->getBufferSize());
+        auto buffer = table_bm->getBufferBlocking();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(bufferMemoryLayout, buffer);
 
-        for (uint64_t i = 0; i < bufferSize; i++) {
-            std::string value = "Appended String:";
-            auto varLengthBuffer = bm->getBufferBlocking();
+
+        for (uint64_t i = 0; i < bufferSize; i++) {// string with 100 chars
+            std::string value = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut l";
+            auto varLengthBuffer = table_bm->getBufferBlocking();
             *varLengthBuffer.getBuffer<uint32_t>() = value.size();
             std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
             auto index = buffer.storeChildBuffer(varLengthBuffer);
@@ -974,23 +976,17 @@ class StringWordCountUDF : public MicroBenchmarkRunner {
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scanOperator);
 
-        auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
+        auto bufferMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, table_bm->getBufferSize());
+        auto buffer = table_bm->getBufferBlocking();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(bufferMemoryLayout, buffer);
 
-        // words with 500 chars
-        std::string longWords = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et e";
+        // words with 100 chars
+        std::string longWords = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut l";
 
-        // set seed
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        // set range
-        std::uniform_int_distribution<> start(0, 249);
-        std::uniform_int_distribution<> end(250, 500);
         for (uint64_t i = 0; i < bufferSize; i++) {
-            std::string value = longWords.substr(start(gen), end(gen));
-            auto varLengthBuffer = bm->getBufferBlocking();
-            *varLengthBuffer.getBuffer<uint32_t>() = value.size();
-            std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
+            auto varLengthBuffer = table_bm->getBufferBlocking();
+            *varLengthBuffer.getBuffer<uint32_t>() = longWords.size();
+            std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), longWords.c_str());
             auto index = buffer.storeChildBuffer(varLengthBuffer);
             dynamicBuffer[i]["input"].write(index);
             dynamicBuffer.setNumberOfTuples(i + 1);
@@ -1014,7 +1010,6 @@ class StringWordCountUDF : public MicroBenchmarkRunner {
         executionTimeTimer.pause();
 
         executablePipeline->stop(pipelineContext);
-
 
         sumPythonExecution += handler->getSumExecution();
         double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
@@ -1064,23 +1059,17 @@ class StringAverageWordLengthUDF : public MicroBenchmarkRunner {
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scanOperator);
 
-        auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
+        auto bufferMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, table_bm->getBufferSize());
+        auto buffer = table_bm->getBufferBlocking();
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(bufferMemoryLayout, buffer);
 
-        // words with 500 chars
-        std::string longWords = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et e";
+        // words with 100 chars
+        std::string longWords = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut l";
 
-        // set seed
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        // set range
-        std::uniform_int_distribution<> start(0, 249);
-        std::uniform_int_distribution<> end(250, 500);
         for (uint64_t i = 0; i < bufferSize; i++) {
-            std::string value = longWords.substr(start(gen), end(gen));
-            auto varLengthBuffer = bm->getBufferBlocking();
-            *varLengthBuffer.getBuffer<uint32_t>() = value.size();
-            std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
+            auto varLengthBuffer = table_bm->getBufferBlocking();
+            *varLengthBuffer.getBuffer<uint32_t>() = longWords.size();
+            std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), longWords.c_str());
             auto index = buffer.storeChildBuffer(varLengthBuffer);
             dynamicBuffer[i]["input"].write(index);
             dynamicBuffer.setNumberOfTuples(i + 1);
@@ -1244,18 +1233,8 @@ class LinearRegression : public MicroBenchmarkRunner {
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scanOperator);
 
-        auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
-
-        // set seed
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        // set range
-        std::uniform_real_distribution<> x(0, 50);
-        for (uint64_t i = 0; i < bufferSize; i++) {
-            dynamicBuffer[i]["x"].write(x(gen));
-            dynamicBuffer.setNumberOfTuples(i + 1);
-        }
+        auto bufferMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, table_bm->getBufferSize());
+        auto buffer = initInputBuffer<double>("x", table_bm, bufferMemoryLayout);
 
         //auto buffer = NES::Runtime::TupleBuffer();
         auto executablePipeline = provider->create(pipeline, options);
@@ -1330,7 +1309,7 @@ class KMeansUDF : public MicroBenchmarkRunner {
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scanOperator);
 
-        auto buffer = bm->getBufferBlocking();
+        auto buffer = table_bm->getBufferBlocking();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
 
         // set seed
