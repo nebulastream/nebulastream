@@ -313,6 +313,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
             // register the incoming channel
             auto sink = std::make_shared<NullOutputSink>(recvEngine, 1, 0, 0);
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> succ = {sink};
+            Version sourceVersion = 0;
             auto source = std::make_shared<NetworkSource>(schema,
                                                           recvEngine->getBufferManager(),
                                                           recvEngine->getQueryManager(),
@@ -322,7 +323,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           64,
                                                           NSOURCE_RETRY_WAIT,
                                                           NSOURCE_RETRIES,
-                                                          std::move(succ), 0);
+                                                          std::move(succ), sourceVersion);
             auto qep = Runtime::Execution::ExecutableQueryPlan::create(0,
                                                                        0,
                                                                        {source},

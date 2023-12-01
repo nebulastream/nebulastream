@@ -41,7 +41,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
-                         Version versionNumber)
+                         Version version)
     : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
@@ -53,7 +53,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), versionNumber(versionNumber) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), version(version) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
 }
@@ -137,7 +137,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                                               retryTimes,
                                                                                               reconf,
                                                                                               queryManager,
-                                                                                              versionNumber);
+                                                                                              version);
                 workerContext.storeNetworkChannelFuture(getUniqueNetworkSinkDescriptorId(), std::move(networkChannelFuture));
                 workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
             } else {
@@ -253,7 +253,7 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
 
             receiverLocation = versionUpdate.nodeLocation;
             nesPartition = versionUpdate.partition;
-            versionNumber = versionUpdate.version;
+            version = versionUpdate.version;
 
             break;
         }

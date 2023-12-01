@@ -41,7 +41,7 @@ void PartitionManager::PartitionConsumerEntry::unpin() {
 
 DataEmitterPtr PartitionManager::PartitionConsumerEntry::getConsumer() { return consumer; }
 
-Version PartitionManager::PartitionConsumerEntry::getVersionNumber() {
+Version PartitionManager::PartitionConsumerEntry::getVersion() {
     return consumer->getVersion();
 }
 
@@ -57,11 +57,11 @@ bool PartitionManager::PartitionConsumerEntry::startNewVersion() {
     return true;
 }
 
-void PartitionManager::PartitionConsumerEntry::addPendingVersion(Version pendingVersionNumber, NodeLocation pendingSenderLocation) {
+void PartitionManager::PartitionConsumerEntry::addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation) {
     if (this->pendingVersion.has_value()) {
         NES_NOT_IMPLEMENTED();
     }
-    this->pendingVersion = {pendingVersionNumber, pendingSenderLocation};
+    this->pendingVersion = {pendingVersion, pendingSenderLocation};
 }
 
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
@@ -159,17 +159,17 @@ bool PartitionManager::startNewVersion(NesPartition partition) {
 Version PartitionManager::getVersion(NesPartition partition) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        return it->second.getVersionNumber();
+        return it->second.getVersion();
     }
     NES_ASSERT(false, "Trying to check version of inexistent partition");
     return false;
 }
 
 void PartitionManager::addPendingVersion(NesPartition partition,
-                                         Version pendingVersionNumber, NodeLocation pendingSenderLocation) {
+                                         Version pendingVersion, NodeLocation pendingSenderLocation) {
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        it->second.addPendingVersion(pendingVersionNumber, pendingSenderLocation);
+        it->second.addPendingVersion(pendingVersion, pendingSenderLocation);
     }
 }
 

@@ -21,22 +21,22 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
-                                             Version initialVersion,
+                                             Version version,
                                              uint64_t numberOfOrigins)
     : SinkDescriptor(numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes), initialVersion(initialVersion) {}
+      waitTime(waitTime), retryTimes(retryTimes), version(version) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
-                                                Version initialVersion,
+                                                Version version,
                                                 uint64_t numberOfOrigins) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
                                                                          nesPartition,
                                                                          waitTime,
                                                                          retryTimes,
-                                                                         initialVersion,
+                                                                         version,
                                                                          numberOfOrigins));
 }
 
@@ -61,6 +61,6 @@ std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return wa
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
-uint16_t NetworkSinkDescriptor::getInitialVersion() const { return initialVersion; }
+uint16_t NetworkSinkDescriptor::getVersion() const { return version; }
 
 }// namespace NES::Network

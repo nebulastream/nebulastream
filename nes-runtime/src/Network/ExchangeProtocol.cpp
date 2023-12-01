@@ -48,9 +48,9 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             status == PartitionRegistrationStatus::Registered) {
 
             //check version
-            if (partitionManager->getVersion(nesPartition) != msg.getVersionNumber()) {
+            if (partitionManager->getVersion(nesPartition) != msg.getVersion()) {
                 NES_DEBUG("Ignoring client anouncement for version {} because the current version is {}",
-                          msg.getVersionNumber(),
+                          msg.getVersion(),
                           partitionManager->getVersion(nesPartition));
                 return Messages::ErrorMessage(msg.getChannelId(), ErrorType::VersionMismatchError);
             }

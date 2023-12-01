@@ -42,7 +42,7 @@ class NetworkSourceDescriptor : public SourceDescriptor {
                                       NodeLocation nodeLocation,
                                       std::chrono::milliseconds waitTime,
                                       uint32_t retryTimes,
-                                      Version initialVersion);
+                                      Version version);
 
     /**
      * @brief equal method for the NetworkSourceDescriptor
@@ -78,10 +78,10 @@ class NetworkSourceDescriptor : public SourceDescriptor {
     uint8_t getRetryTimes() const;
 
     /**
-     * @brief getter for the initial version
-     * @return the initial version
+     * @brief getter for the version
+     * @return the version
      */
-    uint16_t getInitialVersion() const;
+    uint16_t getVersion() const;
 
     SourceDescriptorPtr copy() override;
 
@@ -91,13 +91,13 @@ class NetworkSourceDescriptor : public SourceDescriptor {
                                      NodeLocation nodeLocation,
                                      std::chrono::milliseconds waitTime,
                                      uint32_t retryTimes,
-                                     Version initialVersion);
+                                     Version version);
 
     NesPartition nesPartition;
     NodeLocation nodeLocation;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
-    Version initialVersion;
+    Version version;
 };
 
 using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;

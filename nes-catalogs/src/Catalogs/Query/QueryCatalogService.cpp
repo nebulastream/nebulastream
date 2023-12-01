@@ -306,6 +306,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
     }
     return true;
 }
+
 bool QueryCatalogService::handleMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus) {
     std::unique_lock lock(serviceMutex);
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
@@ -329,7 +330,7 @@ bool QueryCatalogService::handleMigration(SharedQueryId sharedQueryId, QuerySubP
                         std::string(magic_enum::enum_name(subQueryStatus)),
                         querySubPlanId,
                         queryId);
-            //FIXME: fix what to do when this occurs
+            //todo #4089: fix what to do when this occurs
             NES_ASSERT(false,
                        "Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
                                          << std::string(magic_enum::enum_name(subQueryStatus)) << " for the sub query with id "

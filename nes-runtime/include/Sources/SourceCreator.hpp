@@ -339,7 +339,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
  * @param waitTime the amount of time the networkSource is supposed to wait for a reply
  * @param retryTimes the number of times the networkSource resends a message, if it does not receive a reply within waitTime
  * @param physicalSourceName the name and unique identifier of a physical source
- * @param initialVersion the version number of the source at its time of creation
+ * @param version the version number of the source at its time of creation
  * @param successors the subsequent operators in the pipeline to which the data is pushed
  * @return a data source pointer
  */
@@ -353,7 +353,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   std::chrono::milliseconds waitTime,
                                   uint8_t retryTimes,
                                   const std::string& physicalSourceName,
-                                  Version initialVersion,
+                                  Version version,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**

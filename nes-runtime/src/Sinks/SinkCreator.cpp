@@ -185,7 +185,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               Runtime::NodeEnginePtr const& nodeEngine,
                               size_t numOfProducers,
                               std::chrono::milliseconds waitTime,
-                              Version versionNumber,
+                              Version version,
                               uint64_t numberOfOrigins,
                               uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema,
@@ -199,7 +199,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   waitTime,
                                                   retryTimes,
                                                   numberOfOrigins,
-                                                  versionNumber);
+                                                  version);
 }
 
 DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
