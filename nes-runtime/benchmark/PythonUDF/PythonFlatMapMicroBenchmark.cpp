@@ -23,7 +23,7 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Project.hpp>
-#include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
+#include <Execution/Operators/Relational/PythonUDF/FlatMapPythonUDF.hpp>
 #include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -95,7 +95,7 @@ class MicroBenchmarkRunner {
     };
 
     /**
-     * Initializes a pipeline with a Scan of the input tuples, a MapPythonUDF operator, and a emit of the processed tuples.
+     * Initializes a pipeline with a Scan of the input tuples, a FlatMapPythonUDF operator, and a emit of the processed tuples.
      * @param schema Schema of the input and output tuples.
      * @param memoryLayout memory layout
      * @return
@@ -103,7 +103,7 @@ class MicroBenchmarkRunner {
     auto initPipelineOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, auto bufferManager) {
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
 
-        auto mapOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        auto mapOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -181,180 +181,6 @@ class MicroBenchmarkRunner {
     // kmeans 6250 Buffer
 
     uint64_t numberOfBuffers = 10;
-    //std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
-};
-
-class SimpleFilterQueryNumericalNES : public MicroBenchmarkRunner {
-  public:
-    SimpleFilterQueryNumericalNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        sumPythonExecution += 0;
-        sumPythonCompilation += 0;
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
-
-        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-        schema->addField("x", BasicType::INT64);
-        // schema->addField("f2", BasicType::INT64);
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-
-        compileTimeTimer.start();
-        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-        auto valueLeft = std::make_shared<Expressions::ConstantInt64ValueExpression>(10);
-        auto valueRight = std::make_shared<Expressions::ReadFieldExpression>("x");
-        auto equalsExpression = std::make_shared<Expressions::GreaterThanExpression>(valueRight, valueLeft);
-        auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
-        scanOperator->setChild(selectionOperator);
-
-        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-        selectionOperator->setChild(emitOperator);
-
-        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-        pipeline->setRootOperator(scanOperator);
-
-        auto buffer = initInputBuffer<int64_t>("x", bm, memoryLayout);
-        auto executablePipeline = provider->create(pipeline, options);
-        auto pipelineContext = MockedPipelineExecutionContext();
-
-        executablePipeline->setup(pipelineContext);
-        compileTimeTimer.snapshot("setup");
-        compileTimeTimer.pause();
-
-        executionTimeTimer.start();
-        for (uint64_t i = 0; i < numberOfBuffers; i++) {
-            executablePipeline->execute(buffer, pipelineContext, *wc);
-        }
-        executionTimeTimer.snapshot("execute");
-        executionTimeTimer.pause();
-
-        executablePipeline->stop(pipelineContext);
-    }
-
-    std::string getUDFName() override {
-        return "nes_filter";
-    }
-};
-
-class SimpleMapQueryNES : public MicroBenchmarkRunner {
-  public:
-    SimpleMapQueryNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        sumPythonExecution += 0;
-        sumPythonCompilation += 0;
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
-
-        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-        schema->addField("x", BasicType::INT64);
-        // schema->addField("f2", BasicType::INT64);
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-
-        compileTimeTimer.start();
-        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-        auto valueLeft = std::make_shared<Expressions::ConstantInt64ValueExpression>(10);
-        auto valueRight = std::make_shared<Expressions::ReadFieldExpression>("x");
-        auto addExpression = std::make_shared<Expressions::GreaterThanExpression>(valueRight, valueLeft);
-        auto writeFieldExpression = std::make_shared<Expressions::WriteFieldExpression>("x", addExpression);
-        auto mapOperator = std::make_shared<Operators::Map>(writeFieldExpression);
-        scanOperator->setChild(mapOperator);
-
-        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-        mapOperator->setChild(emitOperator);
-
-        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-        pipeline->setRootOperator(scanOperator);
-
-        auto buffer = initInputBuffer<int64_t>("x", bm, memoryLayout);
-        auto executablePipeline = provider->create(pipeline, options);
-        auto pipelineContext = MockedPipelineExecutionContext();
-
-        executablePipeline->setup(pipelineContext);
-        compileTimeTimer.snapshot("setup");
-        compileTimeTimer.pause();
-
-        executionTimeTimer.start();
-        for (uint64_t i = 0; i < numberOfBuffers; i++) {
-            executablePipeline->execute(buffer, pipelineContext, *wc);
-        }
-        executionTimeTimer.snapshot("execute");
-        executionTimeTimer.pause();
-        executablePipeline->stop(pipelineContext);
-    }
-
-    std::string getUDFName() override {
-        return "nes_map";
-    }
-};
-
-class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
-  public:
-    SimpleProjectionQueryNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        sumPythonExecution += 0;
-        sumPythonCompilation += 0;
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
-
-        auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField("x", BasicType::INT64)
-                          ->addField("y", BasicType::INT64)
-                          ->addField("z", BasicType::INT64);
-        auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                               ->addField("x", BasicType::INT64);
-        auto inputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
-        auto outputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
-
-
-        compileTimeTimer.start();
-        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
-        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-        std::vector<Record::RecordFieldIdentifier> inputFields{"x", "y", "z"};
-        std::vector<Record::RecordFieldIdentifier> outputFields{"x"};
-        auto projectOperator = std::make_shared<Operators::Project>(inputFields, outputFields);
-        scanOperator->setChild(projectOperator);
-
-        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
-        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-        projectOperator->setChild(emitOperator);
-
-        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-        pipeline->setRootOperator(scanOperator);
-
-
-        auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
-        for (uint64_t i = 0; i < bufferSize; i++) {
-            dynamicBuffer[i]["x"].write(i % 10_s64);
-            dynamicBuffer[i]["y"].write(+1_s64);
-            dynamicBuffer[i]["z"].write(+1_s64);
-            dynamicBuffer.setNumberOfTuples(i + 1);
-        }
-
-        //auto buffer = NES::Runtime::TupleBuffer();
-        auto executablePipeline = provider->create(pipeline, options);
-        auto pipelineContext = MockedPipelineExecutionContext();
-
-        executablePipeline->setup(pipelineContext);
-        compileTimeTimer.snapshot("setup");
-        compileTimeTimer.pause();
-
-        executionTimeTimer.start();
-        for (uint64_t i = 0; i < numberOfBuffers; i++) {
-            executablePipeline->execute(buffer, pipelineContext, *wc);
-        }
-        executionTimeTimer.snapshot("execute");
-        executionTimeTimer.pause();
-
-        executablePipeline->stop(pipelineContext);
-    }
-
-    std::string getUDFName() override {
-        return "nes_projection";
-    }
 };
 
 class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
@@ -364,7 +190,10 @@ class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
 
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def filter_numerical(x):"
-                               "\n\treturn x > 10\n";
+                               "\n\tif x > 10:"
+                               "\n\t\treturn [x]"
+                               "\n\telse:"
+                               "\n\t\treturn []\n";
         std::string functionName = "filter_numerical";
         auto variableName = "x";
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -406,7 +235,7 @@ class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "filter_udf";
+        return "flat_map_filter_udf";
     }
 };
 
@@ -418,7 +247,7 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def simple_map(x):"
                                "\n\ty = x + 10"
-                               "\n\treturn y\n";
+                               "\n\treturn [y]\n";
         std::string functionName = "simple_map";
         auto variableName = "x";
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -462,7 +291,7 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "map_udf";
+        return "flat_map_map_udf";
     }
 };
 
@@ -473,7 +302,7 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def simple_projection(x, y, z):"
-                               "\n\treturn x\n";
+                               "\n\treturn [x]\n";
         std::string functionName = "simple_projection";
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -490,7 +319,7 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto projectOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        auto projectOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         scanOperator->setChild(projectOperator);
 
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
@@ -504,9 +333,9 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
         auto buffer = bm->getBufferBlocking();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
         for (uint64_t i = 0; i < bufferSize; i++) {
-            dynamicBuffer[i]["x"].write(i % 10_s64);
-            dynamicBuffer[i]["y"].write(+1_s64);
-            dynamicBuffer[i]["z"].write(+1_s64);
+            dynamicBuffer[i]["x"].write((int64_t) i % 10_s64);
+            dynamicBuffer[i]["y"].write((int64_t) +1_s64);
+            dynamicBuffer[i]["z"].write((int64_t) +1_s64);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
 
@@ -544,68 +373,7 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "projection_udf";
-    }
-};
-
-class NumbaExampleUDF : public MicroBenchmarkRunner {
-    // using a modified example of the 5 minutes guide to check whether numba is working
-    // https://numba.pydata.org/numba-doc/latest/user/5minguide.html
-  public:
-    NumbaExampleUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        std::map<std::string, std::string> modulesToImport;
-        //modulesToImport.insert({"numpy", "np"});
-        std::string function = "def go_fast(x):"
-                               "\n\ttotal = 0.0"
-                               "\n\tfor i in range(10):"
-                               "\n\t\tfor j in range(1,10):"
-                               "\n\t\t\ttotal += (i/j)"
-                               "\n\treturn x"; // cannot return numpy array atm
-        std::string functionName = "go_fast";
-        auto variableName = "x";
-        auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(variableName, BasicType::INT64);
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-
-        compileTimeTimer.start();
-        auto pipeline = initPipelineOperator(schema, schema, bm);
-        // auto dummyBuffer = NES::Runtime::TupleBuffer(); // from the TPCHBenchmark
-        auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
-        auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, schema, schema);
-        auto pipelineContext = MockedPipelineExecutionContext({handler});
-        executablePipeline->setup(pipelineContext);
-        compileTimeTimer.snapshot("setup");
-        compileTimeTimer.pause();
-
-        executionTimeTimer.start();
-        for (uint64_t i = 0; i < numberOfBuffers; i++) {
-            executablePipeline->execute(buffer, pipelineContext, *wc);
-        }
-        executionTimeTimer.snapshot("execute");
-        executionTimeTimer.pause();
-
-        executablePipeline->stop(pipelineContext);
-
-
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
-        NES_INFO("avg python udf execution time {}", avg_exec);
-        auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
-
-        std::ofstream outputFileExecute;
-        outputFileExecute.open(executeFile, std::ios_base::app);
-        outputFileExecute << avg_exec << "\n";
-        outputFileExecute.close();
-
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
-    }
-
-    std::string getUDFName() override {
-        return "double_loop";
+        return "flat_map_projection_udf";
     }
 };
 
@@ -617,6 +385,12 @@ class BlackScholesNumPyUDF : public MicroBenchmarkRunner {
         std::map<std::string, std::string> modulesToImport;
         modulesToImport.insert({"numpy", "np"});
         std::string function = "def black_scholes_np_udf(stockPrice, optionStrike, optionYears, Riskfree, Volatility):\n"
+                               "\tglobal collector\n"
+                               "\titeration = 0\n"
+                               "\tif len(collector) == 10:\n"
+                               "\t\tavg_black_scholes = sum(collector) / len(collector)\n"
+                               "\t\tcollector = []\n"
+                               "\t\treturn [avg_black_scholes]\n"
                                "\tS = stockPrice\n"
                                "\tX = optionStrike\n"
                                "\tT = optionYears\n"
@@ -645,7 +419,9 @@ class BlackScholesNumPyUDF : public MicroBenchmarkRunner {
                                "\n"
                                "\tcallResult = S * cndd1 - X * expRT * cndd2\n"
                                "\tputResult = X * expRT * (1.0 - cndd2) - S * (1.0 - cndd1)\n"
-                               "\treturn np.add(callResult, putResult).item()"; // cannot return numpy array atm
+                               "\tsumResult = np.add(callResult, putResult).item()\n"
+                               "\tcollector.append(sumResult)\n"
+                               "\treturn []";; // cannot return numpy array atm
         std::string functionName = "black_scholes_np_udf";
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -664,7 +440,7 @@ class BlackScholesNumPyUDF : public MicroBenchmarkRunner {
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto projectOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        auto projectOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         scanOperator->setChild(projectOperator);
 
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
@@ -733,7 +509,7 @@ class BlackScholesNumPyUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "black_scholes_numpy";
+        return "flat_map_black_scholes_numpy";
     }
 };
 
@@ -745,6 +521,12 @@ class BlackScholesUDF : public MicroBenchmarkRunner {
         std::map<std::string, std::string> modulesToImport;
         modulesToImport.insert({"math", ""});
         std::string function = "def black_scholes_udf(stockPrice, optionStrike, optionYears, Riskfree, Volatility):\n"
+                               "\tglobal collector\n"
+                               "\titeration = 0\n"
+                               "\tif len(collector) == 10:\n"
+                               "\t\tavg_black_scholes = sum(collector) / len(collector)\n"
+                               "\t\tcollector = []\n"
+                               "\t\treturn [avg_black_scholes]\n"
                                "\tS = stockPrice\n"
                                "\tX = optionStrike\n"
                                "\tT = optionYears\n"
@@ -780,7 +562,9 @@ class BlackScholesUDF : public MicroBenchmarkRunner {
                                "\n"
                                "\tcallResult = S * cndd1 - X * expRT * cndd2\n"
                                "\tputResult = X * expRT * (1.0 - cndd2) - S * (1.0 - cndd1)\n"
-                               "\treturn callResult + putResult";
+                               "\tsumResult = callResult + putResult\n"
+                               "\tcollector.append(sumResult)\n"
+                               "\treturn []";
         std::string functionName = "black_scholes_udf";
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -799,7 +583,7 @@ class BlackScholesUDF : public MicroBenchmarkRunner {
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto projectOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        auto projectOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         scanOperator->setChild(projectOperator);
 
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
@@ -868,95 +652,11 @@ class BlackScholesUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "black_scholes";
+        return "flat_map_black_scholes";
     }
 };
 
 // string micro benchmarks
-
-class StringConcatUDF : public MicroBenchmarkRunner {
-  public:
-    StringConcatUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        std::map<std::string, std::string> modulesToImport;
-        std::string function = "def concat_string(input):\n"
-                               "\treturn input +\"test\"";
-        std::string functionName = "concat_string";
-
-        auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                               ->addField("input", BasicType::TEXT);
-        auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("result", BasicType::TEXT);
-        auto inputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
-        auto outputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
-
-
-        compileTimeTimer.start();
-        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
-        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-        auto udfOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
-        scanOperator->setChild(udfOperator);
-
-        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
-        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-        udfOperator->setChild(emitOperator);
-
-        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-        pipeline->setRootOperator(scanOperator);
-
-        auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
-
-        for (uint64_t i = 0; i < bufferSize; i++) {
-            std::string value = "Appended String:";
-            auto varLengthBuffer = bm->getBufferBlocking();
-            *varLengthBuffer.getBuffer<uint32_t>() = value.size();
-            std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
-            auto index = buffer.storeChildBuffer(varLengthBuffer);
-         dynamicBuffer[i]["input"].write(index);
-            dynamicBuffer.setNumberOfTuples(i + 1);
-        }
-
-        //auto buffer = NES::Runtime::TupleBuffer();
-        auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-        auto pipelineContext = MockedPipelineExecutionContext({handler});
-
-        executablePipeline->setup(pipelineContext);
-        compileTimeTimer.snapshot("setup");
-        compileTimeTimer.pause();
-
-        executionTimeTimer.start();
-        for (uint64_t i = 0; i < numberOfBuffers; i++) {
-            executablePipeline->execute(buffer, pipelineContext, *wc);
-        }
-
-        executionTimeTimer.snapshot("execute");
-        executionTimeTimer.pause();
-
-        executablePipeline->stop(pipelineContext);
-
-
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
-        NES_INFO("avg python udf execution time {}", avg_exec);
-        auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
-
-        std::ofstream outputFileExecute;
-        outputFileExecute.open(executeFile, std::ios_base::app);
-        outputFileExecute << avg_exec << "\n";
-        outputFileExecute.close();
-
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
-    }
-
-    std::string getUDFName() override {
-        return "string_concat";
-    }
-};
 
 class StringWordCountUDF : public MicroBenchmarkRunner {
   public:
@@ -967,7 +667,7 @@ class StringWordCountUDF : public MicroBenchmarkRunner {
         std::string function = "def wordcount(sentence):\n"
                                "\twords = sentence.split(\" \")\n"
                                "\tlength = len(words)\n"
-                               "\treturn length";
+                               "\treturn [length]";
         std::string functionName = "wordcount";
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -981,7 +681,7 @@ class StringWordCountUDF : public MicroBenchmarkRunner {
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto udfOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        auto udfOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         scanOperator->setChild(udfOperator);
 
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
@@ -1048,7 +748,7 @@ class StringWordCountUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "word_count";
+        return "flat_map_word_count";
     }
 };
 
@@ -1060,7 +760,7 @@ class StringAverageWordLengthUDF : public MicroBenchmarkRunner {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def avg_word_length(sentence):\n"
                                "\twords = sentence.split()\n"
-                               "\treturn sum(len(word) for word in words) / len(words)";
+                               "\treturn [sum(len(word) for word in words) / len(words)]";
         std::string functionName = "avg_word_length";
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -1074,7 +774,7 @@ class StringAverageWordLengthUDF : public MicroBenchmarkRunner {
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto udfOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        auto udfOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         scanOperator->setChild(udfOperator);
 
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
@@ -1141,7 +841,7 @@ class StringAverageWordLengthUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "avg_word_length";
+        return "flat_map_avg_word_length";
     }
 };
 
@@ -1153,9 +853,9 @@ class BooleanUDF : public MicroBenchmarkRunner {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def boolean_udf(check, value):\n"
                                "\tif check:\n"
-                               "\t\treturn value\n"
+                               "\t\treturn [value]\n"
                                "\telse:\n"
-                               "\t\treturn 0";
+                               "\t\treturn [0]";
         std::string functionName = "boolean_udf";
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -1170,7 +870,7 @@ class BooleanUDF : public MicroBenchmarkRunner {
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto udfOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        auto udfOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         scanOperator->setChild(udfOperator);
 
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
@@ -1189,7 +889,7 @@ class BooleanUDF : public MicroBenchmarkRunner {
             } else {
                 dynamicBuffer[i]["check"].write((bool) false);
             }
-            dynamicBuffer[i]["value"].write(i % 10_s64);
+            dynamicBuffer[i]["value"].write((int64_t) i % 10_s64);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
 
@@ -1228,113 +928,25 @@ class BooleanUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "boolean_udf";
+        return "flat_map_boolean_udf";
     }
 };
 
-class LinearRegression : public MicroBenchmarkRunner {
+class SimpleAggregationUDF : public MicroBenchmarkRunner {
   public:
-    LinearRegression(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
+    SimpleAggregationUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
-        modulesToImport.insert({"sklearn.datasets", ""});
-        modulesToImport.insert({"sklearn.linear_model", ""});
-        modulesToImport.insert({"numpy", "np"});
-
-        std::string function = "def linear_regression_udf(x):\n"
-                               "\tX = [[1], [2], [3], [4]]\n"
-                               "\ty =  [14, 29, 10, 39]\n"
-                               "\treg = sklearn.linear_model.LinearRegression().fit(X, y)\n"
-                               "\treturn reg.predict([[x]]).item()";
-        std::string functionName = "linear_regression_udf";
-
-        auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                               ->addField("x", BasicType::FLOAT64);
-        auto outputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("prediction", BasicType::INT64);
-        auto inputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
-        auto outputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
-
-        compileTimeTimer.start();
-        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
-        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-        auto udfOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
-        scanOperator->setChild(udfOperator);
-
-        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
-        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-        udfOperator->setChild(emitOperator);
-
-        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-        pipeline->setRootOperator(scanOperator);
-
-        auto buffer = bm->getBufferBlocking();
-        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
-
-        // set seed
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        // set range
-        std::uniform_real_distribution<> x(0, 50);
-        for (uint64_t i = 0; i < bufferSize; i++) {
-            dynamicBuffer[i]["x"].write(x(gen));
-            dynamicBuffer.setNumberOfTuples(i + 1);
-        }
-
-        //auto buffer = NES::Runtime::TupleBuffer();
-        auto executablePipeline = provider->create(pipeline, options);
-        auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
-        auto pipelineContext = MockedPipelineExecutionContext({handler});
-
-        executablePipeline->setup(pipelineContext);
-        compileTimeTimer.snapshot("setup");
-        compileTimeTimer.pause();
-
-        executionTimeTimer.start();
-        for (uint64_t i = 0; i < numberOfBuffers; i++) {
-            executablePipeline->execute(buffer, pipelineContext, *wc);
-        }
-
-        executionTimeTimer.snapshot("execute");
-        executionTimeTimer.pause();
-
-        executablePipeline->stop(pipelineContext);
-
-
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
-        NES_INFO("avg python udf execution time {}", avg_exec);
-        auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
-
-        std::ofstream outputFileExecute;
-        outputFileExecute.open(executeFile, std::ios_base::app);
-        outputFileExecute << avg_exec << "\n";
-        outputFileExecute.close();
-
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
-    }
-
-    std::string getUDFName() override {
-        return "linear_regression";
-    }
-};
-
-class KMeansUDF : public MicroBenchmarkRunner {
-  public:
-    KMeansUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        std::map<std::string, std::string> modulesToImport;
-        modulesToImport.insert({"numpy", "np"});
-        std::string function = "def np_dot_udf(x, y):\n"
-                               "\tX = [[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]]\n"
-                               "\tkmeans = sklearn.cluster.KMeans(n_clusters=2, random_state=0, n_init=\"auto\").fit(X)\n"
-                               "\tprediction = kmeans.predict([[x, y]]).item()\n"
-                               "\treturn prediction";
-        std::string functionName = "kmeans_udf";
+        std::string function = "def aggregation_udf(x, y):\n"
+                               "\n\tglobal collector"
+                               "\n\tif x % 10 == 0:"
+                               "\n\t\tres = sum(collector)"
+                               "\n\t\treturn [res]"
+                               "\n\telse:"
+                               "\n\t\tcollector.append(y)"
+                               "\n\t\treturn []";
+        std::string functionName = "aggregation_udf";
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                ->addField("x", BasicType::INT64)
@@ -1349,7 +961,7 @@ class KMeansUDF : public MicroBenchmarkRunner {
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(inputMemoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto projectOperator = std::make_shared<Operators::MapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        auto projectOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
         scanOperator->setChild(projectOperator);
 
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(outputMemoryLayout);
@@ -1366,11 +978,10 @@ class KMeansUDF : public MicroBenchmarkRunner {
         std::random_device rd;
         std::mt19937 gen(rd());
         // set range
-        std::uniform_int_distribution<> xValue(0, 100);
+        std::uniform_int_distribution<> yValue(0, 100);
         for (uint64_t i = 0; i < bufferSize; i++) {
-            int64_t x = xValue(gen);
-            int64_t y = xValue(gen);
-            dynamicBuffer[i]["x"].write(x);
+            int64_t y = yValue(gen);
+            dynamicBuffer[i]["x"].write((int64_t) i);
             dynamicBuffer[i]["y"].write(y);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
@@ -1409,7 +1020,7 @@ class KMeansUDF : public MicroBenchmarkRunner {
     }
 
     std::string getUDFName() override {
-        return "kmeans";
+        return "flat_map_sum_aggregation_udf";
     }
 };
 
@@ -1423,7 +1034,7 @@ void deleteContentInFile(std::string filePath) {
 
 int main(int, char**) {
     std::vector<std::string> compilers = {"PipelineCompiler", "CPPPipelineCompiler"};
-    std::vector<std::string> pythonCompilers = {"cython"};
+    std::vector<std::string> pythonCompilers = {"cpython", "cython", "nuitka"};
     auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
     deleteContentInFile(executeFile);
     for (const auto& c : compilers) {
@@ -1433,23 +1044,17 @@ int main(int, char**) {
             outputFileExecute << pythonCompiler << "-" << c << "\n";
             outputFileExecute.close();
 
-            NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
-            //NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
+            //NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
-            //NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleProjectionQueryUDF(c, pythonCompiler).run();
-            //NES::Runtime::Execution::SimpleProjectionQueryNES(c, pythonCompiler).run();
-            //NES::Runtime::Execution::NumbaExampleUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::BlackScholesNumPyUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::BlackScholesUDF(c, pythonCompiler).run();
 
-            //NES::Runtime::Execution::StringConcatUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::StringWordCountUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::StringAverageWordLengthUDF(c, pythonCompiler).run();
 
             //NES::Runtime::Execution::BooleanUDF(c, pythonCompiler).run();
-            //NES::Runtime::Execution::LinearRegression(c, pythonCompiler).run();
-            //NES::Runtime::Execution::KMeansUDF(c, pythonCompiler).run();
+            NES::Runtime::Execution::SimpleAggregationUDF(c, pythonCompiler).run();
         }
     }
 }

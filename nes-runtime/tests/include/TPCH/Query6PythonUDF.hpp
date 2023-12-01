@@ -38,6 +38,7 @@
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
+#include <Execution/Operators/Relational/PythonUDF/FlatMapPythonUDF.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -70,13 +71,12 @@ class TPCH_Query6_Python {
                         std::map<std::string, std::string> modulesToImport,
                         std::string pythonCompiler,
                         SchemaPtr inputSchema,
-                        SchemaPtr outputSchema,
-                        Timer<>& pythonUDFCompilationTimeTimer) {
-        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema, pythonUDFCompilationTimeTimer);
+                        SchemaPtr outputSchema) {
+        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
     }
 
     static PipelinePlan getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
-                                        Runtime::BufferManagerPtr bm, std::string pythonCompiler, Timer<>& pythonUDFCompilationTimeTimer) {
+                                        Runtime::BufferManagerPtr bm, std::string pythonCompiler) {
         const SchemaPtr inputSchema = Schema::create()
                                           ->addField("l_shipdate", BasicType::INT32)
                                           ->addField("l_discount", BasicType::FLOAT32)
@@ -93,7 +93,7 @@ class TPCH_Query6_Python {
                         "    return 0";
         auto functionName = "tpch_query_6";
         std::map<std::string, std::string> modulesToImport;
-        auto pythonUdfOperatorHandler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema, pythonUDFCompilationTimeTimer);
+        auto pythonUdfOperatorHandler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
 
         PipelinePlan plan;
         auto& lineitems = tables[TPCHTable::LineItem];
@@ -158,13 +158,12 @@ class TPCH_Query6_Python_Pandas {
                                std::map<std::string, std::string> modulesToImport,
                                std::string pythonCompiler,
                                SchemaPtr inputSchema,
-                               SchemaPtr outputSchema,
-                               Timer<>& pythonUDFCompilationTimeTimer) {
-        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema, pythonUDFCompilationTimeTimer);
+                               SchemaPtr outputSchema) {
+        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
     }
 
     static PipelinePlan getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
-                                        Runtime::BufferManagerPtr bm, std::string pythonCompiler, Timer<>& pythonUDFCompilationTimeTimer) {
+                                        Runtime::BufferManagerPtr bm, std::string pythonCompiler) {
         const SchemaPtr inputSchema = Schema::create()
                                           ->addField("l_shipdate", BasicType::INT32)
                                           ->addField("l_discount", BasicType::FLOAT32)
@@ -187,7 +186,7 @@ class TPCH_Query6_Python_Pandas {
         auto functionName = "tpch_query_6_pandas";
         std::map<std::string, std::string> modulesToImport;
         modulesToImport.insert({"pandas", "pd"});
-        auto pythonUdfOperatorHandler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema, pythonUDFCompilationTimeTimer);
+        auto pythonUdfOperatorHandler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
 
         PipelinePlan plan;
         auto& lineitems = tables[TPCHTable::LineItem];
@@ -252,16 +251,12 @@ class TPCH_Query6_Python_Multiple_UDFs {
                                std::map<std::string, std::string> modulesToImport,
                                std::string pythonCompiler,
                                SchemaPtr inputSchema,
-                               SchemaPtr outputSchema,
-                               Timer<>& pythonUDFCompilationTimeTimer) {
-        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema, pythonUDFCompilationTimeTimer);
+                               SchemaPtr outputSchema) {
+        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
     }
 
     static PipelinePlan getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
-                                        Runtime::BufferManagerPtr bm, std::string pythonCompiler,
-                                        Timer<>& pythonUDFCompilationTimeTimerShipdate,
-                                        Timer<>& pythonUDFCompilationTimeTimerDiscount,
-                                        Timer<>& pythonUDFCompilationTimeTimerQuantity) {
+                                        Runtime::BufferManagerPtr bm, std::string pythonCompiler) {
         const SchemaPtr inputSchema = Schema::create()
                                           ->addField("l_shipdate", BasicType::INT32)
                                           ->addField("l_discount", BasicType::FLOAT32)
@@ -279,7 +274,7 @@ class TPCH_Query6_Python_Multiple_UDFs {
                                 "\t\treturn (0, 0, 0, 0)";
 
         auto functionNameShipdate = "tpch_query_6_shipdate";
-        auto pythonUdfOperatorHandlerShipdate = initMapHandler(functionShipdate, functionNameShipdate, modulesToImport, pythonCompiler, inputSchema, inputSchema, pythonUDFCompilationTimeTimerShipdate);
+        auto pythonUdfOperatorHandlerShipdate = initMapHandler(functionShipdate, functionNameShipdate, modulesToImport, pythonCompiler, inputSchema, inputSchema);
 
         auto functionDiscount = "def tpch_query_6_discount(l_extendedprice, l_shipdate, l_discount, l_quantity):\n"
                                  "\tif l_discount >= 0.05 and l_discount <= 0.07:\n"
@@ -288,7 +283,7 @@ class TPCH_Query6_Python_Multiple_UDFs {
                                  "\t\treturn (0, 0, 0, 0)";
 
         auto functionNameDiscount = "tpch_query_6_discount";
-        auto pythonUdfOperatorHandlerDiscount = initMapHandler(functionDiscount, functionNameDiscount, modulesToImport, pythonCompiler, inputSchema, inputSchema, pythonUDFCompilationTimeTimerDiscount);
+        auto pythonUdfOperatorHandlerDiscount = initMapHandler(functionDiscount, functionNameDiscount, modulesToImport, pythonCompiler, inputSchema, inputSchema);
 
         auto functionQuantity = "def tpch_query_6_quantity(l_extendedprice, l_shipdate, l_discount, l_quantity):\n"
                                  "\tif l_quantity < 24:\n"
@@ -297,7 +292,7 @@ class TPCH_Query6_Python_Multiple_UDFs {
                                  "\t\treturn 0";
 
         auto functionNameQuantity = "tpch_query_6_quantity";
-        auto pythonUdfOperatorHandlerQuantity = initMapHandler(functionQuantity, functionNameQuantity, modulesToImport, pythonCompiler, inputSchema, outputSchema, pythonUDFCompilationTimeTimerQuantity);
+        auto pythonUdfOperatorHandlerQuantity = initMapHandler(functionQuantity, functionNameQuantity, modulesToImport, pythonCompiler, inputSchema, outputSchema);
 
 
         PipelinePlan plan;
@@ -347,6 +342,85 @@ class TPCH_Query6_Python_Multiple_UDFs {
         emitPipeline->setRootOperator(aggScan);
         auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(aggregationHandler);
         plan.appendPipeline(emitPipeline, pipeline2Context);
+        return plan;
+    }
+};
+
+class TPCH_Query6_Python_FlatMap {
+  public:
+    /**
+     * Initializes the map handler for the given pipeline.
+     * @param className python class name of the udf
+     * @param methodName method name of the udf
+     * @param inputProxyName input proxy class name
+     * @param outputProxyName output proxy class name
+     * @param schema schema of the input and output tuples
+     * @param testDataPath path to the test data containing the udf jar
+     * @return operator handler
+     */
+    auto static initMapHandler(std::string function,
+                               std::string functionName,
+                               std::map<std::string, std::string> modulesToImport,
+                               std::string pythonCompiler,
+                               SchemaPtr inputSchema,
+                               SchemaPtr outputSchema) {
+        return std::make_shared<Operators::PythonUDFOperatorHandler>(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
+    }
+
+    static PipelinePlan getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
+                                        Runtime::BufferManagerPtr bm, std::string pythonCompiler) {
+        const SchemaPtr inputSchema = Schema::create()
+                                          ->addField("l_shipdate", BasicType::INT32)
+                                          ->addField("l_discount", BasicType::FLOAT32)
+                                          ->addField("l_quantity", BasicType::INT32)
+                                          ->addField("l_extendedprice", BasicType::FLOAT32);
+        const SchemaPtr outputSchema = Schema::create()
+                                           ->addField("revenue", BasicType::FLOAT32);
+        // cannot do aggregations with a Map UDF bc it has nothing to aggregate with
+
+        auto function = "def tpch_query_6_flatmap(l_shipdate, l_discount, l_quantity, l_extendedprice):\n"
+                        "  global collector\n"
+                        "\n"
+                        "  if (l_shipdate >= 19940101) and (l_shipdate < 19950101) and (l_discount >= 0.05) and (l_discount <= 0.07) and (l_quantity < 24):\n"
+                        "    revenue = l_extendedprice * l_discount\n"
+                        "    collector.append(revenue)\n"
+                        "  \n"
+                        "  if len(collector) > 0:\n"
+                        "    total_revenue = sum(collector)\n"
+                        "    return [total_revenue]\n"
+                        "  else:\n"
+                        "    return [0]";
+        auto functionName = "tpch_query_6_flatmap";
+        std::map<std::string, std::string> modulesToImport;
+        auto pythonUdfOperatorHandler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, inputSchema, outputSchema);
+
+        PipelinePlan plan;
+        auto& lineitems = tables[TPCHTable::LineItem];
+
+        auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
+            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
+        std::vector<std::string> projections = {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"};
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr), projections);
+
+        auto udfOperator = std::make_shared<Operators::FlatMapPythonUDF>(0, inputSchema, outputSchema, pythonCompiler);
+        scanOperator->setChild(udfOperator);
+
+        // emit operator
+        auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+        resultSchema->addField("revenue", BasicType::FLOAT32);
+        auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(resultLayout);
+        auto emit = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        udfOperator->setChild(emit);
+
+        // create aggregation pipeline
+        auto aggregationPipeline = std::make_shared<PhysicalOperatorPipeline>();
+        aggregationPipeline->setRootOperator(scanOperator);
+        std::vector<OperatorHandlerPtr> aggregationHandler = {pythonUdfOperatorHandler};
+        auto pipeline1Context = std::make_shared<MockedPipelineExecutionContext>(aggregationHandler);
+        auto pipelineContext = MockedPipelineExecutionContext(aggregationHandler);
+        plan.appendPipeline(aggregationPipeline, pipeline1Context);
+
         return plan;
     }
 };
