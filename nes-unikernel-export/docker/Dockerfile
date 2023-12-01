@@ -27,28 +27,13 @@ RUN cd nebulastream/build && cmake --build . --target NesUnikernelExporter -j$(n
 
 FROM debian:sid-slim as APP
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y libdw-dev libatomic1 build-essential clang-16
+RUN apt-get update && apt-get install -y libdw-dev libatomic1 build-essential 
 
 WORKDIR /app
-RUN ln -s /usr/bin/clang++-16 /usr/bin/clang++ && ln -s /usr/bin/clang-16 /usr/bin/clang
-COPY --from=Builder /nebulastream/build/nes-unikernel-export/NesUnikernelExporter /app/exporter
-COPY --from=Builder /nebulastream/build/nes-unikernel-export/libUnikernelQueryExport.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-unikernel-export/libUnikernelLLVMExport.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-client/libnes-client.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-operators/libnes-operators.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-configurations/libnes-configurations.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-data-types/libnes-data-types.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-common/libnes-common.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-common/libnes-grpc.so /usr/lib/
-COPY --from=Builder /clang/lib/*.so* /usr/lib/
-COPY --from=Builder /nebulastream/build/include /nebulastream/build/include
-COPY --from=Builder /nebulastream/build/nes-common /nebulastream/build/nes-common
-COPY --from=Builder /nebulastream/build/nes-runtime /nebulastream/build/nes-runtime
-COPY --from=Builder /nebulastream/nes-unikernel-export/include /nebulastream/build/nes-unikernel-export/include
-COPY --from=Builder /nebulastream/nes-unikernel/include /nebulastream/build/nes-unikernel/include
-COPY --from=Builder /nebulastream/nes-common/include /nebulastream/build/nes-common/include
-COPY --from=Builder /nebulastream/nes-runtime/include /nebulastream/build/nes-runtime/include
-COPY --from=Builder /nebulastream/build/nes-core /nebulastream/build/nes-core
-COPY --from=Builder /nebulastream/build/nes-data-types /nebulastream/build/nes-data-types
+COPY --from=Builder /clang/lib /nebulastream/build/nes-core/libnes.so /nebulastream/build/nes-common/libnes-grpc.so /nebulastream/build/nes-common/libnes-common.so /nebulastream/build/nes-data-types/libnes-data-types.so /nebulastream/build/nes-configurations/libnes-configurations.so /nebulastream/build/nes-operators/libnes-operators.so /nebulastream/build/nes-client/libnes-client.so /nebulastream/build/nes-unikernel-export/libUnikernelLLVMExport.so /nebulastream/build/nes-unikernel-export/libUnikernelQueryExport.so /usr/local/lib/
+COPY --from=Builder /clang/bin /nebulastream/build/nes-unikernel-export/NesUnikernelExporter /usr/local/bin/
+RUN ln /usr/local/bin/clang++ /usr/local/bin/nes-clang
+ENV LD_LIBRARY_PATH="/usr/local/lib"
+COPY --from=Builder /nebulastream/build/include /clang/include /usr/local/include/
 COPY nes-unikernel-export/docker/entrypoint.sh /app/
 ENTRYPOINT "/app/entrypoint.sh"
