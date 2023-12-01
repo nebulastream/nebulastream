@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.267](https://github.com/nebulastream/nebulastream/tree/v0.5.267) (2023-12-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.266...v0.5.267)
+
+**Implemented enhancements:**
+
+- \[TASK\] Drain query plans for redeployment [\#4282](https://github.com/nebulastream/nebulastream/issues/4282)
+
 ## [v0.5.266](https://github.com/nebulastream/nebulastream/tree/v0.5.266) (2023-11-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.265...v0.5.266)
