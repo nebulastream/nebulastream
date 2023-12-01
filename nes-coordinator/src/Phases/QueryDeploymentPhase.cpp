@@ -81,6 +81,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         for (auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                //todo: do this only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
                 queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
             }
         }
@@ -88,6 +89,8 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+        //todo: mark subqueries that will be undeployed and reconfigured as migrating here
+        //todo: just mark all as migrating?
         queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
     }
 
@@ -96,6 +99,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+        //todo: do not mark the queries to be undeployed as migrating
         queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
     }
 
@@ -108,6 +112,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
         NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id={}", executionNode->getId());
+        //todo: pass version parameter here
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
         if (querySubPlans.empty()) {
             throw QueryDeploymentException(queryId,
@@ -127,6 +132,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
 
         for (auto& querySubPlan : querySubPlans) {
 
+            //todo: make switch case here that either deploys or reconfigures
             //If accelerate Java UDFs is enabled
             if (accelerateJavaUDFs) {
 
