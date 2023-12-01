@@ -128,8 +128,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newReceiverLocation the location of the node where the new downstream source is located
      * @param newVersion The new version number assigned to this sink
      */
-    void configureNewReceiverAndPartition(NesPartition newPartition,
-                                          const NodeLocation& newReceiverLocation, Version newVersion);
+    void configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation, Version newVersion);
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 

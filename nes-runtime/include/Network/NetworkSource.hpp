@@ -143,7 +143,7 @@ class NetworkSource : public DataSource {
      */
     void onVersionUpdate(Version newVersion, Network::NodeLocation newSenderLocation) override;
 
-   /**
+    /**
     * @brief Getter for the initial version.
     * @return The version this source was started with
     */

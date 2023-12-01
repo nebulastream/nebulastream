@@ -185,8 +185,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getWaitTime(),
                                  networkSinkDescriptor->getVersion(),
                                  networkSinkDescriptor->getNumberOfOrigins(),
-                                 networkSinkDescriptor->getRetryTimes()
-                                 );
+                                 networkSinkDescriptor->getRetryTimes());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

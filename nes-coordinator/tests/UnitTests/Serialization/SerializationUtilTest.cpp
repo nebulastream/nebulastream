@@ -274,8 +274,12 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         Network::NodeLocation nodeLocation{0, "*", 31337};
         Network::NesPartition nesPartition{1, 22, 33, 44};
         uint16_t version = 55;
-        auto source =
-            Network::NetworkSourceDescriptor::create(schema, nesPartition, nodeLocation, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES, version);
+        auto source = Network::NetworkSourceDescriptor::create(schema,
+                                                               nesPartition,
+                                                               nodeLocation,
+                                                               NSOURCE_RETRY_WAIT,
+                                                               NSOURCE_RETRIES,
+                                                               version);
         SerializableOperator_SourceDetails sourceDetails;
         OperatorSerializationUtil::serializeSourceDescriptor(*source, sourceDetails);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(sourceDetails);
@@ -366,7 +370,8 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         Network::NesPartition nesPartition{1, 22, 33, 44};
         Version version = 5;
         auto numberOfOrigins = 6;
-        auto sink = Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), version, numberOfOrigins);
+        auto sink =
+            Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), version, numberOfOrigins);
         SerializableOperator_SinkDetails sinkDescriptor;
         OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(sinkDescriptor);

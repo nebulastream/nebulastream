@@ -120,8 +120,12 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingNetworkLogicalToPhysica
     Network::NesPartition nesPartition{1, 22, 33, 44};
     Network::NodeLocation nodeLocation(0, "*", 31337);
     Version version = 0;
-    SourceDescriptorPtr sourceDescriptor =
-        Network::NetworkSourceDescriptor::create(schema, nesPartition, nodeLocation, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES, version);
+    SourceDescriptorPtr sourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
+                                                                                    nesPartition,
+                                                                                    nodeLocation,
+                                                                                    NSOURCE_RETRY_WAIT,
+                                                                                    NSOURCE_RETRIES,
+                                                                                    version);
     DataSourcePtr networkSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
     EXPECT_EQ(networkSource->getType(), SourceType::NETWORK_SOURCE);
 }

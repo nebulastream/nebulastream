@@ -274,13 +274,14 @@ void NetworkSource::onVersionUpdate(Version newVersion, Network::NodeLocation ne
     NES_DEBUG("Updating version for network source {}", nesPartition);
     version = newVersion;
     sinkLocation = newSenderLocation;
-    auto reconfMessage = Runtime::ReconfigurationMessage(-1, -1, Runtime::ReconfigurationType::UpdateVersion, Runtime::Reconfigurable::shared_from_this());
+    auto reconfMessage = Runtime::ReconfigurationMessage(-1,
+                                                         -1,
+                                                         Runtime::ReconfigurationType::UpdateVersion,
+                                                         Runtime::Reconfigurable::shared_from_this());
     queryManager->addReconfigurationMessage(-1, -1, reconfMessage, false);
 }
 
-Version NetworkSource::getVersion() const {
-    return version;
-}
+Version NetworkSource::getVersion() const { return version; }
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);

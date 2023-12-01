@@ -26,12 +26,7 @@ DataSinkPtr TestSinkProvider::lower(OperatorId sinkId,
         auto testSinkDescriptor = sinkDescriptor->as<TestSinkDescriptor>();
         return testSinkDescriptor->getSink();
     }
-    return DataSinkProvider::lower(sinkId,
-                                   sinkDescriptor,
-                                   schema,
-                                   nodeEngine,
-                                   querySubPlan,
-                                   numOfProducers);
+    return DataSinkProvider::lower(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlan, numOfProducers);
 }
 
 }// namespace NES::TestUtils
