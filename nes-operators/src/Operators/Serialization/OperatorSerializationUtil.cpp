@@ -1212,7 +1212,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_nodeid(nodeLocation.getNodeId());
         auto s = std::chrono::duration_cast<std::chrono::milliseconds>(networkSourceDescriptor->getWaitTime());
         networkSerializedSourceDescriptor.set_waittime(s.count());
-        networkSerializedSourceDescriptor.set_initialversion(networkSourceDescriptor->getInitialVersion());
+        networkSerializedSourceDescriptor.set_version(networkSourceDescriptor->getVersion());
         networkSerializedSourceDescriptor.set_retrytimes(networkSourceDescriptor->getRetryTimes());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(networkSerializedSourceDescriptor);
     } else if (sourceDescriptor.instanceOf<const DefaultSourceDescriptor>()) {
@@ -1413,7 +1413,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
                                                             nesPartition,
                                                             nodeLocation,
                                                             waitTime,
-                                                            networkSerializedSourceDescriptor.retrytimes(), networkSerializedSourceDescriptor.initialversion());
+                                                            networkSerializedSourceDescriptor.retrytimes(), networkSerializedSourceDescriptor.version());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
         // de-serialize default source descriptor

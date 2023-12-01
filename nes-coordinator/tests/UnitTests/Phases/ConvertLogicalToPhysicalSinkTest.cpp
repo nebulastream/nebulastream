@@ -108,8 +108,10 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
     SchemaPtr schema = Schema::create();
     Network::NodeLocation nodeLocation{1, "localhost", 31337};
     Network::NesPartition nesPartition{1, 22, 33, 44};
+    auto retryTimes = 0;
+    Version version = 1;
     SinkDescriptorPtr sinkDescriptor =
-        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 0, 1);
+        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), retryTimes, version);
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);

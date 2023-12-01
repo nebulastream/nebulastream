@@ -33,7 +33,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         int highWaterMark,
                                         std::chrono::milliseconds waitTime,
                                         uint8_t retryTimes,
-                                        Version versionNumber = 0,
+                                        Version version = 0,
                                         std::optional<std::future<bool>> abortConnection = std::nullopt) {
     NES_ASSERT2_FMT(abortConnection.has_value() || retryTimes != 0,
                     "Cannot use indefinite retries without suppliying a future to abort connection");
@@ -75,7 +75,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                 return nullptr;
             }
 
-            sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId, mode, versionNumber);
+            sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId, mode, version);
 
             zmq::message_t recvHeaderMsg;
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
@@ -191,7 +191,7 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                          int highWaterMark,
                                          std::chrono::milliseconds waitTime,
                                          uint8_t retryTimes,
-                                         Version versionNumber,
+                                         Version version,
                                          std::optional<std::future<bool>> abortConnection) {
     return detail::createNetworkChannel<NetworkChannel>(zmqContext,
                                                         std::move(socketAddr),
@@ -201,7 +201,7 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                                         highWaterMark,
                                                         waitTime,
                                                         retryTimes,
-                                                        versionNumber,
+                                                        version,
                                                         std::move(abortConnection));
 }
 

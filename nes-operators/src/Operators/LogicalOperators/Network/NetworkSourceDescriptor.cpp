@@ -23,18 +23,18 @@ NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema,
                                                  NodeLocation nodeLocation,
                                                  std::chrono::milliseconds waitTime,
                                                  uint32_t retryTimes,
-                                                 Version initialVersion)
+                                                 Version version)
     : SourceDescriptor(std::move(schema)), nesPartition(nesPartition), nodeLocation(nodeLocation), waitTime(waitTime),
-      retryTimes(retryTimes), initialVersion(initialVersion) {}
+      retryTimes(retryTimes), version(version) {}
 
 SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema,
                                                     NesPartition nesPartition,
                                                     NodeLocation nodeLocation,
                                                     std::chrono::milliseconds waitTime,
                                                     uint32_t retryTimes,
-                                                    Version initialVersion) {
+                                                    Version version) {
     return std::make_shared<NetworkSourceDescriptor>(
-        NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation, waitTime, retryTimes, initialVersion));
+        NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation, waitTime, retryTimes, version));
 }
 
 bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
@@ -57,10 +57,10 @@ std::chrono::milliseconds NetworkSourceDescriptor::getWaitTime() const { return 
 
 uint8_t NetworkSourceDescriptor::getRetryTimes() const { return retryTimes; }
 
-uint16_t NetworkSourceDescriptor::getInitialVersion() const { return initialVersion; }
+uint16_t NetworkSourceDescriptor::getVersion() const { return version; }
 
 SourceDescriptorPtr NetworkSourceDescriptor::copy() {
-    auto copy = NetworkSourceDescriptor::create(schema->copy(), nesPartition, nodeLocation, waitTime, retryTimes, initialVersion);
+    auto copy = NetworkSourceDescriptor::create(schema->copy(), nesPartition, nodeLocation, waitTime, retryTimes, version);
     return copy;
 }
 

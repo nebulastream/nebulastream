@@ -123,7 +123,7 @@ class NetworkManager {
      * @param nesPartition indicates the partition
      * @param waitTime time in seconds to wait until a retry is called
      * @param retryTimes times to retry a connection
-     * @param versionNumber the version number which will be used by the receiver to determine if this channel will be accepted
+     * @param version the version number which will be used by the receiver to determine if this channel will be accepted
      * @return the data network channel
      */
     NetworkChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
@@ -131,7 +131,7 @@ class NetworkManager {
                                                    Runtime::BufferManagerPtr bufferManager,
                                                    std::chrono::milliseconds waitTime,
                                                    uint8_t retryTimes,
-                                                   Version versionNumber = 0);
+                                                   Version version = 0);
 
     /**
      * @brief This method is called on the sender side to asynchronously register a SubpartitionProducer. It returns a future
@@ -145,7 +145,7 @@ class NetworkManager {
      * @param reconfigurationMessage a message to be inserted into the query manager on completion, to inform the caller about
      * the completion of the operation
      * @param queryManager a pointer to the query manager which will hand over the reconfiguration message to the caller
-     * @param versionNumber the version number which will be used by the receiver to determine if this channel will be accepted
+     * @param version the version number which will be used by the receiver to determine if this channel will be accepted
      * @return a pair consisting of a future containing the data network channel on completion and a promise that aborts the connection process when
      * its value is set
      */
@@ -157,7 +157,7 @@ class NetworkManager {
                                       uint8_t retryTimes,
                                       Runtime::ReconfigurationMessage reconfigurationMessage,
                                       Runtime::QueryManagerPtr queryManager,
-                                      Version versionNumber = 0);
+                                      Version version = 0);
 
     /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to
