@@ -41,8 +41,7 @@ class PythonUDFOperatorHandler : public OperatorHandler {
                                       const std::map<std::string, std::string> modulesToImport,
                                       const std::string& pythonCompiler,
                                       SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema,
-                                      Timer<>& pythonUDFCompilationTimeTimer);
+                                      SchemaPtr outputSchema);
 
     /**
      * @brief This method returns the udf as a string
@@ -115,10 +114,6 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      */
     PyObject* getPythonModule() const { return this->pythonModule; }
 
-    PyObject* getPythonLocals() const { return this->locals; }
-
-    PyObject* getPythonGlobals() const { return this->globals; }
-
     std::string getNumbaDataType(AttributeFieldPtr& fieldDataType);
 
     std::string getNumbaSignature();
@@ -136,6 +131,7 @@ class PythonUDFOperatorHandler : public OperatorHandler {
 
     double getSumExecution() const { return this->sumExecution;}
     void addSumExecution(double printTime);
+    double getCompilationTime() const { return this->pythonUDFCompilationTime;}
 
     /**
      * @brief Initializes the python udf in a module
@@ -162,10 +158,8 @@ class PythonUDFOperatorHandler : public OperatorHandler {
     PyObject* pythonFunction; // python function object
     PyObject* pythonModule;   // python module object
     PyObject* pythonVariable; // temp python variable for setting arguments
-    PyObject* locals; // python local variables
-    PyObject* globals; // python global variables
     Backends::BC::Dyncall& dyncall = Backends::BC::Dyncall::getVM();
-    Timer<>& pythonUDFCompilationTimeTimer;
+    double pythonUDFCompilationTime = 0;
     double sumExecution = 0;
 };
 

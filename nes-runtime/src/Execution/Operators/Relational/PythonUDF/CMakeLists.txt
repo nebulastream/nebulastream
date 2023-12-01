@@ -15,4 +15,6 @@ add_source_files(nes-runtime
         PythonUDFOperatorHandler.cpp
         PythonUDFNumbaUtils.cpp
         PythonUDFPyPyUtils.cpp
+        PythonUDFUtils.cpp
+        FlatMapPythonUDF.cpp
         )

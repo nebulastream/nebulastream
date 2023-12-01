@@ -26,9 +26,8 @@ PythonUDFOperatorHandler::PythonUDFOperatorHandler(const std::string& function,
                          const std::map<std::string, std::string> modulesToImport,
                          const std::string& pythonCompiler,
                          SchemaPtr inputSchema,
-                         SchemaPtr outputSchema,
-                         Timer<>& pythonUDFCompilationTimeTimer)
-    : function(function), functionName(functionName), modulesToImport(modulesToImport), pythonCompiler(pythonCompiler), inputSchema(inputSchema), outputSchema(outputSchema), pythonUDFCompilationTimeTimer(pythonUDFCompilationTimeTimer){
+                         SchemaPtr outputSchema)
+    : function(function), functionName(functionName), modulesToImport(modulesToImport), pythonCompiler(pythonCompiler), inputSchema(inputSchema), outputSchema(outputSchema){
     this->initPython();
 }
 
@@ -189,6 +188,7 @@ std::string PythonUDFOperatorHandler::getModulesToImportAsString() {
 }
 
 void PythonUDFOperatorHandler::initPython() {
+    Timer pythonUDFCompilationTimeTimer("PythonUDFCompilation");
     pythonUDFCompilationTimeTimer.start();
     this->moduleName = this->functionName + "Module";
     // initialize python interpreter
@@ -198,8 +198,6 @@ void PythonUDFOperatorHandler::initPython() {
     if (this->pythonCompiler == "numba") {
         // init globals and locals to be able to access the variables later when calling the function
         // they have to be a pyDict
-        globals = PyDict_New();
-        locals = PyDict_New();
         // should look like this
         // import numba
         //
@@ -215,9 +213,9 @@ void PythonUDFOperatorHandler::initPython() {
                       "@numba.cfunc(\"" + numbaSignature + "\", nopython=True)\n" +
                       this->function + "\n" +
                       this->functionName + "_address = " + this->functionName + ".address";
-        //PyRun_String(pythonCode.c_str(), Py_file_input, globals, locals);
     } else {
         // default, just using the CPython compiler or Cython or Nuitka
+        pythonCode += "collector = list()\n\n";
         pythonCode += this->function;
     }
 
@@ -323,6 +321,7 @@ void PythonUDFOperatorHandler::initPython() {
     }
     pythonUDFCompilationTimeTimer.snapshot("init");
     pythonUDFCompilationTimeTimer.pause();
+    pythonUDFCompilationTime = pythonUDFCompilationTimeTimer.getPrintTime();
 }
 
 void PythonUDFOperatorHandler::finalize() {
@@ -330,8 +329,6 @@ void PythonUDFOperatorHandler::finalize() {
     Py_DecRef(this->pythonModule);
     Py_DecRef(this->pythonArguments);
     Py_DecRef(this->pythonFunction);
-    Py_DecRef(this->globals);
-    Py_DecRef(this->locals);
 
     if (Py_IsInitialized()) {
         if (Py_FinalizeEx() == -1) {
