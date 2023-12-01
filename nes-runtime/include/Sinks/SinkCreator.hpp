@@ -209,7 +209,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
  * @param nesPartition
  * @param waitTime
  * @param retryTimes
- * @param versionNumber the initial version number of the network sink
+ * @param version the initial version number of the network sink
  * @return a data sink pointer
  */
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
@@ -221,7 +221,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               size_t numOfProducers,
                               std::chrono::milliseconds waitTime,
-                              Version versionNumber,
+                              Version version,
                               uint64_t numberOfOrigins = 1,
                               uint8_t retryTimes = 5);
 

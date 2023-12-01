@@ -44,7 +44,7 @@ class NetworkSource : public DataSource {
    * @param waitTime
    * @param retryTimes
    * @param successors
-   * @param versionNumber The initial version number of this source when it starts
+   * @param version The initial version number of this source when it starts
    * @param physicalSourceName
    */
     NetworkSource(SchemaPtr schema,
@@ -57,7 +57,7 @@ class NetworkSource : public DataSource {
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                  Version initialVersion,
+                  Version version,
                   const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**

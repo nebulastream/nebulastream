@@ -75,7 +75,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
      * @param highWaterMark the max number of buffers the channel takes before blocking
      * @param waitTime the backoff time in case of failure when connecting
      * @param retryTimes the number of retries before the methods will raise error. Set this to zero to retry indefinitely
-     * @param versionNumber the version number that will be used by the receiver to determine if it can already accept messages
+     * @param version the version number that will be used by the receiver to determine if it can already accept messages
      * from this client
      * @param abortConnection a future which which will be checked on every connection retry. By setting a value in the
      * corresponding promise, the calling thread can abort the connection process if the connection is performed asynchronously.
@@ -89,7 +89,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
                                     int highWaterMark,
                                     std::chrono::milliseconds waitTime,
                                     uint8_t retryTimes,
-                                    Version versionNumber,
+                                    Version version,
                                     std::optional<std::future<bool>> abortConnection = std::nullopt);
 };
 

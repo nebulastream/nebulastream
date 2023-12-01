@@ -183,7 +183,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  nodeEngine,
                                  numOfProducers,
                                  networkSinkDescriptor->getWaitTime(),
-                                 networkSinkDescriptor->getInitialVersion(),
+                                 networkSinkDescriptor->getVersion(),
                                  networkSinkDescriptor->getNumberOfOrigins(),
                                  networkSinkDescriptor->getRetryTimes()
                                  );

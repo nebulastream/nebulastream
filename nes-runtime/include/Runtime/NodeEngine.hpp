@@ -317,7 +317,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param querySubPlanId the id of the subplan containing the sink to be reconfigured
      * @param uniqueNetworkSinkDescriptorId the unique id of the network sink to be reconfigured
      * @param newPartition the partition of the new source
-     * @param versionNumber the new version number of the sink to be reconfigured
+     * @param version the new version number of the sink to be reconfigured
      * @return true on success, false if sink was not found
      */
     bool experimentalReconfigureNetworkSink(uint64_t newNodeId,
@@ -326,7 +326,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                             QuerySubPlanId querySubPlanId,
                                             uint64_t uniqueNetworkSinkDescriptorId,
                                             Network::NesPartition newPartition,
-                                            Version versionNumber);
+                                            Version version);
 
     /**
      * @brief retrieve the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish

@@ -36,7 +36,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              std::chrono::milliseconds waitTime,
                              uint8_t retryTimes,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                             Version initialVersion,
+                             Version version,
                              const std::string& physicalSourceName)
 
     : DataSource(std::move(schema),
@@ -49,7 +49,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  physicalSourceName,
                  std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)),
-      waitTime(waitTime), retryTimes(retryTimes), version(initialVersion) {
+      waitTime(waitTime), retryTimes(retryTimes), version(version) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
 }
 

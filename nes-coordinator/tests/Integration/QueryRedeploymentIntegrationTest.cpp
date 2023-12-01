@@ -376,7 +376,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
                                                                                 networkSourceWrk2Partition,
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
-                                                                                5, 0);
+                                                                                5, firstVersion);
     auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
     queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
     //create network sink connected to coordinator

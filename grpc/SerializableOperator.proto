@@ -228,7 +228,7 @@ message SerializableOperator{
       NodeLocation nodeLocation = 3;
       uint64 waitTime = 4;
       uint32 retryTimes = 5;
-      uint32 initialVersion = 6;
+      uint32 version = 6;
     }
 
     message SerializableMaterializedViewSourceDescriptor {

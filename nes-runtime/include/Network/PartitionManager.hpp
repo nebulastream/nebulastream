@@ -114,7 +114,7 @@ class PartitionManager {
          * @brief add a pending
          * @param pendingVersion
          */
-        void addPendingVersion(Version pendingVersionNumber, NodeLocation pendingSenderLocation);
+        void addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation);
 
         /**
          * @brief increment ref cnt by 1
@@ -134,7 +134,7 @@ class PartitionManager {
         /**
          * @return the version number
          */
-        Version getVersionNumber();
+        Version getVersion();
 
       private:
         uint64_t partitionCounter{1};
@@ -204,10 +204,10 @@ class PartitionManager {
     /**
      * @brief add a pendign version for this partition to be activated once all channels of the current version have disconnected
      * @param partition the partition to which the pending version should be added
-     * @param pendingVersionNumber the number of the pending version
+     * @param pendingVersion the number of the pending version
      * @param pendingSenderLocation the node location of the sending sink for the new version
      */
-    void addPendingVersion(NesPartition partition, Version pendingVersionNumber, NodeLocation pendingSenderLocation);
+    void addPendingVersion(NesPartition partition, Version pendingVersion, NodeLocation pendingSenderLocation);
 
     /**
      * @brief checks if a partition is registered

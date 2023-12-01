@@ -37,7 +37,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param networkManager
     * @param nodeLocation
     * @param nesPartition
-    * @param versionNumber The initial version of this sink when it starts
+    * @param version The initial version of this sink when it starts
     */
     explicit NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
@@ -50,7 +50,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins = 0,
-                         Version versionNumber = 0);
+                         Version version = 0);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -171,7 +171,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
-    Version versionNumber;
+    Version version;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
