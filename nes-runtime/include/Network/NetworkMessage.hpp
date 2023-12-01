@@ -124,7 +124,8 @@ class ClientAnnounceMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::ClientAnnouncement;
 
-    explicit ClientAnnounceMessage(ChannelId channelId, ChannelType mode, Version version = 0) : ExchangeMessage(channelId), mode(mode), version(version) {}
+    explicit ClientAnnounceMessage(ChannelId channelId, ChannelType mode, Version version = 0)
+        : ExchangeMessage(channelId), mode(mode), version(version) {}
 
     [[nodiscard]] Version getVersion() const { return version; }
 
