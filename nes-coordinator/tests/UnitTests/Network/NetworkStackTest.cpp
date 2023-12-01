@@ -408,7 +408,8 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
 
             //registering with a different version number should fail (consumer count should not change)
-            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            auto newversionAnouncementMessage =
+                Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
             exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
 
@@ -436,7 +437,8 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
 
             //registering with a different version number should fail (consumer count should not change)
-            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            auto newversionAnouncementMessage =
+                Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
             exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
         }
@@ -454,7 +456,8 @@ TEST_F(NetworkStackTest, testEosPropagation) {
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
 
             //registering with a different version number should fail (consumer count should not change)
-            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            auto newversionAnouncementMessage =
+                Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
             exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
         }
@@ -493,15 +496,14 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         auto senderLocation = NodeLocation(0, "127.0.0.1", *senderPort);
 
         struct DataEmitterImpl : public DataEmitter {
-            DataEmitterImpl(PartitionManagerPtr partitionManager, Version version) : partitionManager(partitionManager), version(version) {}
+            DataEmitterImpl(PartitionManagerPtr partitionManager, Version version)
+                : partitionManager(partitionManager), version(version) {}
             void emitWork(TupleBuffer&) override {}
             void onVersionUpdate(Version newVersion, NodeLocation) override {
                 NES_DEBUG("Updating version for data emitter");
                 version = newVersion;
             }
-            Version getVersion() const override {
-                return version;
-            }
+            Version getVersion() const override { return version; }
             PartitionManagerPtr partitionManager;
             Version version;
         };
@@ -510,7 +512,9 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
 
         auto initialVersion = 0;
-        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition, senderLocation, std::make_shared<DataEmitterImpl>(partMgrRecv, initialVersion)));
+        ASSERT_TRUE(partMgrRecv->registerSubpartitionConsumer(nesPartition,
+                                                              senderLocation,
+                                                              std::make_shared<DataEmitterImpl>(partMgrRecv, initialVersion)));
 
         auto nextVersion = 1;
         partMgrRecv->addPendingVersion(nesPartition, nextVersion, nodeLocation);
@@ -524,7 +528,8 @@ TEST_F(NetworkStackTest, testVersionTransition) {
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
 
             //registering with a different version number should fail (consumer count should not change)
-            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            auto newversionAnouncementMessage =
+                Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
             exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
 
@@ -552,7 +557,8 @@ TEST_F(NetworkStackTest, testVersionTransition) {
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
 
             //registering with a different version number should fail (consumer count should not change)
-            auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+            auto newversionAnouncementMessage =
+                Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
             exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
             ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), j - i + 2);
         }
@@ -570,7 +576,8 @@ TEST_F(NetworkStackTest, testVersionTransition) {
             if (j < numSendingThreads) {
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
                 //registering with a different version number should fail (consumer count should not change)
-                auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+                auto newversionAnouncementMessage =
+                    Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
                 exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), j);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), numSendingThreads - j + 1);
@@ -578,12 +585,12 @@ TEST_F(NetworkStackTest, testVersionTransition) {
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 0);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 1);
                 //registering with a different version number should work now
-                auto newversionAnouncementMessage = Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
+                auto newversionAnouncementMessage =
+                    Messages::ClientAnnounceMessage(channelId, Messages::ChannelType::DataChannel, nextVersion);
                 exchangeProtocol.onClientAnnouncement(newversionAnouncementMessage);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerDisconnectCount(nesPartition), 0);
                 ASSERT_EQ(partMgrRecv->getSubpartitionConsumerCounter(nesPartition), 2);
             }
-
         }
 
         ASSERT_EQ(receiveListener->numReceivedEoS, 0);
@@ -597,7 +604,6 @@ TEST_F(NetworkStackTest, testVersionTransition) {
         exchangeProtocol.onEndOfStream(endOfStreamMessage);
 
         ASSERT_EQ(receiveListener->numReceivedEoS, 1);
-
 
         partMgrRecv->unregisterSubpartitionConsumer(nesPartition);
     } catch (...) {
