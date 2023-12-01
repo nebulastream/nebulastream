@@ -68,6 +68,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
     }
 
+    //todo: if we remove all metadata here we also need to add it again for all, but that could be optimized
     //Reset all sub query plan metadata in the catalog
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         queryCatalogService->resetSubQueryMetaData(queryId);
@@ -81,6 +82,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         for (auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                //todo: do this only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
                 queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
             }
         }
@@ -88,6 +90,9 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+        //todo: mark subqueries that will be undeployed and reconfigured as migrating here
+        //todo: actually do we have to mark those that will be undeployed?
+        //todo: just mark all as migrating?
         queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
     }
 
@@ -96,6 +101,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+        //todo: do not mark the queries to be undeployed as migrating
         queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
     }
 
@@ -126,58 +132,72 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         auto topologyNode = executionNode->getTopologyNode();
 
         for (auto& querySubPlan : querySubPlans) {
+            switch (querySubPlan->getQueryState()) {
+                case QueryState::REGISTERED: {
+                    //If accelerate Java UDFs is enabled
+                    if (accelerateJavaUDFs) {
 
-            //If accelerate Java UDFs is enabled
-            if (accelerateJavaUDFs) {
+                        //Elegant acceleration service call
+                        //1. Fetch the OpenCL Operators
+                        auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
 
-                //Elegant acceleration service call
-                //1. Fetch the OpenCL Operators
-                auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+                        //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
+                        for (const auto& openCLOperator : openCLOperators) {
 
-                //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
-                for (const auto& openCLOperator : openCLOperators) {
+                            //3. Fetch the topology node and compute the topology node payload
+                            nlohmann::json payload;
+                            payload[DEVICE_INFO_KEY] =
+                                std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(topologyNode->getNodeProperty(
+                                    NES::Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
 
-                    //3. Fetch the topology node and compute the topology node payload
-                    nlohmann::json payload;
-                    payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(
-                        topologyNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
+                            //4. Extract the Java UDF metadata
+                            auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
+                            payload["functionCode"] = javaDescriptor->getMethodName();
 
-                    //4. Extract the Java UDF metadata
-                    auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
-                    payload["functionCode"] = javaDescriptor->getMethodName();
+                            // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
+                            jni::JavaByteCode javaByteCode =
+                                javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
 
-                    // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
-                    jni::JavaByteCode javaByteCode = javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
+                            //5. Prepare the multi-part message
+                            cpr::Part part1 = {"jsonFile", to_string(payload)};
+                            cpr::Part part2 = {"codeFile", &javaByteCode[0]};
+                            cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
 
-                    //5. Prepare the multi-part message
-                    cpr::Part part1 = {"jsonFile", to_string(payload)};
-                    cpr::Part part2 = {"codeFile", &javaByteCode[0]};
-                    cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
+                            //6. Make Acceleration Service Call
+                            cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
+                                                               cpr::Header{{"Content-Type", "application/json"}},
+                                                               multipartPayload,
+                                                               cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
+                            if (response.status_code != 200) {
+                                throw QueryDeploymentException(queryId,
+                                                               "Error in call to Elegant acceleration service with code "
+                                                                   + std::to_string(response.status_code) + " and msg "
+                                                                   + response.reason);
+                            }
 
-                    //6. Make Acceleration Service Call
-                    cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
-                                                       cpr::Header{{"Content-Type", "application/json"}},
-                                                       multipartPayload,
-                                                       cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
-                    if (response.status_code != 200) {
-                        throw QueryDeploymentException(queryId,
-                                                       "Error in call to Elegant acceleration service with code "
-                                                           + std::to_string(response.status_code) + " and msg "
-                                                           + response.reason);
+                            nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
+                            //Fetch the acceleration Code
+                            //FIXME: use the correct key
+                            auto openCLCode = jsonResponse["AccelerationCode"];
+                            //6. Set the Open CL code
+                            openCLOperator->setOpenClCode(openCLCode);
+                        }
                     }
 
-                    nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
-                    //Fetch the acceleration Code
-                    //FIXME: use the correct key
-                    auto openCLCode = jsonResponse["AccelerationCode"];
-                    //6. Set the Open CL code
-                    openCLOperator->setOpenClCode(openCLCode);
+                    //enable this for sync calls
+                    //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
+                    workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
+                    break;
+                }
+                case QueryState::RECONFIGURE: {
+                    //todo: deploy reconfig
+                    NES_NOT_IMPLEMENTED();
+                    break;
+                }
+                case default: {
+                    break;
                 }
             }
-
-            //enable this for sync calls
-            //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
-            workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
         }
         completionQueues[queueForExecutionNode] = querySubPlans.size();
     }

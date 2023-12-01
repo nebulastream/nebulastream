@@ -302,11 +302,13 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
         }
         if (subQueryStatus == QueryState::MIGRATING) {
             //todo #4089: what to do here?
+            //todo: check similar to above it != migration completed or running, (we keep reconfig und update nodes in running and only mark the ones to be drained as migrating
         }
     }
     return true;
 }
 
+//todo: remove this function, migration state should be set from the redeployment phase
 bool QueryCatalogService::handleMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus) {
     std::unique_lock lock(serviceMutex);
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "

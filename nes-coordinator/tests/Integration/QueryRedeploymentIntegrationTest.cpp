@@ -380,7 +380,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
                                                                                 sinkLocationWrk1,
                                                                                 std::chrono::milliseconds(1000),
                                                                                 5,
-                                                                                0);
+                                                                                firstVersion);
     auto sourceOperatorNodeWrk2 = std::make_shared<SourceLogicalOperatorNode>(networkSourceDescriptorWrk2, networkSrcWrk2Id);
     queryPlan2->addRootOperator(sourceOperatorNodeWrk2);
     //create network sink connected to coordinator
@@ -793,6 +793,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
         ASSERT_TRUE(retStart3);
         ASSERT_TRUE(waitForNodes(5, 4 + actualReconnects, topology));
+        //ASSERT_TRUE(waitForNodes(5, 4, topology));
         reconnectParents.push_back(wrk3);
 
         std::string compareStringAfter;
@@ -874,6 +875,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
                   Network::PartitionRegistrationStatus::Registered);
         ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
                   Network::PartitionRegistrationStatus::Registered);
+        //todo: this is the troublemaker
+        EXPECT_NE(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
+                  Network::PartitionRegistrationStatus::Registered);
         currentWrk1TargetPartition = networkSourceWrk3Partition;
 
         //verify that query has been undeployed from old parent
@@ -884,6 +888,12 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
             }
         }
         ASSERT_EQ(oldWorker->getNodeEngine()->getQueryStatus(queryId), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
+
+        // ASSERT_TRUE(oldWorker->stop(false));
+        oldWorker = wrk3;
+        EXPECT_EQ(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
+                  Network::PartitionRegistrationStatus::Registered);
+
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
