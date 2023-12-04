@@ -29,11 +29,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y libdw-dev libatomic1
 
 WORKDIR /app
-COPY --from=Builder /nebulastream/build/nes-unikernel-common/libUnikernelTest.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-common/libnes-common.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-common/libnes-grpc.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-configurations/libnes-configurations.so /usr/lib/
-COPY --from=Builder /nebulastream/build/nes-data-types/libnes-data-types.so /usr/lib/
+COPY --from=Builder /nebulastream/build/nes-data-types/libnes-data-types.so /nebulastream/build/nes-configurations/libnes-configurations.so /nebulastream/build/nes-common/libnes-grpc.so /nebulastream/build/nes-common/libnes-common.so /nebulastream/build/nes-unikernel-common/libUnikernelTest.so /usr/lib/
 COPY --from=Builder /nebulastream/build/nes-unikernel-sink/unikernel-sink /app/sink
 COPY nes-unikernel-sink/docker/entrypoint.sh /app/
 ENTRYPOINT "/app/entrypoint.sh"
