@@ -12,6 +12,7 @@ COPY . ./nebulastream/
 
 RUN cd nebulastream && mkdir build && cd build && cmake .. -GNinja -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=ON \
                                                            -DCMAKE_PREFIX_PATH=/home/ls/.local/bin/lib/cmake \
+							   -DCMAKE_BUILD_TYPE=Release \
                                                            -DMLIR_DIR=/usr/lib/llvm-16/lib/cmake/mlir \
                                                            -DCMAKE_CXX_COMPILER=/clang/bin/clang++ \
                                                            -DCMAKE_C_COMPILER=/clang/bin/clang \
