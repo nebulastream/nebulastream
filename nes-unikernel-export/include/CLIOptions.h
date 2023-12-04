@@ -2,10 +2,10 @@
 #define NES_CLIOPTIONS_H
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <YAMLModel.h>
+#include <boost/lexical_cast/try_lexical_convert.hpp>
 #include <boost/outcome.hpp>
 #include <optional>
 #include <string>
-#include <boost/lexical_cast/try_lexical_convert.hpp>
 #include <yaml-cpp/yaml.h>
 
 namespace NES {
@@ -41,8 +41,13 @@ struct ExportWorkerConfiguration {
     std::vector<ExportSourceConfiguration> sources;
 };
 
+struct ExportTopologySinkConfiguration {
+    std::optional<ExportKafkaConfiguration> kafka;
+    std::optional<ExportTopologyNodeConfiguration> node;
+};
+
 struct ExportTopologyConfiguration {
-    std::variant<ExportKafkaConfiguration, ExportTopologyNodeConfiguration> sink;
+    ExportTopologySinkConfiguration sink;
     std::vector<ExportWorkerConfiguration> workers;
 };
 
@@ -58,7 +63,7 @@ struct ExportConfiguration {
         }                                                                                                                        \
     } while (0)
 
-#define UNIKERNEL_MODEL_YAML_ENCODE_VARIANT(field, type_name, type_tag) \
+#define UNIKERNEL_MODEL_YAML_ENCODE_VARIANT(field, type_name, type_tag)                                                          \
     do {                                                                                                                         \
         if (std::holds_alternative<type_name>(rhs.field)) {                                                                      \
             node[#field] = std::get<type_name>(rhs.field);                                                                       \
@@ -101,15 +106,14 @@ struct convert<ExportSourceConfiguration> {
     }
 };
 
-
 template<>
 struct convert<std::variant<std::string, size_t>> {
     static Node encode(const std::variant<std::string, size_t>& rhs) {
         Node node;
-        if (holds_alternative<std::string>(rhs)){
+        if (holds_alternative<std::string>(rhs)) {
             node = get<std::string>(rhs);
         }
-        if (holds_alternative<size_t>(rhs)){
+        if (holds_alternative<size_t>(rhs)) {
             node = get<size_t>(rhs);
         }
         return node;
@@ -118,7 +122,7 @@ struct convert<std::variant<std::string, size_t>> {
     static Node decode(const Node& node, std::variant<std::string, size_t>& rhs) {
         auto asString = node.as<std::string>();
         size_t asNumber = 0;
-        if (boost::conversion::try_lexical_convert(asString, asNumber)){
+        if (boost::conversion::try_lexical_convert(asString, asNumber)) {
             rhs = asNumber;
         } else {
             rhs = asString;
@@ -149,20 +153,41 @@ struct convert<ExportWorkerConfiguration> {
     }
 };
 template<>
+struct convert<ExportTopologySinkConfiguration> {
+    static Node encode(const ExportTopologySinkConfiguration& rhs) {
+        Node node;
+        if (rhs.node.has_value()) {
+            node["node"] = rhs.node.value();
+        }
+        if (rhs.kafka.has_value()) {
+            node["kafka"] = rhs.kafka.value();
+        }
+        return node;
+    };
+
+    static Node decode(const Node& node, ExportTopologySinkConfiguration& rhs) {
+        if (node["node"]) {
+            rhs.node = node["node"];
+        }
+        if (node["kafka"]) {
+            rhs.kafka = node["kafka"];
+        }
+        return node;
+    }
+};
+
+template<>
 struct convert<ExportTopologyConfiguration> {
     static Node encode(const ExportTopologyConfiguration& rhs) {
         Node node;
-        UNIKERNEL_MODEL_YAML_ENCODE_VARIANT(sink, ExportKafkaConfiguration, "kafka");
-        UNIKERNEL_MODEL_YAML_ENCODE_VARIANT(sink, ExportTopologyNodeConfiguration, "node");
+        UNIKERNEL_MODEL_YAML_ENCODE(sink);
         UNIKERNEL_MODEL_YAML_ENCODE(workers);
         return node;
     };
 
     static Node decode(const Node& node, ExportTopologyConfiguration& rhs) {
-        UNIKERNEL_MODEL_YAML_DECODE_VARIANT(sink, ExportKafkaConfiguration, "kafka");
-        UNIKERNEL_MODEL_YAML_DECODE_VARIANT(sink, ExportTopologyNodeConfiguration, "node");
+        UNIKERNEL_MODEL_YAML_DECODE(sink);
         UNIKERNEL_MODEL_YAML_DECODE(workers);
-
         return node;
     }
 };
