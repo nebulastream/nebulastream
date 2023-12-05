@@ -396,6 +396,19 @@ message SerializableOperator{
     string newSourceName = 1;
   }
 
+  /**message Synopsis {
+    enum SynopsisType {
+      COUNT_MIN = 0;
+      DDSKETCH = 1;
+      HLL = 2;
+      RESERVOIR_SAMPLE = 3;
+    }
+    SynopsisType type = 1;
+    string fieldName = 2;
+    uint64 depth = 3;
+    uint64 width = 4;
+  }*/
+
   /**
  InferModelDetails contains the model file for the inference
  */

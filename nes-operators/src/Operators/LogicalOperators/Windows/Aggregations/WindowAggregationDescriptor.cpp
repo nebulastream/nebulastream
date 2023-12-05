@@ -52,8 +52,7 @@ WindowAggregationDescriptor::Type WindowAggregationDescriptor::getType() { retur
 std::string WindowAggregationDescriptor::getTypeAsString() {
     if (aggregationType == Type::Count) {
         return "Count";
-    }
-    if (aggregationType == Type::Avg) {
+    } else if (aggregationType == Type::Avg) {
         return "Avg";
     } else if (aggregationType == Type::Max) {
         return "Max";

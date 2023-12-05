@@ -12,17 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        CsvFormat.cpp
-        JsonFormat.cpp
-        NesFormat.cpp
-        SinkFormat.cpp
+        CountMin.cpp
+        Synopsis.cpp
 )
-
-if (NES_USE_ARROW)
-    add_source_files(nes-operators
-            ArrowFormat.cpp
-            )
-endif ()
-
-add_subdirectory(FormatIterators)
-add_subdirectory(Synopses)

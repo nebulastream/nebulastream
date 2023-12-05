@@ -61,6 +61,13 @@ class TypeInferencePhase {
      */
     static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
                                         Catalogs::UDF::UDFCatalogPtr udfCatalog);
+    /**
+     * @brief checks if the query plan contains a statistics operator and if so adds 4 meta fields to the schema of the sources,
+     * otherwise the prevExecute function is regularly called and the type Inference phase is executed.
+     * @param queryPlan the query plan on which we potentially extend the input schema of the sources and perform type inference
+     * @return the query plan on which we performed type inference
+     */
+    QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
     /**
      * @brief Performs type inference on the given query plan.
@@ -74,7 +81,7 @@ class TypeInferencePhase {
      * @throws TypeInferenceException if inferring the data types into the query failed
      * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
      */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+    QueryPlanPtr prevExecute(QueryPlanPtr);
 
   private:
     /**

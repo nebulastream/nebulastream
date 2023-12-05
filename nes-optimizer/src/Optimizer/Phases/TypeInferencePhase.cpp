@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
@@ -19,6 +20,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/WindowSynopsisLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -37,6 +39,23 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
 }
 
 QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
+    if (!queryPlan->getOperatorByType<NES::Experimental::Statistics::WindowSynopsisLogicalOperatorNode>().empty()) {
+        auto sources = queryPlan->getSourceOperators();
+
+        for (auto source : sources) {
+            source->getSourceDescriptor()->getSchema()->addField("logicalSourceName", DataTypeFactory::createText());
+            source->getSourceDescriptor()->getSchema()->addField("physicalSourceName", DataTypeFactory::createText());
+            source->getSourceDescriptor()->getSchema()->addField("fieldName", DataTypeFactory::createText());
+            source->getSourceDescriptor()->getSchema()->addField("NodeId", DataTypeFactory::createUInt64());
+        }
+
+        return prevExecute(queryPlan);
+    } else {
+        return prevExecute(queryPlan);
+    }
+}
+
+QueryPlanPtr TypeInferencePhase::prevExecute(QueryPlanPtr queryPlan) {
 
     // first we have to check if all source operators have a correct source descriptors
     auto sources = queryPlan->getSourceOperators();

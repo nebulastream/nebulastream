@@ -77,4 +77,6 @@ TEST_F(StatisticsTest, requestsTest) {
     EXPECT_EQ(deleteObj.getEndTime(), endTime);
 };
 
+
+
 }// namespace NES

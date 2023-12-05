@@ -82,6 +82,16 @@ class LogicalOperatorFactory {
                                                          OperatorId id = getNextOperatorId());
 
     /**
+     * @brief
+     * @param synopsisDescriptor
+     * @param id
+     * @return
+     */
+    static LogicalUnaryOperatorNodePtr
+    createSynopsisOperator(Experimental::Statistics::WindowSynopsisDescriptorPtr synopsisDescriptor,
+                           NES::OperatorId id = getNextOperatorId());
+
+        /**
      * @brief Create a new infer model operator.
      * @param model: The path to the model of the operator.
      * @param inputFields: The intput fields of the model.
@@ -89,10 +99,10 @@ class LogicalOperatorFactory {
      * @param id: The id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorNodePtr
      */
-    static LogicalUnaryOperatorNodePtr createInferModelOperator(std::string model,
-                                                                std::vector<ExpressionNodePtr> inputFields,
-                                                                std::vector<ExpressionNodePtr> outputFields,
-                                                                OperatorId id = getNextOperatorId());
+        static LogicalUnaryOperatorNodePtr createInferModelOperator(std::string model,
+                                                                    std::vector<ExpressionNodePtr> inputFields,
+                                                                    std::vector<ExpressionNodePtr> outputFields,
+                                                                    OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source operator with source descriptor.

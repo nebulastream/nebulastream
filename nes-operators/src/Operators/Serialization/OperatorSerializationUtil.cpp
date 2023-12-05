@@ -11,15 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -56,6 +47,7 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
@@ -74,7 +66,21 @@
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/CountMinSynopsisDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/DDSketchSynopsisDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/HLLSynopsisDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/ReservoirSampleSynopsisDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/WindowSynopsisDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/WindowSynopsisLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Operators/Serialization/ExpressionSerializationUtil.hpp>
@@ -132,6 +138,10 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         // serialize map operator
         serializeMapOperator(*operatorNode->as<MapLogicalOperatorNode>(), serializedOperator);
 
+//    } else if (operatorNode->instanceOf<Experimental::Statistics::WindowSynopsisLogicalOperatorNode>()) {
+//        // serialize synopsis operator
+//        serializeSynopsisOperator(*operatorNode->as<NES::Experimental::Statistics::WindowSynopsisLogicalOperatorNode>(),
+//                          serializedOperator);
     } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
         // serialize infer model
         serializeInferModelOperator(*operatorNode->as<InferModel::InferModelLogicalOperatorNode>(), serializedOperator);
@@ -1870,6 +1880,13 @@ void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorNodePtr op
             SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
     }
 }
+
+//void OperatorSerializationUtil::serializeSynopsisOperator(
+//    const NES::Experimental::Statistics::WindowSynopsisLogicalOperatorNode& synopsisOperator,
+//    SerializableOperator& serializableOperator) {
+//    synopsisOperato
+//
+//}
 
 void OperatorSerializationUtil::serializeInferModelOperator(const InferModel::InferModelLogicalOperatorNode& inferModelOperator,
                                                             SerializableOperator& serializedOperator) {

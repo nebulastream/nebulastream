@@ -75,6 +75,11 @@ class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 }// namespace Windowing
 
+namespace Experimental::Statistics {
+class WindowSynopsisDescriptor;
+using WindowSynopsisDescriptorPtr = std::shared_ptr<WindowSynopsisDescriptor>;
+}
+
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
 namespace JoinOperatorBuilder {
@@ -477,6 +482,13 @@ class Query {
      * @return query
      */
     Query& map(FieldAssignmentExpressionNodePtr const& mapExpression);
+
+    /**
+     * @brief
+     * @param synopsisDesc
+     * @return
+     */
+    Query& synopsis(NES::Experimental::Statistics::WindowSynopsisDescriptorPtr synopsisDesc);
 
     /**
      * @brief: inferModel

@@ -40,6 +40,11 @@ using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 }// namespace Windowing
+
+namespace Experimental::Statistics {
+class WindowSynopsisDescriptor;
+using WindowSynopsisDescriptorPtr = std::shared_ptr<WindowSynopsisDescriptor>;
+}// namespace Experimental::Statistics
 }// namespace NES
 /**
  * @brief The following declares API functions for windowing.
@@ -94,6 +99,16 @@ API::WindowAggregationPtr Median(const ExpressionItem& onField);
  * @return A descriptor of the aggregation function.
  */
 API::WindowAggregationPtr Avg(const ExpressionItem& onField);
+
+class WindowSynopsis;
+using WindowSynopsisPtr = std::shared_ptr<WindowSynopsis>;
+class WindowSynopsis {
+  public:
+    WindowSynopsis(NES::Experimental::Statistics::WindowSynopsisDescriptorPtr windowSynopsisDescriptor);
+    const NES::Experimental::Statistics::WindowSynopsisDescriptorPtr synopsis;
+};
+
+API::WindowSynopsisPtr CountMin(const ExpressionItem& onField);
 
 /**
  * @brief Defines event time as a time characteristic for a window.

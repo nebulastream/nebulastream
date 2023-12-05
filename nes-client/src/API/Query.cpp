@@ -29,6 +29,7 @@
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/WindowSynopsisDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -338,6 +339,11 @@ Query& Query::flatMapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor) {
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");
     this->queryPlan = QueryPlanBuilder::addMap(mapExpression, this->queryPlan);
+    return *this;
+}
+
+Query& Query::synopsis(NES::Experimental::Statistics::WindowSynopsisDescriptorPtr synopsisDesc) {
+    queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createSynopsisOperator(synopsisDesc));
     return *this;
 }
 

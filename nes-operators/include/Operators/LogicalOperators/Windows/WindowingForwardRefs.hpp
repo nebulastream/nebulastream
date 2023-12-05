@@ -33,7 +33,6 @@ using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-
 }// namespace NES
 
 namespace NES::Windowing {

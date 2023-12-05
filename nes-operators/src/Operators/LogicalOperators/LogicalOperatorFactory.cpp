@@ -33,6 +33,8 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/WindowSynopsisDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/WindowSynopsisLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 
@@ -67,6 +69,12 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(con
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression,
                                                                       OperatorId id) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
+}
+
+LogicalUnaryOperatorNodePtr
+LogicalOperatorFactory::createSynopsisOperator(Experimental::Statistics::WindowSynopsisDescriptorPtr synopsisDescriptor,
+                                               NES::OperatorId id) {
+    return std::make_shared<NES::Experimental::Statistics::WindowSynopsisLogicalOperatorNode>(synopsisDescriptor, id);
 }
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createInferModelOperator(std::string model,

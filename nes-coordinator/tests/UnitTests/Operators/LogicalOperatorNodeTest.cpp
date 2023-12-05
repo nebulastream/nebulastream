@@ -1223,6 +1223,20 @@ TEST_F(LogicalOperatorNodeTest, swap5) {
 
     filterOp6->swap(filterOp3, filterOp2);
     stringstream expected;
+  protected:
+    bool removed{};
+    bool replaced{};
+    LogicalSourcePtr logicalSource;
+    DumpContextPtr dumpContext;
+
+    ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
+    LogicalOperatorNodePtr sourceOp;
+
+    LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
+    LogicalOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy;
+
+    std::vector<NodePtr> children{};
+    std::vector<NodePtr> parents{};
     expected << std::string(0, ' ') << filterOp6->toString() << std::endl;
     expected << "|--" << filterOp1->toString() << std::endl;
     expected << "|  |--" << filterOp3->toString() << std::endl;

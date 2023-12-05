@@ -25,20 +25,22 @@
 #include <Statistics/StatisticManager/StatisticCollectorStorage.hpp>
 #include <Statistics/StatisticCollectors/StatisticCollectorType.hpp>
 
-#include <API/Schema.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/CountMinSynopsisDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/DDSketchSynopsisDescriptor.hpp>
+
+#include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Services/QueryService.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
+#include <Util/TestUtils.hpp>
+#include <iostream>
 
 using namespace std;
 
@@ -136,4 +138,38 @@ TEST_F(StatisticsIntegrationTest, createTest) {
 
     EXPECT_EQ(success, true);
 }
+
+TEST_F(StatisticsIntegrationTest, API_Test) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("ContinuousSourceTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
+
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    workerConfig1->queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
+    auto defaultSourceType1 = DefaultSourceType::create("testStream", "test_stream");
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    workerConfig1->physicalSourceTypes.add(defaultSourceType1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    //register query
+    auto query = Query::from("testStream").ddSketch("campaign_id", 100, 0.95);
+
+}
+
 }// namespace NES

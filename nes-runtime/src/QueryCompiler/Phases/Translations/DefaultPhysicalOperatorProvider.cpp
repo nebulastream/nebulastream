@@ -35,6 +35,7 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Synopses/WindowSynopsisLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
@@ -160,6 +161,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerWatermarkAssignmentOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         lowerMapOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<NES::Experimental::Statistics::WindowSynopsisLogicalOperatorNode>()) {
+        lowerSynopsisOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
         lowerInferModelOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
@@ -211,6 +214,12 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
 
     physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
     operatorNode->replace(physicalProjectOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerSynopsisOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+    auto synopsisOperator = operatorNode->as<NES::Experimental::Statistics::WindowSynopsisLogicalOperatorNode>();
+    operatorNode
+//    operatorNode->replace(physicalSynopsisOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {

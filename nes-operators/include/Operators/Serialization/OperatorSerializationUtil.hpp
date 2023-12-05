@@ -17,10 +17,10 @@
 
 #include <Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <SerializableOperator.pb.h>
 #include <memory>
 
@@ -289,6 +289,15 @@ class OperatorSerializationUtil {
      * @param operatorNode LogicalOperatorNode for which to serialize the input schema
      */
     static void deserializeInputSchema(LogicalOperatorNodePtr operatorNode, SerializableOperator& serializedOperator);
+
+    /**
+     * @brief Serializes a synopsis logical operator
+     * @param synopsisOperator the original instance of the synopsis Operator
+     * @param serializedOperator the serialized instance of the synopsis
+     */
+//    static void
+//    serializeSynopsisOperator(const NES::Experimental::Statistics::WindowSynopsisLogicalOperatorNode& synopsisOperator,
+//                              SerializableOperator& serializedOperator);
 
     /**
      * @brief Serializes an inferModel logical operator

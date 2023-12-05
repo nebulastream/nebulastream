@@ -128,6 +128,13 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerProjectOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
+     * @brief
+     * @param queryPlan
+     * @param operatorNode
+     */
+    void lowerSynopsisOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+
+    /**
     * @brief Lowers an infer model operator
     * @param queryPlan current plan
     * @param operatorNode current operator
