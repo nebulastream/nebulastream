@@ -128,6 +128,42 @@ class DummyWaitOnFutureSubRequest : public AbstractSubRequest {
     std::future<bool> future;
 };
 
+class DummyWaitOnFutureMultiRequest : public AbstractMultiRequest {
+  public:
+    DummyWaitOnFutureMultiRequest(
+        const std::vector<ResourceType>& requiredResources,
+        uint8_t maxRetries,
+        std::vector<std::pair<std::future<bool>, std::shared_ptr<AbstractSubRequest>>>& listOfResourceLists)
+        : AbstractMultiRequest(requiredResources, maxRetries), listOfResourceLists(listOfResourceLists){};
+
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
+        std::vector<std::future<std::any>> responseFutures;
+        responseFutures.reserve(listOfResourceLists.size());
+        for (auto& [future, subRequest] : listOfResourceLists) {
+            future.get();
+            responseFutures.push_back(scheduleSubRequest(subRequest, storageHandler));
+        }
+
+        executeSubRequestWhileQueueNotEmpty(storageHandler);
+
+        for (auto& f : responseFutures) {
+            f.wait();
+        }
+        responsePromise.set_value(std::make_shared<DummyWaitOnFutureResponse>(storageHandler));
+        return {};
+    }
+
+    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
+
+  protected:
+    void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
+    void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
+    void postExecution(const StorageHandlerPtr& storageHandler) override { storageHandler->releaseResources(requestId); }
+
+  private:
+    std::vector<std::pair<std::future<bool>, std::shared_ptr<AbstractSubRequest>>>& listOfResourceLists;
+};
+
 class DummyMultiResponse : public AbstractRequestResponse {
   public:
     explicit DummyMultiResponse(uint32_t number) : number(number){};
@@ -229,25 +265,20 @@ class AsyncRequestProcessorTest : public Testing::BaseUnitTest, public testing::
     using Base = Testing::BaseUnitTest;
 
   protected:
-    AsyncRequestProcessorPtr processor{nullptr};
     Configurations::CoordinatorConfigurationPtr coordinatorConfig;
 
   public:
-    void SetUp() override {
-        Base::SetUp();
+    AsyncRequestProcessorPtr getProcessor(uint16_t numThreads)  {
         coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
-        coordinatorConfig->requestExecutorThreads = GetParam();
+        coordinatorConfig->requestExecutorThreads = numThreads;
         StorageDataStructures storageDataStructures = {coordinatorConfig, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-        processor = std::make_shared<AsyncRequestProcessor>(storageDataStructures);
+        return std::make_shared<AsyncRequestProcessor>(storageDataStructures);
     }
 
-    void TearDown() override {
-        processor.reset();
-        Base::TearDown();
-    }
 };
 
 TEST_P(AsyncRequestProcessorTest, startAndDestroy) {
+    auto processor = getProcessor(GetParam());
     EXPECT_TRUE(processor->stop());
 
     //it should not be possible to submit a request after destruction
@@ -255,8 +286,8 @@ TEST_P(AsyncRequestProcessorTest, startAndDestroy) {
     EXPECT_FALSE(processor->runAsync(request));
 }
 
-TEST_P(AsyncRequestProcessorTest, testWaitingForLock) {
-    constexpr uint32_t responseValue = 20;
+TEST_F(AsyncRequestProcessorTest, testWaitingForLock) {
+    auto processor = getProcessor(8);
     try {
         //using the same value for response value and min value will create a single request with no follow up requests
         std::promise<bool> promise1;
@@ -314,12 +345,20 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLock) {
                 NES_DEBUG("Request {} has not yet locked the topology", queryId1);
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        auto currentTicketTopology = 0;
+        auto currentTicketQueryCatalog = 0;
+        auto nextAvailableTicketTopology = 1;
+        auto nextAvailableTicketQueryCatalogService = 0;
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
         auto queryId2 = processor->runAsync(request2);
         EXPECT_NE(queryId2, INVALID_REQUEST_ID);
-        while (coordinatorConfig->requestExecutorThreads.getValue() > 1) {
+        nextAvailableTicketQueryCatalogService++;
+        while (true) {
             try {
                 twoplhandler->getQueryCatalogServiceHandle(queryId2);
                 NES_DEBUG("Request {} has locked the query catalog", queryId2);
@@ -328,119 +367,154 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLock) {
                 NES_DEBUG("Request {} has not yet locked the query catalog", queryId2);
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
-        auto threadCount = coordinatorConfig->requestExecutorThreads.getValue();
         auto queryId3 = processor->runAsync(request3);
         EXPECT_NE(queryId3, INVALID_REQUEST_ID);
-        auto expectedTopologyWaitingCount = 1;
-        if (threadCount < 3) {
-            expectedTopologyWaitingCount = 0;
-        }
+        //no additional waiting on query catalog because the request has to acquire topology before trying ot acquire the query catalog
+        nextAvailableTicketTopology++;
+
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) < expectedTopologyWaitingCount) {
-            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+        while (twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
         auto queryId4 = processor->runAsync(request4);
         EXPECT_NE(queryId4, INVALID_REQUEST_ID);
-        expectedTopologyWaitingCount = 2;
-        if (threadCount < 3) {
-            expectedTopologyWaitingCount = 0;
-        } else if (threadCount < 4) {
-            expectedTopologyWaitingCount = 1;
-        }
+        nextAvailableTicketTopology++;
         start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) < expectedTopologyWaitingCount) {
-            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
         auto queryId5 = processor->runAsync(request5);
         EXPECT_NE(queryId5, INVALID_REQUEST_ID);
-        auto expectedQueryCatalogWaitingCount = 1;
-        if (threadCount < 5) {
-            expectedQueryCatalogWaitingCount = 0;
-        }
+        nextAvailableTicketQueryCatalogService++;
         start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) < expectedQueryCatalogWaitingCount) {
-            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService)
+               < nextAvailableTicketQueryCatalogService) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
         promise1.set_value(true);
         future1.get();
-        //when request one gets executed, the wating count on the topology will eventually decrease
-        if (expectedTopologyWaitingCount > 0) {
-            expectedTopologyWaitingCount--;
-        }
-        start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) != expectedTopologyWaitingCount) {
-            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
-            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
-                FAIL();
-            }
-        }
         //because one lock on the topology gets released, request 3 can qcquire it and will then start waiting on the query catalog as well
-        expectedQueryCatalogWaitingCount = 2;
-        if (threadCount < 2) {
-            expectedQueryCatalogWaitingCount = 0;
-        } else if (threadCount < 4) {
-            expectedQueryCatalogWaitingCount = 1;
-        }
+        nextAvailableTicketQueryCatalogService++;
+        //when request one gets executed, the current ticket for the topology will increase eventually
+        currentTicketTopology++;
         start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) < expectedQueryCatalogWaitingCount) {
-            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+        while ((int) twoplhandler->getCurrentTicket(ResourceType::Topology) < currentTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService)
+               < nextAvailableTicketQueryCatalogService) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
         promise2.set_value(true);
         future2.get();
-
-        //when request two gets executed, the wating count on the query catalog will eventually decrease
-        expectedQueryCatalogWaitingCount = 1;
-        if (threadCount < 3) {
-            expectedQueryCatalogWaitingCount = 0;
-        }
+        //when request two gets executed, the current ticket for the query catalog will increase eventually
+        currentTicketQueryCatalog++;
         start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) > expectedQueryCatalogWaitingCount) {
-            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+        while ((int) twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService) < currentTicketQueryCatalog) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
         promise3.set_value(true);
-        //nothing changes, request 3 is still waiting on the query catalog
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        //for threads >= 5 nothing changes, request 3 is still waiting on the query catalog
+
+        //if there is just one thread, this will increase the ticket of the topology
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService)
+               < nextAvailableTicketQueryCatalogService) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getCurrentTicket(ResourceType::Topology) < currentTicketTopology) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
         promise4.set_value(true);
         //nothing changes, request 4 is waiting on toplogy which is still held by request 3 which is waiting on query catalog
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getCurrentTicket(ResourceType::Topology) < currentTicketTopology) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
         promise5.set_value(true);
         future3.get();
         future4.get();
         future5.get();
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), 3);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), 3);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), 3);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService), 3);
 
         EXPECT_TRUE(processor->stop());
     } catch (std::exception const& ex) {
@@ -449,8 +523,8 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLock) {
     }
 }
 
-
 TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
+    auto processor = getProcessor(8);
     constexpr uint32_t responseValue = 20;
     try {
         //using the same value for response value and min value will create a single request with no follow up requests
@@ -465,20 +539,31 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
                                                                    promise2.get_future());
 
         std::promise<bool> promise3;
-        auto request3 = std::make_shared<DummyWaitOnFutureRequest>(
+        std::promise<bool> runPromise3;
+        auto request3 = std::make_shared<DummyWaitOnFutureSubRequest>(
             std::vector<ResourceType>{ResourceType::QueryCatalogService, ResourceType::Topology},
-            0,
             promise3.get_future());
+        std::pair pair3 = {runPromise3.get_future(), request3};
 
         std::promise<bool> promise4;
-        auto request4 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::Topology},
-                                                                   0,
-                                                                   promise4.get_future());
+        std::promise<bool> runPromise4;
+        auto request4 = std::make_shared<DummyWaitOnFutureSubRequest>(std::vector<ResourceType>{ResourceType::Topology},
+                                                                      promise4.get_future());
+        std::pair pair4 = {runPromise4.get_future(), request4};
 
         std::promise<bool> promise5;
-        auto request5 = std::make_shared<DummyWaitOnFutureRequest>(std::vector<ResourceType>{ResourceType::QueryCatalogService},
-                                                                   0,
-                                                                   promise5.get_future());
+        std::promise<bool> runPromise5;
+        auto request5 =
+            std::make_shared<DummyWaitOnFutureSubRequest>(std::vector<ResourceType>{ResourceType::QueryCatalogService},
+                                                          promise5.get_future());
+        std::pair pair5 = {runPromise5.get_future(), request5};
+
+        std::vector<std::pair<std::future<bool>, std::shared_ptr<AbstractSubRequest>>> pairs;
+        pairs.emplace_back(std::move(pair3));
+        pairs.emplace_back(std::move(pair4));
+        pairs.emplace_back(std::move(pair5));
+        std::vector<ResourceType> resources;
+        auto multiRequest = std::make_shared<DummyWaitOnFutureMultiRequest>(resources, 0, pairs);
 
         //get 2pl handler
         std::promise<bool> handlerGetterPromise;
@@ -493,9 +578,7 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
 
         auto future1 = request1->getFuture();
         auto future2 = request2->getFuture();
-        auto future3 = request3->getFuture();
-        auto future4 = request4->getFuture();
-        auto future5 = request5->getFuture();
+        auto multiRequestFuture = multiRequest->getFuture();
 
         auto queryId1 = processor->runAsync(request1);
         EXPECT_NE(queryId1, INVALID_REQUEST_ID);
@@ -509,12 +592,20 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
                 NES_DEBUG("Request {} has not yet locked the topology", queryId1);
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        auto currentTicketTopology = 0;
+        auto currentTicketQueryCatalog = 0;
+        auto nextAvailableTicketTopology = 1;
+        auto nextAvailableTicketQueryCatalogService = 0;
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
         auto queryId2 = processor->runAsync(request2);
         EXPECT_NE(queryId2, INVALID_REQUEST_ID);
-        while (coordinatorConfig->requestExecutorThreads.getValue() > 1) {
+        nextAvailableTicketQueryCatalogService++;
+        while (true) {
             try {
                 twoplhandler->getQueryCatalogServiceHandle(queryId2);
                 NES_DEBUG("Request {} has locked the query catalog", queryId2);
@@ -523,119 +614,132 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
                 NES_DEBUG("Request {} has not yet locked the query catalog", queryId2);
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
         auto threadCount = coordinatorConfig->requestExecutorThreads.getValue();
-        auto queryId3 = processor->runAsync(request3);
-        EXPECT_NE(queryId3, INVALID_REQUEST_ID);
-        auto expectedTopologyWaitingCount = 1;
-        if (threadCount < 3) {
-            expectedTopologyWaitingCount = 0;
-        }
+        auto multiRequestId = processor->runAsync(multiRequest);
+        runPromise3.set_value(true);
+
+        //no additional waiting on query catalog because the request has to acquire topology before trying ot acquire the query catalog
+        nextAvailableTicketTopology++;
+
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) < expectedTopologyWaitingCount) {
-            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+        while (twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
-        auto queryId4 = processor->runAsync(request4);
-        EXPECT_NE(queryId4, INVALID_REQUEST_ID);
-        expectedTopologyWaitingCount = 2;
-        if (threadCount < 3) {
-            expectedTopologyWaitingCount = 0;
-        } else if (threadCount < 4) {
-            expectedTopologyWaitingCount = 1;
+        runPromise4.set_value(true);
+
+        nextAvailableTicketTopology++;
+        if (coordinatorConfig->requestExecutorThreads.getValue() < 2) {
+            nextAvailableTicketTopology = 1;
+        } else if (coordinatorConfig->requestExecutorThreads.getValue() < 5) {
+            nextAvailableTicketTopology = 2;
         }
         start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) < expectedTopologyWaitingCount) {
-            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
-        auto queryId5 = processor->runAsync(request5);
-        EXPECT_NE(queryId5, INVALID_REQUEST_ID);
-        auto expectedQueryCatalogWaitingCount = 1;
-        if (threadCount < 5) {
-            expectedQueryCatalogWaitingCount = 0;
-        }
+        runPromise5.set_value(true);
+
+        nextAvailableTicketQueryCatalogService++;
         start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) < expectedQueryCatalogWaitingCount) {
-            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService)
+               < nextAvailableTicketQueryCatalogService) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
 
         promise1.set_value(true);
         future1.get();
-        //when request one gets executed, the wating count on the topology will eventually decrease
-        if (expectedTopologyWaitingCount > 0) {
-            expectedTopologyWaitingCount--;
-        }
-        start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::Topology) != expectedTopologyWaitingCount) {
-            NES_DEBUG("Topology waiting count is {}", twoplhandler->getWaitingCount(ResourceType::Topology));
-            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
-                FAIL();
-            }
-        }
+
         //because one lock on the topology gets released, request 3 can qcquire it and will then start waiting on the query catalog as well
-        expectedQueryCatalogWaitingCount = 2;
-        if (threadCount < 2) {
-            expectedQueryCatalogWaitingCount = 0;
-        } else if (threadCount < 4) {
-            expectedQueryCatalogWaitingCount = 1;
-        }
+        nextAvailableTicketQueryCatalogService++;
+        //when request one gets executed, the current ticket for the topology will increase eventually
+        currentTicketTopology++;
         start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) < expectedQueryCatalogWaitingCount) {
-            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+        while ((int) twoplhandler->getCurrentTicket(ResourceType::Topology) < currentTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        start_timestamp = std::chrono::system_clock::now();
+        while ((int) twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService)
+               < nextAvailableTicketQueryCatalogService) {
+            if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
+                FAIL();
+            }
+        }
+
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
+
         promise2.set_value(true);
         future2.get();
 
-        //when request two gets executed, the wating count on the query catalog will eventually decrease
-        expectedQueryCatalogWaitingCount = 1;
-        if (threadCount < 3) {
-            expectedQueryCatalogWaitingCount = 0;
-        }
+        //when request two gets executed, the current ticket for the query catalog will increase eventually
+        currentTicketQueryCatalog++;
         start_timestamp = std::chrono::system_clock::now();
-        while ((int) twoplhandler->getWaitingCount(ResourceType::QueryCatalogService) > expectedQueryCatalogWaitingCount) {
-            NES_DEBUG("QueryCatalog waiting count is {}", twoplhandler->getWaitingCount(ResourceType::QueryCatalogService));
+        while ((int) twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService) < currentTicketQueryCatalog) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
         }
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
+
         promise3.set_value(true);
         //nothing changes, request 3 is still waiting on the query catalog
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
         promise4.set_value(true);
         //nothing changes, request 4 is waiting on toplogy which is still held by request 3 which is waiting on query catalog
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), expectedTopologyWaitingCount);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), expectedQueryCatalogWaitingCount);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), currentTicketQueryCatalog);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), nextAvailableTicketTopology);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
+                  nextAvailableTicketQueryCatalogService);
         promise5.set_value(true);
-        future3.get();
-        future4.get();
-        future5.get();
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::Topology), 0);
-        ASSERT_EQ(twoplhandler->getWaitingCount(ResourceType::QueryCatalogService), 0);
+        multiRequestFuture.get();
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), 3);
+        ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::QueryCatalogService), 3);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::Topology), 3);
+        ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService), 3);
 
         EXPECT_TRUE(processor->stop());
     } catch (std::exception const& ex) {
@@ -645,6 +749,7 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
 }
 
 TEST_P(AsyncRequestProcessorTest, submitRequest) {
+    auto processor = getProcessor(GetParam());
     constexpr uint32_t responseValue = 20;
     try {
         //using the same value for response value and min value will create a single request with no follow up requests
@@ -662,6 +767,7 @@ TEST_P(AsyncRequestProcessorTest, submitRequest) {
 }
 
 TEST_P(AsyncRequestProcessorTest, submitFollowUpRequest) {
+    auto processor = getProcessor(GetParam());
     constexpr uint32_t responseValue = 12;
     constexpr uint32_t min = 10;
     try {
@@ -694,6 +800,7 @@ TEST_P(AsyncRequestProcessorTest, submitFollowUpRequest) {
 }
 
 TEST_P(AsyncRequestProcessorTest, submitMultiRequest) {
+    auto processor = getProcessor(GetParam());
     constexpr uint32_t iterations = 20;
     EXPECT_EQ(iterations % 2, 0);
     constexpr uint32_t additionsPerIteration = 3;
