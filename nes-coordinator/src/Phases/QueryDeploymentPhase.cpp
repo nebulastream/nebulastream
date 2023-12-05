@@ -68,6 +68,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
     }
 
+    //todo: if we remove all metadata here we also need to add it again for all, but that could be optimized
     //Reset all sub query plan metadata in the catalog
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         queryCatalogService->resetSubQueryMetaData(queryId);
