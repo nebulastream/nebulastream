@@ -111,5 +111,7 @@ target_link_libraries(NesUnikernelExporter PUBLIC
         UnikernelLLVMExport
 )
 
+set_target_properties(NesUnikernelExporter PROPERTIES EXPORT_COMPILE_COMMANDS ON)
+
 
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L /usr/local/lib -fuse-ld=lld")

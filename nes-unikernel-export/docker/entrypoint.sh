@@ -6,4 +6,4 @@ function ctrl_c() {
         echo "** Trapped CTRL-C"
 }
 
-NesUnikernelExporter /input/query.yaml --yaml /output/export.yaml --output /output/
+NesUnikernelExporter /input/input.yaml --yaml /output/export.yaml --output /output/

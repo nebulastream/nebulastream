@@ -1,4 +1,3 @@
-#include "NoOpPhysicalSource.h"
 #include "Runtime/NodeEngine.hpp"
 #include "Services/QueryService.hpp"
 #include "UnikernelExport.h"
@@ -20,7 +19,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <YamlExport.h>
-#include <iostream>
 #include <memory>
 #include <ranges>
 
@@ -59,7 +57,6 @@ bool isUnikernelWorkerNode(const NES::ExecutionNodePtr node) {
 int main(int argc, char** argv) {
     using namespace NES;
     using namespace NES::Runtime;
-    namespace stdr = std::ranges;
     namespace stdv = std::ranges::views;
 
     NES::Logger::setupLogging("unikernel_export.log", NES::LogLevel::LOG_DEBUG);

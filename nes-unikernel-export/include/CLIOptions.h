@@ -167,10 +167,10 @@ struct convert<ExportTopologySinkConfiguration> {
 
     static Node decode(const Node& node, ExportTopologySinkConfiguration& rhs) {
         if (node["node"]) {
-            rhs.node = node["node"];
+            rhs.node = node["node"].as<ExportTopologyNodeConfiguration>();
         }
         if (node["kafka"]) {
-            rhs.kafka = node["kafka"];
+            rhs.kafka = node["kafka"].as<ExportKafkaConfiguration>();
         }
         return node;
     }

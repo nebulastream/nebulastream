@@ -11,7 +11,7 @@
 .debs
 
 # Build files
-build
+build*
 cmake-build*
 debug*
 

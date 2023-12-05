@@ -12,6 +12,7 @@
      limitations under the License.
 */
 
+#include "Util/Logger/Logger.hpp"
 #include <API/Schema.hpp>
 #include <CLIOptions.h>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -27,10 +28,8 @@
 
 std::string Options::getQueryString() { return configuration.query; }
 
-bool Options::useKafka() const { return std::holds_alternative<ExportKafkaConfiguration>(configuration.topology.sink); }
-ExportKafkaConfiguration Options::getKafkaConfiguration() const {
-    return std::get<ExportKafkaConfiguration>(configuration.topology.sink);
-}
+bool Options::useKafka() const { return configuration.topology.sink.kafka.has_value(); }
+ExportKafkaConfiguration Options::getKafkaConfiguration() const { return configuration.topology.sink.kafka.value(); }
 
 NES::SchemaPtr parseSchema(const SchemaConfiguration& schemaConfig) {
     auto schema = NES::Schema::create();
@@ -53,7 +52,7 @@ Options::getTopologyAndSources() {
     if (useKafka()) {
         nodes[1] = NES::TopologyNode::create(1, "0.0.0.0", 0, 0, 1, {{NES::Worker::Properties::MAINTENANCE, false}});
     } else {
-        const auto& sink = std::get<ExportTopologyNodeConfiguration>(configuration.topology.sink);
+        const auto& sink = configuration.topology.sink.node.value();
         nodes[1] = NES::TopologyNode::create(1,
                                              sink.ip,
                                              sink.port,
@@ -151,8 +150,9 @@ CLIResult Options::getCLIOptions(int argc, char** argv) {
         if (input == "-") {
             yamlConfig = YAML::Load(std::cin);
         } else {
-            if (!exists(input))
-                return "Input file does not exist";
+            if (!exists(input)) {
+                return std::string("Input file does not exist: ") + input;
+            }
             yamlConfig = YAML::LoadFile(input.c_str());
         }
     } catch (const YAML::ParserException& pe) {
