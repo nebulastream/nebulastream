@@ -162,6 +162,8 @@ struct convert<ExportTopologySinkConfiguration> {
         if (rhs.kafka.has_value()) {
             node["kafka"] = rhs.kafka.value();
         }
+
+        NES_ASSERT(rhs.node.has_value() && rhs.kafka.has_value(), "Neither Node nor Kafka are defined");
         return node;
     };
 
