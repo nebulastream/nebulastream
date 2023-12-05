@@ -151,8 +151,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     thread = std::make_shared<std::thread>([&twoPLAccessHandle, &releaseCount]() {
         auto thread3 = std::make_shared<std::thread>([&twoPLAccessHandle, &releaseCount]() {
             //wait until the other request is in waiting list for the resource
-            while (twoPLAccessHandle->getWaitingCount(ResourceType::Topology) < 1) {
-                NES_DEBUG("Waiting request count {}", twoPLAccessHandle->getWaitingCount(ResourceType::Topology))
+            while (twoPLAccessHandle->getCurrentTicket(ResourceType::Topology) < 1) {
+                NES_DEBUG("Waiting request count {}", twoPLAccessHandle->getCurrentTicket(ResourceType::Topology))
             }
             ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId3, {ResourceType::Topology}));
             ASSERT_EQ(releaseCount, 2);
@@ -182,8 +182,8 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     thread2->join();
 
     //wait until the other request is in waiting list for the resource
-    while (twoPLAccessHandle->getWaitingCount(ResourceType::Topology) < 2) {
-        NES_DEBUG("Waiting request count {}", twoPLAccessHandle->getWaitingCount(ResourceType::Topology))
+    while (twoPLAccessHandle->getCurrentTicket(ResourceType::Topology) < 2) {
+        NES_DEBUG("Waiting request count {}", twoPLAccessHandle->getCurrentTicket(ResourceType::Topology))
     }
     releaseCount++;
     twoPLAccessHandle->releaseResources(queryId1);

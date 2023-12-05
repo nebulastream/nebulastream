@@ -22,7 +22,9 @@
 
 namespace NES::RequestProcessor {
 struct StorageDataStructures;
+using TicketId = uint16_t;
 
+static constexpr RequestId MAX_TICKET = std::numeric_limits<TicketId>::max();
 /**
  * @brief Resource handles created by this class ensure that the resource has been locked in the growing phase and stay locked
  * until the handle goes out of scope.
@@ -30,8 +32,8 @@ struct StorageDataStructures;
 class TwoPhaseLockingStorageHandler : public StorageHandler {
     struct ResourceHolderData {
         RequestId holderId{INVALID_REQUEST_ID};
-        std::deque<std::promise<std::unique_lock<std::mutex>>> waitingQueue;
-        std::mutex queueMutex;
+        std::atomic<TicketId> nextAvailableTicket{0};
+        std::atomic<TicketId> currentTicket{0};
     };
 
   public:
@@ -130,7 +132,9 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
 
     CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
 
-    uint32_t getWaitingCount(ResourceType resource);
+    TicketId getCurrentTicket(ResourceType resource);
+
+    TicketId getNextAvailableTicket(ResourceType resource);
 
   private:
     /**

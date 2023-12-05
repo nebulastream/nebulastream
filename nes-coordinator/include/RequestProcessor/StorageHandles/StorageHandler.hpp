@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 
+
 namespace NES {
 
 //todo #3610: currently we only have handle that allow reading and writing. but we should also define also handles that allow only const operations
@@ -66,7 +67,7 @@ using UDFCatalogHandle = ResourceHandle<Catalogs::UDF::UDFCatalog>;
 
 namespace RequestProcessor {
 
-static constexpr RequestId MAX_REQUEST_ID = INT_MAX;
+static constexpr RequestId MAX_REQUEST_ID = std::numeric_limits<RequestId>::max();
 
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
