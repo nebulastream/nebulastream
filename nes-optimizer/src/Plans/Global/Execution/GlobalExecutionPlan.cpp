@@ -99,7 +99,9 @@ bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
     return false;
 }
 
-bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
+bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId, Version version) {
+    //todo: consider if we need to index over the different versions or if it is enough to leave it like this
+    //todo: if only the current version will ever get inserted into the index, we do not have a problem
     auto itr = queryIdIndex.find(queryId);
     if (itr == queryIdIndex.end()) {
         NES_DEBUG("GlobalExecutionPlan: No query with id {} exists in the system", queryId);
@@ -110,13 +112,13 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
     NES_DEBUG("GlobalExecutionPlan: Found {} Execution node for query with id {}", executionNodes.size(), queryId);
     for (const auto& executionNode : executionNodes) {
         uint64_t executionNodeId = executionNode->getId();
-        if (!executionNode->removeQuerySubPlans(queryId)) {
+        if (!executionNode->removeQuerySubPlans(queryId, version)) {
             NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id {} from execution node with id {}",
                       queryId,
                       executionNodeId);
             return false;
         }
-        if (executionNode->getAllQuerySubPlans().empty()) {
+        if (executionNode->getAllQuerySubPlans(version).empty()) {
             removeExecutionNode(executionNodeId);
         }
     }
@@ -178,7 +180,8 @@ void GlobalExecutionPlan::scheduleExecutionNode(const ExecutionNodePtr& executio
 
 void GlobalExecutionPlan::mapExecutionNodeToQueryId(const ExecutionNodePtr& executionNode) {
     NES_DEBUG("GlobalExecutionPlan: Mapping execution node {} to the query Id index.", executionNode->getId());
-    auto querySubPlans = executionNode->getAllQuerySubPlans();
+    //todo: do we want ot map the nodes for all versions or just for the current one
+    auto querySubPlans = executionNode->getAllQuerySubPlans(TODO);
     for (const auto& pair : querySubPlans) {
         QueryId queryId = pair.first;
         if (queryIdIndex.find(queryId) == queryIdIndex.end()) {
@@ -209,7 +212,7 @@ std::map<uint64_t, uint32_t> GlobalExecutionPlan::getMapOfTopologyNodeIdToOccupi
     std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
     NES_DEBUG("GlobalExecutionPlan: Found {} Execution node for query with id {}", executionNodes.size(), queryId);
     for (auto& executionNode : executionNodes) {
-        uint32_t occupiedResource = executionNode->getOccupiedResources(queryId);
+        uint32_t occupiedResource = executionNode->getOccupiedResources(queryId, TODO);
         mapOfTopologyNodeIdToOccupiedResources[executionNode->getTopologyNode()->getId()] = occupiedResource;
     }
     NES_DEBUG("GlobalExecutionPlan: returning the map of occupied resources for the query  {}", queryId);

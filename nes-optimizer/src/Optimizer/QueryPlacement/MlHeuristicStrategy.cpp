@@ -85,7 +85,7 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId) 
         Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
 
     for (auto executionNode : executionNodes) {
-        auto querysubplans = executionNode->getQuerySubPlans(queryId);
+        auto querysubplans = executionNode->getQuerySubPlans(queryId, TODO);
 
         SignatureEqualityUtilPtr signatureEqualityUtil = SignatureEqualityUtil::create(context);
 
@@ -121,7 +121,7 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId) 
                 querysubplans.erase(querysubplans.begin() + querysubplansToRemove[i]);
             }
         }
-        executionNode->updateQuerySubPlans(queryId, querysubplans);
+        executionNode->updateQuerySubPlans(queryId, querysubplans, TODO);
     }
     NES_DEBUG("MlHeuristicStrategy: Updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
 }

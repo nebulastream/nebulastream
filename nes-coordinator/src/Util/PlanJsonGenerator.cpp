@@ -151,7 +151,7 @@ nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPl
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] = executionNode->getTopologyNode()->getIpAddress();
 
         std::map<QueryId, std::vector<QueryPlanPtr>> queryToQuerySubPlansMap;
-        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
         if (!querySubPlans.empty()) {
             queryToQuerySubPlansMap[queryId] = querySubPlans;
         }

@@ -257,7 +257,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         //25. clean up the data structure
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
-        globalExecutionPlan->removeQuerySubPlans(queryId);
+        globalExecutionPlan->removeQuerySubPlans(queryId, TODO);
 
         //26. Set query status as Explained
         queryCatalogService->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
@@ -298,7 +298,7 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
 
         // loop over all query sub plans inside the current executionNode
         nlohmann::json scheduledSubQueries{};
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId, TODO)) {
 
             // prepare json object to hold information on current query sub plan
             nlohmann::json currentQuerySubPlanMetaData{};

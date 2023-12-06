@@ -162,7 +162,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         //Add sub query plan metadata in the catalog
         for (auto& executionNode : executionNodes) {
             auto workerId = executionNode->getId();
-            auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
+            auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId, TODO);
             for (auto& subQueryPlan : subQueryPlans) {
                 QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
                 for (auto& queryId : sharedQueryPlan->getQueryIds()) {

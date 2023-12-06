@@ -70,7 +70,7 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
         topology->increaseResources(id, resourceAmount);
     }
 
-    if (!globalExecutionPlan->removeQuerySubPlans(sharedQueryId)) {
+    if (!globalExecutionPlan->removeQuerySubPlans(sharedQueryId, TODO)) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,
                                                      "Failed to remove query subplans for the query "
                                                          + std::to_string(sharedQueryId) + '.');

@@ -17,6 +17,7 @@
 
 #include <Identifiers.hpp>
 #include <Nodes/Node.hpp>
+#include <Plans/Query/QueryPlanVersion.hpp>
 #include <list>
 #include <map>
 #include <memory>
@@ -36,6 +37,9 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
+class QueryPlanVersion;
+using QueryPlanVersionPtr = std::shared_ptr<QueryPlanVersion>;
+
 /**
  * This class contains information about the physical node, a map of query sub plans that need to be executed
  * on the physical node, and some additional configurations.
@@ -52,7 +56,7 @@ class ExecutionNode : public Node {
      * @param sharedQueryId : Id of the sub plan
      * @return true if the plan exists else false
      */
-    bool hasQuerySubPlans(SharedQueryId sharedQueryId);
+    bool hasQuerySubPlans(SharedQueryId sharedQueryId, Version version);
 
     /**
      * Get execution node id
@@ -72,7 +76,7 @@ class ExecutionNode : public Node {
      * @param querySubPlan : the query sub plan
      * @return true if operation is successful
      */
-    bool addNewQuerySubPlan(SharedQueryId sharedQueryId, const QueryPlanPtr& querySubPlan);
+    bool addNewQuerySubPlan(SharedQueryId sharedQueryId, const QueryPlanPtr& querySubPlan, Version version);
 
     /**
      * Update an existing query sub plan
@@ -80,33 +84,34 @@ class ExecutionNode : public Node {
      * @param querySubPlans : the new query sub plan
      * @return true if successful
      */
-    bool updateQuerySubPlans(SharedQueryId sharedQueryId, std::vector<QueryPlanPtr> querySubPlans);
+    bool updateQuerySubPlans(SharedQueryId sharedQueryId, std::vector<QueryPlanPtr> querySubPlans, Version version);
 
     /**
      * Get Query subPlan for the given Id
      * @param sharedQueryId
+     * @param version the version number of the the plan (defaults to 0)
      * @return Query sub plan
      */
-    std::vector<QueryPlanPtr> getQuerySubPlans(SharedQueryId sharedQueryId);
+    std::vector<QueryPlanPtr> getQuerySubPlans(SharedQueryId sharedQueryId, Version version/* = 0*/);
 
     /**
      * Remove existing subPlan
      * @param sharedQueryId
      * @return true if operation succeeds
      */
-    bool removeQuerySubPlans(SharedQueryId sharedQueryId);
+    bool removeQuerySubPlans(SharedQueryId sharedQueryId, Version version);
 
     /**
      * Get the map of all query sub plans
      * @return
      */
-    std::map<SharedQueryId, std::vector<QueryPlanPtr>> getAllQuerySubPlans();
+    std::map<SharedQueryId, std::vector<QueryPlanPtr>> getAllQuerySubPlans(Version version);
 
     /**
      * Get the resources occupied by the query sub plans for the input query id.
      * @param sharedQueryId : the input shared query plan id
      */
-    uint32_t getOccupiedResources(SharedQueryId sharedQueryId);
+    uint32_t getOccupiedResources(SharedQueryId sharedQueryId, Version version);
 
     bool equal(NodePtr const& rhs) const override;
 
@@ -137,7 +142,12 @@ class ExecutionNode : public Node {
     /**
      * map of queryPlans
      */
-    std::map<SharedQueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
+    std::unordered_map<Version, std::map<SharedQueryId, std::vector<QueryPlanPtr>>> mapOfQuerySubPlans;
+    std::unordered_map<Version, std::map<SharedQueryId, std::vector<Network::NodeLocation>>> mapOfSourceReconfigurations;
+    std::unordered_map<Version, std::map<SharedQueryId, std::vector<QueryPlanVersion::SinkReconfigurationData>>> mapOfSinkReconfigurations;
+    //todo: instead of putting this all in one map, make separate maps so we do not have to convert from version to plan
+    //todo: make away completely with the encapsulating class
+    //std::unordered_map<Version, std::map<SharedQueryId, std::vector<QueryPlanVersionPtr>>> mapOfQuerySubPlans;
 };
 }// namespace NES
 

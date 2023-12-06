@@ -104,7 +104,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
     plan->setQueryId(queryId);
     plan->setQuerySubPlanId(querySubPlanId);
-    executionNode->addNewQuerySubPlan(queryId, plan);
+    executionNode->addNewQuerySubPlan(queryId, plan, TODO);
 
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
 
@@ -158,7 +158,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId);
     plan1->setQuerySubPlanId(querySubPlanId1);
-    executionNode->addNewQuerySubPlan(queryId, plan1);
+    executionNode->addNewQuerySubPlan(queryId, plan1, TODO);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
@@ -167,7 +167,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId);
     plan2->setQuerySubPlanId(querySubPlanId2);
-    executionNode->addNewQuerySubPlan(queryId, plan2);
+    executionNode->addNewQuerySubPlan(queryId, plan2, TODO);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -222,7 +222,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
-    executionNode->addNewQuerySubPlan(queryId1, plan1);
+    executionNode->addNewQuerySubPlan(queryId1, plan1, TODO);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
@@ -232,7 +232,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
-    executionNode->addNewQuerySubPlan(queryId2, plan2);
+    executionNode->addNewQuerySubPlan(queryId2, plan2, TODO);
 
     globalExecutionPlan->addExecutionNode(executionNode);
     globalExecutionPlan->addExecutionNodeAsRoot(executionNode);
@@ -288,7 +288,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId11 = PlanIdGenerator::getNextQuerySubPlanId();
     plan11->setQueryId(queryId1);
     plan11->setQuerySubPlanId(querySubPlanId11);
-    executionNode->addNewQuerySubPlan(queryId1, plan11);
+    executionNode->addNewQuerySubPlan(queryId1, plan11, TODO);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor12 = PrintSinkDescriptor::create();
@@ -297,7 +297,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId12 = PlanIdGenerator::getNextQuerySubPlanId();
     plan12->setQueryId(queryId1);
     plan12->setQuerySubPlanId(querySubPlanId12);
-    executionNode->addNewQuerySubPlan(queryId1, plan12);
+    executionNode->addNewQuerySubPlan(queryId1, plan12, TODO);
 
     //query sub plans for query 2
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
@@ -308,7 +308,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId21 = PlanIdGenerator::getNextQuerySubPlanId();
     plan21->setQueryId(queryId2);
     plan21->setQuerySubPlanId(querySubPlanId21);
-    executionNode->addNewQuerySubPlan(queryId2, plan21);
+    executionNode->addNewQuerySubPlan(queryId2, plan21, TODO);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding another query plan to the execution node");
     auto printSinkDescriptor22 = PrintSinkDescriptor::create();
@@ -317,7 +317,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     QuerySubPlanId querySubPlanId22 = PlanIdGenerator::getNextQuerySubPlanId();
     plan22->setQueryId(queryId2);
     plan22->setQuerySubPlanId(querySubPlanId22);
-    executionNode->addNewQuerySubPlan(queryId2, plan22);
+    executionNode->addNewQuerySubPlan(queryId2, plan22, TODO);
 
     globalExecutionPlan->addExecutionNode(executionNode);
 
@@ -393,7 +393,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
-    executionNode1->addNewQuerySubPlan(queryId1, plan1);
+    executionNode1->addNewQuerySubPlan(queryId1, plan1, TODO);
 
     //create execution node
     uint64_t node2Id = 2;
@@ -408,7 +408,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
-    executionNode2->addNewQuerySubPlan(queryId2, plan2);
+    executionNode2->addNewQuerySubPlan(queryId2, plan2, TODO);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
     globalExecutionPlan->addExecutionNode(executionNode2);
@@ -473,7 +473,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId1 = PlanIdGenerator::getNextQuerySubPlanId();
     plan1->setQueryId(queryId1);
     plan1->setQuerySubPlanId(querySubPlanId1);
-    executionNode1->addNewQuerySubPlan(queryId1, plan1);
+    executionNode1->addNewQuerySubPlan(queryId1, plan1, TODO);
 
     //create execution node 2
     uint64_t node2Id = 2;
@@ -488,7 +488,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId2 = PlanIdGenerator::getNextQuerySubPlanId();
     plan2->setQueryId(queryId2);
     plan2->setQuerySubPlanId(querySubPlanId2);
-    executionNode2->addNewQuerySubPlan(queryId2, plan2);
+    executionNode2->addNewQuerySubPlan(queryId2, plan2, TODO);
 
     //create execution node 3
     uint64_t node3Id = 3;
@@ -503,7 +503,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId3 = PlanIdGenerator::getNextQuerySubPlanId();
     plan3->setQueryId(queryId3);
     plan3->setQuerySubPlanId(querySubPlanId3);
-    executionNode3->addNewQuerySubPlan(queryId3, plan3);
+    executionNode3->addNewQuerySubPlan(queryId3, plan3, TODO);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
     globalExecutionPlan->addExecutionNode(executionNode2);
@@ -522,7 +522,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     QuerySubPlanId querySubPlanId4 = PlanIdGenerator::getNextQuerySubPlanId();
     plan4->setQueryId(queryId4);
     plan4->setQuerySubPlanId(querySubPlanId4);
-    executionNode4->addNewQuerySubPlan(queryId4, plan4);
+    executionNode4->addNewQuerySubPlan(queryId4, plan4, TODO);
 
     globalExecutionPlan->addExecutionNode(executionNode1);
     globalExecutionPlan->addExecutionNode(executionNode2);

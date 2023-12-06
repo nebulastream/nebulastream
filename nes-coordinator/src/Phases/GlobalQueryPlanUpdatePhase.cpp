@@ -308,8 +308,8 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
 
                 //6.3. Only process the upstream and downstream execution node pairs when both have shared query plans
                 // with the impacted shared query id
-                if (upstreamExecutionNode->hasQuerySubPlans(impactedSharedQueryId)
-                    && downstreamExecutionNode->hasQuerySubPlans(impactedSharedQueryId)) {
+                if (upstreamExecutionNode->hasQuerySubPlans(impactedSharedQueryId, TODO)
+                    && downstreamExecutionNode->hasQuerySubPlans(impactedSharedQueryId, TODO)) {
                     markOperatorsForReOperatorPlacement(impactedSharedQueryId, upstreamExecutionNode, downstreamExecutionNode);
                 }
             }
@@ -345,7 +345,7 @@ void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(const SharedQueryI
                                                               const ExecutionNodePtr& upstreamExecutionNode,
                                                               std::set<OperatorId>& upstreamOperatorIds) const {
 
-    auto upstreamSubQueryPlans = upstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId);
+    auto upstreamSubQueryPlans = upstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId, TODO);
     for (const auto& upstreamSubQueryPlan : upstreamSubQueryPlans) {
         //1.1 Fetch all sink operators of the sub query plan to find the most upstream non-system generated operator.
         auto sinkOperators = upstreamSubQueryPlan->getSinkOperators();
@@ -377,7 +377,7 @@ void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(const SharedQuer
                                                                 const ExecutionNodePtr& downstreamExecutionNode,
                                                                 std::set<OperatorId>& downstreamOperatorIds) const {
 
-    auto downstreamSubQueryPlans = downstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId);
+    auto downstreamSubQueryPlans = downstreamExecutionNode->getQuerySubPlans(sharedQueryPlanId, TODO);
     for (const auto& downstreamSubQueryPlan : downstreamSubQueryPlans) {
         //1.1 Fetch all source operators of the sub query plan to find the most downstream non-system generated operator.
         auto sourceOperators = downstreamSubQueryPlan->getSourceOperators();

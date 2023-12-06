@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <set>
 #include <utility>
@@ -29,22 +29,34 @@ namespace NES {
 
 ExecutionNode::ExecutionNode(const TopologyNodePtr& physicalNode) : id(physicalNode->getId()), topologyNode(physicalNode) {}
 
-bool ExecutionNode::hasQuerySubPlans(QueryId sharedQueryId) {
+bool ExecutionNode::hasQuerySubPlans(QueryId sharedQueryId, Version version) {
     NES_DEBUG("ExecutionNode : Checking if a query sub plan exists with id  {}", sharedQueryId);
-    return mapOfQuerySubPlans.find(sharedQueryId) != mapOfQuerySubPlans.end();
+    const auto versionIterator = mapOfQuerySubPlans.find(version);
+    if (versionIterator == mapOfQuerySubPlans.end()) {
+        return false;
+    }
+    return versionIterator->second.contains(sharedQueryId);
 }
 
-std::vector<QueryPlanPtr> ExecutionNode::getQuerySubPlans(QueryId sharedQueryId) {
-    if (hasQuerySubPlans(sharedQueryId)) {
+std::vector<QueryPlanPtr> ExecutionNode::getQuerySubPlans(QueryId sharedQueryId, Version version) {
+    if (hasQuerySubPlans(sharedQueryId, version)) {
         NES_DEBUG("ExecutionNode : Found query sub plan with id  {}", sharedQueryId);
-        return mapOfQuerySubPlans[sharedQueryId];
+        return mapOfQuerySubPlans[version][sharedQueryId];
     }
     NES_WARNING("ExecutionNode : Unable to find query sub plan with id {}", sharedQueryId);
     return {};
 }
 
-bool ExecutionNode::removeQuerySubPlans(QueryId sharedQueryId) {
-    if (mapOfQuerySubPlans.erase(sharedQueryId) == 1) {
+bool ExecutionNode::removeQuerySubPlans(QueryId sharedQueryId, Version version) {
+    const auto versionIterator = mapOfQuerySubPlans.find(version);
+    if (versionIterator == mapOfQuerySubPlans.end()) {
+        NES_WARNING("ExecutionNode: Version {} not found", version);
+        return false;
+    }
+    if (versionIterator->second.erase(sharedQueryId)) {
+        if (versionIterator->second.empty()) {
+            mapOfQuerySubPlans.erase(versionIterator);
+        }
         NES_DEBUG("ExecutionNode: Successfully removed query sub plan and released the resources");
         return true;
     }
@@ -52,13 +64,13 @@ bool ExecutionNode::removeQuerySubPlans(QueryId sharedQueryId) {
     return false;
 }
 
-uint32_t ExecutionNode::getOccupiedResources(QueryId sharedQueryId) {
+uint32_t ExecutionNode::getOccupiedResources(QueryId sharedQueryId, Version version) {
 
     // In this method we iterate from the root operators to all their child operator within a query sub plan
     // and count the amount of resources occupied by them. While iterating the operator trees, we keep a list
     // of visited operators so that we count each visited operator only once.
 
-    std::vector<QueryPlanPtr> querySubPlans = getQuerySubPlans(sharedQueryId);
+    std::vector<QueryPlanPtr> querySubPlans = getQuerySubPlans(sharedQueryId, version);
     uint32_t occupiedResources = 0;
     for (const auto& querySubPlan : querySubPlans) {
         NES_DEBUG("ExecutionNode : calculate the number of resources occupied by the query sub plan and release them");
@@ -105,25 +117,26 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId sharedQueryId) {
     return occupiedResources;
 }
 
-bool ExecutionNode::addNewQuerySubPlan(QueryId sharedQueryId, const QueryPlanPtr& querySubPlan) {
-    if (hasQuerySubPlans(sharedQueryId)) {
+bool ExecutionNode::addNewQuerySubPlan(QueryId sharedQueryId, const QueryPlanPtr& querySubPlan, Version version) {
+    //todo: simplify
+    if (hasQuerySubPlans(sharedQueryId, version)) {
         NES_DEBUG("ExecutionNode: Adding a new entry to the collection of query sub plans after assigning the id :  {}",
                   sharedQueryId);
-        std::vector<QueryPlanPtr> querySubPlans = mapOfQuerySubPlans[sharedQueryId];
+        std::vector<QueryPlanPtr> querySubPlans = mapOfQuerySubPlans[version][sharedQueryId];
         querySubPlans.push_back(querySubPlan);
-        mapOfQuerySubPlans[sharedQueryId] = querySubPlans;
+        mapOfQuerySubPlans[version][sharedQueryId] = querySubPlans;
     } else {
         NES_DEBUG("ExecutionNode: Creating a new entry of query sub plans and assigning to the id :  {}", sharedQueryId);
         std::vector<QueryPlanPtr> querySubPlans{querySubPlan};
-        mapOfQuerySubPlans[sharedQueryId] = querySubPlans;
+        mapOfQuerySubPlans[version][sharedQueryId] = querySubPlans;
     }
     return true;
 }
 
-bool ExecutionNode::updateQuerySubPlans(QueryId sharedQueryId, std::vector<QueryPlanPtr> querySubPlans) {
+bool ExecutionNode::updateQuerySubPlans(QueryId sharedQueryId, std::vector<QueryPlanPtr> querySubPlans, Version version) {
     NES_DEBUG("ExecutionNode: Updating the query sub plan with id :{} to the collection of query sub plans", sharedQueryId);
-    if (hasQuerySubPlans(sharedQueryId)) {
-        mapOfQuerySubPlans[sharedQueryId] = std::move(querySubPlans);
+    if (hasQuerySubPlans(sharedQueryId, version)) {
+        mapOfQuerySubPlans[version][sharedQueryId] = std::move(querySubPlans);
         NES_DEBUG("ExecutionNode: Updated the query sub plan with id : {} to the collection of query sub plans", sharedQueryId);
         return true;
     }
@@ -144,7 +157,13 @@ uint64_t ExecutionNode::getId() const { return id; }
 
 TopologyNodePtr ExecutionNode::getTopologyNode() { return topologyNode; }
 
-std::map<QueryId, std::vector<QueryPlanPtr>> ExecutionNode::getAllQuerySubPlans() { return mapOfQuerySubPlans; }
+std::map<QueryId, std::vector<QueryPlanPtr>> ExecutionNode::getAllQuerySubPlans(Version version) {
+    auto versionIterator = mapOfQuerySubPlans.find(version);
+    if (versionIterator != mapOfQuerySubPlans.end()) {
+        return versionIterator->second;
+    }
+    return {};
+}
 
 bool ExecutionNode::equal(NodePtr const& rhs) const { return rhs->as<ExecutionNode>()->getId() == id; }
 
@@ -152,20 +171,23 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
     std::vector<std::string> lines;
     lines.push_back(toString());
 
-    for (const auto& mapOfQuerySubPlan : mapOfQuerySubPlans) {
-        for (const auto& queryPlan : mapOfQuerySubPlan.second) {
-            lines.push_back("QuerySubPlan(queryId:" + std::to_string(mapOfQuerySubPlan.first)
-                            + ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
+    for (const auto& version : mapOfQuerySubPlans) {
+        lines.push_back("Version: " + std::to_string(version.first));
+        for (const auto& mapOfQuerySubPlan : version.second) {
+            for (const auto& queryPlan : mapOfQuerySubPlan.second) {
+                lines.push_back("QuerySubPlan(queryId:" + std::to_string(mapOfQuerySubPlan.first)
+                                + ", querySubPlanId:" + std::to_string(queryPlan->getQuerySubPlanId()) + ")");
 
-            // Split the string representation of the queryPlan into multiple lines
-            std::string s = queryPlan->toString();
-            std::string delimiter = "\n";
-            uint64_t pos = 0;
-            std::string token;
-            while ((pos = s.find(delimiter)) != std::string::npos) {
-                token = s.substr(0, pos);
-                lines.push_back(' ' + token);
-                s.erase(0, pos + delimiter.length());
+                // Split the string representation of the queryPlan into multiple lines
+                std::string s = queryPlan->toString();
+                std::string delimiter = "\n";
+                uint64_t pos = 0;
+                std::string token;
+                while ((pos = s.find(delimiter)) != std::string::npos) {
+                    token = s.substr(0, pos);
+                    lines.push_back(' ' + token);
+                    s.erase(0, pos + delimiter.length());
+                }
             }
         }
     }

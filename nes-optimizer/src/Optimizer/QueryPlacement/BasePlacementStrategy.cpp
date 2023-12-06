@@ -225,7 +225,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
             }
 
             NES_TRACE("BasePlacementStrategy: Add the query plan to the candidate execution node.");
-            if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
+            if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan, TODO)) {
                 NES_ERROR("BasePlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
                 throw Exceptions::RuntimeException(
                     "BasePlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
@@ -337,7 +337,7 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     for (const auto& executionNode : executionNodes) {
         NES_TRACE("BasePlacementStrategy: Get all query sub plans on the execution node for the query with id {}", queryId);
-        const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
+        const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
         for (const auto& querySubPlan : querySubPlans) {
             auto sinks = querySubPlan->getOperatorByType<SinkLogicalOperatorNode>();
             for (const auto& sink : sinks) {
@@ -427,7 +427,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                 NES_ASSERT2_FMT(candidateExecutionNode, "Invalid candidate execution node while placing query " << queryId);
                 if (i == 0) {
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Find the query plan with child operator.");
-                    std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
+                    std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId, TODO);
                     bool found = false;
                     for (auto& querySubPlan : querySubPlans) {
                         OperatorNodePtr targetUpStreamOperator = querySubPlan->getOperatorWithId(upStreamOperator->getId());
@@ -454,7 +454,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     }
                 } else if (i == nodesBetween.size() - 1) {
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Find the query plan with parent operator.");
-                    std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
+                    std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId, TODO);
                     auto sinkNode = previousParent = nodesBetween[i - 1];
                     OperatorNodePtr sourceOperator =
                         createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId, sinkNode);
@@ -503,7 +503,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     operatorToSubPlan[networkSink->getId()] = querySubPlan;
 
                     NES_TRACE("BasePlacementStrategy: add query plan to execution node and update the global execution plan");
-                    candidateExecutionNode->addNewQuerySubPlan(queryId, querySubPlan);
+                    candidateExecutionNode->addNewQuerySubPlan(queryId, querySubPlan, TODO);
                     globalExecutionPlan->addExecutionNode(candidateExecutionNode);
                 }
                 // Add the parent-child relation
@@ -550,7 +550,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
 
                 // 8.1.4. remove the empty downstream query plan from the execution node
                 if (queryPlanForDownStreamOperator->getRootOperators().empty()) {
-                    auto querySubPlans = downStreamExecutionNode->getQuerySubPlans(queryId);
+                    auto querySubPlans = downStreamExecutionNode->getQuerySubPlans(queryId, TODO);
                     auto found = std::find_if(querySubPlans.begin(),
                                               querySubPlans.end(),
                                               [downStreamQuerySubPlanId](const QueryPlanPtr& querySubPlan) {
@@ -561,7 +561,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                             "BasePlacementStrategy::placeNetworkOperator: Parent plan not found in execution node.");
                     }
                     querySubPlans.erase(found);
-                    downStreamExecutionNode->updateQuerySubPlans(queryId, querySubPlans);
+                    downStreamExecutionNode->updateQuerySubPlans(queryId, querySubPlans, TODO);
                 }
             }
         }
@@ -696,7 +696,7 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
               executionNode->getId());
 
     // Get all query sub plans for the query id on the execution node
-    std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+    std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
     QueryPlanPtr candidateQueryPlan;
     if (querySubPlans.empty()) {
         NES_TRACE("BottomUpStrategy: no query plan exists for this query on the executionNode. Returning an empty query plan.");
@@ -729,7 +729,7 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
     }
 
     if (!queryPlansWithChildren.empty()) {
-        executionNode->updateQuerySubPlans(queryId, querySubPlans);
+        executionNode->updateQuerySubPlans(queryId, querySubPlans, TODO);
         // if there are more than 1 query plans containing the child operator, the create a new query plan, add root operators on
         // it, and return the created query plan
         if (queryPlansWithChildren.size() > 1) {

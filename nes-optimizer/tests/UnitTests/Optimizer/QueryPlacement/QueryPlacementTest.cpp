@@ -173,7 +173,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     ASSERT_EQ(executionNodes.size(), 3u);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0u];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -186,7 +186,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -259,7 +259,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     ASSERT_EQ(executionNodes.size(), 3u);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -273,7 +273,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -331,7 +331,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     ASSERT_EQ(executionNodes.size(), 3u);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 2u);
             for (const auto& querySubPlan : querySubPlans) {
                 std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -351,7 +351,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2u || executionNode->getId() == 3u);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -407,7 +407,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     ASSERT_EQ(executionNodes.size(), 3u);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 2u);
             for (const auto& querySubPlan : querySubPlans) {
                 std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -427,7 +427,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2U || executionNode->getId() == 3U);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1U);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -485,7 +485,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     ASSERT_EQ(executionNodes.size(), 3UL);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1UL);
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlans[0]->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 2UL);
@@ -504,7 +504,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2ULL || executionNode->getId() == 3ULL);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1UL);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -583,7 +583,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
     ASSERT_EQ(executionNodes.size(), 3UL);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(planToDeploy->getQueryId());
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(planToDeploy->getQueryId(), TODO);
             ASSERT_EQ(querySubPlans.size(), 2UL);
             for (const auto& querySubPlan : querySubPlans) {
                 std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -600,7 +600,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2ULL || executionNode->getId() == 3ULL);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(planToDeploy->getQueryId());
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(planToDeploy->getQueryId(), TODO);
             // map merged into querySubPlan with filter
             ASSERT_EQ(querySubPlans.size(), 1UL);
             auto querySubPlan = querySubPlans[0];
@@ -718,12 +718,12 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     ASSERT_EQ(executionNodes.size(), 3UL);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1UL);
             ASSERT_EQ(querySubPlans[0]->getSinkOperators().size(), 3UL);
         } else {
             EXPECT_TRUE(executionNode->getId() == 2ULL || executionNode->getId() == 3ULL);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId, TODO);
             // map merged into querySubPlan with filter
             ASSERT_EQ(querySubPlans.size(), 1UL);
             auto querySubPlan = querySubPlans[0];
@@ -780,7 +780,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     ASSERT_EQ(executionNodes.size(), 3UL);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 2UL);
             for (const auto& querySubPlan : querySubPlans) {
                 std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -800,7 +800,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2UL || executionNode->getId() == 3UL);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1UL);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -849,7 +849,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     ASSERT_EQ(executionNodes.size(), 3u);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0u];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -862,7 +862,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -912,7 +912,7 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
     ASSERT_EQ(executionNodes.size(), 3u);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0u];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -925,7 +925,7 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -974,7 +974,7 @@ TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
     ASSERT_EQ(executionNodes.size(), 3u);
     for (const auto& executionNode : executionNodes) {
         if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0u];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -987,7 +987,7 @@ TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
             }
         } else {
             EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId, TODO);
             ASSERT_EQ(querySubPlans.size(), 1u);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -1095,7 +1095,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     bool isSinkPlacementValid = false;
     bool isSource1PlacementValid = false;
     for (const auto& executionNode : executionNodes) {
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(testQueryPlan->getQueryId())) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(testQueryPlan->getQueryId(), TODO)) {
             OperatorNodePtr root = querySubPlan->getRootOperators()[0];
 
             // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
@@ -1231,7 +1231,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     bool isSource1PlacementValid = false;
     bool isSource2PlacementValid = false;
     for (const auto& executionNode : executionNodes) {
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(testQueryPlan->getQueryId())) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(testQueryPlan->getQueryId(), TODO)) {
             OperatorNodePtr root = querySubPlan->getRootOperators()[0];
 
             // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
@@ -1371,7 +1371,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     bool isSource1PlacementValid = false;
     bool isSource2PlacementValid = false;
     for (const auto& executionNode : executionNodes) {
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(queryId)) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(queryId, TODO)) {
             OperatorNodePtr root = querySubPlan->getRootOperators()[0];
 
             // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
@@ -1490,7 +1490,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     bool isSource1PlacementValid = false;
     bool isSource2PlacementValid = false;
     for (const auto& executionNode : executionNodes) {
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId, TODO)) {
             OperatorNodePtr root = querySubPlan->getRootOperators()[0];
 
             // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
@@ -1598,7 +1598,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthThightResourcesConstrains) {
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
     for (const auto& executionNode : executionNodes) {
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId, TODO)) {
             auto ops = querySubPlan->getRootOperators();
             ASSERT_EQ(ops.size(), 1);
             if (executionNode->getId() == 0) {
@@ -1712,7 +1712,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrains) {
     EXPECT_EQ(executionNodes.size(), 3UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
     for (const auto& executionNode : executionNodes) {
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId, TODO)) {
             auto ops = querySubPlan->getRootOperators();
             ASSERT_EQ(ops.size(), 1);
             if (executionNode->getId() == 0) {
@@ -1858,7 +1858,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrainsInAJ
     EXPECT_EQ(executionNodes.size(), 4UL);
     NES_INFO("Test Query Plan:\n {}", testQueryPlan->toString());
     for (const auto& executionNode : executionNodes) {
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId)) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(sharedQueryId, TODO)) {
             auto ops = querySubPlan->getRootOperators();
             ASSERT_EQ(ops.size(), 1);
             if (executionNode->getId() == 0) {
