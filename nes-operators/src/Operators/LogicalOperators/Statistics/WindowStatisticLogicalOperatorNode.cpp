@@ -13,58 +13,38 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
+#include <sstream>
 
 namespace NES::Experimental::Statistics {
 
 WindowStatisticLogicalOperatorNode::WindowStatisticLogicalOperatorNode(WindowStatisticDescriptorPtr statisticDescriptor,
-                                                                       const std::string& logicalSourceName,
-                                                                       const std::string& physicalSourceName,
-                                                                       const std::string& synopsisSourceDataFieldName,
-                                                                       TopologyNodeId topologyNodeId,
-                                                                       StatisticCollectorType statisticCollectorType,
-                                                                       time_t windowSize,
-                                                                       time_t slideFactor,
-                                                                       OperatorId operatorId)
-    : OperatorNode(operatorId), LogicalUnaryOperatorNode(operatorId), logicalSourceName(logicalSourceName),
-      physicalSourceName(physicalSourceName), synopsisSourceDataFieldName(synopsisSourceDataFieldName),
-      topologyNodeId(topologyNodeId), statisticCollectorType(statisticCollectorType), statisticDescriptor(statisticDescriptor),
-      windowSize(windowSize), slideFactor(slideFactor) {}
+                                                                       const std::string& synopsisFieldName,
+                                                                       uint64_t windowSize,
+                                                                       uint64_t slideFactor,
+                                                                       OperatorId id)
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), statisticDescriptor(statisticDescriptor),
+      synopsisFieldName(synopsisFieldName), windowSize(windowSize), slideFactor(slideFactor) {}
 
-std::string WindowStatisticLogicalOperatorNode::getTypeAsString() const {
-    switch (statisticCollectorType) {
-        case StatisticCollectorType::COUNT_MIN: return "Count-Min";
-        case StatisticCollectorType::DDSKETCH: return "DDSketch";
-        case StatisticCollectorType::HYPER_LOG_LOG: return "Hyper Log Log";
-        case StatisticCollectorType::RESERVOIR: return "Reservoir Sample";
-        case StatisticCollectorType::UNDEFINED: return "Undefined!";
-    }
+std::string WindowStatisticLogicalOperatorNode::toString() const {
+    std::stringstream ss;
+    ss << "StatisticLogicalOperator: ";
+    ss << " synopsisFieldName: " << this->getSynopsisFieldName();
+    ss << " windowSize: " << this->getWindowSize();
+    ss << " slideFactor: " << this->getSlideFactor();
+    return ss.str();
 }
 
-std::string WindowStatisticLogicalOperatorNode::toString() const { return ""; }
-
 OperatorNodePtr WindowStatisticLogicalOperatorNode::copy() {
-    return LogicalOperatorFactory::createStatisticOperator(statisticDescriptor,
-                                                           logicalSourceName,
-                                                           physicalSourceName,
-                                                           synopsisSourceDataFieldName,
-                                                           topologyNodeId,
-                                                           statisticCollectorType,
-                                                           windowSize,
-                                                           slideFactor);
+    return LogicalOperatorFactory::createStatisticOperator(statisticDescriptor, synopsisFieldName, windowSize, slideFactor);
 }
 
 bool WindowStatisticLogicalOperatorNode::equal(const NES::NodePtr& rhs) const {
     if (rhs->instanceOf<WindowStatisticLogicalOperatorNode>()) {
         auto statisticOperatorNode = rhs->as<WindowStatisticLogicalOperatorNode>();
-        if (logicalSourceName == statisticOperatorNode->getLogicalSourceName()
-            && physicalSourceName == statisticOperatorNode->getPhysicalSourceName()
-            && synopsisSourceDataFieldName == statisticOperatorNode->getSynopsisSourceDataFieldName()
-            && topologyNodeId == statisticOperatorNode->getTopologyNodeId()
-            && statisticCollectorType == statisticOperatorNode->getStatisticCollectorType()
-            && statisticDescriptor == statisticOperatorNode->getStatisticDescriptor()
+        if (statisticDescriptor == statisticOperatorNode->getStatisticDescriptor()
+            && synopsisFieldName == statisticOperatorNode->getSynopsisFieldName()
             && windowSize == statisticOperatorNode->getWindowSize() && slideFactor == statisticOperatorNode->getSlideFactor()) {
             return true;
         }
@@ -82,10 +62,7 @@ bool WindowStatisticLogicalOperatorNode::inferSchema() {
     }
 
     auto inputSchema = getInputSchema();
-    outputSchema->addField("logicalSourceName", BasicType::TEXT);
-    outputSchema->addField("physicalSourceName", BasicType::TEXT);
-    outputSchema->addField("synopsisDataFieldName", BasicType::TEXT);
-    outputSchema->addField("TopologyNodeId", BasicType::UINT64);
+    outputSchema->addField("synopsisFieldName", BasicType::TEXT);
     statisticDescriptor->addStatisticFields(outputSchema);
     outputSchema->addField("synopsisData", BasicType::TEXT);
 
@@ -94,23 +71,13 @@ bool WindowStatisticLogicalOperatorNode::inferSchema() {
 
 void WindowStatisticLogicalOperatorNode::inferStringSignature() {}
 
-const std::string& WindowStatisticLogicalOperatorNode::getLogicalSourceName() const { return logicalSourceName; }
-
-const std::string& WindowStatisticLogicalOperatorNode::getPhysicalSourceName() const { return physicalSourceName; }
-
-const std::string& WindowStatisticLogicalOperatorNode::getSynopsisSourceDataFieldName() const {
-    return synopsisSourceDataFieldName;
-}
-
-TopologyNodeId WindowStatisticLogicalOperatorNode::getTopologyNodeId() const { return topologyNodeId; }
-
-StatisticCollectorType WindowStatisticLogicalOperatorNode::getStatisticCollectorType() const { return statisticCollectorType; }
-
 const WindowStatisticDescriptorPtr& WindowStatisticLogicalOperatorNode::getStatisticDescriptor() const {
     return statisticDescriptor;
 }
 
-time_t WindowStatisticLogicalOperatorNode::getWindowSize() const { return windowSize; }
+const std::string& WindowStatisticLogicalOperatorNode::getSynopsisFieldName() const { return synopsisFieldName; }
 
-time_t WindowStatisticLogicalOperatorNode::getSlideFactor() const { return slideFactor; }
+uint64_t WindowStatisticLogicalOperatorNode::getWindowSize() const { return windowSize; }
+
+uint64_t WindowStatisticLogicalOperatorNode::getSlideFactor() const { return slideFactor; }
 }// namespace NES::Experimental::Statistics

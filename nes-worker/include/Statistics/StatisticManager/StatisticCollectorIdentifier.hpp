@@ -15,7 +15,7 @@
 #ifndef NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICMANAGER_STATISTICCOLLECTORIDENTIFIER_HPP_
 #define NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICMANAGER_STATISTICCOLLECTORIDENTIFIER_HPP_
 
-#include "Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp"
+#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
 #include <Identifiers.hpp>
 #include <memory>
 #include <string>

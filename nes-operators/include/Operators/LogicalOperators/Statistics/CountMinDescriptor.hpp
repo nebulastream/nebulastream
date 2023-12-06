@@ -21,19 +21,39 @@ namespace NES::Experimental::Statistics {
 
 class CountMinDescriptor : public WindowStatisticDescriptor {
   public:
-    CountMinDescriptor(double error, double probability);
 
-    bool operator==(WindowStatisticDescriptor& statisticsDescriptor) override;
+    /**
+     * @param depth the depth of the CM Sketch that we wish to create
+     * @param width the width of the CM Sketch that we wish to create
+     */
+    CountMinDescriptor(uint64_t depth, uint64_t width);
 
+    /**
+     * @brief checks if two statisticOperators are equal
+     * @param statisticDescriptor a statistic descriptor which holds specific values to the statistic
+     * @return true if they are equal
+     */
+    bool operator==(WindowStatisticDescriptor& statisticDescriptor) override;
+
+    /**
+     * @brief adds specific meta fields to a schema, such that
+     * @param schema the schema that will be modified
+     */
     void addStatisticFields(SchemaPtr schema) override;
 
-    double getError() const;
+    /**
+     * @return returns the depth of the sketch
+     */
+    double getDepth() const;
 
-    double getProbability() const;
+    /**
+     * @return returns the width of the sketch
+     */
+    double getWidth() const;
 
   private:
-    double error;
-    double probability;
+    uint64_t depth;
+    uint64_t width;
 };
 }
 

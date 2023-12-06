@@ -39,20 +39,73 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
 
 QueryPlanPtr TypeInferencePhase::execute(NES::QueryPlanPtr queryPlan) {
     if (!queryPlan->getOperatorByType<NES::Experimental::Statistics::WindowStatisticLogicalOperatorNode>().empty()) {
-        auto sources = queryPlan->getSourceOperators();
+        return inferSchemaForStatisticQuery(queryPlan);
+    } else {
+        return inferSchemaForAnalyticQuery(queryPlan);
+    }
+}
 
-        for (auto source : sources) {
-            auto schema = source->getSourceDescriptor()->getSchema();
+
+QueryPlanPtr TypeInferencePhase::inferSchemaForStatisticQuery(NES::QueryPlanPtr queryPlan) {
+
+    // first we have to check if all source operators have a correct source descriptors
+    auto sources = queryPlan->getSourceOperators();
+
+    if (!sources.empty() && !sourceCatalog) {
+        NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
+    }
+
+    for (const auto& source : sources) {
+        auto sourceDescriptor = source->getSourceDescriptor();
+
+        // if the source descriptor has no schema set and is only a logical source we replace it with the correct
+        // source descriptor form the catalog.
+        if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>() && sourceDescriptor->getSchema()->empty()) {
+            auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
+            SchemaPtr schema = Schema::create();
+            if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
+                NES_ERROR("Source name: {} not registered.", logicalSourceName);
+                throw Exceptions::LogicalSourceNotFoundException("Logical source not registered. Source Name: "
+                                                                 + logicalSourceName);
+            }
+            auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
+            schema = schema->copyFields(originalSchema);
+            schema->setLayoutType(originalSchema->getLayoutType());
+            std::string qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+            //perform attribute name resolution
+            for (auto& field : schema->fields) {
+                if (!field->getName().starts_with(qualifierName)) {
+                    field->setName(qualifierName + field->getName());
+                }
+            }
+
             schema->addField("LogicalSourceName", BasicType::TEXT);
             schema->addField("PhysicalSourceName", BasicType::TEXT);
             schema->addField("SynopsisSourceDataFieldName", BasicType::TEXT);
             schema->addField("TopologyNodeId", BasicType::UINT64);
+
+            sourceDescriptor->setSchema(schema);
+            NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}",
+                      logicalSourceName,
+                      schema->toString());
         }
     }
-    return prevExecute(queryPlan);
+
+    // now we have to infer the input and output schemas for the whole query.
+    // to this end we call at each sink the infer method to propagate the schemata across the whole query.
+    auto sinks = queryPlan->getSinkOperators();
+    for (auto& sink : sinks) {
+        if (!sink->inferSchema()) {
+            NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase.");
+            auto queryId = queryPlan->getQueryId();
+            throw TypeInferenceException(queryId, "TypeInferencePhase: Failed!");
+        }
+    }
+    NES_DEBUG("TypeInferencePhase: we inferred all schemas");
+    return queryPlan;
 }
 
-QueryPlanPtr TypeInferencePhase::prevExecute(QueryPlanPtr queryPlan) {
+QueryPlanPtr TypeInferencePhase::inferSchemaForAnalyticQuery(QueryPlanPtr queryPlan) {
 
     // first we have to check if all source operators have a correct source descriptors
     auto sources = queryPlan->getSourceOperators();

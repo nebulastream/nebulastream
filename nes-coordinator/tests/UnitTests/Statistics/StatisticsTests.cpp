@@ -84,43 +84,35 @@ TEST_F(StatisticsTest, requestsTest) {
 };
 
 TEST_F(StatisticsTest, statisticLogicalOperatorTest) {
-    auto error = 0.01;
-    auto probability = 0.001;
+    auto depth = 5;
+    auto width = 10000;
 
     auto logicalSourceName = "defaultLogicalSourceName";
     auto physicalSourceName = "defaultPhysicalSourceName";
-    auto synopsisSourceDataFieldName = "synopsisSourceDataFieldName";
+    auto synopsisFieldName = "synopsisSourceDataFieldName";
     auto topologyNodeId = 0;
     auto statisticCollectorType = NES::Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
     auto windowSize = 5;
     auto slideFactor = 1;
 
-    auto statisticDescriptor = std::make_shared<Experimental::Statistics::CountMinDescriptor>(error, probability);
+    auto statisticDescriptor = std::make_shared<Experimental::Statistics::CountMinDescriptor>(depth, width);
 
     auto logicalUnaryOperatorNode = LogicalOperatorFactory::createStatisticOperator(statisticDescriptor,
-                                                                                   logicalSourceName,
-                                                                                   physicalSourceName,
-                                                                                   synopsisSourceDataFieldName,
-                                                                                   topologyNodeId,
-                                                                                   statisticCollectorType,
+                                                                                   synopsisFieldName,
                                                                                    windowSize,
                                                                                    slideFactor);
 
     auto statisticOperator = std::dynamic_pointer_cast<NES::Experimental::Statistics::WindowStatisticLogicalOperatorNode>(logicalUnaryOperatorNode);
 
-    EXPECT_EQ(statisticOperator->getLogicalSourceName(), logicalSourceName);
-    EXPECT_EQ(statisticOperator->getPhysicalSourceName(), physicalSourceName);
-    EXPECT_EQ(statisticOperator->getSynopsisSourceDataFieldName(), synopsisSourceDataFieldName);
-    EXPECT_EQ(statisticOperator->getTopologyNodeId(), topologyNodeId);
-    EXPECT_EQ(statisticOperator->getStatisticCollectorType(), statisticCollectorType);
+    EXPECT_EQ(statisticOperator->getSynopsisFieldName(), synopsisFieldName);
     EXPECT_EQ(statisticOperator->getWindowSize(), windowSize);
     EXPECT_EQ(statisticOperator->getSlideFactor(), slideFactor);
 
     auto desc= statisticOperator->getStatisticDescriptor();
     auto cmDesc = std::dynamic_pointer_cast<NES::Experimental::Statistics::CountMinDescriptor>(desc);
 
-    EXPECT_EQ(cmDesc->getError(), error);
-    EXPECT_EQ(cmDesc->getProbability(), probability);
+    EXPECT_EQ(cmDesc->getDepth(), depth);
+    EXPECT_EQ(cmDesc->getWidth(), width);
 }
 
 }// namespace NES

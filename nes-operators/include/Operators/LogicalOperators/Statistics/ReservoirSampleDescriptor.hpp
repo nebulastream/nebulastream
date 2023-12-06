@@ -21,12 +21,28 @@ namespace NES::Experimental::Statistics {
 
 class ReservoirSampleDescriptor : public WindowStatisticDescriptor {
   public:
+
+    /**
+     * @param width the width/size of the reservoir sample
+     */
     ReservoirSampleDescriptor(uint64_t width);
 
+    /**
+     * @brief checks if two statisticOperators/reservoirs are equal
+     * @param statisticDescriptor a statistic descriptor which holds specific values to the statistic
+     * @return true if they are equal
+     */
     bool operator==(WindowStatisticDescriptor& statisticsDescriptor) override;
 
+    /**
+     * @brief adds specific meta fields to a schema, such that
+     * @param schema the schema that will be modified
+     */
     void addStatisticFields(SchemaPtr schema) override;
 
+    /**
+     * @return the width/size of the sample
+     */
     uint64_t getWidth() const;
 
   private:
