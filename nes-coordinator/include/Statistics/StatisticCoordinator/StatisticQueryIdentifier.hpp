@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 
-#include <Statistics/StatisticCollectors/StatisticCollectorType.hpp>
+#include "Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp"
 
 namespace NES::Experimental::Statistics {
 

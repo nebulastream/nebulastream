@@ -39,6 +39,11 @@ using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
 namespace Experimental {
 class BatchJoinLogicalOperatorNode;
 using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+
+namespace Statistics {
+class WindowStatisticDescriptor;
+using WindowStatisticDescriptorPtr = std::shared_ptr<WindowStatisticDescriptor>;
+}// namespace Statistics
 }// namespace Experimental
 
 class UnionLogicalOperatorNode;

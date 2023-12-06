@@ -16,14 +16,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-#include <Statistics/StatisticManager/StatisticManager.hpp>
+#include "Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp"
 #include <Statistics/Requests/StatisticCreateRequest.hpp>
 #include <Statistics/Requests/StatisticDeleteRequest.hpp>
 #include <Statistics/Requests/StatisticProbeRequest.hpp>
 #include <Statistics/StatisticCoordinator/StatisticCoordinator.hpp>
 #include <Statistics/StatisticManager/StatisticCollectorIdentifier.hpp>
 #include <Statistics/StatisticManager/StatisticCollectorStorage.hpp>
-#include <Statistics/StatisticCollectors/StatisticCollectorType.hpp>
+#include <Statistics/StatisticManager/StatisticManager.hpp>
 
 #include <API/Schema.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>

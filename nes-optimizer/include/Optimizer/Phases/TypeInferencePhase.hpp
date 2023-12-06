@@ -41,7 +41,9 @@ using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
 }// namespace UDF
 
 }// namespace Catalogs
-
+namespace Experimental::Statistics {
+class WindowStatisticLogicalOperatorNode;
+}
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -63,6 +65,13 @@ class TypeInferencePhase {
                                         Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
+     * @brief
+     * @param queryPlan
+     * @return
+     */
+    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+
+    /**
      * @brief Performs type inference on the given query plan.
      * This involves the following steps.
      * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
@@ -74,7 +83,7 @@ class TypeInferencePhase {
      * @throws TypeInferenceException if inferring the data types into the query failed
      * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
      */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+    QueryPlanPtr prevExecute(QueryPlanPtr queryPlan);
 
   private:
     /**

@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <Statistics/StatisticCollectors/StatisticCollectorType.hpp>
+#include "Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp"
 
 namespace NES::Experimental::Statistics {
 /**

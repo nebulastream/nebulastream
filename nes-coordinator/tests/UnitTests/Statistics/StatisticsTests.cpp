@@ -16,11 +16,17 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
+#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
 #include <Statistics/Requests/StatisticCreateRequest.hpp>
 #include <Statistics/Requests/StatisticDeleteRequest.hpp>
 #include <Statistics/Requests/StatisticProbeRequest.hpp>
 #include <Statistics/Requests/StatisticRequest.hpp>
-#include <Statistics/StatisticCollectors/StatisticCollectorType.hpp>
+
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
+#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
+#include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
+#include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 
 namespace NES {
 
@@ -39,14 +45,14 @@ TEST_F(StatisticsTest, requestsTest) {
     std::string defaultLogicalSourceName = "defaultLogicalSourceName";
     std::vector<std::string> physicalSourceNames(10, "defaultPhysicalSourceName");
     std::string defaultFieldName = "defaultFieldName";
-    Experimental::Statistics::StatisticCollectorType statisticCollectorType = Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
+    Experimental::Statistics::StatisticCollectorType statisticCollectorType =
+        Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
     std::string probeExpression = "x == 15";
     time_t startTime = 100;
     time_t endTime = 10;
 
-    auto createObj = Experimental::Statistics::StatisticCreateRequest(defaultLogicalSourceName,
-                                                                      defaultFieldName,
-                                                                      statisticCollectorType);
+    auto createObj =
+        Experimental::Statistics::StatisticCreateRequest(defaultLogicalSourceName, defaultFieldName, statisticCollectorType);
 
     auto probeObj = Experimental::Statistics::StatisticProbeRequest(defaultLogicalSourceName,
                                                                     defaultFieldName,
@@ -57,9 +63,9 @@ TEST_F(StatisticsTest, requestsTest) {
                                                                     endTime);
 
     auto deleteObj = Experimental::Statistics::StatisticDeleteRequest(defaultLogicalSourceName,
-                                                                 defaultFieldName,
-                                                                 statisticCollectorType,
-                                                                 endTime);
+                                                                      defaultFieldName,
+                                                                      statisticCollectorType,
+                                                                      endTime);
 
     EXPECT_EQ(createObj.getLogicalSourceName(), defaultLogicalSourceName);
     EXPECT_EQ(probeObj.getLogicalSourceName(), defaultLogicalSourceName);
@@ -76,5 +82,45 @@ TEST_F(StatisticsTest, requestsTest) {
     EXPECT_EQ(probeObj.getEndTime(), endTime);
     EXPECT_EQ(deleteObj.getEndTime(), endTime);
 };
+
+TEST_F(StatisticsTest, statisticLogicalOperatorTest) {
+    auto error = 0.01;
+    auto probability = 0.001;
+
+    auto logicalSourceName = "defaultLogicalSourceName";
+    auto physicalSourceName = "defaultPhysicalSourceName";
+    auto synopsisSourceDataFieldName = "synopsisSourceDataFieldName";
+    auto topologyNodeId = 0;
+    auto statisticCollectorType = NES::Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
+    auto windowSize = 5;
+    auto slideFactor = 1;
+
+    auto statisticDescriptor = std::make_shared<Experimental::Statistics::CountMinDescriptor>(error, probability);
+
+    auto logicalUnaryOperatorNode = LogicalOperatorFactory::createStatisticOperator(statisticDescriptor,
+                                                                                   logicalSourceName,
+                                                                                   physicalSourceName,
+                                                                                   synopsisSourceDataFieldName,
+                                                                                   topologyNodeId,
+                                                                                   statisticCollectorType,
+                                                                                   windowSize,
+                                                                                   slideFactor);
+
+    auto statisticOperator = std::dynamic_pointer_cast<NES::Experimental::Statistics::WindowStatisticLogicalOperatorNode>(logicalUnaryOperatorNode);
+
+    EXPECT_EQ(statisticOperator->getLogicalSourceName(), logicalSourceName);
+    EXPECT_EQ(statisticOperator->getPhysicalSourceName(), physicalSourceName);
+    EXPECT_EQ(statisticOperator->getSynopsisSourceDataFieldName(), synopsisSourceDataFieldName);
+    EXPECT_EQ(statisticOperator->getTopologyNodeId(), topologyNodeId);
+    EXPECT_EQ(statisticOperator->getStatisticCollectorType(), statisticCollectorType);
+    EXPECT_EQ(statisticOperator->getWindowSize(), windowSize);
+    EXPECT_EQ(statisticOperator->getSlideFactor(), slideFactor);
+
+    auto desc= statisticOperator->getStatisticDescriptor();
+    auto cmDesc = std::dynamic_pointer_cast<NES::Experimental::Statistics::CountMinDescriptor>(desc);
+
+    EXPECT_EQ(cmDesc->getError(), error);
+    EXPECT_EQ(cmDesc->getProbability(), probability);
+}
 
 }// namespace NES
