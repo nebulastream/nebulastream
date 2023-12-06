@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include "Statistics/Requests/StatisticDeleteRequest.hpp"
-#include "Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp"
+#include <Statistics/Requests/StatisticDeleteRequest.hpp>
 
 namespace NES::Experimental::Statistics {
 

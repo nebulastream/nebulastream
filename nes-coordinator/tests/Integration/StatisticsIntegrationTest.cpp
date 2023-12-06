@@ -16,7 +16,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-#include "Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp"
+#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
 #include <Statistics/Requests/StatisticCreateRequest.hpp>
 #include <Statistics/Requests/StatisticDeleteRequest.hpp>
 #include <Statistics/Requests/StatisticProbeRequest.hpp>

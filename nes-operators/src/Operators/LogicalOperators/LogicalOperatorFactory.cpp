@@ -70,20 +70,12 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const Fiel
 }
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createStatisticOperator(NES::Experimental::Statistics::WindowStatisticDescriptorPtr statisticDescriptor,
-                                                                            const std::string& logicalSourceName,
-                                                                            const std::string& physicalSourceName,
-                                                                            const std::string& synopsisSourceDataFieldName,
-                                                                            TopologyNodeId topologyNodeId,
-                                                                            NES::Experimental::Statistics::StatisticCollectorType statisticCollectorType,
-                                                                            time_t windowSize,
-                                                                            time_t slideFactor,
+                                                                            const std::string& synopsisFieldName,
+                                                                            uint64_t windowSize,
+                                                                            uint64_t slideFactor,
                                                                             OperatorId id) {
     return std::make_shared<NES::Experimental::Statistics::WindowStatisticLogicalOperatorNode>(statisticDescriptor,
-                                                                                               logicalSourceName,
-                                                                                               physicalSourceName,
-                                                                                               synopsisSourceDataFieldName,
-                                                                                               topologyNodeId,
-                                                                                               statisticCollectorType,
+                                                                                               synopsisFieldName,
                                                                                                windowSize,
                                                                                                slideFactor,
                                                                                                id);

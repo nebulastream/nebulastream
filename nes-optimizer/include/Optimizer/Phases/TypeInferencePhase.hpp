@@ -65,11 +65,19 @@ class TypeInferencePhase {
                                         Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
-     * @brief
-     * @param queryPlan
-     * @return
+     * @brief checks if the queryPlan contains a logical statistic operator node and accordingly either performs type
+     * interference (inferSchemaForAnalyticalQuery), or type inference, while also adding meta fields for the statistic operator/sink
+     * @param queryPlan the query plan
+     * @return QueryPlanPtr
      */
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
+
+    /**
+     * @brief we perform type inference, but also extend the output schema of the source operator
+     * @param queryPlan the query plan
+     * @return QueryPlanPtr
+     */
+    QueryPlanPtr inferSchemaForStatisticQuery(QueryPlanPtr queryPlan);
 
     /**
      * @brief Performs type inference on the given query plan.
@@ -83,7 +91,7 @@ class TypeInferencePhase {
      * @throws TypeInferenceException if inferring the data types into the query failed
      * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
      */
-    QueryPlanPtr prevExecute(QueryPlanPtr queryPlan);
+    QueryPlanPtr inferSchemaForAnalyticQuery(QueryPlanPtr queryPlan);
 
   private:
     /**

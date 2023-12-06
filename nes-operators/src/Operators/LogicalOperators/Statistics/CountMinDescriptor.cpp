@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include "Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp"
-#include "API/Schema.hpp"
+#include <Operators/LogicalOperators/Statistics/CountMinDescriptor.hpp>
+#include <API/Schema.hpp>
 
 namespace NES::Experimental::Statistics {
 
-CountMinDescriptor::CountMinDescriptor(double error, double probability) : WindowStatisticDescriptor(), error(error), probability(probability) {}
+CountMinDescriptor::CountMinDescriptor(uint64_t depth, uint64_t width) : WindowStatisticDescriptor(), depth(depth), width(width) {}
 
-bool CountMinDescriptor::operator==(WindowStatisticDescriptor& statisticsDescriptor) {
-    auto countMinDesc = dynamic_cast<CountMinDescriptor*>(&statisticsDescriptor);
+bool CountMinDescriptor::operator==(WindowStatisticDescriptor& statisticDescriptor) {
+    auto countMinDesc = dynamic_cast<CountMinDescriptor*>(&statisticDescriptor);
     if (countMinDesc != nullptr) {
-        if (error == countMinDesc->getError() && probability == countMinDesc->getProbability()) {
+        if (depth == countMinDesc->getDepth() && width == countMinDesc->getWidth()) {
             return true;
         }
         return false;
@@ -31,12 +31,12 @@ bool CountMinDescriptor::operator==(WindowStatisticDescriptor& statisticsDescrip
 }
 
 void CountMinDescriptor::addStatisticFields(NES::SchemaPtr schema) {
-    schema->addField("error", BasicType::FLOAT64);
-    schema->addField("probability", BasicType::FLOAT64);
+    schema->addField("depth", BasicType::UINT64);
+    schema->addField("width", BasicType::UINT64);
 }
 
-double CountMinDescriptor::getError() const { return error; }
+double CountMinDescriptor::getDepth() const { return depth; }
 
-double CountMinDescriptor::getProbability() const { return probability; }
+double CountMinDescriptor::getWidth() const { return width; }
 
 }

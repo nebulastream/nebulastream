@@ -15,7 +15,7 @@
 #ifndef NES_NES_WORKER_INCLUDE_STATISTICS_REQUESTS_STATISTICPROBEREQUEST_HPP_
 #define NES_NES_WORKER_INCLUDE_STATISTICS_REQUESTS_STATISTICPROBEREQUEST_HPP_
 
-#include "Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp"
+#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
 #include <Statistics/Requests/StatisticRequest.hpp>
 #include <memory>
 #include <string>
