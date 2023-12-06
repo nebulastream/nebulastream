@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Statistics/WindowStatisticLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -36,7 +37,22 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog), std::move(udfCatalog)));
 }
 
-QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
+QueryPlanPtr TypeInferencePhase::execute(NES::QueryPlanPtr queryPlan) {
+    if (!queryPlan->getOperatorByType<NES::Experimental::Statistics::WindowStatisticLogicalOperatorNode>().empty()) {
+        auto sources = queryPlan->getSourceOperators();
+
+        for (auto source : sources) {
+            auto schema = source->getSourceDescriptor()->getSchema();
+            schema->addField("LogicalSourceName", BasicType::TEXT);
+            schema->addField("PhysicalSourceName", BasicType::TEXT);
+            schema->addField("SynopsisSourceDataFieldName", BasicType::TEXT);
+            schema->addField("TopologyNodeId", BasicType::UINT64);
+        }
+    }
+    return prevExecute(queryPlan);
+}
+
+QueryPlanPtr TypeInferencePhase::prevExecute(QueryPlanPtr queryPlan) {
 
     // first we have to check if all source operators have a correct source descriptors
     auto sources = queryPlan->getSourceOperators();

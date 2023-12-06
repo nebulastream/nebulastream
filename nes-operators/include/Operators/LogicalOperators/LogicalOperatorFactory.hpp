@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Operators/LogicalOperators/Statistics/StatisticCollectorType.hpp>
 
 namespace NES {
 
@@ -80,6 +81,26 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression,
                                                          OperatorId id = getNextOperatorId());
+
+    /**
+     * @brief
+     * @param statisticDescriptor
+     * @param logicalSourceName
+     * @param physicalSourceName
+     * @param nodeId
+     * @param statisticCollectorType
+     * @param id
+     * @return
+     */
+    static LogicalUnaryOperatorNodePtr createStatisticOperator(NES::Experimental::Statistics::WindowStatisticDescriptorPtr statisticDescriptor,
+                                                               const std::string& logicalSourceName,
+                                                               const std::string& physicalSourceName,
+                                                               const std::string& synopsisSourceDataFieldName,
+                                                               TopologyNodeId topologyNodeId,
+                                                               NES::Experimental::Statistics::StatisticCollectorType statisticCollectorType,
+                                                               time_t windowSize,
+                                                               time_t slideFactor,
+                                                               OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new infer model operator.

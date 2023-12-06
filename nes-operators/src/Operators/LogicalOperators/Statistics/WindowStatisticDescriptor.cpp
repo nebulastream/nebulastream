@@ -12,13 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICCOLLECTORS_STATISTICCOLLECTORTYPE_HPP_
-#define NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICCOLLECTORS_STATISTICCOLLECTORTYPE_HPP_
+#include <Operators/LogicalOperators/Statistics/WindowStatisticDescriptor.hpp>
 
 namespace NES::Experimental::Statistics {
-/**
- * @brief the types of StatisticCollectors
- */
-enum class StatisticCollectorType { COUNT_MIN, HYPER_LOG_LOG, DDSKETCH, RESERVOIR, UNDEFINED };
-}// namespace NES::Experimental::Statistics
-#endif//NES_NES_WORKER_INCLUDE_STATISTICS_STATISTICCOLLECTORS_STATISTICCOLLECTORTYPE_HPP_
+
+}
