@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.5.268](https://github.com/nebulastream/nebulastream/tree/v0.5.268) (2023-12-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.267...v0.5.268)
+
+**Implemented enhancements:**
+
+- \[TASK\] Possible refactor of `nes-operators/Operators` [\#4415](https://github.com/nebulastream/nebulastream/issues/4415)
+- \[TASK\] Investigate multiple Sinks [\#4411](https://github.com/nebulastream/nebulastream/issues/4411)
+- \[TASK\] Refactor DynamicBuffer VarSize Usages [\#4394](https://github.com/nebulastream/nebulastream/issues/4394)
+
+### Miscellaneous Issues ✌️
+
+- Prepare a docker compose file for starting up NES cluster [\#537](https://github.com/nebulastream/nebulastream/issues/537)
+
 ## [v0.5.267](https://github.com/nebulastream/nebulastream/tree/v0.5.267) (2023-12-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.266...v0.5.267)
