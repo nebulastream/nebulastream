@@ -181,11 +181,11 @@ class DynamicTuple {
 
     /**
      * @brief Writes the variable sized value to this tuple at the fieldIndex
-     * @param fieldIndex
+     * @param field: Can be either an index or the fieldName
      * @param value
      * @param bufferManager
      */
-    void writeVarSized(const uint64_t fieldIndex, std::string value, BufferManager* bufferManager);
+    void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, BufferManager* bufferManager);
 
     /**
      * @brief get a string representation of this dynamic tuple

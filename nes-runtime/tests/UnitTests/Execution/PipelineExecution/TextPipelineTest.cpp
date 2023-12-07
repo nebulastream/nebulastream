@@ -90,19 +90,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++) {
-        std::string value = "test";
-        auto b = bm->getBufferBlocking();
-        auto varLengthBuffer = b;
-        *varLengthBuffer.getBuffer<uint32_t>() = 4;
-        std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
-        auto index = buffer.storeChildBuffer(varLengthBuffer);
-
-        auto varLengthBuffer2 = bm->getBufferBlocking();
-        *varLengthBuffer2.getBuffer<uint32_t>() = 4;
-        std::strcpy(varLengthBuffer2.getBuffer<char>() + sizeof(uint32_t), value.c_str());
-        auto index2 = buffer.storeChildBuffer(varLengthBuffer2);
-
-        dynamicBuffer[i]["f1"].write(index);
+        dynamicBuffer[i].writeVarSized("f1", "test", bm.get());
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -116,6 +104,10 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 100);
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    for (auto i = 0_u64; i < resultBuffer.getNumberOfTuples(); ++i) {
+        ASSERT_EQ(std::get<0>(resultDynamicBuffer.readRecordFromBuffer<std::string>(i)), "test");
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
