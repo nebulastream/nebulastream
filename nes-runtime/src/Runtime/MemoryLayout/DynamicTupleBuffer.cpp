@@ -48,15 +48,22 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const {
 DynamicTuple::DynamicTuple(const uint64_t tupleIndex, MemoryLayoutPtr memoryLayout, TupleBuffer buffer)
     : tupleIndex(tupleIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer)) {}
 
-void DynamicTuple::writeVarSized(const uint64_t fieldIndex, std::string value, BufferManager* bufferManager) {
+void DynamicTuple::writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, BufferManager* bufferManager) {
     const auto valueLength = value.length();
-    auto childBuffer = bufferManager->getUnpooledBuffer(valueLength);
+    auto childBuffer = bufferManager->getUnpooledBuffer(valueLength + sizeof(uint32_t));
     if (childBuffer.has_value()) {
         auto& childBufferVal = childBuffer.value();
         *childBufferVal.getBuffer<uint32_t>() = valueLength;
         std::strncpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
         auto index = buffer.storeChildBuffer(childBufferVal);
-        (*this)[fieldIndex].write(index);
+        std::visit([this, index](const auto& key) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(key)>, uint64_t> ||
+                          std::is_convertible_v<std::decay_t<decltype(key)>, std::string>) {
+                (*this)[key].write(index);
+            } else {
+                NES_THROW_RUNTIME_ERROR("We expect either a uint64_t or a std::string to access a DynamicField!");
+            }
+        }, field);
     } else {
         NES_ERROR("Could not store string {}", value);
     }

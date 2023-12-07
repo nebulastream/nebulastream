@@ -62,30 +62,13 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
                           "from the tuple buffer");
 
                 // read the child buffer index from the tuple buffer
-                Runtime::TupleBuffer::NestedTupleBufferKey childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
-
-                // retrieve the child buffer from the tuple buffer
-                auto childTupleBuffer = tbuffer.loadChildBuffer(childIdx);
-
-                // retrieve the size of the variable-length field from the child buffer
-                uint32_t sizeOfTextField = *(childTupleBuffer.getBuffer<uint32_t>());
-
-                // build the string
-                if (sizeOfTextField > 0) {
-                    auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
-                    std::string deserialized(begin, begin + sizeOfTextField);
-                    str = std::move(deserialized);
-                } else {
-                    NES_WARNING("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
-                                "variable-length TEXT field. Returning an empty string.")
-                }
-            }
-
-            else {
+                auto childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
+                str = Runtime::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
+            } else {
                 str = physicalType->convertRawToString(indexInBuffer);
             }
 
-            ss << str.c_str();
+            ss << str;
             if (j < schema->getSize() - 1) {
                 ss << ",";
             }
