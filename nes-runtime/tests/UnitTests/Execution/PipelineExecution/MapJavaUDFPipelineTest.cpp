@@ -437,7 +437,8 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        auto tuple = resultDynamicBuffer.readRecordFromBuffer<std::string, int32_t, int8_t, int16_t, int64_t, float_t, double_t, bool>(i);
+        auto tuple =
+            resultDynamicBuffer.readRecordFromBuffer<std::string, int32_t, int8_t, int16_t, int64_t, float_t, double_t, bool>(i);
         EXPECT_EQ(resultDynamicBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), i + 10);

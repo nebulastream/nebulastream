@@ -257,7 +257,8 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), udfState);
         EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), udfState);
         flatMapStateString += "X";
-        auto tuple = resultDynamicBuffer.readRecordFromBuffer<std::string, int32_t, int8_t, int16_t, int64_t, float_t, double_t, bool>(i);
+        auto tuple =
+            resultDynamicBuffer.readRecordFromBuffer<std::string, int32_t, int8_t, int16_t, int64_t, float_t, double_t, bool>(i);
         ASSERT_EQ(std::get<0>(tuple), flatMapStateString);
     }
 }
