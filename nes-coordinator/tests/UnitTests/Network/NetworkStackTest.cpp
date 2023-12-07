@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -52,6 +53,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <utility>
+
 using namespace std;
 
 namespace NES {
@@ -59,8 +61,6 @@ using Runtime::TupleBuffer;
 
 const uint64_t buffersManaged = 8 * 1024;
 const uint64_t bufferSize = 32 * 1024;
-static constexpr auto NSOURCE_RETRIES = 100;
-static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 struct TestStruct {
     int64_t id;
     int64_t one;
@@ -132,19 +132,6 @@ class TestSink : public SinkMedium {
     std::promise<uint64_t> completed;
 };
 
-void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
-    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
-    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
-    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, buf);
-
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        recordIndexFields[recordIndex] = recordIndex;
-        fields01[recordIndex] = 1;
-        fields02[recordIndex] = recordIndex % 2;
-    }
-    buf.setNumberOfTuples(10);
-}
-
 class DummyExchangeProtocolListener : public ExchangeProtocolListener {
   public:
     ~DummyExchangeProtocolListener() override = default;
@@ -154,20 +141,6 @@ class DummyExchangeProtocolListener : public ExchangeProtocolListener {
     void onEvent(NesPartition, Runtime::BaseEvent&) override {}
     void onChannelError(Messages::ErrorMessage) override {}
 };
-
-TEST_F(NetworkStackTest, serverMustStartAndStop) {
-    try {
-        auto partMgr = std::make_shared<PartitionManager>();
-        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
-        auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
-        ZmqServer server("127.0.0.1", *freeDataPort, 4, exchangeProtocol, buffMgr);
-        server.start();
-        ASSERT_EQ(server.isServerRunning(), true);
-    } catch (...) {
-        // shutdown failed
-        FAIL();
-    }
-}
 
 TEST_F(NetworkStackTest, serverMustStartAndStopRandomPort) {
     try {
