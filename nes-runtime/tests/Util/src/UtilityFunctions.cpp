@@ -379,28 +379,10 @@ void writeFieldValueToTupleBuffer(std::string inputString,
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::TEXT: {
-                    NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {} to "
-                              "tuple buffer",
+                    NES_TRACE("Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
+                              "to tuple buffer",
                               inputString);
-
-                    auto sizeOfInputField = inputString.size();
-                    auto totalSize = sizeOfInputField + sizeof(uint32_t);
-                    auto childTupleBuffer = allocateVariableLengthField(bufferManager, totalSize);
-
-                    NES_ASSERT(
-                        childTupleBuffer.getBufferSize() >= totalSize,
-                        "Parser::writeFieldValueToTupleBuffer(): Could not write TEXT field to tuple buffer, there was not "
-                        "sufficient space available. Required space: "
-                            << totalSize << ", available space: " << childTupleBuffer.getBufferSize());
-
-                    // write out the length and the variable-sized text to the child buffer
-                    (*childTupleBuffer.getBuffer<uint32_t>()) = sizeOfInputField;
-                    std::memcpy(childTupleBuffer.getBuffer() + sizeof(uint32_t), inputString.c_str(), sizeOfInputField);
-
-                    // attach the child buffer to the parent buffer and write the child buffer index in the
-                    // schema field index of the tuple buffer
-                    auto childIdx = tupleBuffer.getBuffer().storeChildBuffer(childTupleBuffer);
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<Runtime::TupleBuffer::NestedTupleBufferKey>(childIdx);
+                    tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
 
                     break;
                 }
