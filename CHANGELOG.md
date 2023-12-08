@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.269](https://github.com/nebulastream/nebulastream/tree/v0.5.269) (2023-12-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.268...v0.5.269)
+
+**Implemented enhancements:**
+
+- \[TASK\] TestSink should expect NumberOfTuples not Buffers [\#4417](https://github.com/nebulastream/nebulastream/issues/4417)
+
 ## [v0.5.268](https://github.com/nebulastream/nebulastream/tree/v0.5.268) (2023-12-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.267...v0.5.268)
