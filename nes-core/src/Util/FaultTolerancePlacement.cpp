@@ -25,6 +25,10 @@ namespace NES {
             return FaultTolerancePlacement::MFTP;
         } else if (faultToleranceMode == "MFTPH") {
             return FaultTolerancePlacement::MFTPH;
+        } else if (faultToleranceMode == "FLINK") {
+            return FaultTolerancePlacement::FLINK;
+        } else if (faultToleranceMode == "FRONTIER") {
+            return FaultTolerancePlacement::FRONTIER;
         } else {
             NES_THROW_RUNTIME_ERROR("FaultTolerancePlacement not supported " + faultToleranceMode);
         }
