@@ -99,6 +99,12 @@ class TopologyNode : public Node {
     uint64_t getMTBFValue() const;
 
     /**
+     * @brief method to copy properties from one node to another
+     * @param node from which the properties will be copied
+     */
+    void copyProperties(TopologyNodePtr node);
+
+    /**
      * @brief calculates propbability of the device failure
      * @param topologyNode
      * @return probability of failure
@@ -250,6 +256,13 @@ class TopologyNode : public Node {
      * @return value of the property with the given key
      */
     std::any getNodeProperty(const std::string& key);
+
+    /**
+     * @brief Get all node properties
+     * @return properties
+     */
+    std::map<std::string, std::any> getNodeProperties();
+
 
     /**
      * @brief Remove a property from the stored properties map

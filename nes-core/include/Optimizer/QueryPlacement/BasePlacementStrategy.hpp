@@ -20,6 +20,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/FaultTolerancePlacement.hpp>
 #include <Util/FaultToleranceType.hpp>
+#include <Util/QueryType.hpp>
 #include <Util/LineageType.hpp>
 #include <chrono>
 #include <functional>
@@ -233,6 +234,7 @@ class BasePlacementStrategy {
     std::map<uint64_t, TopologyNodePtr> topologyMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
+    static QueryType::Value queryType;
     double w_memory = 0.33;
     double w_network = 0.33;
     double w_safety = 0.33;
@@ -278,15 +280,35 @@ class BasePlacementStrategy {
     /**
      * @brief place fault tolerance in naive way
      * @param availablePaths : available paths between pinned operators
+     * @param faultToleranceType : provided level of reliability
+     * @return selected placement
      */
-    std::vector<TopologyNodePtr> placeFaultToleranceNaive(std::vector<std::vector<TopologyNodePtr>> availablePaths);
+    std::vector<TopologyNodePtr> placeFaultToleranceNaive(std::vector<std::vector<TopologyNodePtr>> availablePaths, FaultToleranceType::Value faultToleranceType);
+
+    /**
+     * @brief place fault tolerance in Flink way
+     * @param availablePaths : available paths between pinned operators
+     * @return selected placement
+     */
+    std::vector<TopologyNodePtr> placeFaultToleranceFlink(std::vector<std::vector<TopologyNodePtr>> availablePaths);
+
+    /**
+     * @brief place fault tolerance in Flink way
+     * @param availablePaths : available paths between pinned operators
+     * @param replicationFactor : replication factor of Frontier (r=3 by default)
+     * @return selected placement
+     */
+    std::vector<TopologyNodePtr> placeFaultToleranceFrontier(std::vector<std::vector<TopologyNodePtr>> availablePaths, uint64_t replicationFactor = 3);
+
+
 
     /**
      * @brief place fault tolerance in elaborative way
      * @param availablePaths : available paths between pinned operators
+     * @param faultToleranceType : provided level of reliability
      * @return selected placement
      */
-    std::vector<TopologyNodePtr> placeFaultToleranceMFTP(std::vector<std::vector<TopologyNodePtr>> availablePaths);
+    std::vector<TopologyNodePtr> placeFaultToleranceMFTP(std::vector<std::vector<TopologyNodePtr>> availablePaths, FaultToleranceType::Value faultToleranceType);
 
     /**
      * @brief place fault tolerance in elaborative way
@@ -307,10 +329,22 @@ class BasePlacementStrategy {
     /**
      * Calculates the optimal epoch parameter considering the smallest device on the path
      * @param pathForPlacement path that was chosen for placement
-     * @return new epoch
      */
     void adaptEpoch(std::vector<TopologyNodePtr> pathForPlacement);
 
+    /**
+     * Calculates the optimal weights based on the query type
+     * @param ftType level of reliability specified by the user
+     */
+    void adjustWeights(FaultToleranceType::Value ftType);
+
+    /**
+     * Calculates minimal number of nodes on one path that participate in fault tolerance based on the user requirement
+     * @param pathSize size of the path for placement
+     * @param ftType level of reliability specified by the user
+     * @return minimal number of nodes for fault tolerance placement
+     */
+    uint64_t computeMinNumberOfNodes(size_t pathSize, FaultToleranceType::Value ftType);
     /**
      * Check if operator present in the given collection
      * @param operatorToSearch : operator to search

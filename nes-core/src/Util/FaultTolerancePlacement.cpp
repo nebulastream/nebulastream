@@ -36,6 +36,8 @@ namespace NES {
             case FaultTolerancePlacement::NAIVE: return "NAIVE";
             case FaultTolerancePlacement::MFTP: return "MFTP";
             case FaultTolerancePlacement::MFTPH: return "MFTPH";
+            case FaultTolerancePlacement::FLINK: return "FLINK";
+            case FaultTolerancePlacement::FRONTIER: return "FRONTIER";
         }
     }
 }// namespace NES

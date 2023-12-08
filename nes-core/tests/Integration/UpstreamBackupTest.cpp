@@ -513,7 +513,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     QueryId queryId = queryService->validateAndQueueAddQueryRequest(query,
                                                                     "BottomUp",
-                                                                    FaultToleranceType::AT_LEAST_ONCE,
+                                                                    FaultToleranceType::HIGH,
                                                                     LineageType::IN_MEMORY,
                                                                     FaultTolerancePlacement::NONE);
 
@@ -521,13 +521,13 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
 //    queryId = queryService->validateAndQueueAddQueryRequest(query1,
 //                                                                    "BottomUp",
-//                                                                    FaultToleranceType::AT_LEAST_ONCE,
+//                                                                    FaultToleranceType::HIGH,
 //                                                                    LineageType::IN_MEMORY,
 //                                                                    FaultTolerancePlacement::MFTPH);
 //
 //    queryId = queryService->validateAndQueueAddQueryRequest(query1,
 //                                                            "BottomUp",
-//                                                            FaultToleranceType::AT_LEAST_ONCE,
+//                                                            FaultToleranceType::HIGH,
 //                                                            LineageType::IN_MEMORY,
 //                                                            FaultTolerancePlacement::MFTPH);
 

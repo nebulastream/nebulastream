@@ -61,7 +61,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     nlohmann::json request;
-    request["faultTolerance"] = "AT_MOST_ONCE";
+    request["faultTolerance"] = "LOW";
     request["lineage"] = "IN_MEMORY";
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                                  cpr::Header{{"Content-Type", "application/json"}},
@@ -151,7 +151,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     request["userQuery"] =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
-    request["faultTolerance"] = "AT_MOST_ONCE";
+    request["faultTolerance"] = "LOW";
     request["lineage"] = "ON_PAPER";
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                                  cpr::Header{{"Content-Type", "application/json"}},
@@ -188,7 +188,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     request["userQuery"] =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
-    request["faultTolerance"] = "AT_MOST_ONCE";
+    request["faultTolerance"] = "LOW";
     request["lineage"] = "IN_MEMORY";
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                                  cpr::Header{{"Content-Type", "application/json"}},
@@ -227,7 +227,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     request["userQuery"] =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
-    request["faultTolerance"] = "AT_MOST_ONCE";
+    request["faultTolerance"] = "LOW";
     request["lineage"] = "IN_MEMORY";
     auto f1 = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                              cpr::Header{{"Content-Type", "application/json"}},
@@ -293,7 +293,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     request["userQuery"] =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
-    request["faultTolerance"] = "AT_MOST_ONCE";
+    request["faultTolerance"] = "LOW";
     request["lineage"] = "IN_MEMORY";
     auto f1 = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                              cpr::Header{{"Content-Type", "application/json"}},
@@ -343,7 +343,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     request["userQuery"] =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
-    request["faultTolerance"] = "AT_MOST_ONCE";
+    request["faultTolerance"] = "LOW";
     request["lineage"] = "IN_MEMORY";
     auto f1 = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                              cpr::Header{{"Content-Type", "application/json"}},
@@ -399,7 +399,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     request["userQuery"] =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
-    request["faultTolerance"] = "AT_MOST_ONCE";
+    request["faultTolerance"] = "LOW";
     request["lineage"] = "IN_MEMORY";
     auto f1 = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                              cpr::Header{{"Content-Type", "application/json"}},

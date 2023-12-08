@@ -96,6 +96,12 @@ uint64_t TopologyNode::getInitialNetworkCapacity() const { return initialNetwork
 
 int TopologyNode::getResourcesUsed() { return usedResources; };
 
+std::map<std::string, std::any> TopologyNode::getNodeProperties() { return nodeProperties; };
+
+void TopologyNode::copyProperties(TopologyNodePtr node) {
+    this->nodeProperties = node->getNodeProperties();
+}
+
 double TopologyNode::calculateReliability() const {
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::time_point_cast<std::chrono::seconds>(now);

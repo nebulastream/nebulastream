@@ -154,7 +154,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief method to trigger the buffering of data on all NetworkSinks of this Node.
-     * This function has no effect any NetworkSinks faultToleranceType is set to AT_LEAST_ONCE as it might cause
+     * This function has no effect any NetworkSinks faultToleranceType is set to HIGH as it might cause
      * threading problems to allow reconnect buffering in this case.
      * @return bool indicating succes
      */

@@ -23,7 +23,7 @@ namespace NES {
 class FaultTolerancePlacement {
 
   public:
-    enum Value : uint8_t { NONE = 0, NAIVE = 1, MFTP = 2, MFTPH = 3 };
+    enum Value : uint8_t { NONE = 0, NAIVE = 1, MFTP = 2, MFTPH = 3 , FLINK = 4, FRONTIER = 5};
 
     /**
      * @brief Get fault tolerance placement strategy from string

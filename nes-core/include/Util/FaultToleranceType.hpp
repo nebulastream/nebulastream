@@ -22,9 +22,9 @@ class FaultToleranceType {
   public:
     enum Value : uint8_t {
         NONE = 0,         ///No fault-tolerance
-        AT_MOST_ONCE = 1, ///At-most-once guarantee: some tuple buffers might be dropped
-        AT_LEAST_ONCE = 2,///At-least-once guarantee: some tuple buffers might be processed twice
-        EXACTLY_ONCE = 3, ///Exactly-once guarantee: all tuple buffers are processed once
+        LOW = 1, ///At-most-once guarantee: some tuple buffers might be dropped
+        HIGH = 2,///At-least-once guarantee: some tuple buffers might be processed twice
+        MEDIUM = 3, ///Exactly-once guarantee: all tuple buffers are processed once
         INVALID = 4
     };
 
