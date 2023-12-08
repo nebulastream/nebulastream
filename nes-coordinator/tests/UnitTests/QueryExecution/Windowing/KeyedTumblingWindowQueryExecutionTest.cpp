@@ -71,6 +71,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
 }
 
 TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
+    const auto expectedNumberOfTuples = 2;
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -78,7 +79,7 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
-    auto testSink = executionEngine->createDataSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema, expectedNumberOfTuples);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -100,7 +101,7 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2u);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
     EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 60LL);// sum
     EXPECT_EQ(resultBuffer[1][0].read<int64_t>(), 40LL);// sum
 
@@ -109,6 +110,7 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
 }
 
 TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjection) {
+    const auto expectedNumberOfTuples = 2;
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -120,7 +122,7 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
                           ->addField("test$end", BasicType::INT64)
                           ->addField("test$key", BasicType::INT64)
                           ->addField("test$sum", BasicType::INT64);
-    auto testSink = executionEngine->createDataSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema, expectedNumberOfTuples);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -141,7 +143,7 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2u);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
     EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL); // start
     EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL); // end
     EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 0LL); // key
@@ -157,6 +159,7 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
 }
 
 TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
+    const auto expectedNumberOfTuples = 2;
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -170,7 +173,7 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
                           ->addField("test$key", BasicType::INT64)
                           ->addField("test$sum", BasicType::INT64);
 
-    auto testSink = executionEngine->createDataSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema, expectedNumberOfTuples);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -191,7 +194,7 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2u);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
     EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL); // start
     EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL); // end
     EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 0LL); // key
