@@ -30,8 +30,6 @@
 
 namespace NES {
 
-using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
-
 /**
  * @brief A sink for testing that can be part of a query plan and enables executing queries and producing results.
  */
@@ -39,26 +37,26 @@ class TestSink : public SinkMedium {
   public:
     /**
      * @brief Constructor for a TestSink
-     * @param expectedBuffer
+     * @param expectedTuples
      * @param schema
      * @param nodeEngine
      * @param numOfProducers
      */
-    TestSink(uint64_t expectedBuffer,
+    TestSink(uint64_t expectedTuples,
              const SchemaPtr& schema,
              const Runtime::NodeEnginePtr& nodeEngine,
              uint32_t numOfProducers = 1);
 
     /**
      * @brief Factory method for a TestSink
-     * @param expectedBuffer
+     * @param expectedTuples
      * @param schema
      * @param engine
      * @param numOfProducers
      * @return
      */
     static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1);
+    create(uint64_t expectedTuples, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1);
 
     /**
      * @brief Writes the input Buffer to the resultBuffer
@@ -80,6 +78,12 @@ class TestSink : public SinkMedium {
      * @return DynamicTupleBuffer
      */
     Runtime::MemoryLayouts::DynamicTupleBuffer getResultBuffer(uint64_t index);
+
+    /**
+     * @brief Returns all buffers as DynamicTupleBuffers
+     * @return Vector of DynamicTupleBuffers
+     */
+    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> getResultBuffers();
 
     /**
      * @brief Setup method
@@ -126,7 +130,7 @@ class TestSink : public SinkMedium {
     void shutdown() override;
 
     mutable std::recursive_mutex m;
-    uint64_t numExpectedResultBuffers;
+    uint64_t numOfExpectedTuples;
 
     std::promise<uint64_t> completed;
     /// this vector must be cleanup by the test -- do not rely on the engine to clean it up for you!!

@@ -40,6 +40,7 @@ void* findKeyedBucketsByTs(void* ss, uint64_t ts) {
 
 uint64_t getKeyedBucketListSize(void* ptr) {
     auto buckets = static_cast<std::vector<KeyedSlice*>*>(ptr);
+    NES_DEBUG("Number of buckets: {}", buckets->size());
     return buckets->size();
 }
 

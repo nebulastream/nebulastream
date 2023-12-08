@@ -58,15 +58,15 @@ class LimitQueryExecutionTest : public Testing::BaseUnitTest {
 };
 
 TEST_F(LimitQueryExecutionTest, limitQuery) {
-    auto constexpr LIMIT = 10;
+    auto constexpr expectedTuples = 10;
     auto constexpr TUPLES = 20;
 
     auto schema = Schema::create()->addField("test$id", BasicType::INT64);
-    auto testSink = executionEngine->createDataSink(schema);
+    auto testSink = executionEngine->createDataSink(schema, expectedTuples);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    auto query = TestQuery::from(testSourceDescriptor).limit(LIMIT).sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).limit(expectedTuples).sink(testSinkDescriptor);
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(schema);
@@ -76,8 +76,8 @@ TEST_F(LimitQueryExecutionTest, limitQuery) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), LIMIT);
-    for (uint32_t recordIndex = 0u; recordIndex < LIMIT; ++recordIndex) {
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedTuples);
+    for (uint32_t recordIndex = 0u; recordIndex < expectedTuples; ++recordIndex) {
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));

@@ -75,7 +75,7 @@ TEST_F(MergeQueryExecutionTest, mergeQuery) {
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto result = Schema::create()->addField("test$id", BasicType::INT64);
-    auto testSink = executionEngine->createDataSink(result, /*expected buffers*/ 2);
+    auto testSink = executionEngine->createDataSink(result, /*expected tuples*/ 10);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query1 = TestQuery::from(testSourceDescriptor);

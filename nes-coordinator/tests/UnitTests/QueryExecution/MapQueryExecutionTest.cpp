@@ -168,7 +168,7 @@ static auto getFunction(const std::string function, int input) {// Includes the 
 
 TEST_P(MapQueryExecutionTest, MapAllFunctions) {
     auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
-
+    const auto expectedNumberOfTuples = 10;
     auto resultArray = std::get<2>(GetParam());
     if (resultArray[1] == "test$one") {// for MapQueryArithmetic
         schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
@@ -181,9 +181,9 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
         resultSchema = resultSchema->addField(resultArray[index], BasicType::FLOAT64);
     }
 
-    auto testSink = executionEngine->createDataSink(resultSchema);
+    auto testSink = executionEngine->createDataSink(resultSchema, expectedNumberOfTuples);
     if (resultArray[1] == "test$one") {
-        testSink = executionEngine->createDataSink(schema);
+        testSink = executionEngine->createDataSink(schema, expectedNumberOfTuples);
     }// for MapQueryArithmetic
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
@@ -220,9 +220,9 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
         auto resultBuffer = testSink->getResultBuffer(0);
 
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
 
-        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+        for (uint32_t recordIndex = 0u; recordIndex < expectedNumberOfTuples; ++recordIndex) {
             EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex * 2);
             EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
         }
@@ -240,9 +240,9 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
         auto resultBuffer = testSink->getResultBuffer(0);
 
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
 
-        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+        for (uint32_t recordIndex = 0u; recordIndex < expectedNumberOfTuples; ++recordIndex) {
             EXPECT_EQ(resultBuffer[recordIndex][resultArray[2]].read<double>(), getFunction(resultArray[2], sign * recordIndex));
         }
     } else {
@@ -258,9 +258,9 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
         auto resultBuffer = testSink->getResultBuffer(0);
 
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
 
-        for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+        for (uint32_t recordIndex = 0u; recordIndex < expectedNumberOfTuples; ++recordIndex) {
             for (uint32_t index = 1; index < resultArray.size(); index++) {
                 EXPECT_EQ(resultBuffer[recordIndex][resultArray[index]].read<double>(),
                           getFunction(resultArray[index], sign * recordIndex));

@@ -77,7 +77,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
 TEST_F(MapJavaUDFQueryExecutionTest, MapJavaUdf) {
     auto fqSchema = Schema::create()->addField("s$id", BasicType::INT32);
     auto udfSchema = Schema::create()->addField("id", BasicType::INT32);
-    auto testSink = executionEngine->createDataSink(fqSchema);
+    auto testSink = executionEngine->createDataSink(fqSchema, numberOfRecords);
     auto testSourceDescriptor = executionEngine->createDataSource(fqSchema);
 
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}

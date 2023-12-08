@@ -65,12 +65,13 @@ class ProjectionQueryExecutionTest : public Testing::BaseUnitTest,
 };
 
 TEST_F(ProjectionQueryExecutionTest, projectField) {
+    const auto expectedNumberOfTuples = 10;
     auto schema = Schema::create()
                       ->addField("test$id", BasicType::INT64)
                       ->addField("test$one", BasicType::INT64)
                       ->addField("test$value", BasicType::INT64);
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = executionEngine->createDataSink(outputSchema);
+    auto testSink = executionEngine->createDataSink(outputSchema, expectedNumberOfTuples);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -84,7 +85,7 @@ TEST_F(ProjectionQueryExecutionTest, projectField) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
     for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
     }
@@ -93,12 +94,13 @@ TEST_F(ProjectionQueryExecutionTest, projectField) {
 }
 
 TEST_F(ProjectionQueryExecutionTest, projectTwoFields) {
+    const auto expectedNumberOfTuples = 10;
     auto schema = Schema::create()
                       ->addField("test$id", BasicType::INT64)
                       ->addField("test$one", BasicType::INT64)
                       ->addField("test$value", BasicType::INT64);
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
-    auto testSink = executionEngine->createDataSink(outputSchema);
+    auto testSink = executionEngine->createDataSink(outputSchema, expectedNumberOfTuples);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -112,8 +114,8 @@ TEST_F(ProjectionQueryExecutionTest, projectTwoFields) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
+    for (uint32_t recordIndex = 0u; recordIndex < expectedNumberOfTuples; ++recordIndex) {
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
         EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 42);
     }
