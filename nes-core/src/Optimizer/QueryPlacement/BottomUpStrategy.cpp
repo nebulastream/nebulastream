@@ -52,6 +52,9 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
 
+        if (ftPlacement == FaultTolerancePlacement::NONE) {
+            faultToleranceType = FaultToleranceType::NONE;
+        }
         auto now = std::chrono::system_clock::now();
         auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
         auto epoch = now_ms.time_since_epoch();

@@ -173,7 +173,6 @@ TupleBuffer BufferManager::getBufferBlocking() {
 #else
     detail::MemorySegment* memSegment = nullptr;
     availableBuffers.blockingRead(memSegment);
-    std::cout << "numOfAvailableBuffers" << numOfAvailableBuffers << std::endl;
     numOfAvailableBuffers.fetch_sub(1);
 #endif
     if (memSegment->controlBlock->prepare()) {

@@ -129,85 +129,6 @@ uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 uint64_t NesWorker::getNumberOfBuffersPerEpoch() { return numberOfBuffersPerEpoch; }
 
-void NesWorker::generateAsync(uint64_t workingTimeDeltaInMillSeconds,
-                              uint64_t ingestionRatePerSecond,
-                   folly::MPMCQueue<TupleBufferHolder>& bufferQueue,
-                   std::vector<Runtime::TupleBuffer>& preAllocatedBuffers,
-                              uint64_t numberOfTuplesToProduce) {
-
-//    NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
-
-    while (!started) {
-        sleep(1);
-    }
-    auto workingTimeDeltaInSec = workingTimeDeltaInMillSeconds / 1000.0;
-    auto buffersToProducePerWorkingTimeDelta = ingestionRatePerSecond * workingTimeDeltaInSec;
-    NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
-
-    auto lastSecond = 0L;
-    auto runningOverAllCount = 0L;
-    auto ingestionRateIndex = 0L;
-
-    started = true;
-
-    // continue producing buffers as long as the generator is running
-    while (started) {
-        // get the timestamp of the current period
-        auto periodStartTime =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        auto buffersProcessedCount = 0;
-
-        // produce the required number of buffers for the current period
-        while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta) {
-            auto currentSecond =
-                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-
-                // get the buffer to produce
-                auto bufferIndex = runningOverAllCount++ % preAllocatedBuffers.size();
-                auto preallocatedBuffer = preAllocatedBuffers[bufferIndex];
-
-                // create a buffer holder and write it to the queue
-                TupleBufferHolder bufferHolder;
-                bufferHolder.bufferToHold = preallocatedBuffer;
-                preallocatedBuffer.setNumberOfTuples(numberOfTuplesToProduce);
-                preallocatedBuffer.setCreationTimestampInMS(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-                        .count());
-
-                if (!bufferQueue.write(std::move(bufferHolder))) {
-                    NES_THROW_RUNTIME_ERROR("The queue is too small! This should not happen!");
-                }
-
-                // for the next second, recalculate the number of buffers to produce based on the next predefined ingestion rate
-                if (lastSecond != currentSecond) {
-                    if ((buffersToProducePerWorkingTimeDelta = ingestionRatePerSecond * workingTimeDeltaInSec) == 0) {
-                        buffersToProducePerWorkingTimeDelta = 1;
-                    }
-
-                lastSecond = currentSecond;
-                ingestionRateIndex++;
-            }
-
-            buffersProcessedCount++;
-        }
-
-        // get the current time and wait until the next period start time
-        uint64_t currentTime =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        uint64_t nextPeriodStartTime = periodStartTime + workingTimeDeltaInMillSeconds;
-
-        if (nextPeriodStartTime < currentTime) {
-            NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
-        }
-
-        while (currentTime < nextPeriodStartTime) {
-            currentTime =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-                    .count();
-        }
-    }
-};
-
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking "
               << blocking << " coordinatorIp=" << workerConfig->coordinatorIp.getValue() << " coordinatorPort="
@@ -220,91 +141,394 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
-    auto preAllocatedBufferCnt = workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue();
+    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t a;
+            uint64_t b;
+            uint64_t c;
+            uint64_t d;
+            uint64_t e;
+            uint64_t f;
+            uint64_t g;
+            uint64_t h;
+            uint64_t i;
+            uint64_t j;
+            uint64_t k;
+            uint64_t l;
+            uint64_t m;
+            uint64_t n;
+            uint64_t o;
+            uint64_t p;
+            uint64_t q;
+            uint64_t r;
+            uint64_t s;
+            uint64_t t;
+            uint64_t u;
+            uint64_t v;
+            uint64_t w;
+            uint64_t x;
+            uint64_t timestamp1;
+            uint64_t timestamp2;
+        };
 
-    struct Record {
-        uint64_t a;
-        uint64_t b;
-        uint64_t c;
-        uint64_t d;
-        uint64_t e;
-        uint64_t f;
-        uint64_t g;
-        uint64_t h;
-        uint64_t i;
-        uint64_t k;
-        uint64_t l;
-        uint64_t m;
-        uint64_t timestamp1;
-        uint64_t timestamp2;
-    };
-
-    auto numberOfBuffersToSpawnOverall = workerConfig->numberOfBuffersToProduce.getValue();
-    auto ingestionRatePerSecond = workerConfig->sourceGatheringInterval.getValue();
-    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(numberOfBuffersToSpawnOverall);
-    auto numberOfTuplesToProduce = numberOfBuffersToSpawnOverall / ingestionRatePerSecond;
-
-    bufferManager = std::make_shared<Runtime::BufferManager>();
-    auto recordSize = bufferManager->getBufferSize() / sizeof(Record);
-    for (uint64_t i = 0; i < preAllocatedBufferCnt; i++) {
-
-        auto buffer = bufferManager->getUnpooledBuffer(workerConfig->bufferSizeInBytes.getValue());
-        auto* records = buffer.value().getBuffer<Record>();
+        auto* records = buffer.getBuffer<Record>();
         auto now = std::chrono::system_clock::now();
         auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
         auto epoch = now_ms.time_since_epoch();
         auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
-        for (auto u = 0u; u < recordSize; ++u) {
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].a = u;
             records[u].b = u % 2;
             records[u].c = u % 3;
             records[u].d = u % 4;
             records[u].e = u % 5;
             records[u].f = u % 6;
+            records[u].g = u % 7;
+            records[u].h = u % 8;
+            records[u].i = u % 9;
+            records[u].j = u % 10;
+            records[u].k = u % 11;
+            records[u].l = u % 12;
+            records[u].m = u % 13;
+            records[u].n = u % 14;
+            records[u].o = u % 15;
+            records[u].p = u % 16;
+            records[u].q = u % 17;
+            records[u].r = u % 18;
+            records[u].s = u % 19;
+            records[u].t = u % 20;
+            records[u].w = u % 21;
+            records[u].x = u % 22;
             records[u].timestamp1 = value.count();
             records[u].timestamp2 = value.count();
         }
-        preAllocatedBuffers.push_back(buffer.value());
-    }
-
-
-
-    auto readerFunc = [this](NES::Runtime::TupleBuffer&, uint64_t) -> std::optional<Runtime::TupleBuffer> {
-        NES::TupleBufferHolder bufferHolder;
-        auto res = false;
-
-
-        bool isStarted = started;
-        if (!isStarted) {
-            started = true;
-        }
-
-        while (isStarted && !res) {
-            res = bufferQueue.read(bufferHolder);
-        }
-
-
-        std::cout << "SIZE" << bufferQueue.size() << std::endl;
-        if (res) {
-            return bufferHolder.bufferToHold;
-        } else if (!isStarted) {
-            return std::nullopt;
-        } else {
-            NES_THROW_RUNTIME_ERROR("This should not happen! An empty buffer was returned while provider is started!");
-        }
     };
-
-    auto workingTimeDeltaInSeconds = numberOfBuffersToSpawnOverall / ingestionRatePerSecond;
-
-    auto lambdaSourceType1 = LambdaSourceType::create(std::move(readerFunc),
-                                                      numberOfBuffersToSpawnOverall,
-                                                      ingestionRatePerSecond,
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1),
+                                                      workerConfig->numberOfBuffersToProduce,
+                                                      workerConfig->sourceGatheringInterval,
                                                       GatheringMode::INGESTION_RATE_MODE);
-
-
-    auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
-    workerConfig->physicalSources.add(physicalSource1);
-
+    switch (workerConfig->lambdaSource) {
+        case 1: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 2: {
+            auto physicalSource1 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 3: {
+            auto physicalSource1 = PhysicalSource::create("A", "A3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 4: {
+            auto physicalSource1 = PhysicalSource::create("A", "A4", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 5: {
+            auto physicalSource1 = PhysicalSource::create("A", "A5", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 6: {
+            auto physicalSource1 = PhysicalSource::create("A", "A6", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 7: {
+            auto physicalSource1 = PhysicalSource::create("A", "A7", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 8: {
+            auto physicalSource1 = PhysicalSource::create("A", "A8", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 9: {
+            auto physicalSource1 = PhysicalSource::create("A", "A9", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 10: {
+            auto physicalSource1 = PhysicalSource::create("A", "A10", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 11: {
+            auto physicalSource1 = PhysicalSource::create("A", "A11", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 12: {
+            auto physicalSource1 = PhysicalSource::create("A", "A12", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 13: {
+            auto physicalSource1 = PhysicalSource::create("A", "A13", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 14: {
+            auto physicalSource1 = PhysicalSource::create("A", "A14", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 15: {
+            auto physicalSource1 = PhysicalSource::create("A", "A15", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 16: {
+            auto physicalSource1 = PhysicalSource::create("A", "A16", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 17: {
+            auto physicalSource1 = PhysicalSource::create("A", "A17", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 18: {
+            auto physicalSource1 = PhysicalSource::create("A", "A18", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 19: {
+            auto physicalSource1 = PhysicalSource::create("A", "A19", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 20: {
+            auto physicalSource1 = PhysicalSource::create("A", "A20", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 21: {
+            auto physicalSource1 = PhysicalSource::create("A", "A21", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 22: {
+            auto physicalSource1 = PhysicalSource::create("A", "A22", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 23: {
+            auto physicalSource1 = PhysicalSource::create("A", "A23", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 24: {
+            auto physicalSource1 = PhysicalSource::create("A", "A24", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 25: {
+            auto physicalSource1 = PhysicalSource::create("A", "A25", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 26: {
+            auto physicalSource1 = PhysicalSource::create("A", "A26", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 27: {
+            auto physicalSource1 = PhysicalSource::create("A", "A27", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 28: {
+            auto physicalSource1 = PhysicalSource::create("A", "A28", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 29: {
+            auto physicalSource1 = PhysicalSource::create("A", "A29", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 30: {
+            auto physicalSource1 = PhysicalSource::create("A", "A30", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 31: {
+            auto physicalSource1 = PhysicalSource::create("A", "A31", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 32: {
+            auto physicalSource1 = PhysicalSource::create("A", "A32", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 33: {
+            auto physicalSource1 = PhysicalSource::create("A", "A33", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 34: {
+            auto physicalSource1 = PhysicalSource::create("A", "A34", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 35: {
+            auto physicalSource1 = PhysicalSource::create("A", "A35", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 36: {
+            auto physicalSource1 = PhysicalSource::create("A", "A36", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 37: {
+            auto physicalSource1 = PhysicalSource::create("A", "A37", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 38: {
+            auto physicalSource1 = PhysicalSource::create("A", "A38", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 39: {
+            auto physicalSource1 = PhysicalSource::create("A", "A39", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 40: {
+            auto physicalSource1 = PhysicalSource::create("A", "A40", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 41: {
+            auto physicalSource1 = PhysicalSource::create("A", "A41", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 42: {
+            auto physicalSource1 = PhysicalSource::create("A", "A42", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 43: {
+            auto physicalSource1 = PhysicalSource::create("A", "A43", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 44: {
+            auto physicalSource1 = PhysicalSource::create("A", "A44", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 45: {
+            auto physicalSource1 = PhysicalSource::create("A", "A45", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 46: {
+            auto physicalSource1 = PhysicalSource::create("A", "A46", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 47: {
+            auto physicalSource1 = PhysicalSource::create("A", "A47", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 48: {
+            auto physicalSource1 = PhysicalSource::create("A", "A48", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 49: {
+            auto physicalSource1 = PhysicalSource::create("A", "A49", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 50: {
+            auto physicalSource1 = PhysicalSource::create("A", "A50", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 51: {
+            auto physicalSource1 = PhysicalSource::create("A", "A51", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 52: {
+            auto physicalSource1 = PhysicalSource::create("A", "A52", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 53: {
+            auto physicalSource1 = PhysicalSource::create("A", "A53", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 54: {
+            auto physicalSource1 = PhysicalSource::create("A", "A54", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 55: {
+            auto physicalSource1 = PhysicalSource::create("A", "A55", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 56: {
+            auto physicalSource1 = PhysicalSource::create("A", "A56", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 57: {
+            auto physicalSource1 = PhysicalSource::create("A", "A57", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 58: {
+            auto physicalSource1 = PhysicalSource::create("A", "A58", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 59: {
+            auto physicalSource1 = PhysicalSource::create("A", "A59", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 60: {
+            auto physicalSource1 = PhysicalSource::create("A", "A60", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 61: {
+            auto physicalSource1 = PhysicalSource::create("A", "A61", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 62: {
+            auto physicalSource1 = PhysicalSource::create("A", "A62", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 63: {
+            auto physicalSource1 = PhysicalSource::create("A", "A63", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 64: {
+            auto physicalSource1 = PhysicalSource::create("A", "A64", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+    }
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring.getValue());
         monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring.getValue());
@@ -356,12 +580,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }
+
     if (workerConfig->enableStatisticOutput) {
-
-        generatorThread = std::make_shared<std::thread>(([this, workingTimeDeltaInSeconds, ingestionRatePerSecond, numberOfTuplesToProduce]() {
-            generateAsync(workingTimeDeltaInSeconds * 1000, ingestionRatePerSecond, bufferQueue, preAllocatedBuffers, numberOfTuplesToProduce);
-        }));
-
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
             NES_DEBUG("NesWorker: start statistic collection");
             std::ofstream statisticsFile;

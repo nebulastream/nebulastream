@@ -187,7 +187,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                 if (!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())) {
                     std::string errorMessage =
                         "Invalid fault tolerance Type provided: " + requestJson["faultTolerance"].get<std::string>()
-                        + ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
+                        + ". Valid Fault Tolerance Types are: 'LOW', 'HIGH', 'MEDIUM', 'NONE'.";
                     return errorHandler->handleError(Status::CODE_400, errorMessage);
                 } else {
                     faultToleranceString = requestJson["faultTolerance"].get<std::string>();
@@ -262,7 +262,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             if (context->contains("faultTolerance")) {
                 if (!validateFaultToleranceType(context->at("faultTolerance").value())) {
                     std::string errorMessage = "Invalid fault tolerance Type provided: " + context->at("faultTolerance").value()
-                        + ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.";
+                        + ". Valid Fault Tolerance Types are: 'LOW', 'HIGH', 'MEDIUM', 'NONE'.";
                     return errorHandler->handleError(Status::CODE_400, errorMessage);
                 } else {
                     faultToleranceString = context->at("faultTolerance").value();
