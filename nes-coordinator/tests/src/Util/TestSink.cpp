@@ -51,7 +51,8 @@ bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     } else if (receivedTuples == numOfExpectedTuples) {
         completed.set_value(numOfExpectedTuples);
     } else if (receivedTuples > numOfExpectedTuples) {
-        NES_ERROR("result number of tuples {} and expected number of tuples={} do not match", receivedTuples,
+        NES_ERROR("result number of tuples {} and expected number of tuples={} do not match",
+                  receivedTuples,
                   numOfExpectedTuples);
         EXPECT_TRUE(false);
     }

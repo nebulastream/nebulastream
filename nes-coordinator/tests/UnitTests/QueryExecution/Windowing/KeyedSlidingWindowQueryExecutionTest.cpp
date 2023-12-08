@@ -16,12 +16,12 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <TestUtils/UtilityFunctions.hpp>
 #include <iostream>
 #include <utility>
 
@@ -73,21 +73,21 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
 }
 
 void createExpectedBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0,10,0,4));
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0,10,1,3));
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0,10,2,3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0, 10, 0, 4));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0, 10, 1, 3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0, 10, 2, 3));
 
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5,15,0,3));
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5,15,1,3));
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5,15,2,4));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5, 15, 0, 3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5, 15, 1, 3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5, 15, 2, 4));
 
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10,20,0,3));
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10,20,1,4));
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10,20,2,3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10, 20, 0, 3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10, 20, 1, 4));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10, 20, 2, 3));
 
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15,25,0,4));
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15,25,1,3));
-    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15,25,2,3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15, 25, 0, 4));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15, 25, 1, 3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15, 25, 2, 3));
 }
 
 TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
@@ -130,16 +130,12 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
     std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> expectedBuffers = {expectedDynamicBuffer};
     auto resultBuffers = testSink->getResultBuffers();
 
-
-
     auto startTs = 0;
     auto endTs = 10;
     for (auto i = 0_u64; i < testSink->getNumberOfResultBuffers(); ++i) {
         auto resultBuffer = testSink->getResultBuffer(i);
         NES_INFO("Buffer: {}", NES::Runtime::Execution::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
     }
-
-
 
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, resultBuffers));
 
