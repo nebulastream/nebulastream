@@ -17,6 +17,7 @@
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <numeric>
 #include <list>
 #include <map>
 #include <memory>
@@ -52,18 +53,14 @@ class BucketStore {
         // get a read lock
         std::lock_guard<std::mutex> lock(mutex);
         localResultVector.clear();
-        int64_t timestamp = ts;
 
-        int64_t remainder = (timestamp) % windowSize;
-        // handle both positive and negative cases
-        int64_t lastStart;
-        if (remainder < 0) {
-            lastStart = timestamp - (remainder + windowSize);
-        } else {
-            lastStart = timestamp - remainder;
-        }
+        int64_t timestamp = ts;
+        int64_t remainder = (timestamp % windowSlide);
+        int64_t lastStart = (timestamp - remainder);
+        int64_t lowerBound = timestamp - windowSize;
+
         // iterate over all windows that cover the ts
-        for (int64_t start = lastStart; start >= 0 && start > timestamp - windowSize; start -= windowSlide) {
+        for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide) {
             auto bucketRef = buckets.find(start);
             if (bucketRef == buckets.end()) {
                 auto bucket = allocateNewSlice(start, start + windowSize);
@@ -74,6 +71,12 @@ class BucketStore {
                 localResultVector.emplace_back(bucket.get());
             }
         }
+
+        const auto bucketStr = std::accumulate(localResultVector.begin(), localResultVector.end(), std::string(), [&](const auto str, auto bucket) {
+               return str + std::to_string(bucket->getStart()) + ", " + std::to_string(bucket->getEnd()) + "\n";
+        });
+        NES_DEBUG("ts: {} bucketStr: {}", ts, bucketStr);
+
         return &localResultVector;
     }
 

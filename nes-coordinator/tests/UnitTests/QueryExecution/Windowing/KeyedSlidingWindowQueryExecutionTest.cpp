@@ -21,6 +21,7 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
 #include <iostream>
 #include <utility>
 
@@ -71,7 +72,26 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(30);
 }
 
+void createExpectedBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0,10,0,4));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0,10,1,3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(0,10,2,3));
+
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5,15,0,3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5,15,1,3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(5,15,2,4));
+
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10,20,0,3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10,20,1,4));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(10,20,2,3));
+
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15,25,0,4));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15,25,1,3));
+    buf.pushRecordToBuffer(std::tuple<uint64_t, uint64_t, int64_t, int64_t>(15,25,2,3));
+}
+
 TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
+    const auto expectedNumberOfTuples = 12;
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -83,7 +103,7 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
                           ->addField("test$sum", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
-    auto testSink = executionEngine->createDataSink(sinkSchema, 4);
+    auto testSink = executionEngine->createDataSink(sinkSchema, expectedNumberOfTuples);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -102,26 +122,26 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 4u);
-    auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3u);
-    // compare result for key 0
-    EXPECT_EQ(resultBuffer[0]["test$startTs"].read<uint64_t>(), 0);
-    EXPECT_EQ(resultBuffer[0]["test$endTs"].read<uint64_t>(), 10);
-    EXPECT_EQ(resultBuffer[0]["test$key"].read<int64_t>(), 0);
-    EXPECT_EQ(resultBuffer[0]["test$sum"].read<int64_t>(), 4);
+    // Create expected buffer
+    auto expectedBuffer = executionEngine->getBufferManager()->getBufferBlocking();
+    auto expectedDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer::createDynamicTupleBuffer(expectedBuffer, sinkSchema);
+    createExpectedBuffer(expectedDynamicBuffer);
+    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> expectedBuffers = {expectedDynamicBuffer};
+    auto resultBuffers = testSink->getResultBuffers();
 
-    // compare result for key 1
-    EXPECT_EQ(resultBuffer[1]["test$startTs"].read<uint64_t>(), 0);
-    EXPECT_EQ(resultBuffer[1]["test$endTs"].read<uint64_t>(), 10);
-    EXPECT_EQ(resultBuffer[1]["test$key"].read<int64_t>(), 1);
-    EXPECT_EQ(resultBuffer[1]["test$sum"].read<int64_t>(), 3);
 
-    // compare result for key 2
-    EXPECT_EQ(resultBuffer[2]["test$startTs"].read<uint64_t>(), 0);
-    EXPECT_EQ(resultBuffer[2]["test$endTs"].read<uint64_t>(), 10);
-    EXPECT_EQ(resultBuffer[2]["test$key"].read<int64_t>(), 2);
-    EXPECT_EQ(resultBuffer[2]["test$sum"].read<int64_t>(), 3);
+
+    auto startTs = 0;
+    auto endTs = 10;
+    for (auto i = 0_u64; i < testSink->getNumberOfResultBuffers(); ++i) {
+        auto resultBuffer = testSink->getResultBuffer(i);
+        NES_INFO("Buffer: {}", NES::Runtime::Execution::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
+    }
+
+
+
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, resultBuffers));
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);

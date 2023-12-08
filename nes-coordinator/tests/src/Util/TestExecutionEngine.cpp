@@ -58,8 +58,8 @@ TestExecutionEngine::TestExecutionEngine(const QueryCompilation::DumpMode& dumpM
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 }
 
-std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr& outputSchema, uint32_t expectedBuffer) {
-    return std::make_shared<TestSink>(expectedBuffer, outputSchema, nodeEngine);
+std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(const SchemaPtr& outputSchema, uint32_t expectedTuples) {
+    return std::make_shared<TestSink>(expectedTuples, outputSchema, nodeEngine);
 }
 
 std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema) {

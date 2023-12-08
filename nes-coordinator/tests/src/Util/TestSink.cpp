@@ -14,15 +14,16 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestSink.hpp>
+#include <Util/TestUtils.hpp>
 
 namespace NES {
 
-TestSink::TestSink(uint64_t expectedBuffer,
+TestSink::TestSink(uint64_t expectedTuples,
                    const SchemaPtr& schema,
                    const Runtime::NodeEnginePtr& nodeEngine,
                    uint32_t numOfProducers)
     : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0),
-      numExpectedResultBuffers(expectedBuffer) {
+      numOfExpectedTuples(expectedTuples) {
     auto bufferManager = nodeEngine->getBufferManager(0);
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
@@ -31,25 +32,27 @@ TestSink::TestSink(uint64_t expectedBuffer,
     }
 };
 
-std::shared_ptr<TestSink> TestSink::create(uint64_t expectedBuffer,
+std::shared_ptr<TestSink> TestSink::create(uint64_t expectedTuples,
                                            const SchemaPtr& schema,
                                            const Runtime::NodeEnginePtr& engine,
                                            uint32_t numOfProducers) {
-    return std::make_shared<TestSink>(expectedBuffer, schema, engine, numOfProducers);
+    return std::make_shared<TestSink>(expectedTuples, schema, engine, numOfProducers);
 }
 
 bool TestSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     std::unique_lock lock(m);
 
     resultBuffers.emplace_back(inputBuffer);
+    const auto receivedTuples = TestUtils::countTuples(resultBuffers);
 
     // Check whether the required amount of expected result buffers has been reached.
-    if (resultBuffers.size() < numExpectedResultBuffers) {
-        NES_DEBUG("Already saw {} buffers and expects a total of {}", resultBuffers.size(), numExpectedResultBuffers);
-    } else if (resultBuffers.size() == numExpectedResultBuffers) {
-        completed.set_value(numExpectedResultBuffers);
-    } else if (resultBuffers.size() > numExpectedResultBuffers) {
-        NES_ERROR("result buffer size {} and expected buffer={} do not match", resultBuffers.size(), numExpectedResultBuffers);
+    if (receivedTuples < numOfExpectedTuples) {
+        NES_DEBUG("Already saw {} tuples and expects a total of {}", receivedTuples, numOfExpectedTuples);
+    } else if (receivedTuples == numOfExpectedTuples) {
+        completed.set_value(numOfExpectedTuples);
+    } else if (receivedTuples > numOfExpectedTuples) {
+        NES_ERROR("result number of tuples {} and expected number of tuples={} do not match", receivedTuples,
+                  numOfExpectedTuples);
         EXPECT_TRUE(false);
     }
     return true;
@@ -63,6 +66,14 @@ Runtime::TupleBuffer TestSink::get(uint64_t index) {
 Runtime::MemoryLayouts::DynamicTupleBuffer TestSink::getResultBuffer(uint64_t index) {
     auto buffer = get(index);
     return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+}
+
+std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> TestSink::getResultBuffers() {
+    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> allBuffers;
+    for (auto bufIdx = 0_u64; bufIdx < getNumberOfResultBuffers(); ++bufIdx) {
+        allBuffers.emplace_back(getResultBuffer(bufIdx));
+    }
+    return allBuffers;
 }
 
 void TestSink::setup(){};
