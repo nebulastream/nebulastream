@@ -17,10 +17,10 @@
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <numeric>
 #include <list>
 #include <map>
 #include <memory>
+#include <numeric>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -72,9 +72,10 @@ class BucketStore {
             }
         }
 
-        const auto bucketStr = std::accumulate(localResultVector.begin(), localResultVector.end(), std::string(), [&](const auto str, auto bucket) {
-               return str + std::to_string(bucket->getStart()) + ", " + std::to_string(bucket->getEnd()) + "\n";
-        });
+        const auto bucketStr =
+            std::accumulate(localResultVector.begin(), localResultVector.end(), std::string(), [&](const auto str, auto bucket) {
+                return str + std::to_string(bucket->getStart()) + ", " + std::to_string(bucket->getEnd()) + "\n";
+            });
         NES_DEBUG("ts: {} bucketStr: {}", ts, bucketStr);
 
         return &localResultVector;
