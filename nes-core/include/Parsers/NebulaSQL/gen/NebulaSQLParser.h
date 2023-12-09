@@ -27,17 +27,17 @@ public:
     UNKNOWN = 71, USE = 72, USING = 73, VALUES = 74, WHEN = 75, WHERE = 76, 
     WINDOW = 77, WITH = 78, TUMBLING = 79, SLIDING = 80, THRESHOLD = 81, 
     SIZE = 82, ADVANCE = 83, MS = 84, SEC = 85, MIN = 86, HOUR = 87, DAY = 88, 
-    MAX = 89, AVG = 90, SUM = 91, COUNT = 92, WATERMARK = 93, OFFSET = 94, 
-    ZMQ = 95, KAFKA = 96, FILE = 97, MQTT = 98, OPC = 99, PRINT = 100, LOCALHOST = 101, 
-    CSV_FORMAT = 102, NES_FORMAT = 103, TEXT_FORMAT = 104, AT_MOST_ONCE = 105, 
-    AT_LEAST_ONCE = 106, BOOLEAN_VALUE = 107, EQ = 108, NSEQ = 109, NEQ = 110, 
-    NEQJ = 111, LT = 112, LTE = 113, GT = 114, GTE = 115, PLUS = 116, MINUS = 117, 
-    ASTERISK = 118, SLASH = 119, PERCENT = 120, TILDE = 121, AMPERSAND = 122, 
-    PIPE = 123, CONCAT_PIPE = 124, HAT = 125, STRING = 126, BIGINT_LITERAL = 127, 
-    SMALLINT_LITERAL = 128, TINYINT_LITERAL = 129, INTEGER_VALUE = 130, 
-    EXPONENT_VALUE = 131, DECIMAL_VALUE = 132, FLOAT_LITERAL = 133, DOUBLE_LITERAL = 134, 
-    BIGDECIMAL_LITERAL = 135, IDENTIFIER = 136, SIMPLE_COMMENT = 137, BRACKETED_COMMENT = 138, 
-    WS = 139, FOUR_OCTETS = 140, OCTET = 141, UNRECOGNIZED = 142
+    MAX = 89, AVG = 90, SUM = 91, COUNT = 92, MEDIAN = 93, WATERMARK = 94, 
+    OFFSET = 95, ZMQ = 96, KAFKA = 97, FILE = 98, MQTT = 99, OPC = 100, 
+    PRINT = 101, LOCALHOST = 102, CSV_FORMAT = 103, NES_FORMAT = 104, TEXT_FORMAT = 105, 
+    AT_MOST_ONCE = 106, AT_LEAST_ONCE = 107, BOOLEAN_VALUE = 108, EQ = 109, 
+    NSEQ = 110, NEQ = 111, NEQJ = 112, LT = 113, LTE = 114, GT = 115, GTE = 116, 
+    PLUS = 117, MINUS = 118, ASTERISK = 119, SLASH = 120, PERCENT = 121, 
+    TILDE = 122, AMPERSAND = 123, PIPE = 124, CONCAT_PIPE = 125, HAT = 126, 
+    STRING = 127, BIGINT_LITERAL = 128, SMALLINT_LITERAL = 129, TINYINT_LITERAL = 130, 
+    INTEGER_VALUE = 131, EXPONENT_VALUE = 132, DECIMAL_VALUE = 133, FLOAT_LITERAL = 134, 
+    DOUBLE_LITERAL = 135, BIGDECIMAL_LITERAL = 136, IDENTIFIER = 137, SIMPLE_COMMENT = 138, 
+    BRACKETED_COMMENT = 139, WS = 140, FOUR_OCTETS = 141, OCTET = 142, UNRECOGNIZED = 143
   };
 
   enum {
@@ -54,7 +54,7 @@ public:
     RuleExpression = 32, RuleBooleanExpression = 33, RuleWindowedAggregationClause = 34, 
     RuleAggregationClause = 35, RuleGroupingSet = 36, RuleWindowClause = 37, 
     RuleWatermarkClause = 38, RuleWatermarkParameters = 39, RuleWindowSpec = 40, 
-    RuleTimeWindow = 41, RuleCountWindow = 42, RuleThresholdWindow = 43, 
+    RuleTimeWindow = 41, RuleCountWindow = 42, RuleConditionWindow = 43, 
     RuleConditionParameter = 44, RuleThresholdMinSizeParameter = 45, RuleSizeParameter = 46, 
     RuleAdvancebyParameter = 47, RuleTimeUnit = 48, RuleTimestampParameter = 49, 
     RuleFunctionName = 50, RuleSinkClause = 51, RuleSinkType = 52, RuleSinkTypeZMQ = 53, 
@@ -82,13 +82,13 @@ public:
     /**
      * When true, the behavior of keywords follows ANSI SQL standard.
      */
-  bool SQL_standard_keyword_behavior = false;
+    public boolean SQL_standard_keyword_behavior = false;
 
       /**
        * When false, a literal with an exponent would be converted into
        * double type rather than decimal type.
        */
-  bool legacy_exponent_literal_as_decimal_enabled = false;
+      public boolean legacy_exponent_literal_as_decimal_enabled = false;
 
 
   class SingleStatementContext;
@@ -134,7 +134,7 @@ public:
   class WindowSpecContext;
   class TimeWindowContext;
   class CountWindowContext;
-  class ThresholdWindowContext;
+  class ConditionWindowContext;
   class ConditionParameterContext;
   class ThresholdMinSizeParameterContext;
   class SizeParameterContext;
@@ -899,8 +899,8 @@ public:
   public:
     WindowedAggregationClauseContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    AggregationClauseContext *aggregationClause();
     WindowClauseContext *windowClause();
+    AggregationClauseContext *aggregationClause();
     WatermarkClauseContext *watermarkClause();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -1031,7 +1031,7 @@ public:
   public:
     ThresholdBasedWindowContext(WindowSpecContext *ctx);
 
-    ThresholdWindowContext *thresholdWindow();
+    ConditionWindowContext *conditionWindow();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };
@@ -1101,20 +1101,31 @@ public:
 
   CountWindowContext* countWindow();
 
-  class  ThresholdWindowContext : public antlr4::ParserRuleContext {
+  class  ConditionWindowContext : public antlr4::ParserRuleContext {
   public:
-    ThresholdWindowContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *THRESHOLD();
-    ConditionParameterContext *conditionParameter();
-    ThresholdMinSizeParameterContext *thresholdMinSizeParameter();
+    ConditionWindowContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+   
+    ConditionWindowContext() = default;
+    void copyFrom(ConditionWindowContext *context);
+    using antlr4::ParserRuleContext::copyFrom;
 
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual size_t getRuleIndex() const override;
+
    
   };
 
-  ThresholdWindowContext* thresholdWindow();
+  class  ThresholdWindowContext : public ConditionWindowContext {
+  public:
+    ThresholdWindowContext(ConditionWindowContext *ctx);
+
+    antlr4::tree::TerminalNode *THRESHOLD();
+    ConditionParameterContext *conditionParameter();
+    ThresholdMinSizeParameterContext *thresholdMinSizeParameter();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  ConditionWindowContext* conditionWindow();
 
   class  ConditionParameterContext : public antlr4::ParserRuleContext {
   public:
@@ -1212,6 +1223,7 @@ public:
     antlr4::tree::TerminalNode *MIN();
     antlr4::tree::TerminalNode *SUM();
     antlr4::tree::TerminalNode *COUNT();
+    antlr4::tree::TerminalNode *MEDIAN();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

@@ -193,9 +193,9 @@ booleanExpression
     | left=booleanExpression op=AND right=booleanExpression  #logicalBinary
     | left=booleanExpression op=OR right=booleanExpression   #logicalBinary
     ;
-
+//Problem fixed that the querySpecification rule could match an empty string
 windowedAggregationClause:
-    aggregationClause? windowClause? watermarkClause?;
+    aggregationClause? windowClause watermarkClause?;
 
 aggregationClause
     : GROUP BY groupingExpressions+=expression (',' groupingExpressions+=expression)* (
@@ -217,11 +217,11 @@ windowClause
 watermarkClause: WATERMARK '(' watermarkParameters ')';
 
 watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE watermarkTimeUnit=timeUnit;
-//Adding Threshold Windows and removing Count Windows
+//Adding Threshold Windows
 windowSpec:
     timeWindow #timeBasedWindow
     | countWindow #countBasedWindow
-    | thresholdWindow #thresholdBasedWindow
+    | conditionWindow #thresholdBasedWindow
     ;
 
 timeWindow
@@ -233,8 +233,8 @@ countWindow:
     TUMBLING '(' INTEGER_VALUE ')'    #countBasedTumbling
     ;
 
-thresholdWindow
-    : THRESHOLD '(' conditionParameter (',' thresholdMinSizeParameter)? ')'
+conditionWindow
+    : THRESHOLD '(' conditionParameter (',' thresholdMinSizeParameter)? ')' #thresholdWindow
     ;
 
 conditionParameter: expression;
@@ -253,7 +253,8 @@ timeUnit: MS
 
 timestampParameter: IDENTIFIER;
 
-functionName:  AVG | MAX | MIN | SUM | COUNT
+//added Median
+functionName:  AVG | MAX | MIN | SUM | COUNT | MEDIAN
             ;
 
 sinkClause: INTO sinkType AS?
@@ -572,6 +573,7 @@ MAX: 'MAX' | 'max';
 AVG: 'AVG' | 'avg';
 SUM: 'SUM' | 'sum';
 COUNT: 'COUNT' | 'count';
+MEDIAN: 'MEDIAN' | 'median';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';
 ZMQ: 'ZMQ' | 'zmq';
