@@ -56,9 +56,9 @@ public:
      * by a space. 34.E2 is a valid decimal token because it is followed by symbol '+'
      * which is not a digit or letter or underscore.
      */
-    public boolean isValidDecimal() {
-      int nextChar = _input.LA(1);
-      if (nextChar >= 'A' && nextChar <= 'Z' || nextChar >= '0' && nextChar <= '9' ||
+    bool isValidDecimal() {
+      int nextChar = _input->LA(1);
+      if ((nextChar >= 'A' && nextChar <= 'Z') || (nextChar >= '0' && nextChar <= '9') ||
         nextChar == '_') {
         return false;
       } else {
@@ -67,14 +67,14 @@ public:
     }
 
     /**
-     * This method will be called when we see '/*' and try to match it as a bracketed comment.
+     * This method will be called when we see '*' and try to match it as a bracketed comment.
      * If the next character is '+', it should be parsed as hint later, and we cannot match
      * it as a bracketed comment.
      *
      * Returns true if the next character is '+'.
      */
-    public boolean isHint() {
-      int nextChar = _input.LA(1);
+    bool isHint() {
+      int nextChar = _input->LA(1);
       if (nextChar == '+') {
         return true;
       } else {

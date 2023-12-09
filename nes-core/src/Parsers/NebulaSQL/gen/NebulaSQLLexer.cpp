@@ -66,6 +66,7 @@ bool NebulaSQLLexer::sempred(RuleContext *context, size_t ruleIndex, size_t pred
 
 
 bool NebulaSQLLexer::EXPONENT_VALUESempred(antlr4::RuleContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
   switch (predicateIndex) {
     case 0: return isValidDecimal();
 
@@ -76,6 +77,7 @@ bool NebulaSQLLexer::EXPONENT_VALUESempred(antlr4::RuleContext *_localctx, size_
 }
 
 bool NebulaSQLLexer::DECIMAL_VALUESempred(antlr4::RuleContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
   switch (predicateIndex) {
     case 1: return isValidDecimal();
 
@@ -86,6 +88,7 @@ bool NebulaSQLLexer::DECIMAL_VALUESempred(antlr4::RuleContext *_localctx, size_t
 }
 
 bool NebulaSQLLexer::FLOAT_LITERALSempred(antlr4::RuleContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
   switch (predicateIndex) {
     case 2: return isValidDecimal();
 
@@ -96,6 +99,8 @@ bool NebulaSQLLexer::FLOAT_LITERALSempred(antlr4::RuleContext *_localctx, size_t
 }
 
 bool NebulaSQLLexer::DOUBLE_LITERALSempred(antlr4::RuleContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 3: return isValidDecimal();
 
@@ -106,6 +111,8 @@ bool NebulaSQLLexer::DOUBLE_LITERALSempred(antlr4::RuleContext *_localctx, size_
 }
 
 bool NebulaSQLLexer::BIGDECIMAL_LITERALSempred(antlr4::RuleContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 4: return isValidDecimal();
 
@@ -116,6 +123,8 @@ bool NebulaSQLLexer::BIGDECIMAL_LITERALSempred(antlr4::RuleContext *_localctx, s
 }
 
 bool NebulaSQLLexer::BRACKETED_COMMENTSempred(antlr4::RuleContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 5: return !isHint();
 

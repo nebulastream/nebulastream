@@ -8921,6 +8921,8 @@ bool NebulaSQLParser::sempred(RuleContext *context, size_t ruleIndex, size_t pre
 }
 
 bool NebulaSQLParser::queryTermSempred(QueryTermContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 0: return precpred(_ctx, 1);
 
@@ -8931,6 +8933,8 @@ bool NebulaSQLParser::queryTermSempred(QueryTermContext *_localctx, size_t predi
 }
 
 bool NebulaSQLParser::identifierSempred(IdentifierContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 1: return !SQL_standard_keyword_behavior;
 
@@ -8941,6 +8945,8 @@ bool NebulaSQLParser::identifierSempred(IdentifierContext *_localctx, size_t pre
 }
 
 bool NebulaSQLParser::strictIdentifierSempred(StrictIdentifierContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 2: return SQL_standard_keyword_behavior;
     case 3: return !SQL_standard_keyword_behavior;
@@ -8952,6 +8958,8 @@ bool NebulaSQLParser::strictIdentifierSempred(StrictIdentifierContext *_localctx
 }
 
 bool NebulaSQLParser::booleanExpressionSempred(BooleanExpressionContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 4: return precpred(_ctx, 2);
     case 5: return precpred(_ctx, 1);
@@ -8963,6 +8971,8 @@ bool NebulaSQLParser::booleanExpressionSempred(BooleanExpressionContext *_localc
 }
 
 bool NebulaSQLParser::valueExpressionSempred(ValueExpressionContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 6: return precpred(_ctx, 6);
     case 7: return precpred(_ctx, 5);
@@ -8978,6 +8988,8 @@ bool NebulaSQLParser::valueExpressionSempred(ValueExpressionContext *_localctx, 
 }
 
 bool NebulaSQLParser::primaryExpressionSempred(PrimaryExpressionContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 12: return precpred(_ctx, 7);
 
@@ -8988,6 +9000,8 @@ bool NebulaSQLParser::primaryExpressionSempred(PrimaryExpressionContext *_localc
 }
 
 bool NebulaSQLParser::numberSempred(NumberContext *_localctx, size_t predicateIndex) {
+  _localctx->depth();
+
   switch (predicateIndex) {
     case 13: return !legacy_exponent_literal_as_decimal_enabled;
     case 14: return !legacy_exponent_literal_as_decimal_enabled;

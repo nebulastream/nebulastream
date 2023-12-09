@@ -400,6 +400,7 @@ namespace NES::Parsers {
                 auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
                 auto distributionType = Windowing::DistributionCharacteristic::createCompleteWindowType();
                 auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+
                 auto windowDefinition = Windowing::LogicalWindowDefinition::create(helper.windowAggs,
                                                                                    helper.windowType,
                                                                                    distributionType,
