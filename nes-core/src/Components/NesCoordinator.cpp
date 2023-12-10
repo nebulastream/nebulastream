@@ -96,7 +96,36 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
 
+    auto inputSchema = Schema::create()
+                      ->addField("a", DataTypeFactory::createUInt64())
+                      ->addField("b", DataTypeFactory::createUInt64())
+                      ->addField("c", DataTypeFactory::createUInt64())
+                      ->addField("d", DataTypeFactory::createUInt64())
+                      ->addField("e", DataTypeFactory::createUInt64())
+                      ->addField("f", DataTypeFactory::createUInt64())
+                      //                          ->addField("g", DataTypeFactory::createUInt64())
+                      //                          ->addField("h", DataTypeFactory::createUInt64())
+                      //                          ->addField("i", DataTypeFactory::createUInt64())
+                      //                          ->addField("j", DataTypeFactory::createUInt64())
+                      //                          ->addField("k", DataTypeFactory::createUInt64())
+                      //                          ->addField("l", DataTypeFactory::createUInt64())
+                      //                          ->addField("m", DataTypeFactory::createUInt64())
+                      //                          ->addField("n", DataTypeFactory::createUInt64())
+                      //                          ->addField("o", DataTypeFactory::createUInt64())
+                      //                          ->addField("p", DataTypeFactory::createUInt64())
+                      //                          ->addField("q", DataTypeFactory::createUInt64())
+                      //                          ->addField("r", DataTypeFactory::createUInt64())
+                      //                          ->addField("s", DataTypeFactory::createUInt64())
+                      //                          ->addField("t", DataTypeFactory::createUInt64())
+                      //                          ->addField("u", DataTypeFactory::createUInt64())
+                      //                          ->addField("v", DataTypeFactory::createUInt64())
+                      //                          ->addField("w", DataTypeFactory::createUInt64())
+                      //                          ->addField("x", DataTypeFactory::createUInt64())
+                      ->addField("timestamp1", DataTypeFactory::createUInt64())
+                      ->addField("timestamp2", DataTypeFactory::createUInt64());
+
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    sourceCatalogService->registerLogicalSource("A", inputSchema);
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
