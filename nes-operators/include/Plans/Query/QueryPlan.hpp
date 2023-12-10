@@ -19,6 +19,7 @@
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/PlacementStrategy.hpp>
+#include <Util/QueryState.hpp>
 #include <memory>
 #include <set>
 #include <vector>

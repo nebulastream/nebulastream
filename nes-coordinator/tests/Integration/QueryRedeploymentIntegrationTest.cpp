@@ -26,6 +26,10 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Phases/QueryDeploymentPhase.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -759,6 +763,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
 
     auto oldWorker = wrk2;
+    //todo: this needs to stay until we set it in the placement phase or earlier
     crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
     while (actualReconnects < numberOfReconnectsToPerform) {
         //todo: this will crash because subplans do not exist
@@ -795,6 +800,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         ASSERT_TRUE(waitForNodes(5, 4 + actualReconnects, topology));
         //ASSERT_TRUE(waitForNodes(5, 4, topology));
         reconnectParents.push_back(wrk3);
+        topology->print();
 
         std::string compareStringAfter;
         std::ostringstream ossAfter;
@@ -855,11 +861,16 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
             std::make_shared<SinkLogicalOperatorNode>(networkSinkDescriptorWrk3, networkSinkWrk3Id);
         queryPlan3->appendOperatorAsNewRoot(networkSinkOperatorNodeWrk3);
         queryPlan3->getSinkOperators().front()->inferSchema();
-        //register and start query on worker 3
-        auto success_register_wrk3 = wrk3->getNodeEngine()->registerQueryInNodeEngine(queryPlan3);
-        ASSERT_TRUE(success_register_wrk3);
-        auto success_start_wrk3 = wrk3->getNodeEngine()->startQuery(sharedQueryId);
-        ASSERT_TRUE(success_start_wrk3);
+
+        //deploy new query
+        auto topologyNode3 = topology->findNodeWithId(wrk3->getWorkerId());
+        auto executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
+        executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
+        crd->getGlobalExecutionPlan()->addExecutionNode(executionNode3);
+        auto queryDeploymentPhase = QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
+        auto sqp = crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId);
+        sqp->setStatus(SharedQueryPlanStatus::Updated);
+        queryDeploymentPhase->execute(sqp);
 
         //verify that the old partition gets unregistered
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);

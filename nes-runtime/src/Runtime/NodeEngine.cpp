@@ -417,7 +417,7 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
             break;
         }
         case Network::Messages::ErrorType::VersionMismatchError: {
-            NES_INFO("Runtime: Version mismatch for requested partition {}", err.getChannelId());
+            NES_INFO("Runtime: Node {} encountered server error: Version mismatch for requested partition {}", nodeId, err.getChannelId());
             break;
         }
         default: {

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -64,6 +65,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     }
 
     //Remove the old mapping of the shared query plan
+    //todo: we use updated here also for migration?
     if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
         queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
     }
@@ -93,7 +95,13 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         //todo: mark subqueries that will be undeployed and reconfigured as migrating here
         //todo: actually do we have to mark those that will be undeployed?
         //todo: just mark all as migrating?
-        queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
+
+        //if the query is migrating we can not yet put it to deployed
+        //todo: meybe we only need to do that for the shared query plan
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
+            NES_DEBUG("Not updating query status because it is migrating");
+            queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
+        }
     }
 
     deployQuery(sharedQueryId, executionNodes);
@@ -102,7 +110,10 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         //todo: do not mark the queries to be undeployed as migrating
-        queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
+            NES_DEBUG("Not updating query status because it is migrating");
+            queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
+        }
     }
 
     NES_DEBUG("QueryService: start query");
@@ -132,6 +143,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         auto topologyNode = executionNode->getTopologyNode();
 
         for (auto& querySubPlan : querySubPlans) {
+            //todo qeuery state needs to be set
             switch (querySubPlan->getQueryState()) {
                 case QueryState::REGISTERED: {
                     //If accelerate Java UDFs is enabled
@@ -187,6 +199,9 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     //enable this for sync calls
                     //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
                     workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
+                    //todo: should this be deployed first?
+                    querySubPlan->setQueryState(QueryState::RUNNING);
+                    completionQueues[queueForExecutionNode] = querySubPlans.size();
                     break;
                 }
                 case QueryState::RECONFIGURE: {
@@ -194,12 +209,11 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     NES_NOT_IMPLEMENTED();
                     break;
                 }
-                case default: {
+                default: {
                     break;
                 }
             }
         }
-        completionQueues[queueForExecutionNode] = querySubPlans.size();
     }
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", queryId);
