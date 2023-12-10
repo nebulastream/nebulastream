@@ -213,7 +213,10 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryState querySta
     }
 }
 
-void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId) {
+void QueryCatalogService::addSubQueryMetaData(QueryId queryId,
+                                              QuerySubPlanId querySubPlanId,
+                                              uint64_t workerId,
+                                              QueryState subQueryState) {
     std::unique_lock lock(serviceMutex);
 
     //Check if query exists
@@ -225,7 +228,7 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId qu
     //Fetch the current entry for the query
     auto queryEntry = queryCatalog->getQueryCatalogEntry(queryId);
     //Add new query sub plan
-    queryEntry->addQuerySubPlanMetaData(querySubPlanId, workerId);
+    queryEntry->addQuerySubPlanMetaData(querySubPlanId, workerId, subQueryState);
 }
 
 bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus) {
@@ -288,7 +291,13 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
             if (subQueryStatus == QueryState::SOFT_STOP_COMPLETED) {
                 bool queryMigrationComplete = true;
                 //delete the data if the sub query migrated succesfully
-                queryCatalogEntry->removeQuerySubPlanMetaData(querySubPlanId);
+                //todo: we cannot remove here, because we need to remember not to redeploy this node
+                //todo: or we have to remove the execution node first
+                //todo: best way to remove them would be with a check in the calling function
+                //queryCatalogEntry->removeQuerySubPlanMetaData(querySubPlanId);
+                //todo: this can be deduplicated (look below)
+                querySubPlanMetaData->updateStatus(subQueryStatus);
+
 
                 //check if the whole query migrated which is indicated by all subqueries being in running state
                 //because al migrating subplans were deleted
@@ -297,7 +306,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
                               queryId,
                               querySubPlanMetaData->getQuerySubPlanId(),
                               std::string(magic_enum::enum_name(querySubPlanMetaData->getQuerySubPlanStatus())));
-                    if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::RUNNING) {
+                    if (querySubPlanMetaData->getQuerySubPlanStatus() == QueryState::MIGRATING) {
                         queryMigrationComplete = false;
                         break;
                     }
