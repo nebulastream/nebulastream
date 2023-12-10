@@ -149,6 +149,8 @@ class QueryCatalogEntry {
 
     void removeAllQuerySubPlanMetaData();
 
+    void removeQuerySubPlanMetaData(QuerySubPlanId subPlanId);
+
     /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;
 
