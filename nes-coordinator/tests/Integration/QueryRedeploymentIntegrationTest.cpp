@@ -14,6 +14,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -815,6 +816,20 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
         //set the old plan to migrating
         crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
+        //check theat the data for the migrating plan has been set correctly
+        //todo: add check for existence of execution nodes
+        //todo: add check for totoal number of subplans
+        auto migratingEntries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
+        ASSERT_EQ(migratingEntries.size(), 1);
+        auto subplans = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
+        ASSERT_FALSE(subplans.empty());
+        int count = 0;
+        for (auto& plan : subplans) {
+            if (plan->getSubQueryStatus() == QueryState::MIGRATING) {
+                count++;
+            }
+        }
+        ASSERT_EQ(count , 1);
         //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
         auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
         EXPECT_EQ(subQueryIds.size(), 1);
@@ -867,12 +882,12 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto topologyNode3 = topology->findNodeWithId(wrk3->getWorkerId());
         auto executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
         executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
-        //todo check that subplan status has been set properly here
-        //ASSERT_EQ()
         crd->getGlobalExecutionPlan()->addExecutionNode(executionNode3);
         auto queryDeploymentPhase = QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
         auto sqp = crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId);
-        sqp->setStatus(SharedQueryPlanStatus::Updated);
+        //todo: removes
+       // sqp->setStatus(SharedQueryPlanStatus::Updated);
+        sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
         queryDeploymentPhase->execute(sqp);
 
         //verify that the old partition gets unregistered
@@ -911,7 +926,23 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
         //check that query has left migrating state and is running again
         //todo: add more checks that query plans hva actually benn removed
+        //todo: reactivate
+        //todo: add check for existence of execution nodes
+        //todo: add check for totoal number of subplans
         ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalogService()));
+         auto entries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
+         ASSERT_TRUE(entries.empty());
+         auto subplansAfterMigration = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
+         ASSERT_FALSE(subplansAfterMigration.empty());
+         count = 0;
+         //plans should be down to 3 again because the old plan was removed
+         //ASSERT_EQ(subplansAfterMigration.size(), 3);
+         for (auto& plan : subplansAfterMigration) {
+             if (plan->getSubQueryStatus() == QueryState::MIGRATING) {
+                 count++;
+             }
+         }
+        ASSERT_EQ(count , 0);
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));

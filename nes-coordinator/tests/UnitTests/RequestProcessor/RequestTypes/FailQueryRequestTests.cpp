@@ -166,7 +166,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
             for (auto& subQueryPlan : subQueryPlans) {
                 QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
                 for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                    queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
+                    queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, TODO);
                 }
             }
         }

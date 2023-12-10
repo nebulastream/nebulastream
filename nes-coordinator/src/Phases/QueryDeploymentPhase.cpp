@@ -14,6 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
+#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -66,29 +67,35 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Remove the old mapping of the shared query plan
     //todo: we use updated here also for migration?
-    if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
-        queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
-    }
+    if (SharedQueryPlanStatus::MIGRATING != sharedQueryPlan->getStatus()) {
+        if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
+            queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
+        }
 
-    //todo: if we remove all metadata here we also need to add it again for all, but that could be optimized
-    //Reset all sub query plan metadata in the catalog
-    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        queryCatalogService->resetSubQueryMetaData(queryId);
-        queryCatalogService->mapSharedQueryPlanId(sharedQueryId, queryId);
-    }
-
-    //Add sub query plan metadata in the catalog
-    for (auto& executionNode : executionNodes) {
-        auto workerId = executionNode->getId();
-        auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
-        for (auto& subQueryPlan : subQueryPlans) {
-            QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
-            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                //todo: do this only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
-                queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
-            }
+        //todo: if we remove all metadata here we also need to add it again for all, but that could be optimized
+        //Reset all sub query plan metadata in the catalog
+        for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+            queryCatalogService->resetSubQueryMetaData(queryId);
+            queryCatalogService->mapSharedQueryPlanId(sharedQueryId, queryId);
         }
     }
+
+        //Add sub query plan metadata in the catalog
+        for (auto& executionNode : executionNodes) {
+            auto workerId = executionNode->getId();
+            auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
+            for (auto& subQueryPlan : subQueryPlans) {
+                QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
+                for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                    //todo: do this only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
+                    auto entry = queryCatalogService->getEntryForQuery(queryId);
+                    if (!entry->hasQuerySubPlanMetaData(querySubPlanId)) {
+                        //we have to make sure, that the old execution node will not get a new plan here
+                        queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, QueryState::DEPLOYED);
+                    }
+                }
+            }
+        }
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
@@ -96,12 +103,13 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         //todo: actually do we have to mark those that will be undeployed?
         //todo: just mark all as migrating?
 
+        //todo: only overwrite if not migrating
         //if the query is migrating we can not yet put it to deployed
         //todo: meybe we only need to do that for the shared query plan
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
-            NES_DEBUG("Not updating query status because it is migrating");
-            queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
-        }
+        // if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
+        //     NES_DEBUG("Not updating query status because it is migrating");
+        //     queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
+        // }
     }
 
     deployQuery(sharedQueryId, executionNodes);
@@ -144,8 +152,14 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
 
         for (auto& querySubPlan : querySubPlans) {
             //todo qeuery state needs to be set
-            switch (querySubPlan->getQueryState()) {
-                case QueryState::REGISTERED: {
+            //switch (querySubPlan->getQueryState()) {
+            //switch (queryCatalogService->getEntryForQuery(queryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId())->getSubQueryStatus()) {
+            auto subplanMetaData =
+                queryCatalogService->getEntryForQuery(queryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
+            auto subPlanState = subplanMetaData->getSubQueryStatus();
+            switch (subPlanState) {
+                //case QueryState::REGISTERED: {
+                case QueryState::DEPLOYED: {
                     //If accelerate Java UDFs is enabled
                     if (accelerateJavaUDFs) {
 
@@ -200,12 +214,21 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
                     workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
                     //todo: should this be deployed first?
-                    querySubPlan->setQueryState(QueryState::RUNNING);
+                    //querySubPlan->setQueryState(QueryState::RUNNING);
+                    subplanMetaData->updateStatus(QueryState::RUNNING);
+
                     completionQueues[queueForExecutionNode] = querySubPlans.size();
                     break;
                 }
                 case QueryState::RECONFIGURE: {
                     //todo: deploy reconfig
+                    NES_NOT_IMPLEMENTED();
+                    break;
+                }
+                case QueryState::MIGRATING: {
+                    //todo: remove plan from execution node
+                    //todo: increase resources
+                    //todo: if the metadate is already soft stopped, remove that too, otherwise mark MIGRATION_COMPLETED it so it will be removed at soft stop
                     NES_NOT_IMPLEMENTED();
                     break;
                 }

@@ -66,7 +66,7 @@ class QueryCatalogService {
      * @param querySubPlanId : the sub query plan id
      * @param workerId : the topology node where the sub query plan is running
      */
-    void addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId);
+    void addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState);
 
     /**
      * Reset all sub query plans added to the query

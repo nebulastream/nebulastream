@@ -253,9 +253,9 @@ class QueryPlan {
     std::set<OperatorNodePtr> findAllOperatorsBetween(const std::set<OperatorNodePtr>& downstreamOperators,
                                                       const std::set<OperatorNodePtr>& upstreamOperators);
 
-    void setQueryState(QueryState state);
+    //void setQueryState(QueryState state);
 
-    QueryState getQueryState() const;
+    //QueryState getQueryState() const;
 
   private:
     /**

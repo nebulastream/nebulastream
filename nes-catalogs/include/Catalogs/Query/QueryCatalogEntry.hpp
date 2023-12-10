@@ -127,13 +127,14 @@ class QueryCatalogEntry {
      * @return
      */
     std::map<std::string, QueryPlanPtr> getOptimizationPhases();
+    bool hasQuerySubPlanMetaData(QuerySubPlanId querySubPlanId);
 
     /**
      * Add sub query plan to the query catalog
      * @param querySubPlanId : the sub query plan id
      * @param workerId : the worker node on which the query is running
      */
-    void addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId);
+    void addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState);
 
     /**
      * Get sub query plan meta data

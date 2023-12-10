@@ -84,14 +84,19 @@ std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() {
     return optimizationPhases;
 }
 
-void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId) {
+bool QueryCatalogEntry::hasQuerySubPlanMetaData(QuerySubPlanId querySubPlanId) {
+    std::unique_lock lock(mutex);
+    return querySubPlanMetaDataMap.contains(querySubPlanId);
+}
+
+void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState) {
     std::unique_lock lock(mutex);
     if (querySubPlanMetaDataMap.find(querySubPlanId) != querySubPlanMetaDataMap.end()) {
         throw InvalidQueryException("Query catalog entry already contains the query sub plan id "
                                     + std::to_string(querySubPlanId));
     }
 
-    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryState::RUNNING, workerId);
+    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, subQueryState, workerId);
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
 }
 

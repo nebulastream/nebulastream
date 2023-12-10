@@ -379,6 +379,7 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
 
     //inform catalog service
     bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryState::SOFT_STOP_COMPLETED);
+    //todo: remove from execution plan in case of migration
 
     //update response
     response->set_success(success);
