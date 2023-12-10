@@ -49,8 +49,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
-                         uint64_t numberOfOrigins = 0,
-                         Version version = 0);
+                         uint64_t numberOfOrigins,
+                         Version version);
 
     /**
     * @brief Writes data to the underlying output channel

@@ -46,7 +46,7 @@ bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     }
     auto otherSinkDescriptor = other->as<NetworkSinkDescriptor>();
     return (nesPartition == otherSinkDescriptor->nesPartition) && (nodeLocation == otherSinkDescriptor->nodeLocation)
-        && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes);
+        && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes) && (version == otherSinkDescriptor->getVersion());
 }
 
 std::string NetworkSinkDescriptor::toString() const {
