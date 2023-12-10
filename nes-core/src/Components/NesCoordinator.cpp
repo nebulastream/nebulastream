@@ -125,11 +125,11 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                       ->addField("timestamp2", DataTypeFactory::createUInt64());
 
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
-    sourceCatalogService->registerLogicalSource("A", inputSchema);
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
+    sourceCatalogService->registerLogicalSource("A", inputSchema);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
