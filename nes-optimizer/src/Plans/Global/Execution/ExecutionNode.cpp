@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <set>
 #include <utility>
@@ -49,6 +49,20 @@ bool ExecutionNode::removeQuerySubPlans(QueryId sharedQueryId) {
         return true;
     }
     NES_WARNING("ExecutionNode: Not able to remove query sub plan with id : {}", sharedQueryId);
+    return false;
+}
+bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
+    auto sharedPlanIterator = mapOfQuerySubPlans.find(sharedQueryId);
+    if (sharedPlanIterator != mapOfQuerySubPlans.end()) {
+        for (auto subPlanIterator = sharedPlanIterator->second.begin(); subPlanIterator != sharedPlanIterator->second.end();
+             ++subPlanIterator) {
+            if ((*subPlanIterator)->getQuerySubPlanId() == subPlanId) {
+                sharedPlanIterator->second.erase(subPlanIterator);
+                break;
+            }
+        }
+        return true;
+    }
     return false;
 }
 
