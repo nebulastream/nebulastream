@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <algorithm>
 #include <deque>
 #include <utility>
@@ -31,7 +31,7 @@ TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()
 bool Topology::addNewTopologyNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode) {
     std::unique_lock lock(topologyLock);
     uint64_t newNodeId = newNode->getId();
-    if (indexOnNodeIds.find(newNodeId) == indexOnNodeIds.end()) {
+    if (!indexOnNodeIds.contains(newNodeId)) {
         NES_INFO("Topology: Adding New Node {} to the catalog of nodes.", newNode->toString());
         indexOnNodeIds[newNodeId] = newNode;
     }
@@ -44,7 +44,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     NES_INFO("Topology: Removing Node {}", nodeToRemove->toString());
 
     uint64_t idOfNodeToRemove = nodeToRemove->getId();
-    if (indexOnNodeIds.find(idOfNodeToRemove) == indexOnNodeIds.end()) {
+    if (!indexOnNodeIds.contains(idOfNodeToRemove)) {
         NES_WARNING("Topology: The physical node {} doesn't exists in the system.", idOfNodeToRemove);
         return true;
     }
@@ -317,21 +317,7 @@ void Topology::print() { NES_DEBUG("Topology print:{}", toString()); }
 
 bool Topology::nodeWithWorkerIdExists(TopologyNodeId workerId) {
     std::unique_lock lock(topologyLock);
-    NES_INFO("Topology: Finding if a physical node with worker id {} exists.", workerId);
-    if (!rootNode) {
-        NES_WARNING("Topology: Root node not found.");
-        return false;
-    }
-    NES_TRACE("Topology: Traversing the topology using BFS.");
-    BreadthFirstNodeIterator bfsIterator(rootNode);
-    for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
-        auto physicalNode = (*itr)->as<TopologyNode>();
-        if (physicalNode->getId() == workerId) {
-            NES_TRACE("Topology: Found a physical node {} with worker id {}", physicalNode->toString(), workerId);
-            return true;
-        }
-    }
-    return false;
+    return indexOnNodeIds.contains(workerId);
 }
 
 TopologyNodePtr Topology::getRoot() {
@@ -342,7 +328,7 @@ TopologyNodePtr Topology::getRoot() {
 TopologyNodePtr Topology::findNodeWithId(uint64_t nodeId) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Finding a physical node with id {}", nodeId);
-    if (indexOnNodeIds.find(nodeId) != indexOnNodeIds.end()) {
+    if (indexOnNodeIds.contains(nodeId)) {
         NES_DEBUG("Topology: Found a physical node with id {}", nodeId);
         return indexOnNodeIds[nodeId];
     }
@@ -366,23 +352,23 @@ bool Topology::removeNodeAsChild(const TopologyNodePtr& parentNode, const Topolo
 bool Topology::reduceResources(uint64_t nodeId, uint16_t amountToReduce) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Reduce {} resources from node with id {}", amountToReduce, nodeId);
-    if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
-        NES_WARNING("Topology: Unable to find node with id {}", nodeId);
-        return false;
+    if (indexOnNodeIds.contains(nodeId)) {
+        indexOnNodeIds[nodeId]->reduceResources(amountToReduce);
+        return true;
     }
-    indexOnNodeIds[nodeId]->reduceResources(amountToReduce);
-    return true;
+    NES_WARNING("Topology: Unable to find node with id {}", nodeId);
+    return false;
 }
 
 bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Increase {} resources from node with id {}", amountToIncrease, nodeId);
-    if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
-        NES_WARNING("Topology: Unable to find node with id {}", nodeId);
-        return false;
+    if (indexOnNodeIds.contains(nodeId)) {
+        indexOnNodeIds[nodeId]->increaseResources(amountToIncrease);
+        return true;
     }
-    indexOnNodeIds[nodeId]->increaseResources(amountToIncrease);
-    return true;
+    NES_WARNING("Topology: Unable to find node with id {}", nodeId);
+    return false;
 }
 
 TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes) {

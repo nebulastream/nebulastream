@@ -83,9 +83,9 @@ class Topology {
 
     /**
      * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
-     * @param sourceNodes: the start Serialization
-     * @param destinationNodes: the destination Serialization
-     * @return a vector of start nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
+     * @param sourceNodes: the topology nodes where to start the path identification
+     * @param destinationNodes: the topology nodes where to end the path identification
+     * @return a vector of start/upstream topology nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
      */
     std::vector<TopologyNodePtr> findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
                                                  const std::vector<TopologyNodePtr>& destinationNodes);

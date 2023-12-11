@@ -13,20 +13,20 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <nlohmann/json.hpp>
@@ -113,18 +113,47 @@ void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorN
         throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
     }
 
-    //4. Map nodes in the selected topology by their ids.
+    //4. Lock the selected topology nodes exclusively
 
-    topologyMap.clear();
-    // fetch root node from the identified path
-    auto rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
-    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
-    while (topologyIterator != DepthFirstNodeIterator::end()) {
-        // get the ExecutionNode for the current topology Node
-        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-        topologyMap[currentTopologyNode->getId()] = currentTopologyNode;
-        ++topologyIterator;
+    //All locked topology nodes
+    std::vector<TopologyNodePtr> lockedTopologyNode;
+
+    //Temp container for iteration
+    std::queue<TopologyNodePtr> topologyNodesInBFSOrder;
+    // Iterate topology nodes in a true breadth first order
+    // Initialize with the upstream nodes
+    std::for_each(selectedTopologyForPlacement.begin(),
+                  selectedTopologyForPlacement.end(),
+                  [&](const TopologyNodePtr& topologyNode) {
+                      topologyNodesInBFSOrder.push(topologyNode);
+                  });
+
+    while (!topologyNodesInBFSOrder.empty()) {
+        auto topologyNodeToLock = topologyNodesInBFSOrder.front();
+
+        if (!topologyNodeToLock->acquireLock()) {
+            //Release the locks in the inverse order of their acquisition
+            std::for_each(lockedTopologyNode.rbegin(), lockedTopologyNode.rend(), [&](const TopologyNodePtr& lockedTopologyNode) {
+                lockedTopologyNode->releaseLock();
+            });
+
+            break;
+        }
+
+        lockedTopologyNode.emplace_back(topologyNodeToLock);
+
+        std::for_each(topologyNodeToLock->getParents().begin(),
+                      topologyNodeToLock->getParents().end(),
+                      [&](const NodePtr& topologyNode) {
+                          topologyNodesInBFSOrder.push(topologyNode->as<TopologyNode>());
+                      });
     }
+
+    //4. Map nodes in the selected topology by their ids.
+    topologyMap.clear();
+    std::for_each(lockedTopologyNode.begin(), lockedTopologyNode.end(), [&](const auto& topologyNode) {
+        topologyMap[topologyNode->getId()] = topologyNode;
+    });
 }
 
 void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
@@ -328,7 +357,8 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryI
                                                                                                   nesPartition,
                                                                                                   upstreamNodeLocation,
                                                                                                   SOURCE_RETRY_WAIT,
-                                                                                                  SOURCE_RETRIES, 0);
+                                                                                                  SOURCE_RETRIES,
+                                                                                                  0);
     return LogicalOperatorFactory::createSourceOperator(networkSourceDescriptor, operatorId);
 }
 
