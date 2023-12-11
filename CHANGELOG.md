@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.270](https://github.com/nebulastream/nebulastream/tree/v0.5.270) (2023-12-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.269...v0.5.270)
+
+**Implemented enhancements:**
+
+- \[TASK\] Aid PR review process with automation [\#4170](https://github.com/nebulastream/nebulastream/issues/4170)
+
 ## [v0.5.269](https://github.com/nebulastream/nebulastream/tree/v0.5.269) (2023-12-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.268...v0.5.269)
