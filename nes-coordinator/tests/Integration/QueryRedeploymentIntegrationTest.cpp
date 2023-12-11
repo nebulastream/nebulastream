@@ -786,6 +786,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         }
         compareStringBefore = oss.str();
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
+        waitForFinalCount = false;
         NES_INFO("start reconnect parent {}", actualReconnects);
         WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
         wrkConf3->coordinatorPort.setValue(*rpcCoordinatorPort);
@@ -833,6 +834,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
         auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
         EXPECT_EQ(subQueryIds.size(), 1);
+
+
         //retrieve data about running network sink at wrk1
         auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(
             wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front());
@@ -841,19 +844,11 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
         Version nextVersion = actualReconnects + 1;
-        crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition,
-                                                                                       nextVersion,
-                                                                                       newNodeLocation);
-        networkSink->configureNewReceiverAndPartition(networkSourceWrk3Partition, newNodeLocation, nextVersion);
 
-        //reconfig performed but new network source not started yet. tuples are buffered at wrk1
 
-        //notify lambda source that reconfig happened and make it release more tuples into the buffer
-        waitForFinalCount = false;
-        waitForReconfig = true;
-        //wait for tuples in order to make sure that the buffer is actually tested
-        while (!waitForReconnect)
-            ;
+
+
+
 
         //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
         //start query on wrk3
@@ -889,6 +884,21 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
        // sqp->setStatus(SharedQueryPlanStatus::Updated);
         sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
         queryDeploymentPhase->execute(sqp);
+
+
+        //perform reconfiguratins
+        crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition,
+                                                                                       nextVersion,
+                                                                                       newNodeLocation);
+        networkSink->configureNewReceiverAndPartition(networkSourceWrk3Partition, newNodeLocation, nextVersion);
+
+        //notify lambda source that reconfig happened and make it release more tuples into the buffer
+        waitForFinalCount = false;
+        waitForReconfig = true;
+        //wait for tuples in order to make sure that the buffer is actually tested
+        while (!waitForReconnect)
+            ;
+
 
         //verify that the old partition gets unregistered
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
@@ -944,6 +954,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
          }
         ASSERT_EQ(count , 0);
 
+        //waitForFinalCount = true;
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
 
@@ -953,6 +964,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         waitForFinalCount = true;
     }
 
+        //waitForFinalCount = true;
     //send the last tuples, after which the lambda source shuts down
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
 

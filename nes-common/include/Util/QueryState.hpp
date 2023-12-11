@@ -49,6 +49,7 @@ enum class QueryState : uint8_t {
     FAILED,
     RESTARTING,
     MIGRATING,
+    MIGRATION_COMPLETED,
     EXPLAINED,
     RECONFIGURE
 };

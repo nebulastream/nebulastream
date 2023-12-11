@@ -92,6 +92,8 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                     if (!entry->hasQuerySubPlanMetaData(querySubPlanId)) {
                         //we have to make sure, that the old execution node will not get a new plan here
                         queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, QueryState::DEPLOYED);
+                    // } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus() == QueryState::SOFT_STOP_COMPLETED) {
+                    //     entry->removeQuerySubPlanMetaData(querySubPlanId);
                     }
                 }
             }
@@ -106,28 +108,37 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         //todo: only overwrite if not migrating
         //if the query is migrating we can not yet put it to deployed
         //todo: meybe we only need to do that for the shared query plan
+        auto newQueryState = sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING ? QueryState::MIGRATING : QueryState::DEPLOYED;
+        //only update for the entry, not for the subquery metadata
+        queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(newQueryState);
         // if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
-        //     NES_DEBUG("Not updating query status because it is migrating");
-        //     queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
+            //queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
         // }
     }
 
     deployQuery(sharedQueryId, executionNodes);
     NES_DEBUG("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
 
+    //todo: set only for sqp
     //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         //todo: do not mark the queries to be undeployed as migrating
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
-            NES_DEBUG("Not updating query status because it is migrating");
-            queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
+        //todo: move the condition outside the loop
+        //auto newQueryState = sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING ? QueryState::MIGRATING : QueryState::RUNNING;
+        if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::MIGRATING) {
+            queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::RUNNING);
         }
+//        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
+//            NES_DEBUG("Not updating query status because it is migrating");
+//            queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
+//        }
     }
 
     NES_DEBUG("QueryService: start query");
     startQuery(sharedQueryId, executionNodes);
 }
 
+//todo: query id is actually shared query id
 void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::deployQuery queryId= {}", queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
@@ -225,11 +236,25 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     NES_NOT_IMPLEMENTED();
                     break;
                 }
+                case QueryState::SOFT_STOP_COMPLETED:
                 case QueryState::MIGRATING: {
                     //todo: remove plan from execution node
+                    //executionNode->removeQuerySubPlan(queryId, querySubPlan->getQuerySubPlanId());
                     //todo: increase resources
+                    //todo: do we count subplans or operators?
+                    //todo: freeing currently causes errror about consumed resources
+                    //executionNode->getTopologyNode()->increaseResources(1);
                     //todo: if the metadate is already soft stopped, remove that too, otherwise mark MIGRATION_COMPLETED it so it will be removed at soft stop
-                    NES_NOT_IMPLEMENTED();
+                    //todo: we cannot do this because it might cause problems with concurrent operations
+                    //todo: no its actually safe because the entry has a mutex
+                    //todo: do not remove metadata here, just garbage callect on next deployment
+                    // if (subplanMetaData->getSubQueryStatus() == QueryState::SOFT_STOP_COMPLETED) {
+                    //     //todo: get the entry just once above and reuse here
+                    //     queryCatalogService->getEntryForQuery(queryId)->removeQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
+                    // } else {
+                    //     //mark the node to be removed
+                    //     subplanMetaData->updateStatus(QueryState::MIGRATION_COMPLETED);
+                    // }
                     break;
                 }
                 default: {
