@@ -274,6 +274,51 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
+  infer-static-analysis:
+    name: Static Analysis FB Infer
+    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
+    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+    needs: [ pre-build-checks ]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - osversion: ubuntu-22_04
+            arch: "X64"
+            require_build: "true"
+            require_test: "true"
+            build_parallelism: "16"
+            test_parallelism: "4"
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Build Docker
+        id: builddocker
+        if: github.event_name != 'workflow_dispatch'
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}/docker/staticAnalysisImage
+        run: docker build  -t nes_static_analysis_${{ matrix.osversion }} -f Dockerfile-NES-StaticAnalysis-${{ matrix.osversion }} .
+      - name: Build NebulaStream & Run Static Analysis
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+          build_dir="/data/nes-ci/tmp/nes-staticAnalysis_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          echo "build_dir=$build_dir" >> $GITHUB_ENV
+          mkdir -p $build_dir
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE nes_static_analysis_${{ matrix.osversion }}
+      - name: Check Infer report
+        uses: srz-zumix/reviewdog-action-infer@v1
+        with:
+          reporter: github-pr-review
+          report_path: "${{ env.build_dir }}/infer-out"
+      - name: docker cleanup
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+        run: |
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis
   release:
     runs-on: [ self-hosted, linux, X64, Build ]
     if: github.ref == 'refs/heads/master'
