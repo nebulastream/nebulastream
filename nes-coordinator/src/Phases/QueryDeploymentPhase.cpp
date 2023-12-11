@@ -165,8 +165,11 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
             //todo qeuery state needs to be set
             //switch (querySubPlan->getQueryState()) {
             //switch (queryCatalogService->getEntryForQuery(queryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId())->getSubQueryStatus()) {
+            //todo: that we can pick any query id belonging to the shared query id here, highlights a flow in the design of the data structures
+            auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(queryId).front();
             auto subplanMetaData =
-                queryCatalogService->getEntryForQuery(queryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
+                queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
+
             auto subPlanState = subplanMetaData->getSubQueryStatus();
             switch (subPlanState) {
                 //case QueryState::REGISTERED: {
