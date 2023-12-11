@@ -125,6 +125,27 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
     return true;
 }
 
+bool GlobalExecutionPlan::removeQuerySubPlanFromNode(NodeId nodeId, SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
+    auto nodeIterator = nodeIdIndex.find(nodeId);
+    if (nodeIterator == nodeIdIndex.end()) {
+        return false;
+    }
+    auto executionNode = nodeIterator->second;
+    executionNode->removeQuerySubPlan(sharedQueryId, subPlanId);
+    if (executionNode->getQuerySubPlans(sharedQueryId).empty()) {
+        auto& mappedNodes = queryIdIndex[sharedQueryId];
+        if (mappedNodes.size() == 1) {
+            queryIdIndex.erase(sharedQueryId);
+        } else {
+            mappedNodes.erase(std::find(mappedNodes.begin(), mappedNodes.end(), executionNode));
+        }
+    }
+    if (executionNode->getAllQuerySubPlans().empty()) {
+        removeExecutionNode(nodeId);
+    }
+    return true;
+}
+
 std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesByQueryId(QueryId queryId) {
     auto itr = queryIdIndex.find(queryId);
     if (itr != queryIdIndex.end()) {

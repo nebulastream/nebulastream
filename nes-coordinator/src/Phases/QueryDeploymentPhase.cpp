@@ -80,24 +80,34 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
-        //Add sub query plan metadata in the catalog
-        for (auto& executionNode : executionNodes) {
-            auto workerId = executionNode->getId();
-            auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
-            for (auto& subQueryPlan : subQueryPlans) {
-                QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
-                for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                    //todo: do this only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
-                    auto entry = queryCatalogService->getEntryForQuery(queryId);
-                    if (!entry->hasQuerySubPlanMetaData(querySubPlanId)) {
-                        //we have to make sure, that the old execution node will not get a new plan here
-                        queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, QueryState::DEPLOYED);
-                    // } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus() == QueryState::SOFT_STOP_COMPLETED) {
-                    //     entry->removeQuerySubPlanMetaData(querySubPlanId);
-                    }
+    //Add sub query plan metadata in the catalog
+    for (auto& executionNode : executionNodes) {
+        auto workerId = executionNode->getId();
+        auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
+        for (auto& subQueryPlan : subQueryPlans) {
+            QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
+            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                //todo: do this only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
+                auto entry = queryCatalogService->getEntryForQuery(queryId);
+                if (!entry->hasQuerySubPlanMetaData(querySubPlanId)) {
+                    //we have to make sure, that the old execution node will not get a new plan here
+                    queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, QueryState::DEPLOYED);
+                } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus()
+                           == QueryState::MIGRATING) {
+                    //todo: garbage collect
+                    //executionNode->removeQuerySubPlan(sharedQueryId, querySubPlanId);
+                    globalExecutionPlan->removeQuerySubPlanFromNode(executionNode->getId(), sharedQueryId, querySubPlanId);
+                } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus()
+                           == QueryState::SOFT_STOP_COMPLETED) {
+                    entry->removeQuerySubPlanMetaData(querySubPlanId);
                 }
             }
         }
+//        if (executionNode->getQuerySubPlans(sharedQueryId).empty()) {
+//            globalExecutionPlan->removeQuerySubPlans()
+//        }
+    }
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
@@ -108,11 +118,12 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         //todo: only overwrite if not migrating
         //if the query is migrating we can not yet put it to deployed
         //todo: meybe we only need to do that for the shared query plan
-        auto newQueryState = sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING ? QueryState::MIGRATING : QueryState::DEPLOYED;
+        auto newQueryState =
+            sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING ? QueryState::MIGRATING : QueryState::DEPLOYED;
         //only update for the entry, not for the subquery metadata
         queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(newQueryState);
         // if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
-            //queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
+        //queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
         // }
     }
 
@@ -128,10 +139,10 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::MIGRATING) {
             queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::RUNNING);
         }
-//        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
-//            NES_DEBUG("Not updating query status because it is migrating");
-//            queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
-//        }
+        //        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
+        //            NES_DEBUG("Not updating query status because it is migrating");
+        //            queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
+        //        }
     }
 
     NES_DEBUG("QueryService: start query");
@@ -227,8 +238,6 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     //enable this for sync calls
                     //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
                     workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
-                    //todo: should this be deployed first?
-                    //querySubPlan->setQueryState(QueryState::RUNNING);
                     subplanMetaData->updateStatus(QueryState::RUNNING);
 
                     completionQueues[queueForExecutionNode] = querySubPlans.size();
@@ -239,7 +248,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     NES_NOT_IMPLEMENTED();
                     break;
                 }
-                case QueryState::SOFT_STOP_COMPLETED:
+                //case QueryState::SOFT_STOP_COMPLETED:
                 case QueryState::MIGRATING: {
                     //todo: remove plan from execution node
                     //executionNode->removeQuerySubPlan(queryId, querySubPlan->getQuerySubPlanId());

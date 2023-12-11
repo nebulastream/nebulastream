@@ -135,6 +135,7 @@ class GlobalExecutionPlan {
      * @return a map of topology node id to resources occupied
      */
     std::map<uint64_t, uint32_t> getMapOfWorkerIdToOccupiedResource(QueryId sharedQueryId);
+    bool removeQuerySubPlanFromNode(ExecutionNodeId nodeId, SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
 
   private:
     /**
