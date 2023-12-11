@@ -12,34 +12,34 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Util/Mobility/Waypoint.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <algorithm>
 #include <utility>
 
 namespace NES {
 
 TopologyNode::TopologyNode(uint64_t id,
-                           std::string ipAddress,
+                           std::string  ipAddress,
                            uint32_t grpcPort,
                            uint32_t dataPort,
                            uint16_t resources,
                            std::map<std::string, std::any> properties)
     : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
-      nodeProperties(std::move(properties)) {}
+      locked(false), nodeProperties(std::move(properties)) {}
 
-TopologyNodePtr TopologyNode::create(const uint64_t id,
+TopologyNodePtr TopologyNode::create(uint64_t id,
                                      const std::string& ipAddress,
-                                     const uint32_t grpcPort,
-                                     const uint32_t dataPort,
-                                     const uint16_t resources,
+                                     uint32_t grpcPort,
+                                     uint32_t dataPort,
+                                     uint16_t resources,
                                      std::map<std::string, std::any> properties) {
     NES_DEBUG("TopologyNode: Creating node with ID {} and resources {}", id, resources);
-    return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources, properties);
+    return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources, std::move(properties));
 }
 
 uint64_t TopologyNode::getId() const { return id; }
@@ -75,7 +75,7 @@ void TopologyNode::reduceResources(uint16_t usedCapacity) {
 
 TopologyNodePtr TopologyNode::copy() {
     TopologyNodePtr copy =
-        std::make_shared<TopologyNode>(TopologyNode(id, ipAddress, grpcPort, dataPort, resources, nodeProperties));
+        std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources, nodeProperties);
     copy->reduceResources(usedResources);
     copy->linkProperties = this->linkProperties;
     return copy;
@@ -164,4 +164,21 @@ void TopologyNode::setSpatialType(NES::Spatial::Experimental::SpatialType spatia
 Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
     return std::any_cast<Spatial::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
 }
+
+bool TopologyNode::acquireLock() {
+    if (!locked) {
+        locked = true;
+        return true;
+    }
+    return false;
+}
+
+bool TopologyNode::releaseLock() {
+    if (locked) {
+        locked = false;
+        return true;
+    }
+    return false;
+}
+
 }// namespace NES

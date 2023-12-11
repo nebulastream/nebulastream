@@ -20,6 +20,7 @@
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <any>
+#include <atomic>
 #include <fmt/core.h>
 #include <map>
 #include <optional>
@@ -44,20 +45,39 @@ using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 class TopologyNode : public Node {
 
   public:
-    static TopologyNodePtr create(const uint64_t id,
+    static TopologyNodePtr create(uint64_t id,
                                   const std::string& ipAddress,
-                                  const uint32_t grpcPort,
-                                  const uint32_t dataPort,
-                                  const uint16_t resources,
+                                  uint32_t grpcPort,
+                                  uint32_t dataPort,
+                                  uint16_t resources,
                                   std::map<std::string, std::any> properties);
 
-    virtual ~TopologyNode() = default;
+    explicit TopologyNode(uint64_t id,
+                          std::string ipAddress,
+                          uint32_t grpcPort,
+                          uint32_t dataPort,
+                          uint16_t resources,
+                          std::map<std::string, std::any> properties);
+
+    ~TopologyNode() override = default;
 
     /**
      * @brief method to get the id of the node
      * @return id as a uint64_t
      */
     uint64_t getId() const;
+
+    /**
+     * @brief lock this topology node
+     * @return true if locked else false
+     */
+    bool acquireLock();
+
+    /**
+     * @brief release the lock on this topology node
+     * @return true if lock release else false
+     */
+    bool releaseLock();
 
     /**
      * @brief method to get the overall cpu capacity of the node
@@ -114,13 +134,6 @@ class TopologyNode : public Node {
      * @return
      */
     TopologyNodePtr copy();
-
-    explicit TopologyNode(uint64_t id,
-                          std::string ipAddress,
-                          uint32_t grpcPort,
-                          uint32_t dataPort,
-                          uint16_t resources,
-                          std::map<std::string, std::any> properties);
 
     bool containAsParent(NodePtr node) override;
 
@@ -191,12 +204,14 @@ class TopologyNode : public Node {
     NES::Spatial::Experimental::SpatialType getSpatialNodeType();
 
   private:
+
     uint64_t id;
     std::string ipAddress;
     uint32_t grpcPort;
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
+    std::atomic<bool> locked;
 
     /**
      * @brief A field to store a map of node properties
@@ -225,4 +240,4 @@ struct formatter<NES::TopologyNode> : formatter<std::string> {
 };
 }//namespace fmt
 
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
