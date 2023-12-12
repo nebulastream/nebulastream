@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
+#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -762,7 +762,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         crd->getNesWorker()->getNodeEngine()->getExecutableQueryPlan(coordinatorSubplanId)->getSources().front();
     Network::NesPartition networkSourceCrdPartition(queryId, coordinatorSource->getOperatorId(), 0, 0);
 
-
     auto oldWorker = wrk2;
     //todo: this needs to stay until we set it in the placement phase or earlier
     //crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
@@ -830,25 +829,17 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
                 count++;
             }
         }
-        ASSERT_EQ(count , 1);
+        ASSERT_EQ(count, 1);
         //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
         auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
         EXPECT_EQ(subQueryIds.size(), 1);
 
-
         //retrieve data about running network sink at wrk1
-        auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(
-            wrk1->getNodeEngine()->getExecutableQueryPlan(subQueryIds.front())->getSinks().front());
         Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
         networkSrcWrk3Id += 10;
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
         Version nextVersion = actualReconnects + 1;
-
-
-
-
-
 
         //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
         //start query on wrk3
@@ -878,19 +869,32 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
         executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
         crd->getGlobalExecutionPlan()->addExecutionNode(executionNode3);
-        auto queryDeploymentPhase = QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
+        auto queryDeploymentPhase =
+            QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
         auto sqp = crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId);
         //todo: removes
-       // sqp->setStatus(SharedQueryPlanStatus::Updated);
+        // sqp->setStatus(SharedQueryPlanStatus::Updated);
         sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
         queryDeploymentPhase->execute(sqp);
-
 
         //perform reconfiguratins
         crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition,
                                                                                        nextVersion,
                                                                                        newNodeLocation);
-        networkSink->configureNewReceiverAndPartition(networkSourceWrk3Partition, newNodeLocation, nextVersion);
+
+        //todo: new call
+        auto oldPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
+        auto oldPlan = wrk1->getNodeEngine()->getExecutableQueryPlan(oldPlanId);
+        auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(newNodeLocation,
+                                                                                networkSourceWrk3Partition,
+                                                                                waitTime,
+                                                                                retryTimes,
+                                                                                nextVersion);
+        auto sinkReconfigPlan = QueryPlan::create(sharedQueryId, oldPlanId);
+        auto sinkReconfigOperator =
+            std::make_shared<SinkLogicalOperatorNode>(reconfiguredSinkDescriptor, oldPlan->getSinks().front()->getOperatorId());
+        sinkReconfigPlan->addRootOperator(sinkReconfigOperator);
+        wrk1->getNodeEngine()->reconfigureSinksInSubPlan(sinkReconfigPlan);
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
         waitForFinalCount = false;
@@ -898,7 +902,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         //wait for tuples in order to make sure that the buffer is actually tested
         while (!waitForReconnect)
             ;
-
 
         //verify that the old partition gets unregistered
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
@@ -940,19 +943,19 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         //todo: add check for existence of execution nodes
         //todo: add check for totoal number of subplans
         ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalogService()));
-         auto entries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
-         ASSERT_TRUE(entries.empty());
-         auto subplansAfterMigration = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
-         ASSERT_FALSE(subplansAfterMigration.empty());
-         count = 0;
-         //plans should be down to 3 again because the old plan was removed
-         //ASSERT_EQ(subplansAfterMigration.size(), 3);
-         for (auto& plan : subplansAfterMigration) {
-             if (plan->getSubQueryStatus() == QueryState::MIGRATING) {
-                 count++;
-             }
-         }
-        ASSERT_EQ(count , 0);
+        auto entries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
+        ASSERT_TRUE(entries.empty());
+        auto subplansAfterMigration = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
+        ASSERT_FALSE(subplansAfterMigration.empty());
+        count = 0;
+        //plans should be down to 3 again because the old plan was removed
+        //ASSERT_EQ(subplansAfterMigration.size(), 3);
+        for (auto& plan : subplansAfterMigration) {
+            if (plan->getSubQueryStatus() == QueryState::MIGRATING) {
+                count++;
+            }
+        }
+        ASSERT_EQ(count, 0);
 
         //waitForFinalCount = true;
         //check that all tuples arrived
@@ -964,7 +967,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         waitForFinalCount = true;
     }
 
-        //waitForFinalCount = true;
+    //waitForFinalCount = true;
     //send the last tuples, after which the lambda source shuts down
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeoutAtWorker(sharedQueryId, wrk1));
 

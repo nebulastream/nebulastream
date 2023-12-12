@@ -103,9 +103,6 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                 }
             }
         }
-//        if (executionNode->getQuerySubPlans(sharedQueryId).empty()) {
-//            globalExecutionPlan->removeQuerySubPlans()
-//        }
     }
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
@@ -243,7 +240,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     completionQueues[queueForExecutionNode] = querySubPlans.size();
                     break;
                 }
-                case QueryState::RECONFIGURE: {
+                case QueryState::RECONFIGURE_SINKS: {
                     //todo: deploy reconfig
                     NES_NOT_IMPLEMENTED();
                     break;

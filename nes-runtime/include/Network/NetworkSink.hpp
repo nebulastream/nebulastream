@@ -22,6 +22,7 @@
 #include <string>
 
 namespace NES::Network {
+class NetworkSinkDescriptor;
 
 /**
  * @brief This represent a sink operator that acts as a connecting API between query processing and network stack.
@@ -129,6 +130,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newVersion The new version number assigned to this sink
      */
     void configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation, Version newVersion);
+
+    //todo: probably we do not need this
+    void configureNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink);
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
