@@ -89,10 +89,10 @@ class MonitoringAgent {
      * @brief Set the node ID of the topology node
      * @param nodeId: id of the topology node
      */
-    void setNodeId(TopologyNodeId nodeId);
+    void setNodeId(WorkerId nodeId);
 
   private:
-    TopologyNodeId nodeId;
+    WorkerId nodeId;
     MonitoringPlanPtr monitoringPlan;
     MonitoringCatalogPtr catalog;
     bool enabled;

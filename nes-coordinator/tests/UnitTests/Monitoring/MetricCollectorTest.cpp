@@ -44,7 +44,7 @@ class MetricCollectorTest : public Testing::BaseUnitTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     Monitoring::AbstractSystemResourcesReaderPtr reader;
-    TopologyNodeId nodeId;
+    WorkerId nodeId;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MetricCollectorTest.log", NES::LogLevel::LOG_DEBUG);
@@ -57,7 +57,7 @@ class MetricCollectorTest : public Testing::BaseUnitTest {
         NES_DEBUG("MetricCollectorTest: Setup MetricCollectorTest test case.");
 
         auto bufferSize = 4096;
-        nodeId = TopologyNodeId(4711);
+        nodeId = WorkerId(4711);
         bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
         reader = Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader();
     }

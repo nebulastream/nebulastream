@@ -19,7 +19,7 @@
 #include <vector>
 
 namespace NES {
-using TopologyNodeId = uint64_t;
+using WorkerId = uint64_t;
 namespace Experimental::TopologyPrediction {
 class TopologyDelta;
 class Edge;
@@ -68,14 +68,14 @@ class TopologyChangeLog {
          * @param nodeId the id of the node in question
          * @return a vector of node ids
          */
-    std::vector<TopologyNodeId> getAddedChildren(TopologyNodeId nodeId) const;
+    std::vector<WorkerId> getAddedChildren(WorkerId nodeId) const;
 
     /**
          * @brief get a list of the children which would be removed from a certain node if the changes in this changelog were applied
          * @param nodeId the id of the node in question
          * @return a vector of node ids
          */
-    std::vector<TopologyNodeId> getRemovedChildren(TopologyNodeId nodeId) const;
+    std::vector<WorkerId> getRemovedChildren(WorkerId nodeId) const;
 
   private:
     /**
@@ -84,7 +84,7 @@ class TopologyChangeLog {
          * @param map the mop from which values are to be removed
          * @param edges the list of links to remove from the map
          */
-    static void removeLinksFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map,
+    static void removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map,
                                    const std::vector<Edge>& edges);
 
     /**
@@ -97,12 +97,12 @@ class TopologyChangeLog {
          * @param toSubtract if an element is present here, it will not get added to additionTarget even if it is present in newMap
          * but any element present in newMap will be removed from toSubtract
          */
-    static void updateChangelog(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap,
-                                std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget,
-                                std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract);
+    static void updateChangelog(const std::unordered_map<WorkerId, std::vector<WorkerId>>& newMap,
+                                std::unordered_map<WorkerId, std::vector<WorkerId>>& additionTarget,
+                                std::unordered_map<WorkerId, std::vector<WorkerId>>& toSubtract);
 
-    std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>> addedLinks;
-    std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>> removedLinks;
+    std::unordered_map<WorkerId, std::vector<WorkerId>> addedLinks;
+    std::unordered_map<WorkerId, std::vector<WorkerId>> removedLinks;
 };
 }// namespace Experimental::TopologyPrediction
 }// namespace NES

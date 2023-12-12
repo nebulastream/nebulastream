@@ -60,7 +60,7 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
     undeployQuery(sharedQueryId, executionNodes);
 
     const std::map<uint64_t, uint32_t>& resourceMap =
-        globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(sharedQueryId);
+        globalExecutionPlan->getMapOfWorkerIdToOccupiedResource(sharedQueryId);
 
     for (const auto [id, resourceAmount] : resourceMap) {
         NES_TRACE("QueryUndeploymentPhase: Releasing {} resources for the node {}", resourceAmount, id);

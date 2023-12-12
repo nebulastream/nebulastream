@@ -224,10 +224,10 @@ class CoordinatorRPCClient {
 
     /**
      * @brief the function queries for the ids of the parents of a node with a given id
-     * @param nodeId: the id of the node whose parents are requested
+     * @param workerId: the id of the worker whose parents are requested
      * @return a vector containing the ids of all of the nodes parents
      */
-    std::vector<NodeId> getParents(NodeId nodeId);
+    std::vector<WorkerId> getParents(WorkerId workerId);
 
   private:
     uint64_t workerId;

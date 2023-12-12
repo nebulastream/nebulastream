@@ -54,8 +54,8 @@ using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
 using Timestamp = uint64_t;
 
 struct RemovedEdge {
-    TopologyNodeId downstreamNodeId;
-    TopologyNodeId upstreamNodeId;
+    WorkerId downstreamWorkerId;
+    WorkerId upstreamWorkerId;
 };
 
 using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>>;

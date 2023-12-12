@@ -292,13 +292,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * Getter for node Id
      * @return the node id
      */
-    TopologyNodeId getNodeId() const;
+    WorkerId getNodeId() const;
 
     /**
      * Setter for node ID
      * @param NodeId
      */
-    void setNodeId(const TopologyNodeId NodeId);
+    void setNodeId(const WorkerId NodeId);
 
     /**
      * @brief Updates the physical sources on the node engine
@@ -357,7 +357,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         bool connectSinksAsync = false);
 
   private:
-    TopologyNodeId nodeId;
+    WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;

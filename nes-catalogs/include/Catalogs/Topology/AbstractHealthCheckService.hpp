@@ -87,14 +87,14 @@ class AbstractHealthCheckService {
      * @param workerId id of the worker
      * @return true if worker is active otherwise false
      */
-    bool isWorkerInactive(TopologyNodeId workerId);
+    bool isWorkerInactive(WorkerId workerId);
 
     /**
      * Method to return a worker from healthcheck by its id
      * @param workerId id of the worker
      * @return worker with workerId
      */
-    TopologyNodePtr getWorkerByWorkerId(TopologyNodeId workerId);
+    TopologyNodePtr getWorkerByWorkerId(WorkerId workerId);
 
   protected:
     std::shared_ptr<std::thread> healthCheckingThread;
@@ -105,7 +105,7 @@ class AbstractHealthCheckService {
     std::string healthServiceName;
     std::condition_variable cv;
     std::mutex cvMutex;
-    std::set<TopologyNodeId> inactiveWorkers;
+    std::set<WorkerId> inactiveWorkers;
 };
 
 }// namespace NES

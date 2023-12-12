@@ -212,11 +212,11 @@ void GlobalQueryPlanUpdatePhase::processAddQueryRequest(const AddQueryRequestPtr
 void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(
     const NES::Experimental::RemoveTopologyLinkRequestPtr& removeTopologyLinkRequest) {
 
-    TopologyNodeId upstreamNodeId = removeTopologyLinkRequest->getUpstreamNodeId();
-    TopologyNodeId downstreamNodeId = removeTopologyLinkRequest->getDownstreamNodeId();
+    WorkerId upstreamNodeId = removeTopologyLinkRequest->getUpstreamNodeId();
+    WorkerId downstreamNodeId = removeTopologyLinkRequest->getDownstreamNodeId();
 
-    auto upstreamExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(upstreamNodeId);
-    auto downstreamExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(downstreamNodeId);
+    auto upstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(upstreamNodeId);
+    auto downstreamExecutionNode = globalExecutionPlan->getExecutionNodeById(downstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
     if (!upstreamExecutionNode || !downstreamExecutionNode) {
         NES_INFO("RemoveTopologyLinkRequest: {} has no effect on the running queries", removeTopologyLinkRequest->toString());
@@ -254,10 +254,10 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyLinkRequest(
 void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
     const NES::Experimental::RemoveTopologyNodeRequestPtr& removeTopologyNodeRequest) {
 
-    TopologyNodeId removedNodeId = removeTopologyNodeRequest->getTopologyNodeId();
+    WorkerId removedNodeId = removeTopologyNodeRequest->getWorkerId();
 
     //1. If the removed execution nodes do not exist then remove skip rest of the operation
-    auto removedExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(removedNodeId);
+    auto removedExecutionNode = globalExecutionPlan->getExecutionNodeById(removedNodeId);
     if (!removedExecutionNode) {
         NES_INFO("RemoveTopologyNodeRequest: {} has no effect on the running queries as there are no queries "
                  "placed on the node.",
@@ -275,7 +275,7 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
     }
 
     //3. Get the topology node with removed node id
-    TopologyNodePtr removedTopologyNode = topology->findNodeWithId(removedNodeId);
+    TopologyNodePtr removedTopologyNode = topology->findWorkerWithId(removedNodeId);
 
     //4. Fetch upstream and downstream topology nodes connected via the removed topology node
     auto downstreamTopologyNodes = removedTopologyNode->getParents();
@@ -297,9 +297,9 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
             for (auto const& impactedSharedQueryId : impactedSharedQueryIds) {
 
                 auto upstreamExecutionNode =
-                    globalExecutionPlan->getExecutionNodeByNodeId(upstreamTopologyNode->as<TopologyNode>()->getId());
+                    globalExecutionPlan->getExecutionNodeById(upstreamTopologyNode->as<TopologyNode>()->getId());
                 auto downstreamExecutionNode =
-                    globalExecutionPlan->getExecutionNodeByNodeId(downstreamTopologyNode->as<TopologyNode>()->getId());
+                    globalExecutionPlan->getExecutionNodeById(downstreamTopologyNode->as<TopologyNode>()->getId());
 
                 //6.2. If there exists no upstream or downstream execution nodes than skip rest of the operation
                 if (!upstreamExecutionNode || !downstreamExecutionNode) {

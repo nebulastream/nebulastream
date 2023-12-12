@@ -348,7 +348,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
     //Add all logical sources
     checkAndAddLogicalSources();
 
-    std::vector<TopologyNodeId> workerIds;
+    std::vector<WorkerId> workerIds;
 
     for (auto& workerConf : testHarnessWorkerConfigurations) {
 
@@ -379,7 +379,7 @@ TestHarness& TestHarness::setupTopology(std::function<void(CoordinatorConfigurat
 
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
         nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
-        workerIds.emplace_back(nesWorker->getTopologyNodeId());
+        workerIds.emplace_back(nesWorker->getWorkerId());
 
         //We are assuming that coordinator has a node id 1
         nesWorker->replaceParent(1, nesWorker->getWorkerConfiguration()->parentId.getValue());

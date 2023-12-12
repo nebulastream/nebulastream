@@ -33,8 +33,8 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
         NES_DEBUG("Setup TopologyTimeline test class.");
     }
 
-    static std::vector<TopologyNodeId> getIdVector(const std::vector<NodePtr>& nodes) {
-        std::vector<TopologyNodeId> ids;
+    static std::vector<WorkerId> getIdVector(const std::vector<NodePtr>& nodes) {
+        std::vector<WorkerId> ids;
         ids.reserve(nodes.size());
         for (auto& node : nodes) {
             ids.push_back(node->as<TopologyNode>()->getId());
@@ -45,8 +45,8 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
 
     static void compareIdVectors(const std::vector<NodePtr>& original, const std::vector<NodePtr>& copy) {
         EXPECT_EQ(original.size(), copy.size());
-        std::vector<TopologyNodeId> originalIds = getIdVector(original);
-        std::vector<TopologyNodeId> copiedIds = getIdVector(copy);
+        std::vector<WorkerId> originalIds = getIdVector(original);
+        std::vector<WorkerId> copiedIds = getIdVector(copy);
 
         std::sort(originalIds.begin(), originalIds.end());
         std::sort(copiedIds.begin(), copiedIds.end());
@@ -60,7 +60,7 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
                               std::vector<uint64_t> parents,
                               std::vector<uint64_t> children) {
         NES_DEBUG("compare node {}", id);
-        auto predictedNode = versions.getTopologyVersion(time)->findNodeWithId(id);
+        auto predictedNode = versions.getTopologyVersion(time)->findWorkerWithId(id);
 
         //check if the node is predicted to be removed
         if (children.empty() && parents.empty()) {
@@ -89,7 +89,7 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
             originalQueue.pop();
             ASSERT_TRUE(originalNode);
             NES_DEBUG("checking node {}", originalNode->getId());
-            auto copiedNode = copy->findNodeWithId(originalNode->getId());
+            auto copiedNode = copy->findWorkerWithId(originalNode->getId());
             NES_DEBUG("copied node id {}", copiedNode->getId());
             ASSERT_NE(copiedNode, nullptr);
 
@@ -113,11 +113,11 @@ TEST_F(TopologyTimelineTest, testNoChangesPresent) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1),
+    topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(1),
                                         TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2),
+    topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(2),
                                         TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2),
+    topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(2),
                                         TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
 
     auto timeline = TopologyTimeline::create(topology);
@@ -130,11 +130,11 @@ TEST_F(TopologyTimelineTest, testUpdatingMultiplePredictions) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
     topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(1),
+    topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(1),
                                         TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2),
+    topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(2),
                                         TopologyNode::create(3, "localhost", 4001, 5001, 4, properties));
-    topology->addNewTopologyNodeAsChild(topology->findNodeWithId(2),
+    topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(2),
                                         TopologyNode::create(4, "localhost", 4001, 5001, 4, properties));
     NES_DEBUG("Original Topology");
     NES_DEBUG("{}", topology->toString());

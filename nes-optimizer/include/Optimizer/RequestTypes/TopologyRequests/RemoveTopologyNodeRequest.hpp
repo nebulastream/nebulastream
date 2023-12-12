@@ -32,22 +32,22 @@ class RemoveTopologyNodeRequest : public Request {
      * @param topologyNodeId: topology node to remove
      * @return a shared pointer to the RemoveTopologyNodeRequest
      */
-    static RemoveTopologyNodeRequestPtr create(TopologyNodeId topologyNodeId);
+    static RemoveTopologyNodeRequestPtr create(WorkerId topologyNodeId);
 
     /**
      * @brief Get the id of the topology that was removed
      * @return : topology id
      */
-    TopologyNodeId getTopologyNodeId() const;
+    WorkerId getWorkerId() const;
 
     std::string toString() override;
 
     RequestType getRequestType() override;
 
   private:
-    explicit RemoveTopologyNodeRequest(TopologyNodeId topologyNodeId);
+    explicit RemoveTopologyNodeRequest(WorkerId topologyNodeId);
 
-    TopologyNodeId topologyNodeId;
+    WorkerId topologyNodeId;
 };
 }// namespace NES::Experimental
 #endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_TOPOLOGYREQUESTS_REMOVETOPOLOGYNODEREQUEST_HPP_

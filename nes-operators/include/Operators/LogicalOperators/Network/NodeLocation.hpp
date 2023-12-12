@@ -27,21 +27,21 @@ class NodeLocation {
   public:
     explicit NodeLocation() = default;
 
-    explicit NodeLocation(NodeId nodeId, std::string hostname, uint32_t port)
-        : nodeId(nodeId), hostname(std::move(hostname)), port(port) {
-        NES_ASSERT2_FMT(this->hostname.size() > 0, "Empty hostname passed on " << nodeId);
+    explicit NodeLocation(WorkerId workerId, std::string hostname, uint32_t port)
+        : workerId(workerId), hostname(std::move(hostname)), port(port) {
+        NES_ASSERT2_FMT(!this->hostname.empty(), "Empty hostname passed on " << workerId);
     }
 
-    NodeLocation(const NodeLocation& other) : nodeId(other.nodeId), hostname(other.hostname), port(other.port) {}
+    NodeLocation(const NodeLocation& other) : workerId(other.workerId), hostname(other.hostname), port(other.port) {}
 
     NodeLocation& operator=(const NodeLocation& other) {
-        nodeId = other.nodeId;
+        workerId = other.workerId;
         hostname = other.hostname;
         port = other.port;
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return hostname.empty() && port == 0 && nodeId == 0; }
+    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return hostname.empty() && port == 0 && workerId == 0; }
 
     /**
      * @brief Returns the zmq uri for connection
@@ -53,7 +53,7 @@ class NodeLocation {
      * @brief Return the node id
      * @return the node id
      */
-    [[nodiscard]] NodeId getNodeId() const { return nodeId; }
+    [[nodiscard]] WorkerId getNodeId() const { return workerId; }
 
     /**
      * @brief Returns the hostname
@@ -74,11 +74,11 @@ class NodeLocation {
      * @return true, if they are equal, else false
      */
     friend bool operator==(const NodeLocation& lhs, const NodeLocation& rhs) {
-        return lhs.nodeId == rhs.nodeId && lhs.hostname == rhs.hostname && lhs.port == rhs.port;
+        return lhs.workerId == rhs.workerId && lhs.hostname == rhs.hostname && lhs.port == rhs.port;
     }
 
   private:
-    NodeId nodeId;
+    WorkerId workerId;
     std::string hostname;
     uint32_t port;
 };

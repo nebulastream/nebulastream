@@ -41,7 +41,7 @@ IFCOPStrategy::IFCOPStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // initiate operatorIdToNodePlacementMap
-    initiateTopologyNodeIdToIndexMap();
+    initiateWorkerIdToIndexMap();
 
     // Search for an operator placement candidate with the lowest cost
     // 1. get a placement candidate
@@ -80,7 +80,10 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     //addNetworkSourceAndSinkOperators(queryPlan);
 
     // 7. run the type inference phase
-    return runTypeInferencePhase(queryPlan->getQueryId());
+    runTypeInferencePhase(queryPlan->getQueryId());
+
+    // 8. Release the locks from the topology nodes
+    return unlockTopologyNodes();
 }
 
 PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan) {
@@ -276,7 +279,7 @@ double IFCOPStrategy::getNetworkCost(const TopologyNodePtr currentNode,
     return currentNodeCost;
 }
 
-void IFCOPStrategy::initiateTopologyNodeIdToIndexMap() {
+void IFCOPStrategy::initiateWorkerIdToIndexMap() {
     auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
     uint32_t topoIdx = 0;
     for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {

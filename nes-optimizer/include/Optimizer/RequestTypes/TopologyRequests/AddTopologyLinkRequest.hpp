@@ -34,29 +34,29 @@ class AddTopologyLinkRequest : public Request {
      * @param downstreamNodeId: the identifier of downstream topology node
      * @return a shared pointer to the TopologyChangeRequest
      */
-    static AddTopologyLinkRequestPtr create(TopologyNodeId upstreamNodeId, TopologyNodeId downstreamNodeId);
+    static AddTopologyLinkRequestPtr create(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
 
     /**
      * @brief get identifier of the upstream topology node
      * @return topology node id
      */
-    TopologyNodeId getUpstreamNodeId() const;
+    WorkerId getUpstreamNodeId() const;
 
     /**
      * @brief get identifier of the downstream topology node
      * @return topology node id
      */
-    TopologyNodeId getDownstreamNodeId() const;
+    WorkerId getDownstreamNodeId() const;
 
     std::string toString() override;
 
     RequestType getRequestType() override;
 
   private:
-    explicit AddTopologyLinkRequest(TopologyNodeId upstreamNodeId, TopologyNodeId downstreamNodeId);
+    explicit AddTopologyLinkRequest(WorkerId upstreamNodeId, WorkerId downstreamNodeId);
 
-    NES::TopologyNodeId upstreamNodeId;
-    NES::TopologyNodeId downstreamNodeId;
+    NES::WorkerId upstreamNodeId;
+    NES::WorkerId downstreamNodeId;
 };
 }// namespace NES::Experimental
 #endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_TOPOLOGYREQUESTS_ADDTOPOLOGYLINKREQUEST_HPP_

@@ -59,7 +59,10 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 5. Perform type inference on all updated query plans
-        return runTypeInferencePhase(queryId);
+        runTypeInferencePhase(queryId);
+
+        // 6. Release the locks from the topology nodes
+        return unlockTopologyNodes();
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }
@@ -72,13 +75,13 @@ void TopDownStrategy::pinOperators(QueryId queryId,
     NES_TRACE("TopDownStrategy: Place all sink operators.");
     for (const auto& pinnedDownStreamOperator : pinnedDownStreamOperators) {
         NES_TRACE("TopDownStrategy: Get the topology node for the sink operator.");
-        auto nodeId = std::any_cast<uint64_t>(pinnedDownStreamOperator->getProperty(PINNED_NODE_ID));
-        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
+        auto workerId = std::any_cast<uint64_t>(pinnedDownStreamOperator->getProperty(PINNED_NODE_ID));
+        TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
 
         // 1. If pinned down stream operator was already placed then place all its upstream operators
         if (pinnedDownStreamOperator->getOperatorState() == OperatorState::PLACED) {
             //Fetch the execution node storing the operator
-            operatorToExecutionNodeMap[pinnedDownStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
+            operatorToExecutionNodeMap[pinnedDownStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeById(workerId);
             //Place all downstream nodes
             for (auto& upStreamOperator : pinnedDownStreamOperator->getChildren()) {
                 identifyPinningLocation(queryId,
@@ -107,7 +110,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
         auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
-        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
+        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeById(nodeId);
         return;
     }
 

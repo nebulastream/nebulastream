@@ -97,7 +97,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                 registrationRequest->opencldevices());
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
-    TopologyNodeId workerId =
+    WorkerId workerId =
         topologyManagerService->registerWorker(configWorkerId, address, grpcPort, dataPort, slots, workerProperties);
 
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),

@@ -35,17 +35,18 @@ class BottomUpStrategy : public BasePlacementStrategy {
   public:
     ~BottomUpStrategy() override = default;
 
-    static std::unique_ptr<BasePlacementStrategy>
-    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                           const TopologyPtr& topology,
+                                           const TypeInferencePhasePtr& typeInferencePhase);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
   private:
-    explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                              TopologyPtr topology,
-                              TypeInferencePhasePtr typeInferencePhase);
+    explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                              const TopologyPtr& topology,
+                              const TypeInferencePhasePtr& typeInferencePhase);
 
     /**
      * This method is responsible for pinning the operators to the worker nodes.
@@ -72,4 +73,4 @@ class BottomUpStrategy : public BasePlacementStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BOTTOMUPSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BOTTOMUPSTRATEGY_HPP_

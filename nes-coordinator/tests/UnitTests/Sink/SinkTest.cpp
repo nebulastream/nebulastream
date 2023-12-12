@@ -340,8 +340,8 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
 }
 
 TEST_F(SinkTest, testMonitoringSink) {
-    auto nodeId1 = TopologyNodeId(4711);
-    auto nodeId2 = TopologyNodeId(7356);
+    auto nodeId1 = WorkerId(4711);
+    auto nodeId2 = WorkerId(7356);
 
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;

@@ -90,7 +90,7 @@ class GlobalExecutionPlan {
      * @param id: id of the execution node
      * @return true if operation succeeds
      */
-    ExecutionNodePtr getExecutionNodeByNodeId(uint64_t id);
+    ExecutionNodePtr getExecutionNodeById(uint64_t id);
 
     /**
      * Get the nodes to be scheduled/deployed
@@ -131,10 +131,10 @@ class GlobalExecutionPlan {
 
     /**
      * @brief Get the map of topology node id to the amount of resources occupied by the query
-     * @param queryId : the id of the query
+     * @param sharedQueryId : the id of the query
      * @return a map of topology node id to resources occupied
      */
-    std::map<uint64_t, uint32_t> getMapOfTopologyNodeIdToOccupiedResource(QueryId queryId);
+    std::map<uint64_t, uint32_t> getMapOfWorkerIdToOccupiedResource(QueryId sharedQueryId);
 
   private:
     /**

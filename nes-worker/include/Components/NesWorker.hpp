@@ -163,7 +163,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @brief method to get the id of the worker
      * @return id of the worker
      */
-    TopologyNodeId getTopologyNodeId() const;
+    WorkerId getWorkerId() const;
 
     /**
      * @brief Method to check if a worker is still running
@@ -283,7 +283,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr workerMobilityHandler;
     std::atomic<bool> isRunning{false};
-    TopologyNodeId workerId;
+    WorkerId workerId;
     std::unique_ptr<WorkerHealthCheckService> healthCheckService;
 
     std::unique_ptr<grpc::Server> rpcServer;

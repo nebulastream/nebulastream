@@ -1413,7 +1413,7 @@
 
 ### Bug Fixes 🐛
 
-- \[BUG\] On a worker failure Topology::removePhysicalNode rootNode-\>remove\(nodeToRemove\) is called [\#3881](https://github.com/nebulastream/nebulastream/issues/3881)
+- \[BUG\] On a worker failure Topology::removeTopologyNode rootNode-\>remove\(nodeToRemove\) is called [\#3881](https://github.com/nebulastream/nebulastream/issues/3881)
 
 ## [v0.5.128](https://github.com/nebulastream/nebulastream/tree/v0.5.128) (2023-07-01)
 
@@ -3261,7 +3261,7 @@
 - Collection of Metrics fails on PIs [\#2247](https://github.com/nebulastream/nebulastream/issues/2247)
 - Bug in Worker Config [\#2240](https://github.com/nebulastream/nebulastream/issues/2240)
 - WorkerRPCServer::GetMonitoringData\(\) fails when assigning dynamic buffer [\#2226](https://github.com/nebulastream/nebulastream/issues/2226)
-- UtilityFunctions::getNextTopologyNodeId\(\) is not reset properly in consecutive tests [\#2214](https://github.com/nebulastream/nebulastream/issues/2214)
+- UtilityFunctions::getNextWorkerId\(\) is not reset properly in consecutive tests [\#2214](https://github.com/nebulastream/nebulastream/issues/2214)
 - More bugs in MQTT Pipeline [\#2205](https://github.com/nebulastream/nebulastream/issues/2205)
 - Concurrent window test randomly fails  [\#2196](https://github.com/nebulastream/nebulastream/issues/2196)
 - Debug MQTT Pipeline [\#2182](https://github.com/nebulastream/nebulastream/issues/2182)

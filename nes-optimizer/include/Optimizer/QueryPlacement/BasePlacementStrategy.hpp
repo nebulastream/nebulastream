@@ -80,20 +80,10 @@ const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
  */
 class BasePlacementStrategy {
 
-  private:
-    //Number of retries to connect to downstream source operators
-    static constexpr auto SINK_RETRIES = 100;
-    //Time interval in which to retry
-    static constexpr auto SINK_RETRY_WAIT = std::chrono::milliseconds(10);
-    //Number of retries to connect to upstream sink operators
-    static constexpr auto SOURCE_RETRIES = 100;
-    //Time interval in which to retry
-    static constexpr auto SOURCE_RETRY_WAIT = std::chrono::milliseconds(10);
-
   public:
-    explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                                   TopologyPtr topologyPtr,
-                                   TypeInferencePhasePtr typeInferencePhase);
+    explicit BasePlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                   const TopologyPtr& topology,
+                                   const TypeInferencePhasePtr& typeInferencePhase);
 
     virtual ~BasePlacementStrategy() = default;
 
@@ -154,10 +144,10 @@ class BasePlacementStrategy {
 
     /**
      * @brief Get the Topology node with the input id
-     * @param nodeId: the id of the topology node
+     * @param workerId: the id of the topology node
      * @return Topology node ptr or nullptr
      */
-    TopologyNodePtr getTopologyNode(uint64_t nodeId);
+    TopologyNodePtr getTopologyNode(uint64_t workerId);
 
     /**
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes
@@ -194,12 +184,29 @@ class BasePlacementStrategy {
                                                          const LogicalOperatorNodePtr& operatorNode,
                                                          const ExecutionNodePtr& executionNode);
 
+    /**
+     * @brief Perform locking of all topology nodes selected by the path selection algorithm.
+     * We use "back-off and retry" mechanism to lock topology nodes following a strict breadth-first order.
+     * This allows us to prevent deadlocks and starvation situation.
+     * @param sourceTopologyNodes: the topology nodes hosting the pinned upstream operators
+     * @return true if successful else false
+     */
+    bool lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes);
+
+    /**
+     * @brief Perform unlocking of all topology nodes on which the lock was acquired.
+     * We following an order inverse of the lock acquisition. This allows us to prevent starvation situation.
+     * @return true if successful else false
+     */
+    bool unlockTopologyNodes();
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     std::map<uint64_t, TopologyNodePtr> topologyMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
+    std::vector<WorkerId> lockedTopologyNodeIds;
 
   private:
     /**
@@ -259,6 +266,16 @@ class BasePlacementStrategy {
      */
     bool isSourceAndDestinationConnected(const LogicalOperatorNodePtr& upStreamOperator,
                                          const LogicalOperatorNodePtr& downStreamOperator);
+
+  private:
+    //Number of retries to connect to downstream source operators
+    static constexpr auto SINK_RETRIES = 100;
+    //Time interval in which to retry
+    static constexpr auto SINK_RETRY_WAIT = std::chrono::milliseconds(10);
+    //Number of retries to connect to upstream sink operators
+    static constexpr auto SOURCE_RETRIES = 100;
+    //Time interval in which to retry
+    static constexpr auto SOURCE_RETRY_WAIT = std::chrono::milliseconds(10);
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

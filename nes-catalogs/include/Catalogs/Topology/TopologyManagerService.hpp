@@ -59,7 +59,7 @@ class TopologyManagerService {
      * @param workerProperties: Additional properties of worker
      * @return unique identifier of the worker
      */
-    TopologyNodeId registerWorker(TopologyNodeId workerId,
+    WorkerId registerWorker(WorkerId workerId,
                                   const std::string& address,
                                   int64_t grpcPort,
                                   int64_t dataPort,
@@ -72,7 +72,7 @@ class TopologyManagerService {
      * @param geoLocation : location of the worker node
      * @return true if successful
      */
-    bool addGeoLocation(TopologyNodeId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool addGeoLocation(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
      * Update GeoLocation of a worker node
@@ -80,14 +80,14 @@ class TopologyManagerService {
      * @param geoLocation : location of the worker node
      * @return true if successful
      */
-    bool updateGeoLocation(TopologyNodeId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool updateGeoLocation(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
      * Remove geolocation of worker node
      * @param topologyNodeId : worker id whose location is to be removed
      * @return true if successful
      */
-    bool removeGeoLocation(TopologyNodeId topologyNodeId);
+    bool removeGeoLocation(WorkerId topologyNodeId);
 
     /**
      * @brief unregister an existing node
@@ -117,7 +117,7 @@ class TopologyManagerService {
      * @param nodeId
      * @return TopologyNodePtr (or a nullptr if there is no node with this id)
      */
-    TopologyNodePtr findNodeWithId(TopologyNodeId nodeId);
+    TopologyNodePtr findNodeWithId(WorkerId nodeId);
 
     /**
      * Experimental
@@ -126,7 +126,7 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing node ids and the corresponding location
      */
-    std::vector<std::pair<TopologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+    std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
     getNodesIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation center, double radius);
 
     /**
@@ -153,7 +153,7 @@ class TopologyManagerService {
      * @param nodeId : node id of the worker
      * @return GeoLocation of the node
      */
-    std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getGeoLocationForNode(TopologyNodeId nodeId);
+    std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getGeoLocationForNode(WorkerId nodeId);
 
     /**
       * @brief function to obtain JSON representation of a NES Topology
@@ -173,7 +173,7 @@ class TopologyManagerService {
      * @brief method to generate the next (monotonically increasing) topology node id
      * @return next topology node id
      */
-    TopologyNodeId getNextTopologyNodeId();
+    WorkerId getNextWorkerId();
 };
 
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
