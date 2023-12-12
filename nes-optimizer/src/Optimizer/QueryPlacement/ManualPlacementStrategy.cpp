@@ -57,7 +57,10 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 4. Perform type inference on all updated query plans
-        return runTypeInferencePhase(queryId);
+        runTypeInferencePhase(queryId);
+
+        // 5. Release the locks from the topology nodes
+        return unlockTopologyNodes();
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }

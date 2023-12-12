@@ -63,14 +63,14 @@ class Topology {
      * @param nodeToRemove : the node to be removed
      * @return true if successful
      */
-    bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
+    bool removeTopologyNode(const TopologyNodePtr& nodeToRemove);
 
     /**
-     * @brief This method will find a given physical node by its id
-     * @param nodeId : the id of the node
-     * @return physical node if found else nullptr
+     * @brief This method will find a given worker node by its id
+     * @param workerId : the id of the worker
+     * @return Topology node if found else nullptr
      */
-    TopologyNodePtr findNodeWithId(uint64_t nodeId);
+    TopologyNodePtr findWorkerWithId(WorkerId workerId);
 
     /**
      * @brief This method will return a subgraph containing all the paths between start and destination node.
@@ -95,7 +95,7 @@ class Topology {
      * @param workerId: workerId of the node
      * @return true if exists, false otherwise
      */
-    bool nodeWithWorkerIdExists(TopologyNodeId workerId);
+    bool nodeWithWorkerIdExists(WorkerId workerId);
 
     /**
      * @brief Print the current topology information
@@ -123,20 +123,34 @@ class Topology {
     bool removeNodeAsChild(const TopologyNodePtr& parentNode, const TopologyNodePtr& childNode);
 
     /**
+     * @brief acquire the lock on the topology node
+     * @param workerId : the id of the topology node
+     * @return true if successfully acquired the lock else false
+     */
+    bool acquireLockOnTopologyNode(WorkerId workerId);
+
+    /**
+     * @brief release the lock on the topology node
+     * @param workerId : the id of the topology node
+     * @return true if successfully released the lock else false
+     */
+    bool releaseLockOnTopologyNode(WorkerId workerId);
+
+    /**
      * @brief Increase the amount of resources on the node with the id
-     * @param nodeId : the node id
+     * @param workerId : the node id
      * @param amountToIncrease : resources to free
      * @return true if successful
      */
-    bool increaseResources(uint64_t nodeId, uint16_t amountToIncrease);
+    bool increaseResources(WorkerId workerId, uint16_t amountToIncrease);
 
     /**
      * @brief Reduce the amount of resources on the node with given id
-     * @param nodeId : the node id
+     * @param workerId : the worker id
      * @param amountToReduce : amount of resources to reduce
      * @return true if successful
      */
-    bool reduceResources(uint64_t nodeId, uint16_t amountToReduce);
+    bool reduceResources(WorkerId workerId, uint16_t amountToReduce);
 
     /**
      * @brief Merge the sub graphs starting from the nodes into a single sub-graph
@@ -184,14 +198,6 @@ class Topology {
     std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
                                                   std::vector<TopologyNodePtr> destinationNodes);
 
-    /**
-    * @brief Looks for the TopologyNode with id in the vector of sourceNodes and their parents
-    * @param sourceNodes : the source topology nodes
-    * @param id : the id of the topology node that is being searched for
-    * @return nullptr if node is not found, otherwise TopologyNodePtr
-    */
-    static TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes);
-
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
 
@@ -204,12 +210,12 @@ class Topology {
      * @return the node where the searched node is found
      */
     TopologyNodePtr
-    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
+    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<WorkerId, TopologyNodePtr>& uniqueNodes);
 
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
-    std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
+    std::map<WorkerId, TopologyNodePtr> workerIdToTopologyNode;
 };
 }// namespace NES
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

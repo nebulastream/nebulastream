@@ -65,7 +65,7 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog& cha
         queue.pop();
         auto nodeId = copiedNode->getId();
 
-        auto originalNode = originalTopology->findNodeWithId(nodeId);
+        auto originalNode = originalTopology->findWorkerWithId(nodeId);
         if (originalNode) {
             /*if the node exists in the original topology, add iterate over its children and add them to the copy if they are not
             listed as removed by in the changelog*/
@@ -75,7 +75,7 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog& cha
                 //check if the edge is listed as removed in the changelog
                 if (std::find(removedChildren.begin(), removedChildren.end(), childId) == removedChildren.end()) {
                     //if the edge is not marked as removed in the changelog, add a copy of the child to the new topology
-                    auto copiedChild = copiedTopology->findNodeWithId(childId);
+                    auto copiedChild = copiedTopology->findWorkerWithId(childId);
                     if (!copiedChild) {
                         copiedChild = originalChild->as<TopologyNode>()->copy();
                         queue.push(copiedChild);
@@ -95,10 +95,10 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog& cha
 
         //iterate over the added children listed in the changelog
         for (auto& addedChild : changeLog.getAddedChildren(nodeId)) {
-            auto childNode = copiedTopology->findNodeWithId(addedChild);
+            auto childNode = copiedTopology->findWorkerWithId(addedChild);
             //check first if the child node already exists in the copied topology. otherwise a new one has to be created
             if (!childNode) {
-                auto originalChildNode = originalTopology->findNodeWithId(addedChild);
+                auto originalChildNode = originalTopology->findWorkerWithId(addedChild);
                 //check if the node exists in the original topology
                 if (!originalChildNode) {
                     //if the node does neither exist in the original not in the copy, it has to be created

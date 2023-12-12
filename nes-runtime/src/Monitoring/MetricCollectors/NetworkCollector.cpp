@@ -35,9 +35,9 @@ MetricCollectorType NetworkCollector::getType() { return MetricCollectorType::NE
 bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();
-        measuredVal.setNodeId(getNodeId());
+        measuredVal.setNodeId(getWorkerId());
         writeToBuffer(measuredVal, tupleBuffer, 0);
-        NES_TRACE("NetworkCollector: Written metrics for {}: {}", getNodeId(), asJson(measuredVal));
+        NES_TRACE("NetworkCollector: Written metrics for {}: {}", getWorkerId(), asJson(measuredVal));
     } catch (const std::exception& ex) {
         NES_ERROR("NetworkCollector: Error while collecting metrics {}", ex.what());
         return false;
@@ -49,7 +49,7 @@ SchemaPtr NetworkCollector::getSchema() { return schema; }
 
 const MetricPtr NetworkCollector::readMetric() const {
     NetworkMetricsWrapper wrapper = resourceReader->readNetworkStats();
-    wrapper.setNodeId(getNodeId());
+    wrapper.setNodeId(getWorkerId());
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedNetworkMetrics);
 }
 

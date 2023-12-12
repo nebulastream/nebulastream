@@ -29,7 +29,7 @@ LocationService::LocationService(TopologyPtr topology, Spatial::Index::Experimen
 
 nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
 
-    if (!topology->findNodeWithId(nodeId)) {
+    if (!topology->findWorkerWithId(nodeId)) {
         return nullptr;
     }
 
@@ -86,7 +86,7 @@ nlohmann::json LocationService::requestLocationAndParentDataFromAllMobileNodes()
     uint32_t count = 0;
     uint32_t edgeCount = 0;
     for (const auto& [nodeId, location] : nodeVector) {
-        auto topologyNode = topology->findNodeWithId(nodeId);
+        auto topologyNode = topology->findWorkerWithId(nodeId);
         if (topologyNode && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
             nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
             locationMapJson[count] = nodeInfo;

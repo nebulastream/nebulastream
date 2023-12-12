@@ -143,7 +143,7 @@ TEST_F(LocationControllerIntegrationTest, testGetSingleLocation) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
-    uint64_t workerNodeId1 = wrk1->getTopologyNodeId();
+    uint64_t workerNodeId1 = wrk1->getWorkerId();
 
     //test request of node location
     nlohmann::json request;
@@ -181,7 +181,7 @@ TEST_F(LocationControllerIntegrationTest, testGetSingleLocationWhenNoLocationDat
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
-    uint64_t workerNodeId1 = wrk1->getTopologyNodeId();
+    uint64_t workerNodeId1 = wrk1->getWorkerId();
 
     //test request of node location
     nlohmann::json request;
@@ -292,8 +292,8 @@ TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExi
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 3));
 
     //get node ids
-    uint64_t workerNodeId2 = wrk2->getTopologyNodeId();
-    uint64_t workerNodeId3 = wrk3->getTopologyNodeId();
+    uint64_t workerNodeId2 = wrk2->getWorkerId();
+    uint64_t workerNodeId3 = wrk3->getWorkerId();
 
     nlohmann::json request;
     auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location/allMobile"});

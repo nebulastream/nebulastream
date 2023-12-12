@@ -33,21 +33,21 @@ class RemoveTopologyLinkRequest : public Request {
      * @param upstreamNodeId: the identifier of upstream topology node
      * @return a shared pointer to the TopologyChangeRequest
      */
-    static RemoveTopologyLinkRequestPtr create(TopologyNodeId downstreamNodeId, TopologyNodeId upstreamNodeId);
+    static RemoveTopologyLinkRequestPtr create(WorkerId downstreamNodeId, WorkerId upstreamNodeId);
 
-    TopologyNodeId getUpstreamNodeId() const;
+    WorkerId getUpstreamNodeId() const;
 
-    TopologyNodeId getDownstreamNodeId() const;
+    WorkerId getDownstreamNodeId() const;
 
     std::string toString() override;
 
     RequestType getRequestType() override;
 
   private:
-    explicit RemoveTopologyLinkRequest(TopologyNodeId downstreamNodeId, TopologyNodeId upstreamNodeId);
+    explicit RemoveTopologyLinkRequest(WorkerId downstreamNodeId, WorkerId upstreamNodeId);
 
-    NES::TopologyNodeId downstreamNodeId;
-    NES::TopologyNodeId upstreamNodeId;
+    NES::WorkerId downstreamNodeId;
+    NES::WorkerId upstreamNodeId;
 };
 }// namespace NES::Experimental
 #endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_TOPOLOGYREQUESTS_REMOVETOPOLOGYLINKREQUEST_HPP_

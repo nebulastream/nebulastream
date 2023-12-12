@@ -91,7 +91,7 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
                     + std::to_string(response.status_code) + " and msg " + response.reason);
         }
 
-        //2. Parse the response of the external placement service
+        // 2. Parse the response of the external placement service
         pinOperatorsBasedOnElegantService(queryId, pinnedDownStreamOperators, response);
 
         // 3. Place the operators
@@ -101,7 +101,10 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 5. Perform type inference on updated query plans
-        return runTypeInferencePhase(queryId);
+        runTypeInferencePhase(queryId);
+
+        // 6. Release the locks from the topology nodes
+        return unlockTopologyNodes();
     } catch (const std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }
@@ -118,7 +121,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
     // fill with true where nodeId is present
     for (const auto& placement : placementData) {
         OperatorId operatorId = placement[OPERATOR_ID_KEY];
-        TopologyNodeId topologyNodeId = placement[NODE_ID_KEY];
+        WorkerId topologyNodeId = placement[NODE_ID_KEY];
 
         bool pinned = false;
         for (const auto& item : pinnedDownStreamOperators) {
@@ -186,7 +189,7 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             nlohmann::json node;
             node[OPERATOR_ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_NODE_ID);
-            node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::to_string(std::any_cast<TopologyNodeId>(pinnedNodeId)) : EMPTY_STRING;
+            node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::to_string(std::any_cast<WorkerId>(pinnedNodeId)) : EMPTY_STRING;
             auto sourceCode = logicalOperator->getProperty(sourceCodeKey);
             node[sourceCodeKey] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();

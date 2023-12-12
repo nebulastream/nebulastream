@@ -64,15 +64,18 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 3. Place pinned operators
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. add network source and sink operators
+        // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         if (DEFAULT_ENABLE_OPERATOR_REDUNDANCY_ELIMINATION) {
             performOperatorRedundancyElimination(queryId);
         }
 
-        // 4. Perform type inference on all updated query plans
-        return runTypeInferencePhase(queryId);
+        // 5. Perform type inference on all updated query plans
+        runTypeInferencePhase(queryId);
+
+        // 6. Release the locks from the topology nodes
+        return unlockTopologyNodes();
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }
@@ -141,7 +144,7 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
         // 1. If pinned up stream node was already placed then place all its downstream operators
         if (pinnedUpStreamOperator->getOperatorState() == OperatorState::PLACED) {
             //Fetch the execution node storing the operator
-            operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
+            operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeById(nodeId);
             //Place all downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
                 identifyPinningLocation(queryId,
@@ -191,7 +194,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
         auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
-        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
+        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeById(nodeId);
         return;
     }
 

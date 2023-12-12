@@ -17,16 +17,16 @@
 
 namespace NES::Experimental {
 
-RemoveTopologyLinkRequestPtr RemoveTopologyLinkRequest::create(TopologyNodeId downstreamNodeId, TopologyNodeId upstreamNodeId) {
+RemoveTopologyLinkRequestPtr RemoveTopologyLinkRequest::create(WorkerId downstreamNodeId, WorkerId upstreamNodeId) {
     return std::make_shared<RemoveTopologyLinkRequest>(RemoveTopologyLinkRequest(downstreamNodeId, upstreamNodeId));
 }
 
-RemoveTopologyLinkRequest::RemoveTopologyLinkRequest(TopologyNodeId downstreamNodeId, TopologyNodeId upstreamNodeId)
+RemoveTopologyLinkRequest::RemoveTopologyLinkRequest(WorkerId downstreamNodeId, WorkerId upstreamNodeId)
     : downstreamNodeId(downstreamNodeId), upstreamNodeId(upstreamNodeId) {}
 
-TopologyNodeId RemoveTopologyLinkRequest::getUpstreamNodeId() const { return upstreamNodeId; }
+WorkerId RemoveTopologyLinkRequest::getUpstreamNodeId() const { return upstreamNodeId; }
 
-TopologyNodeId RemoveTopologyLinkRequest::getDownstreamNodeId() const { return downstreamNodeId; }
+WorkerId RemoveTopologyLinkRequest::getDownstreamNodeId() const { return downstreamNodeId; }
 
 std::string RemoveTopologyLinkRequest::toString() {
     return "RemoveTopologyLinkRequest { UpstreamNodeId: " + std::to_string(upstreamNodeId)

@@ -26,12 +26,12 @@ namespace NES::Spatial::Index::Experimental {
 
 LocationIndex::LocationIndex() = default;
 
-bool LocationIndex::initializeFieldNodeCoordinates(TopologyNodeId topologyNodeId,
+bool LocationIndex::initializeFieldNodeCoordinates(WorkerId topologyNodeId,
                                                    Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     return setFieldNodeCoordinates(topologyNodeId, std::move(geoLocation));
 }
 
-bool LocationIndex::updateFieldNodeCoordinates(TopologyNodeId topologyNodeId,
+bool LocationIndex::updateFieldNodeCoordinates(WorkerId topologyNodeId,
                                                Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     if (removeNodeFromSpatialIndex(topologyNodeId)) {
         return setFieldNodeCoordinates(topologyNodeId, std::move(geoLocation));
@@ -39,7 +39,7 @@ bool LocationIndex::updateFieldNodeCoordinates(TopologyNodeId topologyNodeId,
     return false;
 }
 
-bool LocationIndex::setFieldNodeCoordinates(TopologyNodeId topologyNodeId,
+bool LocationIndex::setFieldNodeCoordinates(WorkerId topologyNodeId,
                                             Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     if (!geoLocation.isValid()) {
         NES_WARNING("trying to set node coordinates to invalid value")
@@ -57,7 +57,7 @@ bool LocationIndex::setFieldNodeCoordinates(TopologyNodeId topologyNodeId,
     return true;
 }
 
-bool LocationIndex::removeNodeFromSpatialIndex(TopologyNodeId topologyNodeId) {
+bool LocationIndex::removeNodeFromSpatialIndex(WorkerId topologyNodeId) {
     std::unique_lock lock(locationIndexMutex);
     auto workerGeoLocation = workerGeoLocationMap.find(topologyNodeId);
     if (workerGeoLocation != workerGeoLocationMap.end()) {
@@ -77,15 +77,15 @@ bool LocationIndex::removeNodeFromSpatialIndex(TopologyNodeId topologyNodeId) {
     return false;
 }
 
-std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(const Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
+std::optional<WorkerId> LocationIndex::getClosestNodeTo(const Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
                                                               int radius) const {
 #ifdef S2DEF
     std::unique_lock lock(locationIndexMutex);
-    S2ClosestPointQuery<TopologyNodeId> query(&workerPointIndex);
+    S2ClosestPointQuery<WorkerId> query(&workerPointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
-    S2ClosestPointQuery<TopologyNodeId>::PointTarget target(
+    S2ClosestPointQuery<WorkerId>::PointTarget target(
         S2Point(S2LatLng::FromDegrees(geoLocation.getLatitude(), geoLocation.getLongitude())));
-    S2ClosestPointQuery<TopologyNodeId>::Result queryResult = query.FindClosestPoint(&target);
+    S2ClosestPointQuery<WorkerId>::Result queryResult = query.FindClosestPoint(&target);
     if (queryResult.is_empty()) {
         return {};
     }
@@ -98,7 +98,7 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(const Spatial::Dat
 #endif
 }
 
-std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(TopologyNodeId topologyNodeId, int radius) const {
+std::optional<WorkerId> LocationIndex::getClosestNodeTo(WorkerId topologyNodeId, int radius) const {
 #ifdef S2DEF
     std::unique_lock lock(locationIndexMutex);
     auto workerGeoLocation = workerGeoLocationMap.find(topologyNodeId);
@@ -113,9 +113,9 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(TopologyNodeId top
         return {};
     }
 
-    S2ClosestPointQuery<TopologyNodeId> query(&workerPointIndex);
+    S2ClosestPointQuery<WorkerId> query(&workerPointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
-    S2ClosestPointQuery<TopologyNodeId>::PointTarget target(
+    S2ClosestPointQuery<WorkerId>::PointTarget target(
         S2Point(S2LatLng::FromDegrees(geoLocation.getLatitude(), geoLocation.getLongitude())));
     auto queryResult = query.FindClosestPoint(&target);
     //if we cannot find any node within the radius return an empty optional
@@ -141,17 +141,17 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(TopologyNodeId top
 #endif
 }
 
-std::vector<std::pair<TopologyNodeId, Spatial::DataTypes::Experimental::GeoLocation>>
+std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
 LocationIndex::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLocation& center, double radius) const {
 #ifdef S2DEF
     std::unique_lock lock(locationIndexMutex);
-    S2ClosestPointQuery<TopologyNodeId> query(&workerPointIndex);
+    S2ClosestPointQuery<WorkerId> query(&workerPointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
 
-    S2ClosestPointQuery<TopologyNodeId>::PointTarget target(
+    S2ClosestPointQuery<WorkerId>::PointTarget target(
         S2Point(S2LatLng::FromDegrees(center.getLatitude(), center.getLongitude())));
     auto result = query.FindClosestPoints(&target);
-    std::vector<std::pair<TopologyNodeId, Spatial::DataTypes::Experimental::GeoLocation>> closestNodeList;
+    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>> closestNodeList;
     for (auto r : result) {
         auto latLng = S2LatLng(r.point());
         closestNodeList.emplace_back(
@@ -167,7 +167,7 @@ LocationIndex::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLoca
 #endif
 }
 
-void LocationIndex::addMobileNode(TopologyNodeId topologyNodeId,
+void LocationIndex::addMobileNode(WorkerId topologyNodeId,
                                   NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     std::unique_lock lock(locationIndexMutex);
     workerGeoLocationMap.erase(topologyNodeId);
@@ -197,7 +197,7 @@ size_t LocationIndex::getSizeOfPointIndex() {
 }
 
 std::optional<Spatial::DataTypes::Experimental::GeoLocation>
-LocationIndex::getGeoLocationForNode(TopologyNodeId topologyNodeId) const {
+LocationIndex::getGeoLocationForNode(WorkerId topologyNodeId) const {
     std::unique_lock lock(locationIndexMutex);
     auto workGeoLocation = workerGeoLocationMap.find(topologyNodeId);
     if (workGeoLocation == workerGeoLocationMap.end()) {

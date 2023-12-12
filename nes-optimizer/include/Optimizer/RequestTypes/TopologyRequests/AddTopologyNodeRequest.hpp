@@ -46,7 +46,7 @@ class AddTopologyNodeRequest : public Request {
      * @param workerProperties : the worker properties
      * @return shared pointer of AddTopologyNodeRequest
      */
-    static AddTopologyNodeRequestPtr create(TopologyNodeId topologyNodeId,
+    static AddTopologyNodeRequestPtr create(WorkerId topologyNodeId,
                                             const std::string& address,
                                             uint64_t grpcPort,
                                             uint64_t dataPort,
@@ -54,7 +54,7 @@ class AddTopologyNodeRequest : public Request {
                                             NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation,
                                             const std::map<std::string, std::any>& workerProperties);
 
-    TopologyNodeId getTopologyNodeId() const;
+    WorkerId getWorkerId() const;
 
     const std::string& getAddress() const;
 
@@ -73,7 +73,7 @@ class AddTopologyNodeRequest : public Request {
     RequestType getRequestType() override;
 
   private:
-    explicit AddTopologyNodeRequest(TopologyNodeId topologyNodeId,
+    explicit AddTopologyNodeRequest(WorkerId topologyNodeId,
                                     std::string address,
                                     uint64_t grpcPort,
                                     uint64_t dataPort,
@@ -81,7 +81,7 @@ class AddTopologyNodeRequest : public Request {
                                     NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation,
                                     const std::map<std::string, std::any>& workerProperties);
 
-    TopologyNodeId topologyNodeId;
+    WorkerId topologyNodeId;
     std::string address;
     uint64_t grpcPort;
     uint64_t dataPort;

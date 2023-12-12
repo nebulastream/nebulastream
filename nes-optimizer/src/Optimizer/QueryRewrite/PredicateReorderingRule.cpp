@@ -23,12 +23,12 @@ namespace NES::Optimizer {
 PredicateReorderingRulePtr PredicateReorderingRule::create() { return std::make_shared<PredicateReorderingRule>(); }
 
 QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
-    std::set<NodeId> visitedNodesIds;
+    std::set<OperatorId> visitedOperators;
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
     NES_DEBUG("PredicateReorderingRule: Identified {} filter nodes in the query plan", filterOperators.size());
     NES_DEBUG("Query before applying the rule: {}", queryPlan->toString());
     for (auto& filter : filterOperators) {
-        if (visitedNodesIds.find(filter->getId()) == visitedNodesIds.end()) {
+        if (visitedOperators.find(filter->getId()) == visitedOperators.end()) {
             std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = getConsecutiveFilters(filter);
             NES_TRACE("PredicateReorderingRule: Filter {} has {} consecutive filters as children",
                       filter->getId(),
@@ -77,7 +77,7 @@ QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
                 }
                 NES_TRACE("PredicateReorderingRule: Mark the involved nodes as visited");
                 for (auto& orderedFilter : consecutiveFilters) {
-                    visitedNodesIds.insert(orderedFilter->getId());
+                    visitedOperators.insert(orderedFilter->getId());
                 }
             }
         } else {

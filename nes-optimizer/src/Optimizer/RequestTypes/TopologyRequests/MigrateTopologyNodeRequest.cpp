@@ -17,22 +17,22 @@
 
 namespace NES::Experimental {
 
-MigrateTopologyNodeRequest::MigrateTopologyNodeRequest(std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToRemove,
-                                                       std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToAdd)
+MigrateTopologyNodeRequest::MigrateTopologyNodeRequest(std::vector<std::pair<WorkerId, WorkerId>> linksToRemove,
+                                                       std::vector<std::pair<WorkerId, WorkerId>> linksToAdd)
     : linksToRemove(std::move(linksToRemove)), linksToAdd(std::move(linksToAdd)) {}
 
 MigrateTopologyNodeRequestPtr
-MigrateTopologyNodeRequest::create(std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToRemove,
-                                   std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToAdd) {
+MigrateTopologyNodeRequest::create(std::vector<std::pair<WorkerId, WorkerId>> linksToRemove,
+                                   std::vector<std::pair<WorkerId, WorkerId>> linksToAdd) {
     return std::make_shared<MigrateTopologyNodeRequest>(
         MigrateTopologyNodeRequest(std::move(linksToRemove), std::move(linksToAdd)));
 }
 
-const std::vector<std::pair<TopologyNodeId, TopologyNodeId>>& MigrateTopologyNodeRequest::getLinksToRemove() const {
+const std::vector<std::pair<WorkerId, WorkerId>>& MigrateTopologyNodeRequest::getLinksToRemove() const {
     return linksToRemove;
 }
 
-const std::vector<std::pair<TopologyNodeId, TopologyNodeId>>& MigrateTopologyNodeRequest::getLinksToAdd() const {
+const std::vector<std::pair<WorkerId, WorkerId>>& MigrateTopologyNodeRequest::getLinksToAdd() const {
     return linksToAdd;
 }
 

@@ -17,7 +17,7 @@
 #include <string>
 
 namespace NES {
-using TopologyNodeId = uint64_t;
+using WorkerId = uint64_t;
 namespace Experimental::TopologyPrediction {
 /**
  * @brief this class represents a topology edge between 2 nodes
@@ -37,8 +37,8 @@ class Edge {
      */
     bool operator==(const Edge& other) const;
 
-    TopologyNodeId upstreamTopologyNode;
-    TopologyNodeId downstreamTopologyNode;
+    WorkerId upstreamTopologyNode;
+    WorkerId downstreamTopologyNode;
 };
 }// namespace Experimental::TopologyPrediction
 }// namespace NES

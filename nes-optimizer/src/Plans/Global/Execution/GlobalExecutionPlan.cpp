@@ -30,10 +30,10 @@ bool GlobalExecutionPlan::checkIfExecutionNodeExists(uint64_t id) {
 
 bool GlobalExecutionPlan::checkIfExecutionNodeIsARoot(uint64_t id) {
     NES_DEBUG("GlobalExecutionPlan: Checking if Execution node with id {} is a root node", id);
-    return std::find(rootNodes.begin(), rootNodes.end(), getExecutionNodeByNodeId(id)) != rootNodes.end();
+    return std::find(rootNodes.begin(), rootNodes.end(), getExecutionNodeById(id)) != rootNodes.end();
 }
 
-ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
+ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeById(uint64_t id) {
     if (checkIfExecutionNodeExists(id)) {
         NES_DEBUG("GlobalExecutionPlan: Returning execution node with id  {}", id);
         return nodeIdIndex[id];
@@ -43,7 +43,7 @@ ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
 }
 
 bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, const ExecutionNodePtr& parentExecutionNode) {
-    ExecutionNodePtr childNode = getExecutionNodeByNodeId(childId);
+    ExecutionNodePtr childNode = getExecutionNodeById(childId);
     if (childNode) {
         NES_DEBUG("GlobalExecutionPlan: Adding Execution node as parent to the execution node with id  {}", childId);
         if (childNode->containAsParent(parentExecutionNode)) {
@@ -202,18 +202,18 @@ void GlobalExecutionPlan::mapExecutionNodeToQueryId(const ExecutionNodePtr& exec
     }
 }
 
-std::map<uint64_t, uint32_t> GlobalExecutionPlan::getMapOfTopologyNodeIdToOccupiedResource(QueryId queryId) {
+std::map<WorkerId, uint32_t> GlobalExecutionPlan::getMapOfWorkerIdToOccupiedResource(SharedQueryId sharedQueryId) {
 
-    NES_INFO("GlobalExecutionPlan: Get a map of occupied resources for the query {}", queryId);
-    std::map<uint64_t, uint32_t> mapOfTopologyNodeIdToOccupiedResources;
-    std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
-    NES_DEBUG("GlobalExecutionPlan: Found {} Execution node for query with id {}", executionNodes.size(), queryId);
+    NES_INFO("GlobalExecutionPlan: Get a map of occupied resources for the query {}", sharedQueryId);
+    std::map<WorkerId, uint32_t> mapOfWorkerIdToOccupiedResources;
+    std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[sharedQueryId];
+    NES_DEBUG("GlobalExecutionPlan: Found {} Execution node for query with id {}", executionNodes.size(), sharedQueryId);
     for (auto& executionNode : executionNodes) {
-        uint32_t occupiedResource = executionNode->getOccupiedResources(queryId);
-        mapOfTopologyNodeIdToOccupiedResources[executionNode->getTopologyNode()->getId()] = occupiedResource;
+        uint32_t occupiedResource = executionNode->getOccupiedResources(sharedQueryId);
+        mapOfWorkerIdToOccupiedResources[executionNode->getTopologyNode()->getId()] = occupiedResource;
     }
-    NES_DEBUG("GlobalExecutionPlan: returning the map of occupied resources for the query  {}", queryId);
-    return mapOfTopologyNodeIdToOccupiedResources;
+    NES_DEBUG("GlobalExecutionPlan: returning the map of occupied resources for the query  {}", sharedQueryId);
+    return mapOfWorkerIdToOccupiedResources;
 }
 
 }// namespace NES

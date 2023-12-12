@@ -593,7 +593,7 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 #endif
 }
 
-TopologyNodeId NesWorker::getTopologyNodeId() const { return workerId; }
+WorkerId NesWorker::getWorkerId() const { return workerId; }
 
 NES::Spatial::Mobility::Experimental::LocationProviderPtr NesWorker::getLocationProvider() { return locationProvider; }
 

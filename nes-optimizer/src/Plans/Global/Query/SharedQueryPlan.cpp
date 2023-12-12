@@ -389,7 +389,7 @@ void SharedQueryPlan::updateOperators(const std::set<LogicalOperatorNodePtr>& up
 
     //Iterate over all updated operators and update the corresponding operator in the shared query plan with correct properties and state.
     for (const auto& placedOperator : updatedOperators) {
-        auto topologyNodeId = std::any_cast<TopologyNodeId>(placedOperator->getProperty(PINNED_NODE_ID));
+        auto topologyNodeId = std::any_cast<WorkerId>(placedOperator->getProperty(PINNED_NODE_ID));
         auto operatorInQueryPlan = queryPlan->getOperatorWithId(placedOperator->getId());
         operatorInQueryPlan->addProperty(PINNED_NODE_ID, topologyNodeId);
         placedOperator->setOperatorState(OperatorState::PLACED);

@@ -18,9 +18,9 @@
 
 namespace NES::Experimental::TopologyPrediction {
 
-void TopologyChangeLog::updateChangelog(const std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& newMap,
-                                        std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& additionTarget,
-                                        std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& toSubtract) {
+void TopologyChangeLog::updateChangelog(const std::unordered_map<WorkerId, std::vector<WorkerId>>& newMap,
+                                        std::unordered_map<WorkerId, std::vector<WorkerId>>& additionTarget,
+                                        std::unordered_map<WorkerId, std::vector<WorkerId>>& toSubtract) {
     //iterate over the parent ids and corresponding lists of children
     for (const auto& [parentToAdd, childrenToAdd] : newMap) {
         //get the list of children to which new children will be added
@@ -66,7 +66,7 @@ void TopologyChangeLog::add(const TopologyChangeLog& newChangeLog) {
     updateChangelog(newChangeLog.removedLinks, this->removedLinks, this->addedLinks);
 }
 
-std::vector<TopologyNodeId> TopologyChangeLog::getAddedChildren(TopologyNodeId nodeId) const {
+std::vector<WorkerId> TopologyChangeLog::getAddedChildren(WorkerId nodeId) const {
     auto it = addedLinks.find(nodeId);
     if (it != addedLinks.end()) {
         return it->second;
@@ -74,7 +74,7 @@ std::vector<TopologyNodeId> TopologyChangeLog::getAddedChildren(TopologyNodeId n
     return {};
 }
 
-std::vector<TopologyNodeId> TopologyChangeLog::getRemovedChildren(TopologyNodeId nodeId) const {
+std::vector<WorkerId> TopologyChangeLog::getRemovedChildren(WorkerId nodeId) const {
     auto it = removedLinks.find(nodeId);
     if (it != removedLinks.end()) {
         return it->second;
@@ -96,7 +96,7 @@ void TopologyChangeLog::erase(const TopologyDelta& delta) {
     removeLinksFromMap(removedLinks, delta.getRemoved());
 }
 
-void TopologyChangeLog::removeLinksFromMap(std::unordered_map<TopologyNodeId, std::vector<TopologyNodeId>>& map,
+void TopologyChangeLog::removeLinksFromMap(std::unordered_map<WorkerId, std::vector<WorkerId>>& map,
                                            const std::vector<Edge>& edges) {
     for (auto edge : edges) {
         auto& children = map[edge.downstreamTopologyNode];

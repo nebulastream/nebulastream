@@ -125,7 +125,7 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
     for (auto child : operatorNode->getAndFlattenAllChildren(true)) {
         if (child->as_if<OperatorNode>()->hasProperty(NES::Optimizer::PINNED_NODE_ID)) {
             auto nodeId = std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(NES::Optimizer::PINNED_NODE_ID));
-            TopologyNodePtr node = topology->findNodeWithId(nodeId);
+            TopologyNodePtr node = topology->findWorkerWithId(nodeId);
             for (auto& parent : node->getParents()) {
                 auto parentId = std::any_cast<uint64_t>(parent->as_if<TopologyNode>()->getId());
 

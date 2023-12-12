@@ -45,7 +45,7 @@ class LocationIndex {
      * @param geoLocation  the location of the Field node
      * @return true on success
      */
-    bool initializeFieldNodeCoordinates(TopologyNodeId topologyNodeId,
+    bool initializeFieldNodeCoordinates(WorkerId topologyNodeId,
                                         NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
@@ -55,7 +55,7 @@ class LocationIndex {
      * @param geoLocation  the new location of the Field node
      * @return true on success, false if the node was not a field node
      */
-    bool updateFieldNodeCoordinates(TopologyNodeId topologyNodeId,
+    bool updateFieldNodeCoordinates(WorkerId topologyNodeId,
                                     NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
@@ -64,7 +64,7 @@ class LocationIndex {
      * @param topologyNodeId: id of the topology node whose entry is to be removed from the spatial index
      * @returns true on success, false if the node in question does not have a location
      */
-    bool removeNodeFromSpatialIndex(TopologyNodeId topologyNodeId);
+    bool removeNodeFromSpatialIndex(WorkerId topologyNodeId);
 
     /**
      * Experimental
@@ -73,7 +73,7 @@ class LocationIndex {
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodeId> getClosestNodeTo(const NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
+    std::optional<WorkerId> getClosestNodeTo(const NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
                                                    int radius = DEFAULT_SEARCH_RADIUS) const;
 
     /**
@@ -83,7 +83,7 @@ class LocationIndex {
      * @param radius the maximum distance in kilometres which the returned node can have from the specified node
      * @return TopologyNodePtr to the closest field node unequal to nodePtr
      */
-    std::optional<TopologyNodeId> getClosestNodeTo(TopologyNodeId topologyNodeId, int radius = DEFAULT_SEARCH_RADIUS) const;
+    std::optional<WorkerId> getClosestNodeTo(WorkerId topologyNodeId, int radius = DEFAULT_SEARCH_RADIUS) const;
 
     /**
      * Experimental
@@ -92,7 +92,7 @@ class LocationIndex {
      * @param radius: the maximum distance in kilometres of the returned nodes from center
      * @return a vector of pairs containing node pointers and the corresponding locations
      */
-    std::vector<std::pair<TopologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+    std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
     getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation& center, double radius) const;
 
     /**
@@ -101,7 +101,7 @@ class LocationIndex {
      * @param topologyNodeId: id of the node to be inserted
      * @param geoLocation: location of the node
      */
-    void addMobileNode(TopologyNodeId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    void addMobileNode(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
      * Experimental
@@ -115,7 +115,7 @@ class LocationIndex {
      * @param topologyNodeId : the node id
      * @return geoLocation
      */
-    std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getGeoLocationForNode(TopologyNodeId topologyNodeId) const;
+    std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getGeoLocationForNode(WorkerId topologyNodeId) const;
 
     /**
      * Experimental
@@ -132,14 +132,14 @@ class LocationIndex {
      * @param geoLocation: the (new) location of the field node
      * @return true if successful
      */
-    bool setFieldNodeCoordinates(TopologyNodeId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool setFieldNodeCoordinates(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     mutable std::recursive_mutex locationIndexMutex;
     // Map containing locations of all registered worker nodes
     std::unordered_map<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation> workerGeoLocationMap;
 #ifdef S2DEF
     // Spatial index that stores ids of all worker nodes and index them based on their geo location
-    S2PointIndex<TopologyNodeId> workerPointIndex;
+    S2PointIndex<WorkerId> workerPointIndex;
 #endif
 };
 }// namespace NES::Spatial::Index::Experimental
