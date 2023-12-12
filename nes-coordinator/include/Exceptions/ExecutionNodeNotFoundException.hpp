@@ -35,15 +35,15 @@ class ExecutionNodeNotFoundException : public RequestExecutionException {
      * @param id: the id of the execution node that was looked up but not found (execution node ids correspond to topology
      * node ids and therefore have the same type)
      */
-    ExecutionNodeNotFoundException(const std::string& message, TopologyNodeId id);
+    ExecutionNodeNotFoundException(const std::string& message, uint64_t id);
 
     /**
      * @brief get the id of the execution node that could not be found
      */
-    [[nodiscard]] NodeId getNodeId() const;
+    [[nodiscard]] uint64_t getExecutionNodeId() const;
 
   private:
-    TopologyNodeId id;
+    uint64_t id;
 };
 }// namespace NES::Exceptions
 #endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_

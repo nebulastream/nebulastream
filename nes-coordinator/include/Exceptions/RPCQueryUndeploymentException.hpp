@@ -31,7 +31,7 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
      * @param mode: the mode indicating if the rpc was a register, unregister, start or stop operation
      */
     explicit RPCQueryUndeploymentException(const std::string& message,
-                                           std::vector<TopologyNodeId> failedRpcExecutionNodeIds,
+                                           std::vector<WorkerId> failedRpcExecutionNodeIds,
                                            RpcClientModes mode);
 
     [[nodiscard]] const char* what() const noexcept override;
@@ -40,7 +40,7 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
      * @brief get a list of the nodes that could not be reached
      * @return a vector of node ids
      */
-    std::vector<TopologyNodeId> getFailedExecutionNodeIds();
+    std::vector<WorkerId> getFailedExecutionNodeIds();
 
     /**
      * @brief get the mode of the failed operation
@@ -50,7 +50,7 @@ class RPCQueryUndeploymentException : public RequestExecutionException {
 
   private:
     std::string message;
-    std::vector<TopologyNodeId> failedExecutionNodeIds;
+    std::vector<WorkerId> failedExecutionNodeIds;
     RpcClientModes mode;
 };
 }// namespace NES::Exceptions

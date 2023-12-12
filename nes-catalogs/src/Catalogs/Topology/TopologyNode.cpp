@@ -23,26 +23,26 @@
 
 namespace NES {
 
-TopologyNode::TopologyNode(uint64_t id,
+TopologyNode::TopologyNode(WorkerId workerId,
                            std::string  ipAddress,
                            uint32_t grpcPort,
                            uint32_t dataPort,
                            uint16_t resources,
                            std::map<std::string, std::any> properties)
-    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
+    : workerId(workerId), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
       locked(false), nodeProperties(std::move(properties)) {}
 
-TopologyNodePtr TopologyNode::create(uint64_t id,
+TopologyNodePtr TopologyNode::create(WorkerId workerId,
                                      const std::string& ipAddress,
                                      uint32_t grpcPort,
                                      uint32_t dataPort,
                                      uint16_t resources,
                                      std::map<std::string, std::any> properties) {
-    NES_DEBUG("TopologyNode: Creating node with ID {} and resources {}", id, resources);
-    return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources, std::move(properties));
+    NES_DEBUG("TopologyNode: Creating node with ID {} and resources {}", workerId, resources);
+    return std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, resources, std::move(properties));
 }
 
-uint64_t TopologyNode::getId() const { return id; }
+WorkerId TopologyNode::getId() const { return workerId; }
 
 uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
@@ -75,7 +75,7 @@ void TopologyNode::reduceResources(uint16_t usedCapacity) {
 
 TopologyNodePtr TopologyNode::copy() {
     TopologyNodePtr copy =
-        std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources, nodeProperties);
+        std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, resources, nodeProperties);
     copy->reduceResources(usedResources);
     copy->linkProperties = this->linkProperties;
     return copy;
@@ -85,7 +85,7 @@ std::string TopologyNode::getIpAddress() const { return ipAddress; }
 
 std::string TopologyNode::toString() const {
     std::stringstream ss;
-    ss << "PhysicalNode[id=" + std::to_string(id) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
+    ss << "PhysicalNode[id=" + std::to_string(workerId) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
             + ", usedResource=" + std::to_string(usedResources) + "]";
     return ss.str();
 }

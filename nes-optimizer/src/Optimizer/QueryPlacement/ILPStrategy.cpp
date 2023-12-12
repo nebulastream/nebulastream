@@ -17,12 +17,12 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
@@ -34,21 +34,22 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BasePlacementStrategy>
-ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase) {
+BasePlacementStrategyPtr ILPStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                             const TopologyPtr& topology,
+                                             const TypeInferencePhasePtr& typeInferencePhase) {
     z3::config cfg;
     cfg.set("timeout", 1000);
     cfg.set("model", false);
     cfg.set("type_check", false);
-    auto z3Context = std::make_shared<z3::context>(cfg);
+    const auto& z3Context = std::make_shared<z3::context>(cfg);
     return std::make_unique<ILPStrategy>(ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, z3Context));
 }
 
-ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                         TopologyPtr topology,
-                         TypeInferencePhasePtr typeInferencePhase,
-                         z3::ContextPtr z3Context)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(std::move(z3Context)) {}
+ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                         const TopologyPtr& topology,
+                         const TypeInferencePhasePtr& typeInferencePhase,
+                         const z3::ContextPtr& z3Context)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(z3Context) {}
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -153,7 +154,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         }
 
         //Loop over downstream operators and compute network cost
-        for (auto downStreamOperator : logicalOperatorNode->getParents()) {
+        for (const auto& downStreamOperator : logicalOperatorNode->getParents()) {
             OperatorId downStreamOperatorId = downStreamOperator->as_if<LogicalOperatorNode>()->getId();
             //Only consider nodes that are to be placed
             if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
@@ -213,8 +214,8 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
     for (auto const& [topologyID, P] : placementVariables) {
         if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
-            int operatorId = std::stoi(topologyID.substr(0, topologyID.find(",")));
-            int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(",") + 1));
+            int operatorId = std::stoi(topologyID.substr(0, topologyID.find(',')));
+            int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(',') + 1));
             LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorId];
             TopologyNodePtr topologyNode = topologyMap[topologyNodeId];
 
@@ -252,7 +253,7 @@ std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOpe
     return mileageMap;
 }
 
-void ILPStrategy::computeDistance(TopologyNodePtr node, std::map<uint64_t, double>& mileages) {
+void ILPStrategy::computeDistance(const TopologyNodePtr& node, std::map<uint64_t, double>& mileages) {
     uint64_t topologyID = node->getId();
     auto& parents = node->getParents();
     // if the current node has no parent (i.e., is a root node), then the mileages is 0
@@ -393,7 +394,7 @@ void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizatio
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
 
 //FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
-double ILPStrategy::getDefaultOperatorOutput(LogicalOperatorNodePtr operatorNode) {
+double ILPStrategy::getDefaultOperatorOutput(const LogicalOperatorNodePtr& operatorNode) {
 
     double dmf = 1;
     double input = 10;
@@ -410,7 +411,7 @@ double ILPStrategy::getDefaultOperatorOutput(LogicalOperatorNodePtr operatorNode
 }
 
 //FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
-int ILPStrategy::getDefaultOperatorCost(LogicalOperatorNodePtr operatorNode) {
+int ILPStrategy::getDefaultOperatorCost(const LogicalOperatorNodePtr& operatorNode) {
 
     if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         return 0;

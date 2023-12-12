@@ -35,7 +35,7 @@ MetricCollectorType DiskCollector::getType() { return MetricCollectorType::DISK_
 bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         DiskMetrics measuredVal = resourceReader->readDiskStats();
-        measuredVal.nodeId = getNodeId();
+        measuredVal.nodeId = getWorkerId();
         writeToBuffer(measuredVal, tupleBuffer, 0);
     } catch (const std::exception& ex) {
         NES_ERROR("DiskCollector: Error while collecting metrics {}", ex.what());
@@ -48,7 +48,7 @@ SchemaPtr DiskCollector::getSchema() { return schema; }
 
 const MetricPtr DiskCollector::readMetric() const {
     DiskMetrics metrics = resourceReader->readDiskStats();
-    metrics.nodeId = getNodeId();
+    metrics.nodeId = getWorkerId();
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }
 

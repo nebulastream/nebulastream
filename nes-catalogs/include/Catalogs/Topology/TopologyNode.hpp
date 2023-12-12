@@ -16,6 +16,7 @@
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGYNODE_HPP_
 
 #include <Catalogs/Topology/LinkProperty.hpp>
+#include <Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -45,14 +46,14 @@ using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 class TopologyNode : public Node {
 
   public:
-    static TopologyNodePtr create(uint64_t id,
+    static TopologyNodePtr create(WorkerId workerId,
                                   const std::string& ipAddress,
                                   uint32_t grpcPort,
                                   uint32_t dataPort,
                                   uint16_t resources,
                                   std::map<std::string, std::any> properties);
 
-    explicit TopologyNode(uint64_t id,
+    explicit TopologyNode(WorkerId workerId,
                           std::string ipAddress,
                           uint32_t grpcPort,
                           uint32_t dataPort,
@@ -63,9 +64,9 @@ class TopologyNode : public Node {
 
     /**
      * @brief method to get the id of the node
-     * @return id as a uint64_t
+     * @return id
      */
-    uint64_t getId() const;
+    WorkerId getId() const;
 
     /**
      * @brief lock this topology node
@@ -204,8 +205,7 @@ class TopologyNode : public Node {
     NES::Spatial::Experimental::SpatialType getSpatialNodeType();
 
   private:
-
-    uint64_t id;
+    WorkerId workerId;
     std::string ipAddress;
     uint32_t grpcPort;
     uint32_t dataPort;

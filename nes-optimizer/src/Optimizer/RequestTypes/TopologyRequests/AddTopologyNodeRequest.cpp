@@ -18,7 +18,7 @@
 
 namespace NES::Experimental {
 
-AddTopologyNodeRequest::AddTopologyNodeRequest(TopologyNodeId topologyNodeId,
+AddTopologyNodeRequest::AddTopologyNodeRequest(WorkerId topologyNodeId,
                                                std::string address,
                                                uint64_t grpcPort,
                                                uint64_t dataPort,
@@ -28,7 +28,7 @@ AddTopologyNodeRequest::AddTopologyNodeRequest(TopologyNodeId topologyNodeId,
     : topologyNodeId(topologyNodeId), address(std::move(address)), grpcPort(grpcPort), dataPort(dataPort),
       numberOfSlots(numberOfSlots), geoLocation(geoLocation), workerProperties(workerProperties) {}
 
-AddTopologyNodeRequestPtr AddTopologyNodeRequest::create(TopologyNodeId topologyNodeId,
+AddTopologyNodeRequestPtr AddTopologyNodeRequest::create(WorkerId topologyNodeId,
                                                          const std::string& address,
                                                          uint64_t grpcPort,
                                                          uint64_t dataPort,
@@ -39,7 +39,7 @@ AddTopologyNodeRequestPtr AddTopologyNodeRequest::create(TopologyNodeId topology
         AddTopologyNodeRequest(topologyNodeId, address, grpcPort, dataPort, numberOfSlots, geoLocation, workerProperties));
 }
 
-TopologyNodeId AddTopologyNodeRequest::getTopologyNodeId() const { return topologyNodeId; }
+WorkerId AddTopologyNodeRequest::getWorkerId() const { return topologyNodeId; }
 
 const std::string& AddTopologyNodeRequest::getAddress() const { return address; }
 
@@ -54,7 +54,7 @@ Spatial::DataTypes::Experimental::GeoLocation& AddTopologyNodeRequest::getGeoLoc
 const std::map<std::string, std::any>& AddTopologyNodeRequest::getWorkerProperties() const { return workerProperties; }
 
 std::string AddTopologyNodeRequest::toString() {
-    return "AddTopologyNodeRequest { TopologyNodeId: " + std::to_string(topologyNodeId) + ", Address: " + address
+    return "AddTopologyNodeRequest { WorkerId: " + std::to_string(topologyNodeId) + ", Address: " + address
         + ", GrpcPort: " + std::to_string(grpcPort) + ", DataPort: " + std::to_string(dataPort)
         + ", Number Of Slots: " + std::to_string(numberOfSlots) + ", GeoLocation: " + geoLocation.toString() + "}";
 }

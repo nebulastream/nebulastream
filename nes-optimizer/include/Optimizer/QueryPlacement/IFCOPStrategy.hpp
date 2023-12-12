@@ -105,7 +105,7 @@ class IFCOPStrategy : public BasePlacementStrategy {
     /**
      * @brief initialize the mapping in the topologyNodeIdToIndexMap
      */
-    void initiateTopologyNodeIdToIndexMap();
+    void initiateWorkerIdToIndexMap();
 
     // a mapping between Ids of nodes in the topology to its index in a depth first search iterator
     std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;

@@ -118,6 +118,6 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
     return false;
 }
 
-void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
+void MonitoringAgent::setNodeId(WorkerId nodeId) { this->nodeId = nodeId; }
 
 }// namespace NES::Monitoring

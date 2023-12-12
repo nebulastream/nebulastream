@@ -187,7 +187,7 @@ bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reade
 bool MetricValidator::isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
                               Monitoring::StoredNodeMetricsPtr storedMetrics,
                               Monitoring::MetricType expectedType,
-                              TopologyNodeId expectedNodeId,
+                              WorkerId expectedNodeId,
                               uint64_t expectedSize) {
     bool check = true;
 

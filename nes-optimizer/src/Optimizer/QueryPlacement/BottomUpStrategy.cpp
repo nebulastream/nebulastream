@@ -13,33 +13,32 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
 #include <utility>
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                                TopologyPtr topology,
-                                                                TypeInferencePhasePtr typeInferencePhase) {
-    return std::make_unique<BottomUpStrategy>(
-        BottomUpStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)));
+std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                                const TopologyPtr& topology,
+                                                                const TypeInferencePhasePtr& typeInferencePhase) {
+    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase));
 }
 
-BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                                   TopologyPtr topology,
-                                   TypeInferencePhasePtr typeInferencePhase)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
+BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                   const TopologyPtr& topology,
+                                   const TypeInferencePhasePtr& typeInferencePhase)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -52,14 +51,17 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 2. Pin all unpinned operators
         pinOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 2. Place all pinned operators
+        // 3. Place all pinned operators
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. add network source and sink operators
+        // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 4. Perform type inference on all updated query plans
-        return runTypeInferencePhase(queryId);
+        // 5. Perform type inference on all updated query plans
+        runTypeInferencePhase(queryId);
+
+        // 6. Release the locks from the topology nodes
+        return unlockTopologyNodes();
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementException(queryId, ex.what());
     }
@@ -74,13 +76,13 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
         NES_DEBUG("BottomUpStrategy: Get the topology node for source operator {} placement.",
                   pinnedUpStreamOperator->toString());
 
-        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
-        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
+        auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
+        TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
 
         // 1. If pinned up stream node was already placed then place all its downstream operators
         if (pinnedUpStreamOperator->getOperatorState() == OperatorState::PLACED) {
             //Fetch the execution node storing the operator
-            operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
+            operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeById(workerId);
             //Place all downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
                 identifyPinningLocation(queryId,

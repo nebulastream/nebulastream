@@ -35,31 +35,31 @@ class MigrateTopologyNodeRequest : public Request {
      * @param linksToAdd : vector of links to be added
      * @return a shared pointer to the migrate topology node request
      */
-    static MigrateTopologyNodeRequestPtr create(std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToRemove,
-                                                std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToAdd);
+    static MigrateTopologyNodeRequestPtr create(std::vector<std::pair<WorkerId, WorkerId>> linksToRemove,
+                                                std::vector<std::pair<WorkerId, WorkerId>> linksToAdd);
 
     /**
      * @brief Get all links that were removed
      * @return returns all links that need to be removed
      */
-    const std::vector<std::pair<TopologyNodeId, TopologyNodeId>>& getLinksToRemove() const;
+    const std::vector<std::pair<WorkerId, WorkerId>>& getLinksToRemove() const;
 
     /**
      * @brief Get all links that are added
      * @return return all new links
      */
-    const std::vector<std::pair<TopologyNodeId, TopologyNodeId>>& getLinksToAdd() const;
+    const std::vector<std::pair<WorkerId, WorkerId>>& getLinksToAdd() const;
 
     std::string toString() override;
 
     RequestType getRequestType() override;
 
   private:
-    explicit MigrateTopologyNodeRequest(std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToRemove,
-                                        std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToAdd);
+    explicit MigrateTopologyNodeRequest(std::vector<std::pair<WorkerId, WorkerId>> linksToRemove,
+                                        std::vector<std::pair<WorkerId, WorkerId>> linksToAdd);
 
-    std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToRemove;
-    std::vector<std::pair<TopologyNodeId, TopologyNodeId>> linksToAdd;
+    std::vector<std::pair<WorkerId, WorkerId>> linksToRemove;
+    std::vector<std::pair<WorkerId, WorkerId>> linksToAdd;
 };
 }// namespace NES::Experimental
 #endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_REQUESTTYPES_TOPOLOGYREQUESTS_MIGRATETOPOLOGYNODEREQUEST_HPP_

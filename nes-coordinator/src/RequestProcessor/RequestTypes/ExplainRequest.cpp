@@ -294,7 +294,7 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
         nlohmann::json executionNodeMetaData{};
 
         executionNodeMetaData["nodeId"] = executionNode->getId();
-        auto topologyNode = topology->findNodeWithId(executionNode->getId());
+        auto topologyNode = topology->findWorkerWithId(executionNode->getId());
 
         // loop over all query sub plans inside the current executionNode
         nlohmann::json scheduledSubQueries{};

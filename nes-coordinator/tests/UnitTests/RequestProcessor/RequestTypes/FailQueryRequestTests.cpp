@@ -93,7 +93,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
     }
 
     void populateTopology() {
-        TopologyNodeId id = 1;
+        WorkerId id = 1;
         std::string address = "localhost";
         uint32_t grpcPort = 4000;
         uint32_t dataPort = 5000;

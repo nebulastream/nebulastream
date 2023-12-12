@@ -25,12 +25,12 @@ FilterMergeRulePtr FilterMergeRule::create() { return std::make_shared<FilterMer
 
 QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan) {
     NES_INFO("Applying FilterMergeRule to query {}", queryPlan->toString());
-    std::set<NodeId> visitedNodesIds;
+    std::set<OperatorId> visitedOperators;
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
     NES_DEBUG("FilterMergeRule: Identified {} filter nodes in the query plan", filterOperators.size());
     NES_DEBUG("Query before applying the rule: {}", queryPlan->toString());
     for (auto& filter : filterOperators) {
-        if (visitedNodesIds.find(filter->getId()) == visitedNodesIds.end()) {
+        if (visitedOperators.find(filter->getId()) == visitedOperators.end()) {
             std::vector<FilterLogicalOperatorNodePtr> consecutiveFilters = getConsecutiveFilters(filter);
             NES_DEBUG("FilterMergeRule: Filter {} has {} consecutive filters as children",
                       filter->getId(),
@@ -65,7 +65,7 @@ QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan) {
                 }
                 NES_DEBUG("FilterMergeRule: Mark the involved nodes as visited");
                 for (auto& orderedFilter : consecutiveFilters) {
-                    visitedNodesIds.insert(orderedFilter->getId());
+                    visitedOperators.insert(orderedFilter->getId());
                 }
             } else {
                 NES_DEBUG("FilterMergeRule: Only one filter was found, no optimization is possible")

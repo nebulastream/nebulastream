@@ -16,9 +16,9 @@
 
 namespace NES::Monitoring {
 
-MetricCollector::MetricCollector(TopologyNodeId nodeId) : nodeId(nodeId) {}
-TopologyNodeId MetricCollector::getNodeId() const { return nodeId; }
-void MetricCollector::setNodeId(const TopologyNodeId nodeId) { this->nodeId = nodeId; }
-MetricCollector::MetricCollector() : nodeId(TopologyNodeId(0)) {}
+MetricCollector::MetricCollector(WorkerId workerId) : workerId(workerId) {}
+WorkerId MetricCollector::getWorkerId() const { return workerId; }
+void MetricCollector::setNodeId(const WorkerId nodeId) { this->workerId = nodeId; }
+MetricCollector::MetricCollector() : workerId(WorkerId(0)) {}
 
 }// namespace NES::Monitoring

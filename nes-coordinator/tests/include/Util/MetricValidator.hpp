@@ -55,7 +55,7 @@ class MetricValidator {
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
                         Monitoring::StoredNodeMetricsPtr storedMetrics,
                         Monitoring::MetricType expectedType,
-                        TopologyNodeId expectedNodeId,
+                        WorkerId expectedNodeId,
                         uint64_t expectedSize);
 
     static bool isValidAll(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);

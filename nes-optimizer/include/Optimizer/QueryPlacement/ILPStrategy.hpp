@@ -44,8 +44,10 @@ class ILPStrategy : public BasePlacementStrategy {
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
-    static BasePlacementStrategyPtr
-    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                           const TopologyPtr& topology,
+                                           const TypeInferencePhasePtr& typeInferencePhase);
+
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
      * @param weight the relative weight
@@ -80,10 +82,10 @@ class ILPStrategy : public BasePlacementStrategy {
     std::map<OperatorId, LogicalOperatorNodePtr> operatorMap;
     const char* const KEY_SEPARATOR = ",";
 
-    explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                         TopologyPtr topology,
-                         TypeInferencePhasePtr typeInferencePhase,
-                         z3::ContextPtr z3Context);
+    explicit ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                         const TopologyPtr& topology,
+                         const TypeInferencePhasePtr& typeInferencePhase,
+                         const z3::ContextPtr& z3Context);
     /**
      * @brief assigns operators to topology nodes based on ILP solution
      * @param z3Model a Z3 z3Model from the Z3 Optimize
@@ -121,22 +123,22 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param node topology node for which mileage is calculated
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
-    void computeDistance(TopologyNodePtr node, std::map<uint64_t, double>& mileages);
+    void computeDistance(const TopologyNodePtr& node, std::map<uint64_t, double>& mileages);
 
     /**
      * Get default operator output value
      * @param operatorNode : the operator for which output values are needed
      * @return weight for the output
      */
-    double getDefaultOperatorOutput(LogicalOperatorNodePtr operatorNode);
+    double getDefaultOperatorOutput(const LogicalOperatorNodePtr& operatorNode);
 
     /**
      * Get default value for operator cost
      * @param operatorNode : operator for which cost is to be computed
      * @return weight indicating operator cost
      */
-    int getDefaultOperatorCost(LogicalOperatorNodePtr operatorNode);
+    int getDefaultOperatorCost(const LogicalOperatorNodePtr& operatorNode);
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
