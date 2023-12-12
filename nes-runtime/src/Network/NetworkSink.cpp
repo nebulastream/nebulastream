@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp"
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -378,5 +379,8 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     NES_INFO("stop buffering data for context {}", workerContext.getId());
     unbuffer(workerContext);
     return true;
+}
+void NetworkSink::configureNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink) {
+    configureNewReceiverAndPartition(reconfiguredSink.getNesPartition(), reconfiguredSink.getNodeLocation(), reconfiguredSink.getVersion());
 }
 }// namespace NES::Network

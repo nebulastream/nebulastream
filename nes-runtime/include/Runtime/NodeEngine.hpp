@@ -335,6 +335,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool getConnectSinksAsync();
 
+    bool reconfigureSinksInSubPlan(QueryPlanPtr& reconfiguredQueryPlan);
+
   public:
     /**
      * @brief Create a node engine and gather node information

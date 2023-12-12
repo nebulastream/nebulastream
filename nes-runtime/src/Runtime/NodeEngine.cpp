@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp"
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -639,6 +640,30 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
         return false;
     }
 }
+
+bool NodeEngine::reconfigureSinksInSubPlan(QueryPlanPtr& reconfiguredQueryPlan) {
+    std::unique_lock lock(engineMutex);
+    auto deployedPlanIterator = deployedQEPs.find(reconfiguredQueryPlan->getQuerySubPlanId());
+    if (deployedPlanIterator == deployedQEPs.end()) {
+        return false;
+    }
+    auto deployedPlan = deployedPlanIterator->second;
+    for (auto& sink : deployedPlan->getSinks()) {
+        auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+        if (networkSink != nullptr) {
+            //todo: use find if like above
+            for (auto& reconfiguredSink : reconfiguredQueryPlan->getSinkOperators()) {
+                if (reconfiguredSink->getId() == sink->getOperatorId()) {
+                    auto reconfiguredNetworkSink = std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
+                    networkSink->configureNewReceiverAndPartition(*reconfiguredNetworkSink);
+                }
+            }
+        }
+    }
+    return true;
+}
+
+
 
 Monitoring::MetricStorePtr NodeEngine::getMetricStore() { return metricStore; }
 void NodeEngine::setMetricStore(Monitoring::MetricStorePtr metricStore) {
