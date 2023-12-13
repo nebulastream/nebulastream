@@ -126,16 +126,16 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId) 
         }
         executionNode->updateQuerySubPlans(queryId, querysubplans);
     }
-    NES_DEBUG("MlHeuristicStrategy: Updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
+    NES_DEBUG("Updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
 }
 
 void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
                                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_DEBUG("MlHeuristicStrategy: Get the all source operators for performing the placement.");
+    NES_DEBUG("Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        NES_DEBUG("MlHeuristicStrategy: Get the topology node for source operator {} placement.",
+        NES_DEBUG("Get the topology node for source operator {} placement.",
                   pinnedUpStreamOperator->toString());
 
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
@@ -155,14 +155,14 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
         } else {// 2. If pinned operator is not placed then start by placing the operator
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
-                NES_ERROR("MlHeuristicStrategy: Unable to find resources on the physical node for placement of source operator");
+                NES_ERROR("Unable to find resources on the physical node for placement of source operator");
                 throw Exceptions::RuntimeException(
-                    "MlHeuristicStrategy: Unable to find resources on the physical node for placement of source operator");
+                    "Unable to find resources on the physical node for placement of source operator");
             }
             identifyPinningLocation(queryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
         }
     }
-    NES_DEBUG("MlHeuristicStrategy: Finished placing query operators into the global execution plan");
+    NES_DEBUG("Finished placing query operators into the global execution plan");
 }
 
 bool MlHeuristicStrategy::pushUpBasedOnFilterSelectivity(const LogicalOperatorNodePtr& operatorNode) {
@@ -200,36 +200,36 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
     if (!operatorToExecutionNodeMap.contains(logicalOperator->getId())) {
 
-        NES_DEBUG("MlHeuristicStrategy: Place operatorNode with Id:{}.", logicalOperator->getId());
+        NES_DEBUG("Place operatorNode with Id:{}.", logicalOperator->getId());
         if ((logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperatorNode>())
             || logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
-            NES_TRACE("MlHeuristicStrategy: Received an NAry operator for placement.");
+            NES_TRACE("Received an NAry operator for placement.");
             //Check if all children operators already placed
-            NES_TRACE("MlHeuristicStrategy: Get the topology nodes where child operators are placed.");
+            NES_TRACE("Get the topology nodes where child operators are placed.");
             std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(logicalOperator);
             if (childTopologyNodes.empty()) {
-                NES_WARNING("MlHeuristicStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are "
+                NES_WARNING("No topology node isOperatorAPinnedDownStreamOperator where child operators are "
                             "placed.");
                 return;
             }
 
-            NES_TRACE("MlHeuristicStrategy: Find a node reachable from all topology nodes where child operators are placed.");
+            NES_TRACE("Find a node reachable from all topology nodes where child operators are placed.");
             if (childTopologyNodes.size() == 1) {
                 candidateTopologyNode = childTopologyNodes[0];
             } else {
                 candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
             }
             if (!candidateTopologyNode) {
-                NES_ERROR("MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator, "
+                NES_ERROR("Unable to find a common ancestor topology node to place the binary operator, "
                           "operatorId: {}",
                           logicalOperator->getId());
                 topology->print();
                 throw Exceptions::RuntimeException(
-                    "MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator");
+                    "Unable to find a common ancestor topology node to place the binary operator");
             }
 
             if (logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
-                NES_TRACE("MlHeuristicStrategy: Received Sink operator for placement.");
+                NES_TRACE("Received Sink operator for placement.");
                 auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
                 auto pinnedSinkOperatorLocation = getTopologyNode(nodeId);
                 if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
@@ -237,18 +237,18 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                     candidateTopologyNode = pinnedSinkOperatorLocation;
                 } else {
                     NES_ERROR(
-                        "MlHeuristicStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
+                        "Unexpected behavior. Could not find Topology node where sink operator is to be "
                         "placed.");
                     throw Exceptions::RuntimeException(
 
-                        "MlHeuristicStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
+                        "Unexpected behavior. Could not find Topology node where sink operator is to be "
                         "placed.");
                 }
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
-                    NES_ERROR("MlHeuristicStrategy: Topology node where sink operator is to be placed has no capacity.");
+                    NES_ERROR("Topology node where sink operator is to be placed has no capacity.");
                     throw Exceptions::RuntimeException(
-                        "MlHeuristicStrategy: Topology node where sink operator is to be placed has no capacity.");
+                        "Topology node where sink operator is to be placed has no capacity.");
                 }
             }
         }
@@ -321,12 +321,12 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
         if (candidateTopologyNode->getAvailableResources() == 0) {
 
-            NES_DEBUG("MlHeuristicStrategy: Find the next NES node in the path where operator can be placed");
+            NES_DEBUG("Find the next NES node in the path where operator can be placed");
             while (!candidateTopologyNode->getParents().empty()) {
                 //FIXME: we are considering only one root node currently
                 candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
                 if (candidateTopologyNode->getAvailableResources() > 0) {
-                    NES_DEBUG("MlHeuristicStrategy: Found NES node for placing the operators with id : {}",
+                    NES_DEBUG("Found NES node for placing the operators with id : {}",
                               candidateTopologyNode->getId());
                     break;
                 }
@@ -334,11 +334,11 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
         }
 
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
-            NES_ERROR("MlHeuristicStrategy: No node available for further placement of operators");
-            throw Exceptions::RuntimeException("MlHeuristicStrategy: No node available for further placement of operators");
+            NES_ERROR("No node available for further placement of operators");
+            throw Exceptions::RuntimeException("No node available for further placement of operators");
         }
 
-        NES_TRACE("MlHeuristicStrategy: Pinn operator to the candidate topology node.");
+        NES_TRACE("Pinn operator to the candidate topology node.");
         logicalOperator->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
     } else {
         candidateTopologyNode = operatorToExecutionNodeMap[logicalOperator->getId()]->getTopologyNode();
@@ -352,11 +352,11 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                      });
 
     if (isOperatorAPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
-        NES_DEBUG("MlHeuristicStrategy: Found pinned downstream operator. Skipping placement of further operators.");
+        NES_DEBUG("Found pinned downstream operator. Skipping placement of further operators.");
         return;
     }
 
-    NES_TRACE("MlHeuristicStrategy: Place further upstream operators.");
+    NES_TRACE("Place further upstream operators.");
     for (const auto& parent : logicalOperator->getParents()) {
         identifyPinningLocation(queryId, parent->as<LogicalOperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators);
     }
