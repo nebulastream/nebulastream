@@ -240,29 +240,11 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     break;
                 }
                 case QueryState::RECONFIGURE: {
-                    //todo: deploy reconfig
-                    NES_NOT_IMPLEMENTED();
+                    //todo: make nan async function for this
+                    workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
                     break;
                 }
-                //case QueryState::SOFT_STOP_COMPLETED:
                 case QueryState::MIGRATING: {
-                    //todo: remove plan from execution node
-                    //executionNode->removeQuerySubPlan(queryId, querySubPlan->getQuerySubPlanId());
-                    //todo: increase resources
-                    //todo: do we count subplans or operators?
-                    //todo: freeing currently causes errror about consumed resources
-                    //executionNode->getTopologyNode()->increaseResources(1);
-                    //todo: if the metadate is already soft stopped, remove that too, otherwise mark MIGRATION_COMPLETED it so it will be removed at soft stop
-                    //todo: we cannot do this because it might cause problems with concurrent operations
-                    //todo: no its actually safe because the entry has a mutex
-                    //todo: do not remove metadata here, just garbage callect on next deployment
-                    // if (subplanMetaData->getSubQueryStatus() == QueryState::SOFT_STOP_COMPLETED) {
-                    //     //todo: get the entry just once above and reuse here
-                    //     queryCatalogService->getEntryForQuery(queryId)->removeQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
-                    // } else {
-                    //     //mark the node to be removed
-                    //     subplanMetaData->updateStatus(QueryState::MIGRATION_COMPLETED);
-                    // }
                     break;
                 }
                 default: {

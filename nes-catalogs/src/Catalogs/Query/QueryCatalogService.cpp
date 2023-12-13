@@ -362,7 +362,9 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
                 //queryCatalogEntry->removeQuerySubPlanMetaData(querySubPlanId);
                 bool queryMigrationComplete = true;
                 for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
-                    if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::RUNNING && querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::SOFT_STOP_COMPLETED) {
+                    if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::RUNNING
+                        && querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::SOFT_STOP_COMPLETED
+                        && querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::RECONFIGURE) {
                         queryMigrationComplete = false;
                         break;
                     }

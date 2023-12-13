@@ -229,6 +229,8 @@ class WorkerRPCClient {
      */
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
+    bool reconfigureQuery(const std::string& address, const QueryPlanPtr& queryPlan);
+
   private:
     WorkerRPCClient() = default;
 };

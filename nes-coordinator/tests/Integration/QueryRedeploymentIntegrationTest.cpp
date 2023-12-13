@@ -877,30 +877,29 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         //todo: removes
         // sqp->setStatus(SharedQueryPlanStatus::Updated);
         sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
-        queryDeploymentPhase->execute(sqp);
 
-        //todo: new call
-        //perform reconfiguratins
-        auto oldPlanIdForSourceReconfig = crd->getNodeEngine()->getSubQueryIds(queryId).front();
-        auto oldPlanforSourceReconfig = crd->getNodeEngine()->getExecutableQueryPlan(oldPlanIdForSourceReconfig);
-        auto sourceReconfigPlan = QueryPlan::create(sharedQueryId, oldPlanIdForSourceReconfig);
+        //source reconfig
         auto reconfiguredSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
                                                                                      networkSourceCrdPartition,
                                                                                      newNodeLocation,
                                                                                      waitTime,
                                                                                      retryTimes,
                                                                                      nextVersion);
-        auto sourceReconfigOperator =
-            std::make_shared<SourceLogicalOperatorNode>(reconfiguredSourceDescriptor,
-                                                        oldPlanforSourceReconfig->getSources().front()->getOperatorId());
-        sourceReconfigPlan->addRootOperator(sourceReconfigOperator);
-        crd->getNesWorker()->getNodeEngine()->reconfigureSubPlan(sourceReconfigPlan);
-        //todo: replace this call
-//        crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition,
-//                                                                                       nextVersion,
-//                                                                                       newNodeLocation);
+        auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+        auto crdExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(crd->getNesWorker()->getWorkerId());
+        crdExecutionNode->getQuerySubPlans(sharedQueryId)
+            .front()
+            ->getSourceOperators()
+            .front()
+            ->setSourceDescriptor(reconfiguredSourceDescriptor);
+        crd->getQueryCatalogService()
+            ->getEntryForQuery(queryId)
+            ->getQuerySubPlanMetaData(crd->getNesWorker()->getNodeEngine()->getSubQueryIds(sharedQueryId).front())
+            ->updateStatus(QueryState::RECONFIGURE);
 
-        //todo: new call
+        queryDeploymentPhase->execute(sqp);
+
+        //sink reconfig
         auto oldPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
         auto oldPlan = wrk1->getNodeEngine()->getExecutableQueryPlan(oldPlanId);
         auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(newNodeLocation,

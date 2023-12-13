@@ -60,6 +60,28 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     return Status::CANCELLED;
 }
 
+Status WorkerRPCServer::ReconfigureQuery(ServerContext*, const ReconfigureQueryRequest* request, ReconfigureQueryReply* reply) {
+    auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
+    NES_DEBUG("WorkerRPCServer::ReconfigureQuery: got request for queryId: {} plan={}",
+              queryPlan->getQueryId(),
+              queryPlan->toString());
+    bool success = 0;
+    try {
+        success = nodeEngine->reconfigureSubPlan(queryPlan);
+    } catch (std::exception& error) {
+        NES_ERROR("Reconfigure query crashed: {}", error.what());
+        success = false;
+    }
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::ReconfigureQuery: success");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("WorkerRPCServer::ReconfigureQuery: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
 Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for {}", request->queryid());
     bool success = nodeEngine->unregisterQuery(request->queryid());
