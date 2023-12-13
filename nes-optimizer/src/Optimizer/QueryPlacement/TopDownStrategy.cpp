@@ -185,10 +185,10 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
             throw Exceptions::RuntimeException("TopDownStrategy: No node available for further placement of operators");
         }
 
-        //Pin the operator to the candidate node and mark as placed
+        //Pin the operator to the candidate node
         candidateTopologyNode->reduceResources(1);
         logicalOperator->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
-
+        logicalOperator->addProperty(PROCESSED, true);
     } else {
         candidateTopologyNode = operatorToExecutionNodeMap[logicalOperator->getId()]->getTopologyNode();
     }
@@ -219,10 +219,11 @@ TopDownStrategy::getTopologyNodesForDownStreamOperators(const LogicalOperatorNod
     std::vector<TopologyNodePtr> parentTopologyNodes;
     NES_DEBUG("TopDownStrategy: Get topology nodes with parent operators");
     std::vector<NodePtr> downstreamOperators = candidateOperator->getParents();
-    //iterate over parent operators and get the physical location where operator is placed
+    //iterate over parent operators and get the physical location where operator was processed to be placed
     for (auto& downstreamOperator : downstreamOperators) {
-        if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
-            NES_WARNING("TopDownStrategy: unable to find topology for downstreamOperator operator.");
+        if (!downstreamOperator->as<OperatorNode>()->hasProperty(PROCESSED)) {
+            NES_WARNING("TopDownStrategy: Not all downstream operators are processed for placement yet. Placement of this "
+                        "operator will be re-attempted.");
             return {};
         }
 
@@ -256,6 +257,7 @@ TopDownStrategy::getTopologyNodesForUpStreamOperators(const LogicalOperatorNodeP
                                  upStreamOperator->getChildren().begin(),
                                  upStreamOperator->getChildren().end());
     }
+
     if (upStreamTopologyNodes.empty()) {
         NES_ERROR("TopDownStrategy::getTopologyNodesForUpStreamOperators: Unable to find the upStreamOperators operators to the "
                   "candidate operator");

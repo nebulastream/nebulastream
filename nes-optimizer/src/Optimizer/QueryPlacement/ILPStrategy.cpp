@@ -239,7 +239,10 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     // 10. Run the type inference phase and return.
-    return runTypeInferencePhase(queryId);
+    runTypeInferencePhase(queryId);
+
+    // 11. Release the locks from the topology nodes
+    return unlockTopologyNodes();
 }
 
 std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators) {
