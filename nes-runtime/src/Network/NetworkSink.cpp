@@ -380,7 +380,12 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     unbuffer(workerContext);
     return true;
 }
-void NetworkSink::configureNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink) {
-    configureNewReceiverAndPartition(reconfiguredSink.getNesPartition(), reconfiguredSink.getNodeLocation(), reconfiguredSink.getVersion());
+bool NetworkSink::configureNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink) {
+    auto newVersion =  reconfiguredSink.getVersion();
+    if (newVersion != version) {
+        configureNewReceiverAndPartition(reconfiguredSink.getNesPartition(), reconfiguredSink.getNodeLocation(), reconfiguredSink.getVersion());
+        return true;
+    }
+    return false;
 }
 }// namespace NES::Network

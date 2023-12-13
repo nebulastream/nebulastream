@@ -51,8 +51,7 @@ enum class QueryState : uint8_t {
     MIGRATING,
     MIGRATION_COMPLETED,
     EXPLAINED,
-    RECONFIGURE_SINKS,
-    RECONFIGURE_SOURCES,
+    RECONFIGURE,
 };
 
 }// namespace NES

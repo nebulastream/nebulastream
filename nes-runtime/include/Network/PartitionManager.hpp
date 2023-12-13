@@ -114,7 +114,7 @@ class PartitionManager {
          * @brief add a pending
          * @param pendingVersion
          */
-        void addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation);
+        bool addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation);
 
         /**
          * @brief increment ref cnt by 1

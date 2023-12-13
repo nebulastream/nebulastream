@@ -66,13 +66,11 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     }
 
     //Remove the old mapping of the shared query plan
-    //todo: we use updated here also for migration?
     if (SharedQueryPlanStatus::MIGRATING != sharedQueryPlan->getStatus()) {
         if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
             queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
         }
 
-        //todo: if we remove all metadata here we also need to add it again for all, but that could be optimized
         //Reset all sub query plan metadata in the catalog
         for (auto& queryId : sharedQueryPlan->getQueryIds()) {
             queryCatalogService->resetSubQueryMetaData(queryId);
@@ -94,11 +92,12 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                     queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, QueryState::DEPLOYED);
                 } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus()
                            == QueryState::MIGRATING) {
-                    //todo: garbage collect
-                    //executionNode->removeQuerySubPlan(sharedQueryId, querySubPlanId);
+                    //garbage collect migrated execution nodes
                     globalExecutionPlan->removeQuerySubPlanFromNode(executionNode->getId(), sharedQueryId, querySubPlanId);
                 } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus()
                            == QueryState::SOFT_STOP_COMPLETED) {
+                    //garbage collect metadata of stop subplans
+                    //todo: keep these
                     entry->removeQuerySubPlanMetaData(querySubPlanId);
                 }
             }
@@ -240,7 +239,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     completionQueues[queueForExecutionNode] = querySubPlans.size();
                     break;
                 }
-                case QueryState::RECONFIGURE_SINKS: {
+                case QueryState::RECONFIGURE: {
                     //todo: deploy reconfig
                     NES_NOT_IMPLEMENTED();
                     break;

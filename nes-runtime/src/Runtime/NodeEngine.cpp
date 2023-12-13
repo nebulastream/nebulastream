@@ -13,11 +13,13 @@
 */
 
 #include "Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp"
+#include "Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp"
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -418,7 +420,9 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
             break;
         }
         case Network::Messages::ErrorType::VersionMismatchError: {
-            NES_INFO("Runtime: Node {} encountered server error: Version mismatch for requested partition {}", nodeId, err.getChannelId());
+            NES_INFO("Runtime: Node {} encountered server error: Version mismatch for requested partition {}",
+                     nodeId,
+                     err.getChannelId());
             break;
         }
         default: {
@@ -641,7 +645,7 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
     }
 }
 
-bool NodeEngine::reconfigureSinksInSubPlan(QueryPlanPtr& reconfiguredQueryPlan) {
+bool NodeEngine::reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan) {
     std::unique_lock lock(engineMutex);
     auto deployedPlanIterator = deployedQEPs.find(reconfiguredQueryPlan->getQuerySubPlanId());
     if (deployedPlanIterator == deployedQEPs.end()) {
@@ -654,16 +658,32 @@ bool NodeEngine::reconfigureSinksInSubPlan(QueryPlanPtr& reconfiguredQueryPlan) 
             //todo: use find if like above
             for (auto& reconfiguredSink : reconfiguredQueryPlan->getSinkOperators()) {
                 if (reconfiguredSink->getId() == sink->getOperatorId()) {
-                    auto reconfiguredNetworkSink = std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
+                    auto reconfiguredNetworkSink =
+                        std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
                     networkSink->configureNewReceiverAndPartition(*reconfiguredNetworkSink);
                 }
             }
         }
     }
+    for (auto& source : deployedPlan->getSources()) {
+        auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
+        if (networkSource != nullptr) {
+            for (auto& reconfiguredSource : reconfiguredQueryPlan->getSourceOperators()) {
+                //if (reconfiguredSource->getId() == source->getOperatorId()) {
+                auto reconfiguredNetworkSourceDescriptor =
+                    std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
+                //todo: perform reconfiguration through source
+                //auto sourceIterator = std::find(physicalSources.begin(), physicalSources.end(), )
+                partitionManager->addPendingVersion(reconfiguredNetworkSourceDescriptor->getNesPartition(),
+                                                    reconfiguredNetworkSourceDescriptor->getVersion(),
+                                                    reconfiguredNetworkSourceDescriptor->getNodeLocation());
+
+                //}
+            }
+        }
+    }
     return true;
 }
-
-
 
 Monitoring::MetricStorePtr NodeEngine::getMetricStore() { return metricStore; }
 void NodeEngine::setMetricStore(Monitoring::MetricStorePtr metricStore) {

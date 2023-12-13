@@ -835,7 +835,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         EXPECT_EQ(subQueryIds.size(), 1);
 
         //retrieve data about running network sink at wrk1
-        Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
+        //todo: was it correct to put the coordinator in here before?
+        //Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
+        Network::NodeLocation newNodeLocation(wrk3->getWorkerId(), "localhost", *wrk3DataPort);
         networkSrcWrk3Id += 10;
         networkSinkWrk3Id += 10;
         auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
@@ -877,24 +879,40 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
         queryDeploymentPhase->execute(sqp);
 
+        //todo: new call
         //perform reconfiguratins
-        crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition,
-                                                                                       nextVersion,
-                                                                                       newNodeLocation);
+        auto oldPlanIdForSourceReconfig = crd->getNodeEngine()->getSubQueryIds(queryId).front();
+        auto oldPlanforSourceReconfig = crd->getNodeEngine()->getExecutableQueryPlan(oldPlanIdForSourceReconfig);
+        auto sourceReconfigPlan = QueryPlan::create(sharedQueryId, oldPlanIdForSourceReconfig);
+        auto reconfiguredSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
+                                                                                     networkSourceCrdPartition,
+                                                                                     newNodeLocation,
+                                                                                     waitTime,
+                                                                                     retryTimes,
+                                                                                     nextVersion);
+        auto sourceReconfigOperator =
+            std::make_shared<SourceLogicalOperatorNode>(reconfiguredSourceDescriptor,
+                                                        oldPlanforSourceReconfig->getSources().front()->getOperatorId());
+        sourceReconfigPlan->addRootOperator(sourceReconfigOperator);
+        crd->getNesWorker()->getNodeEngine()->reconfigureSubPlan(sourceReconfigPlan);
+        //todo: replace this call
+//        crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition,
+//                                                                                       nextVersion,
+//                                                                                       newNodeLocation);
 
         //todo: new call
         auto oldPlanId = wrk1->getNodeEngine()->getSubQueryIds(queryId).front();
         auto oldPlan = wrk1->getNodeEngine()->getExecutableQueryPlan(oldPlanId);
         auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(newNodeLocation,
-                                                                                networkSourceWrk3Partition,
-                                                                                waitTime,
-                                                                                retryTimes,
-                                                                                nextVersion);
+                                                                                 networkSourceWrk3Partition,
+                                                                                 waitTime,
+                                                                                 retryTimes,
+                                                                                 nextVersion);
         auto sinkReconfigPlan = QueryPlan::create(sharedQueryId, oldPlanId);
         auto sinkReconfigOperator =
             std::make_shared<SinkLogicalOperatorNode>(reconfiguredSinkDescriptor, oldPlan->getSinks().front()->getOperatorId());
         sinkReconfigPlan->addRootOperator(sinkReconfigOperator);
-        wrk1->getNodeEngine()->reconfigureSinksInSubPlan(sinkReconfigPlan);
+        wrk1->getNodeEngine()->reconfigureSubPlan(sinkReconfigPlan);
 
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
         waitForFinalCount = false;
