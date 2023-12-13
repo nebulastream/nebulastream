@@ -369,6 +369,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES,
+                                                         1,
                                                          0);
         networkSink->preSetup();
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
@@ -570,7 +571,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                          nodeEngineSender,
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
-                                                         NSOURCE_RETRIES);
+                                                         NSOURCE_RETRIES, 1, 0);
         auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
         auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
 
@@ -905,7 +906,9 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                                          nodeEngineSender,
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
-                                                         NSOURCE_RETRIES);
+                                                         NSOURCE_RETRIES,
+                                                         1,
+                                                         0);
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,

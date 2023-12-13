@@ -131,7 +131,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     void configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation, Version newVersion);
 
-    bool configureNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink);
+    bool scheduleNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink);
+
+    bool applyPendingReceiverAndPartition();
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
@@ -168,6 +170,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
     NodeLocation receiverLocation;
+    std::optional<std::tuple<NesPartition, NodeLocation, Version>> pendingReceiver;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
     size_t numOfProducers;

@@ -320,6 +320,7 @@ message SerializableOperator{
       uint64 waitTime = 3;
       uint32 retryTimes = 4;
       uint64 version = 5;
+      uint64 uniqueNetwokSinkId = 6;
     }
 
     google.protobuf.Any sinkDescriptor = 1;
