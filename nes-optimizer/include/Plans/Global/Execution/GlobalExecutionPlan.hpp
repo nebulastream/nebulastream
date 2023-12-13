@@ -42,7 +42,7 @@ class GlobalExecutionPlan {
      * @param parentExecutionNode: the parent execution node
      * @return true if operation succeeds
      */
-    bool addExecutionNodeAsParentTo(uint64_t childId, const ExecutionNodePtr& parentExecutionNode);
+    bool addExecutionNodeAsParentTo(ExecutionNodeId childId, const ExecutionNodePtr& parentExecutionNode);
 
     /**
      * Add execution node without any connectivity
@@ -62,7 +62,7 @@ class GlobalExecutionPlan {
      * @return true if operation succeeds
      */
     //TODO: what should we do about its children? Also, a good location to release the occupied resources.
-    bool removeExecutionNode(uint64_t id);
+    bool removeExecutionNode(ExecutionNodeId id);
 
     /**
      * Remove all the query sub plans for the input query
@@ -76,21 +76,21 @@ class GlobalExecutionPlan {
      * @param id: id of the execution node
      * @return true if operation succeeds
      */
-    bool checkIfExecutionNodeExists(uint64_t id);
+    bool checkIfExecutionNodeExists(ExecutionNodeId id);
 
     /**
      * Check if the executionNode is a root node.
      * @param id: id of the execution node.
      * @return true if execution node with given id is a root node.
      */
-    bool checkIfExecutionNodeIsARoot(uint64_t id);
+    bool checkIfExecutionNodeIsARoot(ExecutionNodeId id);
 
     /**
      * Get the execution node
      * @param id: id of the execution node
      * @return true if operation succeeds
      */
-    ExecutionNodePtr getExecutionNodeById(uint64_t id);
+    ExecutionNodePtr getExecutionNodeById(ExecutionNodeId id);
 
     /**
      * Get the nodes to be scheduled/deployed
@@ -146,7 +146,7 @@ class GlobalExecutionPlan {
     /**
      * Index based on nodeId for faster access to the execution nodes
      */
-    std::map<uint64_t, ExecutionNodePtr> nodeIdIndex;
+    std::map<ExecutionNodeId, ExecutionNodePtr> executionNodeIdIndex;
 
     /**
      * Index based on query Id for faster access to the execution nodes

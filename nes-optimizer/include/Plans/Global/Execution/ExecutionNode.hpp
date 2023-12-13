@@ -58,7 +58,7 @@ class ExecutionNode : public Node {
      * Get execution node id
      * @return id of the execution node
      */
-    uint64_t getId() const;
+    ExecutionNodeId getId() const;
 
     /**
      * Get the nes node for the execution node.
@@ -127,7 +127,7 @@ class ExecutionNode : public Node {
      * Execution node id.
      * Same as physical node id.
      */
-    const uint64_t id;
+    const ExecutionNodeId id;
 
     /**
      * Physical Node information
@@ -141,4 +141,4 @@ class ExecutionNode : public Node {
 };
 }// namespace NES
 
-#endif  // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
