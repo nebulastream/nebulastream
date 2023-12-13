@@ -51,14 +51,14 @@ class TopologyNode : public Node {
                                   uint32_t grpcPort,
                                   uint32_t dataPort,
                                   uint16_t resources,
-                                  std::map<std::string, std::any> properties);
+                                  const std::map<std::string, std::any>& properties);
 
     explicit TopologyNode(WorkerId workerId,
-                          std::string ipAddress,
+                          const std::string& ipAddress,
                           uint32_t grpcPort,
                           uint32_t dataPort,
                           uint16_t resources,
-                          std::map<std::string, std::any> properties);
+                          const std::map<std::string, std::any>& properties);
 
     ~TopologyNode() override = default;
 

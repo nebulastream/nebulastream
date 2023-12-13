@@ -144,8 +144,8 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
 
         if (logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
             NES_TRACE("Received Sink operator for placement.");
-            auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
-            auto pinnedSinkOperatorLocation = getTopologyNode(nodeId);
+            auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
+            auto pinnedSinkOperatorLocation = getTopologyNode(workerId);
             if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
                 || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
                 candidateTopologyNode = pinnedSinkOperatorLocation;
