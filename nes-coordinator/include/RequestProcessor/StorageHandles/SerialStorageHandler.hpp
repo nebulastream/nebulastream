@@ -36,7 +36,7 @@ class SerialStorageHandler : public StorageHandler {
      * -lockManager
      * @return shared pointer to the serial storage manager
      */
-    static StorageHandlerPtr create(const StorageDataStructures& storageDataStructures);
+    static StorageHandlerPtr create(StorageDataStructures& storageDataStructures);
 
     /**
      * @brief Obtain a mutable topology handle.
@@ -87,7 +87,6 @@ class SerialStorageHandler : public StorageHandler {
      */
     CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
 
-  private:
     /**
      * @brief constructor
      * @param storageDataStructures a struct containing pointers to the following data structures:
@@ -99,8 +98,9 @@ class SerialStorageHandler : public StorageHandler {
      * -udfCatalog
      * -lockManager
      */
-    explicit SerialStorageHandler(StorageDataStructures storageDataStructures);
+    explicit SerialStorageHandler(StorageDataStructures& storageDataStructures);
 
+  private:
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;

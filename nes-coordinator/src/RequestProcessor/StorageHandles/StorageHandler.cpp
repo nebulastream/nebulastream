@@ -36,8 +36,8 @@ UDFCatalogHandle StorageHandler::getUDFCatalogHandle(RequestId) { NES_NOT_IMPLEM
 CoordinatorConfigurationHandle StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
 
 RequestId StorageHandler::generateRequestId() {
-    RequestId requestId;
-    requestId = nextFreeRequestId;
+    std::unique_lock lock(idMutex);
+    RequestId requestId = nextFreeRequestId;
     nextFreeRequestId = (nextFreeRequestId % MAX_REQUEST_ID) + 1;
     return requestId;
 }

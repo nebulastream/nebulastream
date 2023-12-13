@@ -45,13 +45,14 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto serialAccessHandle = SerialStorageHandler::create({coordinatorConfiguration,
-                                                            topology,
-                                                            globalExecutionPlan,
-                                                            queryCatalogService,
-                                                            globalQueryPlan,
-                                                            sourceCatalog,
-                                                            udfCatalog});
+    StorageDataStructures storageDataStructures = {coordinatorConfiguration,
+                                                    topology,
+                                                    globalExecutionPlan,
+                                                    queryCatalogService,
+                                                    globalQueryPlan,
+                                                    sourceCatalog,
+                                                    udfCatalog};
+    auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
 
     //test if we can obtain the resource we passed to the constructor
     ASSERT_EQ(globalExecutionPlan.get(), serialAccessHandle->getGlobalExecutionPlanHandle(requestId).get());

@@ -63,10 +63,10 @@ add_nes_unit_test(location-provider-csv-unit-tests "Spatial/LocationProviderCSVT
 add_nes_unit_test(reconnect-schedule-predictor-tests "Spatial/ReconnectSchedulePredictorTest.cpp")
 
 ### Serial Storage Handler Test ###
-add_nes_unit_test(serial-access-handle-tests "RequestProcessor/StorageHandles/SerialStorageHandlerTest.cpp")
+add_nes_unit_test(serial-storage-handler-tests "RequestProcessor/StorageHandles/SerialStorageHandlerTest.cpp")
 
 ### 2 Phase Lcoking Storage Handler Test ###
-add_nes_unit_test(two-phase-locking-access-handle-tests "RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandlerTest.cpp")
+add_nes_unit_test(two-phase-locking-storage-handler-tests "RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandlerTest.cpp")
 
 ### Unlock Deleter Test ###
 add_nes_unit_test(unlock-deleter-tests "RequestProcessor/StorageHandles/UnlockDeleterTest.cpp")

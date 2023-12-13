@@ -820,7 +820,6 @@ TEST_P(AsyncRequestProcessorTest, submitMultiRequest) {
         NES_DEBUG("{}", ex.what());
         FAIL();
     }
-    //todo: problem occurs here
     EXPECT_TRUE(processor->stop());
 }
 

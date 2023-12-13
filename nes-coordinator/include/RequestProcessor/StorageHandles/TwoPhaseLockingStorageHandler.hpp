@@ -132,8 +132,18 @@ class TwoPhaseLockingStorageHandler : public StorageHandler {
 
     CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId) override;
 
+    /**
+     * @brief Used for testing
+     * @param resource The resource for which the current ticket number should be queried
+     * @return the number of the current ticket
+     */
     TicketId getCurrentTicket(ResourceType resource);
 
+    /**
+     * @brief Used for testing
+     * @param resource The resource for which the next available ticket number should be queried
+     * @return the number of the next available ticket
+     */
     TicketId getNextAvailableTicket(ResourceType resource);
 
   private:

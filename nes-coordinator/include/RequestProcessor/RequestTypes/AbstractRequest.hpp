@@ -48,7 +48,6 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 const uint8_t DEFAULT_RETRIES = 1;
 
-//todo: rename this to UniRequest
 class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>, public StorageResourceLocker {
   public:
     /**
