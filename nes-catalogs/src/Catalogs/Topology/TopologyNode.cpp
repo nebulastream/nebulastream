@@ -30,7 +30,7 @@ TopologyNode::TopologyNode(WorkerId workerId,
                            uint16_t resources,
                            const std::map<std::string, std::any>& properties)
     : workerId(workerId), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
-      locked(false), nodeProperties(properties) {}
+      locked(false), version(0), nodeProperties(properties) {}
 
 TopologyNodePtr TopologyNode::create(WorkerId workerId,
                                      const std::string& ipAddress,
@@ -58,11 +58,15 @@ void TopologyNode::increaseResources(uint16_t freedCapacity) {
     NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
     NES_ASSERT(freedCapacity <= usedResources,
                "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
+    //Update the version number to indicate that the topology node was changed
+    incrementVersion();
     usedResources = usedResources - freedCapacity;
 }
 
 void TopologyNode::reduceResources(uint16_t usedCapacity) {
     NES_DEBUG("TopologyNode: Reducing resources {} Currently occupied {} of {}", usedCapacity, usedResources, resources);
+    //Update the version number to indicate that the topology node was changed
+    incrementVersion();
     if (usedCapacity > resources) {
         NES_WARNING("PhysicalNode: amount of resources to be used should not be more than actual resources");
     }
@@ -77,6 +81,7 @@ TopologyNodePtr TopologyNode::copy() {
     TopologyNodePtr copy = std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, resources, nodeProperties);
     copy->reduceResources(usedResources);
     copy->linkProperties = this->linkProperties;
+    copy->version = this->version;
     return copy;
 }
 
