@@ -102,25 +102,25 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
         sourceNode2->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
-        auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-        const std::string sourceName = "car";
+        auto carSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        const std::string carSourceName = "car";
 
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-        sourceCatalog->addLogicalSource(sourceName, schema);
-        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+        sourceCatalog->addLogicalSource(carSourceName, carSchema);
+        auto logicalSource = sourceCatalog->getLogicalSource(carSourceName);
 
-        CSVSourceTypePtr csvSourceType = CSVSourceType::create(sourceName, "test2");
-        csvSourceType->setGatheringInterval(0);
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(csvSourceType);
+        CSVSourceTypePtr csvSourceTypeForCar = CSVSourceType::create(carSourceName, "carPhysicalSourceName");
+        csvSourceTypeForCar->setGatheringInterval(0);
+        csvSourceTypeForCar->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSourceForCar = PhysicalSource::create(csvSourceTypeForCar);
 
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceForCar, logicalSource, sourceNode1);
         Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
+            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceForCar, logicalSource, sourceNode2);
 
-        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
-        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+        sourceCatalog->addPhysicalSource(carSourceName, sourceCatalogEntry1);
+        sourceCatalog->addPhysicalSource(carSourceName, sourceCatalogEntry2);
 
         globalExecutionPlan = GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
@@ -1525,7 +1525,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
  *
  *
  */
-TEST_F(QueryPlacementTest, testTopDownPlacementWthThightResourcesConstrains) {
+TEST_F(QueryPlacementTest, testTopDownPlacementWthTightResourcesConstrains) {
     // Setup the topology
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1637,7 +1637,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthThightResourcesConstrains) {
  *
  *
  */
-TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrains) {
+TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrains) {
     // Setup the topology
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1753,7 +1753,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrains) {
  *
  *
  */
-TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrainsInAJoin) {
+TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrainsInAJoin) {
     // Setup the topology
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1893,6 +1893,125 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthThightResourcesConstrainsInAJ
                 ASSERT_EQ(placedSource->as<SourceLogicalOperatorNode>()->getId(), source2->getId());
             }
             NES_INFO("Sub Plan: {}", querySubPlan->toString());
+        }
+    }
+}
+
+/* Test concurrent query placement with pessimistic bottom up strategy  */
+TEST_F(QueryPlacementTest, testConcurrentOperatorPlacementUsingPessimisticBottomUpStrategy) {
+
+    setupTopologyAndSourceCatalog({4, 4, 4});
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+
+    // First Query
+    Query query1 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+    typeInferencePhase->execute(queryPlan1);
+
+    topologySpecificQueryRewrite->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan1);
+
+    auto sharedQueryPlan1 = SharedQueryPlan::create(queryPlan1);
+    auto sharedQueryPlanId1 = sharedQueryPlan1->getId();
+
+    // Second Query
+    Query query2 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
+    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+    typeInferencePhase->execute(queryPlan2);
+
+    topologySpecificQueryRewrite->execute(queryPlan2);
+    typeInferencePhase->execute(queryPlan2);
+
+    auto sharedQueryPlan2 = SharedQueryPlan::create(queryPlan2);
+    auto sharedQueryPlanId2 = sharedQueryPlan2->getId();
+
+    std::future<bool> placementResult1 = std::async(std::launch::async, [&]() {
+        auto queryPlacementPhaseInstance1 =
+            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+        return queryPlacementPhaseInstance1->execute(sharedQueryPlan1);
+    });
+
+    std::future<bool> placementResult2 = std::async(std::launch::async, [&]() {
+        auto queryPlacementPhaseInstance2 =
+            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+        return queryPlacementPhaseInstance2->execute(sharedQueryPlan2);
+    });
+
+    EXPECT_TRUE(placementResult1.get());
+    EXPECT_TRUE(placementResult2.get());
+
+    //Assertion
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId1);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3u);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1u) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId1);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0u];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan1->getRootOperators()[0]->getId());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId1);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+            }
+        }
+    }
+
+    //Assertion
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId2);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3u);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1u) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId2);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0u];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan2->getRootOperators()[0]->getId());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId2);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+            }
         }
     }
 }
