@@ -60,6 +60,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
 }
 
+
 void WorkerRPCClient::registerQueryAsync(const std::string& address,
                                          const QueryPlanPtr& queryPlan,
                                          const CompletionQueuePtr& cq) {
@@ -98,6 +99,37 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+}
+
+bool WorkerRPCClient::reconfigureQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
+    QueryId queryId = queryPlan->getQueryId();
+    QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
+    NES_DEBUG("WorkerRPCClient::reconfigureQuery address={} queryId={} querySubPlanId = {} ", address, queryId, querySubPlanId);
+
+    // wrap the query id and the query operators in the protobuf reconfigure query request object.
+    ReconfigureQueryRequest request;
+
+    // serialize query plan.
+    auto serializedQueryPlan = request.mutable_queryplan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+
+    NES_TRACE("WorkerRPCClient:reconfigureQuery -> {}", request.DebugString());
+    ReconfigureQueryReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->ReconfigureQuery(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::reconfigureQuery: status ok return success={}", reply.success());
+        return reply.success();
+    }
+    NES_DEBUG(" WorkerRPCClient::reconfigureQuery "
+              "error={}: {}",
+              status.error_code(),
+              status.error_message());
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::reconfigureQuery");
 }
 
 void WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
