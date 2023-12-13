@@ -71,9 +71,9 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                     const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
+    NES_DEBUG("Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        NES_DEBUG("BottomUpStrategy: Get the topology node for source operator {} placement.",
+        NES_DEBUG("Get the topology node for source operator {} placement.",
                   pinnedUpStreamOperator->toString());
 
         auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
@@ -93,14 +93,14 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
         } else {// 2. If pinned operator is not placed then start by placing the operator
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
-                NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
+                NES_ERROR("Unable to find resources on the physical node for placement of source operator");
                 throw Exceptions::RuntimeException(
-                    "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
+                    "Unable to find resources on the physical node for placement of source operator");
             }
             identifyPinningLocation(queryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
         }
     }
-    NES_DEBUG("BottomUpStrategy: Finished placing query operators into the global execution plan");
+    NES_DEBUG("Finished placing query operators into the global execution plan");
 }
 
 void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
@@ -113,20 +113,20 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
         return;
     }
 
-    NES_DEBUG("BottomUpStrategy: Place {}", logicalOperator->toString());
+    NES_DEBUG("Place {}", logicalOperator->toString());
     if ((logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperatorNode>())
         || logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
+        NES_TRACE("Received an NAry operator for placement.");
         //Check if all children operators already placed
-        NES_TRACE("BottomUpStrategy: Get the topology nodes where child operators are placed.");
+        NES_TRACE("Get the topology nodes where child operators are placed.");
         std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(logicalOperator);
         if (childTopologyNodes.empty()) {
             NES_WARNING(
-                "BottomUpStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are placed.");
+                "No topology node isOperatorAPinnedDownStreamOperator where child operators are placed.");
             return;
         }
 
-        NES_TRACE("BottomUpStrategy: Find a node reachable from all topology nodes where child operators are placed.");
+        NES_TRACE("Find a node reachable from all topology nodes where child operators are placed.");
         if (childTopologyNodes.size() == 1) {
             candidateTopologyNode = childTopologyNodes[0];
         } else {
@@ -135,44 +135,44 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
 
         if (!candidateTopologyNode) {
             NES_ERROR(
-                "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator, operatorId: {}",
+                "Unable to find a common ancestor topology node to place the binary operator, operatorId: {}",
                 logicalOperator->getId());
             topology->print();
             throw Exceptions::RuntimeException(
-                "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
+                "Unable to find a common ancestor topology node to place the binary operator");
         }
 
         if (logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
-            NES_TRACE("BottomUpStrategy: Received Sink operator for placement.");
+            NES_TRACE("Received Sink operator for placement.");
             auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
             auto pinnedSinkOperatorLocation = getTopologyNode(nodeId);
             if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
                 || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
                 candidateTopologyNode = pinnedSinkOperatorLocation;
             } else {
-                NES_ERROR("BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
+                NES_ERROR("Unexpected behavior. Could not find Topology node where sink operator is to be "
                           "placed.");
                 throw Exceptions::RuntimeException(
-                    "BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
+                    "Unexpected behavior. Could not find Topology node where sink operator is to be "
                     "placed.");
             }
 
             if (candidateTopologyNode->getAvailableResources() == 0) {
-                NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
+                NES_ERROR("Topology node where sink operator is to be placed has no capacity.");
                 throw Exceptions::RuntimeException(
-                    "BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
+                    "Topology node where sink operator is to be placed has no capacity.");
             }
         }
     }
 
     if (candidateTopologyNode->getAvailableResources() == 0) {
 
-        NES_DEBUG("BottomUpStrategy: Find the next NES node in the path where operator can be placed");
+        NES_DEBUG("Find the next NES node in the path where operator can be placed");
         while (!candidateTopologyNode->getParents().empty()) {
             //FIXME: we are considering only one root node currently
             candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
             if (candidateTopologyNode->getAvailableResources() > 0) {
-                NES_DEBUG("BottomUpStrategy: Found NES node for placing the operators with id : {}",
+                NES_DEBUG("Found NES node for placing the operators with id : {}",
                           candidateTopologyNode->getId());
                 break;
             }
@@ -180,8 +180,8 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
     }
 
     if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
-        NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
-        throw Exceptions::RuntimeException("BottomUpStrategy: No node available for further placement of operators");
+        NES_ERROR("No node available for further placement of operators");
+        throw Exceptions::RuntimeException("No node available for further placement of operators");
     }
 
     candidateTopologyNode->reduceResources(1);
@@ -195,11 +195,11 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
                      });
 
     if (isOperatorAPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
-        NES_DEBUG("BottomUpStrategy: Found pinned downstream operator. Skipping placement of further operators.");
+        NES_DEBUG("Found pinned downstream operator. Skipping placement of further operators.");
         return;
     }
 
-    NES_TRACE("BottomUpStrategy: Place further upstream operators.");
+    NES_TRACE("Place further upstream operators.");
     for (const auto& parent : logicalOperator->getParents()) {
         identifyPinningLocation(queryId, parent->as<LogicalOperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators);
     }

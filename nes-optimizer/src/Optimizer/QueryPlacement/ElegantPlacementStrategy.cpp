@@ -13,23 +13,23 @@
 */
 
 #include <API/Schema.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <cpp-base64/base64.h>
 #include <cpr/api.h>
 #include <queue>
 #include <utility>
-#include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Runtime/OpenCLDeviceInfo.hpp>
-#include <cpp-base64/base64.h>
 
 namespace NES::Optimizer {
 
@@ -141,22 +141,26 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
 
         if (!pinned) {
             throw Exceptions::QueryPlacementException(queryId,
-                                                      "ElegantPlacementStrategy: Unable to find operator with id "
-                                                          + std::to_string(operatorId) + " in the given list of operators.");
+                                                      "Unable to find operator with id " + std::to_string(operatorId)
+                                                          + " in the given list of operators.");
         }
     }
 }
 
 void ElegantPlacementStrategy::addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node) {
-    if (logicalOperator->instanceOf<MapUDFLogicalOperatorNode>() || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
-        const auto* udfDescriptor = dynamic_cast<Catalogs::UDF::JavaUDFDescriptor*>(logicalOperator->as<UDFLogicalOperator>()->getUDFDescriptor().get());
+    if (logicalOperator->instanceOf<MapUDFLogicalOperatorNode>()
+        || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
+        const auto* udfDescriptor =
+            dynamic_cast<Catalogs::UDF::JavaUDFDescriptor*>(logicalOperator->as<UDFLogicalOperator>()->getUDFDescriptor().get());
         const auto& byteCode = udfDescriptor->getByteCodeList();
         std::vector<std::pair<std::string, std::string>> base64ByteCodeList;
         std::transform(byteCode.cbegin(),
                        byteCode.cend(),
                        std::back_inserter(base64ByteCodeList),
                        [](const jni::JavaClassDefinition& classDefinition) {
-                           return std::pair<std::string, std::string>{classDefinition.first, base64_encode(std::string(classDefinition.second.data(), classDefinition.second.size()))};
+                           return std::pair<std::string, std::string>{
+                               classDefinition.first,
+                               base64_encode(std::string(classDefinition.second.data(), classDefinition.second.size()))};
                        });
         node[JAVA_UDF_FIELD_KEY] = base64ByteCodeList;
     } else {
@@ -168,7 +172,7 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
                                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                                    nlohmann::json& payload) {
 
-    NES_DEBUG("ElegantPlacementStrategy: Getting the json representation of the query plan");
+    NES_DEBUG("Getting the json representation of the query plan");
 
     std::vector<nlohmann::json> nodes{};
 
@@ -189,7 +193,8 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
             nlohmann::json node;
             node[OPERATOR_ID_KEY] = logicalOperator->getId();
             auto pinnedNodeId = logicalOperator->getProperty(PINNED_NODE_ID);
-            node[CONSTRAINT_KEY] = pinnedNodeId.has_value() ? std::to_string(std::any_cast<WorkerId>(pinnedNodeId)) : EMPTY_STRING;
+            node[CONSTRAINT_KEY] =
+                pinnedNodeId.has_value() ? std::to_string(std::any_cast<WorkerId>(pinnedNodeId)) : EMPTY_STRING;
             auto sourceCode = logicalOperator->getProperty(sourceCodeKey);
             node[sourceCodeKey] = sourceCode.has_value() ? std::any_cast<std::string>(sourceCode) : EMPTY_STRING;
             node[INPUT_DATA_KEY] = logicalOperator->getOutputSchema()->getSchemaSizeInBytes();
@@ -218,7 +223,7 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
 }
 
 void ElegantPlacementStrategy::prepareTopologyPayload(nlohmann::json& payload) {
-    NES_DEBUG("ElegantPlacementStrategy: Getting the json representation of available nodes");
+    NES_DEBUG("Getting the json representation of available nodes");
     auto root = topology->getRoot();
     std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
     std::deque<TopologyNodePtr> childToAdd;
@@ -235,7 +240,8 @@ void ElegantPlacementStrategy::prepareTopologyPayload(nlohmann::json& payload) {
         // Add properties for current topology node
         currentNodeJsonValue[NODE_ID_KEY] = currentNode->getId();
         currentNodeJsonValue[NODE_TYPE_KEY] = "stationary";// always set to stationary
-        currentNodeJsonValue[DEVICES_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(currentNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES));
+        currentNodeJsonValue[DEVICES_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(
+            currentNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES));
 
         auto children = currentNode->getChildren();
         for (const auto& child : children) {
@@ -255,7 +261,7 @@ void ElegantPlacementStrategy::prepareTopologyPayload(nlohmann::json& payload) {
 
         nodes.push_back(currentNodeJsonValue);
     }
-    NES_INFO("ElegantPlacementStrategy: no more topology nodes to add");
+    NES_INFO("no more topology nodes to add");
 
     payload[AVAILABLE_NODES_KEY] = nodes;
     payload[NETWORK_DELAYS_KEY] = edges;

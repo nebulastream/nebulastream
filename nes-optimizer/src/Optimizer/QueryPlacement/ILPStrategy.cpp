@@ -55,7 +55,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_INFO("ILPStrategy: Performing placement of the input query plan with id {}", queryId);
+    NES_INFO("Performing placement of the input query plan with id {}", queryId);
 
     // 1. Find the path where operators need to be placed
     performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -85,7 +85,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
             //Skip further processing if encountered pinned downstream operator
             if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
-                NES_DEBUG("ILPStrategy: Found pinned downstream operator. Skipping further downstream operators.");
+                NES_DEBUG("Found pinned downstream operator. Skipping further downstream operators.");
                 break;
             }
 
@@ -93,7 +93,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             auto downstreamOperators = operatorToProcess->getParents();
 
             if (downstreamOperators.empty()) {
-                NES_ERROR("ILPStrategy: Unable to find pinned downstream operator.");
+                NES_ERROR("Unable to find pinned downstream operator.");
                 return false;
             }
 
@@ -103,7 +103,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 // FIXME: (issue #2290) Assuming a tree structure, hence a node can only have a single parent. However, a query can have
                 //  multiple sinks or parents.
                 if (unplacedDownStreamOperatorCount > 1) {
-                    NES_ERROR("ILPStrategy: Current implementation can not place plan with multiple downstream operators.");
+                    NES_ERROR("Current implementation can not place plan with multiple downstream operators.");
                     return false;
                 }
 
@@ -128,7 +128,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         while (!topologyPath.back()->getParents().empty()) {
             //FIXME #2290: path with multiple parents not supported
             if (topologyPath[0]->getParents().size() > 1) {
-                NES_ERROR("ILPStrategy: Current implementation can not place operators on topology with multiple paths.");
+                NES_ERROR("Current implementation can not place operators on topology with multiple paths.");
                 return false;
             }
             topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
@@ -200,7 +200,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     // 6. Check if we have solution, return false if that is not the case
     if (z3::sat != opt.check()) {
-        NES_ERROR("ILPStrategy: Solver failed.");
+        NES_ERROR("Solver failed.");
         return false;
     }
 
