@@ -81,6 +81,17 @@ class TopologyNode : public Node {
     bool releaseLock();
 
     /**
+     * @brief Get the current version of the topology node
+     * @return the current version number
+     */
+    uint64_t getVersion() const;
+
+    /**
+     * @brief Increment the topology node version
+     */
+    void incrementVersion();
+
+    /**
      * @brief method to get the overall cpu capacity of the node
      * @return uint64_t cpu capacity
      */
@@ -212,6 +223,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     std::atomic<bool> locked;
+    uint64_t version;
 
     /**
      * @brief A field to store a map of node properties
