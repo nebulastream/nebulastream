@@ -357,7 +357,7 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(WorkerId workerId) {
     }
 
     auto topologyNode = topologyMap[workerId];
-    if (topologyNode->getAvailableResources() == 0 && !operatorToExecutionNodeMap.contains(workerId)) {
+    if (topologyNode->getAvailableResources() == 0) {
         NES_ERROR("Unable to find resources on the physical node for placement of source operator");
         throw Exceptions::RuntimeException("Unable to find resources on the physical node for placement of source operator");
     }

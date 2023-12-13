@@ -109,8 +109,8 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
 
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
-        auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
-        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeById(nodeId);
+        auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
+        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeById(workerId);
         return;
     }
 
@@ -143,8 +143,8 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
 
             if (logicalOperator->instanceOf<SourceLogicalOperatorNode>()) {
                 NES_DEBUG("Received Source operator for placement.");
-                auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
-                auto pinnedSourceOperatorLocation = getTopologyNode(nodeId);
+                auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
+                auto pinnedSourceOperatorLocation = getTopologyNode(workerId);
                 if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSourceOperatorLocation;
@@ -248,8 +248,8 @@ TopDownStrategy::getTopologyNodesForUpStreamOperators(const LogicalOperatorNodeP
         auto upStreamOperator = upStreamOperators.back()->as<OperatorNode>();
         upStreamOperators.pop_back();
         if (upStreamOperator->hasProperty(PINNED_NODE_ID)) {
-            auto nodeId = std::any_cast<uint64_t>(upStreamOperator->getProperty(PINNED_NODE_ID));
-            auto pinnedTopologyNode = getTopologyNode(nodeId);
+            auto workerId = std::any_cast<uint64_t>(upStreamOperator->getProperty(PINNED_NODE_ID));
+            auto pinnedTopologyNode = getTopologyNode(workerId);
             upStreamTopologyNodes.emplace_back(pinnedTopologyNode);
             continue;
         }

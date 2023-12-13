@@ -23,26 +23,26 @@ namespace NES {
 
 GlobalExecutionPlanPtr GlobalExecutionPlan::create() { return std::make_shared<GlobalExecutionPlan>(); }
 
-bool GlobalExecutionPlan::checkIfExecutionNodeExists(uint64_t id) {
+bool GlobalExecutionPlan::checkIfExecutionNodeExists(ExecutionNodeId id) {
     NES_DEBUG("GlobalExecutionPlan: Checking if Execution node with id {} exists", id);
-    return nodeIdIndex.find(id) != nodeIdIndex.end();
+    return executionNodeIdIndex.find(id) != executionNodeIdIndex.end();
 }
 
-bool GlobalExecutionPlan::checkIfExecutionNodeIsARoot(uint64_t id) {
+bool GlobalExecutionPlan::checkIfExecutionNodeIsARoot(ExecutionNodeId id) {
     NES_DEBUG("GlobalExecutionPlan: Checking if Execution node with id {} is a root node", id);
     return std::find(rootNodes.begin(), rootNodes.end(), getExecutionNodeById(id)) != rootNodes.end();
 }
 
-ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeById(uint64_t id) {
+ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeById(ExecutionNodeId id) {
     if (checkIfExecutionNodeExists(id)) {
         NES_DEBUG("GlobalExecutionPlan: Returning execution node with id  {}", id);
-        return nodeIdIndex[id];
+        return executionNodeIdIndex[id];
     }
     NES_WARNING("GlobalExecutionPlan: Execution node doesn't exists with the id {}", id);
     return nullptr;
 }
 
-bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, const ExecutionNodePtr& parentExecutionNode) {
+bool GlobalExecutionPlan::addExecutionNodeAsParentTo(ExecutionNodeId childId, const ExecutionNodePtr& parentExecutionNode) {
     ExecutionNodePtr childNode = getExecutionNodeById(childId);
     if (childNode) {
         NES_DEBUG("GlobalExecutionPlan: Adding Execution node as parent to the execution node with id  {}", childId);
@@ -53,7 +53,7 @@ bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, const Exe
 
         if (childNode->addParent(parentExecutionNode)) {
             NES_DEBUG("GlobalExecutionPlan: Added Execution node with id  {}", parentExecutionNode->getId());
-            nodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
+            executionNodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
             return true;
         }
         NES_WARNING("GlobalExecutionPlan: Failed to add Execution node as parent to the execution node with id {}", childId);
@@ -69,7 +69,7 @@ bool GlobalExecutionPlan::addExecutionNodeAsRoot(const ExecutionNodePtr& executi
     if (found == rootNodes.end()) {
         rootNodes.push_back(executionNode);
         NES_DEBUG("GlobalExecutionPlan: Added Execution node with id  {}", executionNode->getId());
-        nodeIdIndex[executionNode->getId()] = executionNode;
+        executionNodeIdIndex[executionNode->getId()] = executionNode;
     } else {
         NES_WARNING("GlobalExecutionPlan: Execution node already present in the root node list");
     }
@@ -78,12 +78,12 @@ bool GlobalExecutionPlan::addExecutionNodeAsRoot(const ExecutionNodePtr& executi
 
 bool GlobalExecutionPlan::addExecutionNode(const ExecutionNodePtr& executionNode) {
     NES_DEBUG("GlobalExecutionPlan: Added Execution node with id  {}", executionNode->getId());
-    nodeIdIndex[executionNode->getId()] = executionNode;
+    executionNodeIdIndex[executionNode->getId()] = executionNode;
     scheduleExecutionNode(executionNode);
     return true;
 }
 
-bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
+bool GlobalExecutionPlan::removeExecutionNode(ExecutionNodeId id) {
     NES_DEBUG("GlobalExecutionPlan: Removing Execution node with id  {}", id);
     if (checkIfExecutionNodeExists(id)) {
         NES_DEBUG("GlobalExecutionPlan: Removed execution node with id  {}", id);
@@ -93,7 +93,7 @@ bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
         if (found != rootNodes.end()) {
             rootNodes.erase(found);
         }
-        return nodeIdIndex.erase(id) == 1;
+        return executionNodeIdIndex.erase(id) == 1;
     }
     NES_DEBUG("GlobalExecutionPlan: Failed to remove Execution node with id  {}", id);
     return false;
@@ -138,7 +138,7 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesByQueryId(Qu
 std::vector<ExecutionNodePtr> GlobalExecutionPlan::getAllExecutionNodes() {
     NES_INFO("GlobalExecutionPlan: get all execution nodes");
     std::vector<ExecutionNodePtr> executionNodes;
-    for (auto& [nodeId, executionNode] : nodeIdIndex) {
+    for (auto& [nodeId, executionNode] : executionNodeIdIndex) {
         executionNodes.push_back(executionNode);
     }
     return executionNodes;

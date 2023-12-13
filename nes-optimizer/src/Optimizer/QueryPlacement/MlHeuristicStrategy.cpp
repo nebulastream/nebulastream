@@ -138,13 +138,13 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
         NES_DEBUG("Get the topology node for source operator {} placement.",
                   pinnedUpStreamOperator->toString());
 
-        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
-        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
+        auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
+        TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
 
         // 1. If pinned up stream node was already placed then place all its downstream operators
         if (pinnedUpStreamOperator->getOperatorState() == OperatorState::PLACED) {
             //Fetch the execution node storing the operator
-            operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeById(nodeId);
+            operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeById(workerId);
             //Place all downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
                 identifyPinningLocation(queryId,
@@ -193,8 +193,8 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
-        auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
-        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeById(nodeId);
+        auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
+        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeById(workerId);
         return;
     }
 
@@ -230,8 +230,8 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
             if (logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_TRACE("Received Sink operator for placement.");
-                auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
-                auto pinnedSinkOperatorLocation = getTopologyNode(nodeId);
+                auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
+                auto pinnedSinkOperatorLocation = getTopologyNode(workerId);
                 if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSinkOperatorLocation;

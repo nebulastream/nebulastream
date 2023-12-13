@@ -119,10 +119,10 @@ class BasePlacementStrategy {
   protected:
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators
-     * @param topologyNode: the pinned upstream operators
+     * @param upStreamPinnedOperators: the pinned upstream operators
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
-    void performPathSelection(const std::set<LogicalOperatorNodePtr>& topologyNode,
+    void performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
                               const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
 
     /**
