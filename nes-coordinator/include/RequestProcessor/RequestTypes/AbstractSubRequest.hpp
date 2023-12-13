@@ -26,8 +26,17 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
+/**
+ * This class encapsulates parts of a coordinator side requests logic that are to be executed concurrently.
+ * Subrequests are scheduled and executed as part of the execution of a MultiRequest
+ */
 class AbstractSubRequest : public StorageResourceLocker {
   public:
+    /**
+     * @brief Constructor
+     * @param requiredResources the resources required by this request. The parent request has to ensure that it does
+     * not create subrequests that try to lock resources that have already been locked by the parent request
+     */
     explicit AbstractSubRequest(std::vector<ResourceType> requiredResources);
 
     /**
@@ -35,16 +44,28 @@ class AbstractSubRequest : public StorageResourceLocker {
      */
     virtual ~AbstractSubRequest() = default;
 
+    /**
+     * @brief lock resources, execute this subrequests logic and release resources
+     * @param requiredResources the resources required by this request. Must not be already locked by the parent request.
+     */
+    //todo #4433: move to common base class with abstract request
     void execute(const StorageHandlerPtr& storageHandler);
 
-    virtual void executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
-
+    /**
+     * @brief obtain a future into which the results of this subrequests execution will be placed on completion
+     * @return a future containing the results
+     */
     std::future<std::any> getFuture();
 
   protected:
+    /**
+     * @brief Execute this subrequests logic
+     * @param storageHandler
+     */
+    virtual void executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
+
     std::promise<std::any> responsePromise;
 };
-
 }// namespace NES::RequestProcessor::Experimental
 
 #endif//NES_ABSTRACTSUBREQUEST_HPP

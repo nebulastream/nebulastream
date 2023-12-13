@@ -24,17 +24,24 @@ enum class ResourceType : uint8_t;
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
+//todo #4433: add template parameter, move execute functions from subclasses here and rename this class accordingly
+/**
+ * This is the common base class of objects that use a storage handler to lock resources before manipulating them
+ */
 class StorageResourceLocker {
   public:
     /**
-     * @brief set the id of this request. This has to be done before the request is executed.
+     * @brief set the id of this object. This has to be done before any resource is locked.
      * @param requestId
      */
     void setId(RequestId requestId);
-  private:
-    std::vector<ResourceType> requiredResources;
+
   protected:
-    StorageResourceLocker(std::vector<ResourceType> requiredResources);
+    /**
+     * @brief Constructor
+     * @param requiredResources a list of the resources to be locked
+     */
+    explicit StorageResourceLocker(std::vector<ResourceType> requiredResources);
 
     /**
      * @brief Performs steps to be done before execution of the request logic, e.g. locking the required data structures
@@ -48,6 +55,9 @@ class StorageResourceLocker {
     virtual void postExecution(const StorageHandlerPtr& storageHandle);
 
     RequestId requestId{INVALID_REQUEST_ID};
+
+  private:
+    std::vector<ResourceType> requiredResources;
 };
 }
 #endif//NES_STORAGERESOURCELOCKER_HPP

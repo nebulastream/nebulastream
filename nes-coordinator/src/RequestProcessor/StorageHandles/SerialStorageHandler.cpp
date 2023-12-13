@@ -19,7 +19,7 @@
 
 namespace NES::RequestProcessor {
 
-SerialStorageHandler::SerialStorageHandler(StorageDataStructures storageDataStructures)
+SerialStorageHandler::SerialStorageHandler(StorageDataStructures& storageDataStructures)
     : coordinatorConfiguration(std::move(storageDataStructures.coordinatorConfiguration)),
       topology(std::move(storageDataStructures.topology)),
       globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
@@ -27,8 +27,8 @@ SerialStorageHandler::SerialStorageHandler(StorageDataStructures storageDataStru
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
       sourceCatalog(std::move(storageDataStructures.sourceCatalog)), udfCatalog(std::move(storageDataStructures.udfCatalog)) {}
 
-StorageHandlerPtr SerialStorageHandler::create(const StorageDataStructures& storageDataStructures) {
-    return std::make_shared<SerialStorageHandler>(SerialStorageHandler(storageDataStructures));
+StorageHandlerPtr SerialStorageHandler::create(StorageDataStructures& storageDataStructures) {
+    return std::make_shared<SerialStorageHandler>(storageDataStructures);
 }
 
 GlobalExecutionPlanHandle SerialStorageHandler::getGlobalExecutionPlanHandle(const RequestId) {

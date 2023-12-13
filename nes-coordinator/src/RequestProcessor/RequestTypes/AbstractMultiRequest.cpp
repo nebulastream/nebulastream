@@ -24,10 +24,11 @@ namespace NES::RequestProcessor {
 
 AbstractMultiRequest::AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
     : AbstractRequest(requiredResources, maxRetries) {}
+
 std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandlerPtr& storageHandle) {
     std::vector<AbstractRequestPtr> result;
 
-    //let the first acquired thread execute the main thread and set the done memver afterwards
+    //let the first acquired thread execute the main thread and set the done member variable afterwards
     bool expected = false;
     if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
         result = AbstractRequest::execute(storageHandle);
@@ -79,7 +80,6 @@ void AbstractMultiRequest::executeSubRequestWhileQueueNotEmpty(const StorageHand
 std::future<std::any> AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest,
                                                                const StorageHandlerPtr& storageHandler) {
     NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
-    //todo: set id on subrequest
     std::unique_lock lock(workMutex);
     auto future = subRequest->getFuture();
     subRequest->setId(storageHandler->generateRequestId());

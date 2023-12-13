@@ -47,7 +47,7 @@ class AsyncRequestProcessor {
      * @brief constructor
      * @param storageDataStructures a struct containing pointers to the data structures on which the requests operate
      */
-    AsyncRequestProcessor(const StorageDataStructures& storageDataStructures);
+    AsyncRequestProcessor(StorageDataStructures& storageDataStructures);
 
     /**
      * @brief Submits a request to the executor to be executed when a thread picks it up

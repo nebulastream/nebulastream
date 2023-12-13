@@ -27,7 +27,7 @@
 
 namespace NES::RequestProcessor {
 
-AsyncRequestProcessor::AsyncRequestProcessor(const StorageDataStructures& storageDataStructures)
+AsyncRequestProcessor::AsyncRequestProcessor(StorageDataStructures& storageDataStructures)
     : running(true) {
 
     numOfThreads = storageDataStructures.coordinatorConfiguration->requestExecutorThreads.getValue();
@@ -105,15 +105,16 @@ void AsyncRequestProcessor::runningRoutine() {
         if (running) {
             AbstractRequestPtr abstractRequest = asyncRequestQueue.front();
 
-            //todo: update comment
-            //remove the request from the queue only if it is done, leave it in and execute it otherwise
+            // remove the request from the queue only if it is done,
+            // otherwise leave it at the front of the queue and acquire more threads for concurrent execution
             if (abstractRequest->instanceOf<AbstractMultiRequest>() && abstractRequest->as<AbstractMultiRequest>()->isDone()) {
                 asyncRequestQueue.pop_front();
                 lock.unlock();
                 continue;
             }
 
-            //todo: comment
+            // if the request is not a multirequest it will not have to acquire more threads than the current one.
+            // it can be removed from the queue
             if (!abstractRequest->instanceOf<AbstractMultiRequest>()) {
                 asyncRequestQueue.pop_front();
             }

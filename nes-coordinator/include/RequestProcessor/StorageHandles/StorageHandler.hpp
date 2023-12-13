@@ -19,7 +19,6 @@
 #include <memory>
 #include <vector>
 
-
 namespace NES {
 
 //todo #3610: currently we only have handle that allow reading and writing. but we should also define also handles that allow only const operations
@@ -145,7 +144,13 @@ class StorageHandler {
      */
     virtual CoordinatorConfigurationHandle getCoordinatorConfiguration(RequestId requestId);
 
+    /**
+     * @brief obtain a new request id
+     * @return an integer used as an identifier for the request. Wraps around to one when the max is reached
+     */
     RequestId generateRequestId();
+
+    std::mutex idMutex;
     RequestId nextFreeRequestId{1};
 };
 }// namespace RequestProcessor::Experimental

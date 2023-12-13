@@ -223,13 +223,11 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
     for (uint64_t i = 1; i < numThreads; ++i) {
         threads.emplace_back([i, &lockHolder, &resourceVector, &reverseResourceVector, twoPLAccessHandle]() {
             if (i % 2 == 0) {
-                //ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(i, resourceVector));
                 twoPLAccessHandle->acquireResources(i, resourceVector);
                 NES_TRACE("Previous lock holder {}", lockHolder)
                 lockHolder = i;
                 NES_TRACE("Locked using resource vector in thread {}", i)
             } else {
-                //ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(i, reverseResourceVector));
                 twoPLAccessHandle->acquireResources(i, reverseResourceVector);
                 NES_TRACE("Previous lock holder {}", lockHolder)
                 lockHolder = i;

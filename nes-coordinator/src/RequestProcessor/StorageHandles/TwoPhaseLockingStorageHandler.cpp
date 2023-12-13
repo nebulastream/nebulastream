@@ -66,18 +66,6 @@ void TwoPhaseLockingStorageHandler::releaseResources(const RequestId requestId) 
         holder.holderId = INVALID_REQUEST_ID;
         holder.currentTicket = (holder.currentTicket + 1) % MAX_TICKET;
         holder.currentTicket.notify_all();
-
-//        //if the waiting queue is not empty, signal to the next request in line, that it can overwrite this holders id
-//        std::unique_lock lock(holder.queueMutex);
-//        auto& queue = holder.waitingQueue;
-//        holder.holderId = INVALID_REQUEST_ID;
-//
-//        //if another request is waiting on this resource, we pass the lock held by this request to the waiting one
-//        if (!queue.empty()) {
-//            auto promise = std::move(queue.front());
-//            queue.pop_front();
-//            promise.set_value(std::move(lock));
-//        }
     }
 }
 
@@ -105,29 +93,18 @@ TwoPhaseLockingStorageHandler::ResourceHolderData& TwoPhaseLockingStorageHandler
 void TwoPhaseLockingStorageHandler::lockResource(const ResourceType resourceType, const RequestId requestId) {
     auto& holder = getHolder(resourceType);
     auto& holderId = holder.holderId;
-    //std::unique_lock lock(holder.queueMutex);
-
     auto ticket = holder.nextAvailableTicket.fetch_add(1) % MAX_TICKET;
-    //check if the resource is free
     auto lastTicketSeen = holder.currentTicket.load();
+
+    //wait until the resource is free
     while (lastTicketSeen != ticket) {
         holder.currentTicket.wait(lastTicketSeen);
         lastTicketSeen = holder.currentTicket.load();
     }
+
+    //set holder id
     NES_ASSERT(holderId == INVALID_REQUEST_ID, "Ticket acquired by new request but hte holder id was not reset");
     holderId = requestId;
-
-
-    //if another thread holds the resource, insert a promise into the queue and weit for previous requests to fullfill that promise
-//    std::promise<std::unique_lock<std::mutex>> promise;
-//    auto future = promise.get_future();
-//    holder.waitingQueue.push_back(std::move(promise));
-//    lock.unlock();
-//
-//    //wait for previous request to pass the lock and then set this requests id as the holder id
-//    auto newLock = future.get();
-//    NES_ASSERT(holderId == INVALID_REQUEST_ID, "Request id does not match holder id");
-//    holderId = requestId;
 }
 
 GlobalExecutionPlanHandle TwoPhaseLockingStorageHandler::getGlobalExecutionPlanHandle(const RequestId requestId) {
