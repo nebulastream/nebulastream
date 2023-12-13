@@ -131,8 +131,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     void configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation, Version newVersion);
 
-    //todo: probably we do not need this
-    void configureNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink);
+    bool configureNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink);
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 

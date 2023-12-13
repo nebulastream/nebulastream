@@ -149,6 +149,8 @@ class NetworkSource : public DataSource {
     */
     Version getVersion() const override;
 
+    //Version addPendingVersion() const override;
+
     bool bind();
 
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }

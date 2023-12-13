@@ -335,7 +335,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool getConnectSinksAsync();
 
-    bool reconfigureSinksInSubPlan(QueryPlanPtr& reconfiguredQueryPlan);
+    bool reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan);
 
   public:
     /**

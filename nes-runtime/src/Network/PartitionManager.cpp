@@ -55,11 +55,15 @@ bool PartitionManager::PartitionConsumerEntry::startNewVersion() {
     return true;
 }
 
-void PartitionManager::PartitionConsumerEntry::addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation) {
+bool PartitionManager::PartitionConsumerEntry::addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation) {
     if (this->pendingVersion.has_value()) {
         NES_NOT_IMPLEMENTED();
     }
+    if (pendingVersion == consumer->getVersion()) {
+        return false;
+    }
     this->pendingVersion = {pendingVersion, pendingSenderLocation};
+    return true;
 }
 
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
