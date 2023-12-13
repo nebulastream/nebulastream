@@ -657,10 +657,10 @@ bool NodeEngine::reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan) {
         if (networkSink != nullptr) {
             //todo: use find if like above
             for (auto& reconfiguredSink : reconfiguredQueryPlan->getSinkOperators()) {
-                if (reconfiguredSink->getId() == sink->getOperatorId()) {
-                    auto reconfiguredNetworkSink =
-                        std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
-                    networkSink->configureNewReceiverAndPartition(*reconfiguredNetworkSink);
+                auto reconfiguredNetworkSink =
+                    std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
+                if (reconfiguredNetworkSink && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
+                    networkSink->scheduleNewReceiverAndPartition(*reconfiguredNetworkSink);
                 }
             }
         }

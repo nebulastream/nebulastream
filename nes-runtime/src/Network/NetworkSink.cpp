@@ -44,12 +44,12 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t numberOfOrigins,
                          Version version)
     : SinkMedium(
-        std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
-        nodeEngine,
-        numOfProducers,
-        queryId,
-        querySubPlanId,
-        numberOfOrigins),
+          std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
+          nodeEngine,
+          numOfProducers,
+          queryId,
+          querySubPlanId,
+          numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
@@ -380,12 +380,21 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     unbuffer(workerContext);
     return true;
 }
-bool NetworkSink::configureNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink) {
-    auto newVersion =  reconfiguredSink.getVersion();
+bool NetworkSink::scheduleNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink) {
+    auto newVersion = reconfiguredSink.getVersion();
     if (newVersion != version) {
-        configureNewReceiverAndPartition(reconfiguredSink.getNesPartition(), reconfiguredSink.getNodeLocation(), reconfiguredSink.getVersion());
+        pendingReceiver = {reconfiguredSink.getNesPartition(), reconfiguredSink.getNodeLocation(), reconfiguredSink.getVersion()};
         return true;
     }
     return false;
+}
+
+bool NetworkSink::applyPendingReceiverAndPartition() {
+    if (!pendingReceiver.has_value()) {
+        return false;
+    }
+    auto& [newReceiverPartition, newReceiverLocation, newVersion] = pendingReceiver.value();
+    configureNewReceiverAndPartition(newReceiverPartition, newReceiverLocation, newVersion);
+    return true;
 }
 }// namespace NES::Network

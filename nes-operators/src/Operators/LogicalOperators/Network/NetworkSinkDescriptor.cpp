@@ -22,22 +22,20 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
                                              Version version,
-                                             uint64_t numberOfOrigins)
+                                             uint64_t numberOfOrigins,
+                                             OperatorId uniqueId)
     : SinkDescriptor(numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
-      waitTime(waitTime), retryTimes(retryTimes), version(version) {}
+      waitTime(waitTime), retryTimes(retryTimes), version(version), uniqueNetworkSinkId(uniqueId) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
                                                 Version version,
-                                                uint64_t numberOfOrigins) {
-    return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
-                                                                         nesPartition,
-                                                                         waitTime,
-                                                                         retryTimes,
-                                                                         version,
-                                                                         numberOfOrigins));
+                                                uint64_t numberOfOrigins,
+                                                OperatorId uniqueId) {
+    return std::make_shared<NetworkSinkDescriptor>(
+        NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, retryTimes, version, numberOfOrigins, uniqueId));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -46,7 +44,7 @@ bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     }
     auto otherSinkDescriptor = other->as<NetworkSinkDescriptor>();
     return (nesPartition == otherSinkDescriptor->nesPartition) && (nodeLocation == otherSinkDescriptor->nodeLocation)
-        && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes) && (version == otherSinkDescriptor->getVersion());
+        && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes) && (version == otherSinkDescriptor->version && (uniqueNetworkSinkId == otherSinkDescriptor->uniqueNetworkSinkId));
 }
 
 std::string NetworkSinkDescriptor::toString() const {
@@ -62,5 +60,7 @@ std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return wa
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
 uint16_t NetworkSinkDescriptor::getVersion() const { return version; }
+
+OperatorId NetworkSinkDescriptor::getUniqueId() const { return uniqueNetworkSinkId; }
 
 }// namespace NES::Network

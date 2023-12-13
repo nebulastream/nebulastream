@@ -374,8 +374,9 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId 
                                        sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
     Version sinkVersion = 0;
+    OperatorId id = getNextOperatorId();
     return LogicalOperatorFactory::createSinkOperator(
-        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES, sinkVersion));
+        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES, sinkVersion, 0, id), id);
 }
 
 LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId,
