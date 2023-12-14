@@ -31,7 +31,7 @@ namespace NES::RequestProcessor::Experimental {
 FailQueryRequest::FailQueryRequest(const NES::QueryId queryId,
                                    const NES::QuerySubPlanId failedSubPlanId,
                                    const uint8_t maxRetries)
-    : AbstractRequest({ResourceType::GlobalQueryPlan,
+    : AbstractUniRequest({ResourceType::GlobalQueryPlan,
                        ResourceType::QueryCatalogService,
                        ResourceType::Topology,
                        ResourceType::GlobalExecutionPlan},

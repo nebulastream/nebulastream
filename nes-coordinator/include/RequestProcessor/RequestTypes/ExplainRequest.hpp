@@ -16,7 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_EXPLAINREQUEST_HPP_
 
 #include <Identifiers.hpp>
-#include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <nlohmann/json.hpp>
 
 namespace z3 {
@@ -106,7 +106,7 @@ struct ExplainResponse : public AbstractRequestResponse {
 class ExplainRequest;
 using ExplainRequestPtr = std::shared_ptr<ExplainRequest>;
 
-class ExplainRequest : public AbstractRequest {
+class ExplainRequest : public AbstractUniRequest {
   public:
     /**
      * @brief Constructor

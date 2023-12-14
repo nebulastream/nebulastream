@@ -12,7 +12,9 @@
     limitations under the License.
 */
 #include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
+#include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES::RequestProcessor {
@@ -20,9 +22,15 @@ namespace NES::RequestProcessor {
 AbstractSubRequest::AbstractSubRequest(std::vector<ResourceType> requiredResources)
     : StorageResourceLocker(std::move(requiredResources)) {}
 
-std::future<std::any> AbstractSubRequest::getFuture() { return responsePromise.get_future(); }
+void AbstractSubRequest::setPromise(std::promise<std::any> promise) { responsePromise = std::move(promise); }
+void AbstractSubRequest::setStorageHandler(StorageHandlerPtr storageHandler) { this->storageHandler = std::move(storageHandler); }
 
-void AbstractSubRequest::execute(const StorageHandlerPtr& storageHandler) {
+bool AbstractSubRequest::execute() {
+    auto expected = false;
+    if (!executionStarted.compare_exchange_strong(expected, true)) {
+        return false;
+    }
+    requestId = storageHandler->generateRequestId();
     if (requestId == INVALID_REQUEST_ID) {
         NES_THROW_RUNTIME_ERROR("Trying to execute a subrequest before its id has been set");
     }
@@ -30,9 +38,21 @@ void AbstractSubRequest::execute(const StorageHandlerPtr& storageHandler) {
     preExecution(storageHandler);
 
     //execute the request logic
-    executeSubRequestLogic(storageHandler);
+    responsePromise.set_value(executeSubRequestLogic(storageHandler));
 
     //release locks
     postExecution(storageHandler);
+    return true;
 }
+
+
+
+
+SubRequestFuture::SubRequestFuture(AbstractSubRequestPtr parentRequest, std::future<std::any> future) : request(std::move(parentRequest)), future(std::move(future)) {}
+
+std::any SubRequestFuture::get() {
+    request->execute();
+    return future.get();
+}
+
 }// namespace NES::RequestProcessor

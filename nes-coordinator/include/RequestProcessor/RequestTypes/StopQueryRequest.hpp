@@ -15,7 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STOPQUERYREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STOPQUERYREQUEST_HPP_
 
-#include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 
@@ -87,7 +87,7 @@ struct StopQueryResponse : public AbstractRequestResponse {
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequest : public AbstractRequest {
+class StopQueryRequest : public AbstractUniRequest {
 
   public:
     /**

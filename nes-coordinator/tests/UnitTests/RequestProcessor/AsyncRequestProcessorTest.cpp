@@ -17,6 +17,7 @@
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
 #include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Util/TestUtils.hpp>
@@ -48,13 +49,13 @@ class DummyConcatResponse : public AbstractRequestResponse {
  *                             \
  *                              --- (10,10)
  */
-class DummyConcatRequest : public AbstractRequest {
+class DummyConcatRequest : public AbstractUniRequest {
   public:
     DummyConcatRequest(const std::vector<ResourceType>& requiredResources,
                        uint8_t maxRetries,
                        uint32_t responseValue,
                        uint32_t min)
-        : AbstractRequest(requiredResources, maxRetries), responseValue(responseValue), min(min){};
+        : AbstractUniRequest(requiredResources, maxRetries), responseValue(responseValue), min(min){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override {
         std::vector<std::shared_ptr<AbstractRequest>> newRequests;
@@ -86,10 +87,10 @@ class DummyWaitOnFutureResponse : public AbstractRequestResponse {
     StorageHandlerPtr storageHandler;
 };
 
-class DummyWaitOnFutureRequest : public AbstractRequest {
+class DummyWaitOnFutureRequest : public AbstractUniRequest {
   public:
     DummyWaitOnFutureRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, std::future<bool> future)
-        : AbstractRequest(requiredResources, maxRetries), future(std::move(future)){};
+        : AbstractUniRequest(requiredResources, maxRetries), future(std::move(future)){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
         if (future.get()) {
@@ -116,12 +117,11 @@ class DummyWaitOnFutureSubRequest : public AbstractSubRequest {
     DummyWaitOnFutureSubRequest(const std::vector<ResourceType>& requiredResources, std::future<bool> future)
         : AbstractSubRequest(requiredResources), future(std::move(future)){};
 
-    void executeSubRequestLogic(const StorageHandlerPtr& storageHandler) override {
-        if (future.get()) {
-            auto response = std::make_shared<DummyWaitOnFutureResponse>(storageHandler);
+    std::any executeSubRequestLogic(const StorageHandlerPtr& storageHandler) override {
+        future.get();
+        auto response = std::make_shared<DummyWaitOnFutureResponse>(storageHandler);
 
-            responsePromise.set_value(response);
-        }
+        return response;
     }
 
   private:
@@ -136,20 +136,20 @@ class DummyWaitOnFutureMultiRequest : public AbstractMultiRequest {
         std::vector<std::pair<std::future<bool>, std::shared_ptr<AbstractSubRequest>>>& listOfResourceLists)
         : AbstractMultiRequest(requiredResources, maxRetries), listOfResourceLists(listOfResourceLists){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
-        std::vector<std::future<std::any>> responseFutures;
+    std::vector<AbstractRequestPtr> executeRequestLogic() override {
+        std::vector<SubRequestFuturePtr> responseFutures;
         responseFutures.reserve(listOfResourceLists.size());
         for (auto& [future, subRequest] : listOfResourceLists) {
             future.get();
-            responseFutures.push_back(scheduleSubRequest(subRequest, storageHandler));
+            responseFutures.push_back(scheduleSubRequest(subRequest));
         }
 
-        executeSubRequestWhileQueueNotEmpty(storageHandler);
-
+        std::shared_ptr<DummyWaitOnFutureResponse> response;
         for (auto& f : responseFutures) {
-            f.wait();
+            response = std::any_cast<std::shared_ptr<DummyWaitOnFutureResponse>>(f->get());
         }
-        responsePromise.set_value(std::make_shared<DummyWaitOnFutureResponse>(storageHandler));
+        //todo: do not return the storage handler
+        responsePromise.set_value(response);
         return {};
     }
 
@@ -174,14 +174,15 @@ class DummySubRequest : public AbstractSubRequest {
   public:
     DummySubRequest(std::atomic<uint32_t>& additionTarget, uint32_t returnNewRequestFrequency)
         : AbstractSubRequest({}), additionTarget(additionTarget), returnNewRequestFrequency(returnNewRequestFrequency) {}
-    void executeSubRequestLogic(const StorageHandlerPtr&) override {
+    std::any executeSubRequestLogic(const StorageHandlerPtr&) override {
         auto lastValue = ++additionTarget;
-        responsePromise.set_value(true);
+        return true;
     }
     std::atomic<uint32_t>& additionTarget;
     uint32_t returnNewRequestFrequency;
 };
 
+//todo: rename
 class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
   public:
     DummyRequestMainThreadHelpsExecution(const std::vector<ResourceType>& requiredResources,
@@ -192,18 +193,14 @@ class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
         : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue),
           returnNewRequestFrequency(returnNewRequestFrequency){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
-        std::vector<std::future<std::any>> futures;
+    std::vector<AbstractRequestPtr> executeRequestLogic() override {
+        std::vector<SubRequestFuturePtr> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
-            futures.push_back(scheduleSubRequest(
-                std::make_shared<DummySubRequest>(responseValue, returnNewRequestFrequency),
-                storageHandler));
+            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(responseValue, returnNewRequestFrequency)));
         }
 
-        executeSubRequestWhileQueueNotEmpty(storageHandler);
-
         for (auto& f : futures) {
-            f.wait();
+            f->get();
         }
         responsePromise.set_value(std::make_shared<DummyMultiResponse>(responseValue));
         return {};
@@ -231,13 +228,12 @@ class AsyncRequestProcessorTest : public Testing::BaseUnitTest, public testing::
     Configurations::CoordinatorConfigurationPtr coordinatorConfig;
 
   public:
-    AsyncRequestProcessorPtr getProcessor(uint16_t numThreads)  {
+    AsyncRequestProcessorPtr getProcessor(uint16_t numThreads) {
         coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
         coordinatorConfig->requestExecutorThreads = numThreads;
         StorageDataStructures storageDataStructures = {coordinatorConfig, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
         return std::make_shared<AsyncRequestProcessor>(storageDataStructures);
     }
-
 };
 
 TEST_P(AsyncRequestProcessorTest, startAndDestroy) {
@@ -484,7 +480,7 @@ TEST_F(AsyncRequestProcessorTest, testWaitingForLock) {
     }
 }
 
-TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
+TEST_F(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
     auto processor = getProcessor(8);
     constexpr uint32_t responseValue = 20;
     try {
@@ -588,7 +584,9 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
 
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        while (twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
+        //todo: ticket count does not match here
+        //while (twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology - 1) {
+            while (twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
@@ -602,11 +600,6 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
         runPromise4.set_value(true);
 
         nextAvailableTicketTopology++;
-        if (coordinatorConfig->requestExecutorThreads.getValue() < 2) {
-            nextAvailableTicketTopology = 1;
-        } else if (coordinatorConfig->requestExecutorThreads.getValue() < 5) {
-            nextAvailableTicketTopology = 2;
-        }
         start_timestamp = std::chrono::system_clock::now();
         while ((int) twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
