@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.0](https://github.com/nebulastream/nebulastream/tree/v0.6.0) (2023-12-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.270...v0.6.0)
+
+**Implemented enhancements:**
+
+- \[TASK\] Shared Protobuf Folder/Repo [\#4403](https://github.com/nebulastream/nebulastream/issues/4403)
+
 ## [v0.5.270](https://github.com/nebulastream/nebulastream/tree/v0.5.270) (2023-12-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.269...v0.5.270)
