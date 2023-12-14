@@ -235,6 +235,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
+
+
   build-macos:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     runs-on: [ self-hosted, macos, '${{ matrix.arch }}', Build ]
@@ -274,6 +276,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
+
+
   infer-static-analysis:
     name: Static Analysis FB Infer
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
@@ -319,6 +323,8 @@ jobs:
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis
+          
+
   release:
     runs-on: [ self-hosted, linux, X64, Build ]
     if: github.ref == 'refs/heads/master'
@@ -351,9 +357,9 @@ jobs:
           echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-common/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
           if [[ "${{ github.event_name }}"  =~ "workflow_dispatch" ]]; then
             if [[ "${{ env.NEXT_VERSION }}" =~ "Minor" ]]; then
-              echo "NES_VERSION=$(echo $NES_VERSION | awk -F. -v OFS=. '{$2 +=1 ; $3 = 0 ; print}')" >> $GITHUB_ENV
+              echo "NES_VERSION=$(echo ${{ env.NES_VERSION }} | awk -F. -v OFS=. '{$2 +=1 ; $3 = 0 ; print}')" >> $GITHUB_ENV
             else
-              echo "NES_VERSION=$(echo $NES_VERSION | awk -F. -v OFS=. '{$1 +=1 ; $2 =0 ; $3 = 0 ; print}')" >> $GITHUB_ENV 
+              echo "NES_VERSION=$(echo ${{ env.NES_VERSION }} | awk -F. -v OFS=. '{$1 +=1 ; $2 =0 ; $3 = 0 ; print}')" >> $GITHUB_ENV 
             fi
           fi
       - name: "Build and Release NES Build Image"
