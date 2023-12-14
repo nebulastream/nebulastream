@@ -182,7 +182,7 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
     thread2->join();
 
     //wait until the other request is in waiting list for the resource
-    while (twoPLAccessHandle->getCurrentTicket(ResourceType::Topology) < 2) {
+    while (twoPLAccessHandle->getCurrentTicket(ResourceType::Topology) < 1) {
         NES_DEBUG("Waiting request count {}", twoPLAccessHandle->getCurrentTicket(ResourceType::Topology))
     }
     releaseCount++;

@@ -22,7 +22,7 @@
 
 namespace NES::RequestProcessor {
 struct StorageDataStructures;
-using TicketId = uint16_t;
+using TicketId = uint32_t;
 
 static constexpr RequestId MAX_TICKET = std::numeric_limits<TicketId>::max();
 /**
