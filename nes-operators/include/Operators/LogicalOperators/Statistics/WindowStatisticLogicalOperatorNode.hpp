@@ -22,6 +22,9 @@ namespace NES::Experimental::Statistics {
 class WindowStatisticDescriptor;
 using WindowStatisticDescriptorPtr = std::shared_ptr<WindowStatisticDescriptor>;
 
+/**
+ * @brief the class that describes the windowStatisticLogicalOperatorNode. A general operator that implements statistical operations.
+ */
 class WindowStatisticLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
 
