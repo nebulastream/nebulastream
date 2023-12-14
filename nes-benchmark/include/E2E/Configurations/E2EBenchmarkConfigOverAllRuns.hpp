@@ -21,6 +21,10 @@
 #include <map>
 
 namespace NES::Benchmark {
+
+// Default values for config options
+constexpr auto defaultCustomDelayInSeconds = 0;
+
 /**
  * @brief all configurations that are constant over all runs
  */
@@ -32,40 +36,21 @@ class E2EBenchmarkConfigOverAllRuns {
      */
     class E2EBenchmarkQueryConfig {
       public:
-        E2EBenchmarkQueryConfig(std::string queryString, uint32_t customDelayInSeconds) : queryString(std::move(queryString)), customDelayInSeconds(customDelayInSeconds) {}
-        friend std::ostream &operator<< (std::ostream& os, const E2EBenchmarkQueryConfig& config) {
-            os << config.queryString;
-            return os;
-        }
+        E2EBenchmarkQueryConfig(std::string queryString, uint32_t customDelayInSeconds)
+            : queryString(std::move(queryString)), customDelayInSeconds(customDelayInSeconds) {}
+        friend std::ostream& operator<<(std::ostream& os, const E2EBenchmarkQueryConfig& config);
 
         E2EBenchmarkQueryConfig(const E2EBenchmarkQueryConfig& other)
-            : queryString(other.queryString),
-              customDelayInSeconds(other.customDelayInSeconds) {
-        }
+            : queryString(other.queryString), customDelayInSeconds(other.customDelayInSeconds) {}
 
         E2EBenchmarkQueryConfig(E2EBenchmarkQueryConfig&& other) noexcept
-            : queryString(std::move(other.queryString)),
-              customDelayInSeconds(other.customDelayInSeconds) {
-        }
+            : queryString(std::move(other.queryString)), customDelayInSeconds(other.customDelayInSeconds) {}
 
-        E2EBenchmarkQueryConfig& operator=(const E2EBenchmarkQueryConfig& other) {
-            if (this == &other)
-                return *this;
-            queryString = other.queryString;
-            customDelayInSeconds = other.customDelayInSeconds;
-            return *this;
-        }
+        E2EBenchmarkQueryConfig& operator=(const E2EBenchmarkQueryConfig& other);
+        E2EBenchmarkQueryConfig& operator=(E2EBenchmarkQueryConfig&& other);
 
-        E2EBenchmarkQueryConfig& operator=(E2EBenchmarkQueryConfig&& other) noexcept {
-            if (this == &other)
-                return *this;
-            queryString = std::move(other.queryString);
-            customDelayInSeconds = other.customDelayInSeconds;
-            return *this;
-        }
-
-        [[nodiscard]] const std::string& getQueryString() const { return queryString; }
-        [[nodiscard]] uint32_t getCustomDelayInSeconds() const { return customDelayInSeconds; }
+        [[nodiscard]] const std::string& getQueryString() const;
+        [[nodiscard]] uint32_t getCustomDelayInSeconds() const;
 
       private:
         std::string queryString;

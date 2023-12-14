@@ -16,9 +16,38 @@
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Util/yaml/Yaml.hpp>
 
-constexpr auto defaultCustomDelayInSeconds = 0;
-
 namespace NES::Benchmark {
+
+std::ostream& operator<<(std::ostream& os, const E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig& config) {
+    os << config.queryString;
+    return os;
+}
+
+E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig&
+E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::operator=(const E2EBenchmarkQueryConfig& other) {
+    if (this == &other)
+        return *this;
+    queryString = other.queryString;
+    customDelayInSeconds = other.customDelayInSeconds;
+    return *this;
+}
+
+E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig&
+E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::operator=(E2EBenchmarkQueryConfig&& other) {
+    if (this == &other)
+        return *this;
+    queryString = std::move(other.queryString);
+    customDelayInSeconds = other.customDelayInSeconds;
+    return *this;
+}
+
+[[nodiscard]] const std::string& E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::getQueryString() const {
+    return queryString;
+}
+[[nodiscard]] uint32_t E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::getCustomDelayInSeconds() const {
+    return customDelayInSeconds;
+}
+
 E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     using namespace Configurations;
     startupSleepIntervalInSeconds = ConfigurationOption<uint32_t>::create("startupSleepIntervalInSeconds",
