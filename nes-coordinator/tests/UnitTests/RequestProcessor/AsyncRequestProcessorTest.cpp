@@ -342,7 +342,6 @@ TEST_F(AsyncRequestProcessorTest, testWaitingForLock) {
                 NES_DEBUG("Request {} has locked the topology", queryId1);
                 break;
             } catch (std::exception& e) {
-                NES_DEBUG("Request {} has not yet locked the topology", queryId1);
             }
         }
         auto currentTicketTopology = 0;
@@ -364,7 +363,6 @@ TEST_F(AsyncRequestProcessorTest, testWaitingForLock) {
                 NES_DEBUG("Request {} has locked the query catalog", queryId2);
                 break;
             } catch (std::exception& e) {
-                NES_DEBUG("Request {} has not yet locked the query catalog", queryId2);
             }
         }
         ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
@@ -589,7 +587,6 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
                 NES_DEBUG("Request {} has locked the topology", queryId1);
                 break;
             } catch (std::exception& e) {
-                NES_DEBUG("Request {} has not yet locked the topology", queryId1);
             }
         }
         auto currentTicketTopology = 0;
@@ -611,7 +608,6 @@ TEST_P(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
                 NES_DEBUG("Request {} has locked the query catalog", queryId2);
                 break;
             } catch (std::exception& e) {
-                NES_DEBUG("Request {} has not yet locked the query catalog", queryId2);
             }
         }
         ASSERT_EQ(twoplhandler->getCurrentTicket(ResourceType::Topology), currentTicketTopology);
