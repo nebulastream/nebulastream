@@ -14,15 +14,15 @@
 
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWCOMPUTATIONOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWCOMPUTATIONOPERATOR_HPP_
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
 namespace NES {
 
 /**
  * @brief this class represents the computation operator for distributed windowing that is deployed on the sink node and which merges all slices
  */
-class WindowComputationOperator : public WindowOperatorNode {
+class WindowComputationOperator : public WindowOperator {
   public:
     WindowComputationOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
 

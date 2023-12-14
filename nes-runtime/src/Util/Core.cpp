@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -111,7 +111,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
     for (auto&& node : queryPlanIterator) {
         for (auto const& [key, val] : *propertyIterator) {
             // add the current property to the current operator
-            node->as<LogicalOperatorNode>()->addProperty(key, val);
+            node->as<LogicalOperator>()->addProperty(key, val);
         }
         ++propertyIterator;
     }

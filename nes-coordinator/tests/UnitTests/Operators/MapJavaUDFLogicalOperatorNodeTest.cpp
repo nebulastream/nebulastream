@@ -17,8 +17,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>
 #include <gtest/gtest.h>
@@ -40,14 +40,14 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
     auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}.setOutputSchema(outputSchema).build();
 
     // Create a MapUdfLogicalOperatorNode with the JavaUDFDescriptor.
-    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, 1);
+    auto mapUdfLogicalOperatorNode = std::make_shared<LogicalMapUDFOperator>(javaUdfDescriptor, 1);
 
-    // Create a SourceLogicalOperatorNode with a source schema
+    // Create a LogicalSourceOperator with a source schema
     // and add it as a child to the MapUdfLogicalOperatorNode to infer the input schema.
     const std::string sourceName = "sourceName";
     auto inputSchema = std::make_shared<Schema>()->addField(sourceName + "$inputAttribute", DataTypeFactory::createUInt64());
     auto sourceDescriptor = std::make_shared<SchemaSourceDescriptor>(inputSchema);
-    mapUdfLogicalOperatorNode->addChild(std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, 2));
+    mapUdfLogicalOperatorNode->addChild(std::make_shared<LogicalSourceOperator>(sourceDescriptor, 2));
 
     // After calling inferSchema on the MapUdfLogicalOperatorNode, the input schema should be the schema of the source.
     mapUdfLogicalOperatorNode->inferSchema();
@@ -62,8 +62,8 @@ TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferSchema) {
 TEST_F(MapJavaUDFLogicalOperatorNodeTest, InferStringSignature) {
     // Create a MapUdfLogicalOperatorNode with a JavaUDFDescriptor and a source as a child.
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
-    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUDFDescriptor, 1);
-    auto child = std::make_shared<SourceLogicalOperatorNode>(
+    auto mapUdfLogicalOperatorNode = std::make_shared<LogicalMapUDFOperator>(javaUDFDescriptor, 1);
+    auto child = std::make_shared<LogicalSourceOperator>(
         std::make_shared<SchemaSourceDescriptor>(
             std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64())),
         2);

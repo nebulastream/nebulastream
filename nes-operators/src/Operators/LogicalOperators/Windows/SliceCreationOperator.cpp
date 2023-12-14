@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
@@ -27,7 +27,7 @@
 namespace NES {
 
 SliceCreationOperator::SliceCreationOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
-    : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
+    : OperatorNode(id), WindowOperator(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
@@ -59,7 +59,7 @@ OperatorNodePtr SliceCreationOperator::copy() {
     return copy;
 }
 bool SliceCreationOperator::inferSchema() {
-    if (!WindowOperatorNode::inferSchema()) {
+    if (!WindowOperator::inferSchema()) {
         return false;
     }
     // infer the default input and output schema

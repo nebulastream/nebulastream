@@ -13,8 +13,8 @@
 */
 #include <API/Schema.hpp>
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,12 +30,12 @@ BinaryOperatorSortRule::BinaryOperatorSortRule() { NES_DEBUG("BinaryOperatorSort
 QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr) {
     NES_INFO("Apply BinaryOperatorSortRule ");
     //Find all join operators in the query plan and sort children individually.
-    auto joinOperators = queryPlanPtr->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOperators = queryPlanPtr->getOperatorByType<LogicalJoinOperator>();
     for (const auto& joinOperator : joinOperators) {
         sortChildren(joinOperator);
     }
     //Find all Union operators in the query plan and sort children individually.
-    auto unionOperators = queryPlanPtr->getOperatorByType<UnionLogicalOperatorNode>();
+    auto unionOperators = queryPlanPtr->getOperatorByType<LogicalUnionOperator>();
     for (const auto& unionOperator : unionOperators) {
         sortChildren(unionOperator);
     }

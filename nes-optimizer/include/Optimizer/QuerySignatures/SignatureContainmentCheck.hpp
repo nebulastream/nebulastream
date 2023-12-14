@@ -31,8 +31,8 @@ using ExprPtr = std::shared_ptr<expr>;
 }// namespace z3
 
 namespace NES {
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperator>;
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;

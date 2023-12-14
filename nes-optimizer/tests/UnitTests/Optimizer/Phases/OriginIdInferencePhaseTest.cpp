@@ -26,13 +26,13 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -109,7 +109,7 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
 TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("B"))->as<SourceLogicalOperatorNode>();
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("B"))->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -120,13 +120,13 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
 
     // the source should always expose its own origin id as an output
-    auto sourceOperators = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto sourceOperators = updatedQueryPlan->getOperatorByType<LogicalSourceOperator>();
     ASSERT_EQ(sourceOperators.size(), 1);
     ASSERT_EQ(sourceOperators[0]->getOutputOriginIds().size(), 1);
     ASSERT_EQ(sourceOperators[0]->getOutputOriginIds()[0], sourceOperators[0]->getOriginId());
 
     // the sink should always have one input origin id.
-    auto sinkOperators = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperators = updatedQueryPlan->getOperatorByType<LogicalSinkOperator>();
     ASSERT_EQ(sinkOperators.size(), 1);
     ASSERT_EQ(sinkOperators[0]->getInputOriginIds().size(), 1);
 
@@ -140,7 +140,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
 TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -151,13 +151,13 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources) {
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
 
     // the source should always expose its own origin id as an output
-    auto sourceOperators = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto sourceOperators = updatedQueryPlan->getOperatorByType<LogicalSourceOperator>();
     ASSERT_EQ(sourceOperators.size(), 2);
     ASSERT_EQ(sourceOperators[0]->getOutputOriginIds().size(), 1);
     ASSERT_EQ(sourceOperators[0]->getOutputOriginIds()[0], sourceOperators[0]->getOriginId());
 
     // the sink should always have one input origin id.
-    auto sinkOperators = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperators = updatedQueryPlan->getOperatorByType<LogicalSinkOperator>();
     ASSERT_EQ(sinkOperators.size(), 1);
     ASSERT_EQ(sinkOperators[0]->getInputOriginIds().size(), 2);
 
@@ -173,13 +173,13 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources) {
 TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSources) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source1);
     auto source2 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source2);
     auto source3 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source3);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -190,12 +190,12 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSources) {
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
 
     // the source should always expose its own origin id as an output
-    auto sourceOperators = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto sourceOperators = updatedQueryPlan->getOperatorByType<LogicalSourceOperator>();
     ASSERT_EQ(sourceOperators[0]->getOutputOriginIds().size(), 1);
     ASSERT_EQ(sourceOperators[0]->getOutputOriginIds()[0], sourceOperators[0]->getOriginId());
 
     // the sink should always have one input origin id.
-    auto sinkOperators = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperators = updatedQueryPlan->getOperatorByType<LogicalSinkOperator>();
     ASSERT_EQ(sinkOperators[0]->getInputOriginIds().size(), 3);
 
     // input origin ids of the sink should contain all origin ids from the sources.
@@ -211,13 +211,13 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSources) {
 TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndIntermediateUnaryOperators) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source1);
     auto source2 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source2);
     auto source3 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source3);
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("id") == Attribute("id"));
     queryPlan->appendOperatorAsNewRoot(filter);
@@ -235,12 +235,12 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndIntermediateUnar
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
 
     // the source should always expose its own origin id as an output
-    auto sourceOperators = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto sourceOperators = updatedQueryPlan->getOperatorByType<LogicalSourceOperator>();
     ASSERT_EQ(sourceOperators[0]->getOutputOriginIds().size(), 1);
     ASSERT_EQ(sourceOperators[0]->getOutputOriginIds()[0], sourceOperators[0]->getOriginId());
 
     // the sink should always have one input origin id.
-    auto sinkOperators = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperators = updatedQueryPlan->getOperatorByType<LogicalSinkOperator>();
     ASSERT_EQ(sinkOperators[0]->getInputOriginIds().size(), 3);
 
     // input origin ids of the sink should contain all origin ids from the sources.
@@ -256,19 +256,19 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndIntermediateUnar
 TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
-                       ->as<SourceLogicalOperatorNode>();
+                       ->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source1);
     auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
-                       ->as<SourceLogicalOperatorNode>();
+                       ->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source2);
     auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
-                       ->as<SourceLogicalOperatorNode>();
+                       ->as<LogicalSourceOperator>();
     queryPlan->addRootOperator(source3);
-    auto dummyWindowDefinition = LogicalWindowDefinition::create({},
+    auto dummyWindowDefinition = LogicalWindowDescriptor::create({},
                                                                  WindowTypePtr(),
                                                                  DistributionCharacteristicPtr(),
                                                                  0);
-    auto window = LogicalOperatorFactory::createCentralWindowSpecializedOperator(dummyWindowDefinition)->as<WindowOperatorNode>();
+    auto window = LogicalOperatorFactory::createCentralWindowSpecializedOperator(dummyWindowDefinition)->as<WindowOperator>();
     queryPlan->appendOperatorAsNewRoot(window);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -311,14 +311,14 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForUnionOperators) {
     updatedQueryPlan = typeInferencePhase->execute(updatedQueryPlan);
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
 
-    auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto sourceOps = updatedQueryPlan->getOperatorByType<LogicalSourceOperator>();
+    auto unionOps = updatedQueryPlan->getOperatorByType<LogicalUnionOperator>();
     ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 3);
     ASSERT_EQ(unionOps[0]->getOutputOriginIds()[0], sourceOps[0]->getOutputOriginIds()[0]);
     ASSERT_EQ(unionOps[0]->getOutputOriginIds()[1], sourceOps[1]->getOutputOriginIds()[0]);
     ASSERT_EQ(unionOps[0]->getOutputOriginIds()[2], sourceOps[2]->getOutputOriginIds()[0]);
 
-    auto sinkOps = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOps = updatedQueryPlan->getOperatorByType<LogicalSinkOperator>();
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOps[0]->getOutputOriginIds()[0]);
 }
 
@@ -338,8 +338,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators) {
     updatedQueryPlan = typeInferencePhase->execute(updatedQueryPlan);
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
 
-    auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto sourceOps = updatedQueryPlan->getOperatorByType<LogicalSourceOperator>();
+    auto unionOps = updatedQueryPlan->getOperatorByType<LogicalUnionOperator>();
     const std::vector<OriginId>& unionOutputOriginIds = unionOps[0]->getOutputOriginIds();
     ASSERT_EQ(unionOutputOriginIds.size(), 4);
 
@@ -352,7 +352,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators) {
     found = std::find(unionOutputOriginIds.begin(), unionOutputOriginIds.end(), sourceOps[3]->getOutputOriginIds()[0]);
     ASSERT_TRUE(found != unionOutputOriginIds.end());
 
-    auto sinkOps = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOps = updatedQueryPlan->getOperatorByType<LogicalSinkOperator>();
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOutputOriginIds[0]);
 }
 
@@ -377,8 +377,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator) {
     updatedQueryPlan = typeInferencePhase->execute(updatedQueryPlan);
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
 
-    auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto joinOps = updatedQueryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto sourceOps = updatedQueryPlan->getOperatorByType<LogicalSourceOperator>();
+    auto joinOps = updatedQueryPlan->getOperatorByType<LogicalJoinOperator>();
     auto joinInputOriginIds = joinOps[0]->getLeftInputOriginIds();
     auto rightInputOriginIds = joinOps[0]->getRightInputOriginIds();
     joinInputOriginIds.insert(joinInputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
@@ -397,7 +397,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator) {
     const std::vector<OriginId>& joinOutputOriginIds = joinOps[0]->getOutputOriginIds();
     ASSERT_EQ(joinOutputOriginIds.size(), 1);
 
-    auto sinkOps = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOps = updatedQueryPlan->getOperatorByType<LogicalSinkOperator>();
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], joinOutputOriginIds[0]);
 }
 
@@ -432,11 +432,11 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
 
     // Assert on origin ids for union operator
-    auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto unionOps = updatedQueryPlan->getOperatorByType<LogicalUnionOperator>();
     ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 3);
 
     // Assert on origin ids for union operator
-    auto windowOps = updatedQueryPlan->getOperatorByType<WindowOperatorNode>();
+    auto windowOps = updatedQueryPlan->getOperatorByType<WindowOperator>();
     ASSERT_EQ(windowOps.size(), 2);
 
     // Window aggregations
@@ -464,7 +464,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
     ASSERT_EQ(windowOps[1]->getOutputOriginIds().size(), 1);
 
     // Assert on origin ids for join operator
-    auto joinOps = updatedQueryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOps = updatedQueryPlan->getOperatorByType<LogicalJoinOperator>();
     ASSERT_EQ(joinOps[0]->getLeftInputOriginIds().size(), 1);
     ASSERT_EQ(joinOps[0]->getRightInputOriginIds().size(), 1);
     ASSERT_EQ(joinOps[0]->getOutputOriginIds().size(), 1);

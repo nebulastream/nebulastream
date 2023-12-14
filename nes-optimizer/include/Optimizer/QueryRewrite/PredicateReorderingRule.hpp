@@ -27,8 +27,8 @@ using NodePtr = std::shared_ptr<Node>;
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+class LogicalFilterOperator;
+using FilterLogicalOperatorNodePtr = std::shared_ptr<LogicalFilterOperator>;
 }// namespace NES
 
 namespace NES::Optimizer {

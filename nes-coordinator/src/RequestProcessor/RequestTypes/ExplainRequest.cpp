@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
+#include "Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp"
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
@@ -29,11 +31,9 @@
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Optimizer//Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
@@ -351,7 +351,7 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
 
     //Elegant acceleration service call
     //1. Fetch the OpenCL Operators
-    auto openCLOperators = queryPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+    auto openCLOperators = queryPlan->getOperatorByType<LogicalOpenCLOperator>();
 
     //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {

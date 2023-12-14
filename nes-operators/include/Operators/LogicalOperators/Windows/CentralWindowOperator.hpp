@@ -15,11 +15,11 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_CENTRALWINDOWOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_CENTRALWINDOWOPERATOR_HPP_
 
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
 namespace NES {
 
-class CentralWindowOperator : public WindowOperatorNode {
+class CentralWindowOperator : public WindowOperator {
   public:
     CentralWindowOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
 

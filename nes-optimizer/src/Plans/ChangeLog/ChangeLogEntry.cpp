@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <stack>
 #include <utility>
@@ -56,7 +56,7 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
             }
 
             // Check if the visiting operator is also one of the downstream operators
-            if (downstreamOperators.find(visitingOperator->as<LogicalOperatorNode>()) != downstreamOperators.end()) {
+            if (downstreamOperators.find(visitingOperator->as<LogicalOperator>()) != downstreamOperators.end()) {
                 // Skip rest of the operation
                 continue;
             }
@@ -69,7 +69,7 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
                 for (const auto& downStreamOperatorToVisit : downStreamOperatorsToVisit) {
                     bool visit = false;
                     // If the operator to visit is one of the input downstream operators then add the operator to visit list
-                    if (downstreamOperators.find(downStreamOperatorToVisit->as<LogicalOperatorNode>())
+                    if (downstreamOperators.find(downStreamOperatorToVisit->as<LogicalOperator>())
                         != downstreamOperators.end()) {
                         visit = true;
                     } else {// Check if the path is to be explored

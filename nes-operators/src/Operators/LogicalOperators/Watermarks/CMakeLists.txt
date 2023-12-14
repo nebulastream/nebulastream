@@ -14,6 +14,6 @@
 add_source_files(nes-operators
         EventTimeWatermarkStrategyDescriptor.cpp
         IngestionTimeWatermarkStrategyDescriptor.cpp
-        WatermarkAssignerLogicalOperatorNode.cpp
+        LogicalWatermarkAssignerOperator.cpp
         WatermarkStrategyDescriptor.cpp
 )

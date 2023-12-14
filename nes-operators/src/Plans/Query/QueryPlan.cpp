@@ -14,12 +14,12 @@
 
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <set>
 #include <stack>
@@ -56,7 +56,7 @@ std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
     std::set<SourceLogicalOperatorNodePtr> sourceOperatorsSet;
     for (const auto& rootOperator : rootOperators) {
-        auto sourceOptrs = rootOperator->getNodesByType<SourceLogicalOperatorNode>();
+        auto sourceOptrs = rootOperator->getNodesByType<LogicalSourceOperator>();
         NES_DEBUG("QueryPlan: insert all source operators to the collection");
         sourceOperatorsSet.insert(sourceOptrs.begin(), sourceOptrs.end());
     }
@@ -69,7 +69,7 @@ std::vector<SinkLogicalOperatorNodePtr> QueryPlan::getSinkOperators() {
     NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
     std::vector<SinkLogicalOperatorNodePtr> sinkOperators;
     for (const auto& rootOperator : rootOperators) {
-        auto sinkOperator = rootOperator->as<SinkLogicalOperatorNode>();
+        auto sinkOperator = rootOperator->as<LogicalSinkOperator>();
         sinkOperators.emplace_back(sinkOperator);
     }
     NES_DEBUG("QueryPlan: Found {} sink operators.", sinkOperators.size());

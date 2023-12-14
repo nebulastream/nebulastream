@@ -30,37 +30,37 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+class LogicalFilterOperator;
+using FilterLogicalOperatorNodePtr = std::shared_ptr<LogicalFilterOperator>;
 
-class JoinLogicalOperatorNode;
-using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
+class LogicalJoinOperator;
+using JoinLogicalOperatorNodePtr = std::shared_ptr<LogicalJoinOperator>;
 
 namespace Experimental {
-class BatchJoinLogicalOperatorNode;
-using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+class LogicalBatchJoinOperator;
+using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<LogicalBatchJoinOperator>;
 }// namespace Experimental
 
-class UnionLogicalOperatorNode;
-using UnionLogicalOperatorNodePtr = std::shared_ptr<UnionLogicalOperatorNode>;
+class LogicalUnionOperator;
+using UnionLogicalOperatorNodePtr = std::shared_ptr<LogicalUnionOperator>;
 
-class ProjectionLogicalOperatorNode;
-using ProjectionLogicalOperatorNodePtr = std::shared_ptr<ProjectionLogicalOperatorNode>;
+class LogicalProjectionOperator;
+using ProjectionLogicalOperatorNodePtr = std::shared_ptr<LogicalProjectionOperator>;
 
-class MapLogicalOperatorNode;
-using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
+class LogicalMapOperator;
+using MapLogicalOperatorNodePtr = std::shared_ptr<LogicalMapOperator>;
 
-class WindowLogicalOperatorNode;
-using WindowLogicalOperatorNodePtr = std::shared_ptr<WindowLogicalOperatorNode>;
+class LogicalWindowOperator;
+using WindowLogicalOperatorNodePtr = std::shared_ptr<LogicalWindowOperator>;
 
-class LimitLogicalOperatorNode;
-using LimitLogicalOperatorNodePtr = std::shared_ptr<LimitLogicalOperatorNode>;
+class LogicalLimitOperator;
+using LimitLogicalOperatorNodePtr = std::shared_ptr<LogicalLimitOperator>;
 
-class WatermarkAssignerLogicalOperatorNode;
-using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
+class LogicalWatermarkAssignerOperator;
+using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<LogicalWatermarkAssignerOperator>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class LogicalSourceOperator;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<LogicalSourceOperator>;
 
 namespace Catalogs::UDF {
 class JavaUDFDescriptor;
@@ -74,8 +74,8 @@ using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 }// namespace Catalogs::UDF
 
 namespace InferModel {
-class InferModelLogicalOperatorNode;
-using InferModelLogicalOperatorNodePtr = std::shared_ptr<InferModelLogicalOperatorNode>;
+class LogicalInferModelOperator;
+using InferModelLogicalOperatorNodePtr = std::shared_ptr<LogicalInferModelOperator>;
 
 class InferModelOperatorHandler;
 using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;

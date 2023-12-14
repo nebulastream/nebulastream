@@ -18,11 +18,11 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -84,7 +84,7 @@ void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr&
             SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
         z3::solver solver(*context);
         signatureInferencePhase->execute(queryPlan);
-        auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+        auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
 
         // Looping through all filter operators of the Query, checking for contradicting conditions.
         for (const auto& filterOp : filterOperators) {
@@ -198,7 +198,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& quer
 
     //Check if all root operators of type sink
     for (auto& root : rootOperators) {
-        if (!root->instanceOf<SinkLogicalOperatorNode>()) {
+        if (!root->instanceOf<LogicalSinkOperator>()) {
             throw InvalidQueryException("Query "s + queryPlan->toString() + " does not contain a valid sink operator as root");
         }
     }
@@ -206,7 +206,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& quer
 
 void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryPlan) {
 
-    auto inferModelOperators = queryPlan->getOperatorByType<InferModel::InferModelLogicalOperatorNode>();
+    auto inferModelOperators = queryPlan->getOperatorByType<InferModel::LogicalInferModelOperator>();
     if (!inferModelOperators.empty()) {
         DataTypePtr commonStamp;
         for (const auto& inferModelOperator : inferModelOperators) {

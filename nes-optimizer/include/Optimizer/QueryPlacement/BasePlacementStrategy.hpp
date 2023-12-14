@@ -42,8 +42,8 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperator>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -51,8 +51,8 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class LogicalSourceOperator;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<LogicalSourceOperator>;
 
 class NetworkSinkDescriptor;
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;

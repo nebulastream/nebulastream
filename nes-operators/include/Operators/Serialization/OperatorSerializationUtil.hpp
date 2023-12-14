@@ -16,11 +16,11 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
 
 #include <Identifiers.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/LogicalFlatMapUDFOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <SerializableOperator.pb.h>
 #include <memory>
 
@@ -74,44 +74,44 @@ class OperatorSerializationUtil {
     * @param isClientOriginated Indicate if the source operator is originated from a client.
     * @param serializedOperator serialized instance of the operator
     */
-    static void serializeSourceOperator(const SourceLogicalOperatorNode& sourceOperator,
+    static void serializeSourceOperator(const LogicalSourceOperator& sourceOperator,
                                         SerializableOperator& serializedOperator,
                                         bool isClientOriginated = false);
 
     /**
-     * @brief Deserializes a source logical operator and all its properties to a SourceLogicalOperatorNode
+     * @brief Deserializes a source logical operator and all its properties to a LogicalSourceOperator
      * @param sourceDetails The serialized source operator
-     * @return SourceLogicalOperatorNode of type LogicalUnaryOperatorNode
+     * @return LogicalSourceOperator of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorNodePtr deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails);
 
     /**
      * @brief Serializes a filter operator node and all its properties to a SerializableOperator_FilterDetails object.
-     * @param filterOperator the FilterLogicalOperatorNode
+     * @param filterOperator the LogicalFilterOperator
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeFilterOperator(const FilterLogicalOperatorNode& filterOperator,
+    static void serializeFilterOperator(const LogicalFilterOperator& filterOperator,
                                         SerializableOperator& serializedOperator);
 
     /**
-     * @brief Deserializes a SerializableOperator_FilterDetails and all its properties to a FilterLogicalOperatorNode
+     * @brief Deserializes a SerializableOperator_FilterDetails and all its properties to a LogicalFilterOperator
      * @param filterDetails The serialized filterDetails
-     * @return FilterLogicalOperatorNode of type LogicalUnaryOperatorNode
+     * @return LogicalFilterOperator of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorNodePtr deserializeFilterOperator(const SerializableOperator_FilterDetails& filterDetails);
 
     /**
      * @brief Serializes a projection operator node and all its properties to a SerializableOperator_ProjectionDetails
-     * @param projectionOperator the ProjectionLogicalOperatorNode
+     * @param projectionOperator the LogicalProjectionOperator
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeProjectionOperator(const ProjectionLogicalOperatorNode& projectionOperator,
+    static void serializeProjectionOperator(const LogicalProjectionOperator& projectionOperator,
                                             SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a projection operator node and all its properties to a ProjectionLogicalOperatorNodePtr
      * @param projectionDetails the serialized projectionDetails
-     * @return ProjectionLogicalOperatorNode of type LogicalUnaryOperatorNode
+     * @return LogicalProjectionOperator of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorNodePtr
     deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails);
@@ -121,12 +121,12 @@ class OperatorSerializationUtil {
      * @param sinkOperator The sink operator node.
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeSinkOperator(const SinkLogicalOperatorNode& sinkOperator, SerializableOperator& serializedOperator);
+    static void serializeSinkOperator(const LogicalSinkOperator& sinkOperator, SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
      * @param sinkDetails The serialized sink operator details.
-     * @return SinkLogicalOperatorNodePtr of type LogicalUnaryOperatorNode
+     * @return SinkLogicalOperatorNodePtr of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorNodePtr deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails);
 
@@ -135,12 +135,12 @@ class OperatorSerializationUtil {
      * @param mapOperator the map operator
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeMapOperator(const MapLogicalOperatorNode& mapOperator, SerializableOperator& serializedOperator);
+    static void serializeMapOperator(const LogicalMapOperator& mapOperator, SerializableOperator& serializedOperator);
 
     /**
-     * @brief Deserializes a map operator and all its properties back to a MapLogicalOperatorNode
-     * @param mapDetails the serialized instance of a MapLogicalOperatorNode
-     * @return MapLogicalOperatorNodePtr of type LogicalUnaryOperatorNode
+     * @brief Deserializes a map operator and all its properties back to a LogicalMapOperator
+     * @param mapDetails the serialized instance of a LogicalMapOperator
+     * @return MapLogicalOperatorNodePtr of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorNodePtr deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails);
 
@@ -150,13 +150,13 @@ class OperatorSerializationUtil {
      * @param windowDetails the serialized SerializableOperator_WindowDetails.
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeWindowOperator(const WindowOperatorNode& windowOperator, SerializableOperator& serializedOperator);
+    static void serializeWindowOperator(const WindowOperator& windowOperator, SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes the SerializableOperator_WindowDetails and all its properties back to a central window operatorNodePtr
      * @param windowDetails The serialized sink operator details.
      * @param operatorId: id of the operator to be deserialized
-     * @return WindowOperatorNodePtr of type LogicalUnaryOperatorNode
+     * @return WindowOperatorNodePtr of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorNodePtr deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails,
                                                                  OperatorId operatorId);
@@ -166,13 +166,13 @@ class OperatorSerializationUtil {
      * @param JoinLogicalOperatorNodePtr The window operator node.
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeJoinOperator(const JoinLogicalOperatorNode& joinOperator, SerializableOperator& serializedOperator);
+    static void serializeJoinOperator(const LogicalJoinOperator& joinOperator, SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes the SerializableOperator_JoinDetails and all its properties back to a join operatorNodePtr
      * @param sinkDetails The serialized sink operator details.
      * @param operatorId: id of the operator to be deserialized
-     * @return JoinLogicalOperatorNode of type LogicalUnaryOperatorNode
+     * @return LogicalJoinOperator of type LogicalUnaryOperator
      */
     static JoinLogicalOperatorNodePtr deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails,
                                                               OperatorId operatorId);
@@ -183,14 +183,14 @@ class OperatorSerializationUtil {
      * @param batchJoinDetails the serialized SerializableOperator_BatchJoinDetails.
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeBatchJoinOperator(const Experimental::BatchJoinLogicalOperatorNode& joinOperator,
+    static void serializeBatchJoinOperator(const Experimental::LogicalBatchJoinOperator& joinOperator,
                                            SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes the SerializableOperator_BatchJoinDetails and all its properties back to a join operatorNodePtr
      * @param sinkDetails The serialized sink operator details.
      * @param operatorId: id of the operator to be deserialized
-     * @return BatchJoinLogicalOperatorNode of type LogicalUnaryOperatorNode
+     * @return LogicalBatchJoinOperator of type LogicalUnaryOperator
      */
     static Experimental::BatchJoinLogicalOperatorNodePtr
     deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId);
@@ -234,13 +234,13 @@ class OperatorSerializationUtil {
      * @param limit logical operator node
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeLimitOperator(const LimitLogicalOperatorNode& limitLogicalOperator,
+    static void serializeLimitOperator(const LogicalLimitOperator& limitLogicalOperator,
                                        SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a limit operator
      * @param LimitDetails
-     * @return LimitLogicalOperatorNode of type LogicalUnaryOperatorNode
+     * @return LogicalLimitOperator of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorNodePtr deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails);
 
@@ -249,13 +249,13 @@ class OperatorSerializationUtil {
      * @param watermark assigner logical operator node
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeWatermarkAssignerOperator(const WatermarkAssignerLogicalOperatorNode& watermarkAssignerOperator,
+    static void serializeWatermarkAssignerOperator(const LogicalWatermarkAssignerOperator& watermarkAssignerOperator,
                                                    SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a watermarkAssigner operator
      * @param watermarkStrategyDetails
-     * @return WatermarkAssignerLogicalOperatorNode of type LogicalUnaryOperatorNode
+     * @return LogicalWatermarkAssignerOperator of type LogicalUnaryOperator
      */
     static LogicalUnaryOperatorNodePtr
     deserializeWatermarkAssignerOperator(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails);
@@ -286,7 +286,7 @@ class OperatorSerializationUtil {
     /**
      * @brief Deserializes an input schema
      * @param serializedOperator serialized operator
-     * @param operatorNode LogicalOperatorNode for which to serialize the input schema
+     * @param operatorNode LogicalOperator for which to serialize the input schema
      */
     static void deserializeInputSchema(LogicalOperatorNodePtr operatorNode, SerializableOperator& serializedOperator);
 
@@ -295,13 +295,13 @@ class OperatorSerializationUtil {
      * @param inferModel operator
      * @param serializedOperator serialized instance of the operator
      */
-    static void serializeInferModelOperator(const InferModel::InferModelLogicalOperatorNode& inferModel,
+    static void serializeInferModelOperator(const InferModel::LogicalInferModelOperator& inferModel,
                                             SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes an inferModel logical operator
      * @param inferModelDetails
-     * @return LogicalUnaryOperatorNode of type InferModel::InferModelLogicalOperatorNode
+     * @return LogicalUnaryOperator of type InferModel::LogicalInferModelOperator
      */
     static LogicalUnaryOperatorNodePtr
     deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
@@ -310,7 +310,7 @@ class OperatorSerializationUtil {
      * @brief Serializes a Map or FlatMap Java UDF operator
      * @param mapJavaUdfOperatorNode
      * @param serializedOperator serialized instance of the operator
-     * @tparam T The LogicalOperatorNode (either MapJavaUDFLogicalOperatorNode or FlatMapJavaUDFLogicalOperatorNode)
+     * @tparam T The LogicalOperator (either MapJavaUDFLogicalOperatorNode or FlatMapJavaUDFLogicalOperatorNode)
      * @tparam D The GRPC SerializeOperator details message (either SerializableOperator_MapJavaUdfDetails or SerializableOperator_FlatMapJavaUdfDetails)
      */
     template<typename T, typename D>
@@ -337,7 +337,7 @@ class OperatorSerializationUtil {
      * @param openCLLogicalOperatorNode
      * @param serializedOperator
      */
-    static void serializeOpenCLOperator(const NES::OpenCLLogicalOperatorNode& openCLLogicalOperatorNode,
+    static void serializeOpenCLOperator(const NES::LogicalOpenCLOperator& openCLLogicalOperatorNode,
                                         SerializableOperator& serializedOperator);
 
     /**

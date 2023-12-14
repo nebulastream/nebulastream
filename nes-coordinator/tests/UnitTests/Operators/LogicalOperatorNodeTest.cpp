@@ -14,10 +14,10 @@
 
 #include <BaseIntegrationTest.hpp>//
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -894,13 +894,13 @@ TEST_F(LogicalOperatorNodeTest, equalWithAllPredecessors3) {
 // TODO: add more operator casting
 TEST_F(LogicalOperatorNodeTest, as) {
     NodePtr base2 = filterOp1;
-    FilterLogicalOperatorNodePtr _filterOp1 = base2->as<FilterLogicalOperatorNode>();
+    FilterLogicalOperatorNodePtr _filterOp1 = base2->as<LogicalFilterOperator>();
 }
 
 TEST_F(LogicalOperatorNodeTest, asBadCast) {
     NodePtr base2 = sourceOp;
     try {
-        FilterLogicalOperatorNodePtr _filterOp1 = base2->as<FilterLogicalOperatorNode>();
+        FilterLogicalOperatorNodePtr _filterOp1 = base2->as<LogicalFilterOperator>();
         FAIL();
     } catch (const std::exception& e) {
         SUCCEED();
@@ -1041,9 +1041,9 @@ TEST_F(LogicalOperatorNodeTest, prettyPrint) {
 
 TEST_F(LogicalOperatorNodeTest, instanceOf) {
     bool inst = false;
-    inst = filterOp1->instanceOf<FilterLogicalOperatorNode>();
+    inst = filterOp1->instanceOf<LogicalFilterOperator>();
     EXPECT_TRUE(inst);
-    inst = filterOp1->instanceOf<SourceLogicalOperatorNode>();
+    inst = filterOp1->instanceOf<LogicalSourceOperator>();
     EXPECT_FALSE(inst);
 }
 
@@ -1058,7 +1058,7 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     expected.push_back(filterOp2);
     expected.push_back(filterOp3);
     expected.push_back(filterOp4);
-    const vector<FilterLogicalOperatorNodePtr> children = filterOp1->getNodesByType<FilterLogicalOperatorNode>();
+    const vector<FilterLogicalOperatorNodePtr> children = filterOp1->getNodesByType<LogicalFilterOperator>();
 
     // EXPECT_EQ(children.size(), expected.size());
 

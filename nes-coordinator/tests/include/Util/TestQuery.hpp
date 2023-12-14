@@ -16,8 +16,8 @@
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_
 
 #include <API/Query.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>

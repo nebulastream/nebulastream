@@ -13,23 +13,23 @@
 */
 
 #include <API/Schema.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/LogicalFlatMapUDFOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>
+#include <Operators/OperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <cpp-base64/base64.h>
 #include <cpr/api.h>
 #include <queue>
 #include <utility>
-#include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Runtime/OpenCLDeviceInfo.hpp>
-#include <cpp-base64/base64.h>
 
 namespace NES::Optimizer {
 
@@ -126,9 +126,9 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
             if (operatorToPin) {
                 operatorToPin->addProperty(PINNED_NODE_ID, topologyNodeId);
 
-                if (operatorToPin->instanceOf<OpenCLLogicalOperatorNode>()) {
+                if (operatorToPin->instanceOf<LogicalOpenCLOperator>()) {
                     size_t deviceId = placement[DEVICE_ID_KEY];
-                    operatorToPin->as<OpenCLLogicalOperatorNode>()->setDeviceId(deviceId);
+                    operatorToPin->as<LogicalOpenCLOperator>()->setDeviceId(deviceId);
                 }
 
                 pinned = true;
@@ -145,8 +145,8 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
 }
 
 void ElegantPlacementStrategy::addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node) {
-    if (logicalOperator->instanceOf<MapUDFLogicalOperatorNode>() || logicalOperator->instanceOf<FlatMapUDFLogicalOperatorNode>()) {
-        const auto* udfDescriptor = dynamic_cast<Catalogs::UDF::JavaUDFDescriptor*>(logicalOperator->as<UDFLogicalOperator>()->getUDFDescriptor().get());
+    if (logicalOperator->instanceOf<LogicalMapUDFOperator>() || logicalOperator->instanceOf<LogicalFlatMapUDFOperator>()) {
+        const auto* udfDescriptor = dynamic_cast<Catalogs::UDF::JavaUDFDescriptor*>(logicalOperator->as<LogicalUDFOperator>()->getUDFDescriptor().get());
         const auto& byteCode = udfDescriptor->getByteCodeList();
         std::vector<std::pair<std::string, std::string>> base64ByteCodeList;
         std::transform(byteCode.cbegin(),

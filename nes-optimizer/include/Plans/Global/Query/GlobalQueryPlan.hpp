@@ -41,11 +41,11 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class LogicalSourceOperator;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<LogicalSourceOperator>;
 
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+class LogicalSinkOperator;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<LogicalSinkOperator>;
 
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;

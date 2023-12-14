@@ -15,7 +15,7 @@
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -31,7 +31,7 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan) {
     const auto rootOperators = queryPlan->getRootOperators();
     std::set<FilterLogicalOperatorNodePtr> filterOperatorsSet;
     for (const OperatorNodePtr& rootOperator : rootOperators) {
-        auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
+        auto filters = rootOperator->getNodesByType<LogicalFilterOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
     std::vector<FilterLogicalOperatorNodePtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
@@ -60,12 +60,12 @@ void FilterSplitUpRule::splitUpFilters(FilterLogicalOperatorNodePtr filterOperat
     // We can rewrite this plan to parentOperaters->filter(expression1)->filter(expression2)->childOperator.
     if (filterOperator->getPredicate()->instanceOf<AndExpressionNode>()) {
         //create filter that contains expression1 of the andExpression
-        auto child1 = filterOperator->copy()->as<FilterLogicalOperatorNode>();
+        auto child1 = filterOperator->copy()->as<LogicalFilterOperator>();
         child1->setId(getNextOperatorId());
         child1->setPredicate(filterOperator->getPredicate()->getChildren()[0]->as<ExpressionNode>());
 
         //create filter that contains expression2 of the andExpression
-        auto child2 = filterOperator->copy()->as<FilterLogicalOperatorNode>();
+        auto child2 = filterOperator->copy()->as<LogicalFilterOperator>();
         child2->setId(getNextOperatorId());
         child2->setPredicate(filterOperator->getPredicate()->getChildren()[1]->as<ExpressionNode>());
 

@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -22,8 +24,6 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <utility>
@@ -104,13 +104,13 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         //1. Fetch all upstream pinned operators
         std::set<LogicalOperatorNodePtr> pinnedUpstreamOperators;
         for (const auto& leafOperator : queryPlan->getLeafOperators()) {
-            pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperatorNode>());
+            pinnedUpstreamOperators.insert(leafOperator->as<LogicalOperator>());
         };
 
         //2. Fetch all downstream pinned operators
         std::set<LogicalOperatorNodePtr> pinnedDownStreamOperators;
         for (const auto& rootOperator : queryPlan->getRootOperators()) {
-            pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperatorNode>());
+            pinnedDownStreamOperators.insert(rootOperator->as<LogicalOperator>());
         };
 
         //3. Pin all sink operators
@@ -146,7 +146,7 @@ bool QueryPlacementPhase::checkIfAllArePinnedOperators(const std::set<LogicalOpe
 void QueryPlacementPhase::pinAllSinkOperators(const std::set<LogicalOperatorNodePtr>& operators) {
     uint64_t rootNodeId = topology->getRoot()->getId();
     for (const auto& operatorToCheck : operators) {
-        if (!operatorToCheck->hasProperty(PINNED_NODE_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {
+        if (!operatorToCheck->hasProperty(PINNED_NODE_ID) && operatorToCheck->instanceOf<LogicalSinkOperator>()) {
             operatorToCheck->addProperty(PINNED_NODE_ID, rootNodeId);
         }
     }

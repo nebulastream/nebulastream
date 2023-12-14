@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/QueryMerger/HashSignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 
 namespace NES::Optimizer {
 
@@ -82,8 +82,8 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
                 //Iterate over all matched pairs of sink operators and merge the query plan
                 for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
                     //add to the matched pair
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator->as<LogicalOperatorNode>(),
-                                                                                  targetSinkOperator->as<LogicalOperatorNode>(),
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostSinkOperator->as<LogicalOperator>(),
+                                                                                  targetSinkOperator->as<LogicalOperator>(),
                                                                                   ContainmentRelationship::EQUALITY));
                 }
 

@@ -12,5 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        FlatMapUDFLogicalOperatorNode.cpp
+        LogicalFlatMapUDFOperator.cpp
         )

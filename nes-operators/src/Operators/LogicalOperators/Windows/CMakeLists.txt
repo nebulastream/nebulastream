@@ -14,12 +14,12 @@
 add_source_files(nes-operators
         CentralWindowOperator.cpp
         DistributionCharacteristic.cpp
-        LogicalWindowDefinition.cpp
+        LogicalWindowDescriptor.cpp
         SliceCreationOperator.cpp
         SliceMergingOperator.cpp
         WindowComputationOperator.cpp
-        WindowLogicalOperatorNode.cpp
-        WindowOperatorNode.cpp
+        LogicalWindowOperator.cpp
+        WindowOperator.cpp
 )
 
 add_subdirectory(Aggregations)

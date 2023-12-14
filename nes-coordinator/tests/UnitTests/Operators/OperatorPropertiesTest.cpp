@@ -14,7 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Core.hpp>
@@ -66,16 +66,16 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     // Assert if the property are added correctly
     auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
 
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 1);
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf")), 1);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 1);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("dmf")), 1);
     ++queryPlanIterator;
 
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 2);
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf")), 1);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 2);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("dmf")), 1);
     ++queryPlanIterator;
 
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 3);
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf")), 1);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 3);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("dmf")), 1);
     ++queryPlanIterator;
 }
 
@@ -107,14 +107,14 @@ TEST_F(OperatorPropertiesTest, testAssignDifferentPropertyTypes) {
     // Assert if the property are added correctly
     auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
 
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load_int")), 1);
-    ASSERT_EQ(std::any_cast<double>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf_double")), 0.5);
-    ASSERT_EQ(std::any_cast<std::string>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("misc_str")), "xyz");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load_int")), 1);
+    ASSERT_EQ(std::any_cast<double>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("dmf_double")), 0.5);
+    ASSERT_EQ(std::any_cast<std::string>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("misc_str")), "xyz");
     ++queryPlanIterator;
 
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load_int")), 1);
-    ASSERT_EQ(std::any_cast<double>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf_double")), 0.5);
-    ASSERT_EQ(std::any_cast<std::string>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("misc_str")), "xyz");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load_int")), 1);
+    ASSERT_EQ(std::any_cast<double>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("dmf_double")), 0.5);
+    ASSERT_EQ(std::any_cast<std::string>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("misc_str")), "xyz");
     ++queryPlanIterator;
 }
 
@@ -227,25 +227,25 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
 
     // Assert the property values
     // source (main)
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 1);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 1);
     ++queryPlanIterator;
     // source (main) watermark
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 2);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 2);
     ++queryPlanIterator;
     // source of subquery
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 3);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 3);
     ++queryPlanIterator;
     // watermark of subquery
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 4);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 4);
     ++queryPlanIterator;
     // filter in the subquery
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 5);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 5);
     ++queryPlanIterator;
     // join
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 6);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 6);
     ++queryPlanIterator;
     // sink
-    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 7);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperator>()->getProperty("load")), 7);
     ++queryPlanIterator;
 }
 

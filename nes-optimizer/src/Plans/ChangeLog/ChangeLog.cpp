@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Util/Logger/Logger.hpp>
 

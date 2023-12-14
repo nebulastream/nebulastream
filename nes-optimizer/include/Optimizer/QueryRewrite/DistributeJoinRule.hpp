@@ -24,8 +24,8 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
-class WindowOperatorNode;
-using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
+class WindowOperator;
+using WindowOperatorNodePtr = std::shared_ptr<WindowOperator>;
 
 }// namespace NES
 

@@ -13,7 +13,7 @@
 */
 
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,7 +24,7 @@ PredicateReorderingRulePtr PredicateReorderingRule::create() { return std::make_
 
 QueryPlanPtr PredicateReorderingRule::apply(NES::QueryPlanPtr queryPlan) {
     std::set<NodeId> visitedNodesIds;
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     NES_DEBUG("PredicateReorderingRule: Identified {} filter nodes in the query plan", filterOperators.size());
     NES_DEBUG("Query before applying the rule: {}", queryPlan->toString());
     for (auto& filter : filterOperators) {
@@ -94,9 +94,9 @@ PredicateReorderingRule::getConsecutiveFilters(const NES::FilterLogicalOperatorN
     DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
-    while (node->instanceOf<FilterLogicalOperatorNode>()) {
+    while (node->instanceOf<LogicalFilterOperator>()) {
         NES_DEBUG("Found consecutive filter in the chain, adding it the list");
-        consecutiveFilters.push_back(node->as<FilterLogicalOperatorNode>());
+        consecutiveFilters.push_back(node->as<LogicalFilterOperator>());
         ++nodeIterator;
         node = (*nodeIterator);
     }

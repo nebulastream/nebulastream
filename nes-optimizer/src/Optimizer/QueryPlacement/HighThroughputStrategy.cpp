@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
 #include <API/Query.hpp>
 #include <Catalogs/SourceCatalog.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>

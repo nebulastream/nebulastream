@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
+#include "Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp"
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -353,8 +353,8 @@ void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(const SharedQueryI
             //1.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
             auto children = sinkOperator->getChildren();
             for (const NodePtr& child : children) {
-                if (child->instanceOf<SourceLogicalOperatorNode>()
-                    && child->as<SourceLogicalOperatorNode>()
+                if (child->instanceOf<LogicalSourceOperator>()
+                    && child->as<LogicalSourceOperator>()
                            ->getSourceDescriptor()
                            ->instanceOf<Network::NetworkSourceDescriptor>()) {
 
@@ -365,7 +365,7 @@ void GlobalQueryPlanUpdatePhase::getUpstreamPinnedOperatorIds(const SharedQueryI
                                                      upstreamOperatorIds);
                     }
                 } else {
-                    OperatorId upstreamOperatorId = child->as<LogicalOperatorNode>()->getId();
+                    OperatorId upstreamOperatorId = child->as<LogicalOperator>()->getId();
                     upstreamOperatorIds.insert(upstreamOperatorId);
                 }
             }
@@ -385,8 +385,8 @@ void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(const SharedQuer
             //1.2 Fetch upstream operator of the sink operator to find the most upstream non-system generated operator
             auto parents = sourceOperator->getParents();
             for (const NodePtr& parent : parents) {
-                if (parent->instanceOf<SinkLogicalOperatorNode>()
-                    && parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                if (parent->instanceOf<LogicalSinkOperator>()
+                    && parent->as<LogicalSinkOperator>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
                     //1.3 Identify non-system generated pinned downstream operator from the next downstream execution node
                     for (const auto& nextDownstreamExecutionNode : downstreamExecutionNode->getParents()) {
                         getDownstreamPinnedOperatorIds(sharedQueryPlanId,
@@ -394,7 +394,7 @@ void GlobalQueryPlanUpdatePhase::getDownstreamPinnedOperatorIds(const SharedQuer
                                                        downstreamOperatorIds);
                     }
                 } else {
-                    OperatorId downstreamOperatorId = parent->as<LogicalOperatorNode>()->getId();
+                    OperatorId downstreamOperatorId = parent->as<LogicalOperator>()->getId();
                     downstreamOperatorIds.insert(downstreamOperatorId);
                 }
             }

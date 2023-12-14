@@ -13,14 +13,14 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <random>
 #include <utility>
@@ -162,9 +162,9 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
     //                    // while not stop and the current operator is not a sink operator, place the next parent operator in the query plan
     //                    while (!stop
     //                           && !currentOperator->getParents()[0]
-    //                                   ->instanceOf<SinkLogicalOperatorNode>()) {// assuming one sink operator
+    //                                   ->instanceOf<LogicalSinkOperator>()) {// assuming one sink operator
     //                        currentOperator =
-    //                            currentOperator->getParents()[0]->as<LogicalOperatorNode>();// assuming one parent per operator
+    //                            currentOperator->getParents()[0]->as<LogicalOperator>();// assuming one parent per operator
     //
     //                        // get the index of current topology node and operator in the PlacementCandidate
     //                        topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;
@@ -296,7 +296,7 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
     // iterate to all operator in the query to check for un-assinged operator
     QueryPlanIterator queryPlanIterator = QueryPlanIterator(queryPlan);
     for (auto qPlanIter = queryPlanIterator.begin(); qPlanIter != NES::QueryPlanIterator::end(); ++qPlanIter) {
-        auto currentOpId = (*qPlanIter)->as<LogicalOperatorNode>()->getId();
+        auto currentOpId = (*qPlanIter)->as<LogicalOperator>()->getId();
 
         // check if the current operator has been placed before
         if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), currentOpId) == placedOperatorIds.end()) {

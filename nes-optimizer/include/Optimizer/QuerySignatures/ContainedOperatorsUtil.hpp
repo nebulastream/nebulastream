@@ -19,11 +19,11 @@
 #include <z3++.h>
 namespace NES {
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperator>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+class LogicalFilterOperator;
+using FilterLogicalOperatorNodePtr = std::shared_ptr<LogicalFilterOperator>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;

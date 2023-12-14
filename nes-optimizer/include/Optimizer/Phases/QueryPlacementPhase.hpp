@@ -37,8 +37,8 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperator>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;

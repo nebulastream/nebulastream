@@ -28,8 +28,8 @@ namespace NES {
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperator>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;

@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
+#include "Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp"
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <set>
 #include <utility>
@@ -76,16 +76,16 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId sharedQueryId) {
                     break;
                 }
                 // If the visiting operator is not a system operator then count the resource and add it to the visited operator list.
-                if (visitingOp->instanceOf<SourceLogicalOperatorNode>()) {
-                    auto srcOperator = visitingOp->as<SourceLogicalOperatorNode>();
+                if (visitingOp->instanceOf<LogicalSourceOperator>()) {
+                    auto srcOperator = visitingOp->as<LogicalSourceOperator>();
                     if (!srcOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
                         // increase the resource count
                         occupiedResources++;
                         // add operator id to the already visited operator id collection
                         visitedOpIds.insert(visitingOp->getId());
                     }
-                } else if (visitingOp->instanceOf<SinkLogicalOperatorNode>()) {
-                    auto sinkOperator = visitingOp->as<SinkLogicalOperatorNode>();
+                } else if (visitingOp->instanceOf<LogicalSinkOperator>()) {
+                    auto sinkOperator = visitingOp->as<LogicalSinkOperator>();
                     if (!sinkOperator->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
                         // increase the resource count
                         occupiedResources++;

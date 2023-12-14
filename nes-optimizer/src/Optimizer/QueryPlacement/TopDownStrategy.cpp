@@ -15,8 +15,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
@@ -82,7 +82,7 @@ void TopDownStrategy::pinOperators(QueryId queryId,
             //Place all downstream nodes
             for (auto& upStreamOperator : pinnedDownStreamOperator->getChildren()) {
                 identifyPinningLocation(queryId,
-                                        upStreamOperator->as<LogicalOperatorNode>(),
+                                        upStreamOperator->as<LogicalOperator>(),
                                         candidateTopologyNode,
                                         pinnedUpStreamOperators);
             }
@@ -113,8 +113,8 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
 
     if (!operatorToExecutionNodeMap.contains(logicalOperator->getId())) {
         NES_DEBUG("TopDownStrategy: Place {}", logicalOperator->toString());
-        if ((logicalOperator->hasMultipleChildrenOrParents() || logicalOperator->instanceOf<SourceLogicalOperatorNode>())
-            && !logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
+        if ((logicalOperator->hasMultipleChildrenOrParents() || logicalOperator->instanceOf<LogicalSourceOperator>())
+            && !logicalOperator->instanceOf<LogicalSinkOperator>()) {
 
             NES_TRACE("TopDownStrategy: Received an NAry operator for placement.");
             NES_TRACE("TopDownStrategy: Get the topology nodes where parent operators are placed.");
@@ -138,7 +138,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
                     + logicalOperator->toString());
             }
 
-            if (logicalOperator->instanceOf<SourceLogicalOperatorNode>()) {
+            if (logicalOperator->instanceOf<LogicalSourceOperator>()) {
                 NES_DEBUG("TopDownStrategy: Received Source operator for placement.");
                 auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
                 auto pinnedSourceOperatorLocation = getTopologyNode(nodeId);
@@ -204,7 +204,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
     NES_TRACE("TopDownStrategy: Place the children operators.");
     for (const auto& upstreamOperator : logicalOperator->getChildren()) {
         identifyPinningLocation(queryId,
-                                upstreamOperator->as<LogicalOperatorNode>(),
+                                upstreamOperator->as<LogicalOperator>(),
                                 candidateTopologyNode,
                                 pinnedUpStreamOperators);
     }

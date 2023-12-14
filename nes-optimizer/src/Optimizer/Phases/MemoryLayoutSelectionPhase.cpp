@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -41,14 +41,14 @@ QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) 
     // iterate over all operators and set the output schema
     auto iterator = QueryPlanIterator(queryPlan);
     for (auto node : iterator) {
-        if (auto op = node->as_if<SourceLogicalOperatorNode>()) {
+        if (auto op = node->as_if<LogicalSourceOperator>()) {
             op->getSourceDescriptor()->getSchema()->setLayoutType(layoutType);
         }
-        if (auto op = node->as_if<LogicalUnaryOperatorNode>()) {
+        if (auto op = node->as_if<LogicalUnaryOperator>()) {
             op->getInputSchema()->setLayoutType(layoutType);
             op->getOutputSchema()->setLayoutType(layoutType);
         }
-        if (auto op = node->as_if<LogicalBinaryOperatorNode>()) {
+        if (auto op = node->as_if<LogicalBinaryOperator>()) {
             op->getLeftInputSchema()->setLayoutType(layoutType);
             op->getRightInputSchema()->setLayoutType(layoutType);
             op->getOutputSchema()->setLayoutType(layoutType);

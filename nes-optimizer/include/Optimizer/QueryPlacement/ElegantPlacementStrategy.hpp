@@ -89,7 +89,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                            cpr::Response& response) const;
 
     /**
-     * @brief Add a base64-transformed Java bytecode list to the JSON representation of the operator, if the operator is a MapUDFLogicalOperatorNode or FlatMapUDFLogicalOperatorNode. Otherwise, add an empty field.
+     * @brief Add a base64-transformed Java bytecode list to the JSON representation of the operator, if the operator is a LogicalMapUDFOperator or LogicalFlatMapUDFOperator. Otherwise, add an empty field.
      * @param logicalOperator The logical operator that is processed.
      * @param node Target JSON operator.
      */

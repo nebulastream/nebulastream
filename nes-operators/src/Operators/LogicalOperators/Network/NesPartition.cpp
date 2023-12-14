@@ -14,8 +14,8 @@
 
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <fmt/core.h>
-#include <ostream>
 #include <functional>
+#include <ostream>
 
 namespace NES::Network {
 

@@ -13,10 +13,10 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRule.hpp>
@@ -92,8 +92,8 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
                 matchedOperatorPairs.reserve(matchedTargetToHostOperatorMap.size());
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator->as<LogicalOperatorNode>(),
-                                                                                  targetOperator->as<LogicalOperatorNode>(),
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator->as<LogicalOperator>(),
+                                                                                  targetOperator->as<LogicalOperator>(),
                                                                                   ContainmentRelationship::EQUALITY));
                 }
 
@@ -148,7 +148,7 @@ std::map<OperatorNodePtr, OperatorNodePtr>
 SyntaxBasedPartialQueryMergerRule::areOperatorEqual(const OperatorNodePtr& targetOperator, const OperatorNodePtr& hostOperator) {
 
     std::map<OperatorNodePtr, OperatorNodePtr> targetHostOperatorMap;
-    if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
+    if (targetOperator->instanceOf<LogicalSinkOperator>() && hostOperator->instanceOf<LogicalSinkOperator>()) {
         NES_TRACE("SyntaxBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
         return {};
     }

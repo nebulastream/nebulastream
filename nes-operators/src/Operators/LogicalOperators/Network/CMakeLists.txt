@@ -12,7 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        NetworkSinkDescriptor.cpp
-        NetworkSourceDescriptor.cpp
+        ../Sinks/NetworkSinkDescriptor.cpp
+        ../Sources/NetworkSourceDescriptor.cpp
         NesPartition.cpp
         )

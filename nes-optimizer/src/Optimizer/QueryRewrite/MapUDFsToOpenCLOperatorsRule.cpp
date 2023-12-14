@@ -13,9 +13,9 @@
 */
 
 #include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Optimizer/QueryRewrite/MapUDFsToOpenCLOperatorsRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -30,7 +30,7 @@ MapUDFsToOpenCLOperatorsRulePtr NES::Optimizer::MapUDFsToOpenCLOperatorsRule::cr
 
 QueryPlanPtr MapUDFsToOpenCLOperatorsRule::apply(NES::QueryPlanPtr queryPlan) {
 
-    auto mapJavaUDFOperatorsToReplace = queryPlan->getOperatorByType<MapUDFLogicalOperatorNode>();
+    auto mapJavaUDFOperatorsToReplace = queryPlan->getOperatorByType<LogicalMapUDFOperator>();
     if (mapJavaUDFOperatorsToReplace.empty()) {
         return queryPlan;
     }
@@ -40,7 +40,7 @@ QueryPlanPtr MapUDFsToOpenCLOperatorsRule::apply(NES::QueryPlanPtr queryPlan) {
         auto udfDescriptor = mapJavaUDFOperator->getUDFDescriptor();
         if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
             auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
-            auto openCLOperator = std::make_shared<OpenCLLogicalOperatorNode>(javaUDFDescriptor, getNextOperatorId());
+            auto openCLOperator = std::make_shared<LogicalOpenCLOperator>(javaUDFDescriptor, getNextOperatorId());
             //replace map java udf operator with open cl operator
             if (!mapJavaUDFOperator->replace(openCLOperator)) {
                 NES_ERROR("MapUDFsToOpenCLOperatorsRule: Unable to replace map java UDF with Open cl operator");

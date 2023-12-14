@@ -16,13 +16,13 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
@@ -79,7 +79,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 pinnedDownStreamOperators.begin(),
                 pinnedDownStreamOperators.end(),
                 [operatorToProcess](const LogicalOperatorNodePtr& pinnedDownStreamOperator) {
-                    return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperatorNode>()->getId();
+                    return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperator>()->getId();
                 });
 
             //Skip further processing if encountered pinned downstream operator
@@ -107,7 +107,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                 }
 
                 // Only include unplaced operators in the path
-                if (downstreamOperator->as_if<LogicalOperatorNode>()->getOperatorState() != OperatorState::PLACED) {
+                if (downstreamOperator->as_if<LogicalOperator>()->getOperatorState() != OperatorState::PLACED) {
                     operatorPath.push_back(downstreamOperator);
                     unplacedDownStreamOperatorCount++;
                 }
@@ -119,7 +119,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         auto upstreamTopologyNode = topologyMap[upstreamPinnedNodeId];
 
         auto downstreamPinnedNodeId =
-            std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_NODE_ID));
+            std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperator>()->getProperty(PINNED_NODE_ID));
         auto downstreamTopologyNode = topologyMap[downstreamPinnedNodeId];
 
         std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
@@ -147,14 +147,14 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
 
     for (auto const& [operatorID, position] : operatorPositionMap) {
-        LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorID]->as<LogicalOperatorNode>();
+        LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorID]->as<LogicalOperator>();
         if (logicalOperatorNode->getParents().empty()) {
             continue;
         }
 
         //Loop over downstream operators and compute network cost
         for (auto downStreamOperator : logicalOperatorNode->getParents()) {
-            OperatorId downStreamOperatorId = downStreamOperator->as_if<LogicalOperatorNode>()->getId();
+            OperatorId downStreamOperatorId = downStreamOperator->as_if<LogicalOperator>()->getId();
             //Only consider nodes that are to be placed
             if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
 
@@ -282,7 +282,7 @@ void ILPStrategy::addConstraints(z3::optimize& opt,
     // Creating z3 expression vector to implement an additional constraint of keeping the right order of operator nodes
     std::vector<z3::expr> P_IJ_stored;
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
-        auto operatorNode = operatorNodePath[i]->as<LogicalOperatorNode>();
+        auto operatorNode = operatorNodePath[i]->as<LogicalOperator>();
         OperatorId operatorID = operatorNode->getId();
         // we only need to store the possibilities of the node before the one we look at, so we have to erase "old" data (we keep the values of the last iteration though)
         if (i > 1) {// if i == 0 noting to erase, if i == 1 we only have one "set" of values (which we still need)
@@ -397,13 +397,13 @@ double ILPStrategy::getDefaultOperatorOutput(LogicalOperatorNodePtr operatorNode
 
     double dmf = 1;
     double input = 10;
-    if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<LogicalSinkOperator>()) {
         dmf = 0;
-    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
         dmf = .5;
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
         dmf = 2;
-    } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalSourceOperator>()) {
         input = 100;
     }
     return dmf * input;
@@ -412,16 +412,16 @@ double ILPStrategy::getDefaultOperatorOutput(LogicalOperatorNodePtr operatorNode
 //FIXME: in #1422. This need to be defined better as at present irrespective of operator location we are returning always the default value
 int ILPStrategy::getDefaultOperatorCost(LogicalOperatorNodePtr operatorNode) {
 
-    if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+    if (operatorNode->instanceOf<LogicalSinkOperator>()) {
         return 0;
-    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
         return 1;
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
-               || operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalMapOperator>() || operatorNode->instanceOf<LogicalJoinOperator>()
+               || operatorNode->instanceOf<LogicalUnionOperator>()) {
         return 2;
-    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
         return 1;
-    } else if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<LogicalSourceOperator>()) {
         return 0;
     }
     return 2;

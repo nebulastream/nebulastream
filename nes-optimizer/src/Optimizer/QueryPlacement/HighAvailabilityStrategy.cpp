@@ -14,9 +14,9 @@
 
 #include <API/Query.hpp>
 #include <Catalogs/SourceCatalog.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>

@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
+#include <Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <string>
 
 namespace NES {
@@ -115,7 +115,7 @@ class QueryPlanBuilder {
                                      ExpressionNodePtr onLeftKey,
                                      ExpressionNodePtr onRightKey,
                                      const Windowing::WindowTypePtr& windowType,
-                                     Join::LogicalJoinDefinition::JoinType joinType);
+                                     Join::JoinDescriptor::JoinType joinType);
 
     /**
      * @brief This methods add the batch join operator to a query

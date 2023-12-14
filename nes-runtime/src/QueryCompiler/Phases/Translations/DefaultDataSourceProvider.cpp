@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include "Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp"
 
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>

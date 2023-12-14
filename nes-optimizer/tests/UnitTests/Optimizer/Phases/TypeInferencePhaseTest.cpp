@@ -25,23 +25,23 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/Functions/LogicalFunctionRegistry.hpp>
-#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalRenameSourceOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
@@ -280,7 +280,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-    auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
+    auto maps = plan->getOperatorByType<LogicalMapOperator>();
     phase->execute(plan);
     NES_DEBUG("result schema is={}", maps[0]->getOutputSchema()->toString());
     //we have to forbit the renaming of the attribute in the assignment statement of the map
@@ -307,10 +307,10 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
     EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
@@ -355,9 +355,9 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(sourceOutputSchema->fields.size() == 3);
@@ -419,11 +419,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto projectOperator = plan->getOperatorByType<LogicalProjectionOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
     EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
@@ -472,11 +472,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSource) {
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto renameSourceOperator = plan->getOperatorByType<LogicalRenameSourceOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
     EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
@@ -526,12 +526,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProject) {
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto projectOperator = plan->getOperatorByType<LogicalProjectionOperator>();
+    auto renameSourceOperator = plan->getOperatorByType<LogicalRenameSourceOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
@@ -584,10 +584,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
@@ -632,12 +632,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto projectOperator = plan->getOperatorByType<LogicalProjectionOperator>();
+    auto renameSourceOperator = plan->getOperatorByType<LogicalRenameSourceOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
@@ -695,13 +695,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto mergeOperator = plan->getOperatorByType<UnionLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto mergeOperator = plan->getOperatorByType<LogicalUnionOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto projectOperator = plan->getOperatorByType<LogicalProjectionOperator>();
+    auto renameSourceOperator = plan->getOperatorByType<LogicalRenameSourceOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
@@ -766,12 +766,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto projectOperator = plan->getOperatorByType<LogicalProjectionOperator>();
+    auto renameSourceOperator = plan->getOperatorByType<LogicalRenameSourceOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(sourceOutputSchema->fields.size() == 3);
@@ -853,12 +853,12 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
-    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto filterOperator = plan->getOperatorByType<LogicalFilterOperator>();
+    auto mapOperator = plan->getOperatorByType<LogicalMapOperator>();
+    auto projectOperator = plan->getOperatorByType<LogicalProjectionOperator>();
+    auto renameSourceOperator = plan->getOperatorByType<LogicalRenameSourceOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     NES_DEBUG("expected src0= {}", sourceOperator[0]->getOutputSchema()->toString());
@@ -934,7 +934,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
-    auto windows = resultPlan->getOperatorByType<WindowOperatorNode>();
+    auto windows = resultPlan->getOperatorByType<WindowOperator>();
 
     NES_DEBUG("win1={}", windows[0]->getOutputSchema()->toString());
     EXPECT_TRUE(windows[0]->getOutputSchema()->fields.size() == 4);
@@ -950,7 +950,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
     EXPECT_TRUE(windows[1]->getOutputSchema()->getField("default_logical$value"));
     EXPECT_TRUE(windows[1]->getOutputSchema()->getField("default_logical$id"));
 
-    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
@@ -994,7 +994,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
     // we just access the old references
     ASSERT_EQ(resultPlan->getSinkOperators()[0]->getOutputSchema()->getSize(), 4U);
 
-    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
@@ -1040,29 +1040,29 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
-    JoinLogicalOperatorNodePtr joinOp = queryPlan->getOperatorByType<JoinLogicalOperatorNode>()[0];
+    JoinLogicalOperatorNodePtr joinOp = queryPlan->getOperatorByType<LogicalJoinOperator>()[0];
     Experimental::BatchJoinLogicalOperatorNodePtr batchJoinOp;
     {
-        Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef = Join::Experimental::LogicalBatchJoinDefinition::create(
+        Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef = Join::Experimental::BatchJoinDescriptor::create(
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id1")->as<FieldAccessExpressionNode>(),
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id2")->as<FieldAccessExpressionNode>(),
             1,
             1);
 
         batchJoinOp =
-            LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
+            LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::LogicalBatchJoinOperator>();
     }
     joinOp->replace(batchJoinOp);
     ASSERT_TRUE(batchJoinOp->inferSchema());
 
-    for (auto wmaOp : queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>()) {
+    for (auto wmaOp : queryPlan->getOperatorByType<LogicalWatermarkAssignerOperator>()) {
         ASSERT_TRUE(wmaOp->removeAndJoinParentAndChildren());
     }
 
     // after cutting the wmaOps, infer schema of the operator tree again
     ASSERT_TRUE(queryPlan->getSinkOperators()[0]->inferSchema());
 
-    auto sinkOperator = queryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperator = queryPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("inferred output schema = {}", sinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 5);
@@ -1108,7 +1108,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
-    auto sinkOperator = queryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperator = queryPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("inferred output schema = {}", sinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 5);
@@ -1164,9 +1164,9 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
 
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     plan = phase->execute(plan);
-    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
-    auto joinOperators = plan->getOperatorByType<JoinLogicalOperatorNode>();
-    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sourceOperator = plan->getOperatorByType<LogicalSourceOperator>();
+    auto joinOperators = plan->getOperatorByType<LogicalJoinOperator>();
+    auto sinkOperator = plan->getOperatorByType<LogicalSinkOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     NES_DEBUG("expected src0= {}", sourceOperator[0]->getOutputSchema()->toString());
@@ -1295,7 +1295,7 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
 
     NES_INFO("{}", sink->getOutputSchema()->toString());
 
-    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
@@ -1335,7 +1335,7 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
 
     NES_INFO("{}", sink->getOutputSchema()->toString());
 
-    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 22);
@@ -1389,7 +1389,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
 
     NES_INFO("{}", sink->getOutputSchema()->toString());
 
-    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 22);
@@ -1441,7 +1441,7 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
 
     NES_INFO("{}", sink->getOutputSchema()->toString());
 
-    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto sinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", sinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 13);
@@ -1480,7 +1480,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
             .setInputSchema(udfInputSchema)
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, getNextOperatorId());
+    auto mapUdfLogicalOperatorNode = std::make_shared<LogicalMapUDFOperator>(javaUdfDescriptor, getNextOperatorId());
 
     auto descriptor = LogicalSourceDescriptor::create("logicalSource");
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
@@ -1492,7 +1492,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
     auto resultPlan = phase->execute(queryPlan);
 
-    auto actualSinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto actualSinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = actualSinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", actualSinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
@@ -1522,7 +1522,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
             .setInputSchema(udfInputSchema)
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor, getNextOperatorId());
+    auto mapUdfLogicalOperatorNode = std::make_shared<LogicalMapUDFOperator>(javaUdfDescriptor, getNextOperatorId());
 
     auto descriptor1 = LogicalSourceDescriptor::create("logicalSource1");
     auto sourceOperator1 = LogicalOperatorFactory::createSourceOperator(descriptor1);
@@ -1542,7 +1542,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
     auto resultPlan = phase->execute(queryPlan);
 
-    auto actualSinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto actualSinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = actualSinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", actualSinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
@@ -1572,13 +1572,13 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
             .setInputSchema(udfInputSchema)
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute1", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode1 = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, getNextOperatorId());
+    auto mapUdfLogicalOperatorNode1 = std::make_shared<LogicalMapUDFOperator>(javaUdfDescriptor1, getNextOperatorId());
 
     auto javaUdfDescriptor2 =
         Catalogs::UDF::JavaUDFDescriptorBuilder{}
             .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute2", DataTypeFactory::createBoolean()))
             .build();
-    auto mapUdfLogicalOperatorNode2 = std::make_shared<MapUDFLogicalOperatorNode>(javaUdfDescriptor1, getNextOperatorId());
+    auto mapUdfLogicalOperatorNode2 = std::make_shared<LogicalMapUDFOperator>(javaUdfDescriptor1, getNextOperatorId());
 
     auto descriptor1 = LogicalSourceDescriptor::create("logicalSource1");
     auto sourceOperator1 = LogicalOperatorFactory::createSourceOperator(descriptor1);
@@ -1599,7 +1599,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
     auto resultPlan = phase->execute(queryPlan);
 
-    auto actualSinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    auto actualSinkOperator = resultPlan->getOperatorByType<LogicalSinkOperator>();
     SchemaPtr sinkOutputSchema = actualSinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", actualSinkOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);

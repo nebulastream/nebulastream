@@ -12,21 +12,21 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        LogicalOperatorNode.cpp
-        FilterLogicalOperatorNode.cpp
-        ProjectionLogicalOperatorNode.cpp
-        MapLogicalOperatorNode.cpp
-        InferModelLogicalOperatorNode.cpp
-        UnionLogicalOperatorNode.cpp
+        LogicalOperator.cpp
+        LogicalFilterOperator.cpp
+        LogicalProjectionOperator.cpp
+        LogicalMapOperator.cpp
+        LogicalInferModelOperator.cpp
+        LogicalUnionOperator.cpp
         LogicalOperatorFactory.cpp
-        BroadcastLogicalOperatorNode.cpp
-        BatchJoinLogicalOperatorNode.cpp
-        RenameSourceOperatorNode.cpp
-        LogicalBinaryOperatorNode.cpp
-        LogicalUnaryOperatorNode.cpp
-        OpenCLLogicalOperatorNode.cpp
-        LimitLogicalOperatorNode.cpp
-        LogicalBatchJoinDefinition.cpp
+        LogicalBroadcastOperator.cpp
+        LogicalBatchJoinOperator.cpp
+        LogicalRenameSourceOperator.cpp
+        LogicalBinaryOperator.cpp
+        LogicalUnaryOperator.cpp
+        LogicalOpenCLOperator.cpp
+        LogicalLimitOperator.cpp
+        BatchJoinDescriptor.cpp
 )
 
 add_subdirectory(Sinks)

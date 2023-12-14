@@ -13,30 +13,30 @@
 */
 
 #include <API/Schema.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/Expressions/BinaryExpressionNode.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
-#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
+#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <queue>
 
 namespace NES::Optimizer {
@@ -51,7 +51,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
     const std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
     std::set<FilterLogicalOperatorNodePtr> filterOperatorsSet;
     for (const OperatorNodePtr& rootOperator : rootOperators) {
-        std::vector<FilterLogicalOperatorNodePtr> filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
+        std::vector<FilterLogicalOperatorNodePtr> filters = rootOperator->getNodesByType<LogicalFilterOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
     std::vector<FilterLogicalOperatorNodePtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
@@ -79,19 +79,19 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
 
 void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOperator, NodePtr curOperator, NodePtr parOperator) {
 
-    if (curOperator->instanceOf<ProjectionLogicalOperatorNode>()) {
+    if (curOperator->instanceOf<LogicalProjectionOperator>()) {
         pushBelowProjection(filterOperator, curOperator);
-    } else if (curOperator->instanceOf<MapLogicalOperatorNode>()) {
-        auto mapOperator = curOperator->as<MapLogicalOperatorNode>();
+    } else if (curOperator->instanceOf<LogicalMapOperator>()) {
+        auto mapOperator = curOperator->as<LogicalMapOperator>();
         pushFilterBelowMap(filterOperator, mapOperator);
-    } else if (curOperator->instanceOf<JoinLogicalOperatorNode>()) {
-        auto joinOperator = curOperator->as<JoinLogicalOperatorNode>();
+    } else if (curOperator->instanceOf<LogicalJoinOperator>()) {
+        auto joinOperator = curOperator->as<LogicalJoinOperator>();
         pushFilterBelowJoin(filterOperator, joinOperator, parOperator);
-    } else if (curOperator->instanceOf<UnionLogicalOperatorNode>()) {
+    } else if (curOperator->instanceOf<LogicalUnionOperator>()) {
         pushFilterBelowUnion(filterOperator, curOperator);
-    } else if (curOperator->instanceOf<WindowLogicalOperatorNode>()) {
+    } else if (curOperator->instanceOf<LogicalWindowOperator>()) {
         pushFilterBelowWindowAggregation(filterOperator, curOperator, parOperator);
-    } else if (curOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+    } else if (curOperator->instanceOf<LogicalWatermarkAssignerOperator>()) {
         pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
     }
     // if we have a source operator or some unsupported operator we are not able to push the filter below this operator.
@@ -109,7 +109,7 @@ void FilterPushDownRule::pushFilterBelowJoin(FilterLogicalOperatorNodePtr filter
     //field names that are used by the filter
     std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
     //better readability
-    JoinLogicalOperatorNodePtr curOperatorAsJoin = joinOperator->as<JoinLogicalOperatorNode>();
+    JoinLogicalOperatorNodePtr curOperatorAsJoin = joinOperator->as<LogicalJoinOperator>();
     // we might have pushed it already within the special condition before
     if (!pushed) {
         //if any inputSchema contains all the fields that are used by the filter we can push the filter to the corresponding site
@@ -155,7 +155,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
 
     if (joinDefinition->getLeftJoinKey()->getFieldName() == predicateFields[0]) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
-        auto copyOfFilter = filterOperator->copy()->as<FilterLogicalOperatorNode>();
+        auto copyOfFilter = filterOperator->copy()->as<LogicalFilterOperator>();
         copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
@@ -175,7 +175,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(FilterLogicalOperatorNod
         return true;
     } else if (joinDefinition->getRightJoinKey()->getFieldName() == predicateFields[0]) {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
-        auto copyOfFilter = filterOperator->copy()->as<FilterLogicalOperatorNode>();
+        auto copyOfFilter = filterOperator->copy()->as<LogicalFilterOperator>();
         copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
@@ -204,7 +204,7 @@ void FilterPushDownRule::pushFilterBelowMap(FilterLogicalOperatorNodePtr filterO
 void FilterPushDownRule::pushFilterBelowUnion(FilterLogicalOperatorNodePtr filterOperator, NodePtr unionOperator) {
     std::vector<NodePtr> grandChildren = unionOperator->getChildren();
 
-    auto copyOfFilterOperator = filterOperator->copy()->as<FilterLogicalOperatorNode>();
+    auto copyOfFilterOperator = filterOperator->copy()->as<LogicalFilterOperator>();
     copyOfFilterOperator->setId(getNextOperatorId());
     copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->copy());
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Created a copy of the filter operator");
@@ -220,9 +220,9 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(FilterLogicalOperatorN
                                                           NodePtr windowOperator,
                                                           NodePtr parOperator) {
 
-    auto groupByKeyNames = windowOperator->as<WindowLogicalOperatorNode>()->getGroupByKeyNames();
+    auto groupByKeyNames = windowOperator->as<LogicalWindowOperator>()->getGroupByKeyNames();
     std::vector<FieldAccessExpressionNodePtr> groupByKeys =
-        windowOperator->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getKeys();
+        windowOperator->as<LogicalWindowOperator>()->getWindowDefinition()->getKeys();
     std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Retrieved the group by keys of the window operator");
 
@@ -249,7 +249,7 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(FilterLogicalOperatorN
 
 void FilterPushDownRule::pushBelowProjection(FilterLogicalOperatorNodePtr filterOperator, NodePtr projectionOperator) {
     renameFilterAttributesByExpressionNodes(filterOperator,
-                                            projectionOperator->as<ProjectionLogicalOperatorNode>()->getExpressions());
+                                            projectionOperator->as<LogicalProjectionOperator>()->getExpressions());
     pushDownFilter(filterOperator, projectionOperator->getChildren()[0], projectionOperator);
 }
 
@@ -259,7 +259,7 @@ void FilterPushDownRule::insertFilterIntoNewPosition(FilterLogicalOperatorNodePt
 
     // If the parent operator of the current operator is not the original filter operator, the filter has been pushed below some operators.
     // so we have to remove it from its original position and insert at the new position (above the current operator, which it can't be pushed below)
-    if (filterOperator->getId() != parOperator->as<LogicalOperatorNode>()->getId()) {
+    if (filterOperator->getId() != parOperator->as<LogicalOperator>()->getId()) {
 
         // if we remove the first child (which is the left branch) of a binary operator and insert our filter below this binary operator,
         // it will be inserted as the second children (which is the right branch). To conserve order we will swap the branches after the insertion
@@ -348,7 +348,7 @@ void FilterPushDownRule::renameFilterAttributesByExpressionNodes(const FilterLog
 
 std::string FilterPushDownRule::getAssignmentFieldFromMapOperator(const NodePtr& node) {
     NES_TRACE("FilterPushDownRule: Find the field name used in map operator");
-    MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
+    MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<LogicalMapOperator>();
     const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
     const FieldAccessExpressionNodePtr field = mapExpression->getField();
     return field->getFieldName();

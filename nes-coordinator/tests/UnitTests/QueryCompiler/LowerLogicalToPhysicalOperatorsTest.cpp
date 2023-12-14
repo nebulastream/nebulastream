@@ -19,11 +19,11 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/BatchJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalBroadcastOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
@@ -31,9 +31,9 @@
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -99,8 +99,8 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         projectPp = LogicalOperatorFactory::createProjectionOperator({});
         {
             auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
-            auto joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
-            Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
+            auto joinType = Join::JoinDescriptor::JoinType::INNER_JOIN;
+            Join::LogicalJoinDefinitionPtr joinDef = Join::JoinDescriptor::create(
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
@@ -109,12 +109,12 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
                 1,
                 joinType);
 
-            joinOp1 = LogicalOperatorFactory::createJoinOperator(joinDef)->as<JoinLogicalOperatorNode>();
+            joinOp1 = LogicalOperatorFactory::createJoinOperator(joinDef)->as<LogicalJoinOperator>();
         }
         sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         auto windowType = TumblingWindow::of(EventTime(Attribute("test")), Seconds(10));
-        auto windowDefinition = LogicalWindowDefinition::create({Sum(Attribute("test"))->aggregation},
+        auto windowDefinition = LogicalWindowDescriptor::create({Sum(Attribute("test"))->aggregation},
                                                                 windowType,
                                                                 Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                                 0);
@@ -122,13 +122,13 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         watermarkAssigner1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
             Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
         centralWindowOperator = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
-        centralWindowOperator->as<WindowOperatorNode>()->setInputOriginIds({0});
+        centralWindowOperator->as<WindowOperator>()->setInputOriginIds({0});
         sliceCreationOperator = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition);
-        sliceCreationOperator->as<WindowOperatorNode>()->setInputOriginIds({0});
+        sliceCreationOperator->as<WindowOperator>()->setInputOriginIds({0});
         windowComputation = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition);
-        windowComputation->as<WindowOperatorNode>()->setInputOriginIds({0});
+        windowComputation->as<WindowOperator>()->setInputOriginIds({0});
         sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
-        sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
+        sliceMerging->as<WindowOperator>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
         auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
         mapJavaUDFOp = LogicalOperatorFactory::createMapUDFLogicalOperator(javaUDFDescriptor);
@@ -406,14 +406,14 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleJoinQuery) {
 TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateSimpleBatchJoinQuery) {
     Experimental::BatchJoinLogicalOperatorNodePtr batchJoinOp1;
     {
-        Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef = Join::Experimental::LogicalBatchJoinDefinition::create(
+        Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef = Join::Experimental::BatchJoinDescriptor::create(
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             1,
             1);
 
         batchJoinOp1 =
-            LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
+            LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::LogicalBatchJoinOperator>();
     }
 
     auto queryPlan = QueryPlan::create(sourceOp1);

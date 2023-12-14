@@ -16,8 +16,8 @@
 #include <BaseIntegrationTest.hpp>
 #include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>

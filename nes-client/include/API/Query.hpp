@@ -16,8 +16,8 @@
 #define NES_CLIENT_INCLUDE_API_QUERY_HPP_
 
 #include <API/Expressions/Expressions.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
+#include <Operators/LogicalOperators/BatchJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,11 +34,11 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class LogicalSourceOperator;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<LogicalSourceOperator>;
 
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+class LogicalSinkOperator;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<LogicalSinkOperator>;
 
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;

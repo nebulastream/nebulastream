@@ -214,7 +214,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @return {
      */
     [[nodiscard]] std::tuple<std::string, std::string>
-    getTimestampLeftAndRight(const std::shared_ptr<JoinLogicalOperatorNode>& joinOperator,
+    getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator,
                              const Windowing::TimeBasedWindowTypePtr& windowType) const;
 
     /**

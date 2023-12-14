@@ -15,15 +15,15 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 namespace NES {
 
 SliceMergingOperator::SliceMergingOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id)
-    : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
+    : OperatorNode(id), WindowOperator(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
@@ -56,7 +56,7 @@ OperatorNodePtr SliceMergingOperator::copy() {
     return copy;
 }
 bool SliceMergingOperator::inferSchema() {
-    if (!WindowOperatorNode::inferSchema()) {
+    if (!WindowOperator::inferSchema()) {
         return false;
     }
     // infer the default input and output schema

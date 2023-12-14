@@ -14,18 +14,18 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Optimizer/QuerySignatures/ContainedOperatorsUtil.hpp>
-#include <Optimizer/QuerySignatures/ContainmentRelationshipAndOperatorChain.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
-#include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
+#include <Optimizer/QuerySignatures/ContainedOperatorsUtil.hpp>
+#include <Optimizer/QuerySignatures/ContainmentRelationshipAndOperatorChain.hpp>
+#include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Optimizer {
 
@@ -94,8 +94,8 @@ SignatureContainmentCheck::checkContainmentRelationshipForTopDownMerging(const L
                                                                          const LogicalOperatorNodePtr& rightOperator) {
     NES_TRACE("Checking for containment.");
     ContainmentRelationship containmentRelationship = ContainmentRelationship::NO_CONTAINMENT;
-    if (leftOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()
-        || rightOperator->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+    if (leftOperator->instanceOf<LogicalWatermarkAssignerOperator>()
+        || rightOperator->instanceOf<LogicalWatermarkAssignerOperator>()) {
         NES_TRACE("Watermark assigner detected. Skipping containment check.");
         return ContainmentRelationshipAndOperatorChain::create(containmentRelationship, {});
     }

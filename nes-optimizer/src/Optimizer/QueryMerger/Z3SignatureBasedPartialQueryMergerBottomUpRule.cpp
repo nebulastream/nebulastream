@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerBottomUpRule.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 
 namespace NES::Optimizer {
 
@@ -157,7 +157,7 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOp
                                                                  const LogicalOperatorNodePtr& hostOperator) {
 
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
-    if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
+    if (targetOperator->instanceOf<LogicalSinkOperator>() && hostOperator->instanceOf<LogicalSinkOperator>()) {
         NES_TRACE("Z3SignatureBasedPartialQueryMergerBottomUpRule: Both target and host operators are of sink type.");
         return {};
     }
@@ -169,7 +169,7 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOp
         for (const auto& targetParent : targetOperator->getParents()) {
             for (const auto& hostParent : hostOperator->getParents()) {
                 auto matchedOperators =
-                    areOperatorEqual(targetParent->as<LogicalOperatorNode>(), hostParent->as<LogicalOperatorNode>());
+                    areOperatorEqual(targetParent->as<LogicalOperator>(), hostParent->as<LogicalOperator>());
                 if (!matchedOperators.empty()) {
                     targetHostOperatorMap.merge(matchedOperators);
                     matchCount++;

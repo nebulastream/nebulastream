@@ -15,11 +15,11 @@
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
 
+#include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>

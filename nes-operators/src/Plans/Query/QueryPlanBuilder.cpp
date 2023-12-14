@@ -15,16 +15,16 @@
 #include <API/AttributeField.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/BatchJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
@@ -111,7 +111,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
                                        ExpressionNodePtr onLeftKey,
                                        ExpressionNodePtr onRightKey,
                                        const Windowing::WindowTypePtr& windowType,
-                                       Join::LogicalJoinDefinition::JoinType joinType) {
+                                       Join::JoinDescriptor::JoinType joinType) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
     auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
@@ -131,7 +131,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess,
+    auto joinDefinition = Join::JoinDescriptor::create(leftKeyFieldAccess,
                                                               rightQueryPlanKeyFieldAccess,
                                                               windowType,
                                                               distrType,
@@ -161,7 +161,7 @@ NES::QueryPlanPtr QueryPlanBuilder::addBatchJoin(NES::QueryPlanPtr leftQueryPlan
     // todo here again we wan't to extend to distributed joins:
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
+    auto joinDefinition = Join::Experimental::BatchJoinDescriptor::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
 
     auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
@@ -187,7 +187,7 @@ NES::QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(NES::QueryPla
     NES_DEBUG("QueryPlanBuilder: checkAndAddWatermarkAssignment for a (sub)query plan");
     auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
 
-    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
+    if (queryPlan->getOperatorByType<LogicalWatermarkAssignerOperator>().empty()) {
         if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             return assignWatermark(queryPlan, Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
         } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {

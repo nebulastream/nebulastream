@@ -20,20 +20,20 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -93,8 +93,8 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     typeInferencePhase->execute(plan2);
     signatureInferencePhase->execute(plan2);
 
-    auto mapOperators1 = plan1->getOperatorByType<MapLogicalOperatorNode>();
-    auto mapOperators2 = plan2->getOperatorByType<MapLogicalOperatorNode>();
+    auto mapOperators1 = plan1->getOperatorByType<LogicalMapOperator>();
+    auto mapOperators2 = plan2->getOperatorByType<LogicalMapOperator>();
 
     ASSERT_EQ(mapOperators1.size(), 1u);
     ASSERT_EQ(mapOperators2.size(), 1u);
@@ -103,8 +103,8 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
 
     EXPECT_TRUE(signatureEqualityChecker->checkEquality(mapOperators1[0]->getZ3Signature(), mapOperators2[0]->getZ3Signature()));
 
-    auto srcOperators1 = plan1->getOperatorByType<SourceLogicalOperatorNode>();
-    auto srcOperators2 = plan2->getOperatorByType<SourceLogicalOperatorNode>();
+    auto srcOperators1 = plan1->getOperatorByType<LogicalSourceOperator>();
+    auto srcOperators2 = plan2->getOperatorByType<LogicalSourceOperator>();
 
     ASSERT_EQ(srcOperators1.size(), 1u);
     ASSERT_EQ(srcOperators2.size(), 1u);

@@ -22,8 +22,7 @@ MonitoringSinkDescriptor::MonitoringSinkDescriptor(Monitoring::MetricCollectorTy
 
 SinkDescriptorPtr MonitoringSinkDescriptor::create(Monitoring::MetricCollectorType collectorType,
                                                    uint64_t numberOfOrigins) {
-    return std::make_shared<MonitoringSinkDescriptor>(
-        MonitoringSinkDescriptor(collectorType, numberOfOrigins));
+    return std::make_shared<MonitoringSinkDescriptor>(MonitoringSinkDescriptor(collectorType, numberOfOrigins));
 }
 
 std::string MonitoringSinkDescriptor::toString() const { return "MonitoringSinkDescriptor()"; }

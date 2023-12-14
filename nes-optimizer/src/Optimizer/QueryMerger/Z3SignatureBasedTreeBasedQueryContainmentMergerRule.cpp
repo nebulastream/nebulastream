@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedTreeBasedQueryContainmentMergerRule.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
@@ -81,7 +81,7 @@ bool Z3SignatureBasedTreeBasedQueryContainmentMergerRule::apply(GlobalQueryPlanP
                     //Extract the front of the queue and check if there is a matching operator in the
                     // host query plan
                     bool foundMatch = false;
-                    auto targetOperator = targetOperators.front()->as<LogicalOperatorNode>();
+                    auto targetOperator = targetOperators.front()->as<LogicalOperator>();
                     targetOperators.pop_front();
 
                     //Skip if the target operator is already matched
@@ -110,7 +110,7 @@ bool Z3SignatureBasedTreeBasedQueryContainmentMergerRule::apply(GlobalQueryPlanP
                         //perform matching
                         while (!hostOperators.empty()) {
                             //Take out the front of the queue and add the host operator to the visited list
-                            auto hostOperator = hostOperators.front()->as<LogicalOperatorNode>();
+                            auto hostOperator = hostOperators.front()->as<LogicalOperator>();
                             visitedHostOperators.emplace_back(hostOperator);
                             hostOperators.pop_front();
 
@@ -206,9 +206,9 @@ bool Z3SignatureBasedTreeBasedQueryContainmentMergerRule::apply(GlobalQueryPlanP
                     //relationship
                     if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain) == ContainmentRelationship::EQUALITY) {
                         LogicalOperatorNodePtr hostOperator =
-                            get<0>(hostOperatorContainmentRelationshipContainedOperatorChain)->as<LogicalOperatorNode>();
+                            get<0>(hostOperatorContainmentRelationshipContainedOperatorChain)->as<LogicalOperator>();
                         matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator,
-                                                                                      targetOperator->as<LogicalOperatorNode>(),
+                                                                                      targetOperator->as<LogicalOperator>(),
                                                                                       ContainmentRelationship::EQUALITY));
                         //In case the host contains the target, we first need to prepare the query plan and then add the matched operators
                     } else if (get<1>(hostOperatorContainmentRelationshipContainedOperatorChain)
@@ -222,8 +222,8 @@ bool Z3SignatureBasedTreeBasedQueryContainmentMergerRule::apply(GlobalQueryPlanP
                                                     targetOperator,
                                                     containedOperatorChain);
                         matchedOperatorPairs.emplace_back(
-                            MatchedOperatorPair::create(containerOperator->as<LogicalOperatorNode>(),
-                                                        containedOperatorChain.back()->as<LogicalOperatorNode>(),
+                            MatchedOperatorPair::create(containerOperator->as<LogicalOperator>(),
+                                                        containedOperatorChain.back()->as<LogicalOperator>(),
                                                         ContainmentRelationship::RIGHT_SIG_CONTAINED));
                         //In case the target contains the host, we first need to prepare the query plan and then add the matched operators
                         //if allowExhaustiveContainmentCheck is not explicitly set to true, this case will not be reached
@@ -238,8 +238,8 @@ bool Z3SignatureBasedTreeBasedQueryContainmentMergerRule::apply(GlobalQueryPlanP
                                                     containedOperator,
                                                     containedOperatorChain);
                         matchedOperatorPairs.emplace_back(
-                            MatchedOperatorPair::create(targetOperator->as<LogicalOperatorNode>(),
-                                                        containedOperatorChain.back()->as<LogicalOperatorNode>(),
+                            MatchedOperatorPair::create(targetOperator->as<LogicalOperator>(),
+                                                        containedOperatorChain.back()->as<LogicalOperator>(),
                                                         ContainmentRelationship::LEFT_SIG_CONTAINED));
                     }
                 }

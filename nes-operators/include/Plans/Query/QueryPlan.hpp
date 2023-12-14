@@ -34,11 +34,11 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class LogicalSourceOperator;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<LogicalSourceOperator>;
 
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+class LogicalSinkOperator;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<LogicalSinkOperator>;
 
 /**
  * @brief The query plan encapsulates a set of operators and provides a set of utility functions.

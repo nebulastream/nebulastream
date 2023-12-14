@@ -17,13 +17,13 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/UDFs/FlatMapUDF/LogicalFlatMapUDFOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/Exceptions/OperatorNotFoundException.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
@@ -102,7 +102,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         //Create one duplicate operator for each physical source
         for (const auto& sourceCatalogEntry : sourceCatalogEntries) {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
-            auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperatorNode>();
+            auto duplicateSourceOperator = sourceOperator->duplicate()->as<LogicalSourceOperator>();
             //Add to the source operator the id of the physical node where we have to pin the operator
             //NOTE: This is required at the time of placement to know where the source operator is pinned
             duplicateSourceOperator->addProperty(PINNED_NODE_ID, sourceCatalogEntry->getNode()->getId());
@@ -190,10 +190,10 @@ void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const NodePtr& op
 }
 
 bool LogicalSourceExpansionRule::isBlockingOperator(const NodePtr& operatorNode) {
-    return (operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()
-            || operatorNode->instanceOf<UnionLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
-            || operatorNode->instanceOf<FlatMapUDFLogicalOperatorNode>()
-            || operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>());
+    return (operatorNode->instanceOf<LogicalSinkOperator>() || operatorNode->instanceOf<LogicalWindowOperator>()
+            || operatorNode->instanceOf<LogicalUnionOperator>() || operatorNode->instanceOf<LogicalJoinOperator>()
+            || operatorNode->instanceOf<LogicalFlatMapUDFOperator>()
+            || operatorNode->instanceOf<Experimental::LogicalBatchJoinOperator>());
 }
 
 }// namespace NES::Optimizer

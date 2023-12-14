@@ -17,9 +17,9 @@
 #include <BaseIntegrationTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Configurations/Enums/QueryMergerRule.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Configurations/Enums/QueryMergerRule.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
@@ -67,7 +67,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator1) {
     EXPECT_TRUE(rootOperators.size() == 1);
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -93,7 +93,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator2) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
         ")+FieldAccessNode(c[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -121,7 +121,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator3) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(a[Undefined]"
         ")+FieldAccessNode(b[Undefined])+FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -148,7 +148,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator4) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
         ")*FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -175,7 +175,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator5) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(d[Undefined]"
         ")>FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -202,7 +202,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator6) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined]"
         ")<FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -231,7 +231,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator7) {
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])*FieldAccessNode(c[Undefined]"
         ")+FieldAccessNode(d[Undefined]"
         ")>FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -258,7 +258,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator8) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -285,7 +285,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator9) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -312,7 +312,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator10) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])=="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -339,7 +339,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator11) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])<="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -366,7 +366,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator12) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])&&"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -393,7 +393,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator13) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])||"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -420,7 +420,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator14) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=!FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])&&"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -443,7 +443,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator15) {
     EXPECT_TRUE(rootOperators.size() == 1);
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+FieldAccessNode(a[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -469,7 +469,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator16) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+FieldAccessNode(c[Undefined]"
         ")*FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -495,7 +495,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator17) {
     const auto* expectedSignature =
         "SINK().MAP(FieldAccessNode(b[Undefined])=ConstantValue(BasicValue(10))+ConstantValue(BasicValue(100))+FieldAccessNode(a["
         "Undefined])+FieldAccessNode(b[Undefined])+FieldAccessNode(c[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -521,7 +521,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleFilterOperator1) {
     const auto* expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])<"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -547,7 +547,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator2) {
     const auto* expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>"
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -573,7 +573,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator3) {
     const auto* expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])>="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -599,7 +599,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator4) {
     const auto* expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])<="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -625,7 +625,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator5) {
     const auto* expectedSignature =
         "SINK().FILTER(!FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])=="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }
 
@@ -651,6 +651,6 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator6) {
     const auto* expectedSignature =
         "SINK().FILTER(FieldAccessNode(a[Undefined])+FieldAccessNode(c[Undefined])=="
         "FieldAccessNode(c[Undefined])+FieldAccessNode(d[Undefined])*FieldAccessNode(d[Undefined])).SOURCE(src)";
-    auto actualSignature = *rootOperators[0]->as<LogicalOperatorNode>()->getHashBasedSignature().begin()->second.begin();
+    auto actualSignature = *rootOperators[0]->as<LogicalOperator>()->getHashBasedSignature().begin()->second.begin();
     EXPECT_EQ(expectedSignature, actualSignature);
 }

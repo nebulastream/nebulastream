@@ -14,16 +14,16 @@
 
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_SLICECREATIONOPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_SLICECREATIONOPERATOR_HPP_
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
 namespace NES {
 
 /**
  * @brief this class represents the slicing operator for distributed windowing that is deployed on the source nodes and send all sliches to the combiner
  */
-class SliceCreationOperator : public WindowOperatorNode {
+class SliceCreationOperator : public WindowOperator {
   public:
     SliceCreationOperator(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
 

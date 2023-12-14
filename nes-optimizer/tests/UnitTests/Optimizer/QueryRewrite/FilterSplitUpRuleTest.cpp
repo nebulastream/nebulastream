@@ -19,22 +19,22 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -71,13 +71,13 @@ class FilterSplitUpRuleTest : public Testing::BaseIntegrationTest {
     }
 
     bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> accessedFields) {
-        if (!filter->instanceOf<FilterLogicalOperatorNode>()) {
+        if (!filter->instanceOf<LogicalFilterOperator>()) {
             return false;
         }
 
         auto count = accessedFields.size();
 
-        DepthFirstNodeIterator depthFirstNodeIterator(filter->as<FilterLogicalOperatorNode>()->getPredicate());
+        DepthFirstNodeIterator depthFirstNodeIterator(filter->as<LogicalFilterOperator>()->getPredicate());
         for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
             if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
                 const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
@@ -334,13 +334,13 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotOr) {
     ++itr;
     std::vector<std::string> id;
     id.emplace_back("id");
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<NegateExpressionNode>());
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), id));
     ++itr;
     std::vector<std::string> ts;
     ts.emplace_back("ts");
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), ts));
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<NegateExpressionNode>());
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
@@ -410,18 +410,18 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotTwoOrs) {
     ++itr;
     std::vector<std::string> id;
     id.emplace_back("id");
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<NegateExpressionNode>());
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), id));
     ++itr;
     std::vector<std::string> ts;
     ts.emplace_back("ts");
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), ts));
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<NegateExpressionNode>());
     ++itr;
     std::vector<std::string> fict;
     fict.emplace_back("fict");
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), fict));
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<NegateExpressionNode>());
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
@@ -495,12 +495,12 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterAndOrNot) {
     idTs.emplace_back("id");
     idTs.emplace_back("ts");
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), idTs));
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<NegateExpressionNode>());
     ++itr;
     std::vector<std::string> fict;
     fict.emplace_back("fict");
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), fict));
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<NegateExpressionNode>());
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
@@ -534,7 +534,7 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterDoubleNot) {
     EXPECT_TRUE(sinkOperator->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperator->equal((*itr)));
-    EXPECT_TRUE(!(*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE(!(*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<NegateExpressionNode>());
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
@@ -572,12 +572,12 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotNegatedOr) {
     std::vector<std::string> id;
     id.emplace_back("id");
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), id));
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<EqualsExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<EqualsExpressionNode>());
     ++itr;
     std::vector<std::string> id2;
     id2.emplace_back("id2");
     EXPECT_TRUE(isFilterAndAccessesCorrectFields((*itr), id2));
-    EXPECT_TRUE((*itr)->as<FilterLogicalOperatorNode>()->getPredicate()->instanceOf<EqualsExpressionNode>());
+    EXPECT_TRUE((*itr)->as<LogicalFilterOperator>()->getPredicate()->instanceOf<EqualsExpressionNode>());
     ++itr;
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }

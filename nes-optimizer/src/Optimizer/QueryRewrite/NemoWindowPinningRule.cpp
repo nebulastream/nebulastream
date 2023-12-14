@@ -16,12 +16,12 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryRewrite/NemoWindowPinningRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -57,7 +57,7 @@ QueryPlanPtr NemoWindowPinningRule::apply(QueryPlanPtr queryPlan) {
     if (!performDistributedWindowOptimization) {
         return queryPlan;
     }
-    auto windowOps = queryPlan->getOperatorByType<WindowLogicalOperatorNode>();
+    auto windowOps = queryPlan->getOperatorByType<LogicalWindowOperator>();
     if (!windowOps.empty()) {
         /**
          * @end
@@ -132,8 +132,8 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
                 // get the watermark parent
                 WatermarkAssignerLogicalOperatorNodePtr watermark;
                 for (auto ancestor : child->getAndFlattenAllAncestors()) {
-                    if (ancestor->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-                        watermark = ancestor->as_if<WatermarkAssignerLogicalOperatorNode>();
+                    if (ancestor->instanceOf<LogicalWatermarkAssignerOperator>()) {
+                        watermark = ancestor->as_if<LogicalWatermarkAssignerOperator>();
                         break;
                     }
                 }
@@ -213,14 +213,14 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
 
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef = Windowing::LogicalWindowDefinition::create(keyField,
+        windowDef = Windowing::LogicalWindowDescriptor::create(keyField,
                                                                {windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
                                                                allowedLateness);
 
     } else {
-        windowDef = Windowing::LogicalWindowDefinition::create({windowComputationAggregation},
+        windowDef = Windowing::LogicalWindowDescriptor::create({windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
                                                                allowedLateness);
@@ -240,7 +240,7 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
 
     auto windowChildren = windowComputationOperator->getChildren();
 
-    auto assignerOp = queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>();
+    auto assignerOp = queryPlan->getOperatorByType<LogicalWatermarkAssignerOperator>();
     UnaryOperatorNodePtr finalComputationAssigner = windowComputationOperator;
     NES_ASSERT(assignerOp.size() > 1, "at least one assigner has to be there");
 
@@ -251,7 +251,7 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef =
-                Windowing::LogicalWindowDefinition::create(keyField,
+                Windowing::LogicalWindowDescriptor::create(keyField,
                                                            {sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
@@ -259,7 +259,7 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
 
         } else {
             windowDef =
-                Windowing::LogicalWindowDefinition::create({sliceCombinerWindowAggregation},
+                Windowing::LogicalWindowDescriptor::create({sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
                                                            allowedLateness);
@@ -282,14 +282,14 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef =
-                Windowing::LogicalWindowDefinition::create({keyField},
+                Windowing::LogicalWindowDescriptor::create({keyField},
                                                            {sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
                                                            allowedLateness);
         } else {
             windowDef =
-                Windowing::LogicalWindowDefinition::create({sliceCreationWindowAggregation},
+                Windowing::LogicalWindowDescriptor::create({sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
                                                            allowedLateness);

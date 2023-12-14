@@ -14,38 +14,38 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
-#include <Operators/Exceptions/SignatureComputationException.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
 #include <Util/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/QuerySignatures/Z3ExprAndFieldMap.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <z3++.h>
 
@@ -64,12 +64,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
         NES_DEBUG("QuerySignatureUtil: Creating query signature for operator {}", operatorNode->toString());
         auto children = operatorNode->getChildren();
         if (operatorNode->instanceOf<UnaryOperatorNode>()) {
-            if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
+            if (operatorNode->instanceOf<LogicalSourceOperator>() && !children.empty()) {
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
-            } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>() && children.empty()) {
+            } else if (operatorNode->instanceOf<LogicalSinkOperator>() && children.empty()) {
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have empty children set : " + operatorNode->toString());
-            } else if (!(operatorNode->instanceOf<SourceLogicalOperatorNode>()
-                         || operatorNode->instanceOf<SinkLogicalOperatorNode>())
+            } else if (!(operatorNode->instanceOf<LogicalSourceOperator>()
+                         || operatorNode->instanceOf<LogicalSinkOperator>())
                        && children.size() != 1) {
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can have only one children : "
                                         + operatorNode->toString() + " found : " + std::to_string(children.size()));
@@ -79,46 +79,46 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
                                     + operatorNode->toString());
         }
 
-        if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+        if (operatorNode->instanceOf<LogicalSourceOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for Source operator");
-            SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
+            SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<LogicalSourceOperator>();
             return createQuerySignatureForSource(context, sourceOperator);
         }
-        if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        if (operatorNode->instanceOf<LogicalSinkOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
             NES_ASSERT(!children.empty(), "Sink operator should have at least one child.");
-            return children[0]->as<LogicalOperatorNode>()->getZ3Signature();
-        } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+            return children[0]->as<LogicalOperator>()->getZ3Signature();
+        } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
-            auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
+            auto filterOperator = operatorNode->as<LogicalFilterOperator>();
             return createQuerySignatureForFilter(context, filterOperator);
-        } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalUnionOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
-            auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
+            auto unionOperator = operatorNode->as<LogicalUnionOperator>();
             return createQuerySignatureForUnion(context, unionOperator);
-        } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
-            auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
+            auto mapOperator = operatorNode->as<LogicalMapOperator>();
             return createQuerySignatureForMap(context, mapOperator);
-        } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalWindowOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
-            auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
+            auto windowOperator = operatorNode->as<LogicalWindowOperator>();
             return createQuerySignatureForWindow(context, windowOperator);
-        } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
-            auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
+            auto projectOperator = operatorNode->as<LogicalProjectionOperator>();
             return createQuerySignatureForProject(projectOperator);
-        } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalWatermarkAssignerOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for watermark operator");
-            auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
+            auto watermarkAssignerOperator = operatorNode->as<LogicalWatermarkAssignerOperator>();
             return createQuerySignatureForWatermark(context, watermarkAssignerOperator);
-        } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
-            auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
+            auto joinOperator = operatorNode->as<LogicalJoinOperator>();
             return createQuerySignatureForJoin(context, joinOperator);
-        } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
+        } else if (operatorNode->instanceOf<InferModel::LogicalInferModelOperator>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
-            auto imOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
+            auto imOperator = operatorNode->as<InferModel::LogicalInferModelOperator>();
             return createQuerySignatureForInferModel(context, imOperator);
         }
         throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
@@ -159,7 +159,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(const Proje
     //Get all children operators
     auto children = projectOperator->getChildren();
     NES_ASSERT(children.size() == 1, "Project operator should only have one and non null children.");
-    auto childQuerySignature = children[0]->as<LogicalOperatorNode>()->getZ3Signature();
+    auto childQuerySignature = children[0]->as<LogicalOperator>()->getZ3Signature();
     auto columns = childQuerySignature->getColumns();
 
     //Extract projected columns
@@ -227,7 +227,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
     std::vector<NodePtr> children = inferModelOperator->getChildren();
     NES_ASSERT(children.size() == 1, "InferModel operator should only have one non null children.");
     auto child = children[0];
-    auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
+    auto childQuerySignature = child->as<LogicalOperator>()->getZ3Signature();
 
     //Fetch the signature of only children and get the column values
     auto columns = childQuerySignature->getColumns();
@@ -287,7 +287,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(const z3::Conte
     std::vector<NodePtr> children = mapOperator->getChildren();
     NES_ASSERT(children.size() == 1, "Map operator should only have one non null children.");
     auto child = children[0];
-    auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
+    auto childQuerySignature = child->as<LogicalOperator>()->getZ3Signature();
     auto exprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(mapOperator->getMapExpression(), context);
     auto mapExpr = exprAndFieldMap->getExpr();
     auto rhsOperandFieldMap = exprAndFieldMap->getFieldMap();
@@ -347,7 +347,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
     std::vector<NodePtr> children = filterOperator->getChildren();
     NES_ASSERT(children.size() == 1, "Map operator should only have one non null children.");
     auto child = children[0];
-    auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
+    auto childQuerySignature = child->as<LogicalOperator>()->getZ3Signature();
     auto filterExprAndFieldMap = ExpressionToZ3ExprUtil::createForExpression(filterOperator->getPredicate(), context);
     auto filterFieldMap = filterExprAndFieldMap->getFieldMap();
     auto filterExpr = filterExprAndFieldMap->getExpr();
@@ -410,7 +410,7 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
     std::vector<NodePtr> children = watermarkAssignerOperator->getChildren();
     NES_ASSERT(children.size() == 1, "Map operator should only have one non null children.");
     auto child = children[0];
-    auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
+    auto childQuerySignature = child->as<LogicalOperator>()->getZ3Signature();
 
     auto conditions = childQuerySignature->getConditions();
 
@@ -473,8 +473,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::Con
     auto leftSchema = unionOperator->getLeftInputSchema();
 
     //Identify the left and right schema
-    QuerySignaturePtr leftSignature = children[0]->as<LogicalOperatorNode>()->getZ3Signature();
-    QuerySignaturePtr rightSignature = children[1]->as<LogicalOperatorNode>()->getZ3Signature();
+    QuerySignaturePtr leftSignature = children[0]->as<LogicalOperator>()->getZ3Signature();
+    QuerySignaturePtr rightSignature = children[1]->as<LogicalOperator>()->getZ3Signature();
 
     //Compute a vector of different tuple schemas expected at this operator
     std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaFieldToExprMaps;
@@ -550,7 +550,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     QuerySignaturePtr leftSignature;
     QuerySignaturePtr rightSignature;
     for (auto& child : children) {
-        auto childOperator = child->as<LogicalOperatorNode>();
+        auto childOperator = child->as<LogicalOperator>();
         if (childOperator->getOutputSchema()->equals(leftSchema)) {
             leftSignature = childOperator->getZ3Signature();
         } else {
@@ -684,7 +684,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     std::vector<NodePtr> children = windowOperator->getChildren();
     NES_ASSERT(children.size() == 1 && children[0], "Window operator should only have one non null child.");
     auto child = children[0];
-    auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
+    auto childQuerySignature = child->as<LogicalOperator>()->getZ3Signature();
 
     NES_DEBUG("QuerySignatureUtil: compute signature for window operator");
     z3::expr_vector windowConditions(*context);

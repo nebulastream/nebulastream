@@ -13,13 +13,13 @@
 */
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 
 namespace NES::Optimizer {
 
@@ -30,7 +30,7 @@ DistributeJoinRulePtr DistributeJoinRule::create() { return std::make_shared<Dis
 QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("DistributeJoinRule: Apply DistributeJoinRule.");
     NES_DEBUG("DistributeJoinRule::apply: plan before replace\n{}", queryPlan->toString());
-    auto joinOps = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOps = queryPlan->getOperatorByType<LogicalJoinOperator>();
     if (!joinOps.empty()) {
         NES_DEBUG("DistributeJoinRule::apply: found {} join operators", joinOps.size());
         for (auto& joinOp : joinOps) {

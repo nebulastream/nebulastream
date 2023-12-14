@@ -19,16 +19,18 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -39,10 +41,8 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialType.hpp>
 #include <iostream>
 #include <z3++.h>
 
@@ -416,16 +416,16 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingMoreThanTw
     EXPECT_EQ(changeLogEntries.size(), 1U);
 
     for (const auto& upstreamOperator : changeLogEntries[0].second->upstreamOperators) {
-        EXPECT_TRUE(upstreamOperator->instanceOf<FilterLogicalOperatorNode>());
+        EXPECT_TRUE(upstreamOperator->instanceOf<LogicalFilterOperator>());
         // Three different map operators are added
         EXPECT_TRUE(upstreamOperator->getParents().size() == 3U);
         for (const auto& parent : upstreamOperator->getParents()) {
-            EXPECT_TRUE(parent->instanceOf<MapLogicalOperatorNode>());
+            EXPECT_TRUE(parent->instanceOf<LogicalMapOperator>());
         }
         // There are one physical sources
         EXPECT_TRUE(upstreamOperator->getChildren().size() == 1U);
         for (const auto& child : upstreamOperator->getChildren()) {
-            EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
+            EXPECT_TRUE(child->instanceOf<LogicalSourceOperator>());
         }
     }
 }

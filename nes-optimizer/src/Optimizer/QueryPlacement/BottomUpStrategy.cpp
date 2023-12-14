@@ -13,16 +13,16 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
 #include <utility>
@@ -84,7 +84,7 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
             //Place all downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
                 identifyPinningLocation(queryId,
-                                        downStreamNode->as<LogicalOperatorNode>(),
+                                        downStreamNode->as<LogicalOperator>(),
                                         candidateTopologyNode,
                                         pinnedDownStreamOperators);
             }
@@ -112,8 +112,8 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
     }
 
     NES_DEBUG("BottomUpStrategy: Place {}", logicalOperator->toString());
-    if ((logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperatorNode>())
-        || logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
+    if ((logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<LogicalSourceOperator>())
+        || logicalOperator->instanceOf<LogicalSinkOperator>()) {
         NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
         //Check if all children operators already placed
         NES_TRACE("BottomUpStrategy: Get the topology nodes where child operators are placed.");
@@ -140,7 +140,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
                 "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
         }
 
-        if (logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
+        if (logicalOperator->instanceOf<LogicalSinkOperator>()) {
             NES_TRACE("BottomUpStrategy: Received Sink operator for placement.");
             auto nodeId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
             auto pinnedSinkOperatorLocation = getTopologyNode(nodeId);
@@ -199,7 +199,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
 
     NES_TRACE("BottomUpStrategy: Place further upstream operators.");
     for (const auto& parent : logicalOperator->getParents()) {
-        identifyPinningLocation(queryId, parent->as<LogicalOperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators);
+        identifyPinningLocation(queryId, parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
     }
 }
 

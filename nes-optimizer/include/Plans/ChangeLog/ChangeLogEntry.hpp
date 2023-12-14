@@ -20,8 +20,8 @@
 #include <set>
 
 namespace NES {
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperator>;
 }// namespace NES
 
 namespace NES::Optimizer::Experimental {

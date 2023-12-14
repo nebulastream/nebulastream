@@ -19,7 +19,7 @@
 #include <API/Query.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Services/QueryService.hpp>

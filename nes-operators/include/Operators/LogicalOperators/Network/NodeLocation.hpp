@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_
 
-#include<Operators/LogicalOperators/Network/NesPartition.hpp>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Network {

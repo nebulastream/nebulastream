@@ -22,8 +22,8 @@
 
 namespace NES::Windowing {
 
-class LogicalWindowDefinition;
-using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
+class LogicalWindowDescriptor;
+using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDescriptor>;
 
 class WindowOperatorHandler;
 using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
@@ -31,12 +31,12 @@ using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
 }// namespace NES::Windowing
 
 namespace NES::Join {
-class LogicalJoinDefinition;
-using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
+class JoinDescriptor;
+using LogicalJoinDefinitionPtr = std::shared_ptr<JoinDescriptor>;
 
 namespace Experimental {
-class LogicalBatchJoinDefinition;
-using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
+class BatchJoinDescriptor;
+using LogicalBatchJoinDefinitionPtr = std::shared_ptr<BatchJoinDescriptor>;
 
 class BatchJoinOperatorHandler;
 using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
@@ -44,42 +44,42 @@ using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
 }// namespace NES::Join
 namespace NES {
 
-class LogicalOperatorNode;
-using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
+class LogicalOperator;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperator>;
 
 class UnaryOperatorNode;
 using UnaryOperatorNodePtr = std::shared_ptr<UnaryOperatorNode>;
 
-class LogicalUnaryOperatorNode;
-using LogicalUnaryOperatorNodePtr = std::shared_ptr<LogicalUnaryOperatorNode>;
+class LogicalUnaryOperator;
+using LogicalUnaryOperatorNodePtr = std::shared_ptr<LogicalUnaryOperator>;
 
 class BinaryOperatorNode;
 using BinaryOperatorNodePtr = std::shared_ptr<BinaryOperatorNode>;
 
-class LogicalBinaryOperatorNode;
-using LogicalBinaryOperatorNodePtr = std::shared_ptr<LogicalBinaryOperatorNode>;
+class LogicalBinaryOperator;
+using LogicalBinaryOperatorNodePtr = std::shared_ptr<LogicalBinaryOperator>;
 
 class ExchangeOperatorNode;
 using ExchangeOperatorNodePtr = std::shared_ptr<ExchangeOperatorNode>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class LogicalSourceOperator;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<LogicalSourceOperator>;
 
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+class LogicalSinkOperator;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<LogicalSinkOperator>;
 
-class FilterLogicalOperatorNode;
-using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
+class LogicalFilterOperator;
+using FilterLogicalOperatorNodePtr = std::shared_ptr<LogicalFilterOperator>;
 
-class WindowOperatorNode;
-using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
+class WindowOperator;
+using WindowOperatorNodePtr = std::shared_ptr<WindowOperator>;
 
-class JoinLogicalOperatorNode;
-using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
+class LogicalJoinOperator;
+using JoinLogicalOperatorNodePtr = std::shared_ptr<LogicalJoinOperator>;
 
 namespace Experimental {
-class BatchJoinLogicalOperatorNode;
-using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+class LogicalBatchJoinOperator;
+using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<LogicalBatchJoinOperator>;
 }// namespace Experimental
 
 class FieldAssignmentExpressionNode;
@@ -96,17 +96,17 @@ class JavaUDFDescriptor;
 using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 }// namespace Catalogs::UDF
 
-class BroadcastLogicalOperatorNode;
-using BroadcastLogicalOperatorNodePtr = std::shared_ptr<BroadcastLogicalOperatorNode>;
+class LogicalBroadcastOperator;
+using BroadcastLogicalOperatorNodePtr = std::shared_ptr<LogicalBroadcastOperator>;
 
-class SourceLogicalOperatorNode;
-using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
+class LogicalSourceOperator;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<LogicalSourceOperator>;
 
-class SinkLogicalOperatorNode;
-using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
+class LogicalSinkOperator;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<LogicalSinkOperator>;
 
-class WatermarkAssignerLogicalOperatorNode;
-using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
+class LogicalWatermarkAssignerOperator;
+using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<LogicalWatermarkAssignerOperator>;
 
 class CentralWindowOperator;
 using CentralWindowOperatorPtr = std::shared_ptr<CentralWindowOperator>;
@@ -120,8 +120,8 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
-class BroadcastLogicalOperatorNode;
-using BroadcastLogicalOperatorNodePtr = std::shared_ptr<BroadcastLogicalOperatorNode>;
+class LogicalBroadcastOperator;
+using BroadcastLogicalOperatorNodePtr = std::shared_ptr<LogicalBroadcastOperator>;
 
 }// namespace NES
 

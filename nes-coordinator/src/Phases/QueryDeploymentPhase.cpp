@@ -19,7 +19,7 @@
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -132,7 +132,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
 
                 //Elegant acceleration service call
                 //1. Fetch the OpenCL Operators
-                auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+                auto openCLOperators = querySubPlan->getOperatorByType<LogicalOpenCLOperator>();
 
                 //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
                 for (const auto& openCLOperator : openCLOperators) {

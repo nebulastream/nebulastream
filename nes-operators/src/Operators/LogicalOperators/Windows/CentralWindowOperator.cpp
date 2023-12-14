@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
@@ -28,7 +28,7 @@
 namespace NES {
 
 CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
-    : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
+    : OperatorNode(id), WindowOperator(windowDefinition, id) {
     windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCompleteWindowType());
 }
 
@@ -60,7 +60,7 @@ OperatorNodePtr CentralWindowOperator::copy() {
     return copy;
 }
 bool CentralWindowOperator::inferSchema() {
-    if (!WindowOperatorNode::inferSchema()) {
+    if (!WindowOperator::inferSchema()) {
         return false;
     }
     // infer the default input and output schema

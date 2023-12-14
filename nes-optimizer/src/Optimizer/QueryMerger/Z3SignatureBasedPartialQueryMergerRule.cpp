@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/QueryMerger/MatchedOperatorPair.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -76,7 +76,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                     //Extract the front of the queue and check if there is a matching operator in the
                     // host query plan
                     bool foundMatch = false;
-                    auto targetOperator = targetOperators.front()->as<LogicalOperatorNode>();
+                    auto targetOperator = targetOperators.front()->as<LogicalOperator>();
                     targetOperators.pop_front();
 
                     //Skip if the target operator is already matched
@@ -105,7 +105,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                         // perform matching
                         while (!hostOperators.empty()) {
                             //Take out the front of the queue and add the host operator to the visited list
-                            auto hostOperator = hostOperators.front()->as<LogicalOperatorNode>();
+                            auto hostOperator = hostOperators.front()->as<LogicalOperator>();
                             visitedHostOperators.emplace_back(hostOperator);
                             hostOperators.pop_front();
 
@@ -193,8 +193,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                 matchedOperatorPairs.reserve(matchedTargetToHostOperatorMap.size());
                 //Iterate over all matched pairs of operators and merge the query plan
                 for (auto [targetOperator, hostOperator] : matchedTargetToHostOperatorMap) {
-                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator->as<LogicalOperatorNode>(),
-                                                                                  targetOperator->as<LogicalOperatorNode>(),
+                    matchedOperatorPairs.emplace_back(MatchedOperatorPair::create(hostOperator->as<LogicalOperator>(),
+                                                                                  targetOperator->as<LogicalOperator>(),
                                                                                   ContainmentRelationship::EQUALITY));
                 }
 

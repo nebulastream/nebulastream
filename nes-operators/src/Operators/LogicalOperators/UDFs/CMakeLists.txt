@@ -15,7 +15,7 @@ add_source_files(nes-operators
         JavaUDFDescriptor.cpp
         PythonUDFDescriptor.cpp
         UDFDescriptor.cpp
-        UDFLogicalOperator.cpp
+        LogicalUDFOperator.cpp
         )
 add_subdirectory(FlatMapUDF)
 add_subdirectory(MapUDF)

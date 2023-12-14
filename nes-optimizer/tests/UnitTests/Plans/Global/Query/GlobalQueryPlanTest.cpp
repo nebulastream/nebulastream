@@ -15,8 +15,8 @@
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -78,7 +78,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndGetAllNewGlobalQueryNodesWi
     globalQueryPlan->createNewSharedQueryPlan(plan);
 
     //Assert
-    NES_DEBUG("GlobalQueryPlanTest: A global query node containing operator of type SinkLogicalOperatorNode should be returned");
+    NES_DEBUG("GlobalQueryPlanTest: A global query node containing operator of type LogicalSinkOperator should be returned");
     auto listOfGQMsToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 1);
 }

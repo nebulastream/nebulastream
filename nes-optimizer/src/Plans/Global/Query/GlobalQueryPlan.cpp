@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include  <Catalogs/Exceptions/QueryNotFoundException.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Catalogs/Exceptions/QueryNotFoundException.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Optimizer/Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>

@@ -14,25 +14,25 @@
 
 #include <API/Schema.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedBottomUpQueryContainmentRule.hpp>
-#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
@@ -159,23 +159,23 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                         } else if (std::get<1>(hostOperatorAndRelationship) == ContainmentRelationship::RIGHT_SIG_CONTAINED
                                    && checkWindowContainmentPossible(hostOperator, targetOperator)) {
                             //if we're adding a window, we first need to obtain the watermark for that window
-                            if (targetOperator->instanceOf<WindowOperatorNode>()) {
-                                targetOperator = targetOperator->getChildren()[0]->as<LogicalOperatorNode>();
+                            if (targetOperator->instanceOf<WindowOperator>()) {
+                                targetOperator = targetOperator->getChildren()[0]->as<LogicalOperator>();
                             }
                             //obtain the child operation of the sink operator to merge the correct containment relationship
-                            if (hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
+                            if (hostOperator->instanceOf<LogicalSinkOperator>()) {
                                 //sink operator should only have one child
                                 if (hostOperator->getChildren().size() != 1) {
                                     NES_DEBUG("Sink operator has more than one child");
                                     continue;
                                 }
-                                hostOperator = hostOperator->getChildren()[0]->as<LogicalOperatorNode>();
+                                hostOperator = hostOperator->getChildren()[0]->as<LogicalOperator>();
                             }
                             NES_TRACE("Adding parent {} to {}", targetOperator->toString(), hostOperator->toString());
                             //in case target operator has more than one child (e.g. join or union) obtain the parent operator
                             if (targetOperator->getChildren().size() > 1) {
                                 //will only have one parent operator
-                                targetOperator = targetOperator->getParents()[0]->as<LogicalOperatorNode>();
+                                targetOperator = targetOperator->getParents()[0]->as<LogicalOperator>();
                             }
                             targetOperator->removeChildren();
                             NES_TRACE("Current host operator: {}", hostOperator->toString());
@@ -188,22 +188,22 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
                         } else if (std::get<1>(hostOperatorAndRelationship) == ContainmentRelationship::LEFT_SIG_CONTAINED
                                    && checkWindowContainmentPossible(targetOperator, hostOperator)) {
                             //if we're adding a window, we first need to obtain the watermark for that window
-                            if (hostOperator->instanceOf<WindowOperatorNode>()) {
-                                hostOperator = hostOperator->getChildren()[0]->as<LogicalOperatorNode>();
+                            if (hostOperator->instanceOf<WindowOperator>()) {
+                                hostOperator = hostOperator->getChildren()[0]->as<LogicalOperator>();
                             }
                             //obtain the child operation of the sink operator to merge the correct containment relationship
-                            if (targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
+                            if (targetOperator->instanceOf<LogicalSinkOperator>()) {
                                 //sink operator should only have one child
                                 if (targetOperator->getChildren().size() != 1) {
                                     NES_DEBUG("Sink operator has more than one child");
                                     continue;
                                 }
-                                targetOperator = targetOperator->getChildren()[0]->as<LogicalOperatorNode>();
+                                targetOperator = targetOperator->getChildren()[0]->as<LogicalOperator>();
                             }
                             NES_TRACE("Adding parent {} to {}", hostOperator->toString(), targetOperator->toString());
                             //we cannot match union or logical operator nodes because they cannot be safely merged as the sqp is not a tree
-                            if (hostOperator->instanceOf<UnionLogicalOperatorNode>()
-                                || hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
+                            if (hostOperator->instanceOf<LogicalUnionOperator>()
+                                || hostOperator->instanceOf<LogicalJoinOperator>()) {
                                 unionOrJoin = true;
                                 break;
                             }
@@ -248,9 +248,9 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::apply(GlobalQueryPlanPtr glob
 
 bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossible(const LogicalOperatorNodePtr& container,
                                                                                   const LogicalOperatorNodePtr& containee) const {
-    //check that containee is a WindowOperatorNode if yes, go on, if no, return false
-    if (containee->instanceOf<WindowOperatorNode>()) {
-        auto containeeWindowDefinition = containee->as<WindowOperatorNode>()->getWindowDefinition();
+    //check that containee is a WindowOperator if yes, go on, if no, return false
+    if (containee->instanceOf<WindowOperator>()) {
+        auto containeeWindowDefinition = containee->as<WindowOperator>()->getWindowDefinition();
         auto containeeWindowType = containeeWindowDefinition->getWindowType();
         //check that containee is a time based window, else return false
         if (containeeWindowType->instanceOf<Windowing::TimeBasedWindowType>()) {
@@ -307,7 +307,7 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
                                                                     const LogicalOperatorNodePtr& targetOperator) {
 
     std::map<LogicalOperatorNodePtr, std::tuple<LogicalOperatorNodePtr, ContainmentRelationship>> targetHostOperatorMap;
-    if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
+    if (targetOperator->instanceOf<LogicalSinkOperator>() && hostOperator->instanceOf<LogicalSinkOperator>()) {
         NES_DEBUG("Both target and host operators are of sink type.");
         return {};
     }
@@ -323,7 +323,7 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
             for (const auto& hostParent : hostOperator->getParents()) {
                 NES_DEBUG("HostParent: {}", hostParent->toString());
                 auto matchedOperators =
-                    areOperatorsContained(hostParent->as<LogicalOperatorNode>(), targetParent->as<LogicalOperatorNode>());
+                    areOperatorsContained(hostParent->as<LogicalOperator>(), targetParent->as<LogicalOperator>());
                 if (!matchedOperators.empty()) {
                     targetHostOperatorMap.merge(matchedOperators);
                     matchCount++;
@@ -342,7 +342,7 @@ Z3SignatureBasedBottomUpQueryContainmentRule::areOperatorsContained(const Logica
                   targetOperator->toString(),
                   hostOperator->toString(),
                   magic_enum::enum_name(containmentType));
-        if (targetOperator->instanceOf<JoinLogicalOperatorNode>() && hostOperator->instanceOf<JoinLogicalOperatorNode>()) {
+        if (targetOperator->instanceOf<LogicalJoinOperator>() && hostOperator->instanceOf<LogicalJoinOperator>()) {
             return targetHostOperatorMap;
         }
         targetHostOperatorMap[targetOperator] = {hostOperator, containmentType};
