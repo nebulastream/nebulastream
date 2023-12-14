@@ -28,13 +28,13 @@ class DummyResponse : public AbstractRequestResponse {
 
 class DummySubRequest : public AbstractSubRequest {
   public:
-    DummySubRequest(std::atomic_ref<uint32_t> additionTarget, uint32_t returnNewRequestFrequency)
+    DummySubRequest(std::atomic<uint32_t>& additionTarget, uint32_t returnNewRequestFrequency)
         : AbstractSubRequest({}), additionTarget(additionTarget), returnNewRequestFrequency(returnNewRequestFrequency) {}
     void executeSubRequestLogic(const StorageHandlerPtr&) override {
         auto lastValue = ++additionTarget;
         responsePromise.set_value(true);
     }
-    std::atomic_ref<uint32_t> additionTarget;
+    std::atomic<uint32_t>& additionTarget;
     uint32_t returnNewRequestFrequency;
 };
 
@@ -52,7 +52,7 @@ class DummyRequest : public AbstractMultiRequest {
         std::vector<std::future<std::any>> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
             futures.push_back(scheduleSubRequest(
-                std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency),
+                std::make_shared<DummySubRequest>(responseValue, returnNewRequestFrequency),
                 storageHandler));
         }
         for (auto& f : futures) {
@@ -63,7 +63,7 @@ class DummyRequest : public AbstractMultiRequest {
     }
 
     std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
-    uint32_t responseValue;
+    std::atomic<uint32_t> responseValue;
 
   protected:
     void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
@@ -89,7 +89,7 @@ class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
         std::vector<std::future<std::any>> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
             futures.push_back(scheduleSubRequest(
-                std::make_shared<DummySubRequest>(std::atomic_ref<uint32_t>(responseValue), returnNewRequestFrequency),
+                std::make_shared<DummySubRequest>(responseValue, returnNewRequestFrequency),
                 storageHandler));
         }
 
@@ -103,7 +103,7 @@ class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
     }
 
     std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
-    uint32_t responseValue;
+    std::atomic<uint32_t> responseValue;
 
   protected:
     void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
