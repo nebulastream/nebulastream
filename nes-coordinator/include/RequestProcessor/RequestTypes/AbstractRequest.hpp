@@ -14,10 +14,10 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 
+#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 #include <future>
 #include <memory>
 #include <vector>
-#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 
 namespace NES {
 namespace Exceptions {
@@ -37,7 +37,6 @@ namespace RequestProcessor {
 //the base class for the responses to be given to the creator of the request
 struct AbstractRequestResponse {};
 using AbstractRequestResponsePtr = std::shared_ptr<AbstractRequestResponse>;
-
 
 /**
  * @brief is the abstract base class for any kind of coordinator side request to deploy or undeploy queries, change the topology or perform
@@ -63,7 +62,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>, pu
      * request
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
-    virtual std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle);
+    virtual std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle) = 0;
 
     /**
      * @brief Roll back any changes made by a request that did not complete due to errors.
@@ -110,10 +109,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>, pu
      */
     template<class RequestType>
     bool instanceOf() {
-        if (dynamic_cast<RequestType*>(this)) {
-            return true;
-        }
-        return false;
+        return std::dynamic_pointer_cast<RequestType>(this->shared_from_this()) != nullptr;
     };
 
     /**
@@ -149,14 +145,6 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>, pu
     virtual void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) = 0;
 
     /**
-     * @brief Executes the request logic.
-     * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
-     * request
-     * @return a list of follow up requests to be executed (can be empty if no further actions are required)
-     */
-    virtual std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) = 0;
-
-    /**
      * @brief if no exception or value has been set in this requests response promise yet, set the supplied exception. If a value has
      * already been set, this method has no effect
      * @param exception the exception to give to the promise
@@ -171,10 +159,11 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>, pu
     void setExceptionInPromiseOrRethrow(std::exception_ptr exception);
 
     std::promise<AbstractRequestResponsePtr> responsePromise;
+
   private:
     uint8_t maxRetries;
     uint8_t actualRetries{0};
 };
-}// namespace RequestProcessor::Experimental
+}// namespace RequestProcessor
 }// namespace NES
 #endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTREQUEST_HPP_

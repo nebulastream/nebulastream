@@ -21,11 +21,14 @@ namespace NES::RequestProcessor {
 class AbstractSubRequest;
 using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
 
+class SubRequestFuture;
+using SubRequestFuturePtr = std::shared_ptr<SubRequestFuture>;
+
 /**
  * A multi request can acquire multiple threads and has its own internal subrequest queue which it uses to schedule the
  * concurrent execution of of subrequests
  */
-class AbstractMultiRequest : public AbstractRequest {
+class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRequest>, public AbstractRequest {
 
   public:
     /**
@@ -52,22 +55,25 @@ class AbstractMultiRequest : public AbstractRequest {
      */
     bool isDone();
 
-  protected:
     /**
      * @brief Takes subrequests from the queue and executes them and returns when there is no more work to do. This
      * function has to be called by the main thread of a request before waiting on the return value of a subrequest, if
      * not, the thread might starve if the request processor is single threaded
      * @param storageHandle the storage handle used to lock and access resources
      */
-    void executeSubRequestWhileQueueNotEmpty(const StorageHandlerPtr& storageHandle);
+     //todo: make this protected again and a fried function of subrequest future
+    void executeSubRequestWhileQueueNotEmpty();
 
+  protected:
     /**
      * @brief schedule a subrequest to be executed
      * @param subRequest the request to be executed
      * @param storageHandle the storage handle used to lock and access resources
      * @return a future into which the scheduled request will put the results of its computations
      */
-    std::future<std::any> scheduleSubRequest(AbstractSubRequestPtr subRequest, const StorageHandlerPtr& storageHandler);
+    SubRequestFuturePtr scheduleSubRequest(AbstractSubRequestPtr subRequest);
+
+    virtual std::vector<AbstractRequestPtr> executeRequestLogic() = 0;
 
   private:
     /**
@@ -76,7 +82,7 @@ class AbstractMultiRequest : public AbstractRequest {
      * @return true if a subrequest was executed. False is the request was marked as done and no subrequest was
      * executed
      */
-    bool executeSubRequest(const StorageHandlerPtr& storageHandle);
+    bool executeSubRequest();
 
     std::atomic<bool> done;
     std::atomic<bool> initialThreadAcquired = false;
@@ -84,6 +90,7 @@ class AbstractMultiRequest : public AbstractRequest {
     std::deque<AbstractSubRequestPtr> subRequestQueue;
     std::mutex workMutex;
     std::condition_variable cv;
+    StorageHandlerPtr storageHandle;
 };
 }// namespace NES::RequestProcessor::Experimental
 #endif// NES_CORE_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTITHREADEDREQUEST_HPP_

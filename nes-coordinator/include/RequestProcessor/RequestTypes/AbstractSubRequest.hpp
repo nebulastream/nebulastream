@@ -23,9 +23,23 @@ namespace NES::RequestProcessor {
 class AbstractRequest;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
+class AbstractMultiRequest;
+using AbstractMultiRequestPtr = std::shared_ptr<AbstractMultiRequest>;
+
+class AbstractSubRequest;
+using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
+
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
+class SubRequestFuture {
+  public:
+    explicit SubRequestFuture(AbstractSubRequestPtr parentRequest, std::future<std::any> future);
+    std::any get();
+  private:
+    AbstractSubRequestPtr request;
+    std::future<std::any> future;
+};
 /**
  * This class encapsulates parts of a coordinator side requests logic that are to be executed concurrently.
  * Subrequests are scheduled and executed as part of the execution of a MultiRequest
@@ -49,22 +63,27 @@ class AbstractSubRequest : public StorageResourceLocker {
      * @param requiredResources the resources required by this request. Must not be already locked by the parent request.
      */
     //todo #4433: move to common base class with abstract request
-    void execute(const StorageHandlerPtr& storageHandler);
+    bool execute();
 
     /**
      * @brief obtain a future into which the results of this subrequests execution will be placed on completion
      * @return a future containing the results
      */
-    std::future<std::any> getFuture();
+    //std::future<std::any> getFuture();
 
+    void setPromise(std::promise<std::any> promise);
+
+    void setStorageHandler(StorageHandlerPtr storageHandler);
   protected:
     /**
      * @brief Execute this subrequests logic
      * @param storageHandler
      */
-    virtual void executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
+    virtual std::any executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
 
     std::promise<std::any> responsePromise;
+    StorageHandlerPtr storageHandler;
+    std::atomic<bool> executionStarted{false};
 };
 }// namespace NES::RequestProcessor::Experimental
 

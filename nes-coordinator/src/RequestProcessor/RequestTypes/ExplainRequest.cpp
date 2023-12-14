@@ -75,7 +75,7 @@ ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                                const Optimizer::PlacementStrategy queryPlacementStrategy,
                                const uint8_t maxRetries,
                                const z3::ContextPtr& z3Context)
-    : AbstractRequest({ResourceType::QueryCatalogService,
+    : AbstractUniRequest({ResourceType::QueryCatalogService,
                        ResourceType::GlobalExecutionPlan,
                        ResourceType::Topology,
                        ResourceType::GlobalQueryPlan,

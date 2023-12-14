@@ -16,7 +16,7 @@
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_
 
 #include <Identifiers.hpp>
-#include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 
 namespace z3 {
 class context;
@@ -117,7 +117,7 @@ struct AddQueryResponse : public AbstractRequestResponse {
 class AddQueryRequest;
 using AddQueryRequestPtr = std::shared_ptr<AddQueryRequest>;
 
-class AddQueryRequest : public AbstractRequest {
+class AddQueryRequest : public AbstractUniRequest {
   public:
     /**
      * @brief Constructor

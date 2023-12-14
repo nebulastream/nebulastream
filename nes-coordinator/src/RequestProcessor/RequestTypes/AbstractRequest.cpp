@@ -47,20 +47,6 @@ std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exceptio
 
 bool AbstractRequest::retry() { return actualRetries++ < maxRetries; }
 
-std::vector<AbstractRequestPtr> AbstractRequest::execute(const StorageHandlerPtr& storageHandle) {
-    if (requestId == INVALID_REQUEST_ID) {
-        NES_THROW_RUNTIME_ERROR("Trying to execute a request before its id has been set");
-    }
-    //acquire locks and perform other tasks to prepare for execution
-    preExecution(storageHandle);
-
-    //execute the request logic
-    auto followUpRequests = executeRequestLogic(storageHandle);
-
-    //release locks
-    postExecution(storageHandle);
-    return followUpRequests;
-}
 
 std::future<AbstractRequestResponsePtr> AbstractRequest::getFuture() { return responsePromise.get_future(); }
 

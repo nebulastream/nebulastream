@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <BaseIntegrationTest.hpp>
-#include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <gtest/gtest.h>
 
@@ -24,10 +24,10 @@ class DummyResponse : public AbstractRequestResponse {
     uint32_t number;
 };
 
-class DummyRequest : public AbstractRequest {
+class DummyRequest : public AbstractUniRequest {
   public:
     DummyRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, uint32_t responseValue)
-        : AbstractRequest(requiredResources, maxRetries), responseValue(responseValue){};
+        : AbstractUniRequest(requiredResources, maxRetries), responseValue(responseValue){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override {
         responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));

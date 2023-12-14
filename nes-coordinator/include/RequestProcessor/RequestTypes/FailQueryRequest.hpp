@@ -15,7 +15,7 @@
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_FAILQUERYREQUEST_HPP_
 
 #include <Identifiers.hpp>
-#include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 
 namespace NES {
 class GlobalQueryPlan;
@@ -31,7 +31,7 @@ struct FailQueryResponse : public AbstractRequestResponse {
     SharedQueryId sharedQueryId;
 };
 
-class FailQueryRequest : public AbstractRequest {
+class FailQueryRequest : public AbstractUniRequest {
   public:
     /**
      * @brief Constructor
