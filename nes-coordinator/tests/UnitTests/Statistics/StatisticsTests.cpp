@@ -45,8 +45,7 @@ TEST_F(StatisticsTest, requestsTest) {
     std::string defaultLogicalSourceName = "defaultLogicalSourceName";
     std::vector<std::string> physicalSourceNames(10, "defaultPhysicalSourceName");
     std::string defaultFieldName = "defaultFieldName";
-    Experimental::Statistics::StatisticCollectorType statisticCollectorType =
-        Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
+    auto statisticCollectorType = Experimental::Statistics::StatisticCollectorType::COUNT_MIN;
     std::string probeExpression = "x == 15";
     time_t startTime = 100;
     time_t endTime = 10;
@@ -97,18 +96,17 @@ TEST_F(StatisticsTest, statisticLogicalOperatorTest) {
 
     auto statisticDescriptor = std::make_shared<Experimental::Statistics::CountMinDescriptor>(depth, width);
 
-    auto logicalUnaryOperatorNode = LogicalOperatorFactory::createStatisticOperator(statisticDescriptor,
-                                                                                   synopsisFieldName,
-                                                                                   windowSize,
-                                                                                   slideFactor);
+    auto logicalUnaryOperatorNode =
+        LogicalOperatorFactory::createStatisticOperator(statisticDescriptor, synopsisFieldName, windowSize, slideFactor);
 
-    auto statisticOperator = std::dynamic_pointer_cast<NES::Experimental::Statistics::WindowStatisticLogicalOperatorNode>(logicalUnaryOperatorNode);
+    auto statisticOperator =
+        std::dynamic_pointer_cast<NES::Experimental::Statistics::WindowStatisticLogicalOperatorNode>(logicalUnaryOperatorNode);
 
     EXPECT_EQ(statisticOperator->getSynopsisFieldName(), synopsisFieldName);
     EXPECT_EQ(statisticOperator->getWindowSize(), windowSize);
     EXPECT_EQ(statisticOperator->getSlideFactor(), slideFactor);
 
-    auto desc= statisticOperator->getStatisticDescriptor();
+    auto desc = statisticOperator->getStatisticDescriptor();
     auto cmDesc = std::dynamic_pointer_cast<NES::Experimental::Statistics::CountMinDescriptor>(desc);
 
     EXPECT_EQ(cmDesc->getDepth(), depth);
