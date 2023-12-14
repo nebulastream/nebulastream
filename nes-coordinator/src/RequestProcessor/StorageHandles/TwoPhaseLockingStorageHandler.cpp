@@ -65,10 +65,11 @@ void TwoPhaseLockingStorageHandler::releaseResources(const RequestId requestId) 
 
         std::unique_lock lock(holder.mutex);
         holder.holderId = INVALID_REQUEST_ID;
-        holder.currentTicket = (holder.currentTicket + 1) % MAX_TICKET;
+        TicketId nextTicket = holder.currentTicket + 1;
+        nextTicket = nextTicket % MAX_TICKET;
+        holder.currentTicket = nextTicket;
         lock.unlock();
         holder.cv.notify_all();
-
     }
 }
 
@@ -96,18 +97,17 @@ TwoPhaseLockingStorageHandler::ResourceHolderData& TwoPhaseLockingStorageHandler
 void TwoPhaseLockingStorageHandler::lockResource(const ResourceType resourceType, const RequestId requestId) {
     auto& holder = getHolder(resourceType);
     auto& holderId = holder.holderId;
-    auto ticket = holder.nextAvailableTicket.fetch_add(1) % MAX_TICKET;
+    std::unique_lock lock(holder.mutex);
+    auto myTicket = holder.nextAvailableTicket;
+    holder.nextAvailableTicket = (holder.nextAvailableTicket + 1) % MAX_TICKET;
 
     //wait until the resource is free
-    std::unique_lock lock(holder.mutex);
-    auto lastTicketSeen = holder.currentTicket.load();
-    while (lastTicketSeen != ticket) {
+    while (holder.currentTicket != myTicket) {
         holder.cv.wait(lock);
-        lastTicketSeen = holder.currentTicket.load();
     }
 
     //set holder id
-    NES_ASSERT(holderId == INVALID_REQUEST_ID, "Ticket acquired by new request but hte holder id was not reset");
+    NES_ASSERT(holderId == INVALID_REQUEST_ID, "Ticket acquired by new request but the holder id was not reset");
     holderId = requestId;
 }
 

@@ -34,6 +34,7 @@ class AbstractMultiRequest : public AbstractRequest {
      * entirety of its execution. Additional resources might be acquired by subrequests created by this request
      * @param maxRetries The maximum amount of retries in case of an error
      */
+     //todo: do not pass resources
     AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
 
     /**

@@ -31,7 +31,9 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
     //let the first acquired thread execute the main thread and set the done member variable afterwards
     bool expected = false;
     if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
+        //todo: remove locking
         result = AbstractRequest::execute(storageHandle);
+        executeRequestLogic({});
         NES_ASSERT(subRequestQueue.empty(), "Multi request main logic terminated but sub request queue is not empty");
         std::unique_lock lock(workMutex);
         done = true;
@@ -77,6 +79,7 @@ void AbstractMultiRequest::executeSubRequestWhileQueueNotEmpty(const StorageHand
     }
 }
 
+//todo:
 std::future<std::any> AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest,
                                                                const StorageHandlerPtr& storageHandler) {
     NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
