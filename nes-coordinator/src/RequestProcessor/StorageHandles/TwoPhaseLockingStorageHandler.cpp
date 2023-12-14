@@ -63,9 +63,12 @@ void TwoPhaseLockingStorageHandler::releaseResources(const RequestId requestId) 
             continue;
         }
 
+        std::unique_lock lock(holder.mutex);
         holder.holderId = INVALID_REQUEST_ID;
         holder.currentTicket = (holder.currentTicket + 1) % MAX_TICKET;
-        holder.currentTicket.notify_all();
+        lock.unlock();
+        holder.cv.notify_all();
+
     }
 }
 
@@ -94,11 +97,12 @@ void TwoPhaseLockingStorageHandler::lockResource(const ResourceType resourceType
     auto& holder = getHolder(resourceType);
     auto& holderId = holder.holderId;
     auto ticket = holder.nextAvailableTicket.fetch_add(1) % MAX_TICKET;
-    auto lastTicketSeen = holder.currentTicket.load();
 
     //wait until the resource is free
+    std::unique_lock lock(holder.mutex);
+    auto lastTicketSeen = holder.currentTicket.load();
     while (lastTicketSeen != ticket) {
-        holder.currentTicket.wait(lastTicketSeen);
+        holder.cv.wait(lock);
         lastTicketSeen = holder.currentTicket.load();
     }
 
