@@ -14,7 +14,7 @@ jobs:
   create-tag:
     runs-on: [self-hosted, linux, X64, Build]
     steps:
-     - uses: actions/checkout@v3
+     - uses: actions/checkout@v4
        with:
         ssh-strict: 'false'
         fetch-depth: '0'
@@ -34,7 +34,7 @@ jobs:
   create-tag-tutorial:
     runs-on: [self-hosted, linux, X64, Build]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-strict: 'false'
           fetch-depth: '0'
@@ -66,7 +66,7 @@ jobs:
     steps:
       - uses: AutoModality/action-clean@v1
       - name: "Checkout NebulaStream Repository"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
@@ -128,9 +128,9 @@ jobs:
       UBUNTU_VERSION: 22_04
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
       - name: "Build and Release NES Executable Image"
         run: |
           nes_version=${GITHUB_REF_NAME:1}
