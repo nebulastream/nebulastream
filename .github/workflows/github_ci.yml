@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: verify-user
-        uses: tspascoal/get-user-teams-membership@v1
+        uses: tspascoal/get-user-teams-membership@v3
         id: checkUserMember
         with:
           username: ${{ github.actor }}
@@ -55,10 +55,10 @@ jobs:
           echo "Unauthorized user triggering release"
           exit 1
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Contextual QA Checklists
         if: github.event_name == 'pull_request'
-        uses: wyozi/contextual-qa-checklist-action@1.2
+        uses: wyozi/contextual-qa-checklist-action@1.3.2
         with:
           gh-token: ${{ secrets.NES_CI_SECRET }}
           comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
@@ -69,13 +69,13 @@ jobs:
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [ validateTrigger ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
+        uses: styfle/cancel-workflow-action@0.12.0
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: preamble-check
@@ -108,13 +108,13 @@ jobs:
   #            require_test: "false"
   #    steps:
   #      - uses: AutoModality/action-clean@v1
-  #      - uses: actions/checkout@v3
+  #      - uses: actions/checkout@v4
   #        with:
   #          ssh-key: ${{ secrets.CI_SECRET }}
   #          ssh-strict: 'false'
   #          fetch-depth: '0'
   #      - name: Cancel Previous Runs
-  #        uses: styfle/cancel-workflow-action@0.9.1
+  #        uses: styfle/cancel-workflow-action@0.12.0
   #        with:
   #          access_token: ${{ secrets.NES_CI_SECRET }}
   #      - name: Build Docker
@@ -150,7 +150,7 @@ jobs:
   #        run: |
   #          docker rm -f ${{ github.run_id }}_cc_${{ matrix.osversion }}_build
   #      - name: Notify Slack
-  #        uses: 8398a7/action-slack@v2
+  #        uses: 8398a7/action-slack@v3.15.1
   #        with:
   #          status: ${{ job.status }}
   #          author_name: ${{ github.actor }}
@@ -188,13 +188,13 @@ jobs:
             build_parallelism: "8"
             test_parallelism: "4"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
+        uses: styfle/cancel-workflow-action@0.12.0
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: Build Docker
@@ -227,7 +227,7 @@ jobs:
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_test
       - name: Notify Slack
-        uses: 8398a7/action-slack@v2
+        uses: 8398a7/action-slack@v3.15.1
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
@@ -249,13 +249,13 @@ jobs:
     timeout-minutes: 40
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
+        uses: styfle/cancel-workflow-action@0.12.0
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
@@ -268,7 +268,7 @@ jobs:
           mkdir -p $build_dir
           $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh "$build_dir"
       - name: Notify Slack
-        uses: 8398a7/action-slack@v2
+        uses: 8398a7/action-slack@v3.15.1
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
@@ -295,7 +295,7 @@ jobs:
             test_parallelism: "4"
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
@@ -336,7 +336,7 @@ jobs:
       NEXT_VERSION: ${{ github.event.inputs.version }}
     steps:
       - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           fetch-depth: 0
@@ -349,9 +349,9 @@ jobs:
         with:
           separator: ","
       - name: "Set up QEMU"
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3
       - name: "Set up Docker Buildx"
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
       - name: "Get NebulaStream Version"
         run: |
           NES_VERSION=$(grep -o "NES_VERSION.*" nes-common/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')
@@ -435,7 +435,7 @@ jobs:
           external_repository: nebulastream/nebulastream-docs
           publish_branch: master
       - name: "Notify Slack"
-        uses: 8398a7/action-slack@v2
+        uses: 8398a7/action-slack@v3.15.1
         with:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
