@@ -22,10 +22,12 @@ namespace NES::Unikernel {
 template<typename IN, typename TupleType>
 TupleType read_csv(IN& in) {
     TupleType tuple;
-    std::apply([&in](auto&&... value) {
-        char comma;
-        ((in >> value >> comma),...);
-    }, tuple);
+    std::apply(
+        [&in](auto&&... value) {
+            char comma;
+            ((in >> value >> comma), ...);
+        },
+        tuple);
 
     return tuple;
 }
@@ -43,25 +45,24 @@ void write_csv(OUT& out, const TupleType& tuple) {
 template<typename Schema, size_t BufferSize>
 std::string printTupleBufferAsCSV(const NES::Runtime::TupleBuffer& tbuffer) {
     std::stringstream ss;
-    const SchemaBuffer<Schema, BufferSize> schemaBuffer{tbuffer};
-    for (size_t i = 0; i < tbuffer.getNumberOfTuples(); ++i){
-       auto tuple = schemaBuffer.readTuple(i);
-       write_csv(ss, tuple);
+    const auto schemaBuffer = SchemaBuffer<Schema, BufferSize>::of(tbuffer);
+    for (size_t i = 0; i < tbuffer.getNumberOfTuples(); ++i) {
+        auto tuple = schemaBuffer.readTuple(i);
+        write_csv(ss, tuple);
     }
 
     return ss.str();
 }
 
-
 template<typename SchemaBufferType>
 size_t parseCSVIntoBuffer(std::istringstream& istream, SchemaBufferType& buffer) {
     size_t tuples_written = 0;
     while (buffer.getSize() < buffer.getCapacity()) {
-       auto tuple = read_csv<std::istringstream, SchemaBufferType::TupleType>(istream);
-       buffer.writeTuple(tuple);
-       tuples_written++;
+        auto tuple = read_csv<std::istringstream, typename SchemaBufferType::TupleType>(istream);
+        buffer.writeTuple(tuple);
+        tuples_written++;
     }
     return tuples_written;
 }
-};    // namespace NES::Unikernel
+}// namespace NES::Unikernel
 #endif//NES_CSVFORMAT_HPP

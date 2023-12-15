@@ -40,7 +40,10 @@ SIMPLE_DT(FLOAT64, double);
 SIMPLE_DT(CHAR, char);
 SIMPLE_DT(BOOLEAN, bool);
 
-// Var char is represented as an int
-SIMPLE_DT(TEXT, u_int32_t);
+// Var char is represented as an std::string
+struct TEXT {
+   static constexpr size_t size = sizeof(uint32_t);
+   using ctype = std::string;
+};
 
 #endif//NES_PHYSICALDATATYPES_HPP
