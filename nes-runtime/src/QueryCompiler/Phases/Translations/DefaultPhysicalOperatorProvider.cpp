@@ -39,6 +39,7 @@
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
+#include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -281,8 +282,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
     const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     const auto& windowSize = windowType->getSize().getTime();
     const auto& windowSlide = windowType->getSlide().getTime();
-    NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
-                   || windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::SLIDINGWINDOW,
+    NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>()
+        || windowType->instanceOf<Windowing::SlidingWindow>(),
                "Only a tumbling or sliding window is currently supported for StreamJoin");
 
     const auto [timeStampFieldNameLeft, timeStampFieldNameRight] = getTimestampLeftAndRight(joinOperator, windowType);
@@ -475,8 +476,6 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const QueryPl
     auto windowDefinition = windowOperator->getWindowDefinition();
 
     auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
-    auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
-
     auto windowOperatorProperties =
         WindowOperatorProperties(windowOperator, windowInputSchema, windowOutputSchema, windowDefinition);
 
@@ -495,7 +494,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const QueryPl
     operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
     // if we have a sliding window and use slicing we have to create another slice merge operator
-    if (windowType == Windowing::TimeBasedWindowType::SLIDINGWINDOW
+    if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>()
         && options->getWindowingStrategy() == WindowingStrategy::SLICING) {
         auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(getNextOperatorId(),
                                                                                        windowInputSchema,
