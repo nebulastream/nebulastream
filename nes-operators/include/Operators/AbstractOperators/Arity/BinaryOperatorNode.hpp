@@ -27,24 +27,6 @@ class BinaryOperatorNode : public virtual OperatorNode {
     explicit BinaryOperatorNode(OperatorId id);
 
     /**
-     * @brief detect if this operator is a binary operator, i.e., it has two children
-     * @return true if n-ary else false;
-     */
-    bool isBinaryOperator() const override;
-
-    /**
-    * @brief detect if this operator is an binary operator, i.e., it has only one child
-    * @return true if n-ary else false;
-    */
-    bool isUnaryOperator() const override;
-
-    /**
-   * @brief detect if this operator is an exchange operator, i.e., it sends it output to multiple parents
-   * @return true if n-ary else false;
-   */
-    bool isExchangeOperator() const override;
-
-    /**
    * @brief get the input schema of this operator from the left side
    * @return SchemaPtr
    */

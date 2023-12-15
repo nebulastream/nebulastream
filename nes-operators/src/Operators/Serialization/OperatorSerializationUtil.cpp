@@ -210,7 +210,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     }
 
     // serialize and append origin id
-    if (operatorNode->isBinaryOperator()) {
+    if (operatorNode->instanceOf<BinaryOperatorNode>()) {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         for (const auto& originId : binaryOperator->getLeftInputOriginIds()) {
             serializedOperator.add_leftoriginids(originId);
@@ -218,7 +218,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         for (const auto& originId : binaryOperator->getRightInputOriginIds()) {
             serializedOperator.add_rightoriginids(originId);
         }
-    } else if (operatorNode->isExchangeOperator()) {
+    } else if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
         auto exchangeOperator = operatorNode->as<ExchangeOperatorNode>();
         for (const auto& originId : exchangeOperator->getOutputOriginIds()) {
             serializedOperator.add_originids(originId);
@@ -379,7 +379,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     }
 
     // de-serialize and append origin id
-    if (operatorNode->isBinaryOperator()) {
+    if (operatorNode->instanceOf<BinaryOperatorNode>()) {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         std::vector<uint64_t> leftOriginIds;
         for (const auto& originId : serializedOperator.leftoriginids()) {
@@ -391,7 +391,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             rightOriginIds.push_back(originId);
         }
         binaryOperator->setRightInputOriginIds(rightOriginIds);
-    } else if (operatorNode->isExchangeOperator()) {
+    } else if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
         auto exchangeOperator = operatorNode->as<ExchangeOperatorNode>();
         std::vector<uint64_t> originIds;
         for (const auto& originId : serializedOperator.originids()) {
@@ -1823,8 +1823,8 @@ void OperatorSerializationUtil::serializeInputSchema(const OperatorNodePtr& oper
                                                      SerializableOperator& serializedOperator) {
 
     NES_TRACE("OperatorSerializationUtil:: serialize input schema");
-    if (!operatorNode->isBinaryOperator()) {
-        if (operatorNode->isExchangeOperator()) {
+        if (!operatorNode->instanceOf<BinaryOperatorNode>()) {
+        if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
             SchemaSerializationUtil::serializeSchema(operatorNode->as<ExchangeOperatorNode>()->getInputSchema(),
                                                      serializedOperator.mutable_inputschema());
         } else {
@@ -1832,9 +1832,10 @@ void OperatorSerializationUtil::serializeInputSchema(const OperatorNodePtr& oper
                                                      serializedOperator.mutable_inputschema());
         }
     } else {
-        SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getLeftInputSchema(),
+        auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
+        SchemaSerializationUtil::serializeSchema(binaryOperator->getLeftInputSchema(),
                                                  serializedOperator.mutable_leftinputschema());
-        SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getRightInputSchema(),
+        SchemaSerializationUtil::serializeSchema(binaryOperator->getRightInputSchema(),
                                                  serializedOperator.mutable_rightinputschema());
     }
 }
@@ -1842,18 +1843,20 @@ void OperatorSerializationUtil::serializeInputSchema(const OperatorNodePtr& oper
 void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorNodePtr operatorNode,
                                                        SerializableOperator& serializedOperator) {
     // de-serialize operator input schema
-    if (!operatorNode->isBinaryOperator()) {
-        if (operatorNode->isExchangeOperator()) {
-            operatorNode->as<ExchangeOperatorNode>()->setInputSchema(
+    if (!operatorNode->instanceOf<BinaryOperatorNode>()) {
+        if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
+            auto exchangeOperator = operatorNode->as<ExchangeOperatorNode>();
+            exchangeOperator->setInputSchema(
                 SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
         } else {
             operatorNode->as<UnaryOperatorNode>()->setInputSchema(
                 SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
         }
     } else {
-        operatorNode->as<BinaryOperatorNode>()->setLeftInputSchema(
+        auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
+        binaryOperator->setLeftInputSchema(
             SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
-        operatorNode->as<BinaryOperatorNode>()->setRightInputSchema(
+        binaryOperator->setRightInputSchema(
             SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
     }
 }

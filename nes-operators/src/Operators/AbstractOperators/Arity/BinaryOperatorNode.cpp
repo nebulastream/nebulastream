@@ -23,12 +23,6 @@ BinaryOperatorNode::BinaryOperatorNode(OperatorId id)
     //nop
 }
 
-bool BinaryOperatorNode::isBinaryOperator() const { return true; }
-
-bool BinaryOperatorNode::isUnaryOperator() const { return false; }
-
-bool BinaryOperatorNode::isExchangeOperator() const { return false; }
-
 void BinaryOperatorNode::setLeftInputSchema(SchemaPtr inputSchema) {
     if (inputSchema) {
         this->leftInputSchema = std::move(inputSchema);

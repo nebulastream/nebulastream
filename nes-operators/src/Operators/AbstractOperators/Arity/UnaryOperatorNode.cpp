@@ -21,12 +21,6 @@ namespace NES {
 UnaryOperatorNode::UnaryOperatorNode(OperatorId id)
     : OperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
 
-bool UnaryOperatorNode::isBinaryOperator() const { return false; }
-
-bool UnaryOperatorNode::isUnaryOperator() const { return true; }
-
-bool UnaryOperatorNode::isExchangeOperator() const { return false; }
-
 void UnaryOperatorNode::setInputSchema(SchemaPtr inputSchema) {
     if (inputSchema) {
         this->inputSchema = std::move(inputSchema);
