@@ -165,10 +165,10 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
     //Register root worker
-    topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, "1", 0, 0, UINT16_MAX, properties);
+    topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, "1", 0, 0, UINT16_MAX, properties);
     //register child workers
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, std::to_string(i), 0, 0, UINT16_MAX, properties);
+        topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, std::to_string(i), 0, 0, UINT16_MAX, properties);
     }
 
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));

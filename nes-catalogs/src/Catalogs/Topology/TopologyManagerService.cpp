@@ -54,7 +54,7 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
     WorkerId id;
 
     // if worker is started with a workerId
-    if (workerId != INVALID_TOPOLOGY_NODE_ID) {
+    if (workerId != INVALID_WORKER_NODE_ID) {
         // check if an active worker with workerId already exists
         if (topology->nodeWithWorkerIdExists(workerId)) {
             NES_WARNING("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new "
@@ -78,7 +78,7 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
         }
     }
 
-    if (workerId == INVALID_TOPOLOGY_NODE_ID) {
+    if (workerId == INVALID_WORKER_NODE_ID) {
         // worker does not have a workerId yet => assign next available workerId
         id = getNextWorkerId();
     }
@@ -89,7 +89,7 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
-        return INVALID_TOPOLOGY_NODE_ID;
+        return INVALID_WORKER_NODE_ID;
     }
 
     const TopologyNodePtr rootNode = topology->getRoot();

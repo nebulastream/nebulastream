@@ -21,7 +21,6 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -1897,7 +1896,22 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrainsInAJo
     }
 }
 
-/* Test concurrent query placement with pessimistic bottom up strategy  */
+/*
+ * Test query placement using BottomUp strategy for two queries:
+ *
+ * Q1: Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create())
+ * Q2: Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create())
+ *
+ * On the following topology:
+ *
+ * Topology: rootNode(6)---srcNode1(4)
+ *                     \
+ *                      ---srcNode2 (4)
+ *
+ *  We perform both placements concurrently using the pessimistic approach.
+ *  The Expectations are that both placements should be successful and should result in a consistent global execution plan.
+ *
+ */
 TEST_F(QueryPlacementTest, testConcurrentOperatorPlacementUsingPessimisticBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({4, 4, 4});
@@ -1906,117 +1920,99 @@ TEST_F(QueryPlacementTest, testConcurrentOperatorPlacementUsingPessimisticBottom
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
 
-    // First Query
-    Query query1 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    // Setup Queries
+    std::vector<QueryPlanPtr> queryPlans;
+    std::vector<SharedQueryPlanPtr> sharedQueryPlans;
+    auto numOfQueries = 2;
+    for (uint16_t i = 0; i < numOfQueries; i++) {
+        Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+        QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    queryPlan1 = queryReWritePhase->execute(queryPlan1);
-    queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
-    typeInferencePhase->execute(queryPlan1);
+        queryPlan = queryReWritePhase->execute(queryPlan);
+        queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+        typeInferencePhase->execute(queryPlan);
 
-    topologySpecificQueryRewrite->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan1);
+        topologySpecificQueryRewrite->execute(queryPlan);
+        typeInferencePhase->execute(queryPlan);
+        auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+        auto sharedQueryPlanId = sharedQueryPlan->getId();
 
-    auto sharedQueryPlan1 = SharedQueryPlan::create(queryPlan1);
-    auto sharedQueryPlanId1 = sharedQueryPlan1->getId();
-
-    // Second Query
-    Query query2 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-
-    queryPlan2 = queryReWritePhase->execute(queryPlan2);
-    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
-    typeInferencePhase->execute(queryPlan2);
-
-    topologySpecificQueryRewrite->execute(queryPlan2);
-    typeInferencePhase->execute(queryPlan2);
-
-    auto sharedQueryPlan2 = SharedQueryPlan::create(queryPlan2);
-    auto sharedQueryPlanId2 = sharedQueryPlan2->getId();
-
-    std::future<bool> placementResult1 = std::async(std::launch::async, [&]() {
-        auto queryPlacementPhaseInstance1 =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-        return queryPlacementPhaseInstance1->execute(sharedQueryPlan1);
-    });
-
-    std::future<bool> placementResult2 = std::async(std::launch::async, [&]() {
-        auto queryPlacementPhaseInstance2 =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-        return queryPlacementPhaseInstance2->execute(sharedQueryPlan2);
-    });
-
-    EXPECT_TRUE(placementResult1.get());
-    EXPECT_TRUE(placementResult2.get());
-
-    //Assertion
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId1);
-
-    //Assertion
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId1);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), queryPlan1->getRootOperators()[0]->getId());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
-            }
-        } else {
-            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId1);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
-            }
-        }
+        //Record the plans
+        queryPlans.emplace_back(queryPlan);
+        sharedQueryPlans.emplace_back(sharedQueryPlan);
     }
 
-    //Assertion
-    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId2);
+    // Initiate placement requests
+    std::vector<std::future<bool>> placementResults;
+    for (auto i = 0; i < numOfQueries; i++) {
+        std::future<bool> placementResult = std::async(std::launch::async, [&, index = i]() {
+            auto queryPlacementPhaseInstance = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                                      topology,
+                                                                                      typeInferencePhase,
+                                                                                      coordinatorConfiguration);
+            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]);
+        });
+        placementResults.emplace_back(std::move(placementResult));
+    }
 
-    //Assertion
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId2);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0u];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), queryPlan2->getRootOperators()[0]->getId());
-            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
-            }
-        } else {
-            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId2);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+    // Make sure both placement succeeded
+    for (uint16_t i = 0; i < numOfQueries; i++) {
+        EXPECT_TRUE(placementResults[i].get());
+    }
+
+    // Check the execution plan for both shared query plans
+    for (uint16_t i = 0; i < numOfQueries; i++) {
+        std::vector<ExecutionNodePtr> executionNodes =
+            globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[i]->getId());
+
+        //Assertion
+        ASSERT_EQ(executionNodes.size(), 3u);
+        for (const auto& executionNode : executionNodes) {
+            if (executionNode->getId() == 1u) {
+                std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlans[i]->getId());
+                ASSERT_EQ(querySubPlans.size(), 1u);
+                auto querySubPlan = querySubPlans[0u];
+                std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1u);
+                OperatorNodePtr actualRootOperator = actualRootOperators[0];
+                ASSERT_EQ(actualRootOperator->getId(), queryPlans[i]->getRootOperators()[0]->getId());
+                ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
+                for (const auto& children : actualRootOperator->getChildren()) {
+                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                }
+            } else {
+                EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+                std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlans[i]->getId());
+                ASSERT_EQ(querySubPlans.size(), 1u);
+                auto querySubPlan = querySubPlans[0];
+                std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1u);
+                OperatorNodePtr actualRootOperator = actualRootOperators[0];
+                EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+                for (const auto& children : actualRootOperator->getChildren()) {
+                    EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+                }
             }
         }
     }
 }
 
-/* Test query placement with top down strategy  */
+/*
+ * Test query placement using TopDown strategy for two queries:
+ *
+ * Q1: Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create())
+ * Q2: Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create())
+ *
+ * On the following topology:
+ *
+ * Topology: rootNode(6)---srcNode1(4)
+ *                     \
+ *                      ---srcNode2 (4)
+ *
+ *  We perform both placements concurrently using the pessimistic approach.
+ *  The Expectations are that both placements should be successful and should result in a consistent global execution plan.
+ *
+ */
 TEST_F(QueryPlacementTest, testConcurrentOperatorPlacementUsingPessimisticTopDownStrategy) {
 
     setupTopologyAndSourceCatalog({6, 4, 4});
@@ -2025,108 +2021,78 @@ TEST_F(QueryPlacementTest, testConcurrentOperatorPlacementUsingPessimisticTopDow
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
 
-    // First Query
-    Query query1 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    // Setup Queries
+    std::vector<QueryPlanPtr> queryPlans;
+    std::vector<SharedQueryPlanPtr> sharedQueryPlans;
+    auto numOfQueries = 2;
+    for (uint16_t i = 0; i < numOfQueries; i++) {
+        Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+        QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    queryPlan1 = queryReWritePhase->execute(queryPlan1);
-    queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::TopDown);
-    typeInferencePhase->execute(queryPlan1);
+        queryPlan = queryReWritePhase->execute(queryPlan);
+        queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::TopDown);
+        typeInferencePhase->execute(queryPlan);
 
-    topologySpecificQueryRewrite->execute(queryPlan1);
-    typeInferencePhase->execute(queryPlan1);
+        topologySpecificQueryRewrite->execute(queryPlan);
+        typeInferencePhase->execute(queryPlan);
+        auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+        auto sharedQueryPlanId = sharedQueryPlan->getId();
 
-    auto sharedQueryPlan1 = SharedQueryPlan::create(queryPlan1);
-    auto sharedQueryPlanId1 = sharedQueryPlan1->getId();
-
-    // Second Query
-    Query query2 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
-
-    queryPlan2 = queryReWritePhase->execute(queryPlan2);
-    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::TopDown);
-    typeInferencePhase->execute(queryPlan2);
-
-    topologySpecificQueryRewrite->execute(queryPlan2);
-    typeInferencePhase->execute(queryPlan2);
-
-    auto sharedQueryPlan2 = SharedQueryPlan::create(queryPlan2);
-    auto sharedQueryPlanId2 = sharedQueryPlan2->getId();
-
-    std::future<bool> placementResult1 = std::async(std::launch::async, [&]() {
-        auto queryPlacementPhaseInstance1 =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-        return queryPlacementPhaseInstance1->execute(sharedQueryPlan1);
-    });
-
-    std::future<bool> placementResult2 = std::async(std::launch::async, [&]() {
-        auto queryPlacementPhaseInstance2 =
-            Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
-        return queryPlacementPhaseInstance2->execute(sharedQueryPlan2);
-    });
-
-    EXPECT_TRUE(placementResult1.get());
-    EXPECT_TRUE(placementResult2.get());
-
-    // Assertion
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId1);
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId1);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), queryPlan1->getRootOperators()[0]->getId());
-            std::vector<SourceLogicalOperatorNodePtr> sourceOperators = querySubPlan->getSourceOperators();
-            ASSERT_EQ(sourceOperators.size(), 2u);
-            for (const auto& sourceOperator : sourceOperators) {
-                EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
-            }
-        } else {
-            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId1);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
-            }
-        }
+        //Record the plans
+        queryPlans.emplace_back(queryPlan);
+        sharedQueryPlans.emplace_back(sharedQueryPlan);
     }
 
-    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlanId2);
-    ASSERT_EQ(executionNodes.size(), 3u);
-    for (const auto& executionNode : executionNodes) {
-        if (executionNode->getId() == 1u) {
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId2);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_EQ(actualRootOperator->getId(), queryPlan2->getRootOperators()[0]->getId());
-            std::vector<SourceLogicalOperatorNodePtr> sourceOperators = querySubPlan->getSourceOperators();
-            ASSERT_EQ(sourceOperators.size(), 2u);
-            for (const auto& sourceOperator : sourceOperators) {
-                EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
-            }
-        } else {
-            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlanId2);
-            ASSERT_EQ(querySubPlans.size(), 1u);
-            auto querySubPlan = querySubPlans[0];
-            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-            ASSERT_EQ(actualRootOperators.size(), 1u);
-            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-            for (const auto& children : actualRootOperator->getChildren()) {
-                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+    // Initiate placement requests
+    std::vector<std::future<bool>> placementResults;
+    for (uint16_t i = 0; i < numOfQueries; i++) {
+        auto placementResult = std::async(std::launch::async, [&, index = i]() {
+            auto queryPlacementPhaseInstance = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                                      topology,
+                                                                                      typeInferencePhase,
+                                                                                      coordinatorConfiguration);
+            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]);
+        });
+        placementResults.emplace_back(std::move(placementResult));
+    }
+
+    // Make sure both placement succeeded
+    for (uint16_t i = 0; i < numOfQueries; i++) {
+        EXPECT_TRUE(placementResults[i].get());
+    }
+
+    // Check the execution plan for both shared query plans
+    for (uint16_t i = 0; i < numOfQueries; i++) {
+        SharedQueryId sharedQueryId = sharedQueryPlans[i]->getId();
+        std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+
+        ASSERT_EQ(executionNodes.size(), 3u);
+        for (const auto& executionNode : executionNodes) {
+            if (executionNode->getId() == 1u) {
+                std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+                ASSERT_EQ(querySubPlans.size(), 1u);
+                auto querySubPlan = querySubPlans[0];
+                std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1u);
+                OperatorNodePtr actualRootOperator = actualRootOperators[0];
+                ASSERT_EQ(actualRootOperator->getId(), queryPlans[i]->getRootOperators()[0]->getId());
+                auto upstreamOperators = actualRootOperators[0]->getChildren();
+                ASSERT_EQ(upstreamOperators.size(), 2u);
+                for (const auto& upstreamOperator : upstreamOperators) {
+                    EXPECT_TRUE(upstreamOperator->instanceOf<FilterLogicalOperatorNode>());
+                }
+            } else {
+                EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+                std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+                ASSERT_EQ(querySubPlans.size(), 1u);
+                auto querySubPlan = querySubPlans[0];
+                std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+                ASSERT_EQ(actualRootOperators.size(), 1u);
+                OperatorNodePtr actualRootOperator = actualRootOperators[0];
+                EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+                for (const auto& children : actualRootOperator->getChildren()) {
+                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                }
             }
         }
     }

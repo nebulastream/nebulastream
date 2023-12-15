@@ -56,7 +56,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Id of the Worker.
      * This is used to uniquely identify workers within the cluster.
      */
-    UIntOption workerId = {WORKER_ID, INVALID_TOPOLOGY_NODE_ID, "Worker id."};
+    UIntOption workerId = {WORKER_ID, INVALID_WORKER_NODE_ID, "Worker id."};
 
     /**
      * @brief IP of the Worker.

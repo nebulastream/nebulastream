@@ -59,7 +59,7 @@ namespace NES {
 constexpr uint64_t NES_COORDINATOR_ID = 1;
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore)
-    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_TOPOLOGY_NODE_ID),
+    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_WORKER_NODE_ID),
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
           workerConfig->mobilityConfiguration)),
@@ -365,7 +365,7 @@ bool NesWorker::connect() {
     monitoringAgent->setNodeId(workerId);
     if (successPRCRegister) {
         if (workerId != workerConfig->workerId) {
-            if (workerConfig->workerId == INVALID_TOPOLOGY_NODE_ID) {
+            if (workerConfig->workerId == INVALID_WORKER_NODE_ID) {
                 // workerId value is written in the yaml for the first time
                 NES_DEBUG("NesWorker::connect() Persisting workerId={} in yaml file for the first time.", workerId);
                 bool success =
