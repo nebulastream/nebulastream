@@ -12,10 +12,6 @@
     limitations under the License.
 */
 #include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnBufferTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
@@ -74,7 +70,6 @@
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Operators/Serialization/ExpressionSerializationUtil.hpp>
@@ -585,32 +580,6 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
             default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
         }
     }
-    auto* windowTrigger = windowDetails.mutable_triggerpolicy();
-
-    switch (windowDefinition->getTriggerPolicy()->getPolicyType()) {
-        case Windowing::TriggerType::triggerOnTime: {
-            windowTrigger->set_type(SerializableOperator_TriggerPolicy_Type_triggerOnTime);
-            Windowing::OnTimeTriggerDescriptionPtr triggerDesc =
-                std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(windowDefinition->getTriggerPolicy());
-            windowTrigger->set_timeinms(triggerDesc->getTriggerTimeInMs());
-            break;
-        }
-        case Windowing::TriggerType::triggerOnRecord: {
-            windowTrigger->set_type(SerializableOperator_TriggerPolicy_Type_triggerOnRecord);
-            break;
-        }
-        case Windowing::TriggerType::triggerOnBuffer: {
-            windowTrigger->set_type(SerializableOperator_TriggerPolicy_Type_triggerOnBuffer);
-            break;
-        }
-        case Windowing::TriggerType::triggerOnWatermarkChange: {
-            windowTrigger->set_type(SerializableOperator_TriggerPolicy_Type_triggerOnWatermarkChange);
-            break;
-        }
-        default: {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
-        }
-    }
 
     auto* windowAction = windowDetails.mutable_action();
     switch (windowDefinition->getTriggerAction()->getActionType()) {
@@ -646,7 +615,6 @@ LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails,
                                                      OperatorId operatorId) {
     auto serializedWindowAggregations = windowDetails.windowaggregations();
-    auto serializedTriggerPolicy = windowDetails.triggerpolicy();
     auto serializedAction = windowDetails.action();
 
     auto serializedWindowType = windowDetails.windowtype();
@@ -675,18 +643,6 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         }
     }
 
-    Windowing::WindowTriggerPolicyPtr trigger;
-    if (serializedTriggerPolicy.type() == SerializableOperator_TriggerPolicy_Type_triggerOnTime) {
-        trigger = Windowing::OnTimeTriggerPolicyDescription::create(serializedTriggerPolicy.timeinms());
-    } else if (serializedTriggerPolicy.type() == SerializableOperator_TriggerPolicy_Type_triggerOnBuffer) {
-        trigger = Windowing::OnBufferTriggerPolicyDescription::create();
-    } else if (serializedTriggerPolicy.type() == SerializableOperator_TriggerPolicy_Type_triggerOnRecord) {
-        trigger = Windowing::OnRecordTriggerPolicyDescription::create();
-    } else if (serializedTriggerPolicy.type() == SerializableOperator_TriggerPolicy_Type_triggerOnWatermarkChange) {
-        trigger = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
-    } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: {}", serializedTriggerPolicy.DebugString());
-    }
 
     Windowing::WindowActionDescriptorPtr action;
     if (serializedAction.type() == SerializableOperator_TriggerAction_Type_Complete) {
@@ -782,7 +738,6 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
                                                                 aggregation,
                                                                 window,
                                                                 distChar,
-                                                                trigger,
                                                                 action,
                                                                 allowedLateness);
     windowDef->setOriginId(windowDetails.origin());
@@ -844,32 +799,6 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
     }
 
-    auto* windowTrigger = joinDetails.mutable_triggerpolicy();
-    switch (joinDefinition->getTriggerPolicy()->getPolicyType()) {
-        case Windowing::TriggerType::triggerOnTime: {
-            windowTrigger->set_type(SerializableOperator_TriggerPolicy_Type_triggerOnTime);
-            Windowing::OnTimeTriggerDescriptionPtr triggerDesc =
-                std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(joinDefinition->getTriggerPolicy());
-            windowTrigger->set_timeinms(triggerDesc->getTriggerTimeInMs());
-            break;
-        }
-        case Windowing::TriggerType::triggerOnRecord: {
-            windowTrigger->set_type(SerializableOperator_TriggerPolicy_Type_triggerOnRecord);
-            break;
-        }
-        case Windowing::TriggerType::triggerOnBuffer: {
-            windowTrigger->set_type(SerializableOperator_TriggerPolicy_Type_triggerOnBuffer);
-            break;
-        }
-        case Windowing::TriggerType::triggerOnWatermarkChange: {
-            windowTrigger->set_type(SerializableOperator_TriggerPolicy_Type_triggerOnWatermarkChange);
-            break;
-        }
-        default: {
-            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not cast aggregation type");
-        }
-    }
-
     auto* windowAction = joinDetails.mutable_action();
     switch (joinDefinition->getTriggerAction()->getActionType()) {
         case Join::JoinActionType::LazyNestedLoopJoin: {
@@ -912,23 +841,9 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
 
 JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails,
                                                                               OperatorId operatorId) {
-    auto serializedTriggerPolicy = joinDetails.triggerpolicy();
     auto serializedAction = joinDetails.action();
 
     auto serializedWindowType = joinDetails.windowtype();
-
-    Windowing::WindowTriggerPolicyPtr trigger;
-    if (serializedTriggerPolicy.type() == SerializableOperator_TriggerPolicy_Type_triggerOnTime) {
-        trigger = Windowing::OnTimeTriggerPolicyDescription::create(serializedTriggerPolicy.timeinms());
-    } else if (serializedTriggerPolicy.type() == SerializableOperator_TriggerPolicy_Type_triggerOnBuffer) {
-        trigger = Windowing::OnBufferTriggerPolicyDescription::create();
-    } else if (serializedTriggerPolicy.type() == SerializableOperator_TriggerPolicy_Type_triggerOnRecord) {
-        trigger = Windowing::OnRecordTriggerPolicyDescription::create();
-    } else if (serializedTriggerPolicy.type() == SerializableOperator_TriggerPolicy_Type_triggerOnWatermarkChange) {
-        trigger = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
-    } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: {}", serializedTriggerPolicy.DebugString());
-    }
 
     auto serializedJoinType = joinDetails.jointype();
     // check which jointype is set
@@ -993,7 +908,6 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(co
                                                               rightKeyAccessExpression,
                                                               window,
                                                               distChar,
-                                                              trigger,
                                                               action,
                                                               joinDetails.numberofinputedgesleft(),
                                                               joinDetails.numberofinputedgesright(),

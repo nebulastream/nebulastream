@@ -41,18 +41,6 @@ namespace NES::Windowing {
 class WindowOperatorHandler;
 using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
 
-class BaseExecutableWindowTriggerPolicy;
-using BaseExecutableWindowTriggerPolicyPtr = std::shared_ptr<BaseExecutableWindowTriggerPolicy>;
-
-class ExecutableOnTimeTriggerPolicy;
-using ExecutableOnTimeTriggerPtr = std::shared_ptr<ExecutableOnTimeTriggerPolicy>;
-
-class ExecutableOnWatermarkChangeTriggerPolicy;
-using ExecutableOnWatermarkChangeTriggerPolicyPtr = std::shared_ptr<ExecutableOnWatermarkChangeTriggerPolicy>;
-
-class BaseWindowTriggerPolicyDescriptor;
-using WindowTriggerPolicyPtr = std::shared_ptr<BaseWindowTriggerPolicyDescriptor>;
-
 class BaseWindowActionDescriptor;
 using WindowActionDescriptorPtr = std::shared_ptr<BaseWindowActionDescriptor>;
 

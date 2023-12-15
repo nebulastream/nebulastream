@@ -89,7 +89,6 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
     NES_DEBUG("DistributedWindowRule::apply: introduce distributed window operator for window {}",
               logicalWindowOperator->toString());
     auto windowDefinition = logicalWindowOperator->getWindowDefinition();
-    auto triggerPolicy = windowDefinition->getTriggerPolicy();
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
@@ -105,7 +104,6 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
                                                                {windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               triggerPolicy,
                                                                triggerActionComplete,
                                                                allowedLateness);
 
@@ -113,7 +111,6 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
         windowDef = Windowing::LogicalWindowDefinition::create({windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               triggerPolicy,
                                                                triggerActionComplete,
                                                                allowedLateness);
     }
@@ -147,7 +144,6 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
                                                            {sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
-                                                           triggerPolicy,
                                                            Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
 
@@ -156,7 +152,6 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
                 Windowing::LogicalWindowDefinition::create({sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
-                                                           triggerPolicy,
                                                            Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
         }
@@ -183,7 +178,6 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
                                                            {sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
-                                                           triggerPolicy,
                                                            triggerActionSlicing,
                                                            allowedLateness);
         } else {
@@ -191,7 +185,6 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
                 Windowing::LogicalWindowDefinition::create({sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
-                                                           triggerPolicy,
                                                            triggerActionSlicing,
                                                            allowedLateness);
         }

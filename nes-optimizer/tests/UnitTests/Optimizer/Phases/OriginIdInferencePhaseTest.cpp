@@ -267,7 +267,6 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
     auto dummyWindowDefinition = LogicalWindowDefinition::create({},
                                                                  WindowTypePtr(),
                                                                  DistributionCharacteristicPtr(),
-                                                                 WindowTriggerPolicyPtr(),
                                                                  WindowActionDescriptorPtr(),
                                                                  0);
     auto window = LogicalOperatorFactory::createCentralWindowSpecializedOperator(dummyWindowDefinition)->as<WindowOperatorNode>();
