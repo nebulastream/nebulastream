@@ -135,24 +135,6 @@ class OperatorNode : public Node {
     virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
 
     /**
-     * @brief This methods return if the operator is a binary operator, i.e., as two input schemas
-     * @return bool
-     */
-    virtual bool isBinaryOperator() const = 0;
-
-    /**
-    * @brief This methods return if the operator is a unary operator, i.e., as oneinput schemas
-    * @return bool
-     */
-    virtual bool isUnaryOperator() const = 0;
-
-    /**
-    * @brief This methods return if the operator is an exchange operator, i.e., it has potentially multiple output schemas
-    * @return bool
-    */
-    virtual bool isExchangeOperator() const = 0;
-
-    /**
      * @brief Add a new property string to the stored properties map
      * @param key key of the new property
      * @param value value of the new property
