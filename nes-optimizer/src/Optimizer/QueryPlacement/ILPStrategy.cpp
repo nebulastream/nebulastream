@@ -36,20 +36,23 @@ namespace NES::Optimizer {
 
 BasePlacementStrategyPtr ILPStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                              const TopologyPtr& topology,
-                                             const TypeInferencePhasePtr& typeInferencePhase) {
+                                             const TypeInferencePhasePtr& typeInferencePhase,
+                                             PlacementMode placementMode) {
     z3::config cfg;
     cfg.set("timeout", 1000);
     cfg.set("model", false);
     cfg.set("type_check", false);
     const auto& z3Context = std::make_shared<z3::context>(cfg);
-    return std::make_unique<ILPStrategy>(ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, z3Context));
+    return std::make_unique<ILPStrategy>(
+        ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, z3Context, placementMode));
 }
 
 ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                          const TopologyPtr& topology,
                          const TypeInferencePhasePtr& typeInferencePhase,
-                         const z3::ContextPtr& z3Context)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(z3Context) {}
+                         const z3::ContextPtr& z3Context,
+                         PlacementMode placementMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode), z3Context(z3Context) {}
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

@@ -60,13 +60,16 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      * @param typeInferencePhase
      * @return
      */
-    static std::unique_ptr<BasePlacementStrategy>
-    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                           const TopologyPtr& topology,
+                                           const TypeInferencePhasePtr& typeInferencePhase,
+                                           PlacementMode placementMode);
 
   private:
-    explicit MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                                 TopologyPtr topology,
-                                 TypeInferencePhasePtr typeInferencePhase);
+    explicit MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                 const TopologyPtr& topology,
+                                 const TypeInferencePhasePtr& typeInferencePhase,
+                                 PlacementMode placementMode);
 
     void performOperatorPlacement(QueryId queryId,
                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -92,4 +95,4 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTICSTRATEGY_HPP_

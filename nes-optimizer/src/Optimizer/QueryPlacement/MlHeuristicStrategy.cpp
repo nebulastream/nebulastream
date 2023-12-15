@@ -13,13 +13,15 @@
 */
 
 #include <API/Schema.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
@@ -29,8 +31,6 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
 #include <utility>
@@ -38,17 +38,19 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BasePlacementStrategy> MlHeuristicStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                                   TopologyPtr topology,
-                                                                   TypeInferencePhasePtr typeInferencePhase) {
+std::unique_ptr<BasePlacementStrategy> MlHeuristicStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                                   const TopologyPtr& topology,
+                                                                   const TypeInferencePhasePtr& typeInferencePhase,
+                                                                   PlacementMode placementMode) {
     return std::make_unique<MlHeuristicStrategy>(
-        MlHeuristicStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)));
+        MlHeuristicStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode));
 }
 
-MlHeuristicStrategy::MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                                         TopologyPtr topology,
-                                         TypeInferencePhasePtr typeInferencePhase)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
+MlHeuristicStrategy::MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                         const TopologyPtr& topology,
+                                         const TypeInferencePhasePtr& typeInferencePhase,
+                                         PlacementMode placementMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
 
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -135,8 +137,7 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
 
     NES_DEBUG("Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        NES_DEBUG("Get the topology node for source operator {} placement.",
-                  pinnedUpStreamOperator->toString());
+        NES_DEBUG("Get the topology node for source operator {} placement.", pinnedUpStreamOperator->toString());
 
         auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
@@ -224,8 +225,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                           "operatorId: {}",
                           logicalOperator->getId());
                 topology->print();
-                throw Exceptions::RuntimeException(
-                    "Unable to find a common ancestor topology node to place the binary operator");
+                throw Exceptions::RuntimeException("Unable to find a common ancestor topology node to place the binary operator");
             }
 
             if (logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
@@ -236,9 +236,8 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                     || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSinkOperatorLocation;
                 } else {
-                    NES_ERROR(
-                        "Unexpected behavior. Could not find Topology node where sink operator is to be "
-                        "placed.");
+                    NES_ERROR("Unexpected behavior. Could not find Topology node where sink operator is to be "
+                              "placed.");
                     throw Exceptions::RuntimeException(
 
                         "Unexpected behavior. Could not find Topology node where sink operator is to be "
@@ -247,8 +246,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("Topology node where sink operator is to be placed has no capacity.");
-                    throw Exceptions::RuntimeException(
-                        "Topology node where sink operator is to be placed has no capacity.");
+                    throw Exceptions::RuntimeException("Topology node where sink operator is to be placed has no capacity.");
                 }
             }
         }
@@ -326,8 +324,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                 //FIXME: we are considering only one root node currently
                 candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
                 if (candidateTopologyNode->getAvailableResources() > 0) {
-                    NES_DEBUG("Found NES node for placing the operators with id : {}",
-                              candidateTopologyNode->getId());
+                    NES_DEBUG("Found NES node for placing the operators with id : {}", candidateTopologyNode->getId());
                     break;
                 }
             }

@@ -63,6 +63,7 @@ class PlacementStrategyFactory {
      * @param topology : topology information
      * @param globalExecutionPlan : global execution plan to be updated
      * @param typeInferencePhase : type inference phase instance
+     * @param placementMode: placement mode
      * @param coordinatorConfiguration : coordinator configuration
      * @return instance of type BaseOptimizer
      */
@@ -70,7 +71,8 @@ class PlacementStrategyFactory {
                                                 const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                 const TopologyPtr& topology,
                                                 const TypeInferencePhasePtr& typeInferencePhase,
+                                                PlacementMode placementMode,
                                                 const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_

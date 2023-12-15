@@ -37,7 +37,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
-                                           const TypeInferencePhasePtr& typeInferencePhase);
+                                           const TypeInferencePhasePtr& typeInferencePhase,
+                                           PlacementMode placementMode);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -46,7 +47,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
   private:
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                               const TopologyPtr& topology,
-                              const TypeInferencePhasePtr& typeInferencePhase);
+                              const TypeInferencePhasePtr& typeInferencePhase,
+                              PlacementMode placementMode);
 
     /**
      * This method is responsible for pinning the operators to the worker nodes.

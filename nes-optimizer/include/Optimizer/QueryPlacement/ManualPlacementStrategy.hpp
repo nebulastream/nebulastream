@@ -30,15 +30,18 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
-    static std::unique_ptr<ManualPlacementStrategy>
-    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                           const TopologyPtr& topology,
+                                           const TypeInferencePhasePtr& typeInferencePhase,
+                                           PlacementMode placementMode);
 
   private:
-    explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                                     TopologyPtr topology,
-                                     TypeInferencePhasePtr typeInferencePhase);
+    explicit ManualPlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                     const TopologyPtr& topology,
+                                     const TypeInferencePhasePtr& typeInferencePhase,
+                                     PlacementMode placementMode);
 };
 
 }// namespace NES::Optimizer
 
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MANUALPLACEMENTSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MANUALPLACEMENTSTRATEGY_HPP_

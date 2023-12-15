@@ -54,6 +54,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
+#include <Util/PlacementMode.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -1064,6 +1065,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
+                                                                              Optimizer::PlacementMode::Pessimistic,
                                                                               coordinatorConfiguration);
 
     // Execute optimization phases prior to placement
@@ -1202,6 +1204,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
+                                                                              Optimizer::PlacementMode::Pessimistic,
                                                                               coordinatorConfiguration);
 
     // Execute optimization phases prior to placement

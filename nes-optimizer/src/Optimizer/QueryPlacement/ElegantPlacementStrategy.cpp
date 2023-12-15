@@ -35,13 +35,13 @@ namespace NES::Optimizer {
 
 const std::string ElegantPlacementStrategy::sourceCodeKey = "sourceCode";
 
-std::unique_ptr<ElegantPlacementStrategy>
-ElegantPlacementStrategy::create(const std::string& serviceURL,
-                                 const float transferRate,
-                                 PlacementStrategy placementStrategy,
-                                 NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                                 NES::TopologyPtr topology,
-                                 NES::Optimizer::TypeInferencePhasePtr typeInferencePhase) {
+BasePlacementStrategyPtr ElegantPlacementStrategy::create(const std::string& serviceURL,
+                                                          const float transferRate,
+                                                          PlacementStrategy placementStrategy,
+                                                          const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                          const TopologyPtr& topology,
+                                                          const TypeInferencePhasePtr& typeInferencePhase,
+                                                          PlacementMode placementMode) {
 
     float timeWeight = 0.0;
 
@@ -55,19 +55,21 @@ ElegantPlacementStrategy::create(const std::string& serviceURL,
     return std::make_unique<ElegantPlacementStrategy>(ElegantPlacementStrategy(serviceURL,
                                                                                transferRate,
                                                                                timeWeight,
-                                                                               std::move(globalExecutionPlan),
-                                                                               std::move(topology),
-                                                                               std::move(typeInferencePhase)));
+                                                                               globalExecutionPlan,
+                                                                               topology,
+                                                                               typeInferencePhase,
+                                                                               placementMode));
 }
 
 ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL,
                                                    const float transferRate,
                                                    const float timeWeight,
-                                                   NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                   NES::TopologyPtr topology,
-                                                   NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)),
-      serviceURL(serviceURL), transferRate(transferRate), timeWeight(timeWeight) {}
+                                                   const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                   const TopologyPtr& topology,
+                                                   const TypeInferencePhasePtr& typeInferencePhase,
+                                                   PlacementMode placementMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode), serviceURL(serviceURL),
+      transferRate(transferRate), timeWeight(timeWeight) {}
 
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

@@ -32,16 +32,20 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                       const GlobalExecutionPlanPtr& globalExecutionPlan,
                                       const TopologyPtr& topology,
                                       const TypeInferencePhasePtr& typeInferencePhase,
+                                      PlacementMode placementMode,
                                       const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
 
     auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
     auto transferRate = coordinatorConfiguration->elegant.transferRate;
 
     switch (placementStrategy) {
-        case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::Manual: return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementMode);
+        case PlacementStrategy::BottomUp:
+            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementMode);
+        case PlacementStrategy::TopDown:
+            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementMode);
+        case PlacementStrategy::Manual:
+            return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementMode);
         case PlacementStrategy::ELEGANT_PERFORMANCE:
         case PlacementStrategy::ELEGANT_ENERGY:
         case PlacementStrategy::ELEGANT_BALANCED:
@@ -50,12 +54,13 @@ PlacementStrategyFactory::getStrategy(PlacementStrategy placementStrategy,
                                                     placementStrategy,
                                                     globalExecutionPlan,
                                                     topology,
-                                                    typeInferencePhase);
+                                                    typeInferencePhase,
+                                                    placementMode);
 
             // #2486        case PlacementStrategy::IFCOP:
             //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::MlHeuristic:
-            return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+            return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementMode);
 
         // FIXME: enable them with issue #755
         //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
