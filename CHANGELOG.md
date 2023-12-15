@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.2](https://github.com/nebulastream/nebulastream/tree/v0.6.2) (2023-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.1...v0.6.2)
+
+**Implemented enhancements:**
+
+- \[TASK\] Getting rid of "Is" class member functions in `WindowType` [\#4404](https://github.com/nebulastream/nebulastream/issues/4404)
+
 ## [v0.6.1](https://github.com/nebulastream/nebulastream/tree/v0.6.1) (2023-12-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.0...v0.6.1)
