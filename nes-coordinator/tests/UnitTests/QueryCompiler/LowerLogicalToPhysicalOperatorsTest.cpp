@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/BatchJoinDescriptor.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalBatchJoinOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalBroadcastOperator.hpp"
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -19,10 +22,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/BatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalBroadcastOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>

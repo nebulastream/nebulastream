@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalRenameSourceOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Operators/LogicalOperators/Operators/LogicalRenameSourceOperator.hpp"
+#include "API/AttributeField.hpp"
+#include "API/Schema.hpp"
+#include "Util/Logger/Logger.hpp"
 
 namespace NES {
 

@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include "Operators/LogicalOperators/Operators/LogicalProjectionOperator.hpp"
 #include <API/Query.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -24,7 +25,6 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>

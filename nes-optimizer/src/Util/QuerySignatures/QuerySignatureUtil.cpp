@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalInferModelOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalProjectionOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalUnionOperator.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>

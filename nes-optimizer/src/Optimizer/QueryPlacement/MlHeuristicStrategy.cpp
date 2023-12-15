@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalInferModelOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
 #include <API/Schema.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>

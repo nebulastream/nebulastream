@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -65,7 +66,6 @@
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>

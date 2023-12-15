@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>

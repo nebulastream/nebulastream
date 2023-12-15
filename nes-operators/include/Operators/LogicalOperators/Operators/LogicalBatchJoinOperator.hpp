@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_BATCHJOINLOGICALOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/BatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include "BatchJoinDescriptor.hpp"
+#include "Operators/LogicalOperators/LogicalBinaryOperator.hpp"
 #include <memory>
 
 namespace NES::Experimental {

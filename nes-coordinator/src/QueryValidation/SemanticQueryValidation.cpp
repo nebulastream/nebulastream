@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalInferModelOperator.hpp"
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>

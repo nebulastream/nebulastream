@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
@@ -21,7 +22,6 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>

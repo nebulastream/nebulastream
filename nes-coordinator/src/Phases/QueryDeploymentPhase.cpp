@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalOpenCLOperator.hpp"
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -19,7 +20,6 @@
 #include <Exceptions/ExecutionNodeNotFoundException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>

@@ -16,10 +16,10 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include "Operators/LogicalOperators/Operators/LogicalProjectionOperator.hpp"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Configurations/Enums/QueryMergerRule.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>

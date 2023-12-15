@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalBroadcastOperator.hpp"
 #include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
 #include "Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp"
 #include <API/AttributeField.hpp>
@@ -42,7 +43,6 @@
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/Expressions/WhenExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalBroadcastOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>

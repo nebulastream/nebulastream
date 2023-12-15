@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Operators/LogicalRenameSourceOperator.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalRenameSourceOperator.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>

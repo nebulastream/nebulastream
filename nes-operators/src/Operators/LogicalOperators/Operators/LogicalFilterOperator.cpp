@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Nodes/Iterators/DepthFirstNodeIterator.hpp"
+#include "Operators/Expressions/FieldAccessExpressionNode.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <utility>
 
 namespace NES {

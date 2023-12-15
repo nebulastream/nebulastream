@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalOpenCLOperator.hpp"
 #include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>

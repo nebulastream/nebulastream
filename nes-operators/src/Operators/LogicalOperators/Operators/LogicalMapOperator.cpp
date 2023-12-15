@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
+#include "API/AttributeField.hpp"
+#include "API/Schema.hpp"
+#include "Operators/Expressions/FieldAssignmentExpressionNode.hpp"
+#include "Util/Logger/Logger.hpp"
 namespace NES {
 
 LogicalMapOperator::LogicalMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id)

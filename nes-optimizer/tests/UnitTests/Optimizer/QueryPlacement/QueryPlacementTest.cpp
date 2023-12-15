@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalInferModelOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
 #include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
@@ -28,9 +31,6 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>

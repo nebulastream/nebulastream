@@ -11,6 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalInferModelOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalLimitOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalProjectionOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalUnionOperator.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
@@ -19,12 +25,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/LogicalFlatMapUDFOperator.hpp>

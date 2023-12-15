@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
@@ -21,7 +22,6 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Network/NetworkChannel.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>

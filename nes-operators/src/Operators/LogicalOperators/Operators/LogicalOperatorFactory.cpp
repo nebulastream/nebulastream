@@ -12,29 +12,29 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
-#include <Operators/LogicalOperators/LogicalBroadcastOperator.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalRenameSourceOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/LogicalFlatMapUDFOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>
-#include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windows/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/Windows/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/Windows/WindowComputationOperator.hpp>
+#include "Operators/LogicalOperators/LogicalOperatorFactory.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalBatchJoinOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalBroadcastOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalInferModelOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalLimitOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalOpenCLOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalProjectionOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalRenameSourceOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalUnionOperator.hpp"
+#include "Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp"
+#include "Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp"
+#include "Operators/LogicalOperators/UDFs/FlatMapUDF/LogicalFlatMapUDFOperator.hpp"
+#include "Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp"
+#include "Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp"
+#include "Operators/LogicalOperators/Windows/CentralWindowOperator.hpp"
+#include "Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp"
+#include "Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp"
+#include "Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp"
+#include "Operators/LogicalOperators/Windows/SliceCreationOperator.hpp"
+#include "Operators/LogicalOperators/Windows/SliceMergingOperator.hpp"
+#include "Operators/LogicalOperators/Windows/WindowComputationOperator.hpp"
 
 namespace NES {
 

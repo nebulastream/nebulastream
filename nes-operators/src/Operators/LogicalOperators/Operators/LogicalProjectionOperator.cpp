@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Operators/LogicalOperators/Operators/LogicalProjectionOperator.hpp"
+#include "API/AttributeField.hpp"
+#include "API/Schema.hpp"
+#include "Operators/Exceptions/TypeInferenceException.hpp"
+#include "Operators/Expressions/FieldAccessExpressionNode.hpp"
+#include "Operators/Expressions/FieldRenameExpressionNode.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <utility>
 
 namespace NES {

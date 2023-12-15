@@ -15,9 +15,9 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELLOGICALOPERATORNODE_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELLOGICALOPERATORNODE_HPP_
 
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include "Operators/Expressions/FieldAccessExpressionNode.hpp"
+#include "Operators/LogicalOperators/LogicalUnaryOperator.hpp"
+#include "Operators/OperatorForwardDeclaration.hpp"
 
 namespace NES::InferModel {
 

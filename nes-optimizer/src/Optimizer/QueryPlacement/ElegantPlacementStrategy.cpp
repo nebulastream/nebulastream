@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalOpenCLOperator.hpp"
 #include <API/Schema.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/LogicalFlatMapUDFOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>

@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalUnionOperator.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -30,9 +33,6 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>

@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_FILTERLOGICALOPERATORNODE_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_FILTERLOGICALOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include "Operators/LogicalOperators/LogicalUnaryOperator.hpp"
 
 namespace NES {
 

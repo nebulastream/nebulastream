@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/BatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Operators/LogicalOperators/Operators/LogicalBatchJoinOperator.hpp"
+#include "API/AttributeField.hpp"
+#include "API/Schema.hpp"
+#include "Operators/Exceptions/TypeInferenceException.hpp"
+#include "Operators/Expressions/FieldAccessExpressionNode.hpp"
+#include "Operators/LogicalOperators/Operators/BatchJoinDescriptor.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <utility>
 
 namespace NES::Experimental {

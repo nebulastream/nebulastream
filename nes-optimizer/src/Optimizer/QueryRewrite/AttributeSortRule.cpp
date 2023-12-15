@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
 #include <API/Schema.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -30,8 +32,6 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>

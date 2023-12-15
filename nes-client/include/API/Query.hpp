@@ -15,8 +15,8 @@
 #ifndef NES_CLIENT_INCLUDE_API_QUERY_HPP_
 #define NES_CLIENT_INCLUDE_API_QUERY_HPP_
 
+#include "Operators/LogicalOperators/Operators/BatchJoinDescriptor.hpp"
 #include <API/Expressions/Expressions.hpp>
-#include <Operators/LogicalOperators/BatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinDescriptor.hpp>
 #include <memory>
 #include <string>

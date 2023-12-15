@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDEFINITION_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDEFINITION_HPP_
 
-#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include "Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp"
 #include <cstdint>
 
 namespace NES::Join::Experimental {

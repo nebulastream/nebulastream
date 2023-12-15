@@ -15,6 +15,7 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
+#include "Operators/LogicalOperators/Operators/LogicalUnionOperator.hpp"
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -26,7 +27,6 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>

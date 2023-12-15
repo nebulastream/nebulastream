@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Operators/LogicalOperators/Operators/LogicalLimitOperator.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <utility>
 
 namespace NES {

@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
 
+#include "Operators/LogicalOperators/Operators/LogicalOpenCLOperator.hpp"
 #include <Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/LogicalFlatMapUDFOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/LogicalMapUDFOperator.hpp>

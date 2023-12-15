@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UNIONLOGICALOPERATORNODE_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UNIONLOGICALOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include "Operators/LogicalOperators/LogicalBinaryOperator.hpp"
+#include "Operators/OperatorForwardDeclaration.hpp"
 
 namespace NES {
 

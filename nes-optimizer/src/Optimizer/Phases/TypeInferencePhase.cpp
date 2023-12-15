@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
 #include <API/AttributeField.hpp>
 #include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>

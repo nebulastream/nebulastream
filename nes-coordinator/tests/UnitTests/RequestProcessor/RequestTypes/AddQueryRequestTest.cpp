@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
@@ -29,7 +30,6 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/RPCQueryUndeploymentException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>

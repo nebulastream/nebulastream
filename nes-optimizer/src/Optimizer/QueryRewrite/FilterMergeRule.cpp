@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>

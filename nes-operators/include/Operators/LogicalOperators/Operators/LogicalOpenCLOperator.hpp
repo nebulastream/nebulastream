@@ -15,7 +15,7 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_OPENCLLOGICALOPERATORNODE_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_OPENCLLOGICALOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/UDFs/LogicalUDFOperator.hpp>
+#include "Operators/LogicalOperators/UDFs/LogicalUDFOperator.hpp"
 
 namespace NES {
 

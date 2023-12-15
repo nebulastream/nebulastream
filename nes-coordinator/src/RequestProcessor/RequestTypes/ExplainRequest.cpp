@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalOpenCLOperator.hpp"
 #include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
 #include "Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp"
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
@@ -31,7 +32,6 @@
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>

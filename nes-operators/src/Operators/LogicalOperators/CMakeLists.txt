@@ -13,20 +13,20 @@
 
 add_source_files(nes-operators
         LogicalOperator.cpp
-        LogicalFilterOperator.cpp
-        LogicalProjectionOperator.cpp
-        LogicalMapOperator.cpp
-        LogicalInferModelOperator.cpp
-        LogicalUnionOperator.cpp
-        LogicalOperatorFactory.cpp
-        LogicalBroadcastOperator.cpp
-        LogicalBatchJoinOperator.cpp
-        LogicalRenameSourceOperator.cpp
+        Operators/LogicalFilterOperator.cpp
+        Operators/LogicalProjectionOperator.cpp
+        Operators/LogicalMapOperator.cpp
+        Operators/LogicalInferModelOperator.cpp
+        Operators/LogicalUnionOperator.cpp
+        Operators/LogicalOperatorFactory.cpp
+        Operators/LogicalBroadcastOperator.cpp
+        Operators/LogicalBatchJoinOperator.cpp
+        Operators/LogicalRenameSourceOperator.cpp
         LogicalBinaryOperator.cpp
         LogicalUnaryOperator.cpp
-        LogicalOpenCLOperator.cpp
-        LogicalLimitOperator.cpp
-        BatchJoinDescriptor.cpp
+        Operators/LogicalOpenCLOperator.cpp
+        Operators/LogicalLimitOperator.cpp
+        Operators/BatchJoinDescriptor.cpp
 )
 
 add_subdirectory(Sinks)

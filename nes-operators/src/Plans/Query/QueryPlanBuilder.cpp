@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/BatchJoinDescriptor.hpp"
 #include <API/AttributeField.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/BatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>

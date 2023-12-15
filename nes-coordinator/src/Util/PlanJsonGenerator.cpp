@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Operators/LogicalBroadcastOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalFilterOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalMapOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalProjectionOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalRenameSourceOperator.hpp"
+#include "Operators/LogicalOperators/Operators/LogicalUnionOperator.hpp"
 #include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
 #include "Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp"
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Operators/LogicalOperators/LogicalBroadcastOperator.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalRenameSourceOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/LogicalSinkOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/LogicalWatermarkAssignerOperator.hpp>

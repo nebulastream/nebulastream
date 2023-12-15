@@ -15,8 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_BROADCASTLOGICALOPERATORNODE_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_BROADCASTLOGICALOPERATORNODE_HPP_
 
-#include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include "Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp"
+#include "Operators/LogicalOperators/LogicalOperator.hpp"
 
 namespace NES {
 
