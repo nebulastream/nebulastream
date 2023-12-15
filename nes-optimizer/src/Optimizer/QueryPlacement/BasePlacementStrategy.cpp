@@ -125,7 +125,7 @@ void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorN
             std::this_thread::sleep_for(backOffTime);
             retryCount++;
             backOffTime *= 2;
-            backOffTime = std::min(std::chrono::milliseconds(120000), backOffTime);
+            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
         }
     }
 

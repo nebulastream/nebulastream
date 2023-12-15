@@ -52,7 +52,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
                        uint64_t numberOfBuffersPerWorker,
                        bool sourceSharing,
                        bool connectSinksAsync)
-    : nodeId(INVALID_TOPOLOGY_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
+    : nodeId(INVALID_WORKER_NODE_ID), physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), nesWorker(std::move(nesWorker)), openCLManager(std::move(openCLManager)),
       nodeEngineId(nodeEngineId), numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
