@@ -63,7 +63,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
     try {
         NES_DEBUG("QuerySignatureUtil: Creating query signature for operator {}", operatorNode->toString());
         auto children = operatorNode->getChildren();
-        if (operatorNode->isUnaryOperator()) {
+        if (operatorNode->instanceOf<UnaryOperatorNode>()) {
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
             } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>() && children.empty()) {
@@ -74,7 +74,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can have only one children : "
                                         + operatorNode->toString() + " found : " + std::to_string(children.size()));
             }
-        } else if (operatorNode->isBinaryOperator() && children.size() != 2) {
+        } else if (operatorNode->instanceOf<BinaryOperatorNode>() && children.size() != 2) {
             NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Binary operator can't have empty or only one children : "
                                     + operatorNode->toString());
         }

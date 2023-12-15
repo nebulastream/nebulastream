@@ -21,15 +21,6 @@ namespace NES {
 ExchangeOperatorNode::ExchangeOperatorNode(OperatorId id)
     : OperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
 
-bool ExchangeOperatorNode::isBinaryOperator() const { return false; }
-
-bool ExchangeOperatorNode::isUnaryOperator() const {
-    //TODO: check if this should also be true
-    return false;
-}
-
-bool ExchangeOperatorNode::isExchangeOperator() const { return true; }
-
 void ExchangeOperatorNode::setInputSchema(SchemaPtr inputSchema) {
     if (inputSchema) {
         this->inputSchema = std::move(inputSchema);
