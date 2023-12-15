@@ -61,6 +61,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param sourceCatalogService : the instance of the steam catalog service
      * @param queryCatalogService : the instance of monitoring service
      * @param monitoringService : the instance of monitoring service
+     * @param globalExecutionPlan : the instance of global execution plan todo #4438: remove this param
      */
     explicit CoordinatorRPCServer(QueryServicePtr queryService,
                                   TopologyManagerServicePtr topologyManagerService,

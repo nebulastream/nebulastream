@@ -90,12 +90,17 @@ class ExecutionNode : public Node {
     std::vector<QueryPlanPtr> getQuerySubPlans(SharedQueryId sharedQueryId);
 
     /**
-     * Remove existing subPlan
+     * Remove existing subPlans
      * @param sharedQueryId
      * @return true if operation succeeds
      */
     bool removeQuerySubPlans(SharedQueryId sharedQueryId);
 
+    /**
+     * Remove a single existing subplan
+     * @param sharedQueryId
+     * @return true if operation succeeds
+     */
     bool removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
 
     /**
@@ -122,7 +127,19 @@ class ExecutionNode : public Node {
      */
     std::set<SharedQueryId> getPlacedSharedQueryPlanIds();
 
+    /**
+     * @brief Get the amount of resources used by a specific sub plan
+     * @param querySubPlan The query sub plan
+     * @return the amount of resources
+     */
     static uint32_t getOccupiedResourcesForSubPlan(const QueryPlanPtr& querySubPlan) ;
+
+    /**
+     * @brief returns a pointer to a specific query sub plan
+     * @param sharedQueryId the id of the shared query to which the sub plan belongs
+     * @param subPlanId the id of the sub plan itself
+     * @return A pointer to the sub plan
+     */
     QueryPlanPtr getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
 
   private:

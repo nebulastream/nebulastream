@@ -65,6 +65,7 @@ class QueryCatalogService {
      * @param queryId : query id to which sub query metadata to add
      * @param querySubPlanId : the sub query plan id
      * @param workerId : the topology node where the sub query plan is running
+     * @param subQueryState : the state of the sub query
      */
     void addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState);
 
@@ -174,6 +175,14 @@ class QueryCatalogService {
      */
     void checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
+    /**
+     * Mark query as migrating
+     * @param sharedQueryId: the query id
+     * @param querySubPlanId : query sub plan id
+     * @param subQueryStatus : the new status
+     * @return true if successful else false
+     */
+    bool checkAndMarkForMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
   private:
     /**
      * Handle soft stop for sub query plans
@@ -184,14 +193,6 @@ class QueryCatalogService {
      */
     bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
 
-    /**
-     * Handle migration for sub query plans
-     * @param sharedQueryId: the query id
-     * @param querySubPlanId : query sub plan id
-     * @param subQueryStatus : the new status
-     * @return true if successful else false
-     */
-    bool handleMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
 
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     std::recursive_mutex serviceMutex;

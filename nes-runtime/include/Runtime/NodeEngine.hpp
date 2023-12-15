@@ -335,6 +335,15 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool getConnectSinksAsync();
 
+    /**
+     * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
+     * connections from a new upstream sink. Reconfigured sinks will scheduled a pending change of the downstream source
+     * to which they send their data.
+     * @param reconfiguredQueryPlan A query plan containing source or sink descriptors which contain the updated
+     * sender/receiver date.
+     * @return true if a running sub query with a matching id was found and reconfigured. False if the id of the supplied
+     * plan did not match any running sub query
+     */
     bool reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan);
 
   public:

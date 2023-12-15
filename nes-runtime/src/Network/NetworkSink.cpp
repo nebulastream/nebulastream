@@ -380,10 +380,12 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     unbuffer(workerContext);
     return true;
 }
-bool NetworkSink::scheduleNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink) {
-    auto newVersion = reconfiguredSink.getVersion();
+bool NetworkSink::scheduleNewReceiverAndPartition(NetworkSinkDescriptor const& networkSinkDescriptor) {
+    auto newVersion = networkSinkDescriptor.getVersion();
     if (newVersion != version) {
-        pendingReceiver = {reconfiguredSink.getNesPartition(), reconfiguredSink.getNodeLocation(), reconfiguredSink.getVersion()};
+        pendingReceiver = {networkSinkDescriptor.getNesPartition(),
+                           networkSinkDescriptor.getNodeLocation(),
+                           networkSinkDescriptor.getVersion()};
         return true;
     }
     return false;

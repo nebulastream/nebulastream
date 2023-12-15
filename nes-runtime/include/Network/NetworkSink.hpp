@@ -131,8 +131,18 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     void configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation, Version newVersion);
 
-    bool scheduleNewReceiverAndPartition(NetworkSinkDescriptor const& reconfiguredSink);
+    /**
+     * @brief schedule a new receiver location and new receiver partition and versio number to be set for this sink.
+     * @param networkSinkDescriptor : a sink descriptor containing the new location and partition which will be set as
+     * pending
+     * @return false if the changes have already been applied, true otherwise
+     */
+    bool scheduleNewReceiverAndPartition(NetworkSinkDescriptor const& networkSinkDescriptor);
 
+    /**
+     * @brief apply pending changes to the receiver location, receiver partition and version number
+     * @return true if pending changes were found and applied, false if no pending changes could be found
+     */
     bool applyPendingReceiverAndPartition();
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }

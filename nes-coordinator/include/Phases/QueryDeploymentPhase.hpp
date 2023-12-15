@@ -75,14 +75,14 @@ class QueryDeploymentPhase {
                                   const std::string& accelerationServiceURL);
     /**
      * @brief method send query to nodes
-     * @param queryId
+     * @param sharedQueryId
      * @return bool indicating success
      * todo: #3821 change to specific exception
      * @throws QueryDeploymentException The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF
      * @throws QueryDeploymentException: Error in call to Elegant acceleration service with code
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
-    void deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void deployQuery(QueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     /**
      * @brief method to start a already deployed query

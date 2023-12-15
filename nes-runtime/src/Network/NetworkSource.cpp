@@ -171,13 +171,12 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                 return;
             }
 
-            (void) retryTimes;
+            //todo #4441: enable asynchronous registration of event channels
             auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
                                                                              nesPartition,
                                                                              localBufferManager,
                                                                              waitTime,
                                                                              retryTimes);
-                                                                             //100);
             if (channel == nullptr) {
                 NES_DEBUG("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
                           nesPartition.toString(),

@@ -127,12 +127,19 @@ class QueryCatalogEntry {
      * @return
      */
     std::map<std::string, QueryPlanPtr> getOptimizationPhases();
+
+    /**
+     * @brief Check if metadata exists for a specific subplan
+     * @param Ths id of the subplan to check
+     * @return true if metadata has already been created for the subplan in question
+     */
     bool hasQuerySubPlanMetaData(QuerySubPlanId querySubPlanId);
 
     /**
      * Add sub query plan to the query catalog
      * @param querySubPlanId : the sub query plan id
      * @param workerId : the worker node on which the query is running
+     * @param subQueryState : the state of the subplan
      */
     void addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState);
 
@@ -149,8 +156,6 @@ class QueryCatalogEntry {
     std::vector<QuerySubPlanMetaDataPtr> getAllSubQueryPlanMetaData();
 
     void removeAllQuerySubPlanMetaData();
-
-    void removeQuerySubPlanMetaData(QuerySubPlanId subPlanId);
 
     /** @brief Retrieve a timestamped history of query status changes. */
     const QueryStateHistory& getHistory() const;

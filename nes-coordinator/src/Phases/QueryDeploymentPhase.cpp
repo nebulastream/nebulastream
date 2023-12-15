@@ -85,51 +85,28 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         for (auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                //todo: do this only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
+                //set metadata only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
                 auto entry = queryCatalogService->getEntryForQuery(queryId);
                 if (!entry->hasQuerySubPlanMetaData(querySubPlanId)) {
-                    //we have to make sure, that the old execution node will not get a new plan here
                     queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId, QueryState::DEPLOYED);
-                } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus()
-                           == QueryState::MIGRATING) {
-                    //garbage collect migrated execution nodes
-//                    if (globalExecutionPlan->removeQuerySubPlanFromNode(executionNode->getId(), sharedQueryId, querySubPlanId)) {
-//                        //todo: removing here is to late
-//
-//                    }
                 }
             }
         }
     }
-    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
     //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        //todo: mark subqueries that will be undeployed and reconfigured as migrating here
-        //todo: actually do we have to mark those that will be undeployed?
-        //todo: just mark all as migrating?
-
-        //todo: only overwrite if not migrating
-        //if the query is migrating we can not yet put it to deployed
-        //todo: meybe we only need to do that for the shared query plan
+        //do not set migrating queries to deployed status
         auto newQueryState =
             sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING ? QueryState::MIGRATING : QueryState::DEPLOYED;
-        //only update for the entry, not for the subquery metadata
         queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(newQueryState);
-        // if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
-        //queryCatalogService->updateQueryStatus(queryId, QueryState::DEPLOYED, "");
-        // }
     }
 
     deployQuery(sharedQueryId, executionNodes);
     NES_DEBUG("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
 
-    //todo: set only for sqp
-    //Mark queries as running
+    //Mark queries as running if they are not in migrating state
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        //todo: do not mark the queries to be undeployed as migrating
-        //todo: move the condition outside the loop
-        //auto newQueryState = sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING ? QueryState::MIGRATING : QueryState::RUNNING;
         if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::MIGRATING) {
             queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::RUNNING);
         }
@@ -146,20 +123,18 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     NES_DEBUG("QueryService: start query");
     startQuery(sharedQueryId, executionNodes);
-
 }
 
-//todo: query id is actually shared query id
-void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG("QueryDeploymentPhase::deployQuery queryId= {}", queryId);
+void QueryDeploymentPhase::deployQuery(QueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes) {
+    NES_DEBUG("QueryDeploymentPhase::deployQuery queryId= {}", sharedQueryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
         NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id={}", executionNode->getId());
-        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
         if (querySubPlans.empty()) {
-            throw QueryDeploymentException(queryId,
+            throw QueryDeploymentException(sharedQueryId,
                                            "QueryDeploymentPhase : unable to find query sub plan with id "
-                                               + std::to_string(queryId));
+                                               + std::to_string(sharedQueryId));
         }
 
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
@@ -168,22 +143,17 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {}", queryId, rpcAddress);
+        NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {}", sharedQueryId, rpcAddress);
 
         auto topologyNode = executionNode->getTopologyNode();
 
         for (auto& querySubPlan : querySubPlans) {
-            //todo qeuery state needs to be set
-            //switch (querySubPlan->getQueryState()) {
-            //switch (queryCatalogService->getEntryForQuery(queryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId())->getSubQueryStatus()) {
-            //todo: that we can pick any query id belonging to the shared query id here, highlights a flow in the design of the data structures
-            auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(queryId).front();
+            auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
             auto subplanMetaData =
                 queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
 
             auto subPlanState = subplanMetaData->getSubQueryStatus();
             switch (subPlanState) {
-                //case QueryState::REGISTERED: {
                 case QueryState::DEPLOYED: {
                     //If accelerate Java UDFs is enabled
                     if (accelerateJavaUDFs) {
@@ -220,7 +190,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                                                                multipartPayload,
                                                                cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
                             if (response.status_code != 200) {
-                                throw QueryDeploymentException(queryId,
+                                throw QueryDeploymentException(sharedQueryId,
                                                                "Error in call to Elegant acceleration service with code "
                                                                    + std::to_string(response.status_code) + " and msg "
                                                                    + response.reason);
@@ -244,11 +214,8 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
                     break;
                 }
                 case QueryState::RECONFIGURE: {
-                    //todo: make nan async function for this
+                    //todo #4440: make non async function for this
                     workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
-                    break;
-                }
-                case QueryState::MIGRATING: {
                     break;
                 }
                 default: {
@@ -258,7 +225,7 @@ void QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         }
     }
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
-    NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", queryId);
+    NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
 }
 
 void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {

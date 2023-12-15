@@ -43,7 +43,6 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(const TopologyPtr& topo
 void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQueryPlanStatus sharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase::stopAndUndeployQuery : queryId= {}", sharedQueryId);
 
-    //todo: basically all this has to be called after the query catalog service has found all migrating queries have been put into stopped state
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
     if (executionNodes.empty()) {
@@ -55,11 +54,9 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query");
     //todo 3916: changed method's signature since the return value was always true; invokes NES_THROW_RUNTIME_ERROR
     //todo: what kind of error is NES_THROW_RUNTIME_ERROR?
-    //todo: ne need to call this, query will be stopped by the drain events that are inserted at the reconfig nodes
     stopQuery(sharedQueryId, executionNodes, sharedQueryPlanStatus);
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query  {}", sharedQueryId);
-    //todo: call this only after we received the softstop for all subplans, othewise we are stopping the query which might have not yet received all the tuples
     undeployQuery(sharedQueryId, executionNodes);
 
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfWorkerIdToOccupiedResource(sharedQueryId);

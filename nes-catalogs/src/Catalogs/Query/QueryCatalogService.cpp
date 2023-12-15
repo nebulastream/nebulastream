@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
@@ -22,7 +21,6 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/SharedQueryPlanStatus.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
@@ -328,13 +326,10 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
             }
         }
     }
-
-    //todo: we do not need the migration complete thing do we?
     return true;
 }
 
-//todo: remove this function, migration state should be set from the redeployment phase
-bool QueryCatalogService::handleMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus) {
+bool QueryCatalogService::checkAndMarkForMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus) {
     std::unique_lock lock(serviceMutex);
     NES_DEBUG("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query "
               "plan with id {}",
@@ -366,14 +361,9 @@ bool QueryCatalogService::handleMigration(SharedQueryId sharedQueryId, QuerySubP
 
         queryCatalogEntry->setQueryStatus(subQueryStatus);
 
-        try {
+        if (queryCatalogEntry->hasQuerySubPlanMetaData(querySubPlanId)) {
             auto subplanData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
-            //queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId)->updateStatus(QueryState::MIGRATING);
             subplanData->updateStatus(QueryState::MIGRATING);
-        } catch (InvalidQueryException& e) {
-            //todo: match specific exception
-            auto id = e.getQueryId();
-            NES_INFO("{}", std::to_string(id));
         }
     }
     return true;
@@ -387,7 +377,6 @@ bool QueryCatalogService::updateQuerySubPlanStatus(SharedQueryId sharedQueryId,
     switch (subQueryStatus) {
         case QueryState::SOFT_STOP_TRIGGERED:
         case QueryState::SOFT_STOP_COMPLETED: handleSoftStop(sharedQueryId, querySubPlanId, subQueryStatus); break;
-        case QueryState::MIGRATING: handleMigration(sharedQueryId, querySubPlanId, subQueryStatus); break;
         default:
             throw Exceptions::InvalidQueryStateException({QueryState::SOFT_STOP_TRIGGERED, QueryState::SOFT_STOP_COMPLETED},
                                                          subQueryStatus);
