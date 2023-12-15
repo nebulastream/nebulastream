@@ -719,7 +719,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
         //check theat the data for the migrating plan has been set correctly
         //todo: add check for existence of execution nodes
-        //todo: add check for totoal number of subplans
         auto migratingEntries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
         ASSERT_EQ(migratingEntries.size(), 1);
         auto subplans = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
@@ -730,25 +729,30 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         for (auto& plan : subplans) {
             if (plan->getSubQueryStatus() == QueryState::MIGRATING) {
                 noOfMigratingPlans++;
+                continue;
             }
             if (plan->getSubQueryStatus() == QueryState::MIGRATION_COMPLETED) {
                 noOfCompletedMigrations++;
+                continue;
             }
             if (plan->getSubQueryStatus() == QueryState::RUNNING) {
                 noOfRunningPlans++;
+                continue;
             }
+            NES_DEBUG("Found subplan in unexpected state");
+            FAIL();
         }
         ASSERT_EQ(noOfMigratingPlans, 1);
         ASSERT_EQ(noOfCompletedMigrations, actualReconnects);
         ASSERT_EQ(noOfRunningPlans, 2);
+        //todo: adjust this condition when garbage collection of execution nodes is implemented
+        ASSERT_EQ(crd->getGlobalExecutionPlan()->getAllExecutionNodes().size(), 3 + actualReconnects);
 
         //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
         auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
         EXPECT_EQ(subQueryIds.size(), 1);
 
         //retrieve data about running network sink at wrk1
-        //todo: was it correct to put the coordinator in here before?
-        //Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
         Network::NodeLocation newNodeLocation(wrk3->getWorkerId(), "localhost", *wrk3DataPort);
         networkSrcWrk3Id += 10;
         networkSinkWrk3Id += 10;
@@ -756,7 +760,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         Version nextVersion = actualReconnects + 1;
 
         //start operator at new destination, buffered tuples will be unbuffered to node 3 once the operators there become active
-        //start query on wrk3
+        //create query for worker 3
         auto queryPlan3 = QueryPlan::create(sharedQueryId, subPlanIdWrk3);
         //create network source getting data from sink at wrk1
         auto networkSourceDescriptorWrk3 = Network::NetworkSourceDescriptor::create(schema,
@@ -788,8 +792,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto queryDeploymentPhase =
             QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
         auto sqp = crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId);
-        //todo: removes
-        // sqp->setStatus(SharedQueryPlanStatus::Updated);
+        //todo: shouldn't this already be set to migrating by the call above?
         sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
 
         auto globalExecutionPlan = crd->getGlobalExecutionPlan();
@@ -851,7 +854,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
                   Network::PartitionRegistrationStatus::Registered);
         ASSERT_EQ(wrk1->getNodeEngine()->getPartitionManager()->getProducerRegistrationStatus(networkSourceWrk3Partition),
                   Network::PartitionRegistrationStatus::Registered);
-        //todo: this is the troublemaker
         EXPECT_NE(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
                   Network::PartitionRegistrationStatus::Registered);
         currentWrk1TargetPartition = networkSourceWrk3Partition;
@@ -872,24 +874,35 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         oldSubplanId = oldWorker->getNodeEngine()->getSubQueryIds(queryId).front();
 
         //check that query has left migrating state and is running again
-        //todo: add more checks that query plans hva actually benn removed
-        //todo: reactivate
-        //todo: add check for existence of execution nodes
-        //todo: add check for totoal number of subplans
         ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalogService()));
         auto entries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
         ASSERT_TRUE(entries.empty());
         auto subplansAfterMigration = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
         ASSERT_FALSE(subplansAfterMigration.empty());
+
+        //subplans should not include any migrating plans anymore but one more entry in marked as migration completed
         noOfMigratingPlans = 0;
-        //plans should be down to 3 again because the old plan was removed
-        //ASSERT_EQ(subplansAfterMigration.size(), 3);
+        noOfCompletedMigrations = 0;
+        noOfRunningPlans = 0;
         for (auto& plan : subplansAfterMigration) {
             if (plan->getSubQueryStatus() == QueryState::MIGRATING) {
                 noOfMigratingPlans++;
+                continue;
             }
+            if (plan->getSubQueryStatus() == QueryState::MIGRATION_COMPLETED) {
+                noOfCompletedMigrations++;
+                continue;
+            }
+            if (plan->getSubQueryStatus() == QueryState::RUNNING) {
+                noOfRunningPlans++;
+                continue;
+            }
+            NES_DEBUG("Found subplan in unexpected state");
+            FAIL();
         }
         ASSERT_EQ(noOfMigratingPlans, 0);
+        ASSERT_EQ(noOfCompletedMigrations, actualReconnects + 1);
+        ASSERT_EQ(noOfRunningPlans, 3);
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));

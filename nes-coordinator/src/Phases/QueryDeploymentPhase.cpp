@@ -135,9 +135,6 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         }
     }
 
-    NES_DEBUG("QueryService: start query");
-    startQuery(sharedQueryId, executionNodes);
-
     //mark subqueries that were reconfigured as running again
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         for (auto& subPlanMetaData : queryCatalogService->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData()) {
@@ -146,6 +143,10 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             }
         }
     }
+
+    NES_DEBUG("QueryService: start query");
+    startQuery(sharedQueryId, executionNodes);
+
 }
 
 //todo: query id is actually shared query id
