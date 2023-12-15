@@ -33,7 +33,7 @@ endif (NES_USE_OPC)
 
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/Expressions/ExpressionNode.hpp Operators/Expressions/ExpressionNode.hpp)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/Expressions/FieldAccessExpressionNode.hpp Operators/Expressions/FieldAccessExpressionNode.hpp)
-register_public_header_file(nes-operators include/Operators/LogicalOperators/Operators/BatchJoinDescriptor.hpp Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp)
+register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Operators/BatchJoinDescriptor.hpp Operators/LogicalOperators/Operators/BatchJoinDescriptor.hpp)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp)
 register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/ Operators/LogicalOperators/Windows/)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp)
