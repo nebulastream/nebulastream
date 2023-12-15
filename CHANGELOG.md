@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.1](https://github.com/nebulastream/nebulastream/tree/v0.6.1) (2023-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.0...v0.6.1)
+
+**Implemented enhancements:**
+
+- \[TASK\] Getting rid of "Is" class member functions in `OperatorNode` [\#4413](https://github.com/nebulastream/nebulastream/issues/4413)
+- \[TASK\] Remove `TriggerPolicies` in `nes-operators` [\#4407](https://github.com/nebulastream/nebulastream/issues/4407)
+
 ## [v0.6.0](https://github.com/nebulastream/nebulastream/tree/v0.6.0) (2023-12-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.270...v0.6.0)
