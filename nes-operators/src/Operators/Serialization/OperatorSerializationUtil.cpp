@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/SlidingWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ThresholdWindow.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
@@ -52,10 +51,6 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/SliceAggregationTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
@@ -581,21 +576,6 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
         }
     }
 
-    auto* windowAction = windowDetails.mutable_action();
-    switch (windowDefinition->getTriggerAction()->getActionType()) {
-        case Windowing::ActionType::WindowAggregationTriggerAction: {
-            windowAction->set_type(SerializableOperator_TriggerAction_Type_Complete);
-            break;
-        }
-        case Windowing::ActionType::SliceAggregationTriggerAction: {
-            windowAction->set_type(SerializableOperator_TriggerAction_Type_Slicing);
-            break;
-        }
-        default: {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast action type");
-        }
-    }
-
     if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Complete) {
         windowDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Complete);
     } else if (windowDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
@@ -615,8 +595,6 @@ LogicalUnaryOperatorNodePtr
 OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails,
                                                      OperatorId operatorId) {
     auto serializedWindowAggregations = windowDetails.windowaggregations();
-    auto serializedAction = windowDetails.action();
-
     auto serializedWindowType = windowDetails.windowtype();
 
     std::vector<Windowing::WindowAggregationDescriptorPtr> aggregation;
@@ -643,15 +621,6 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         }
     }
 
-
-    Windowing::WindowActionDescriptorPtr action;
-    if (serializedAction.type() == SerializableOperator_TriggerAction_Type_Complete) {
-        action = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    } else if (serializedAction.type() == SerializableOperator_TriggerAction_Type_Slicing) {
-        action = Windowing::SliceAggregationTriggerActionDescriptor::create();
-    } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize action: {}", serializedAction.DebugString());
-    }
 
     Windowing::WindowTypePtr window;
     if (serializedWindowType.Is<SerializableOperator_TumblingWindow>()) {
@@ -738,7 +707,6 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
                                                                 aggregation,
                                                                 window,
                                                                 distChar,
-                                                                action,
                                                                 allowedLateness);
     windowDef->setOriginId(windowDetails.origin());
 
@@ -799,17 +767,6 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
     }
 
-    auto* windowAction = joinDetails.mutable_action();
-    switch (joinDefinition->getTriggerAction()->getActionType()) {
-        case Join::JoinActionType::LazyNestedLoopJoin: {
-            windowAction->set_type(SerializableOperator_JoinDetails_JoinTriggerAction_Type_LazyNestedLoop);
-            break;
-        }
-        default: {
-            NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not cast action type");
-        }
-    }
-
     if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Complete) {
         joinDetails.mutable_distrchar()->set_distr(SerializableOperator_DistributionCharacteristic_Distribution_Complete);
     } else if (joinDefinition->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
@@ -841,10 +798,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
 
 JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails,
                                                                               OperatorId operatorId) {
-    auto serializedAction = joinDetails.action();
-
     auto serializedWindowType = joinDetails.windowtype();
-
     auto serializedJoinType = joinDetails.jointype();
     // check which jointype is set
     // default: JoinType::INNER_JOIN
@@ -852,13 +806,6 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(co
     // with Cartesian Product is set, change join type
     if (serializedJoinType.jointype() == SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT) {
         joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
-    }
-
-    Join::BaseJoinActionDescriptorPtr action;
-    if (serializedAction.type() == SerializableOperator_JoinDetails_JoinTriggerAction_Type_LazyNestedLoop) {
-        action = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
-    } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize action: {}", serializedAction.DebugString());
     }
 
     Windowing::WindowTypePtr window;
@@ -908,7 +855,6 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(co
                                                               rightKeyAccessExpression,
                                                               window,
                                                               distChar,
-                                                              action,
                                                               joinDetails.numberofinputedgesleft(),
                                                               joinDetails.numberofinputedgesright(),
                                                               joinType);

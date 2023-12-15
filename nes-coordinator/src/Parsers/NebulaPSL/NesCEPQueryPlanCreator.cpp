@@ -23,8 +23,6 @@
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
@@ -249,7 +247,6 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan, windowType);
                     // create default pol
                     auto distributionType = Windowing::DistributionCharacteristic::createCompleteWindowType();
-                    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
                     std::vector<WindowAggregationDescriptorPtr> windowAggs;
                     auto sumAgg = API::Sum(Attribute("Count"))->aggregation;
@@ -260,8 +257,10 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     windowAggs.push_back(sumAgg);
                     windowAggs.push_back(maxAggForTime);
 
-                    auto windowDefinition =
-                        Windowing::LogicalWindowDefinition::create(windowAggs, windowType, distributionType, triggerAction, 0);
+                    auto windowDefinition = Windowing::LogicalWindowDefinition::create(windowAggs,
+                                                                                       windowType,
+                                                                                       distributionType,
+                                                                                       0);
 
                     auto op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
                     queryPlan->appendOperatorAsNewRoot(op);

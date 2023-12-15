@@ -463,18 +463,6 @@ message SerializableOperator{
   }
 
   /**
-    Properties of a trigger action
-  */
-  message TriggerAction
-  {
-    enum Type{
-      Complete = 0;
-      Slicing = 1;
-    }
-    Type type = 1;
-  }
-
-  /**
     Window Details contains properties for the window operator
   */
   message WindowDetails {
@@ -497,23 +485,14 @@ message SerializableOperator{
     repeated Aggregation windowAggregations = 2;
     DistributionCharacteristic distrChar = 3;
     repeated SerializableExpression keys = 4;
-    TriggerAction action = 5;
-    uint64 allowedLateness = 6;
-    uint64 origin = 7;
+    uint64 allowedLateness = 5;
+    uint64 origin = 6;
   }
 
   /**
     Join Details contains properties for the join operator
   */
   message JoinDetails {
-
-    message JoinTriggerAction
-    {
-      enum Type{
-        LazyNestedLoop = 0;
-      }
-      Type type = 1;
-    }
 
     message JoinTypeCharacteristic {
       enum JoinType{
@@ -529,14 +508,13 @@ message SerializableOperator{
     SerializableExpression onRightKey = 4;
     SerializableExpression leftSourceType = 5;
     SerializableExpression rightSourceType = 6;
-    JoinTriggerAction action = 7;
-    uint64 numberOfInputEdgesLeft = 8;
-    uint64 numberOfInputEdgesRight = 9;
-    JoinTypeCharacteristic jointype = 10;
-    string windowStartFieldName = 11;
-    string windowEndFieldName = 12;
-    string windowKeyFieldName = 13;
-    uint64 origin = 14;
+    uint64 numberOfInputEdgesLeft = 7;
+    uint64 numberOfInputEdgesRight = 8;
+    JoinTypeCharacteristic jointype = 9;
+    string windowStartFieldName = 10;
+    string windowEndFieldName = 11;
+    string windowKeyFieldName = 12;
+    uint64 origin = 13;
   }
 
   /**
