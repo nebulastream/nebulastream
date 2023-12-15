@@ -36,11 +36,6 @@ class ContentBasedWindowType : public WindowType {
     virtual ContentBasedSubWindowType getContentBasedSubWindowType() = 0;
 
     /**
-    * @return true if this is a content-based window
-    */
-    bool isContentBasedWindowType() override;
-
-    /**
        * Cast the current window type as a threshold window type
        * @return a shared pointer of ThresholdWindow
        */

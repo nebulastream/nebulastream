@@ -251,10 +251,10 @@ bool Z3SignatureBasedBottomUpQueryContainmentRule::checkWindowContainmentPossibl
     //check that containee is a WindowOperatorNode if yes, go on, if no, return false
     if (containee->instanceOf<WindowOperatorNode>()) {
         auto containeeWindowDefinition = containee->as<WindowOperatorNode>()->getWindowDefinition();
+        auto containeeWindowType = containeeWindowDefinition->getWindowType();
         //check that containee is a time based window, else return false
-        if (containeeWindowDefinition->getWindowType()->isTimeBasedWindowType()) {
-            auto containeeTimeBasedWindow =
-                containeeWindowDefinition->getWindowType()->asTimeBasedWindowType(containeeWindowDefinition->getWindowType());
+        if (containeeWindowType->instanceOf<Windowing::TimeBasedWindowType>()) {
+            auto containeeTimeBasedWindow = containeeWindowType->as<Windowing::TimeBasedWindowType>();
             //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
             auto field = container->getOutputSchema()->getField("start");
             //return false if this is not possible

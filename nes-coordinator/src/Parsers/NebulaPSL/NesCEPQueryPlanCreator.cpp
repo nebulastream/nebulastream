@@ -255,7 +255,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     auto sumAgg = API::Sum(Attribute("Count"))->aggregation;
 
                     auto timeField =
-                        WindowType::asTimeBasedWindowType(windowType)->getTimeCharacteristic()->getField()->getName();
+                        windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName();
                     auto maxAggForTime = API::Max(Attribute(timeField))->aggregation;
                     windowAggs.push_back(sumAgg);
                     windowAggs.push_back(maxAggForTime);
@@ -426,7 +426,8 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
 
             if (operaterName == "SEQ") {
                 // for SEQ we need to add additional filter for order by time
-                auto timestamp = WindowType::asTimeBasedWindowType(windowType)->getTimeCharacteristic()->getField()->getName();
+                auto timestamp =
+                    windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName();
                 // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
                 // in case of composed streams on the right branch
                 auto sourceNameRight = rightQueryPlan->getSourceConsumed();

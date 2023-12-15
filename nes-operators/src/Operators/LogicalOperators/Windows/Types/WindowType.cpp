@@ -14,34 +14,10 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/ContentBasedWindowType.hpp>
-#include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 
 namespace NES::Windowing {
 
 WindowType::WindowType() = default;
 
-bool WindowType::isTimeBasedWindowType() { return false; }
-
-bool WindowType::isContentBasedWindowType() { return false; }
-
-TimeBasedWindowTypePtr WindowType::asTimeBasedWindowType(std::shared_ptr<WindowType> windowType) {
-    if (auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowType)) {
-        return timeBasedWindowType;
-    } else {
-        NES_ERROR("Can not cast the window type to a time based window type");
-        NES_THROW_RUNTIME_ERROR("Can not cast the window type to a time based window type");
-    }
-}
-
-ContentBasedWindowTypePtr WindowType::asContentBasedWindowType(std::shared_ptr<WindowType> windowType) {
-    if (auto contentBasedWindowType = std::dynamic_pointer_cast<ContentBasedWindowType>(windowType)) {
-        return contentBasedWindowType;
-    } else {
-        NES_ERROR("Can not cast the window type to a content based window type");
-        NES_THROW_RUNTIME_ERROR("Can not cast the window type to a content based window type");
-    }
-}
 }// namespace NES::Windowing
