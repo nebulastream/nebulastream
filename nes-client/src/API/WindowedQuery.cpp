@@ -22,8 +22,6 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
@@ -51,9 +49,6 @@ KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery,
 
 Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations) {
     NES_DEBUG("Query: add window operator");
-    //we use a on time trigger as default that triggers on each change of the watermark
-    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
     uint64_t allowedLateness = 0;
     if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
@@ -98,7 +93,6 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
         Windowing::LogicalWindowDefinition::create(windowAggregationDescriptors,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                   triggerAction,
                                                    allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
@@ -117,9 +111,6 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
         }
         expressionNodes.emplace_back(onKey->as<FieldAccessExpressionNode>());
     }
-
-    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
     uint64_t allowedLateness = 0;
     if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
@@ -168,7 +159,6 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
                                                    windowAggregationDescriptors,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                   triggerAction,
                                                    allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 

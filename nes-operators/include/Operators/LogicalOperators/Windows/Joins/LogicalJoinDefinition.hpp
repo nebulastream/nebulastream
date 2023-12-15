@@ -48,7 +48,6 @@ class LogicalJoinDefinition {
                                            const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                            const Windowing::WindowTypePtr& windowType,
                                            const Windowing::DistributionCharacteristicPtr& distributionType,
-                                           const BaseJoinActionDescriptorPtr& triggerAction,
                                            uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight,
                                            JoinType joinType);
@@ -57,7 +56,6 @@ class LogicalJoinDefinition {
                                    FieldAccessExpressionNodePtr rightJoinKeyType,
                                    Windowing::WindowTypePtr windowType,
                                    Windowing::DistributionCharacteristicPtr distributionType,
-                                   BaseJoinActionDescriptorPtr triggerAction,
                                    uint64_t numberOfInputEdgesLeft,
                                    uint64_t numberOfInputEdgesRight,
                                    JoinType joinType,
@@ -87,12 +85,6 @@ class LogicalJoinDefinition {
      * @brief getter/setter for window type
     */
     Windowing::WindowTypePtr getWindowType();
-
-    /**
-     * @brief getter for on trigger action
-     * @return trigger action
-    */
-    [[nodiscard]] BaseJoinActionDescriptorPtr getTriggerAction() const;
 
     /**
      * @brief getter for on trigger action
@@ -166,7 +158,6 @@ class LogicalJoinDefinition {
     SchemaPtr leftSourceType;
     SchemaPtr rightSourceType;
     SchemaPtr outputSchema;
-    BaseJoinActionDescriptorPtr triggerAction;
     Windowing::WindowTypePtr windowType;
     Windowing::DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdgesLeft;

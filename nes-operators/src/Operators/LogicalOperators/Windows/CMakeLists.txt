@@ -22,7 +22,6 @@ add_source_files(nes-operators
         WindowOperatorNode.cpp
 )
 
-add_subdirectory(Actions)
 add_subdirectory(Aggregations)
 add_subdirectory(Joins)
 add_subdirectory(Measures)
