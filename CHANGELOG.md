@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.4](https://github.com/nebulastream/nebulastream/tree/v0.6.4) (2023-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.3...v0.6.4)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove `WindowState` in `nes-operators` [\#4406](https://github.com/nebulastream/nebulastream/issues/4406)
+- \[TASK\] Refactoring `TimeBasedWindowType` [\#4405](https://github.com/nebulastream/nebulastream/issues/4405)
+
 ## [v0.6.3](https://github.com/nebulastream/nebulastream/tree/v0.6.3) (2023-12-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.2...v0.6.3)
