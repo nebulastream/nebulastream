@@ -122,6 +122,9 @@ class ExecutionNode : public Node {
      */
     std::set<SharedQueryId> getPlacedSharedQueryPlanIds();
 
+    static uint32_t getOccupiedResourcesForSubPlan(const QueryPlanPtr& querySubPlan) ;
+    QueryPlanPtr getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
+
   private:
     explicit ExecutionNode(const TopologyNodePtr& physicalNode);
 
