@@ -58,10 +58,9 @@ bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlan
              ++subPlanIterator) {
             if ((*subPlanIterator)->getQuerySubPlanId() == subPlanId) {
                 sharedPlanIterator->second.erase(subPlanIterator);
-                break;
+                return true;
             }
         }
-        return true;
     }
     return false;
 }

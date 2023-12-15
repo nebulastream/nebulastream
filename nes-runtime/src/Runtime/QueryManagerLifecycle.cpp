@@ -202,6 +202,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
         }
     }
 
+    //apply any pending reconfigurations to the sinks
     for (const auto& sink: qep->getSinks()) {
         const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
         if (networkSink) {
@@ -218,7 +219,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
                     .count();
             statistics->setTimestampQueryStart(now, true);
         } else {
-            NES_DEBUG("Start timestamp already exists");
+            NES_DEBUG("Start timestamp already exists, this is expected in case of query reconfiguration");
         }
     } else {
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
