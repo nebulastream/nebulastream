@@ -56,8 +56,8 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
     uint64_t allowedLateness = 0;
-    if (windowType->isTimeBasedWindowType()) {
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
+    if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
+        auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
         if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
             NES_DEBUG("add default watermark strategy as non is provided");
             if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
@@ -122,8 +122,8 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
     uint64_t allowedLateness = 0;
-    if (windowType->isTimeBasedWindowType()) {
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
+    if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
+        auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
         // check if query contain watermark assigner, and add if missing (as default behaviour)
         if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
             NES_DEBUG("add default watermark strategy as non is provided");

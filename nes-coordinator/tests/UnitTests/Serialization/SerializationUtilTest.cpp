@@ -622,7 +622,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
+        auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
         auto watermarkAssignerDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
             Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()).getExpressionNode(),
             API::Milliseconds(0),

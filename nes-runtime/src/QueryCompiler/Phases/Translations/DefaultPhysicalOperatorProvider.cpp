@@ -278,7 +278,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorNod
     const auto& joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
     const auto& joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
 
-    const auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+    const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     const auto& windowSize = windowType->getSize().getTime();
     const auto& windowSlide = windowType->getSlide().getTime();
     NES_ASSERT(windowType->getTimeBasedSubWindowType() == Windowing::TimeBasedWindowType::TUMBLINGWINDOW
@@ -474,7 +474,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const QueryPl
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
 
-    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+    auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto windowType = timeBasedWindowType->getTimeBasedSubWindowType();
 
     auto windowOperatorProperties =
@@ -526,8 +526,9 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     if (operatorNode->instanceOf<WindowLogicalOperatorNode>() || operatorNode->instanceOf<CentralWindowOperator>()) {
         // handle if threshold window
         //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
-        if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isContentBasedWindowType()) {
-            auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
+        auto windowType = operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType();
+        if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
+            auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
             // check different content-based window types
             if (contentBasedWindowType->getContentBasedSubWindowType()
                 == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW) {
@@ -544,7 +545,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                 throw QueryCompilationException("No support for this window type."
                                                 + windowDefinition->getWindowType()->toString());
             }
-        } else if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isTimeBasedWindowType()) {
+        } else if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
             lowerTimeBasedWindowOperator(plan, operatorNode);
         }
     } else {

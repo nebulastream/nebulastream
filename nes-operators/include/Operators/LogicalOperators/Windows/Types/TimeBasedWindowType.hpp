@@ -69,11 +69,6 @@ class TimeBasedWindowType : public WindowType {
     virtual TimeMeasure getSlide() = 0;
 
     /**
-    * @return true if this is a sliding window
-    */
-    bool isTimeBasedWindowType() override;
-
-    /**
      * @brief Infer stamp of time based window type
      * @param schema : the schema of the window
      * @return true if success else false

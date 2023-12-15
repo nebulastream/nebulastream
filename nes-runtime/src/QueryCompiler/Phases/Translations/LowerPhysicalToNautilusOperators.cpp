@@ -625,7 +625,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             physicalGSMO->getWindowDefinition()->getOriginId());
     } else {
         auto timeBasedWindowType =
-            Windowing::WindowType::asTimeBasedWindowType(physicalGSMO->getWindowDefinition()->getWindowType());
+            physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
         auto windowSize = timeBasedWindowType->getSize().getTime();
         auto windowSlide = timeBasedWindowType->getSlide().getTime();
         auto actionHandler =
@@ -691,7 +691,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             physicalGSMO->getWindowDefinition()->getOriginId());
     } else {
         auto timeBasedWindowType =
-            Windowing::WindowType::asTimeBasedWindowType(physicalGSMO->getWindowDefinition()->getWindowType());
+            physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
         auto windowSize = timeBasedWindowType->getSize().getTime();
         auto windowSlide = timeBasedWindowType->getSlide().getTime();
         auto actionHandler =
@@ -752,7 +752,7 @@ LowerPhysicalToNautilusOperators::lowerNonKeyedPreAggregationOperator(
     auto windowDefinition = physicalGTLPAO->getWindowDefinition();
     auto aggregations = physicalGTLPAO->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+    auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto timeFunction = lowerTimeFunction(timeWindow);
 
     if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
@@ -769,7 +769,7 @@ LowerPhysicalToNautilusOperators::lowerNonKeyedPreAggregationOperator(
                                                                                          aggregationFunctions);
         return slicePreAggregation;
     } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
 
         auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
             timeBasedWindowType->getSize().getTime(),
@@ -795,7 +795,7 @@ LowerPhysicalToNautilusOperators::lowerKeyedPreAggregationOperator(
     auto windowDefinition = physicalGTLPAO->getWindowDefinition();
     auto aggregations = windowDefinition->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+    auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto timeFunction = lowerTimeFunction(timeWindow);
     auto keys = windowDefinition->getKeys();
     NES_ASSERT(!keys.empty(), "A keyed window should have keys");
@@ -929,8 +929,8 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                                                        uint64_t handlerIndex) {
     NES_INFO("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
     auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
-    auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
-        thresholdWindowOperator->getWindowDefinition()->getWindowType());
+    auto contentBasedWindowType =
+        thresholdWindowOperator->getWindowDefinition()->getWindowType()->as<Windowing::ContentBasedWindowType>();
     auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
     NES_INFO("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
     auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());

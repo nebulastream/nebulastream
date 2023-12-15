@@ -21,8 +21,6 @@ namespace NES::Windowing {
 
 ContentBasedWindowType::ContentBasedWindowType() = default;
 
-bool ContentBasedWindowType::isContentBasedWindowType() { return true; }
-
 ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType) {
     if (auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType)) {
         return thresholdWindow;
