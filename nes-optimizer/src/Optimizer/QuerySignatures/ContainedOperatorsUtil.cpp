@@ -49,7 +49,7 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
     auto containerWindowOperators = containerOperator->getNodesByType<WindowLogicalOperatorNode>().front();
     const auto containerWindowType =
         containerWindowOperators->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getWindowType();
-    auto containerTimeBasedWindow = containerWindowType->as_if<Windowing::TimeBasedWindowType>();
+    auto containerTimeBasedWindow = containerWindowType->as<Windowing::TimeBasedWindowType>();
     NES_TRACE("Contained operator: {}", containedOperator->toString());
     if (containerTimeBasedWindow == nullptr) {
         return {};

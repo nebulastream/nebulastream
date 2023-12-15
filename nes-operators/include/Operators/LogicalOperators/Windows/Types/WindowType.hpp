@@ -54,16 +54,6 @@ class WindowType : public std::enable_shared_from_this<WindowType>{
         return nullptr;
     }
 
-    /**
-     * @brief Dynamically casts the window to a WindowType or returns nullptr.
-     * @tparam WindowType
-     * @return returns a shared pointer of the WindowType or nullptr if the type can't be casted.
-     */
-    template<class WindowType>
-    std::shared_ptr<WindowType> as_if() {
-        return std::dynamic_pointer_cast<WindowType>(this->shared_from_this());
-    }
-
     virtual std::string toString() = 0;
 
     /**
