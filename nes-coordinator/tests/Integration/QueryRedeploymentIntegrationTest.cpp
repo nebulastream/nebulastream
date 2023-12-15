@@ -658,10 +658,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
     //reconfiguration
     auto subPlanIdWrk3 = 30;
-    //auto oldSubplanId = subPlanIdWrk2;
     ASSERT_EQ(wrk2->getNodeEngine()->getSubQueryIds(queryId).size(), 1);
     auto oldSubplanId = wrk2->getNodeEngine()->getSubQueryIds(queryId).front();
-    //auto currentWrk1TargetPartition = networkSourceWrk2Partition;
     auto wrk2Source = wrk2->getNodeEngine()->getExecutableQueryPlan(oldSubplanId)->getSources().front();
     Network::NesPartition currentWrk1TargetPartition(queryId, wrk2Source->getOperatorId(), 0, 0);
 
@@ -672,17 +670,13 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
     Network::NesPartition networkSourceCrdPartition(queryId, coordinatorSource->getOperatorId(), 0, 0);
 
     auto oldWorker = wrk2;
-    //todo: this needs to stay until we set it in the placement phase or earlier
-    //crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
     while (actualReconnects < numberOfReconnectsToPerform) {
         //todo: this will crash because subplans do not exist
-        //crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
         subPlanIdWrk3++;
 
         //wait for data to be written
         std::string compareStringBefore;
         std::ostringstream oss;
-        //oss << "value:INTEGER(64 bits)" << std::endl;
         oss << "seq$value:INTEGER(64 bits)" << std::endl;
         for (uint64_t i = 0; i < (numBuffersToProduceBeforeReconnect
                                   + (actualReconnects
@@ -707,13 +701,11 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
         ASSERT_TRUE(retStart3);
         ASSERT_TRUE(waitForNodes(5, 4 + actualReconnects, topology));
-        //ASSERT_TRUE(waitForNodes(5, 4, topology));
         reconnectParents.push_back(wrk3);
         topology->print();
 
         std::string compareStringAfter;
         std::ostringstream ossAfter;
-        //ossAfter << "value:INTEGER(64 bits)" << std::endl;
         ossAfter << "seq$value:INTEGER(64 bits)" << std::endl;
         for (uint64_t i = 0;
              i < (numBuffersToProduceBeforeReconnect + numBuffersToProduceAfterReconnect + numBuffersToProduceWhileBuffering)
@@ -732,13 +724,24 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         ASSERT_EQ(migratingEntries.size(), 1);
         auto subplans = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
         ASSERT_FALSE(subplans.empty());
-        int count = 0;
+        int noOfMigratingPlans = 0;
+        int noOfCompletedMigrations = 0;
+        int noOfRunningPlans = 0;
         for (auto& plan : subplans) {
             if (plan->getSubQueryStatus() == QueryState::MIGRATING) {
-                count++;
+                noOfMigratingPlans++;
+            }
+            if (plan->getSubQueryStatus() == QueryState::MIGRATION_COMPLETED) {
+                noOfCompletedMigrations++;
+            }
+            if (plan->getSubQueryStatus() == QueryState::RUNNING) {
+                noOfRunningPlans++;
             }
         }
-        ASSERT_EQ(count, 1);
+        ASSERT_EQ(noOfMigratingPlans, 1);
+        ASSERT_EQ(noOfCompletedMigrations, actualReconnects);
+        ASSERT_EQ(noOfRunningPlans, 2);
+
         //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
         auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
         EXPECT_EQ(subQueryIds.size(), 1);
@@ -878,15 +881,15 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         ASSERT_TRUE(entries.empty());
         auto subplansAfterMigration = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
         ASSERT_FALSE(subplansAfterMigration.empty());
-        count = 0;
+        noOfMigratingPlans = 0;
         //plans should be down to 3 again because the old plan was removed
         //ASSERT_EQ(subplansAfterMigration.size(), 3);
         for (auto& plan : subplansAfterMigration) {
             if (plan->getSubQueryStatus() == QueryState::MIGRATING) {
-                count++;
+                noOfMigratingPlans++;
             }
         }
-        ASSERT_EQ(count, 0);
+        ASSERT_EQ(noOfMigratingPlans, 0);
 
         //check that all tuples arrived
         ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringAfter, testFile));
