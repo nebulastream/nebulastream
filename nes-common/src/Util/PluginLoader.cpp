@@ -34,7 +34,9 @@ void PluginLoader::loadDefaultPlugins() {
 void PluginLoader::loadPlugins(const std::filesystem::path& dirPath) {
     try {
         for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
-            if (entry.is_regular_file() && (entry.path().extension() == ".so" || entry.path().extension() == ".dylib")) {
+            if (entry.is_regular_file() &&
+                entry.path().filename().string().starts_with("libnes-") &&
+                (entry.path().extension() == ".so" || entry.path().extension() == ".dylib")) {
                 loadPlugin(entry.path().string());
             }
         }
