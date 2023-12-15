@@ -624,8 +624,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             endTs,
             physicalGSMO->getWindowDefinition()->getOriginId());
     } else {
-        auto timeBasedWindowType =
-            physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        auto timeBasedWindowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
         auto windowSize = timeBasedWindowType->getSize().getTime();
         auto windowSlide = timeBasedWindowType->getSlide().getTime();
         auto actionHandler =
@@ -690,8 +689,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             resultKeyDataTypes,
             physicalGSMO->getWindowDefinition()->getOriginId());
     } else {
-        auto timeBasedWindowType =
-            physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        auto timeBasedWindowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
         auto windowSize = timeBasedWindowType->getSize().getTime();
         auto windowSlide = timeBasedWindowType->getSlide().getTime();
         auto actionHandler =
