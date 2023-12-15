@@ -38,20 +38,6 @@ using JoinActionDescriptorPtr = std::shared_ptr<JoinActionDescriptor>;
 class AbstractJoinHandler;
 using AbstractJoinHandlerPtr = std::shared_ptr<AbstractJoinHandler>;
 
-template<class KeyType, class InputTypeLeft, class InputTypeRight>
-class ExecutableNestedLoopJoinTriggerAction;
-template<class KeyType, class InputTypeLeft, class InputTypeRight>
-using ExecutableNestedLoopJoinTriggerActionPtr =
-    std::shared_ptr<ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>>;
-
-template<class KeyType, class InputTypeLeft, class InputTypeRight>
-class BaseExecutableJoinAction;
-template<class KeyType, class InputTypeLeft, class InputTypeRight>
-using BaseExecutableJoinActionPtr = std::shared_ptr<BaseExecutableJoinAction<KeyType, InputTypeLeft, InputTypeRight>>;
-
-class BaseJoinActionDescriptor;
-using BaseJoinActionDescriptorPtr = std::shared_ptr<BaseJoinActionDescriptor>;
-
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 

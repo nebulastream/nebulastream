@@ -29,8 +29,6 @@
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
@@ -100,7 +98,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
         projectPp = LogicalOperatorFactory::createProjectionOperator({});
         {
-            auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
             auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
             auto joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
             Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
@@ -108,7 +105,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
                 distrType,
-                triggerAction,
                 1,
                 1,
                 joinType);
@@ -118,11 +114,9 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         auto windowType = TumblingWindow::of(EventTime(Attribute("test")), Seconds(10));
-        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition = LogicalWindowDefinition::create({Sum(Attribute("test"))->aggregation},
                                                                 windowType,
                                                                 Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                                triggerAction,
                                                                 0);
 
         watermarkAssigner1 = LogicalOperatorFactory::createWatermarkAssignerOperator(

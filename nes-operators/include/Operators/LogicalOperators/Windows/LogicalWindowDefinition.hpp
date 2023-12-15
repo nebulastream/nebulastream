@@ -42,7 +42,6 @@ class LogicalWindowDefinition {
                                      std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
-                                     WindowActionDescriptorPtr triggerAction,
                                      uint64_t allowedLateness);
 
     /**
@@ -58,8 +57,7 @@ class LogicalWindowDefinition {
     static LogicalWindowDefinitionPtr create(std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
-                                             const WindowActionDescriptorPtr& triggerAction,
-                                             const uint64_t allowedLateness);
+                                             uint64_t allowedLateness);
 
     /**
      * @brief Create a new window definition for a keyed window
@@ -75,7 +73,6 @@ class LogicalWindowDefinition {
                                              std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
-                                             const WindowActionDescriptorPtr& triggerAction,
                                              uint64_t allowedLateness);
 
     /**
@@ -192,7 +189,6 @@ class LogicalWindowDefinition {
 
   private:
     std::vector<WindowAggregationDescriptorPtr> windowAggregation;
-    WindowActionDescriptorPtr triggerAction;
     WindowTypePtr windowType;
     std::vector<FieldAccessExpressionNodePtr> onKey;
     DistributionCharacteristicPtr distributionType;

@@ -17,7 +17,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/BaseWindowActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <utility>
@@ -28,10 +27,9 @@ LogicalWindowDefinition::LogicalWindowDefinition(const std::vector<FieldAccessEx
                                                  std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                                  WindowTypePtr windowType,
                                                  DistributionCharacteristicPtr distChar,
-                                                 WindowActionDescriptorPtr triggerAction,
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)),
-      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(std::move(keys)),
+      windowType(std::move(windowType)), onKey(std::move(keys)),
       distributionType(std::move(distChar)), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
@@ -41,22 +39,19 @@ bool LogicalWindowDefinition::isKeyed() { return !onKey.empty(); }
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
-                                                           const WindowActionDescriptorPtr& triggerAction,
-                                                           const uint64_t allowedLateness) {
-    return create({}, windowAggregations, windowType, distChar, triggerAction, allowedLateness);
+                                                           uint64_t allowedLateness) {
+    return create({}, windowAggregations, windowType, distChar, allowedLateness);
 }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::vector<FieldAccessExpressionNodePtr> keys,
                                                            std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
-                                                           const WindowActionDescriptorPtr& triggerAction,
                                                            uint64_t allowedLateness) {
     return std::make_shared<LogicalWindowDefinition>(keys,
                                                      windowAggregation,
                                                      windowType,
                                                      distChar,
-                                                     triggerAction,
                                                      allowedLateness);
 }
 
@@ -79,16 +74,13 @@ void LogicalWindowDefinition::setWindowType(WindowTypePtr windowType) { this->wi
 void LogicalWindowDefinition::setOnKey(std::vector<FieldAccessExpressionNodePtr> onKey) { this->onKey = std::move(onKey); }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
-    return create(onKey, windowAggregation, windowType, distributionType, triggerAction, allowedLateness);
+    return create(onKey, windowAggregation, windowType, distributionType, allowedLateness);
 }
-
-WindowActionDescriptorPtr LogicalWindowDefinition::getTriggerAction() const { return triggerAction; }
 
 std::string LogicalWindowDefinition::toString() {
     std::stringstream ss;
     ss << std::endl;
     ss << "windowType=" << windowType->toString();
-    ss << " triggerAction=" << triggerAction->toString() << std::endl;
     if (isKeyed()) {
         //ss << " onKey=" << onKey << std::endl;
     }

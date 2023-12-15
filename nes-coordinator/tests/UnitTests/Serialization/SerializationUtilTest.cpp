@@ -52,13 +52,10 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
@@ -601,14 +598,12 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
-        auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
         auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
         Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
             distrType,
-            triggerAction,
             1,
             1,
             NES::Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
@@ -644,12 +639,10 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
             Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                       triggerAction,
                                                        0);
         auto tumblingWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(tumblingWindow);
@@ -659,12 +652,10 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto windowType = Windowing::SlidingWindow::of(EventTime(Attribute("ts")), Seconds(10), Hours(200));
-        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
             Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                       triggerAction,
                                                        0);
         auto slidingWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(slidingWindow);
@@ -675,12 +666,10 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     // threshold window operator
     {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45);
-        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
             Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                       triggerAction,
                                                        0);
         auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
@@ -691,12 +680,10 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     // threshold window operator with minimum count
     {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45, 5);
-        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
             Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))->aggregation},
                                                        windowType,
                                                        Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                       triggerAction,
                                                        0);
         auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);

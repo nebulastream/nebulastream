@@ -23,8 +23,6 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
@@ -119,9 +117,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
     auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
     auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "leftSide");
 
-    //we use a lazy NL join because this is currently the only one that is implemented
-    auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
-
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
@@ -140,7 +135,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
                                                               rightQueryPlanKeyFieldAccess,
                                                               windowType,
                                                               distrType,
-                                                              triggerAction,
                                                               1,
                                                               1,
                                                               joinType);
