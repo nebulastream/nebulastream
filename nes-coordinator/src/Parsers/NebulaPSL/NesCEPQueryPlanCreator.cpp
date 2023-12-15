@@ -257,10 +257,8 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     windowAggs.push_back(sumAgg);
                     windowAggs.push_back(maxAggForTime);
 
-                    auto windowDefinition = Windowing::LogicalWindowDefinition::create(windowAggs,
-                                                                                       windowType,
-                                                                                       distributionType,
-                                                                                       0);
+                    auto windowDefinition =
+                        Windowing::LogicalWindowDefinition::create(windowAggs, windowType, distributionType, 0);
 
                     auto op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
                     queryPlan->appendOperatorAsNewRoot(op);
