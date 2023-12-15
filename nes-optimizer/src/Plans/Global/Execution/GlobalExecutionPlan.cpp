@@ -131,7 +131,9 @@ bool GlobalExecutionPlan::removeQuerySubPlanFromNode(NodeId nodeId, SharedQueryI
         return false;
     }
     auto executionNode = nodeIterator->second;
-    executionNode->removeQuerySubPlan(sharedQueryId, subPlanId);
+    if (!executionNode->removeQuerySubPlan(sharedQueryId, subPlanId)) {
+        return false;
+    }
     if (executionNode->getQuerySubPlans(sharedQueryId).empty()) {
         auto& mappedNodes = queryIdIndex[sharedQueryId];
         if (mappedNodes.size() == 1) {

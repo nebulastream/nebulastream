@@ -93,12 +93,10 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
                 } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus()
                            == QueryState::MIGRATING) {
                     //garbage collect migrated execution nodes
-                    globalExecutionPlan->removeQuerySubPlanFromNode(executionNode->getId(), sharedQueryId, querySubPlanId);
-                } else if (entry->getQuerySubPlanMetaData(querySubPlanId)->getSubQueryStatus()
-                           == QueryState::SOFT_STOP_COMPLETED) {
-                    //garbage collect metadata of stop subplans
-                    //todo: keep these
-                    entry->removeQuerySubPlanMetaData(querySubPlanId);
+//                    if (globalExecutionPlan->removeQuerySubPlanFromNode(executionNode->getId(), sharedQueryId, querySubPlanId)) {
+//                        //todo: removing here is to late
+//
+//                    }
                 }
             }
         }
@@ -135,10 +133,6 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
         if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::MIGRATING) {
             queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::RUNNING);
         }
-        //        if (queryCatalogService->getEntryForQuery(queryId)->getQueryState() != QueryState::MIGRATING) {
-        //            NES_DEBUG("Not updating query status because it is migrating");
-        //            queryCatalogService->updateQueryStatus(queryId, QueryState::RUNNING, "");
-        //        }
     }
 
     NES_DEBUG("QueryService: start query");

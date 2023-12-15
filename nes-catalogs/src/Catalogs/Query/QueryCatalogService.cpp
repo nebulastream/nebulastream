@@ -260,38 +260,6 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
                                          << std::string(magic_enum::enum_name(subQueryStatus)) << " for the sub query with id "
                                          << querySubPlanId << " for query id " << queryId);
         }
-        // if (currentQueryStatus == QueryState::MIGRATING) {
-        //     bool queryMigrationComplete = false;
-        //     //if (subQueryStatus == QueryState::SOFT_STOP_COMPLETED) {
-        //     queryMigrationComplete = true;
-        //     //delete the data if the sub query migrated succesfully
-        //     //todo: we cannot remove here, because we need to remember not to redeploy this node
-        //     //todo: or we have to remove the execution node first
-        //     //todo: best way to remove them would be with a check in the calling function
-        //     //queryCatalogEntry->removeQuerySubPlanMetaData(querySubPlanId);
-        //     //todo: this can be deduplicated (look below)
-        //     querySubPlanMetaData->updateStatus(subQueryStatus);
-        //
-        //     //check if the whole query migrated which is indicated by all subqueries being in running state
-        //     //because al migrating subplans were deleted
-        //     for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
-        //         NES_DEBUG("Updating query subplan status for query id= {} subplan= {} is {}",
-        //                   queryId,
-        //                   querySubPlanMetaData->getQuerySubPlanId(),
-        //                   std::string(magic_enum::enum_name(querySubPlanMetaData->getQuerySubPlanStatus())));
-        //         //if (querySubPlanMetaData->getQuerySubPlanStatus() == QueryState::MIGRATING || querySubPlanMetaData->getQuerySubPlanStatus() == QueryState::SOFT_STOP_TRIGGERED) {
-        //         if (querySubPlanMetaData->getQuerySubPlanStatus() == QueryState::MIGRATING) {
-        //             queryMigrationComplete = false;
-        //             break;
-        //         }
-        //     }
-        //     if (queryMigrationComplete) {
-        //         queryCatalogEntry->setQueryStatus(QueryState::RUNNING);
-        //     }
-        //     //}
-        //     sharedQueryMigrationComplete = sharedQueryMigrationComplete && queryMigrationComplete;
-        //     continue;
-        // }
 
         //Get the sub query plan
         auto querySubPlanMetaData = queryCatalogEntry->getQuerySubPlanMetaData(querySubPlanId);
@@ -315,62 +283,27 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId, QuerySubPl
                       sharedQueryId);
             NES_WARNING("Skipping remaining operation");
             continue;
-        } else if (currentStatus == QueryState::MIGRATING) {
-            // //todo: perform this check over all entries
-            //todo: where do we set this for the queries?
-            // NES_ASSERT2_FMT(queryCatalogEntry->getQueryState() == QueryState::MIGRATING,
-            //                 "Sub plan is marked as migrating but the containing query is not");
-            //
-            // bool queryMigrationComplete = false;
-            // //if (subQueryStatus == QueryState::SOFT_STOP_COMPLETED) {
-            //     queryMigrationComplete = true;
-            //     //delete the data if the sub query migrated succesfully
-            //     //todo: we cannot remove here, because we need to remember not to redeploy this node
-            //     //todo: or we have to remove the execution node first
-            //     //todo: best way to remove them would be with a check in the calling function
-            //     //queryCatalogEntry->removeQuerySubPlanMetaData(querySubPlanId);
-            //     //todo: this can be deduplicated (look below)
-            //     querySubPlanMetaData->updateStatus(subQueryStatus);
-            //
-            //
-            //     //check if the whole query migrated which is indicated by all subqueries being in running state
-            //     //because al migrating subplans were deleted
-            //     for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
-            //         NES_DEBUG("Updating query subplan status for query id= {} subplan= {} is {}",
-            //                   queryId,
-            //                   querySubPlanMetaData->getQuerySubPlanId(),
-            //                   std::string(magic_enum::enum_name(querySubPlanMetaData->getQuerySubPlanStatus())));
-            //         //if (querySubPlanMetaData->getQuerySubPlanStatus() == QueryState::MIGRATING || querySubPlanMetaData->getQuerySubPlanStatus() == QueryState::SOFT_STOP_TRIGGERED) {
-            //         if (querySubPlanMetaData->getQuerySubPlanStatus() == QueryState::MIGRATING) {
-            //             queryMigrationComplete = false;
-            //             break;
-            //         }
-            //     }
-            //     if (queryMigrationComplete) {
-            //         queryCatalogEntry->setQueryStatus(QueryState::RUNNING);
-            //     }
-            // //}
-            // sharedQueryMigrationComplete = sharedQueryMigrationComplete && queryMigrationComplete;
-            // continue;
-            //NES_ASSERT(false, "found subquery in migrating but query is not migrating");
         }
 
         querySubPlanMetaData->updateStatus(subQueryStatus);
 
         if (currentQueryStatus == QueryState::MIGRATING) {
             if (subQueryStatus == QueryState::SOFT_STOP_COMPLETED) {
-                //queryCatalogEntry->removeQuerySubPlanMetaData(querySubPlanId);
                 bool queryMigrationComplete = true;
                 for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
                     if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::RUNNING
                         && querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::SOFT_STOP_COMPLETED
+                        && querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::MIGRATION_COMPLETED
                         && querySubPlanMetaData->getQuerySubPlanStatus() != QueryState::RECONFIGURE) {
                         queryMigrationComplete = false;
                         break;
                     }
+                    if (querySubPlanMetaData->getQuerySubPlanStatus() == QueryState::SOFT_STOP_COMPLETED) {
+                        //todo #4396: once a specifig drain EOS is implemented, remove this as the received state should already equal migration completed
+                        querySubPlanMetaData->updateStatus(QueryState::MIGRATION_COMPLETED);
+                    }
                 }
                 if (queryMigrationComplete) {
-                    //queryCatalogEntry->setQueryStatus(QueryState::RUNNING);
                     queryCatalogEntry->setQueryStatus(QueryState::RUNNING);
                 }
             }
