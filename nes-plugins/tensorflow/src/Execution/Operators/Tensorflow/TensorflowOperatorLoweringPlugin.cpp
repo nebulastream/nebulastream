@@ -15,12 +15,11 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Tensorflow/TensorflowInferenceOperator.hpp>
 #include <Execution/Operators/Tensorflow/TensorflowInferenceOperatorHandler.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <bits/shared_ptr.h>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -46,14 +45,14 @@ class TensorflowOperatorLoweringPlugin : public QueryCompilation::NautilusOperat
         //Fetch the name of input fields
         std::vector<std::string> inputFields;
         for (const auto& inputField : inferModelOperator->getInputFields()) {
-            auto fieldAccessExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+            auto fieldAccessExpression = inputField->as<FieldAccessExpressionNode>();
             inputFields.push_back(fieldAccessExpression->getFieldName());
         }
 
         //Fetch the name of output fields
         std::vector<std::string> outputFields;
         for (const auto& outputField : inferModelOperator->getOutputFields()) {
-            auto fieldAccessExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+            auto fieldAccessExpression = outputField->as<FieldAccessExpressionNode>();
             outputFields.push_back(fieldAccessExpression->getFieldName());
         }
 
