@@ -426,8 +426,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
 
             if (operaterName == "SEQ") {
                 // for SEQ we need to add additional filter for order by time
-                auto timestamp =
-                    windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName();
+                auto timestamp = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName();
                 // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
                 // in case of composed streams on the right branch
                 auto sourceNameRight = rightQueryPlan->getSourceConsumed();
