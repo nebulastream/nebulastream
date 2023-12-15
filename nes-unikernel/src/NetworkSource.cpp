@@ -18,7 +18,8 @@
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/NesThread.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -31,24 +32,12 @@ namespace NES::Network {
 
 NetworkSource::NetworkSource(NesPartition nesPartition,
                              NodeLocation sinkLocation,
-                             size_t numSourceLocalBuffers,
                              std::chrono::milliseconds waitTime,
                              uint8_t retryTimes,
-                             NES::Unikernel::UnikernelPipelineExecutionContext successors,
-                             const std::string& physicalSourceName)
+                             NES::Unikernel::UnikernelPipelineExecutionContext successors)
 
-    : DataSource(nesPartition.getOperatorId(),
-                 /*default origin id for the network source this is always zero*/ 0,
-                 numSourceLocalBuffers,
-                 physicalSourceName,
-                 std::move(successors)),
+    : DataSource(std::move(successors)),
       nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)), waitTime(waitTime), retryTimes(retryTimes) {}
-
-std::optional<Runtime::TupleBuffer> NetworkSource::receiveData() {
-    NES_THROW_RUNTIME_ERROR("NetworkSource: ReceiveData() called, but method is invalid and should not be used.");
-}
-
-SourceType NetworkSource::getType() const { return SourceType::NETWORK_SOURCE; }
 
 std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
 
@@ -135,7 +124,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
 
             auto channel = TheNetworkManager->registerSubpartitionEventProducer(sinkLocation,
                                                                                 nesPartition,
-                                                                                localBufferManager,
+                                                                                TheBufferManager,
                                                                                 waitTime,
                                                                                 retryTimes);
             if (channel == nullptr) {
@@ -191,9 +180,9 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
 }
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
-    NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", this->operatorId);
+    NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: {}", DefaultNetworkSourceConfiguration::OperatorId);
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
-        auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+        auto senderChannel = workerContext.getEventOnlyNetworkChannel(DefaultNetworkSourceConfiguration::OperatorId);
         senderChannel->sendEvent<Runtime::StartSourceEvent>();
     }
 }

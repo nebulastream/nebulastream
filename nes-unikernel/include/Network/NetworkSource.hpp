@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES::Unikernel {
@@ -29,12 +30,20 @@ class BaseEvent;
 }
 namespace NES::Network {
 
+class NetworkSource;
+struct DefaultNetworkSourceConfiguration {
+   using Schema = struct Schema {};
+   constexpr static OperatorId OperatorId = 1;
+   constexpr static OriginId OriginId = 1;
+   using SourceType = NetworkSource;
+};
 /**
  * @brief this class provide a zmq as data source
  */
-class NetworkSource : public DataSource {
+class NetworkSource : public DataSource<DefaultNetworkSourceConfiguration> {
 
   public:
+    constexpr static NES::SourceType SourceType = NES::SourceType::NETWORK_SOURCE;
     /*
        * @param SchemaPtr
        * @param bufferManager
@@ -50,11 +59,9 @@ class NetworkSource : public DataSource {
        */
     NetworkSource(NesPartition nesPartition,
                   NodeLocation sinkLocation,
-                  size_t numSourceLocalBuffers,
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
-                  NES::Unikernel::UnikernelPipelineExecutionContext successors,
-                  const std::string& physicalSourceName = "defaultPhysicalSourceName");
+                  NES::Unikernel::UnikernelPipelineExecutionContext successors);
 
     /**
          * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
@@ -74,11 +81,6 @@ class NetworkSource : public DataSource {
           * @param event
           */
     void onEvent(Runtime::BaseEvent& event) override;
-
-    /**
-         * @brief Get source type
-         */
-    SourceType getType() const override;
 
     /**
          * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
