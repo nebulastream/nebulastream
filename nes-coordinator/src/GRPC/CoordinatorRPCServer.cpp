@@ -377,25 +377,25 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
                                                      const ::SoftStopCompletionMessage* request,
                                                      ::SoftStopCompletionReply* response) {
     //Fetch the request
-    auto queryId = request->queryid();
+    auto sharedQueryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
 
     //todo #4438: extract the following logic to a request
     auto queryStateBefore =
-        queryCatalogService->getEntryForQuery(queryCatalogService->getQueryIdsForSharedQueryId(queryId).front())->getQueryState();
+        queryCatalogService->getEntryForQuery(queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front())->getQueryState();
     if (queryStateBefore == QueryState::MIGRATING) {
-        std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+        std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
         for (const auto& node : executionNodes) {
-            auto candidateSubplan = node->getQuerySubPlan(queryId, querySubPlanId);
+            auto candidateSubplan = node->getQuerySubPlan(sharedQueryId, querySubPlanId);
             if (candidateSubplan != nullptr) {
-                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), queryId, querySubPlanId);
+                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlanId);
                 auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(candidateSubplan);
                 node->getTopologyNode()->increaseResources(resourceAmount);
             }
         }
     }
     //inform catalog service
-    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryState::SOFT_STOP_COMPLETED);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_COMPLETED);
 
     //update response
     response->set_success(success);

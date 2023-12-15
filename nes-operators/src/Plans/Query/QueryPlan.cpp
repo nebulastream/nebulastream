@@ -310,9 +310,6 @@ std::set<OperatorNodePtr> QueryPlan::findAllOperatorsBetween(const std::set<Oper
 
     return operatorsBetween;
 }
-// void QueryPlan::setQueryState(QueryState state) { queryState = state; }
-//
-// QueryState QueryPlan::getQueryState() const { return queryState; }
 
 std::set<OperatorNodePtr>
 QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorNodePtr& sourceOperator,

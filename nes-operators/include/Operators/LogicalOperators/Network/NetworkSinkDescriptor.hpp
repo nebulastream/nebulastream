@@ -90,8 +90,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     uint16_t getVersion() const;
 
     /**
-     * @brief getter for the sinks version
-     * @return the version
+     * @brief getter for the network sinks unique id
+     * @return the unique id
      */
     OperatorId getUniqueId() const;
 

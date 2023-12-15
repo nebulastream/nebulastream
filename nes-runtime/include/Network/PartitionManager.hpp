@@ -113,6 +113,8 @@ class PartitionManager {
         /**
          * @brief add a pending
          * @param pendingVersion
+         * @return true if a pending version was added, false if this version is already running and no pending version
+         * was added
          */
         bool addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation);
 

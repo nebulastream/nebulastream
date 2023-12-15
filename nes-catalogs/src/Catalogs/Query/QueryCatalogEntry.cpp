@@ -123,14 +123,9 @@ void QueryCatalogEntry::removeAllQuerySubPlanMetaData() {
     std::unique_lock lock(mutex);
     querySubPlanMetaDataMap.clear();
 }
-void QueryCatalogEntry::removeQuerySubPlanMetaData(QuerySubPlanId subPlanId) {
-    std::unique_lock lock(mutex);
-    querySubPlanMetaDataMap.erase(subPlanId);
-}
 
 const QueryStateHistory& QueryCatalogEntry::getHistory() const {
     std::unique_lock lock(mutex);
     return history;
 }
-
 }// namespace NES::Catalogs::Query

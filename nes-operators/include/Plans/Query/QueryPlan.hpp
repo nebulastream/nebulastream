@@ -253,10 +253,6 @@ class QueryPlan {
     std::set<OperatorNodePtr> findAllOperatorsBetween(const std::set<OperatorNodePtr>& downstreamOperators,
                                                       const std::set<OperatorNodePtr>& upstreamOperators);
 
-    //void setQueryState(QueryState state);
-
-    //QueryState getQueryState() const;
-
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
@@ -299,7 +295,6 @@ class QueryPlan {
     std::string sourceConsumed;
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
-    QueryState queryState{QueryState::REGISTERED};
 };
 }// namespace NES
 #endif  // NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

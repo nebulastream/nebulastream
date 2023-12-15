@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include "Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp"
-#include "Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp"
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -655,7 +655,6 @@ bool NodeEngine::reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan) {
     for (auto& sink : deployedPlan->getSinks()) {
         auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
         if (networkSink != nullptr) {
-            //todo: use find if like above
             for (auto& reconfiguredSink : reconfiguredQueryPlan->getSinkOperators()) {
                 auto reconfiguredNetworkSink =
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
@@ -669,16 +668,13 @@ bool NodeEngine::reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan) {
         auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
         if (networkSource != nullptr) {
             for (auto& reconfiguredSource : reconfiguredQueryPlan->getSourceOperators()) {
-                //if (reconfiguredSource->getId() == source->getOperatorId()) {
                 auto reconfiguredNetworkSourceDescriptor =
                     std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
                 //todo: perform reconfiguration through source
-                //auto sourceIterator = std::find(physicalSources.begin(), physicalSources.end(), )
                 partitionManager->addPendingVersion(reconfiguredNetworkSourceDescriptor->getNesPartition(),
                                                     reconfiguredNetworkSourceDescriptor->getVersion(),
                                                     reconfiguredNetworkSourceDescriptor->getNodeLocation());
 
-                //}
             }
         }
     }

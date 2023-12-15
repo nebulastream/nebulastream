@@ -439,7 +439,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
 
     //reconfiguration
-    crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
+    crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
 
     Version nextVersion = 1;
     //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
@@ -672,7 +672,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
 
     auto oldWorker = wrk2;
     while (actualReconnects < numberOfReconnectsToPerform) {
-        //todo: this will crash because subplans do not exist
         subPlanIdWrk3++;
 
         //wait for data to be written
@@ -703,7 +702,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         ASSERT_TRUE(retStart3);
         ASSERT_TRUE(waitForNodes(5, 4 + actualReconnects, topology));
         reconnectParents.push_back(wrk3);
-        topology->print();
 
         std::string compareStringAfter;
         std::ostringstream ossAfter;
@@ -717,7 +715,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         compareStringAfter = ossAfter.str();
 
         //set the old plan to migrating
-        crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
+        crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
         //check theat the data for the migrating plan has been set correctly
         auto migratingEntries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
         ASSERT_EQ(migratingEntries.size(), 1);
@@ -745,9 +743,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         ASSERT_EQ(noOfMigratingPlans, 1);
         ASSERT_EQ(noOfCompletedMigrations, actualReconnects);
         ASSERT_EQ(noOfRunningPlans, 2);
-        //todo: adjust this condition when garbage collection of execution nodes is implemented
-        //ASSERT_EQ(crd->getGlobalExecutionPlan()->getAllExecutionNodes().size(), 3 + actualReconnects);
-        //ASSERT_EQ(crd->getGlobalExecutionPlan()->getAllExecutionNodes().size(), 3);
         ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 3);
 
         //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
@@ -792,13 +787,10 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
         executionNode3->getTopologyNode()->reduceResources(1);
         crd->getGlobalExecutionPlan()->addExecutionNode(executionNode3);
-        //todo: use this list
-        auto executionNodesForQuery = crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId);
         ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 4);
         auto queryDeploymentPhase =
             QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
         auto sqp = crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId);
-        //todo: shouldn't this already be set to migrating by the call above?
         sqp->setStatus(SharedQueryPlanStatus::MIGRATING);
 
         auto globalExecutionPlan = crd->getGlobalExecutionPlan();
@@ -873,7 +865,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         }
         ASSERT_EQ(oldWorker->getNodeEngine()->getQueryStatus(queryId), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
 
-        // ASSERT_TRUE(oldWorker->stop(false));
         oldWorker = wrk3;
         EXPECT_EQ(oldWorker->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(currentWrk1TargetPartition),
                   Network::PartitionRegistrationStatus::Registered);
@@ -1195,7 +1186,7 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(compareStringBefore, testFile));
 
     //reconfiguration
-    crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, 0, QueryState::MIGRATING);
+    crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, 0, QueryState::MIGRATING);
 
     Version nextVersion = 1;
     //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
@@ -1534,7 +1525,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addPendingVersion(networkSourceCrdPartition,
                                                                                    nextVersion,
                                                                                    newNodeLocation);
-    crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
+    crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
     //retrieve data about running network sink at wrk1
     auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
     EXPECT_EQ(subQueryIds.size(), 1);
