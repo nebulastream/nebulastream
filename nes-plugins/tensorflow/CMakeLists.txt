@@ -19,7 +19,7 @@ get_source(nes-tensorflow NES_COMPILER_SOURCE_FILES)
 add_library(nes-tensorflow SHARED
         ${NES_COMPILER_SOURCE_FILES}
 )
-target_link_libraries(nes-tensorflow PRIVATE nes-common nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations tensorflowlite_c::tensorflowlite_c)
+target_link_libraries(nes-tensorflow PRIVATE nes-common nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations nes-client tensorflowlite_c::tensorflowlite_c)
 add_dependencies(build_all_plugins nes-tensorflow)
 
 target_include_directories(nes-tensorflow PUBLIC

@@ -14,5 +14,5 @@ add_source_files(nes-tensorflow
         TensorflowInferenceOperator.cpp
         TensorflowInferenceOperatorHandler.cpp
         TensorflowAdapter.cpp
-        TensorflowInferenceOperator.cpp
+        TensorflowOperatorLoweringPlugin.cpp
 )
