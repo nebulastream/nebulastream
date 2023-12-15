@@ -36,6 +36,8 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
+using PlacedQuerySubPlans = std::map<SharedQueryId, std::map<QuerySubPlanId, QueryPlanPtr>>;
+
 /**
  * This class contains information about the physical node, a map of query sub plans that need to be executed
  * on the physical node, and some additional configurations.
@@ -108,7 +110,7 @@ class ExecutionNode : public Node {
      * Get the map of all query sub plans
      * @return
      */
-    std::map<SharedQueryId, std::vector<QueryPlanPtr>> getAllQuerySubPlans();
+    PlacedQuerySubPlans getAllQuerySubPlans();
 
     /**
      * Get the resources occupied by the query sub plans for the input query id.
@@ -158,9 +160,9 @@ class ExecutionNode : public Node {
     const TopologyNodePtr topologyNode;
 
     /**
-     * map of queryPlans
+     * a map of placed Query Sub Plans
      */
-    std::map<SharedQueryId, std::vector<QueryPlanPtr>> mapOfQuerySubPlans;
+    PlacedQuerySubPlans mapOfSharedQueryToQuerySubPlans;
 };
 }// namespace NES
 

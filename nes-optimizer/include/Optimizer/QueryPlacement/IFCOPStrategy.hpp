@@ -25,8 +25,10 @@ using IdToIteratorIndexMapping = std::map<std::pair<OperatorId, uint64_t>, std::
 class IFCOPStrategy : public BasePlacementStrategy {
 
   public:
-    static BasePlacementStrategyPtr
-    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                           const TopologyPtr& topology,
+                                           const TypeInferencePhasePtr& typeInferencePhase,
+                                           PlacementMode placementMode);
 
     ~IFCOPStrategy() override = default;
 
@@ -37,7 +39,10 @@ class IFCOPStrategy : public BasePlacementStrategy {
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamNodes) override;
 
   private:
-    IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                  const TopologyPtr& topology,
+                  const TypeInferencePhasePtr& typeInferencePhase,
+                  PlacementMode placementMode);
 
     /**
      * Get an random operator placement candidate
@@ -111,4 +116,4 @@ class IFCOPStrategy : public BasePlacementStrategy {
     std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_

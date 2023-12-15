@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
@@ -22,8 +24,6 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <utility>
@@ -55,11 +55,13 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
     auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
-    auto placementStrategyPtr = PlacementStrategyFactory::getStrategy(placementStrategy,
-                                                                      globalExecutionPlan,
-                                                                      topology,
-                                                                      typeInferencePhase,
-                                                                      coordinatorConfiguration);
+    auto placementStrategyPtr =
+        PlacementStrategyFactory::getStrategy(placementStrategy,
+                                              globalExecutionPlan,
+                                              topology,
+                                              typeInferencePhase,
+                                              PlacementMode::Pessimistic,// TODO: make it a runtime configuration
+                                              coordinatorConfiguration);
 
     bool queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
 
@@ -121,9 +123,8 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
             throw Exceptions::QueryPlacementException(sharedQueryId, "QueryPlacementPhase: Found operators without pinning.");
         }
 
-        bool success = placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId,
-                                                                       pinnedUpstreamOperators,
-                                                                       pinnedDownStreamOperators);
+        bool success =
+            placementStrategyPtr->updateGlobalExecutionPlan(sharedQueryId, pinnedUpstreamOperators, pinnedDownStreamOperators);
 
         if (!success) {
             NES_ERROR("Unable to perform query placement for the change log entry");

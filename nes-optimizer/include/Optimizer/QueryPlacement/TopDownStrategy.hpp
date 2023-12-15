@@ -25,15 +25,20 @@ class TopDownStrategy : public BasePlacementStrategy {
   public:
     ~TopDownStrategy() override = default;
 
-    static BasePlacementStrategyPtr
-    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                           const TopologyPtr& topology,
+                                           const TypeInferencePhasePtr& typeInferencePhase,
+                                           PlacementMode placementMode);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
   private:
-    TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                    const TopologyPtr& topology,
+                    const TypeInferencePhasePtr& typeInferencePhase,
+                    PlacementMode placementMode);
 
     /**
      * @brief place query operators and prepare the global execution plan
@@ -73,4 +78,4 @@ class TopDownStrategy : public BasePlacementStrategy {
 };
 
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_TOPDOWNSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_TOPDOWNSTRATEGY_HPP_

@@ -12,34 +12,35 @@
     limitations under the License.
 */
 
-#include  <Optimizer/Exceptions/QueryPlacementException.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 
 #include <utility>
 
 namespace NES::Optimizer {
 
-std::unique_ptr<ManualPlacementStrategy>
-ManualPlacementStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                                NES::TopologyPtr topology,
-                                NES::Optimizer::TypeInferencePhasePtr typeInferencePhase) {
+BasePlacementStrategyPtr ManualPlacementStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                         const TopologyPtr& topology,
+                                                         const TypeInferencePhasePtr& typeInferencePhase,
+                                                         PlacementMode placementMode) {
     return std::make_unique<ManualPlacementStrategy>(
-        ManualPlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)));
+        ManualPlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode));
 }
 
-ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                 NES::TopologyPtr topology,
-                                                 NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
+ManualPlacementStrategy::ManualPlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                 const TopologyPtr& topology,
+                                                 const TypeInferencePhasePtr& typeInferencePhase,
+                                                 PlacementMode placementMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
 
 bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     QueryId queryId /*queryId*/,

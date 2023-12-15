@@ -12,28 +12,15 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
-#define NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
-
 #include <cinttypes>
 
+#ifndef NES_PLACEMENTMODE_HPP
+#define NES_PLACEMENTMODE_HPP
+
 namespace NES::Optimizer {
-enum class PlacementStrategy : uint8_t {
-    TopDown = 0,
-    BottomUp = 1,
-    IFCOP = 2,
-    ILP = 3,
-    Manual = 4,
-    MlHeuristic = 5,
-    ELEGANT_PERFORMANCE = 6,
-    ELEGANT_ENERGY = 7,
-    ELEGANT_BALANCED = 8
-    // FIXME: enable them with issue #755
-    // LowLatency,
-    //  HighThroughput,
-    //  MinimumResourceConsumption,
-    //  MinimumEnergyConsumption,
-    // HighAvailability
+enum class PlacementMode : uint8_t {
+    Pessimistic = 0,// uses strict 2PL
+    Optimistic = 1  // uses MVOCC
 };
 }// namespace NES::Optimizer
-#endif// NES_COMMON_INCLUDE_UTIL_PLACEMENTSTRATEGY_HPP_
+#endif//NES_PLACEMENTMODE_HPP

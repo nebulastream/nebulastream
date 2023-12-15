@@ -13,31 +13,32 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Catalogs/Topology/Topology.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <random>
 #include <utility>
 
 namespace NES::Optimizer {
 
-BasePlacementStrategyPtr IFCOPStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                                               NES::TopologyPtr topology,
-                                               NES::Optimizer::TypeInferencePhasePtr typeInferencePhase) {
-    return std::make_unique<IFCOPStrategy>(
-        IFCOPStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)));
+BasePlacementStrategyPtr IFCOPStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                               const TopologyPtr& topology,
+                                               const TypeInferencePhasePtr& typeInferencePhase,
+                                               PlacementMode placementMode) {
+    return std::make_unique<IFCOPStrategy>(IFCOPStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode));
 }
 
-IFCOPStrategy::IFCOPStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                             NES::TopologyPtr topology,
-                             NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
+IFCOPStrategy::IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                             const TopologyPtr& topology,
+                             const TypeInferencePhasePtr& typeInferencePhase,
+                             PlacementMode placementMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // initiate operatorIdToNodePlacementMap

@@ -17,6 +17,7 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Util/PlacementMode.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -73,8 +74,8 @@ using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
 
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
-const std::string PINNED_NODE_ID = "PINNED_NODE_ID"; // Property indicating the location where the operator is pinned
-const std::string PROCESSED = "PROCESSED"; // Property indicating if operator was processed for placement
+const std::string PINNED_NODE_ID = "PINNED_NODE_ID";// Property indicating the location where the operator is pinned
+const std::string PROCESSED = "PROCESSED";          // Property indicating if operator was processed for placement
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
@@ -84,7 +85,8 @@ class BasePlacementStrategy {
   public:
     explicit BasePlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    const TopologyPtr& topology,
-                                   const TypeInferencePhasePtr& typeInferencePhase);
+                                   const TypeInferencePhasePtr& typeInferencePhase,
+                                   PlacementMode placementMode);
 
     virtual ~BasePlacementStrategy() = default;
 
@@ -204,8 +206,9 @@ class BasePlacementStrategy {
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
-    std::map<uint64_t, TopologyNodePtr> topologyMap;
-    std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
+    PlacementMode placementMode;
+    std::map<WorkerId, TopologyNodePtr> topologyMap;
+    std::map<OperatorId, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
     std::vector<WorkerId> lockedTopologyNodeIds;
 
@@ -267,6 +270,13 @@ class BasePlacementStrategy {
      */
     bool isSourceAndDestinationConnected(const LogicalOperatorNodePtr& upStreamOperator,
                                          const LogicalOperatorNodePtr& downStreamOperator);
+
+    void pessimisticPathSelection(const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
+                                  const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators);
+    void optimisticPathSelection(const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
+                                 const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators);
+    std::vector<TopologyNodePtr> findPath(const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
+                                          const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators);
 
   private:
     //Number of retries to connect to downstream source operators

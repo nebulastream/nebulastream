@@ -41,14 +41,16 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @param globalExecutionPlan: the global execution plan
      * @param topology: the topology
      * @param typeInferencePhase: type inference phase
+     * @param placementMode: placement mode
      * @return shared pointer to the placement strategy
      */
-    static std::unique_ptr<ElegantPlacementStrategy> create(const std::string& serviceURL,
-                                                            const float transferRate,
-                                                            PlacementStrategy placementStrategy,
-                                                            GlobalExecutionPlanPtr globalExecutionPlan,
-                                                            TopologyPtr topology,
-                                                            TypeInferencePhasePtr typeInferencePhase);
+    static BasePlacementStrategyPtr create(const std::string& serviceURL,
+                                           const float transferRate,
+                                           PlacementStrategy placementStrategy,
+                                           const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                           const TopologyPtr& topology,
+                                           const TypeInferencePhasePtr& typeInferencePhase,
+                                           PlacementMode placementMode);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -58,9 +60,10 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     explicit ElegantPlacementStrategy(const std::string& serviceURL,
                                       const float transferRate,
                                       const float timeWeight,
-                                      GlobalExecutionPlanPtr globalExecutionPlan,
-                                      TopologyPtr topology,
-                                      TypeInferencePhasePtr typeInferencePhase);
+                                      const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                      const TopologyPtr& topology,
+                                      const TypeInferencePhasePtr& typeInferencePhase,
+                                      PlacementMode placementMode);
 
     /**
      * @brief: Prepare the query payload for the external service
@@ -69,8 +72,8 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @return json representing the payload
      */
     void prepareQueryPayload(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                       const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
-                                       nlohmann::json&);
+                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
+                             nlohmann::json&);
 
     /**
      * @brief: Prepare the topology payload for the external placement service
@@ -130,4 +133,4 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
 
 }// namespace NES::Optimizer
 
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ELEGANTPLACEMENTSTRATEGY_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ELEGANTPLACEMENTSTRATEGY_HPP_
