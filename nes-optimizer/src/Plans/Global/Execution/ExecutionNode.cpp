@@ -51,6 +51,7 @@ bool ExecutionNode::removeQuerySubPlans(QueryId sharedQueryId) {
     NES_WARNING("ExecutionNode: Not able to remove query sub plan with id : {}", sharedQueryId);
     return false;
 }
+
 bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
     auto sharedPlanIterator = mapOfQuerySubPlans.find(sharedQueryId);
     if (sharedPlanIterator != mapOfQuerySubPlans.end()) {
@@ -65,6 +66,19 @@ bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlan
     return false;
 }
 
+QueryPlanPtr ExecutionNode::getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
+    auto sharedPlanIterator = mapOfQuerySubPlans.find(sharedQueryId);
+    if (sharedPlanIterator != mapOfQuerySubPlans.end()) {
+        for (auto subPlanIterator = sharedPlanIterator->second.begin(); subPlanIterator != sharedPlanIterator->second.end();
+             ++subPlanIterator) {
+            if ((*subPlanIterator)->getQuerySubPlanId() == subPlanId) {
+                return *subPlanIterator;
+            }
+        }
+    }
+    return {};
+}
+
 uint32_t ExecutionNode::getOccupiedResources(QueryId sharedQueryId) {
 
     // In this method we iterate from the root operators to all their child operator within a query sub plan
@@ -75,47 +89,53 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId sharedQueryId) {
     uint32_t occupiedResources = 0;
     for (const auto& querySubPlan : querySubPlans) {
         NES_DEBUG("ExecutionNode : calculate the number of resources occupied by the query sub plan and release them");
-        auto roots = querySubPlan->getRootOperators();
-        // vector keeping track of already visited nodes.
-        std::set<uint64_t> visitedOpIds;
-        NES_DEBUG("ExecutionNode : Iterate over all root nodes in the query sub graph to calculate occupied resources");
-        for (const auto& root : roots) {
-            NES_DEBUG("ExecutionNode : Iterate the root node using BFS");
-            auto bfsIterator = BreadthFirstNodeIterator(root);
-            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
-                auto visitingOp = (*itr)->as<OperatorNode>();
-                if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
-                    NES_TRACE("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
-                    break;
-                }
-                // If the visiting operator is not a system operator then count the resource and add it to the visited operator list.
-                if (visitingOp->instanceOf<SourceLogicalOperatorNode>()) {
-                    auto srcOperator = visitingOp->as<SourceLogicalOperatorNode>();
-                    if (!srcOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
-                        // increase the resource count
-                        occupiedResources++;
-                        // add operator id to the already visited operator id collection
-                        visitedOpIds.insert(visitingOp->getId());
-                    }
-                } else if (visitingOp->instanceOf<SinkLogicalOperatorNode>()) {
-                    auto sinkOperator = visitingOp->as<SinkLogicalOperatorNode>();
-                    if (!sinkOperator->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
-                        // increase the resource count
-                        occupiedResources++;
-                        // add operator id to the already visited operator id collection
-                        visitedOpIds.insert(visitingOp->getId());
-                    }
-                } else {
+        occupiedResources += getOccupiedResourcesForSubPlan(querySubPlan);
+        NES_INFO("ExecutionNode: Releasing {} CPU resources from the node with id {}", occupiedResources, id);
+    }
+    return occupiedResources;
+}
+
+uint32_t ExecutionNode::getOccupiedResourcesForSubPlan(const QueryPlanPtr& querySubPlan) {
+    uint32_t occupiedResources = 0;
+    auto roots = querySubPlan->getRootOperators();
+    // vector keeping track of already visited nodes.
+    std::set<uint64_t> visitedOpIds;
+    NES_DEBUG("ExecutionNode : Iterate over all root nodes in the query sub graph to calculate occupied resources");
+    for (const auto& root : roots) {
+        NES_DEBUG("ExecutionNode : Iterate the root node using BFS");
+        auto bfsIterator = BreadthFirstNodeIterator(root);
+        for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
+            auto visitingOp = (*itr)->as<OperatorNode>();
+            if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
+                NES_TRACE("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
+                break;
+            }
+            // If the visiting operator is not a system operator then count the resource and add it to the visited operator list.
+            if (visitingOp->instanceOf<SourceLogicalOperatorNode>()) {
+                auto srcOperator = visitingOp->as<SourceLogicalOperatorNode>();
+                if (!srcOperator->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
                     // increase the resource count
                     occupiedResources++;
                     // add operator id to the already visited operator id collection
                     visitedOpIds.insert(visitingOp->getId());
                 }
+            } else if (visitingOp->instanceOf<SinkLogicalOperatorNode>()) {
+                auto sinkOperator = visitingOp->as<SinkLogicalOperatorNode>();
+                if (!sinkOperator->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                    // increase the resource count
+                    occupiedResources++;
+                    // add operator id to the already visited operator id collection
+                    visitedOpIds.insert(visitingOp->getId());
+                }
+            } else {
+                // increase the resource count
+                occupiedResources++;
+                // add operator id to the already visited operator id collection
+                visitedOpIds.insert(visitingOp->getId());
             }
         }
-        NES_INFO("ExecutionNode: Releasing {} CPU resources from the node with id {}", occupiedResources, id);
     }
-    return occupiedResources;
+        return occupiedResources;
 }
 
 bool ExecutionNode::addNewQuerySubPlan(QueryId sharedQueryId, const QueryPlanPtr& querySubPlan) {

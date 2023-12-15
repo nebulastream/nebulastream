@@ -15,6 +15,7 @@
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -718,7 +719,6 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         //set the old plan to migrating
         crd->getQueryCatalogService()->updateQuerySubPlanStatus(sharedQueryId, oldSubplanId, QueryState::MIGRATING);
         //check theat the data for the migrating plan has been set correctly
-        //todo: add check for existence of execution nodes
         auto migratingEntries = crd->getQueryCatalogService()->getAllEntriesInStatus("MIGRATING");
         ASSERT_EQ(migratingEntries.size(), 1);
         auto subplans = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData();
@@ -746,7 +746,9 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         ASSERT_EQ(noOfCompletedMigrations, actualReconnects);
         ASSERT_EQ(noOfRunningPlans, 2);
         //todo: adjust this condition when garbage collection of execution nodes is implemented
-        ASSERT_EQ(crd->getGlobalExecutionPlan()->getAllExecutionNodes().size(), 3 + actualReconnects);
+        //ASSERT_EQ(crd->getGlobalExecutionPlan()->getAllExecutionNodes().size(), 3 + actualReconnects);
+        //ASSERT_EQ(crd->getGlobalExecutionPlan()->getAllExecutionNodes().size(), 3);
+        ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 3);
 
         //reconfigure network sink on wrk1 to point to wrk3 instead of to wrk2
         auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
@@ -788,7 +790,11 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto topologyNode3 = topology->findNodeWithId(wrk3->getWorkerId());
         auto executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
         executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
+        executionNode3->getTopologyNode()->reduceResources(1);
         crd->getGlobalExecutionPlan()->addExecutionNode(executionNode3);
+        //todo: use this list
+        auto executionNodesForQuery = crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId);
+        ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 4);
         auto queryDeploymentPhase =
             QueryDeploymentPhase::create(crd->getGlobalExecutionPlan(), crd->getQueryCatalogService(), coordinatorConfig);
         auto sqp = crd->getGlobalQueryPlan()->getSharedQueryPlan(sharedQueryId);
