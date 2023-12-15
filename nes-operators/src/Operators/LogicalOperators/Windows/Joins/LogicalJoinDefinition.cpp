@@ -18,7 +18,6 @@
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Actions/BaseJoinActionDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Types/WindowType.hpp>
 #include <utility>
 
@@ -28,7 +27,6 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
                                              FieldAccessExpressionNodePtr rightJoinKeyType,
                                              Windowing::WindowTypePtr windowType,
                                              Windowing::DistributionCharacteristicPtr distributionType,
-                                             Windowing::WindowTriggerPolicyPtr triggerPolicy,
                                              BaseJoinActionDescriptorPtr triggerAction,
                                              uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight,
@@ -36,7 +34,7 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
                                              OriginId originId)
     : leftJoinKeyType(std::move(leftJoinKeyType)), rightJoinKeyType(std::move(rightJoinKeyType)),
       leftSourceType(Schema::create()), rightSourceType(Schema::create()), outputSchema(Schema::create()),
-      triggerPolicy(std::move(triggerPolicy)), triggerAction(std::move(triggerAction)), windowType(std::move(windowType)),
+      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)),
       distributionType(std::move(distributionType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft),
       numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType), originId(originId) {
 
@@ -44,7 +42,6 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
     NES_ASSERT(this->rightJoinKeyType, "Invalid right join key type");
 
     NES_ASSERT(this->windowType, "Invalid window type");
-    NES_ASSERT(this->triggerPolicy, "Invalid trigger policy");
     NES_ASSERT(this->triggerAction, "Invalid trigger action");
     NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
     NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
@@ -55,7 +52,6 @@ LogicalJoinDefinitionPtr LogicalJoinDefinition::create(const FieldAccessExpressi
                                                        const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                                        const Windowing::WindowTypePtr& windowType,
                                                        const Windowing::DistributionCharacteristicPtr& distributionType,
-                                                       const Windowing::WindowTriggerPolicyPtr& triggerPolicy,
                                                        const BaseJoinActionDescriptorPtr& triggerAction,
                                                        uint64_t numberOfInputEdgesLeft,
                                                        uint64_t numberOfInputEdgesRight,
@@ -64,7 +60,6 @@ LogicalJoinDefinitionPtr LogicalJoinDefinition::create(const FieldAccessExpressi
                                                          rightJoinKeyType,
                                                          windowType,
                                                          distributionType,
-                                                         triggerPolicy,
                                                          triggerAction,
                                                          numberOfInputEdgesLeft,
                                                          numberOfInputEdgesRight,
@@ -80,8 +75,6 @@ SchemaPtr LogicalJoinDefinition::getLeftSourceType() { return leftSourceType; }
 SchemaPtr LogicalJoinDefinition::getRightSourceType() { return rightSourceType; }
 
 Windowing::WindowTypePtr LogicalJoinDefinition::getWindowType() { return windowType; }
-
-Windowing::WindowTriggerPolicyPtr LogicalJoinDefinition::getTriggerPolicy() const { return triggerPolicy; }
 
 Join::BaseJoinActionDescriptorPtr LogicalJoinDefinition::getTriggerAction() const { return triggerAction; }
 
@@ -124,7 +117,7 @@ void LogicalJoinDefinition::setOriginId(OriginId originId) { this->originId = or
 bool LogicalJoinDefinition::equals(const LogicalJoinDefinition& other) const {
     return leftJoinKeyType->equal(other.leftJoinKeyType) && rightJoinKeyType->equal(other.rightJoinKeyType)
         && leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
-        && outputSchema->equals(other.outputSchema) && triggerPolicy->equals(*other.triggerPolicy)
+        && outputSchema->equals(other.outputSchema)
         && triggerAction->equals(*other.triggerAction) && windowType->equal(other.windowType)
         && distributionType->equals(*other.distributionType) && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft
         && numberOfInputEdgesRight == other.numberOfInputEdgesRight && joinType == other.joinType && originId == other.originId;

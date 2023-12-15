@@ -27,7 +27,6 @@
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -53,7 +52,6 @@ KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery,
 Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations) {
     NES_DEBUG("Query: add window operator");
     //we use a on time trigger as default that triggers on each change of the watermark
-    auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
@@ -100,7 +98,6 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
         Windowing::LogicalWindowDefinition::create(windowAggregationDescriptors,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                   triggerPolicy,
                                                    triggerAction,
                                                    allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
@@ -120,9 +117,6 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
         }
         expressionNodes.emplace_back(onKey->as<FieldAccessExpressionNode>());
     }
-
-    //we use a on time trigger as default that triggers on each change of the watermark
-    auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
 
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
@@ -174,7 +168,6 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
                                                    windowAggregationDescriptors,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                   triggerPolicy,
                                                    triggerAction,
                                                    allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);

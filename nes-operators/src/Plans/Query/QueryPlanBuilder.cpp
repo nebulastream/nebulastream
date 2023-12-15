@@ -28,7 +28,6 @@
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TimeBasedWindowType.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
@@ -120,10 +119,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
     auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
     auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "leftSide");
 
-    //we use a on time trigger as default that triggers on each change of the watermark
-    auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
-    //    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
-
     //we use a lazy NL join because this is currently the only one that is implemented
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
 
@@ -145,7 +140,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
                                                               rightQueryPlanKeyFieldAccess,
                                                               windowType,
                                                               distrType,
-                                                              triggerPolicy,
                                                               triggerAction,
                                                               1,
                                                               1,

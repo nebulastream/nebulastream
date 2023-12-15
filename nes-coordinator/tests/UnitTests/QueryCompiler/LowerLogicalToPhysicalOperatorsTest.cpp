@@ -38,8 +38,6 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
@@ -102,7 +100,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
         projectPp = LogicalOperatorFactory::createProjectionOperator({});
         {
-            Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
             auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
             auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
             auto joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
@@ -111,7 +108,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
                 distrType,
-                triggerPolicy,
                 triggerAction,
                 1,
                 1,
@@ -122,12 +118,10 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::BaseUnitTest {
         sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         auto windowType = TumblingWindow::of(EventTime(Attribute("test")), Seconds(10));
-        auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition = LogicalWindowDefinition::create({Sum(Attribute("test"))->aggregation},
                                                                 windowType,
                                                                 Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                                triggerPolicy,
                                                                 triggerAction,
                                                                 0);
 

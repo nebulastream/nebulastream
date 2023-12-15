@@ -42,7 +42,6 @@ class LogicalWindowDefinition {
                                      std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
-                                     WindowTriggerPolicyPtr triggerPolicy,
                                      WindowActionDescriptorPtr triggerAction,
                                      uint64_t allowedLateness);
 
@@ -59,9 +58,8 @@ class LogicalWindowDefinition {
     static LogicalWindowDefinitionPtr create(std::vector<WindowAggregationDescriptorPtr> windowAggregations,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
-                                             const WindowTriggerPolicyPtr& triggerPolicy,
                                              const WindowActionDescriptorPtr& triggerAction,
-                                             uint64_t allowedLateness);
+                                             const uint64_t allowedLateness);
 
     /**
      * @brief Create a new window definition for a keyed window
@@ -77,7 +75,6 @@ class LogicalWindowDefinition {
                                              std::vector<WindowAggregationDescriptorPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
-                                             const WindowTriggerPolicyPtr& triggerPolicy,
                                              const WindowActionDescriptorPtr& triggerAction,
                                              uint64_t allowedLateness);
 
@@ -172,18 +169,6 @@ class LogicalWindowDefinition {
     LogicalWindowDefinitionPtr copy();
 
     /**
-     * @brief Getter for on trigger policy.
-     * @return WindowTriggerPolicyPtr
-     */
-    [[nodiscard]] WindowTriggerPolicyPtr getTriggerPolicy() const;
-
-    /**
-     * @brief Setter for the trigger policy.
-     * @param triggerPolicy
-     */
-    void setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy);
-
-    /**
     * @brief Getter for on trigger action
      * @return trigger action
     */
@@ -207,7 +192,6 @@ class LogicalWindowDefinition {
 
   private:
     std::vector<WindowAggregationDescriptorPtr> windowAggregation;
-    WindowTriggerPolicyPtr triggerPolicy;
     WindowActionDescriptorPtr triggerAction;
     WindowTypePtr windowType;
     std::vector<FieldAccessExpressionNodePtr> onKey;
