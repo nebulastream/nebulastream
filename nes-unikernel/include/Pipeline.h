@@ -7,6 +7,8 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Network/NetworkSink.hpp>
+#include <DataTypes/PhysicalDataTypes.hpp>
+#include <SchemaBuffer.hpp>
 
 namespace NES::Unikernel {
 struct CTConfiguration {
@@ -17,7 +19,7 @@ struct CTConfiguration {
 };
 struct KafkaSinkConfig15 {
     constexpr static unsigned long QueryID = 0;
-    using KafkaSchema = Schema<Field<INT8>, Field<TEXT>, Field<FLOAT32>>;
+    using KafkaSchema = Schema<Field<INT8>, Field<FLOAT32>>;
     using SinkType = typename NES::KafkaSink<KafkaSchema>;
     constexpr static unsigned long QuerySubplanID = 8;
     constexpr static const char* Broker = "Broker";
@@ -39,17 +41,18 @@ struct SinkConfig15 {
 };
 using Sink15 = UnikernelSink<KafkaSinkConfig15>;
 struct SourceConfig17 {
-    constexpr static unsigned long QueryID = 0;
+    using SourceType = TCPSource<SourceConfig17>;
+    using Schema = Schema<Field<INT8>, Field<FLOAT32>>;
+    constexpr static OriginId OriginId = 1;
     constexpr static unsigned long UpstreamNodeID = 3;
-    constexpr static unsigned long UpstreamPartitionID = 0;
-    constexpr static unsigned long UpstreamSubPartitionID = 0;
-    constexpr static const char* UpstreamNodeHostname = "127.0.0.1";
-    constexpr static unsigned long UpstreamOperatorID = 17;
-    constexpr static unsigned int UpstreamNodePort = 8083;
+    constexpr static OperatorId OperatorId = 1;
+    constexpr static unsigned long QueryID = 0;
     constexpr static unsigned long LocalBuffers = 100;
 };
+
 using Source17 = UnikernelSource<SourceConfig17>;
 struct SourceConfig13 {
+    using SourceType = NES::Network::NetworkSource;
     constexpr static unsigned long QueryID = 0;
     constexpr static unsigned long UpstreamNodeID = 4;
     constexpr static unsigned long UpstreamPartitionID = 0;
@@ -61,6 +64,7 @@ struct SourceConfig13 {
 };
 using Source13 = UnikernelSource<SourceConfig13>;
 struct SourceConfig19 {
+    using SourceType = NES::Network::NetworkSource;
     constexpr static unsigned long QueryID = 0;
     constexpr static unsigned long UpstreamNodeID = 5;
     constexpr static unsigned long UpstreamPartitionID = 0;

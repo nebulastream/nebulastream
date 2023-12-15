@@ -16,6 +16,7 @@
 
 #include <Network/NetworkSource.hpp>
 #include <Runtime/Execution/UnikernelPipelineExecutionContext.hpp>
+#include <Sources/TCPSource.hpp>
 
 namespace NES::Unikernel {
 template<typename Config>
@@ -23,30 +24,38 @@ class UnikernelSource {
   public:
     constexpr static size_t Id = Config::UpstreamNodeID;
 
-    static std::optional<NES::Network::NetworkSource> source;
+    static std::optional<typename Config::SourceType> source;
     static void setup(UnikernelPipelineExecutionContext ctx) {
-        UnikernelSource::source.emplace(
-            NES::Network::NesPartition(Config::QueryID,
-                                       Config::UpstreamOperatorID,
-                                       Config::UpstreamPartitionID,
-                                       Config::UpstreamSubPartitionID),
-            NES::Network::NodeLocation(Config::UpstreamNodeID, Config::UpstreamNodeHostname, Config::UpstreamNodePort),
-            Config::LocalBuffers,
-            200ms,
-            100,
-            ctx,
-            "Upstream");
+        if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
+            UnikernelSource::source.emplace(
+                NES::Network::NesPartition(Config::QueryID,
+                                           Config::UpstreamOperatorID,
+                                           Config::UpstreamPartitionID,
+                                           Config::UpstreamSubPartitionID),
+                NES::Network::NodeLocation(Config::UpstreamNodeID, Config::UpstreamNodeHostname, Config::UpstreamNodePort),
+                200ms,
+                100,
+                ctx);
+        } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
+            UnikernelSource::source.emplace(ctx);
+        }
     }
 
     static void start() {
-        source->bind();
-        source->start();
+
+        if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
+            source->bind();
+            source->start();
+        } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
+            source->start();
+            source->runningRoutine();
+        }
     }
 
-    static void stop() { source->stop(); }
+    static void stop() { auto ret = source->stop(Runtime::QueryTerminationType::Graceful); }
 };
-template<typename T>
-std::optional<NES::Network::NetworkSource> UnikernelSource<T>::source = std::nullopt;
+template<typename Config>
+std::optional<typename Config::SourceType> UnikernelSource<Config>::source = std::nullopt;
 }// namespace NES::Unikernel
 
 #endif//NES_UNIKERNELSOURCE_HPP

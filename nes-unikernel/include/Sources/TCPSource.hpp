@@ -22,6 +22,8 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/CircularBuffer.hpp>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 namespace NES {
 
@@ -29,14 +31,28 @@ class Parser;
 using ParserPtr = std::shared_ptr<Parser>;
 
 /**
+     * @brief search from the back (first inputted item) to the front for the given search token
+     * @token to search for
+     * @return number of places until first occurrence of token (place of token not included)
+     */
+uint64_t sizeUntilSearchToken(char token);
+
+/**
+     * @brief pop number of values given and fill temp with popped values. If popTextDevider true, pop one more value and discard
+     * @param numberOfValuesToPop number of values to pop and fill temp with
+     * @param popTextDivider if true, pop one more value and discard, if false, only pop given number of values to pop
+     * @return true if number of values to pop successfully popped, false otherwise
+     */
+bool popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTextDivider);
+
+/**
  * @brief source to receive data via TCP connection
  */
-class TCPSource : public DataSource {
-
-    template<typename Schema>
-    using BufferType = SchemaBuffer<Schema, 8192>;
+template<typename TCPConfig>
+class TCPSource : public DataSource<TCPConfig> {
 
   public:
+    constexpr static NES::SourceType SourceType = NES::SourceType::TCP_SOURCE;
     /**
      * @brief constructor of a TCP Source
      * @param schema the schema of the data
@@ -52,29 +68,24 @@ class TCPSource : public DataSource {
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param executableSuccessors executable operators coming after this source
      */
-    explicit TCPSource(TCPSourceTypePtr tcpSourceType,
-                       OperatorId operatorId,
-                       OriginId originId,
-                       size_t numSourceLocalBuffers,
-                       const std::string& physicalSourceName,
-                       NES::Unikernel::UnikernelPipelineExecutionContext successor);
+    explicit TCPSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
+        : DataSource<TCPConfig>(successor), circularBuffer(2048) {}
 
     /**
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
      */
-    template<typename Schema>
-    std::optional<Runtime::TupleBuffer> receiveData() {
+    std::optional<Runtime::TupleBuffer> receiveData() override {
         NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
-        auto tupleBuffer = allocateBuffer<Schema>();
+        auto tupleBuffer = DataSource<TCPConfig>::allocateBuffer();
         NES_DEBUG("TCPSource buffer allocated ");
         try {
             do {
-                if (!running) {
+                if (!DataSource<TCPConfig>::running) {
                     return std::nullopt;
                 }
                 fillBuffer(tupleBuffer);
-            } while (tupleBuffer.getNumberOfTuples() == 0);
+            } while (tupleBuffer.getSize() == 0);
         } catch (const std::exception& e) {
             delete[] messageBuffer;
             NES_ERROR("TCPSource<Schema>::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
@@ -87,8 +98,7 @@ class TCPSource : public DataSource {
      *  @brief method to fill the buffer with tuples
      *  @param buffer to be filled
      */
-    template<typename Schema>
-    bool fillBuffer(TCPSource::BufferType<Schema>& tupleBuffer) {
+    bool fillBuffer(DataSource<TCPConfig>::BufferType& tupleBuffer) {
 
         // determine how many tuples fit into the buffer
         tuplesThisPass = tupleBuffer.getCapacity();
@@ -154,9 +164,9 @@ class TCPSource : public DataSource {
                 //if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
                 if (inputTupleSize != 0 && popped) {
                     std::string buf(messageBuffer, inputTupleSize);
+                    auto iss = std::istringstream(buf);
                     NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                    parseCSVIntoBuffer(std::istringstream(buf), tupleBuffer);
-                    tupleCount++;
+                    tupleCount += parseCSVIntoBuffer(iss, tupleBuffer);
                 }
                 delete[] messageBuffer;
             }
@@ -173,62 +183,75 @@ class TCPSource : public DataSource {
                 flushIntervalPassed = true;
             }
         }
-        tupleBuffer.setNumberOfTuples(tupleCount);
-        generatedTuples += tupleCount;
-        generatedBuffers++;
+        DataSource<TCPConfig>::generatedTuples += tupleCount;
+        DataSource<TCPConfig>::generatedBuffers++;
         return true;
     }
-
-    /**
-     * @brief search from the back (first inputted item) to the front for the given search token
-     * @token to search for
-     * @return number of places until first occurrence of token (place of token not included)
-     */
-    uint64_t sizeUntilSearchToken(char token);
-
-    /**
-     * @brief pop number of values given and fill temp with popped values. If popTextDevider true, pop one more value and discard
-     * @param numberOfValuesToPop number of values to pop and fill temp with
-     * @param popTextDivider if true, pop one more value and discard, if false, only pop given number of values to pop
-     * @return true if number of values to pop successfully popped, false otherwise
-     */
-    bool popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTextDivider);
 
     /**
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source
      */
-    std::string toString() const override;
-
-    /**
-     * @brief Get source type
-     * @return source type
-     */
-    SourceType getType() const override;
-
-    /**
-     * @brief getter for source config
-     * @return tcpSourceType
-     */
-    const TCPSourceTypePtr& getSourceConfig() const;
+    std::string toString() const {
+        std::stringstream ss;
+        ss << "TCPSOURCE(";
+        ss << ")";
+        return ss.str();
+    }
 
     /**
      * @brief opens TCP connection
      */
-    void open() override;
+    void open() override {
+        DataSource<TCPConfig>::open();
+        NES_TRACE("TCPSource::connected: Trying to create socket.");
+        if (sockfd < 0) {
+            sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
+            NES_TRACE("Socket created with  {}", sockfd);
+        }
+        if (sockfd < 0) {
+            NES_ERROR("TCPSource::connected: Failed to create socket. Error: {}", strerror(errno));
+            connection = -1;
+            return;
+        }
+        NES_TRACE("Created socket");
+
+        struct sockaddr_in servaddr;
+        servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
+        servaddr.sin_addr.s_addr = inet_addr(sourceConfig->getSocketHost()->getValue().c_str());
+        servaddr.sin_port =
+            htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
+
+        if (connection < 0) {
+            NES_TRACE("Try connecting to server: {}:{}",
+                      sourceConfig->getSocketHost()->getValue(),
+                      sourceConfig->getSocketPort()->getValue());
+            connection = connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr));
+        }
+        if (connection < 0) {
+            connection = -1;
+            NES_THROW_RUNTIME_ERROR("TCPSource::connected: Connection with server failed. Error: " << strerror(errno));
+        }
+        NES_TRACE("TCPSource::connected: Connected to server.");
+    }
 
     /**
      * @brief closes TCP connection
      */
-    void close() override;
+    void close() override {
+        NES_TRACE("TCPSource::close: trying to close connection.");
+        DataSource<TCPConfig>::close();
+        if (connection >= 0) {
+            ::close(connection);
+            ::close(sockfd);
+            NES_TRACE("TCPSource::close: connection closed.");
+        }
+    }
 
   private:
-    template<typename Schema>
-    TCPSource::BufferType<Schema> allocateBuffer();
     int connection = -1;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
-    TCPSourceTypePtr sourceConfig;
     int sockfd = -1;
     CircularBuffer<char> circularBuffer;
     char* messageBuffer;
