@@ -281,6 +281,7 @@ class BasePlacementStrategy {
     static constexpr auto MAX_PATH_SELECTION_RETRIES = 3;
     //Time interval in which to retry
     static constexpr auto PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(1000);
+    static constexpr auto MAX_PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(120000);
 };
 }// namespace NES::Optimizer
 #endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

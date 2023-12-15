@@ -77,11 +77,11 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
 
-    uint64_t nodeId = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, ip, publish_port, 5000, 6, properties);
+    uint64_t nodeId = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);
 
     uint64_t nodeId1 =
-        topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, ip, publish_port + 2, 5000, 6, properties);
+        topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 2, 5000, 6, properties);
     EXPECT_EQ(nodeId1, 2u);
 
     //test register existing node
@@ -100,7 +100,7 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
 
     //test register new node
     uint64_t nodeId3 =
-        topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, ip, publish_port + 6, 5000, 6, properties);
+        topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 6, 5000, 6, properties);
     EXPECT_EQ(nodeId3, 4u);
 
     //test register new node with misconfigured worker id

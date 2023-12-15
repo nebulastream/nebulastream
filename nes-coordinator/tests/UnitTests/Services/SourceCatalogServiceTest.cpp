@@ -111,7 +111,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    uint64_t nodeId = topologyManagerService->registerWorker(INVALID_TOPOLOGY_NODE_ID, address, 4000, 5000, 6, properties);
+    uint64_t nodeId = topologyManagerService->registerWorker(INVALID_WORKER_NODE_ID, address, 4000, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);
 
     //setup test
