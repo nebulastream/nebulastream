@@ -44,11 +44,6 @@ TCPSource::TCPSource(TCPSourceTypePtr tcpSourceType,
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
 }
 
-template<typename Schema>
-TCPSource::BufferType<Schema> TCPSource::allocateBuffer(){
-    return BufferType<Schema> {TheBufferManager->getBufferBlocking()};
-}
-
 std::string TCPSource::toString() const {
     std::stringstream ss;
     ss << "TCPSOURCE(";

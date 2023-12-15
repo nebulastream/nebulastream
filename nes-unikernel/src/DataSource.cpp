@@ -61,37 +61,6 @@ class BaseEvent;
 using namespace std::string_literals;
 namespace NES {
 
-DataSource::DataSource(OperatorId operatorId,
-                       OriginId originId,
-                       size_t numSourceLocalBuffers,
-                       const std::string& physicalSourceName,
-                       NES::Unikernel::UnikernelPipelineExecutionContext executableSuccessors,
-                       uint64_t sourceAffinity,
-                       uint64_t taskQueueId)
-    : DataEmitter(), localBufferManager(TheBufferManager), executableSuccessors(std::move(executableSuccessors)),
-      operatorId(operatorId), originId(originId), numSourceLocalBuffers(numSourceLocalBuffers), sourceAffinity(sourceAffinity),
-      taskQueueId(taskQueueId), physicalSourceName(physicalSourceName) {
-    NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
-    // TODO #4094: enable this exception -- currently many UTs are designed to assume empty executableSuccessors
-    //    if (this->executableSuccessors.empty()) {
-    //        throw Exceptions::RuntimeException("empty executable successors");
-    //    }
-}
-
-void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
-    // set the origin id for this source
-    buffer.setOriginId(originId);
-    // set the creation timestamp
-    buffer.setCreationTimestampInMS(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count());
-    // Set the sequence number of this buffer.
-    // A data source generates a monotonic increasing sequence number
-    maxSequenceNumber++;
-    buffer.setSequenceNumber(maxSequenceNumber);
-    emitWork(buffer);
-}
-
 namespace detail {
 template<class... Ts>
 struct overloaded : Ts... {
@@ -100,25 +69,7 @@ struct overloaded : Ts... {
 template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 }// namespace detail
-void DataSource::emitWork(Runtime::TupleBuffer& buffer) { executableSuccessors.emit(buffer); }
 
-OperatorId DataSource::getOperatorId() const { return operatorId; }
-
-void DataSource::setOperatorId(OperatorId operatorId) { this->operatorId = operatorId; }
-
-DataSource::~DataSource() {
-    NES_ASSERT(running == false, "Data source destroyed but thread still running... stop() was not called");
-    NES_DEBUG("DataSource {}: Destroy Data Source.", operatorId);
-}
-
-bool DataSource::start() {
-    NES_DEBUG("DataSource  {} : start source", operatorId);
-    if (running)
-        return false;
-
-    running = true;
-    return true;
-}
 
 bool DataSource::fail() {
     bool isStopped = stop(Runtime::QueryTerminationType::Failure);// this will block until the thread is stopped
