@@ -14,7 +14,6 @@
 
 #include <API/AttributeField.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Operators/LogicalOperators/Windows/Types/WindowState.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Types/TumblingWindow.hpp>
 #include <utility>
@@ -29,28 +28,6 @@ WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeM
     return std::dynamic_pointer_cast<WindowType>(
         std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size))));
 }
-
-uint64_t TumblingWindow::calculateNextWindowEnd(uint64_t currentTs) const {
-    return currentTs + size.getTime() - (currentTs % size.getTime());
-}
-
-void TumblingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const {
-    NES_TRACE("TumblingWindow::triggerWindows windows before={}", windows.size());
-    //lastStart = last window that starts before the watermark
-    long lastStart = lastWatermark - ((lastWatermark + size.getTime()) % size.getTime());
-    NES_TRACE("TumblingWindow::triggerWindows= lastStart={} size.getTime()={} lastWatermark={} currentWatermark={}",
-              lastStart,
-              size.getTime(),
-              lastWatermark,
-              currentWatermark);
-    for (long windowStart = lastStart; windowStart + size.getTime() <= currentWatermark; windowStart += size.getTime()) {
-        NES_TRACE("TumblingWindow::triggerWindows  add window start ={} end={}", windowStart, windowStart + size.getTime());
-        windows.emplace_back(windowStart, windowStart + size.getTime());
-    }
-    NES_TRACE("TumblingWindow::triggerWindows windows after={}", windows.size());
-}
-
-TimeBasedWindowType::TimeBasedSubWindowType TumblingWindow::getTimeBasedSubWindowType() { return TUMBLINGWINDOW; }
 
 TimeMeasure TumblingWindow::getSize() { return size; }
 

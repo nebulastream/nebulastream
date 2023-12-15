@@ -25,27 +25,6 @@ class SlidingWindow : public TimeBasedWindowType {
     static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
 
     /**
-    * Calculates the next window end based on a given timestamp.
-    * @param currentTs
-    * @return the next window end
-    */
-    [[nodiscard]] uint64_t calculateNextWindowEnd(uint64_t currentTs) const override;
-
-    /**
-     * @brief Generates and adds all windows between which ended size the last watermark till the current watermark.
-     * @param windows vector of windows
-     * @param lastWatermark
-     * @param currentWatermark
-     */
-    void triggerWindows(std::vector<WindowState>& windows, uint64_t lastWatermark, uint64_t currentWatermark) const override;
-
-    /**
-     * @brief return the time-based Subwindow Type, i.e., SLIDINGWINDOW
-     * @return enum content-based Subwindow Type
-     */
-    TimeBasedSubWindowType getTimeBasedSubWindowType() override;
-
-    /**
     * @brief return size of the window
     * @return size of the window
     */
