@@ -120,7 +120,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
                                "JoinLogicalOperatorNode: Found both left and right input schema to be same.");
 
     //Infer stamp of window definition
-    const auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+    const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     windowType->inferStamp(leftInputSchema);
 
     //Reset output schema and add fields from left and right input schema

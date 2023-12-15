@@ -601,7 +601,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
         std::make_shared<z3::expr>(z3::to_expr(*context, z3::to_expr(*context, Z3_mk_and(*context, 3, andConditions))));
 
     //Compute the expression for window time key
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+    auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
     //FIXME: problem is that only one time key is defined during the join definition
     // fix it as part of #1592
@@ -711,8 +711,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     uint64_t length = 0;
     uint64_t slide = 0;
     //Compute the expression for window time key
-    if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+    auto windowType = windowDefinition->getWindowType();
+    if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
+        auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
         auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
         z3::expr windowTimeKeyVal(*context);
         if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {

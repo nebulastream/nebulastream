@@ -508,8 +508,8 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
     windowDetails.set_allowedlateness(windowDefinition->getAllowedLateness());
     auto windowType = windowDefinition->getWindowType();
 
-    if (windowType->isTimeBasedWindowType()) {
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
+    if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
+        auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
         auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
         auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
         if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
@@ -538,8 +538,8 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNode
         } else {
             NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
         }
-    } else if (windowType->isContentBasedWindowType()) {
-        auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowType);
+    } else if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
+        auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
         if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
             auto thresholdWindow = std::dynamic_pointer_cast<Windowing::ThresholdWindow>(windowType);
             auto thresholdWindowDetails = SerializableOperator_ThresholdWindow();
@@ -771,7 +771,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorN
     ExpressionSerializationUtil::serializeExpression(joinDefinition->getRightJoinKey(), joinDetails.mutable_onrightkey());
 
     auto windowType = joinDefinition->getWindowType();
-    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
+    auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
     auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {

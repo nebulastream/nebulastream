@@ -73,13 +73,14 @@ bool CentralWindowOperator::inferSchema() {
         agg->inferStamp(inputSchema);
     }
 
-    if (windowDefinition->getWindowType()->isContentBasedWindowType()) {
-        auto contentBasedWindowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
+    auto windowType = windowDefinition->getWindowType();
+    if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
+        auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
         if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
             contentBasedWindowType->inferStamp(inputSchema);
         }
     } else {
-        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
         timeBasedWindowType->inferStamp(inputSchema);
     }
 
@@ -89,7 +90,7 @@ bool CentralWindowOperator::inferSchema() {
      * For the threshold window we cannot pre-calculate the window start and end, thus in the current version we ignores these output fields for
      * threshold windows
      */
-    if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+    if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
         outputSchema = outputSchema
                            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
                                                   BasicType::UINT64))

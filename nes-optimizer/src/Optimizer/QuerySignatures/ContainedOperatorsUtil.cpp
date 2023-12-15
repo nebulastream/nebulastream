@@ -47,18 +47,9 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
     auto containedWindowOperators = containedOperator->getNodesByType<WindowLogicalOperatorNode>();
     //obtain the most downstream window operator from the container query plan
     auto containerWindowOperators = containerOperator->getNodesByType<WindowLogicalOperatorNode>().front();
-    Windowing::TimeBasedWindowTypePtr containerTimeBasedWindow;
-    if (containerWindowOperators->as<WindowLogicalOperatorNode>()
-            ->getWindowDefinition()
-            ->getWindowType()
-            ->isTimeBasedWindowType()) {
-        containerTimeBasedWindow =
-            containerWindowOperators->as<WindowLogicalOperatorNode>()
-                ->getWindowDefinition()
-                ->getWindowType()
-                ->asTimeBasedWindowType(
-                    containerWindowOperators->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getWindowType());
-    }
+    const auto containerWindowType =
+        containerWindowOperators->as<WindowLogicalOperatorNode>()->getWindowDefinition()->getWindowType();
+    auto containerTimeBasedWindow = containerWindowType->as_if<Windowing::TimeBasedWindowType>();
     NES_TRACE("Contained operator: {}", containedOperator->toString());
     if (containerTimeBasedWindow == nullptr) {
         return {};
@@ -69,9 +60,10 @@ ContainedOperatorsUtil::createContainedWindowOperator(const LogicalOperatorNodeP
         auto watermarkOperatorCopy =
             containedWindowOperators.front()->getChildren()[0]->as<WatermarkAssignerLogicalOperatorNode>()->copy();
         auto windowDefinition = windowOperatorCopy->as<WindowLogicalOperatorNode>()->getWindowDefinition();
+        auto windowType = windowDefinition->getWindowType();
         //check that containee is a time based window, else return false
-        if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
-            auto timeBasedWindow = windowDefinition->getWindowType()->asTimeBasedWindowType(windowDefinition->getWindowType());
+        if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
+            auto timeBasedWindow = windowType->as<Windowing::TimeBasedWindowType>();
             //we need to set the time characteristic field to start because the previous timestamp will not exist anymore
             auto field = containerOperator->getOutputSchema()->getField("start");
             //return false if this is not possible

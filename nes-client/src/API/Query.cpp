@@ -133,7 +133,7 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     NES_DEBUG("Sequence enters window function");
-    auto timestamp = Windowing::WindowType::asTimeBasedWindowType(windowType)
+    auto timestamp = windowType->as<Windowing::TimeBasedWindowType>()
                          ->getTimeCharacteristic()
                          ->getField()
                          ->getName();// assume time-based windows
@@ -192,7 +192,7 @@ Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrence
 }
 
 Query& Times::window(const Windowing::WindowTypePtr& windowType) const {
-    auto timestamp = Windowing::WindowType::asTimeBasedWindowType(windowType)->getTimeCharacteristic()->getField()->getName();
+    auto timestamp = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName();
     // if no min and max occurrence is defined, apply count without filter
     if (!bounded) {
         return originalQuery.window(windowType).apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)));

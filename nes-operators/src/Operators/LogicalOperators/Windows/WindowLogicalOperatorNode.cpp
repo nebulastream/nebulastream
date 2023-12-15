@@ -85,12 +85,11 @@ bool WindowLogicalOperatorNode::inferSchema() {
     //Construct output schema
     //First clear()
     outputSchema->clear();
-    // Distinguish process between different window types (curretnly time-based and content-based)
-    if (windowDefinition->getWindowType()->isTimeBasedWindowType()) {
+    // Distinguish process between different window types (currently time-based and content-based)
+    auto windowType = windowDefinition->getWindowType();
+    if (windowType->instanceOf<Windowing::TimeBasedWindowType>()) {
         // typeInference
-        if (!windowDefinition->getWindowType()
-                 ->asTimeBasedWindowType(windowDefinition->getWindowType())
-                 ->inferStamp(inputSchema)) {
+        if (!windowType->as<Windowing::TimeBasedWindowType>()->inferStamp(inputSchema)) {
             return false;
         }
         outputSchema = outputSchema
@@ -98,10 +97,9 @@ bool WindowLogicalOperatorNode::inferSchema() {
                                                   BasicType::UINT64))
                            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
                                                   BasicType::UINT64));
-    } else if (windowDefinition->getWindowType()->isContentBasedWindowType()) {
+    } else if (windowType->instanceOf<Windowing::ContentBasedWindowType>()) {
         // type Inference for Content-based Windows requires the typeInferencePhaseContext
-        auto contentBasedWindowType =
-            windowDefinition->getWindowType()->asContentBasedWindowType(windowDefinition->getWindowType());
+        auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
         if (contentBasedWindowType->getContentBasedSubWindowType() == Windowing::ContentBasedWindowType::THRESHOLDWINDOW) {
             auto thresholdWindow = contentBasedWindowType->asThresholdWindow(contentBasedWindowType);
             if (!thresholdWindow->inferStamp(inputSchema)) {
