@@ -47,13 +47,19 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SinkMedium;
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
+class DataEmitter;
+#ifndef UNIKERNEL_LIB
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
-class DataEmitter;
-#ifndef UNIKERNEL_LIB
 using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 #else
+template<typename Config>
+class DataSource;
+
+template<typename Config>
+using DataSourcePtr = std::shared_ptr<DataSource<Config>>;
+
 using DataEmitterPtr = DataEmitter*;
 #endif
 
@@ -121,7 +127,6 @@ class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
 using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
-using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
 
 class ExecutablePipelineStage;
 using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
@@ -129,7 +134,10 @@ using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 #ifndef UNIKERNEL_LIB
 class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
+using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
 #else
+template<typename Config>
+using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource<Config>>, std::weak_ptr<ExecutablePipeline>>;
 using PipelineExecutionContext = NES::Unikernel::UnikernelPipelineExecutionContext;
 using PipelineExecutionContextPtr = NES::Unikernel::UnikernelPipelineExecutionContext*;
 #endif

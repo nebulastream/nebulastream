@@ -19,8 +19,16 @@
 // TODO ALL: this is only for Runtime components
 namespace NES {
 
+#ifndef UNIKERNEL_LIB
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
+#else
+template<typename Config>
+class DataSource;
+
+template<typename Config>
+using DataSourcePtr = std::shared_ptr<DataSource<Config>>;
+#endif
 
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
