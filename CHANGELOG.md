@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.3](https://github.com/nebulastream/nebulastream/tree/v0.6.3) (2023-12-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.2...v0.6.3)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove `Actions` in `nes-operators` [\#4408](https://github.com/nebulastream/nebulastream/issues/4408)
+
 ## [v0.6.2](https://github.com/nebulastream/nebulastream/tree/v0.6.2) (2023-12-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.1...v0.6.2)
