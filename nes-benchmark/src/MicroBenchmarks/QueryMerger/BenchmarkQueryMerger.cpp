@@ -40,7 +40,6 @@
 
 using namespace NES;
 using std::filesystem::directory_iterator;
-
 uint64_t sourceCnt;
 std::vector<uint64_t> noOfPhysicalSources;
 uint64_t noOfMeasurementsToCollect;
@@ -388,8 +387,9 @@ int main(int argc, const char* argv[]) {
                 auto gqp = coordinator->getGlobalQueryPlan();
                 auto allSQP = gqp->getAllSharedQueryPlans();
                 uint64_t mergedOperators = 0;
-                for (auto sqp : allSQP) {
-                    unsigned long planSize = PlanIterator(sqp->getQueryPlan()).snapshot().size();
+                for (auto& sqp : allSQP){
+                    //auto allSQP2=
+                    unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();
                     mergedOperators = mergedOperators + planSize;
                 }
 

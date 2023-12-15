@@ -34,8 +34,8 @@
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 
 namespace NES {
-class NesCoordinator;
-using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
+class NesCoordinator;//声明一下class NesCoordinator的存在
+using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;  // NesCoordinatorWeakPtr 是指针类型
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -58,7 +58,7 @@ class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
 namespace REST::Controller {
-class QueryController : public oatpp::web::server::api::ApiController {
+class QueryController : public oatpp::web::server::api::ApiController {  //QueryController 继承了 ApiController
 
   public:
     /**
@@ -72,6 +72,9 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                     const std::string& completeRouterPrefix,
                     const ErrorHandlerPtr& errorHandler)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(queryService),
+          queryCatalogService(queryCatalogService), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
+          errorHandler(errorHandler) {} //：后面是初始化列表；{} 里写的函数体 为空
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
           requestHandlerService(requestHandlerService), queryCatalogService(queryCatalogService),
           globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan), errorHandler(errorHandler) {}
@@ -330,6 +333,14 @@ class QueryController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, "unknown exception");
         }
     }
+
+    ENDPOINT("GET", "/test", test) {
+        std::string response="ss";
+        return createResponse(Status::CODE_200, response);
+    }
+
+
+
 
   private:
     std::optional<std::shared_ptr<oatpp::web::protocol::http::outgoing::Response>>
