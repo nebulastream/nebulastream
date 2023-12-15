@@ -28,7 +28,6 @@
 #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
 #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 
@@ -249,7 +248,6 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     // check and add watermark
                     queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan, windowType);
                     // create default pol
-                    auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
                     auto distributionType = Windowing::DistributionCharacteristic::createCompleteWindowType();
                     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
@@ -265,7 +263,6 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                     auto windowDefinition = Windowing::LogicalWindowDefinition::create(windowAggs,
                                                                                        windowType,
                                                                                        distributionType,
-                                                                                       triggerPolicy,
                                                                                        triggerAction,
                                                                                        0);
 

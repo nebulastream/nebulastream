@@ -26,7 +26,6 @@ SliceMergingOperator::SliceMergingOperator(Windowing::LogicalWindowDefinitionPtr
     : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
-    this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
     this->windowDefinition->setWindowType(windowDefinition->getWindowType());
     this->windowDefinition->setOnKey(windowDefinition->getKeys());

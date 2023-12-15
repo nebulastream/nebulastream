@@ -206,7 +206,6 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
     NES_DEBUG("NemoWindowPinningRule::apply: introduce distributed window operator for window {}",
               logicalWindowOperator->toString());
     auto windowDefinition = logicalWindowOperator->getWindowDefinition();
-    auto triggerPolicy = windowDefinition->getTriggerPolicy();
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
@@ -222,7 +221,6 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
                                                                {windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               triggerPolicy,
                                                                triggerActionComplete,
                                                                allowedLateness);
 
@@ -230,7 +228,6 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
         windowDef = Windowing::LogicalWindowDefinition::create({windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               triggerPolicy,
                                                                triggerActionComplete,
                                                                allowedLateness);
     }
@@ -264,7 +261,6 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
                                                            {sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
-                                                           triggerPolicy,
                                                            Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
 
@@ -273,7 +269,6 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
                 Windowing::LogicalWindowDefinition::create({sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
-                                                           triggerPolicy,
                                                            Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
         }
@@ -300,7 +295,6 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
                                                            {sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
-                                                           triggerPolicy,
                                                            triggerActionSlicing,
                                                            allowedLateness);
         } else {
@@ -308,7 +302,6 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
                 Windowing::LogicalWindowDefinition::create({sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
-                                                           triggerPolicy,
                                                            triggerActionSlicing,
                                                            allowedLateness);
         }

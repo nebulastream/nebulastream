@@ -463,20 +463,6 @@ message SerializableOperator{
   }
 
   /**
-    Properties of a trigger policy
-  */
-  message TriggerPolicy{
-    enum Type{
-      triggerOnTime = 0;
-      triggerOnRecord = 1;
-      triggerOnBuffer = 2;
-      triggerOnWatermarkChange = 3;
-    }
-    Type type = 1;
-    uint64 timeInMs = 2;
-  }
-
-  /**
     Properties of a trigger action
   */
   message TriggerAction
@@ -511,10 +497,9 @@ message SerializableOperator{
     repeated Aggregation windowAggregations = 2;
     DistributionCharacteristic distrChar = 3;
     repeated SerializableExpression keys = 4;
-    TriggerPolicy triggerPolicy = 5;
-    TriggerAction action = 6;
-    uint64 allowedLateness = 7;
-    uint64 origin = 8;
+    TriggerAction action = 5;
+    uint64 allowedLateness = 6;
+    uint64 origin = 7;
   }
 
   /**
@@ -544,15 +529,14 @@ message SerializableOperator{
     SerializableExpression onRightKey = 4;
     SerializableExpression leftSourceType = 5;
     SerializableExpression rightSourceType = 6;
-    TriggerPolicy triggerPolicy = 7;
-    JoinTriggerAction action = 8;
-    uint64 numberOfInputEdgesLeft = 9;
-    uint64 numberOfInputEdgesRight = 10;
-    JoinTypeCharacteristic jointype = 11;
-    string windowStartFieldName = 12;
-    string windowEndFieldName = 13;
-    string windowKeyFieldName = 14;
-    uint64 origin = 15;
+    JoinTriggerAction action = 7;
+    uint64 numberOfInputEdgesLeft = 8;
+    uint64 numberOfInputEdgesRight = 9;
+    JoinTypeCharacteristic jointype = 10;
+    string windowStartFieldName = 11;
+    string windowEndFieldName = 12;
+    string windowKeyFieldName = 13;
+    uint64 origin = 14;
   }
 
   /**
