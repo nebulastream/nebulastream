@@ -129,7 +129,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
         for (const auto& item : pinnedDownStreamOperators) {
             auto operatorToPin = item->getChildWithOperatorId(operatorId)->as<OperatorNode>();
             if (operatorToPin) {
-                operatorToPin->addProperty(PINNED_NODE_ID, topologyNodeId);
+                operatorToPin->addProperty(PINNED_WORKER_ID, topologyNodeId);
 
                 if (operatorToPin->instanceOf<OpenCLLogicalOperatorNode>()) {
                     size_t deviceId = placement[DEVICE_ID_KEY];
@@ -194,7 +194,7 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
         if (visitedOperator.insert(logicalOperator).second) {
             nlohmann::json node;
             node[OPERATOR_ID_KEY] = logicalOperator->getId();
-            auto pinnedNodeId = logicalOperator->getProperty(PINNED_NODE_ID);
+            auto pinnedNodeId = logicalOperator->getProperty(PINNED_WORKER_ID);
             node[CONSTRAINT_KEY] =
                 pinnedNodeId.has_value() ? std::to_string(std::any_cast<WorkerId>(pinnedNodeId)) : EMPTY_STRING;
             auto sourceCode = logicalOperator->getProperty(sourceCodeKey);

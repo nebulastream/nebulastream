@@ -53,11 +53,17 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 3. Place all pinned operators
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
+        // 3. Compute query sub plans
+        // computeQuerySubPlans(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators)
+
         // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 5. Perform type inference on all updated query plans
         runTypeInferencePhase(queryId);
+
+        // 6. update execution nodes
+        //updateExecutionNodes();
 
         // 6. Release the locks from the topology nodes
         return unlockTopologyNodes();
@@ -74,7 +80,7 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         NES_DEBUG("Get the topology node for source operator {} placement.", pinnedUpStreamOperator->toString());
 
-        auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
+        auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
 
         // 1. If pinned up stream node was already placed then place all its downstream operators
@@ -136,7 +142,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
 
         if (logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
             NES_TRACE("Received Sink operator for placement.");
-            auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
+            auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_WORKER_ID));
             auto pinnedSinkOperatorLocation = getTopologyNode(workerId);
             if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
                 || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
@@ -175,7 +181,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
     }
 
     candidateTopologyNode->reduceResources(1);
-    logicalOperator->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
+    logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
 
     auto isOperatorAPinnedDownStreamOperator =
         std::find_if(pinnedDownStreamOperators.begin(),

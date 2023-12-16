@@ -140,15 +140,15 @@ bool QueryPlacementPhase::checkIfAllArePinnedOperators(const std::set<LogicalOpe
 
     //Find if one of the operator does not have PINNED_NODE_ID property
     return !std::any_of(pinnedOperators.begin(), pinnedOperators.end(), [](const OperatorNodePtr& pinnedOperator) {
-        return !pinnedOperator->hasProperty(PINNED_NODE_ID);
+        return !pinnedOperator->hasProperty(PINNED_WORKER_ID);
     });
 }
 
 void QueryPlacementPhase::pinAllSinkOperators(const std::set<LogicalOperatorNodePtr>& operators) {
     uint64_t rootNodeId = topology->getRoot()->getId();
     for (const auto& operatorToCheck : operators) {
-        if (!operatorToCheck->hasProperty(PINNED_NODE_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {
-            operatorToCheck->addProperty(PINNED_NODE_ID, rootNodeId);
+        if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {
+            operatorToCheck->addProperty(PINNED_WORKER_ID, rootNodeId);
         }
     }
 }

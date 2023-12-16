@@ -139,7 +139,7 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         NES_DEBUG("Get the topology node for source operator {} placement.", pinnedUpStreamOperator->toString());
 
-        auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
+        auto workerId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
 
         // 1. If pinned up stream node was already placed then place all its downstream operators
@@ -194,7 +194,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
-        auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
+        auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_WORKER_ID));
         operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeById(workerId);
         return;
     }
@@ -230,7 +230,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
             if (logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_TRACE("Received Sink operator for placement.");
-                auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_NODE_ID));
+                auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_WORKER_ID));
                 auto pinnedSinkOperatorLocation = getTopologyNode(workerId);
                 if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
@@ -336,7 +336,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
         }
 
         NES_TRACE("Pinn operator to the candidate topology node.");
-        logicalOperator->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
+        logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
     } else {
         candidateTopologyNode = operatorToExecutionNodeMap[logicalOperator->getId()]->getTopologyNode();
     }

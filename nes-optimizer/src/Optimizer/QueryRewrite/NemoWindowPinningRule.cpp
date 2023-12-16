@@ -105,7 +105,7 @@ void NemoWindowPinningRule::pinWindowOperators(const WindowOperatorNodePtr& wind
         for (auto mergerPair : mergerNodes) {
             auto nodeId = mergerPair.first;
             auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
-            newWindowOp->addProperty(NES::Optimizer::PINNED_NODE_ID, nodeId);
+            newWindowOp->addProperty(NES::Optimizer::PINNED_WORKER_ID, nodeId);
             NES_DEBUG("NemoWindowPinningRule::apply: newNode={} old node={}", newWindowOp->toString(), windowOp->toString());
 
             auto children = mergerPair.second;
@@ -123,8 +123,8 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
     std::unordered_map<uint64_t, std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>>> nodePlacement;
     //iterate over all children of the operator
     for (auto child : operatorNode->getAndFlattenAllChildren(true)) {
-        if (child->as_if<OperatorNode>()->hasProperty(NES::Optimizer::PINNED_NODE_ID)) {
-            auto nodeId = std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(NES::Optimizer::PINNED_NODE_ID));
+        if (child->as_if<OperatorNode>()->hasProperty(NES::Optimizer::PINNED_WORKER_ID)) {
+            auto nodeId = std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(NES::Optimizer::PINNED_WORKER_ID));
             TopologyNodePtr node = topology->findWorkerWithId(nodeId);
             for (auto& parent : node->getParents()) {
                 auto parentId = std::any_cast<uint64_t>(parent->as_if<TopologyNode>()->getId());

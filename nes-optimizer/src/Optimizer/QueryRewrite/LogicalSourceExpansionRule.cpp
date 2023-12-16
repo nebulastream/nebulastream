@@ -105,7 +105,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperatorNode>();
             //Add to the source operator the id of the physical node where we have to pin the operator
             //NOTE: This is required at the time of placement to know where the source operator is pinned
-            duplicateSourceOperator->addProperty(PINNED_NODE_ID, sourceCatalogEntry->getNode()->getId());
+            duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getNode()->getId());
             //Add Physical Source Name to the source descriptor
             auto duplicateSourceDescriptor = sourceDescriptor->copy();
             duplicateSourceDescriptor->setPhysicalSourceName(sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
