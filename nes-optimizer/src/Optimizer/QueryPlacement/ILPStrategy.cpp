@@ -119,11 +119,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         }
 
         //2.2 Find path between pinned upstream and downstream topology node
-        auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
+        auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
         auto upstreamTopologyNode = topologyMap[upstreamPinnedNodeId];
 
         auto downstreamPinnedNodeId =
-            std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_NODE_ID));
+            std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID));
         auto downstreamTopologyNode = topologyMap[downstreamPinnedNodeId];
 
         std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
@@ -252,7 +252,7 @@ std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOpe
     std::map<uint64_t, double> mileageMap;// (topologyId, M)
     // populate the distance map
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
+        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
         auto topologyNode = topologyMap[nodeId];
         computeDistance(topologyNode, mileageMap);
     }
@@ -385,7 +385,7 @@ bool ILPStrategy::pinOperators(z3::model& z3Model, std::map<std::string, z3::exp
             NES_DEBUG("Pinning operator with ID {}", operatorId);
             //Pin the operator to the location identified by ILP algorithm
             auto logicalOperator = operatorMap[operatorId];
-            logicalOperator->addProperty(PINNED_NODE_ID, topologyNodeId);
+            logicalOperator->addProperty(PINNED_WORKER_ID, topologyNodeId);
         }
     }
     return true;
