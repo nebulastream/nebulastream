@@ -387,10 +387,11 @@ void BasePlacementStrategy::placePinnedOperators(QueryId sharedQueryId,
     NES_DEBUG("Finished placing query operators into the global execution plan");
 }
 
-void BasePlacementStrategy::computeQuerySubPlans(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>
+BasePlacementStrategy::computeQuerySubPlans(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
-    std::map<WorkerId, std::vector<LogicalOperatorNodePtr>> workerToOperatorMap;
+    std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>> workerIdToRootOperatorsMap;
 
     // Temp container for iteration
     std::queue<LogicalOperatorNodePtr> operatorsToPlace;
@@ -410,27 +411,27 @@ void BasePlacementStrategy::computeQuerySubPlans(const std::set<LogicalOperatorN
         //1. Fetch the node where operator is to be placed
         auto pinnedWorkerId = std::any_cast<uint64_t>(operatorToPlace->getProperty(PINNED_WORKER_ID));
 
-        if (workerToOperatorMap.contains(pinnedWorkerId)) {
+        if (workerIdToRootOperatorsMap.contains(pinnedWorkerId)) {
 
-            std::vector<LogicalOperatorNodePtr> newPlacedOperators;
+            std::vector<LogicalOperatorNodePtr> newPlacedRootOperators;
             auto copyOfOperatorToPlace = operatorToPlace->copy()->as<LogicalOperatorNode>();
 
             //
-            auto alreadyPlacedOperators = workerToOperatorMap[pinnedWorkerId];
-            for (const auto& placedOperator : alreadyPlacedOperators) {
-                if (!operatorToPlace->containAsChild(placedOperator)) {
+            auto alreadyPlacedRootOperators = workerIdToRootOperatorsMap[pinnedWorkerId];
+            for (const auto& placedRootOperator : alreadyPlacedRootOperators) {
+                if (!operatorToPlace->containAsChild(placedRootOperator)) {
                     // add the placedOperator to the new list
-                    newPlacedOperators.emplace_back(operatorToPlace);
+                    newPlacedRootOperators.emplace_back(operatorToPlace);
                 } else {
                     //
-                    copyOfOperatorToPlace->addChild(placedOperator);
+                    copyOfOperatorToPlace->addChild(placedRootOperator);
                 }
             }
 
-            newPlacedOperators.emplace_back(copyOfOperatorToPlace);
-            workerToOperatorMap[pinnedWorkerId] = newPlacedOperators;
+            newPlacedRootOperators.emplace_back(copyOfOperatorToPlace);
+            workerIdToRootOperatorsMap[pinnedWorkerId] = newPlacedRootOperators;
         } else {
-            workerToOperatorMap[pinnedWorkerId] = {operatorToPlace};
+            workerIdToRootOperatorsMap[pinnedWorkerId] = {operatorToPlace};
         }
 
         //
@@ -455,6 +456,68 @@ void BasePlacementStrategy::computeQuerySubPlans(const std::set<LogicalOperatorN
             operatorsToPlace.push(operatorNode->as<LogicalOperatorNode>());
         });
     }
+
+    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>> workerIdToQuerySubPlans;
+    // Create the query sub plans
+
+    for (const auto& [workerId, rootOperators] : workerIdToRootOperatorsMap){
+
+        // Group root operators that share common upstream operators placed on the same worker node
+
+    }
+
+    return workerIdToQuerySubPlans;
+}
+
+std::unordered_map<WorkerId, std::vector<QueryPlanPtr>> BasePlacementStrategy::addNetworkOperators(
+    const std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>& workerIdToQuerySubPlans,
+    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+
+    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>> workerIdToUpdatedQuerySubPlans;
+
+    for (const auto& [workerId, querySubPlans] : workerIdToQuerySubPlans) {
+
+        //
+        // 1. Iterate over all query sub plans
+        // 2. Check if "all leaf operators" are in the state "Placed"
+        //    When True:
+        //              2.1.continue;
+        //
+        //    When False:
+        //              2.1. For each leaf operator find the topology node hosting the immediate upstream logical operator.
+        //              2.2. If the two topology nodes are connected to each other.
+        //                   When True:
+        //                             2.2.1. Add a network sink operator to the identified upstream operator and a network source to the leaf operator.
+        //                   When False:
+        //                             2.2.1. Find all topology nodes between the two topology nodes. Add network sink and source operator pairs to all the topology nodes.
+    }
+
+    return workerIdToUpdatedQuerySubPlans;
+}
+
+bool BasePlacementStrategy::updateExecutionNodes(
+    const std::map<WorkerId, std::vector<QueryPlanPtr>>& workerIdToQuerySubPlans,
+    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
+
+    for (const auto& [workerId, querySubPlans] : workerIdToQuerySubPlans) {
+
+        // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
+        // 2. Fetch the execution node with id = workerId.
+        // 3. Iterate over all query sub plans:
+        //      3.1. Check if "all leaf operators" are in the state "Placed".
+        //              When True:
+        //                      3.1.1. Get from the execution plan the query sub plan hosting the operators.
+        //                      3.1.2. Replace the placed operator in the iterated query sub plan with the operators from the fetched query plan.
+        //                      3.1.3. Compute new root operators for the query sub plan.
+        //              When False:
+        //                      3.1.1. Create a new sub query plan.
+        //      3.2. Perform the type inference phase on the updated query sub plan.
+        // 4. Update the topology node resources, and the execution node with new query sub plan.
+        // 5. If using optimistic strategy then, release the lock.
+    }
+    return true;
 }
 
 ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
