@@ -54,10 +54,13 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 3. Compute query sub plans
-        // computeQuerySubPlans(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators)
+        // addNetworkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators)
+
 
         // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+
 
         // 5. Perform type inference on all updated query plans
         runTypeInferencePhase(queryId);

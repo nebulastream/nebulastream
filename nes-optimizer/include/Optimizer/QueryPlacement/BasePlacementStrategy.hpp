@@ -77,10 +77,12 @@ using PlacementMatrix = std::vector<std::vector<bool>>;
 const std::string PINNED_WORKER_ID = "PINNED_NODE_ID";// Property indicating the location where the operator is pinned
 const std::string PROCESSED = "PROCESSED";            // Property indicating if operator was processed for placement
 
-/**
+std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>>
+
+    /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
-class BasePlacementStrategy {
+    class BasePlacementStrategy {
 
   public:
     explicit BasePlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -144,7 +146,29 @@ class BasePlacementStrategy {
      * @param pinnedUpStreamOperators the upstream operators
      * @param pinnedDownStreamOperators the downstream operators
      */
-    void computeQuerySubPlans(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>
+    computeQuerySubPlans(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+
+    /**
+     * @brief
+     * @param pinnedUpStreamOperators
+     * @param pinnedDownStreamOperators
+     * @return
+     */
+    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>
+    addNetworkOperators(const std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>& workerIdToRootOperatorsMap,
+                        const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                        const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+
+    /**
+     * @brief
+     * @param pinnedUpStreamOperators
+     * @param pinnedDownStreamOperators
+     * @return
+     */
+    bool updateExecutionNodes(const std::map<WorkerId, std::vector<QueryPlanPtr>>& updatedQuerySubPlans,
+                              const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                               const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
@@ -220,7 +244,6 @@ class BasePlacementStrategy {
     std::map<OperatorId, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
     std::vector<WorkerId> lockedTopologyNodeIds;
-    std::unordered_map<WorkerId, LogicalOperatorNodePtr> workerIdToRootOperatorMap;
 
   private:
     /**
