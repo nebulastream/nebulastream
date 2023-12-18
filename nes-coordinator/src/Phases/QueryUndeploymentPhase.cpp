@@ -59,8 +59,7 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query  {}", sharedQueryId);
     undeployQuery(sharedQueryId, executionNodes);
 
-    const std::map<uint64_t, uint32_t>& resourceMap =
-        globalExecutionPlan->getMapOfWorkerIdToOccupiedResource(sharedQueryId);
+    const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfWorkerIdToOccupiedResource(sharedQueryId);
 
     for (const auto [id, resourceAmount] : resourceMap) {
         NES_TRACE("QueryUndeploymentPhase: Releasing {} resources for the node {}", resourceAmount, id);
