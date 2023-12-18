@@ -34,7 +34,7 @@ class DataEmitter : public Runtime::RuntimeEventListener {
      */
     virtual void emitWork(Runtime::TupleBuffer& buffer) = 0;
 
-    virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
+    ~DataEmitter() override = default;
 
     /**
      * @brief

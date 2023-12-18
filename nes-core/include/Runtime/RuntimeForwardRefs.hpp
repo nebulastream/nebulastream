@@ -68,7 +68,11 @@ namespace Runtime {
 enum class NumaAwarenessFlag : int8_t { ENABLED, DISABLED };
 
 class RuntimeEventListener;
+#ifndef UNIKERNEL_LIB
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
+#else
+using RuntimeEventListenerPtr =RuntimeEventListener*;
+#endif
 
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<BufferStorage>;

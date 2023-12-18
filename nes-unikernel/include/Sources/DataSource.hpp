@@ -52,7 +52,7 @@ namespace NES {
 template<typename Config>
 class DataSource : public DataEmitter {
 
-  public:
+public:
     /**
          * @brief public constructor for data source
          * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
@@ -60,11 +60,12 @@ class DataSource : public DataEmitter {
          * @param successors the subsequent operators in the pipeline to which the data is pushed
          */
     explicit DataSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
-        : executableSuccessors(std::move(successor)){};
+        : executableSuccessors(std::move(successor)) {
+    };
 
     DataSource() = delete;
 
-    virtual ~DataSource() = default;
+    ~DataSource() override = default;
 
     using BufferType = NES::Unikernel::SchemaBuffer<typename Config::Schema, 8192>;
 
@@ -72,14 +73,16 @@ class DataSource : public DataEmitter {
          * @brief This methods initializes thread-local state. For instance, it creates the local buffer pool and is necessary
          * because we cannot do it in the constructor.
          */
-    virtual void open() { bufferManager = TheBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
+    virtual void open() { bufferManager = TheBufferManager->createFixedSizeBufferPool(Config::NumberOfLocalBuffers); }
 
     /**
          * @brief This method cleans up thread-local state for the source.
          */
     virtual void close() {
         Runtime::QueryTerminationType queryTerminationType;
-        { queryTerminationType = this->wasGracefullyStopped; }
+        {
+            queryTerminationType = this->wasGracefullyStopped;
+        }
         if (queryTerminationType != Runtime::QueryTerminationType::Graceful) {
             // inject reconfiguration task containing end of stream
             NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
@@ -108,7 +111,7 @@ class DataSource : public DataEmitter {
          * 1.) check if bool running is false, if false return, if not stop source
          * 2.) stop thread by join
          */
-    [[nodiscard]] virtual bool stop(Runtime::QueryTerminationType graceful);
+    [[nodiscard]] virtual bool stop(Runtime::QueryTerminationType) { return false; }
 
     /**
          * @brief running routine while source is active
@@ -135,7 +138,8 @@ class DataSource : public DataEmitter {
             //check if already produced enough buffer
             if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce) {
                 auto optBuf = receiveData();// note that receiveData might block
-                if (!running) {// necessary if source stops while receiveData is called due to stricter shutdown logic
+                if (!running) {
+                    // necessary if source stops while receiveData is called due to stricter shutdown logic
                     break;
                 }
                 //this checks we received a valid output buffer
@@ -262,13 +266,12 @@ class DataSource : public DataEmitter {
         return false;
     }
 
-  protected:
+protected:
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
     NES::Unikernel::UnikernelPipelineExecutionContext executableSuccessors;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
-    uint64_t numSourceLocalBuffers;
     Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful};// protected by mutex
     bool wasStarted{false};
     bool futureRetrieved{false};
@@ -276,7 +279,6 @@ class DataSource : public DataEmitter {
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
     bool sourceSharing = false;
-    std::string physicalSourceName;
 
     //this counter is used to count the number of queries that use this source
     uint64_t refCounter = 0;
@@ -288,7 +290,7 @@ class DataSource : public DataEmitter {
          */
     void emitWork(Runtime::TupleBuffer& buffer) override { executableSuccessors.emit(buffer); }
 
-    BufferType allocateBuffer() { return BufferType::of(TheBufferManager->getBufferBlocking()); }
+    Runtime::TupleBuffer allocateBuffer() { return TheBufferManager->getBufferBlocking(); }
 
     void emitWorkFromSource(Runtime::TupleBuffer& buffer) {
         {
@@ -296,8 +298,8 @@ class DataSource : public DataEmitter {
             buffer.setOriginId(Config::OriginId);
             // set the creation timestamp
             buffer.setCreationTimestampInMS(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                std::chrono::high_resolution_clock::now().time_since_epoch())
-                                                .count());
+                    std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count());
             // Set the sequence number of this buffer.
             // A data source generates a monotonic increasing sequence number
             maxSequenceNumber++;
@@ -306,8 +308,8 @@ class DataSource : public DataEmitter {
         }
     }
 
-  protected:
-  private:
+protected:
+private:
     uint64_t maxSequenceNumber = 0;
 
     bool endOfStreamSent{false};// protected by startStopMutex

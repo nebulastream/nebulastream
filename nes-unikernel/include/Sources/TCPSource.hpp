@@ -30,20 +30,6 @@ namespace NES {
 class Parser;
 using ParserPtr = std::shared_ptr<Parser>;
 
-/**
-     * @brief search from the back (first inputted item) to the front for the given search token
-     * @token to search for
-     * @return number of places until first occurrence of token (place of token not included)
-     */
-uint64_t sizeUntilSearchToken(char token);
-
-/**
-     * @brief pop number of values given and fill temp with popped values. If popTextDevider true, pop one more value and discard
-     * @param numberOfValuesToPop number of values to pop and fill temp with
-     * @param popTextDivider if true, pop one more value and discard, if false, only pop given number of values to pop
-     * @return true if number of values to pop successfully popped, false otherwise
-     */
-bool popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTextDivider);
 
 /**
  * @brief source to receive data via TCP connection
@@ -51,7 +37,7 @@ bool popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTextDivider);
 template<typename TCPConfig>
 class TCPSource : public DataSource<TCPConfig> {
 
-  public:
+public:
     constexpr static NES::SourceType SourceType = NES::SourceType::TCP_SOURCE;
     /**
      * @brief constructor of a TCP Source
@@ -69,7 +55,8 @@ class TCPSource : public DataSource<TCPConfig> {
      * @param executableSuccessors executable operators coming after this source
      */
     explicit TCPSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
-        : DataSource<TCPConfig>(successor), circularBuffer(2048) {}
+        : DataSource<TCPConfig>(successor), circularBuffer(2048) {
+    }
 
     /**
      * @brief override the receiveData method for the csv source
@@ -78,21 +65,60 @@ class TCPSource : public DataSource<TCPConfig> {
     std::optional<Runtime::TupleBuffer> receiveData() override {
         NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
         auto tupleBuffer = DataSource<TCPConfig>::allocateBuffer();
+        auto schemaBuffer = DataSource<TCPConfig>::BufferType::of(tupleBuffer);
         NES_DEBUG("TCPSource buffer allocated ");
         try {
             do {
                 if (!DataSource<TCPConfig>::running) {
                     return std::nullopt;
                 }
-                fillBuffer(tupleBuffer);
-            } while (tupleBuffer.getSize() == 0);
+                fillBuffer(schemaBuffer);
+            } while (schemaBuffer.getSize() == 0);
         } catch (const std::exception& e) {
             delete[] messageBuffer;
             NES_ERROR("TCPSource<Schema>::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
             throw e;
         }
-        return tupleBuffer.getBuffer();
+        return tupleBuffer;
     }
+
+    /**
+     * @brief search from the back (first inputted item) to the front for the given search token
+     * @token to search for
+     * @return number of places until first occurrence of token (place of token not included)
+     */
+    uint64_t sizeUntilSearchToken(char token) {
+        uint64_t places = 0;
+        for (auto itr = circularBuffer.end() - 1; itr != circularBuffer.begin() - 1; --itr) {
+            if (*itr == token) {
+                return places;
+            }
+            ++places;
+        }
+        return places;
+    }
+
+    /**
+     * @brief pop number of values given and fill temp with popped values. If popTextDevider true, pop one more value and discard
+     * @param numberOfValuesToPop number of values to pop and fill temp with
+     * @param popTextDivider if true, pop one more value and discard, if false, only pop given number of values to pop
+     * @return true if number of values to pop successfully popped, false otherwise
+     */
+    bool popGivenNumberOfValues(uint64_t numberOfValuesToPop, bool popTextDivider) {
+        if (circularBuffer.size() >= numberOfValuesToPop) {
+            for (uint64_t i = 0; i < numberOfValuesToPop; ++i) {
+                char popped = circularBuffer.pop();
+                messageBuffer[i] = popped;
+            }
+            messageBuffer[numberOfValuesToPop] = '\0';
+            if (popTextDivider) {
+                circularBuffer.pop();
+            }
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      *  @brief method to fill the buffer with tuples
@@ -147,7 +173,7 @@ class TCPSource : public DataSource<TCPConfig> {
             if (!circularBuffer.empty()) {
                 try {
                     // search the circularBuffer until Tuple seperator is found to obtain size of tuple
-                    inputTupleSize = sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
+                    inputTupleSize = sizeUntilSearchToken('\n');
                     // allocate buffer with size of tuple
                     messageBuffer = new char[inputTupleSize];
                     NES_DEBUG("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
@@ -173,13 +199,12 @@ class TCPSource : public DataSource<TCPConfig> {
             // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
             // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
             // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
-            if ((sourceConfig->getFlushIntervalMS()->getValue() > 0
-                 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-                                                                          - flushIntervalTimerStart)
-                         .count()
-                     >= sourceConfig->getFlushIntervalMS()->getValue())) {
+            if (TCPConfig::BufferFlushInterval > 0ms
+                && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+                    - flushIntervalTimerStart)
+                >= TCPConfig::BufferFlushInterval) {
                 NES_DEBUG("TCPSource<Schema>::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
-                          "TupleBuffer.");
+                    "TupleBuffer.");
                 flushIntervalPassed = true;
             }
         }
@@ -192,7 +217,7 @@ class TCPSource : public DataSource<TCPConfig> {
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source
      */
-    std::string toString() const {
+    std::string toString() const override {
         std::stringstream ss;
         ss << "TCPSOURCE(";
         ss << ")";
@@ -206,7 +231,7 @@ class TCPSource : public DataSource<TCPConfig> {
         DataSource<TCPConfig>::open();
         NES_TRACE("TCPSource::connected: Trying to create socket.");
         if (sockfd < 0) {
-            sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
+            sockfd = socket(TCPConfig::SocketDomain, TCPConfig::SocketType, 0);
             NES_TRACE("Socket created with  {}", sockfd);
         }
         if (sockfd < 0) {
@@ -217,15 +242,12 @@ class TCPSource : public DataSource<TCPConfig> {
         NES_TRACE("Created socket");
 
         struct sockaddr_in servaddr;
-        servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
-        servaddr.sin_addr.s_addr = inet_addr(sourceConfig->getSocketHost()->getValue().c_str());
-        servaddr.sin_port =
-            htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
+        servaddr.sin_family = TCPConfig::SocketDomain;
+        servaddr.sin_addr.s_addr = inet_addr(TCPConfig::NodeIP);
+        servaddr.sin_port = htons(TCPConfig::Port);// htons is necessary to convert a number to network byte order
 
         if (connection < 0) {
-            NES_TRACE("Try connecting to server: {}:{}",
-                      sourceConfig->getSocketHost()->getValue(),
-                      sourceConfig->getSocketPort()->getValue());
+            NES_TRACE("Try connecting to server: {}:{}", TCPConfig::NodeIP, TCPConfig::Port);
             connection = connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr));
         }
         if (connection < 0) {
@@ -248,7 +270,7 @@ class TCPSource : public DataSource<TCPConfig> {
         }
     }
 
-  private:
+private:
     int connection = -1;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
