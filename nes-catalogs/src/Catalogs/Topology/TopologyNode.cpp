@@ -179,5 +179,4 @@ bool TopologyNode::releaseLock() {
     }
     return false;
 }
-
 }// namespace NES
