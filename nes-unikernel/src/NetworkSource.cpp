@@ -28,6 +28,7 @@
 extern NES::Network::NetworkManagerPtr TheNetworkManager;
 extern NES::Runtime::BufferManagerPtr TheBufferManager;
 extern NES::Runtime::WorkerContextPtr TheWorkerContext;
+
 namespace NES::Network {
 
 NetworkSource::NetworkSource(NesPartition nesPartition,
@@ -35,9 +36,9 @@ NetworkSource::NetworkSource(NesPartition nesPartition,
                              std::chrono::milliseconds waitTime,
                              uint8_t retryTimes,
                              NES::Unikernel::UnikernelPipelineExecutionContext successors)
-
-    : DataSource(std::move(successors)),
-      nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)), waitTime(waitTime), retryTimes(retryTimes) {}
+    : nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)), waitTime(waitTime),
+      successors(std::move(successors)), retryTimes(retryTimes) {
+}
 
 std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
 
@@ -47,11 +48,16 @@ template<class... Ts>
 struct overloaded : Ts... {
     using Ts::operator()...;
 };
+
 template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 }// namespace detail
 
 bool NetworkSource::bind() { return TheNetworkManager->registerSubpartitionConsumer(nesPartition, sinkLocation, this); }
+
+void NetworkSource::emitWork(Runtime::TupleBuffer& buffer) {
+    successors.emit(buffer);
+}
 
 bool NetworkSource::start() {
     using namespace Runtime;
@@ -165,10 +171,6 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                   nesPartition.toString(),
                   Runtime::NesThread::getId());
     }
-}
-
-void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&) {
-    NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
 
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {

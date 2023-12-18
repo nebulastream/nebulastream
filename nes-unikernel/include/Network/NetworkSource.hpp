@@ -15,34 +15,36 @@
 #define NES_NETWORKSOURCE_HPP
 
 #include <Sources/DataSource.hpp>
-#include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
-#include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES::Unikernel {
 class UnikernelPipelineExecutionContext;
 }
+
 namespace NES::Runtime {
 class BaseEvent;
 }
+
 namespace NES::Network {
 
 class NetworkSource;
+
 struct DefaultNetworkSourceConfiguration {
-   using Schema = struct Schema {};
-   constexpr static OperatorId OperatorId = 1;
-   constexpr static OriginId OriginId = 1;
-   using SourceType = NetworkSource;
+    using Schema = struct Schema {
+    };
+    constexpr static OperatorId OperatorId = 1;
+    constexpr static OriginId OriginId = 1;
+    using SourceType = NetworkSource;
 };
+
 /**
  * @brief this class provide a zmq as data source
  */
-class NetworkSource : public DataSource<DefaultNetworkSourceConfiguration> {
+class NetworkSource : DataEmitter {
 
-  public:
+public:
     constexpr static NES::SourceType SourceType = NES::SourceType::NETWORK_SOURCE;
     /*
        * @param SchemaPtr
@@ -63,23 +65,24 @@ class NetworkSource : public DataSource<DefaultNetworkSourceConfiguration> {
                   uint8_t retryTimes,
                   NES::Unikernel::UnikernelPipelineExecutionContext successors);
 
+    ~NetworkSource() = default;
     /**
          * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
          * @return TupleBufferPtr containing the received buffer
          */
-    std::optional<Runtime::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData();
 
     /**
          * @brief override the toString method
          * @return returns string describing the network source
          */
-    std::string toString() const override;
+    std::string toString() const;
 
     /**
-          * @brief This method is called once an event is triggered for the current source.
-          * The event type is PropagateEpochEvent. Method passes epoch barrier further to network sink as a reconfiguration message.
-          * @param event
-          */
+      * @brief This method is called once an event is triggered for the current source.
+      * The event type is PropagateEpochEvent. Method passes epoch barrier further to network sink as a reconfiguration message.
+      * @param event
+      */
     void onEvent(Runtime::BaseEvent& event) override;
 
     /**
@@ -87,59 +90,56 @@ class NetworkSource : public DataSource<DefaultNetworkSourceConfiguration> {
          * It registers the source on the NetworkManager
          * @return true if registration on the network stack is successful
          */
-    bool start() final;
+    bool start();
 
     /**
          * @brief This method is overridden here to prevent the NetworkSource to start a thread.
          * It de-registers the source on the NetworkManager
          * @return true if deregistration on the network stack is successful
          */
-    bool stop(Runtime::QueryTerminationType = Runtime::QueryTerminationType::Graceful) final;
+    bool stop(Runtime::QueryTerminationType);
 
     /**
-         * @brief This method is overridden here to manage failures of NetworkSource.
-         * It de-registers the source on the NetworkManager
-         * @return true if deregistration on the network stack is successful
-         */
-    bool fail() final;
+     * @brief This method is overridden here to manage failures of NetworkSource.
+     * It de-registers the source on the NetworkManager
+     * @return true if deregistration on the network stack is successful
+     */
+    bool fail();
 
     /**
-         * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
-         * @param bufferManager
-         * @param queryManager
-         */
-    static void runningRoutine(const Runtime::BufferManagerPtr&);
-
-    /**
-         * @brief This method is invoked when the source receives a reconfiguration message.
-         * @param message the reconfiguration message
-         * @param context thread context
-         */
+     * @brief This method is invoked when the source receives a reconfiguration message.
+     * @param message the reconfiguration message
+     * @param context thread context
+     */
     void reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context);
 
     /**
-         * @brief API method called upon receiving an event, send event further upstream via Network Channel.
-         * @param event
-         * @param workerContext
-         */
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) override;
+     * @brief API method called upon receiving an event, send event further upstream via Network Channel.
+     * @param event
+     * @param workerContext
+     */
+    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
 
     /**
          * @brief
          * @param terminationType
          */
-    void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
+    void onEndOfStream(Runtime::QueryTerminationType terminationType);
 
     bool bind();
 
+    void emitWork(Runtime::TupleBuffer& buffer) override;
+
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
-  private:
+private:
     NesPartition nesPartition;
     NodeLocation sinkLocation;
     // for event channel
     std::chrono::milliseconds waitTime;
+    NES::Unikernel::UnikernelPipelineExecutionContext successors;
     uint8_t retryTimes;
+    bool running;
 };
 
 }// namespace NES::Network

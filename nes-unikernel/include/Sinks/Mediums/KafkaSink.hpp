@@ -72,7 +72,7 @@ class KafkaSink : public SinkMedium {
         try {
             std::stringstream outputStream;
             NES_TRACE("KafkaSink::getData: write data");
-            auto buffer = NES::Unikernel::printTupleBufferAsCSV<Schema>(inputBuffer);
+            auto buffer = NES::Unikernel::printTupleBufferAsCSV<Schema, 8192>(inputBuffer);
             NES_TRACE("KafkaSink::getData: write buffer of size {}", buffer.size());
             cppkafka::Buffer kafkaBuffer(buffer.data(), buffer.size());
             msgBuilder->payload(kafkaBuffer);

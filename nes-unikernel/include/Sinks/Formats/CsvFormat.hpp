@@ -57,7 +57,7 @@ std::string printTupleBufferAsCSV(const NES::Runtime::TupleBuffer& tbuffer) {
 template<typename SchemaBufferType>
 size_t parseCSVIntoBuffer(std::istringstream& istream, SchemaBufferType& buffer) {
     size_t tuples_written = 0;
-    while (buffer.getSize() < buffer.getCapacity()) {
+    while (buffer.getSize() < buffer.getCapacity() && !istream.eof()) {
         auto tuple = read_csv<std::istringstream, typename SchemaBufferType::TupleType>(istream);
         buffer.writeTuple(tuple);
         tuples_written++;

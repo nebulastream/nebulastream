@@ -14,13 +14,11 @@
 
 #include <API/Schema.hpp>
 #include <Components/NesWorker.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
-
 namespace NES {
 
 SinkMedium::SinkMedium(uint32_t numOfProducers,

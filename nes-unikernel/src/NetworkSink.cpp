@@ -84,7 +84,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 void NetworkSink::preSetup() {
     NES_DEBUG("NetworkSink: method preSetup() called {} qep {}", nesPartition.toString(), querySubPlanId);
     NES_ASSERT2_FMT(
-        networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, inherited1::shared_from_this()),
+        networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, this),
         "Cannot register event listener " << nesPartition.toString());
 }
 

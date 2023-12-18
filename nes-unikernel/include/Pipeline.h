@@ -4,7 +4,6 @@
 #include <UnikernelSink.hpp>
 #include <UnikernelSource.hpp>
 #include <UnikernelStage.hpp>
-#include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Network/NetworkSink.hpp>
 #include <DataTypes/PhysicalDataTypes.hpp>
@@ -17,6 +16,7 @@ struct CTConfiguration {
     constexpr static const char* NodeIP = "127.0.0.1";
     constexpr static unsigned long NodePort = 8080;
 };
+
 struct KafkaSinkConfig15 {
     constexpr static unsigned long QueryID = 0;
     using KafkaSchema = Schema<Field<INT8>, Field<FLOAT32>>;
@@ -39,18 +39,27 @@ struct SinkConfig15 {
     constexpr static unsigned int DownstreamNodePort = 8082;
     constexpr static unsigned long LocalBuffers = 100;
 };
+
 using Sink15 = UnikernelSink<KafkaSinkConfig15>;
+
 struct SourceConfig17 {
     using SourceType = TCPSource<SourceConfig17>;
-    using Schema = Schema<Field<INT8>, Field<FLOAT32>>;
+    using Schema = Schema<Field<INT32>, Field<FLOAT32>>;
     constexpr static OriginId OriginId = 1;
     constexpr static unsigned long UpstreamNodeID = 3;
     constexpr static OperatorId OperatorId = 1;
     constexpr static unsigned long QueryID = 0;
+    constexpr static std::chrono::milliseconds BufferFlushInterval = 10ms;
     constexpr static unsigned long LocalBuffers = 100;
+    constexpr static sa_family_t SocketDomain = AF_INET;
+    constexpr static unsigned long SocketType = SOCK_STREAM;
+    constexpr static const char* NodeIP = "127.0.0.1";
+    constexpr static short Port = 8092;
+    constexpr static size_t NumberOfLocalBuffers = 100;
 };
 
 using Source17 = UnikernelSource<SourceConfig17>;
+
 struct SourceConfig13 {
     using SourceType = NES::Network::NetworkSource;
     constexpr static unsigned long QueryID = 0;
@@ -62,7 +71,9 @@ struct SourceConfig13 {
     constexpr static unsigned int UpstreamNodePort = 8081;
     constexpr static unsigned long LocalBuffers = 100;
 };
+
 using Source13 = UnikernelSource<SourceConfig13>;
+
 struct SourceConfig19 {
     using SourceType = NES::Network::NetworkSource;
     constexpr static unsigned long QueryID = 0;
@@ -74,6 +85,7 @@ struct SourceConfig19 {
     constexpr static unsigned int UpstreamNodePort = 8084;
     constexpr static unsigned long LocalBuffers = 100;
 };
+
 using Source19 = UnikernelSource<SourceConfig19>;
 using SubQuery8 = SubQuery<Sink15,
                            PipelineJoin<Stage<2>,
