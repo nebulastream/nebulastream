@@ -394,54 +394,54 @@ BasePlacementStrategy::computeQuerySubPlans(const std::set<LogicalOperatorNodePt
     std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>> workerIdToRootOperatorsMap;
 
     // Temp container for iteration
-    std::queue<LogicalOperatorNodePtr> operatorsToPlace;
+    std::queue<LogicalOperatorNodePtr> placedOperators;
     // Iterate topology nodes in a true breadth first order
     // Initialize with the upstream nodes
     std::for_each(pinnedUpStreamOperators.begin(), pinnedUpStreamOperators.end(), [&](const auto& operatorNode) {
-        operatorsToPlace.push(operatorNode);
+        placedOperators.push(operatorNode);
     });
 
-    //
-    while (!operatorsToPlace.empty()) {
+    //Iterate over all placed operators in strict BFS order
+    while (!placedOperators.empty()) {
 
-        //
-        auto operatorToPlace = operatorsToPlace.front();
-        operatorsToPlace.pop();
+        //Fetch the location operator to be placed and
+        auto placedOperator = placedOperators.front();
+        placedOperators.pop();
 
         //1. Fetch the node where operator is to be placed
-        auto pinnedWorkerId = std::any_cast<uint64_t>(operatorToPlace->getProperty(PINNED_WORKER_ID));
+        auto pinnedWorkerId = std::any_cast<uint64_t>(placedOperator->getProperty(PINNED_WORKER_ID));
 
         if (workerIdToRootOperatorsMap.contains(pinnedWorkerId)) {
 
             std::vector<LogicalOperatorNodePtr> newPlacedRootOperators;
-            auto copyOfOperatorToPlace = operatorToPlace->copy()->as<LogicalOperatorNode>();
+            auto copyOfPlacedOperator = placedOperator->copy()->as<LogicalOperatorNode>();
 
             //
             auto alreadyPlacedRootOperators = workerIdToRootOperatorsMap[pinnedWorkerId];
             for (const auto& placedRootOperator : alreadyPlacedRootOperators) {
-                if (!operatorToPlace->containAsChild(placedRootOperator)) {
+                if (!placedOperator->containAsChild(placedRootOperator)) {
                     // add the placedOperator to the new list
-                    newPlacedRootOperators.emplace_back(operatorToPlace);
+                    newPlacedRootOperators.emplace_back(placedOperator);
                 } else {
                     //
-                    copyOfOperatorToPlace->addChild(placedRootOperator);
+                    copyOfPlacedOperator->addChild(placedRootOperator);
                 }
             }
 
-            newPlacedRootOperators.emplace_back(copyOfOperatorToPlace);
+            newPlacedRootOperators.emplace_back(copyOfPlacedOperator);
             workerIdToRootOperatorsMap[pinnedWorkerId] = newPlacedRootOperators;
         } else {
-            workerIdToRootOperatorsMap[pinnedWorkerId] = {operatorToPlace};
+            workerIdToRootOperatorsMap[pinnedWorkerId] = {placedOperator};
         }
 
         //
-        if (operatorToPlace->getOperatorState() == OperatorState::PLACED) {
+        if (placedOperator->getOperatorState() == OperatorState::PLACED) {
             //3. Check if this operator in the pinned downstream operator list.
             const auto& isPinnedDownStreamOperator =
                 std::find_if(pinnedDownStreamOperators.begin(),
                              pinnedDownStreamOperators.end(),
-                             [operatorToPlace](const auto& pinnedDownStreamOperator) {
-                                 return pinnedDownStreamOperator->getId() == operatorToPlace->getId();
+                             [placedOperator](const auto& pinnedDownStreamOperator) {
+                                 return pinnedDownStreamOperator->getId() == placedOperator->getId();
                              });
 
             //
@@ -451,9 +451,9 @@ BasePlacementStrategy::computeQuerySubPlans(const std::set<LogicalOperatorNodePt
         }
 
         //
-        auto downStreamOperators = operatorToPlace->getParents();
+        auto downStreamOperators = placedOperator->getParents();
         std::for_each(downStreamOperators.begin(), downStreamOperators.end(), [&](const NodePtr& operatorNode) {
-            operatorsToPlace.push(operatorNode->as<LogicalOperatorNode>());
+            placedOperators.push(operatorNode->as<LogicalOperatorNode>());
         });
     }
 
@@ -508,7 +508,7 @@ bool BasePlacementStrategy::updateExecutionNodes(
         // 3. Iterate over all query sub plans:
         //      3.1. Check if "all leaf operators" are in the state "Placed".
         //              When True:
-        //                      3.1.1. Get from the execution plan the query sub plan hosting the operators.
+        //                      3.1.1. Get from the execution node the query sub plan hosting the operators.
         //                      3.1.2. Replace the placed operator in the iterated query sub plan with the operators from the fetched query plan.
         //                      3.1.3. Compute new root operators for the query sub plan.
         //              When False:

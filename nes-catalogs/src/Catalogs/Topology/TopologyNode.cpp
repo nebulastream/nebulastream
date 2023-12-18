@@ -170,18 +170,33 @@ Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
 }
 
 bool TopologyNode::acquireLock() {
+    //NOTE: the below code is not thread safe.
+    // However, as the only callee of this method (Topology::acquireLock) uses a
+    // mutex, implicitly this method becomes thread safe.
+
+    //Check if no one has locked the topology node already
     if (!locked) {
+        //lock the topology node and return true
         locked = true;
         return true;
     }
+    //Someone has already locked the topology node
     return false;
 }
 
 bool TopologyNode::releaseLock() {
+    //NOTE: the below code is not thread safe.
+    // However, as the only callee of this method (Topology::acquireLock) uses a
+    // mutex, implicitly this method becomes thread safe.
+
+    //Check if the lock was acquired
     if (locked) {
+        //Unlock the topology node and return true
         locked = false;
         return true;
     }
+
+    //Return false as the topology node was not locked
     return false;
 }
 }// namespace NES
