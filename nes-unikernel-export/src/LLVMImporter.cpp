@@ -7,7 +7,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 
-std::unique_ptr<llvm::Module> LLVMImporter::importModule(const std::string &ir) {
+std::unique_ptr<llvm::Module> LLVMImporter::importModule(const std::string& ir) {
     using namespace llvm;
     SMDiagnostic error;
     auto buffer = MemoryBuffer::getMemBufferCopy(ir, "module");

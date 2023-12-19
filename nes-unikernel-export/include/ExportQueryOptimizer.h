@@ -20,10 +20,11 @@ class CoordinatorConfiguration;
 #include <memory>
 class ExportQueryOptimizer {
   public:
-    std::pair<std::shared_ptr<NES::QueryPlan>, std::shared_ptr<NES::GlobalExecutionPlan>> optimize(std::shared_ptr<NES::Topology> topology,
-                  std::shared_ptr<NES::Configurations::CoordinatorConfiguration> config,
-                  std::shared_ptr<NES::QueryPlan> query,
-                  std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog);
+    std::pair<std::shared_ptr<NES::QueryPlan>, std::shared_ptr<NES::GlobalExecutionPlan>>
+    optimize(std::shared_ptr<NES::Topology> topology,
+             std::shared_ptr<NES::Configurations::CoordinatorConfiguration> config,
+             std::shared_ptr<NES::QueryPlan> query,
+             std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog);
 };
 
 #endif//NES_EXPORTQUERYOPTIMIZER_H

@@ -38,8 +38,6 @@ void NonKeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecu
 
 NonKeyedSlicePreAggregationHandler::~NonKeyedSlicePreAggregationHandler() { NES_DEBUG("~NonKeyedSlicePreAggregationHandler"); }
 
-const State* NonKeyedSlicePreAggregationHandler::getDefaultState() const {
-    NES_THROW_RUNTIME_ERROR("Not Implemented");
-}
+const State* NonKeyedSlicePreAggregationHandler::getDefaultState() const { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 
 }// namespace NES::Runtime::Execution::Operators

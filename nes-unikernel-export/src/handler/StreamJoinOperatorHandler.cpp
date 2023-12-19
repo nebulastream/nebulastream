@@ -16,9 +16,7 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, uint32_t) {
-    NES_THROW_RUNTIME_ERROR("Not Implemented!");
-}
+void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, uint32_t) { NES_THROW_RUNTIME_ERROR("Not Implemented!"); }
 void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_THROW_RUNTIME_ERROR("Not Implemented!");
 }

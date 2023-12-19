@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     NES_INFO("Topology: \n{}", topology->toString());
     NES_INFO("GEP:\n{}", gep->getAsString());
 
-    yamlExport.setQueryPlan(queryPlan, gep);
+    yamlExport.setQueryPlan(queryPlan, gep, sourcesCatalog);
 
     ExportQueryCompiler queryCompiler;
 
@@ -85,7 +85,8 @@ int main(int argc, char** argv) {
         std::vector<WorkerSubQuery> workerSubQueries;
         for (const auto& subquery : subQueries) {
             auto logicalSubQueryPlan = subquery->copy();
-            auto [sinkMap, sourceMap, stages, sharedHandler] = queryCompiler.compile(subquery, options.getBufferSize(), sourcesCatalog);
+            auto [sinkMap, sourceMap, stages, sharedHandler] =
+                queryCompiler.compile(subquery, options.getBufferSize(), sourcesCatalog);
             UnikernelExport unikernelExport;
             std::vector<WorkerSubQueryStage> stageIds;
 

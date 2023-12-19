@@ -49,7 +49,7 @@ class YamlExport {
 
   public:
     explicit YamlExport(const std::optional<ExportKafkaConfiguration>& exportToKafka);
-    void setQueryPlan(NES::QueryPlanPtr queryPlan, NES::GlobalExecutionPlanPtr gep);
+    void setQueryPlan(NES::QueryPlanPtr queryPlan, NES::GlobalExecutionPlanPtr gep, NES::Catalogs::Source::SourceCatalogPtr);
 
     void addWorker(const std::vector<WorkerSubQuery>& subqueries, const NES::ExecutionNodePtr& workerNode);
 

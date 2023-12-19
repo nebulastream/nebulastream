@@ -1,8 +1,8 @@
 #ifndef NES_UNIKERNELPIPELINEEXPORT_H
 #define NES_UNIKERNELPIPELINEEXPORT_H
 
-#include <Identifiers.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Identifiers.hpp>
 #include <OperatorHandlerTracer.hpp>
 
 namespace llvm {

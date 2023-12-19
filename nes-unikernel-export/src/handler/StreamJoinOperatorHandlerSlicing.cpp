@@ -27,8 +27,7 @@ StreamJoinOperatorHandlerSlicing::StreamJoinOperatorHandlerSlicing(const std::ve
                                                                    const uint64_t windowSlide,
                                                                    uint64_t sizeOfRecordLeft,
                                                                    uint64_t sizeOfRecordRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight) {
-}
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, sizeOfRecordLeft, sizeOfRecordRight) {}
 
 StreamSlice* StreamJoinOperatorHandlerSlicing::getCurrentSliceOrCreate() { NES_THROW_RUNTIME_ERROR("Not Implemented"); }
 

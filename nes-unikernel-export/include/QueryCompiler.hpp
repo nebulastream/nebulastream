@@ -1,15 +1,15 @@
 #ifndef NES_QUERYCOMPILER_HPP
 #define NES_QUERYCOMPILER_HPP
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Identifiers.hpp>
 #include <OperatorHandlerTracer.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <vector>
 #include <map>
+#include <vector>
 
 using SharedOperatorHandlerId = size_t;
 using SharedOperatorHandlers = std::map<SharedOperatorHandlerId, NES::Runtime::Unikernel::OperatorHandlerDescriptor>;

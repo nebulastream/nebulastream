@@ -16,13 +16,13 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_UNIKERNEL_OPERATORHANDLERTRACER_HPP_
 
 #include <API/Schema.hpp>
+#include <Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <any>
 #include <cstdint>
 #include <ranges>
 #include <string>
-#include <Identifiers.hpp>
 #include <vector>
 
 #ifdef UNIKERNEL_EXPORT
@@ -110,8 +110,10 @@ class OperatorHandlerTracer {
 
     static std::vector<OperatorHandlerDescriptor> getDescriptors();
 
-    static std::string generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handler, NES::QuerySubPlanId subPlanId);
-    static std::string generateFile(std::vector<EitherSharedOrLocal> descriptors, uint64_t pipelineID, NES::QuerySubPlanId subPlanId);
+    static std::string generateSharedHandlerFile(const std::vector<OperatorHandlerDescriptor>& handler,
+                                                 NES::QuerySubPlanId subPlanId);
+    static std::string
+    generateFile(std::vector<EitherSharedOrLocal> descriptors, uint64_t pipelineID, NES::QuerySubPlanId subPlanId);
 
     [[nodiscard]] static std::string generateRuntimeIncludes();
 

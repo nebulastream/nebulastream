@@ -20,15 +20,18 @@
 
 namespace NES {
 class NoOpSourceDescriptor : public SourceDescriptor {
-public:
+  public:
     NoOpSourceDescriptor(SchemaPtr schema,
                          std::string logicalSourceName,
                          std::optional<TCPSourceConfiguration> tcp,
                          NES::OriginId originId,
                          NES::OperatorId operatorId);
 
-    static SourceDescriptorPtr create(SchemaPtr schemaPtr, std::string logicalSourceName, std::optional<TCPSourceConfiguration>, OriginId originId, OperatorId
-                                      operatorId);
+    static SourceDescriptorPtr create(SchemaPtr schemaPtr,
+                                      std::string logicalSourceName,
+                                      std::optional<TCPSourceConfiguration>,
+                                      OriginId originId,
+                                      OperatorId operatorId);
     NoOpSourceDescriptor(SchemaPtr schemaPtr, std::string logicalSourceName, std::optional<TCPSourceConfiguration>);
 
     std::string toString() const override;
@@ -37,19 +40,13 @@ public:
 
     SourceDescriptorPtr copy() override;
 
-    [[nodiscard]] NES::OriginId getOriginId() const {
-        return originId;
-    }
+    [[nodiscard]] NES::OriginId getOriginId() const { return originId; }
 
-    [[nodiscard]] NES::OperatorId getOperatorId() const {
-        return operatorId;
-    }
+    [[nodiscard]] NES::OperatorId getOperatorId() const { return operatorId; }
 
-    [[nodiscard]] std::optional<TCPSourceConfiguration> getTcp() const {
-        return tcp;
-    }
+    [[nodiscard]] std::optional<TCPSourceConfiguration> getTcp() const { return tcp; }
 
-private:
+  private:
     std::optional<TCPSourceConfiguration> tcp;
     NES::OriginId originId;
     NES::OperatorId operatorId;

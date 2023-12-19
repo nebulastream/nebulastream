@@ -41,6 +41,7 @@ class StreamJoinOperatorHandlerBucketing : public JoinOperatorHandlerInterfaceBu
                            sizeOfRecordLeft,
                            sizeOfRecordRight);
     }
+
   private:
     std::vector<std::vector<StreamSlice*>> windowsToFill;
 };

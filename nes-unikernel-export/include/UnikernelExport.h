@@ -14,11 +14,11 @@
 #ifndef NES_UNIKERNELEXPORT_H
 #define NES_UNIKERNELEXPORT_H
 #include "QueryCompiler.hpp"
+#include <Compiler/Util/ExecutablePath.hpp>
 #include <CompilerInvoker.h>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <OperatorHandlerTracer.hpp>
 #include <string>
-#include <Compiler/Util/ExecutablePath.hpp>
 #include <vector>
 
 class UnikernelExport {
