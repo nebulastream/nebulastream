@@ -19,51 +19,50 @@
 #include <Sources/TCPSource.hpp>
 
 namespace NES::Unikernel {
-    template<typename Config, typename Prev>
-    class UnikernelSourceImpl {
-    public:
-        constexpr static size_t Id = Config::UpstreamNodeID;
-        static std::optional<typename Config::SourceType> source;
+template<typename Config, typename Prev>
+class UnikernelSourceImpl {
+  public:
+    constexpr static size_t Id = Config::UpstreamNodeID;
+    static std::optional<typename Config::SourceType> source;
 
-        static void setup() {
-            if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
-                UnikernelSourceImpl::source.emplace(
-                        NES::Network::NesPartition(Config::QueryID,
-                                                   Config::UpstreamOperatorID,
-                                                   Config::UpstreamPartitionID,
-                                                   Config::UpstreamSubPartitionID),
-                        NES::Network::NodeLocation(Config::UpstreamNodeID, Config::UpstreamNodeHostname,
-                                                   Config::UpstreamNodePort),
-                        200ms,
-                        100,
-                        UnikernelPipelineExecutionContext::create<Prev>());
-            } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
-                UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
-            }
+    static void setup() {
+        if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
+            UnikernelSourceImpl::source.emplace(
+                NES::Network::NesPartition(Config::QueryID,
+                                           Config::UpstreamOperatorID,
+                                           Config::UpstreamPartitionID,
+                                           Config::UpstreamSubPartitionID),
+                NES::Network::NodeLocation(Config::UpstreamNodeID, Config::UpstreamNodeHostname, Config::UpstreamNodePort),
+                200ms,
+                100,
+                UnikernelPipelineExecutionContext::create<Prev>());
+        } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
+            UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
         }
+    }
 
-        static void start() {
-            if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
-                source->bind();
-                source->start();
-            } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
-                source->start();
-                source->runningRoutine();
-            }
+    static void start() {
+        if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
+            source->bind();
+            source->start();
+        } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
+            source->start();
+            source->runningRoutine();
         }
+    }
 
-        static void stop() { auto ret = source->stop(Runtime::QueryTerminationType::Graceful); }
-    };
+    static void stop() { auto ret = source->stop(Runtime::QueryTerminationType::Graceful); }
+};
 
-    template<typename Config>
-    class UnikernelSource {
-    public:
-        template<typename Prev>
-        using Impl = UnikernelSourceImpl<Config, Prev>;
-    };
+template<typename Config>
+class UnikernelSource {
+  public:
+    template<typename Prev>
+    using Impl = UnikernelSourceImpl<Config, Prev>;
+};
 
-    template<typename Config, typename Prev>
-    std::optional<typename Config::SourceType> UnikernelSourceImpl<Config, Prev>::source = std::nullopt;
+template<typename Config, typename Prev>
+std::optional<typename Config::SourceType> UnikernelSourceImpl<Config, Prev>::source = std::nullopt;
 }// namespace NES::Unikernel
 
 #endif//NES_UNIKERNELSOURCE_HPP

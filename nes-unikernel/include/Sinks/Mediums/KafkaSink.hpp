@@ -93,8 +93,8 @@ class KafkaSink : public SinkMedium {
     void setup() override{/*No Op*/};
     void shutdown() override{/*No Op*/};
 
-    std::string toString() const override {return "KafkaSink";};
-    SinkMediumTypes getSinkMediumType() override{return SinkMediumTypes::KAFKA_SINK;};
+    std::string toString() const override { return "KafkaSink"; };
+    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::KAFKA_SINK; };
 
   private:
     void connect() {

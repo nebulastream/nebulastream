@@ -52,7 +52,7 @@ namespace NES {
 template<typename Config>
 class DataSource : public DataEmitter {
 
-public:
+  public:
     /**
          * @brief public constructor for data source
          * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
@@ -60,8 +60,7 @@ public:
          * @param successors the subsequent operators in the pipeline to which the data is pushed
          */
     explicit DataSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
-        : executableSuccessors(std::move(successor)) {
-    };
+        : executableSuccessors(std::move(successor)){};
 
     DataSource() = delete;
 
@@ -80,9 +79,7 @@ public:
          */
     virtual void close() {
         Runtime::QueryTerminationType queryTerminationType;
-        {
-            queryTerminationType = this->wasGracefullyStopped;
-        }
+        { queryTerminationType = this->wasGracefullyStopped; }
         if (queryTerminationType != Runtime::QueryTerminationType::Graceful) {
             // inject reconfiguration task containing end of stream
             NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
@@ -266,7 +263,7 @@ public:
         return false;
     }
 
-protected:
+  protected:
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
     NES::Unikernel::UnikernelPipelineExecutionContext executableSuccessors;
     uint64_t generatedTuples{0};
@@ -298,8 +295,8 @@ protected:
             buffer.setOriginId(Config::OriginId);
             // set the creation timestamp
             buffer.setCreationTimestampInMS(std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::high_resolution_clock::now().time_since_epoch())
-                .count());
+                                                std::chrono::high_resolution_clock::now().time_since_epoch())
+                                                .count());
             // Set the sequence number of this buffer.
             // A data source generates a monotonic increasing sequence number
             maxSequenceNumber++;
@@ -308,8 +305,8 @@ protected:
         }
     }
 
-protected:
-private:
+  protected:
+  private:
     uint64_t maxSequenceNumber = 0;
 
     bool endOfStreamSent{false};// protected by startStopMutex

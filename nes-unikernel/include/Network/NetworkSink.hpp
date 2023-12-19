@@ -42,18 +42,17 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param nesPartition
     * @param faultToleranceType: fault-tolerance guarantee chosen by a user
     */
-    explicit NetworkSink(
-        uint64_t uniqueNetworkSinkDescriptorId,
-        QueryId queryId,
-        QuerySubPlanId querySubPlanId,
-        NodeLocation const& destination,
-        NesPartition nesPartition,
-        size_t schemaSizeInBytes,
-        size_t numOfProducers,
-        std::chrono::milliseconds waitTime,
-        uint8_t retryTimes,
-        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-        uint64_t numberOfOrigins = 0);
+    explicit NetworkSink(uint64_t uniqueNetworkSinkDescriptorId,
+                         QueryId queryId,
+                         QuerySubPlanId querySubPlanId,
+                         NodeLocation const& destination,
+                         NesPartition nesPartition,
+                         size_t schemaSizeInBytes,
+                         size_t numOfProducers,
+                         std::chrono::milliseconds waitTime,
+                         uint8_t retryTimes,
+                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                         uint64_t numberOfOrigins = 0);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -118,7 +117,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @return id
      */
     uint64_t getUniqueNetworkSinkDescriptorId();
-
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 

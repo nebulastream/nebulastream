@@ -30,14 +30,13 @@ namespace NES {
 class Parser;
 using ParserPtr = std::shared_ptr<Parser>;
 
-
 /**
  * @brief source to receive data via TCP connection
  */
 template<typename TCPConfig>
 class TCPSource : public DataSource<TCPConfig> {
 
-public:
+  public:
     constexpr static NES::SourceType SourceType = NES::SourceType::TCP_SOURCE;
     /**
      * @brief constructor of a TCP Source
@@ -55,8 +54,7 @@ public:
      * @param executableSuccessors executable operators coming after this source
      */
     explicit TCPSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
-        : DataSource<TCPConfig>(successor), circularBuffer(2048) {
-    }
+        : DataSource<TCPConfig>(successor), circularBuffer(2048) {}
 
     /**
      * @brief override the receiveData method for the csv source
@@ -118,7 +116,6 @@ public:
         }
         return false;
     }
-
 
     /**
      *  @brief method to fill the buffer with tuples
@@ -201,10 +198,10 @@ public:
             // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
             if (TCPConfig::BufferFlushInterval > 0ms
                 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-                    - flushIntervalTimerStart)
-                >= TCPConfig::BufferFlushInterval) {
+                                                                         - flushIntervalTimerStart)
+                    >= TCPConfig::BufferFlushInterval) {
                 NES_DEBUG("TCPSource<Schema>::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
-                    "TupleBuffer.");
+                          "TupleBuffer.");
                 flushIntervalPassed = true;
             }
         }
@@ -270,7 +267,7 @@ public:
         }
     }
 
-private:
+  private:
     int connection = -1;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;

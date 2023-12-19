@@ -53,13 +53,9 @@ class SchemaBuffer {
         return SchemaBuffer(const_cast<NES::Runtime::TupleBuffer&>(tb));
     }
 
-    NES::Runtime::TupleBuffer getBuffer(){
-        return this->buffer;
-    }
+    NES::Runtime::TupleBuffer getBuffer() { return this->buffer; }
 
-    const NES::Runtime::TupleBuffer getBuffer() const {
-        return this->buffer;
-    }
+    const NES::Runtime::TupleBuffer getBuffer() const { return this->buffer; }
 
     static SchemaBuffer of(NES::Runtime::TupleBuffer& tb) { return SchemaBuffer(tb); }
 

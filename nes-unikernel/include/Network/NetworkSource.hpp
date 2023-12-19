@@ -14,10 +14,10 @@
 #ifndef NES_NETWORKSOURCE_HPP
 #define NES_NETWORKSOURCE_HPP
 
-#include <Sources/DataSource.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES::Unikernel {
 class UnikernelPipelineExecutionContext;
@@ -32,8 +32,7 @@ namespace NES::Network {
 class NetworkSource;
 
 struct DefaultNetworkSourceConfiguration {
-    using Schema = struct Schema {
-    };
+    using Schema = struct Schema {};
     constexpr static OperatorId OperatorId = 1;
     constexpr static OriginId OriginId = 1;
     using SourceType = NetworkSource;
@@ -44,7 +43,7 @@ struct DefaultNetworkSourceConfiguration {
  */
 class NetworkSource : DataEmitter {
 
-public:
+  public:
     constexpr static NES::SourceType SourceType = NES::SourceType::NETWORK_SOURCE;
     /*
        * @param SchemaPtr
@@ -132,7 +131,7 @@ public:
 
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
-private:
+  private:
     NesPartition nesPartition;
     NodeLocation sinkLocation;
     // for event channel
