@@ -13,7 +13,7 @@
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <QueryCompiler.h>
+#include <QueryCompiler.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -47,11 +47,8 @@ bool isUnikernelWorkerNode(const NES::ExecutionNodePtr node) {
     auto sink = subplans->getRootOperators()[0]->as<SinkLogicalOperatorNode>();
     auto sources = subplans->getOperatorByType<SourceLogicalOperatorNode>();
     bool hasNetworkSink = sink->getSinkDescriptor()->instanceOf<NES::Network::NetworkSinkDescriptor>();
-    bool hasOnlyNetworkSources = std::ranges::all_of(sources, [](const SourceLogicalOperatorNodePtr& source) {
-        return source->getSourceDescriptor()->instanceOf<NES::Network::NetworkSourceDescriptor>();
-    });
-    NES_DEBUG("{} is {} Unikernel Worker", node->toString(), (hasNetworkSink && hasOnlyNetworkSources) ? "a" : "not a");
-    return hasNetworkSink && hasOnlyNetworkSources;
+    NES_DEBUG("{} is {} Unikernel Worker", node->toString(), (hasNetworkSink) ? "a" : "not a");
+    return hasNetworkSink;
 }
 
 int main(int argc, char** argv) {
@@ -59,7 +56,7 @@ int main(int argc, char** argv) {
     using namespace NES::Runtime;
     namespace stdv = std::ranges::views;
 
-    NES::Logger::setupLogging("unikernel_export.log", NES::LogLevel::LOG_DEBUG);
+    NES::Logger::setupLogging("unikernel_export.log", NES::LogLevel::LOG_INFO);
     auto cliResult = Options::getCLIOptions(argc, argv);
 
     if (!cliResult) {
@@ -88,7 +85,7 @@ int main(int argc, char** argv) {
         std::vector<WorkerSubQuery> workerSubQueries;
         for (const auto& subquery : subQueries) {
             auto logicalSubQueryPlan = subquery->copy();
-            auto [sinkMap, sourceMap, stages, sharedHandler] = queryCompiler.compile(subquery, options.getBufferSize());
+            auto [sinkMap, sourceMap, stages, sharedHandler] = queryCompiler.compile(subquery, options.getBufferSize(), sourcesCatalog);
             UnikernelExport unikernelExport;
             std::vector<WorkerSubQueryStage> stageIds;
 

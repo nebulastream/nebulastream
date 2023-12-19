@@ -13,7 +13,7 @@
 */
 #ifndef NES_UNIKERNELEXPORT_H
 #define NES_UNIKERNELEXPORT_H
-#include "QueryCompiler.h"
+#include "QueryCompiler.hpp"
 #include <CompilerInvoker.h>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <OperatorHandlerTracer.hpp>

@@ -15,7 +15,7 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <ExportPhaseFactory.h>
 #include <ExportQueryOptimizer.h>
-#include <NoOpPhysicalSource.h>
+#include <NoOpPhysicalSourceType.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>

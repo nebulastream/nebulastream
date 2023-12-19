@@ -14,8 +14,8 @@
 
 #include "UnikernelExport.h"
 #include "LLVMImporter.h"
-#include "LLVMModuleStripper.h"
-#include "QueryCompiler.h"
+#include "LLVMModuleStripper.hpp"
+#include "QueryCompiler.hpp"
 #include "UnikernelPipelineExport.h"
 #include <llvm/ADT/None.h>
 #include <llvm/IR/IRBuilder.h>

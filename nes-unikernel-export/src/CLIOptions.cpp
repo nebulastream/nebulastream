@@ -12,7 +12,7 @@
      limitations under the License.
 */
 
-#include "Util/Logger/Logger.hpp"
+#include <Util/Logger/Logger.hpp>
 #include <API/Schema.hpp>
 #include <CLIOptions.h>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -20,7 +20,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <NoOpPhysicalSource.h>
+#include <NoOpPhysicalSourceType.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <argumentum/argparse.h>
 #include <sys/stat.h>
@@ -74,7 +74,7 @@ Options::getTopologyAndSources() {
         for (const auto& source : workerConfiguration.sources) {
             sourceCatalog->addLogicalSource(source.name, parseSchema(source.schema));
             auto logicalSource = sourceCatalog->getLogicalSource(source.name);
-            auto physicalSourceType = std::make_shared<NES::NoOpPhysicalSourceType>(source.name, source.name);
+            auto physicalSourceType = std::make_shared<NES::NoOpPhysicalSourceType>(source.name, source.name, source.tcp);
             auto physicalSource = NES::PhysicalSource::create(physicalSourceType);
             sourceCatalog->addPhysicalSource(
                 source.name,
