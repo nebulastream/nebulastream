@@ -1,10 +1,11 @@
-#ifndef NES_QUERYCOMPILER_H
-#define NES_QUERYCOMPILER_H
+#ifndef NES_QUERYCOMPILER_HPP
+#define NES_QUERYCOMPILER_HPP
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Identifiers.hpp>
 #include <OperatorHandlerTracer.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <vector>
@@ -38,10 +39,10 @@ struct SinkStage {
 class ExportQueryCompiler {
   public:
     std::tuple<std::map<NES::PipelineId, SinkStage>,
-               std::map<NES::PipelineId, NES::Network::NetworkSourceDescriptorPtr>,
+               std::map<NES::PipelineId, NES::SourceDescriptorPtr>,
                std::vector<Stage>,
                std::vector<NES::Runtime::Unikernel::OperatorHandlerDescriptor>>
-    compile(NES::QueryPlanPtr queryPlan, size_t bufferSize);
+    compile(NES::QueryPlanPtr queryPlan, size_t bufferSize, NES::Catalogs::Source::SourceCatalogPtr sourceCatalog);
 };
 
-#endif//NES_QUERYCOMPILER_H
+#endif//NES_QUERYCOMPILER_HPP

@@ -12,18 +12,24 @@
      limitations under the License.
 */
 
-#ifndef NES_NOOPPHYSICALSOURCE_H
-#define NES_NOOPPHYSICALSOURCE_H
+#ifndef NES_NOOPPHYSICALSOURCETYPE_HPP
+#define NES_NOOPPHYSICALSOURCETYPE_HPP
 
 
+#include <optional>
+#include <CLIOptions.h>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 
 namespace NES {
 class NoOpPhysicalSourceType : public PhysicalSourceType {
-  public:
-    NoOpPhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName)
-        : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::NOOP_SOURCE){};
+public:
+    NoOpPhysicalSourceType(std::string logicalSourceName,
+                           std::string physicalSourceName,
+                           std::optional<TCPSourceConfiguration> tcpSourceConfiguration)
+        : PhysicalSourceType(std::move(logicalSourceName), std::move(physicalSourceName), SourceType::NOOP_SOURCE),
+          tcpSourceConfiguration(std::move(tcpSourceConfiguration)) {
+    };
 
     bool equal(const PhysicalSourceTypePtr& other) override { return other->getSourceType() == SourceType::NOOP_SOURCE; }
 
@@ -32,7 +38,15 @@ class NoOpPhysicalSourceType : public PhysicalSourceType {
     void reset() override {
         //NoOp
     }
+
+private:
+    std::optional<TCPSourceConfiguration> tcpSourceConfiguration;
+
+public:
+    [[nodiscard]] std::optional<TCPSourceConfiguration> getTCP() const {
+        return tcpSourceConfiguration;
+    }
 };
 }// namespace NES
 
-#endif//NES_NOOPPHYSICALSOURCE_H
+#endif//NES_NOOPPHYSICALSOURCETYPE_HPP
