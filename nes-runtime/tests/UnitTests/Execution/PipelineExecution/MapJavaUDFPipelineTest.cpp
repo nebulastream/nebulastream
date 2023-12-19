@@ -377,7 +377,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        ASSERT_EQ(std::get<0>(resultDynamicBuffer.readRecordFromBuffer<std::string>(i)), "Appended String:X");
+        ASSERT_EQ(resultDynamicBuffer[i].readVarSized("stringVariable"), "Appended String:X");
     }
 }
 
@@ -437,8 +437,6 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        auto tuple =
-            resultDynamicBuffer.readRecordFromBuffer<std::string, int32_t, int8_t, int16_t, int64_t, float_t, double_t, bool>(i);
         EXPECT_EQ(resultDynamicBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), i + 10);
@@ -446,7 +444,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
         EXPECT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
-        EXPECT_EQ(std::get<0>(tuple), "XAppended String:");
+        EXPECT_EQ(resultDynamicBuffer[i].readVarSized("stringVariable"), "XAppended String:");
     }
 }
 

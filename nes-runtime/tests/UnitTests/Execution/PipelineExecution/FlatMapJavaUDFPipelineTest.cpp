@@ -180,7 +180,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 30; i = i + 1) {
-        const auto text = std::get<0>(resultDynamicBuffer.readRecordFromBuffer<std::string>(i));
+        const auto text = resultDynamicBuffer[i].readVarSized("stringVariable");
         switch (i % 3) {
             case 0: ASSERT_EQ(text, "X"); break;
             case 1: ASSERT_EQ(text, "Y"); break;
@@ -250,16 +250,14 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
         udfState += i;
+        flatMapStateString += "X";
         EXPECT_EQ(resultDynamicBuffer[i]["byteVariable"].read<int8_t>(), udfState);
         EXPECT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), udfState);
         EXPECT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), udfState);
         EXPECT_EQ(resultDynamicBuffer[i]["longVariable"].read<int64_t>(), udfState);
         EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), udfState);
         EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), udfState);
-        flatMapStateString += "X";
-        auto tuple =
-            resultDynamicBuffer.readRecordFromBuffer<std::string, int32_t, int8_t, int16_t, int64_t, float_t, double_t, bool>(i);
-        ASSERT_EQ(std::get<0>(tuple), flatMapStateString);
+        ASSERT_EQ(resultDynamicBuffer[i].readVarSized("stringVariable"), flatMapStateString);
     }
 }
 
