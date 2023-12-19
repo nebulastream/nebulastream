@@ -44,23 +44,17 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(
-        SinkFormatPtr sinkFormat,
-        uint32_t numOfProducers,
-        QueryId queryId,
-        QuerySubPlanId querySubPlanId);
+    explicit SinkMedium(SinkFormatPtr sinkFormat, uint32_t numOfProducers, QueryId queryId, QuerySubPlanId querySubPlanId);
 
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(
-        SinkFormatPtr sinkFormat,
-        uint32_t numOfProducers,
-        QueryId queryId,
-        QuerySubPlanId querySubPlanId,
-        FaultToleranceType faultToleranceType,
-        uint64_t numberOfOrigins
-    );
+    explicit SinkMedium(SinkFormatPtr sinkFormat,
+                        uint32_t numOfProducers,
+                        QueryId queryId,
+                        QuerySubPlanId querySubPlanId,
+                        FaultToleranceType faultToleranceType,
+                        uint64_t numberOfOrigins);
 
     /**
      * @brief virtual method to setup sink

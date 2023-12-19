@@ -16,7 +16,6 @@
 #include <Network/NetworkSink.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -39,18 +38,15 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint8_t retryTimes,
                          FaultToleranceType faultToleranceType,
                          uint64_t numberOfOrigins)
-    : SinkMedium(
-        std::make_shared<NesFormat>(schema, bufferManager),
-        numOfProducers,
-        queryId,
-        querySubPlanId,
-        faultToleranceType,
-        numberOfOrigins),
-      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId),
-      networkManager(networkManager),
-      workerContext(workerContext), receiverLocation(destination), bufferManager(std::move(bufferManager)),
-      nesPartition(nesPartition), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes),
-      reconnectBuffering(false) {
+    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId,
+                 faultToleranceType,
+                 numberOfOrigins),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), networkManager(networkManager), workerContext(workerContext),
+      receiverLocation(destination), bufferManager(std::move(bufferManager)), nesPartition(nesPartition),
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
@@ -230,6 +226,5 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) 
 }
 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
-
 
 }// namespace NES::Network

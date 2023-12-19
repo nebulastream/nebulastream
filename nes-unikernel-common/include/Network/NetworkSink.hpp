@@ -127,7 +127,6 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     uint64_t getUniqueNetworkSinkDescriptorId();
 
-
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
