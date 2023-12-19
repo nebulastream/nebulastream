@@ -47,5 +47,5 @@ install(TARGETS nes-tensorflow
         COMPONENT nesLibrary)
 
 # Include tensorflow library in the deb package and install it in the lib folder
-install(IMPORTED_RUNTIME_ARTIFACTS tensorflowlite_c::tensorflowlite_c DESTINATION ${CMAKE_INSTALL_BINDIR}/nes-plugins)
+install(IMPORTED_RUNTIME_ARTIFACTS tensorflowlite_c::tensorflowlite_c DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

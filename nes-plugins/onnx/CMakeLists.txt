@@ -49,4 +49,4 @@ install(TARGETS nes-onnx
         COMPONENT nesLibrary)
 
 # Include onnx library in the deb package and install it in the lib folder
-install(IMPORTED_RUNTIME_ARTIFACTS onnxruntime DESTINATION ${CMAKE_INSTALL_BINDIR}/nes-plugins)
+install(IMPORTED_RUNTIME_ARTIFACTS onnxruntime DESTINATION ${CMAKE_INSTALL_LIBDIR})
