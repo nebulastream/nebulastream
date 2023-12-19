@@ -83,25 +83,26 @@ class ExecutionNode : public Node {
     bool updateQuerySubPlans(SharedQueryId sharedQueryId, std::vector<QueryPlanPtr> querySubPlans);
 
     /**
-     * Get Query subPlan for the given Id
+     * Get Query query sub plan for the given Id
      * @param sharedQueryId
      * @return Query sub plan
      */
     std::vector<QueryPlanPtr> getQuerySubPlans(SharedQueryId sharedQueryId);
 
     /**
-     * Remove existing subPlans
+     * Remove existing query sub plans belonging to a shared query
      * @param sharedQueryId
      * @return true if operation succeeds
      */
     bool removeQuerySubPlans(SharedQueryId sharedQueryId);
 
     /**
-     * Remove a single existing subplan
-     * @param sharedQueryId
+     * Remove a single existing query sub plan
+     * @param sharedQueryId the id of the shared query to which the query sub plan belongs
+     * @param querySubPlanId the id of the query sub plan to remove
      * @return true if operation succeeds
      */
-    bool removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
+    bool removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
     /**
      * Get the map of all query sub plans

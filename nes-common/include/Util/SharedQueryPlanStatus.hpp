@@ -30,7 +30,7 @@ namespace NES {
      * Stopped: Shared Query Plan was stopped by user.
      * Failed: Shared Query Plan failed because of some reason.
      */
-enum class SharedQueryPlanStatus : uint8_t { Created = 0, Deployed, Updated, Stopped, Failed, MIGRATING };
+enum class SharedQueryPlanStatus : uint8_t { CREATED = 0, DEPLOYED, UPDATED, STOPPED, FAILED, MIGRATING };
 
 }// namespace NES
 

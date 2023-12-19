@@ -235,7 +235,8 @@ class WorkerRPCClient {
      * Source reconfigurations take effect immediately
      * @param address: the ip address of the node
      * @param queryPlan: The query plan containing the updated source or sink information
-     * @return
+     * @return true if a plan with a matching id was found
+     * @throws runtimeException if the remote procedure call returned an error status
      */
     bool reconfigureQuery(const std::string& address, const QueryPlanPtr& queryPlan);
 

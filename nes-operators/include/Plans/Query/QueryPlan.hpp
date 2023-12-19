@@ -19,13 +19,11 @@
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <Util/QueryState.hpp>
 #include <memory>
 #include <set>
 #include <vector>
 
 namespace NES {
-enum class QueryState : uint8_t;
 
 class Source;
 using SourcePtr = std::shared_ptr<Source>;

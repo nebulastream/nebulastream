@@ -93,9 +93,9 @@ void QueryUndeploymentPhase::stopQuery(QueryId sharedQueryId,
 
         Runtime::QueryTerminationType queryTerminationType;
 
-        if (SharedQueryPlanStatus::Updated == sharedQueryPlanStatus || SharedQueryPlanStatus::Stopped == sharedQueryPlanStatus) {
+        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlanStatus || SharedQueryPlanStatus::STOPPED == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::HardStop;
-        } else if (SharedQueryPlanStatus::Failed == sharedQueryPlanStatus) {
+        } else if (SharedQueryPlanStatus::FAILED == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::Failure;
         } else {
             NES_ERROR("Unhandled request type {}", std::string(magic_enum::enum_name(sharedQueryPlanStatus)));

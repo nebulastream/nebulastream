@@ -69,8 +69,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   QueryCatalogServicePtr queryCatalogService,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   LocationServicePtr locationService,
-                                  QueryParsingServicePtr queryParsingService,
-                                  GlobalExecutionPlanPtr globalExecutionPlan);
+                                  QueryParsingServicePtr queryParsingService);
     /**
      * @brief RPC Call to register a node
      * @param context: the server context
@@ -256,7 +255,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Monitoring::MonitoringManagerPtr monitoringManager;
     LocationServicePtr locationService;
     QueryParsingServicePtr queryParsingService;
-    GlobalExecutionPlanPtr globalExecutionPlan;
+    //GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }// namespace NES
 

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp"
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>
@@ -271,10 +272,10 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
-void NetworkSource::onVersionUpdate(Version newVersion, Network::NodeLocation newSenderLocation) {
+void NetworkSource::onVersionUpdate(NetworkSourceDescriptor newDescriptor) {
     NES_DEBUG("Updating version for network source {}", nesPartition);
-    version = newVersion;
-    sinkLocation = newSenderLocation;
+    version = newDescriptor.getVersion();
+    sinkLocation = newDescriptor.getNodeLocation();
     auto reconfMessage = Runtime::ReconfigurationMessage(-1,
                                                          -1,
                                                          Runtime::ReconfigurationType::UpdateVersion,

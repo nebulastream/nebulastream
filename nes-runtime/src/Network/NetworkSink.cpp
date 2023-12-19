@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp"
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -284,9 +284,10 @@ OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() const { return unique
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
-void NetworkSink::configureNewReceiverAndPartition(NesPartition newPartition,
-                                                   const NodeLocation& newReceiverLocation,
-                                                   Version newVersion) {
+void NetworkSink::configureNewSinkDescriptor(const NetworkSinkDescriptor& newNetworkSinkDescriptor) {
+    auto newReceiverLocation = newNetworkSinkDescriptor.getNodeLocation();
+    auto newPartition = newNetworkSinkDescriptor.getNesPartition();
+    auto newVersion = newNetworkSinkDescriptor.getVersion();
     VersionUpdate newReceiverTuple = {newReceiverLocation, newPartition, newVersion};
     //register event consumer for new source. It has to be registered before any data channels connect
     NES_ASSERT2_FMT(
@@ -380,23 +381,20 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     unbuffer(workerContext);
     return true;
 }
-bool NetworkSink::scheduleNewReceiverAndPartition(NetworkSinkDescriptor const& networkSinkDescriptor) {
-    auto newVersion = networkSinkDescriptor.getVersion();
-    if (newVersion != version) {
-        pendingReceiver = {networkSinkDescriptor.getNesPartition(),
-                           networkSinkDescriptor.getNodeLocation(),
-                           networkSinkDescriptor.getVersion()};
+
+bool NetworkSink::scheduleNewDescriptor(const NetworkSinkDescriptor& networkSinkDescriptor) {
+    if (version != networkSinkDescriptor.getVersion()) {
+        nextSinkDescriptor = networkSinkDescriptor;
         return true;
     }
     return false;
 }
 
-bool NetworkSink::applyPendingReceiverAndPartition() {
-    if (!pendingReceiver.has_value()) {
+bool NetworkSink::applyNextSinkDescriptor() {
+    if (!nextSinkDescriptor.has_value()) {
         return false;
     }
-    auto& [newReceiverPartition, newReceiverLocation, newVersion] = pendingReceiver.value();
-    configureNewReceiverAndPartition(newReceiverPartition, newReceiverLocation, newVersion);
+    configureNewSinkDescriptor(nextSinkDescriptor.value());
     return true;
 }
 }// namespace NES::Network

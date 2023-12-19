@@ -17,6 +17,7 @@
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Network/PartitionRegistrationStatus.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
@@ -111,12 +112,14 @@ class PartitionManager {
         bool startNewVersion();
 
         /**
-         * @brief add a pending
-         * @param pendingVersion
-         * @return true if a pending version was added, false if this version is already running and no pending version
-         * was added
+         * @brief add the next version to be activated for this partition once all channels for the old version have
+         * been closes
+         * @param nextNetworkSourceDescriptor a network source descriptor containing the location of the sink from which
+         * new data will be accepted after the version change and the version number of the next version
+         * @return true if a pending version was added, false if the already running version has the same version number
+         * and no pending version was added
          */
-        bool addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation);
+        bool addNextVersion(const NetworkSourceDescriptor& nextNetworkSourceDescriptor);
 
         /**
          * @brief increment ref cnt by 1
@@ -141,7 +144,7 @@ class PartitionManager {
       private:
         uint64_t partitionCounter{1};
         uint64_t disconnectCount{0};
-        std::optional<std::pair<Version, NodeLocation>> pendingVersion{std::nullopt};
+        std::optional<NetworkSourceDescriptor> nextSourceDescriptor{std::nullopt};
         NodeLocation senderLocation;
         DataEmitterPtr consumer{nullptr};
     };
@@ -209,7 +212,7 @@ class PartitionManager {
      * @param pendingVersion the number of the pending version
      * @param pendingSenderLocation the node location of the sending sink for the new version
      */
-    void addPendingVersion(NesPartition partition, Version pendingVersion, NodeLocation pendingSenderLocation);
+    void addNextVersion(const NetworkSourceDescriptor& nextNetworkSourceDescriptor);
 
     /**
      * @brief checks if a partition is registered

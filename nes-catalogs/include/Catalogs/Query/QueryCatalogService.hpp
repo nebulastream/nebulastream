@@ -65,9 +65,9 @@ class QueryCatalogService {
      * @param queryId : query id to which sub query metadata to add
      * @param querySubPlanId : the sub query plan id
      * @param workerId : the topology node where the sub query plan is running
-     * @param subQueryState : the state of the sub query
+     * @param querySubPlanStatus : the state of the sub query
      */
-    void addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState subQueryState);
+    void addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId, QueryState querySubPlanStatus);
 
     /**
      * Reset all sub query plans added to the query
@@ -79,9 +79,9 @@ class QueryCatalogService {
      * Update query sub plan status
      * @param sharedQueryId : the query id to which sub plan is added
      * @param querySubPlanId : the query sub plan id
-     * @param subQueryStatus : the new sub query status
+     * @param querySubPlanStatus : the new sub query status
      */
-    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
+    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState querySubPlanStatus);
 
     /**
      * Get the entry from the query catalog for the input query id
@@ -176,22 +176,23 @@ class QueryCatalogService {
     void checkAndMarkForFailure(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId);
 
     /**
-     * Mark query as migrating
+     * Indicate that a query sub plan will be stopped and the operators will be deployed somewhere else. This has to
+     * be called before entering the query deployment phase for a shared query that is to be redeployed.
      * @param sharedQueryId: the query id
      * @param querySubPlanId : query sub plan id
-     * @param subQueryStatus : the new status
+     * @param querySubPlanStatus : the new status
      * @return true if successful else false
      */
-    bool checkAndMarkForMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
+    bool checkAndMarkForMigration(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState querySubPlanStatus);
   private:
     /**
      * Handle soft stop for sub query plans
      * @param sharedQueryId: the query id
      * @param querySubPlanId : query sub plan id
-     * @param subQueryStatus : the new status
+     * @param querySubPlanStatus : the new status
      * @return true if successful else false
      */
-    bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState subQueryStatus);
+    bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryState querySubPlanStatus);
 
 
     Catalogs::Query::QueryCatalogPtr queryCatalog;

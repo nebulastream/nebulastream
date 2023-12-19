@@ -499,9 +499,9 @@ TEST_F(NetworkStackTest, testVersionTransition) {
             DataEmitterImpl(PartitionManagerPtr partitionManager, Version version)
                 : partitionManager(partitionManager), version(version) {}
             void emitWork(TupleBuffer&) override {}
-            void onVersionUpdate(Version newVersion, NodeLocation) override {
+            void onVersionUpdate(NetworkSourceDescriptor networkSourceDescriptor) override {
                 NES_DEBUG("Updating version for data emitter");
-                version = newVersion;
+                version = networkSourceDescriptor.getVersion();
             }
             Version getVersion() const override { return version; }
             PartitionManagerPtr partitionManager;
@@ -517,7 +517,14 @@ TEST_F(NetworkStackTest, testVersionTransition) {
                                                               std::make_shared<DataEmitterImpl>(partMgrRecv, initialVersion)));
 
         auto nextVersion = 1;
-        partMgrRecv->addPendingVersion(nesPartition, nextVersion, nodeLocation);
+        auto schema = Schema::create();
+        auto reconfiguredNetworkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
+                                                                                            nesPartition,
+                                                                                            nodeLocation,
+                                                                                            NSOURCE_RETRY_WAIT,
+                                                                                            NSOURCE_RETRIES,
+                                                                                            nextVersion);
+        partMgrRecv->addNextVersion(*reconfiguredNetworkSourceDescriptor->as<NetworkSourceDescriptor>());
         uint64_t i = 1;
         //register and close one channel at a time
         for (; i <= numSendingThreads / 2; ++i) {

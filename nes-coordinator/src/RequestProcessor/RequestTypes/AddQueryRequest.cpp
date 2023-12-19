@@ -319,12 +319,12 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         }
 
         //20. If the shared query plan is not new but updated an existing shared query plan, we first need to undeploy that plan
-        if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
+        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
 
             NES_DEBUG("Shared Query Plan is non empty and an older version is already "
                       "running.");
             //20.1 First undeploy the running shared query plan with the shared query plan id
-            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
+            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::UPDATED);
         }
         //21. Perform placement of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
@@ -339,7 +339,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryDeploymentPhase->execute(sharedQueryPlan);
 
         //23. Update the shared query plan as deployed
-        sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);

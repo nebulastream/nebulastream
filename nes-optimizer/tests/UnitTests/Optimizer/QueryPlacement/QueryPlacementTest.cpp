@@ -554,7 +554,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(updatedSharedQMToDeploy[0]);
-    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
+    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
     // new Query
     auto queryPlan2 = Query::from("car")
@@ -670,7 +670,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
     queryPlacementPhase->execute(updatedSharedQMToDeploy[0]);
     //Mark as deployed
-    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
+    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
     // new Query
     auto queryPlan2 = Query::from("car")

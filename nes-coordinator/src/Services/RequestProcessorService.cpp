@@ -103,7 +103,7 @@ void RequestProcessorService::start() {
                         NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : {}", sharedQueryId);
 
                         //3.2. If the shared query plan is newly created
-                        if (SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
+                        if (SharedQueryPlanStatus::CREATED == sharedQueryPlan->getStatus()) {
 
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is new.");
 
@@ -123,16 +123,16 @@ void RequestProcessorService::start() {
                             queryDeploymentPhase->execute(sharedQueryPlan);
 
                             //Update the shared query plan as deployed
-                            sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+                            sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
                             // 3.3. Check if the shared query plan was updated after addition or removal of operators
-                        } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
+                        } else if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
 
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is non empty and an older version is already "
                                       "running.");
 
                             //3.3.1. First undeploy the running shared query plan with the shared query plan id
-                            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
+                            queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::UPDATED);
 
                             //3.3.2. Perform placement of updated shared query plan
                             auto queryPlan = sharedQueryPlan->getQueryPlan();
@@ -149,11 +149,11 @@ void RequestProcessorService::start() {
                             //3.3.3. Perform deployment of re-placed shared query plan
                             queryDeploymentPhase->execute(sharedQueryPlan);
                             //Update the shared query plan as deployed
-                            sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+                            sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
                             // 3.4. Check if the shared query plan is empty and already running
-                        } else if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()
-                                   || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
+                        } else if (SharedQueryPlanStatus::STOPPED == sharedQueryPlan->getStatus()
+                                   || SharedQueryPlanStatus::FAILED == sharedQueryPlan->getStatus()) {
 
                             NES_DEBUG("QueryProcessingService: Shared Query Plan is empty and an older version is already "
                                       "running.");
@@ -202,7 +202,7 @@ void RequestProcessorService::start() {
             } catch (Exceptions::QueryPlacementException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryPlacementException: {}", ex.what());
                 auto sharedQueryId = ex.getQueryId();
-                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
+                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::FAILED);
                 auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryPlan->getQueryIds()) {
                     queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
@@ -210,7 +210,7 @@ void RequestProcessorService::start() {
             } catch (QueryDeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryDeploymentException: {}", ex.what());
                 auto sharedQueryId = ex.getQueryId();
-                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
+                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::FAILED);
                 auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryPlan->getQueryIds()) {
                     queryCatalogService->updateQueryStatus(queryId, QueryState::FAILED, ex.what());
