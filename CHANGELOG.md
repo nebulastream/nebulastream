@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.7](https://github.com/nebulastream/nebulastream/tree/v0.6.7) (2023-12-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.6...v0.6.7)
+
+**Implemented enhancements:**
+
+- \[TASK\] Read varSized from DynamicTuple [\#4444](https://github.com/nebulastream/nebulastream/issues/4444)
+
 ## [v0.6.6](https://github.com/nebulastream/nebulastream/tree/v0.6.6) (2023-12-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.5...v0.6.6)
@@ -11,10 +19,6 @@
 ## [v0.6.5](https://github.com/nebulastream/nebulastream/tree/v0.6.5) (2023-12-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.4...v0.6.5)
-
-### Bug Fixes 🐛
-
-- \[BUG\] InferModel does not work [\#4435](https://github.com/nebulastream/nebulastream/issues/4435)
 
 ## [v0.6.4](https://github.com/nebulastream/nebulastream/tree/v0.6.4) (2023-12-15)
 
