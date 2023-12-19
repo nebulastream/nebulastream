@@ -13,8 +13,8 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
-#include <boost/iostreams/stream.hpp>
 #include <argumentum/argparse.h>
+#include <boost/iostreams/stream.hpp>
 #include <memory>
 #include <string>
 
@@ -65,8 +65,7 @@ int main(int argc, char* argv[]) {
                                          1,
                                          options.subQueryId,
                                          options.queryId,
-                                         os
-                                         );
+                                         os);
     std::vector<NES::DataSinkPtr> pipelines{print_sink};
     auto source = std::make_shared<
         NetworkSource>(options.outputSchema, buffer_manager, wc, manager, partition, location, 1000, 200ms, 20, pipelines);
