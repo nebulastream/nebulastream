@@ -14,18 +14,13 @@
 #include <NoOpSourceDescriptor.hpp>
 #include <utility>
 
-std::string NES::NoOpSourceDescriptor::toString() const {
-    return "NoOpSourceDescriptor";
-}
+std::string NES::NoOpSourceDescriptor::toString() const { return "NoOpSourceDescriptor"; }
 
 bool NES::NoOpSourceDescriptor::equal(const NES::SourceDescriptorPtr& other) const {
-    return other->instanceOf<NoOpSourceDescriptor>() &&
-        other->getLogicalSourceName() == getLogicalSourceName() &&
-        other->getSchema() == getSchema() &&
-        other->as<NoOpSourceDescriptor>()->getTcp() == getTcp() &&
-        other->as<NoOpSourceDescriptor>()->getOperatorId() == getOperatorId() &&
-        other->as<NoOpSourceDescriptor>()->getOriginId() == getOriginId();
-
+    return other->instanceOf<NoOpSourceDescriptor>() && other->getLogicalSourceName() == getLogicalSourceName()
+        && other->getSchema() == getSchema() && other->as<NoOpSourceDescriptor>()->getTcp() == getTcp()
+        && other->as<NoOpSourceDescriptor>()->getOperatorId() == getOperatorId()
+        && other->as<NoOpSourceDescriptor>()->getOriginId() == getOriginId();
 }
 
 NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::copy() {
@@ -37,11 +32,8 @@ NES::NoOpSourceDescriptor::NoOpSourceDescriptor(SchemaPtr schema,
                                                 std::optional<TCPSourceConfiguration> tcp,
                                                 NES::OriginId originId,
                                                 NES::OperatorId operatorId)
-    : SourceDescriptor(std::move(schema), std::move(logicalSourceName)),
-      tcp(std::move(tcp)),
-      originId(originId),
-      operatorId(operatorId) {
-}
+    : SourceDescriptor(std::move(schema), std::move(logicalSourceName)), tcp(std::move(tcp)), originId(originId),
+      operatorId(operatorId) {}
 
 NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::create(NES::SchemaPtr schemaPtr,
                                                            std::string logicalSourceName,

@@ -12,7 +12,6 @@
      limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <API/Schema.hpp>
 #include <CLIOptions.h>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -21,6 +20,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NoOpPhysicalSourceType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <argumentum/argparse.h>
 #include <sys/stat.h>

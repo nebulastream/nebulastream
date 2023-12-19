@@ -32,9 +32,7 @@ void NonKeyedSliceMergingHandler::setup(PipelineExecutionContext&, uint64_t entr
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
-void NonKeyedSliceMergingHandler::start(PipelineExecutionContextPtr, uint32_t) {
-    NES_DEBUG("start NonKeyedSliceMergingHandler");
-}
+void NonKeyedSliceMergingHandler::start(PipelineExecutionContextPtr, uint32_t) { NES_DEBUG("start NonKeyedSliceMergingHandler"); }
 
 GlobalSlicePtr NonKeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<NonKeyedSlice>* sliceMergeTask) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");

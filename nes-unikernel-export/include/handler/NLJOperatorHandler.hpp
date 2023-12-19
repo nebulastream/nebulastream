@@ -19,7 +19,6 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-
 class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
   public:
     NLJOperatorHandler(const std::vector<OriginId>& inputOrigins,

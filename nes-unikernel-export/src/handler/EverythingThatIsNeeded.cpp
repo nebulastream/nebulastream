@@ -2,10 +2,10 @@
 // Created by ls on 04.10.23.
 //
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {

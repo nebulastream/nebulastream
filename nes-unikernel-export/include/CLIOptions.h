@@ -36,13 +36,10 @@ struct TCPSourceConfiguration {
     size_t port;
 
     friend bool operator==(const TCPSourceConfiguration& lhs, const TCPSourceConfiguration& rhs) {
-        return lhs.ip == rhs.ip
-            && lhs.port == rhs.port;
+        return lhs.ip == rhs.ip && lhs.port == rhs.port;
     }
 
-    friend bool operator!=(const TCPSourceConfiguration& lhs, const TCPSourceConfiguration& rhs) {
-        return !(lhs == rhs);
-    }
+    friend bool operator!=(const TCPSourceConfiguration& lhs, const TCPSourceConfiguration& rhs) { return !(lhs == rhs); }
 };
 
 struct ExportSourceConfiguration {
@@ -270,7 +267,7 @@ class Options;
 using CLIResult = boost::outcome_v2::result<Options, std::string>;
 
 class Options {
-public:
+  public:
     static CLIResult getCLIOptions(int argc, char** argv);
     std::string getQueryString();
     [[nodiscard]] bool useKafka() const;
@@ -281,7 +278,7 @@ public:
     [[nodiscard]] ExportKafkaConfiguration getKafkaConfiguration() const;
     [[nodiscard]] std::string getYAMLOutputPath() const;
 
-private:
+  private:
     ExportConfiguration configuration;
     std::optional<std::string> input;
     size_t bufferSize = 8192;

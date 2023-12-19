@@ -14,7 +14,6 @@
 
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 
-
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
@@ -29,7 +28,6 @@
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <set>
 #include <vector>
-
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -46,7 +44,7 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::dispatchSliceMer
     PipelineExecutionContext& ctx,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
     std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices) {
-NES_THROW_RUNTIME_ERROR("Not Implemented");
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
 template<class SliceType, typename SliceStore>
@@ -55,23 +53,23 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::trigger(WorkerCo
                                                                         OriginId originId,
                                                                         uint64_t sequenceNumber,
                                                                         uint64_t watermarkTs) {
-NES_THROW_RUNTIME_ERROR("Not Implemented");
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
 };
 
 template<class SliceType, typename SliceStore>
 SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThreadLocalSliceStore(uint64_t workerId) {
-NES_THROW_RUNTIME_ERROR("Not Implemented");
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
 template<class SliceType, typename SliceStore>
 void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::start(PipelineExecutionContextPtr, uint32_t) {
-NES_THROW_RUNTIME_ERROR("Not Implemented");
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
 template<class SliceType, typename SliceStore>
 void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::stop(QueryTerminationType queryTerminationType,
                                                                      PipelineExecutionContextPtr ctx) {
-NES_THROW_RUNTIME_ERROR("Not Implemented");
+    NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
 template<class SliceType, typename SliceStore>
@@ -81,6 +79,5 @@ AbstractSlicePreAggregationHandler<SliceType, SliceStore>::~AbstractSlicePreAggr
 template class AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore>;
 
 template class AbstractSlicePreAggregationHandler<KeyedSlice, KeyedThreadLocalSliceStore>;
-
 
 }// namespace NES::Runtime::Execution::Operators
