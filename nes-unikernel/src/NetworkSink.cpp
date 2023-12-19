@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Runtime/NesThread.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Runtime/Events.hpp>
+#include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/WorkerContext.hpp>
 
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -83,9 +83,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 
 void NetworkSink::preSetup() {
     NES_DEBUG("NetworkSink: method preSetup() called {} qep {}", nesPartition.toString(), querySubPlanId);
-    NES_ASSERT2_FMT(
-        networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, this),
-        "Cannot register event listener " << nesPartition.toString());
+    NES_ASSERT2_FMT(networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, this),
+                    "Cannot register event listener " << nesPartition.toString());
 }
 
 void NetworkSink::setup() {

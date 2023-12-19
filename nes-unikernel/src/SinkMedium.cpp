@@ -15,8 +15,8 @@
 #include <API/Schema.hpp>
 #include <Components/NesWorker.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES {

@@ -36,9 +36,8 @@ NetworkSource::NetworkSource(NesPartition nesPartition,
                              std::chrono::milliseconds waitTime,
                              uint8_t retryTimes,
                              NES::Unikernel::UnikernelPipelineExecutionContext successors)
-    : nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)), waitTime(waitTime),
-      successors(std::move(successors)), retryTimes(retryTimes) {
-}
+    : nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)), waitTime(waitTime), successors(std::move(successors)),
+      retryTimes(retryTimes) {}
 
 std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
 
@@ -55,9 +54,7 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 bool NetworkSource::bind() { return TheNetworkManager->registerSubpartitionConsumer(nesPartition, sinkLocation, this); }
 
-void NetworkSource::emitWork(Runtime::TupleBuffer& buffer) {
-    successors.emit(buffer);
-}
+void NetworkSource::emitWork(Runtime::TupleBuffer& buffer) { successors.emit(buffer); }
 
 bool NetworkSource::start() {
     using namespace Runtime;

@@ -38,21 +38,16 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(
-        uint32_t numOfProducers,
-        QueryId queryId,
-        QuerySubPlanId querySubPlanId);
+    explicit SinkMedium(uint32_t numOfProducers, QueryId queryId, QuerySubPlanId querySubPlanId);
 
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(
-        uint32_t numOfProducers,
-        QueryId queryId,
-        QuerySubPlanId querySubPlanId,
-        FaultToleranceType faultToleranceType,
-        uint64_t numberOfOrigins
-    );
+    explicit SinkMedium(uint32_t numOfProducers,
+                        QueryId queryId,
+                        QuerySubPlanId querySubPlanId,
+                        FaultToleranceType faultToleranceType,
+                        uint64_t numberOfOrigins);
 
     /**
      * @brief virtual method to setup sink
@@ -104,7 +99,6 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @return string with name and additional information about the sink
      */
     virtual std::string toString() const = 0;
-
 
     /**
      * @brief method passes current safe to trim timestamp to coordinator via RPC

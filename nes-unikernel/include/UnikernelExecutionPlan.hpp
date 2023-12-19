@@ -41,9 +41,7 @@ concept UnikernelPipeline = requires(T a) {
 template<typename Prev, typename Source, typename... Stages>
 class PipelineImpl;
 
-template<UnikernelBackwardsPipelineImpl Prev,
-         NES::Unikernel::UnikernelStage Stage,
-         typename... Stages>
+template<UnikernelBackwardsPipelineImpl Prev, NES::Unikernel::UnikernelStage Stage, typename... Stages>
 class PipelineImpl<Prev, Stage, Stages...> {
     using Next = PipelineImpl<PipelineImpl, Stages...>;
 
@@ -72,6 +70,7 @@ class PipelineImpl<Prev, Stage, Stages...> {
 template<UnikernelBackwardsPipelineImpl Prev, typename Source>
 class PipelineImpl<Prev, Source> {
     using SourceImpl = Source::template Impl<Prev>;
+
   public:
     static void setup() {
         NES_INFO("Calling Setup for Source {}", SourceImpl::Id);

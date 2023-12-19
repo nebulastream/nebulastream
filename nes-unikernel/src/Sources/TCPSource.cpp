@@ -14,11 +14,11 @@
 
 #include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Sinks/Formats/CsvFormat.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Sinks/Formats/CsvFormat.hpp>
 #include <arpa/inet.h>
 #include <chrono>
 #include <cstring>
@@ -34,11 +34,11 @@
 namespace NES {
 extern NES::Runtime::BufferManagerPtr TheBufferManager;
 TCPSource::TCPSource(TCPSourceTypePtr tcpSourceType,
-                             OperatorId operatorId,
-                             OriginId originId,
-                             size_t numSourceLocalBuffers,
-                             const std::string& physicalSourceName,
-                             NES::Unikernel::UnikernelPipelineExecutionContext successor)
+                     OperatorId operatorId,
+                     OriginId originId,
+                     size_t numSourceLocalBuffers,
+                     const std::string& physicalSourceName,
+                     NES::Unikernel::UnikernelPipelineExecutionContext successor)
     : DataSource(operatorId, originId, numSourceLocalBuffers, physicalSourceName, std::move(successor)),
       tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)), circularBuffer(2048) {
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");

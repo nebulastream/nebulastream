@@ -14,8 +14,8 @@
 
 #ifndef NES_RECONFIGURATIONMESSAGE_HPP
 #define NES_RECONFIGURATIONMESSAGE_HPP
-#include <Runtime/ReconfigurationType.hpp>
 #include <Identifiers.hpp>
+#include <Runtime/ReconfigurationType.hpp>
 #include <any>
 
 namespace NES::Runtime {
@@ -49,11 +49,10 @@ class ReconfigurationMessage {
                                     const QuerySubPlanId parentPlanId,
                                     ReconfigurationType type,
                                     [[maybe_unused]] void* unused_instance,
-                                    [[maybe_unused]]uint64_t numThreads,
+                                    [[maybe_unused]] uint64_t numThreads,
                                     std::any&& userdata = nullptr,
-                                    [[maybe_unused]]bool blocking = false)
-        : type(type), queryId(queryId), parentPlanId(parentPlanId),
-          userdata(std::move(userdata)) {
+                                    [[maybe_unused]] bool blocking = false)
+        : type(type), queryId(queryId), parentPlanId(parentPlanId), userdata(std::move(userdata)) {
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
 
@@ -63,7 +62,9 @@ class ReconfigurationMessage {
      * @param numThreads number of running threads
      * @param blocking whether the reconfiguration must block for completion
      */
-    explicit ReconfigurationMessage(const ReconfigurationMessage& other, [[maybe_unused]] uint64_t numThreads, [[maybe_unused]] bool blocking = false)
+    explicit ReconfigurationMessage(const ReconfigurationMessage& other,
+                                    [[maybe_unused]] uint64_t numThreads,
+                                    [[maybe_unused]] bool blocking = false)
         : ReconfigurationMessage(other) {
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
@@ -73,8 +74,7 @@ class ReconfigurationMessage {
      * @param that
      */
     ReconfigurationMessage(const ReconfigurationMessage& that)
-        : type(that.type), queryId(that.queryId),
-          parentPlanId(that.parentPlanId), userdata(that.userdata) {
+        : type(that.type), queryId(that.queryId), parentPlanId(that.parentPlanId), userdata(that.userdata) {
         // nop
     }
 
