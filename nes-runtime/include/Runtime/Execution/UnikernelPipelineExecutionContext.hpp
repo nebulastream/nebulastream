@@ -4,10 +4,10 @@
 
 #ifndef NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_HPP
 #define NES_UNIKERNELPIPELINEEXECUTIONCONTEXT_HPP
-#include <UnikernelStage.hpp>
 #include "Runtime/TupleBuffer.hpp"
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <UnikernelStage.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
