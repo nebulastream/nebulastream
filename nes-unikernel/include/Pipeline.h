@@ -1,96 +1,71 @@
-#ifndef NES_UNIKERNEL_PIPELINE_H
-#define NES_UNIKERNEL_PIPELINE_H
+#ifndef CRAZY_RARE_UNUSED_HEADER_GUARD
+#define CRAZY_RARE_UNUSED_HEADER_GUARD
+
 #include <UnikernelExecutionPlan.hpp>
 #include <UnikernelSink.hpp>
-#include <UnikernelSource.hpp>
-#include <UnikernelStage.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Network/NetworkSink.hpp>
-#include <DataTypes/PhysicalDataTypes.hpp>
+#include <UnikernelSource.hpp>
+#include <UnikernelStage.hpp>
 #include <SchemaBuffer.hpp>
+#include <DataTypes/PhysicalDataTypes.hpp>
 
 namespace NES::Unikernel {
-struct CTConfiguration {
-    constexpr static unsigned long QueryID = 0;
-    constexpr static unsigned long NodeID = 2;
-    constexpr static const char* NodeIP = "127.0.0.1";
-    constexpr static unsigned long NodePort = 8080;
-};
+    struct CTConfiguration {
+        constexpr static size_t QueryID = 0;
+        constexpr static size_t NodeID = 2;
+        constexpr static const char *NodeIP = "127.0.0.1";
+        constexpr static size_t NodePort = 8080;
+    };
+    struct SourceConfig17 {
+        using SourceType = Network::NetworkSource;
+        constexpr static size_t QueryID = 0;
+        constexpr static size_t UpstreamNodeID = 4;
+        constexpr static size_t UpstreamPartitionID = 0;
+        constexpr static size_t UpstreamSubPartitionID = 0;
+        constexpr static const char *UpstreamNodeHostname = "127.0.0.1";
+        constexpr static size_t UpstreamOperatorID = 17;
+        constexpr static size_t UpstreamNodePort = 8084;
+        constexpr static size_t LocalBuffers = 100;
+    };
+    struct SourceConfig13 {
+        using SourceType = Network::NetworkSource;
+        constexpr static size_t QueryID = 0;
+        constexpr static size_t UpstreamNodeID = 3;
+        constexpr static size_t UpstreamPartitionID = 0;
+        constexpr static size_t UpstreamSubPartitionID = 0;
+        constexpr static const char *UpstreamNodeHostname = "127.0.0.1";
+        constexpr static size_t UpstreamOperatorID = 13;
+        constexpr static size_t UpstreamNodePort = 8081;
+        constexpr static size_t LocalBuffers = 100;
+    };
+    struct SourceConfig29 {
+        using SourceType = TCPSource<SourceConfig29>;
+        using Schema = Schema<Field<INT64>, Field<INT64>>;
+        constexpr static size_t QueryID = 0;
+        constexpr static size_t UpstreamNodeID = 29;
+        constexpr static size_t OperatorId = 29;
+        constexpr static size_t OriginId = 4;
+        constexpr static std::chrono::milliseconds BufferFlushInterval = 100ms;
+        constexpr static size_t LocalBuffers = 100;
+        constexpr static const char *NodeIP = "127.0.0.1";
+        constexpr static short Port = 8092;
+    };
+    struct SinkConfig7 {
+        constexpr static size_t QueryID = 0;
+        using SinkType = typename NES::Network::NetworkSink;
+        constexpr static size_t QuerySubplanID = 7;
+        constexpr static size_t OutputSchemaSizeInBytes = 96;
+        constexpr static size_t DownstreamNodeID = 1;
+        constexpr static size_t DownstreamPartitionID = 0;
+        constexpr static size_t DownstreamSubPartitionID = 0;
+        constexpr static const char *DownstreamNodeHostname = "127.0.0.1";
+        constexpr static size_t DownstreamOperatorID = 15;
+        constexpr static size_t DownstreamNodePort = 8085;
+        constexpr static size_t LocalBuffers = 100;
+    };
+    using SubQueryPlan7 = SubQuery<UnikernelSink<SinkConfig7>, PipelineJoin<Stage<4>, PipelineJoin<Stage<5>, Pipeline<Stage<6>, UnikernelSource<SourceConfig29>>, Pipeline<Stage<8>, UnikernelSource<SourceConfig13>>>, Pipeline<Stage<10>, UnikernelSource<SourceConfig17>>>>;
+    using QueryPlan = UnikernelExecutionPlan<SubQueryPlan7>;
+}
+#endif //CRAZY_RARE_UNUSED_HEADER_GUARD
 
-struct KafkaSinkConfig15 {
-    constexpr static unsigned long QueryID = 0;
-    using KafkaSchema = Schema<Field<INT8>, Field<FLOAT32>>;
-    using SinkType = typename NES::KafkaSink<KafkaSchema>;
-    constexpr static unsigned long QuerySubplanID = 8;
-    constexpr static const char* Broker = "Broker";
-    constexpr static const char* Topic = "Topic";
-};
-
-struct SinkConfig15 {
-    constexpr static unsigned long QueryID = 0;
-    using SinkType = typename NES::Network::NetworkSink;
-    constexpr static unsigned long QuerySubplanID = 8;
-    constexpr static unsigned long OutputSchemaSizeInBytes = 96;
-    constexpr static unsigned long DownstreamNodeID = 1;
-    constexpr static unsigned long DownstreamPartitionID = 0;
-    constexpr static unsigned long DownstreamSubPartitionID = 0;
-    constexpr static const char* DownstreamNodeHostname = "127.0.0.1";
-    constexpr static unsigned long DownstreamOperatorID = 15;
-    constexpr static unsigned int DownstreamNodePort = 8082;
-    constexpr static unsigned long LocalBuffers = 100;
-};
-
-using Sink15 = UnikernelSink<KafkaSinkConfig15>;
-
-struct SourceConfig17 {
-    using SourceType = TCPSource<SourceConfig17>;
-    using Schema = Schema<Field<INT32>, Field<FLOAT32>>;
-    constexpr static OriginId OriginId = 1;
-    constexpr static unsigned long UpstreamNodeID = 3;
-    constexpr static OperatorId OperatorId = 1;
-    constexpr static unsigned long QueryID = 0;
-    constexpr static std::chrono::milliseconds BufferFlushInterval = 10ms;
-    constexpr static unsigned long LocalBuffers = 100;
-    constexpr static sa_family_t SocketDomain = AF_INET;
-    constexpr static unsigned long SocketType = SOCK_STREAM;
-    constexpr static const char* NodeIP = "127.0.0.1";
-    constexpr static short Port = 8092;
-    constexpr static size_t NumberOfLocalBuffers = 100;
-};
-
-using Source17 = UnikernelSource<SourceConfig17>;
-
-struct SourceConfig13 {
-    using SourceType = NES::Network::NetworkSource;
-    constexpr static unsigned long QueryID = 0;
-    constexpr static unsigned long UpstreamNodeID = 4;
-    constexpr static unsigned long UpstreamPartitionID = 0;
-    constexpr static unsigned long UpstreamSubPartitionID = 0;
-    constexpr static const char* UpstreamNodeHostname = "127.0.0.1";
-    constexpr static unsigned long UpstreamOperatorID = 13;
-    constexpr static unsigned int UpstreamNodePort = 8081;
-    constexpr static unsigned long LocalBuffers = 100;
-};
-
-using Source13 = UnikernelSource<SourceConfig13>;
-
-struct SourceConfig19 {
-    using SourceType = NES::Network::NetworkSource;
-    constexpr static unsigned long QueryID = 0;
-    constexpr static unsigned long UpstreamNodeID = 5;
-    constexpr static unsigned long UpstreamPartitionID = 0;
-    constexpr static unsigned long UpstreamSubPartitionID = 0;
-    constexpr static const char* UpstreamNodeHostname = "127.0.0.1";
-    constexpr static unsigned long UpstreamOperatorID = 19;
-    constexpr static unsigned int UpstreamNodePort = 8084;
-    constexpr static unsigned long LocalBuffers = 100;
-};
-
-using Source19 = UnikernelSource<SourceConfig19>;
-using SubQuery8 = SubQuery<Sink15,
-                           PipelineJoin<Stage<2>,
-                                        PipelineJoin<Stage<3>, Pipeline<Stage<4>, Source17>, Pipeline<Stage<6>, Source13>>,
-                                        Pipeline<Stage<8>, Source19>>>;
-using QueryPlan = UnikernelExecutionPlan<SubQuery8>;
-}// namespace NES::Unikernel
-#endif//NES_UNIKERNEL_PIPELINE_H
