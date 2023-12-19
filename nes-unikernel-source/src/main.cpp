@@ -1,7 +1,5 @@
 #include <AutomaticDataGenerator.h>
 #include <CSVDataGenerator.h>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <DataGeneration/Nextmark/NEBitDataGenerator.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkChannel.hpp>
@@ -10,12 +8,64 @@
 #include <Network/PartitionManager.hpp>
 #include <Options.h>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Sinks/Formats/CsvFormat.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <YAMLModel.h>
+#include <boost/asio.hpp>
 #include <memory>
 #include <string>
 
 using namespace std::literals::chrono_literals;
+
+class TcpServer {
+  public:
+    TcpServer(boost::asio::io_service& ioService, Options option)
+        : acceptor(ioService, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), option.port)) {
+        bufferManager = std::make_shared<NES::Runtime::BufferManager>();
+        bufferManager->createFixedSizeBufferPool(128);
+        generator = AutomaticDataGenerator::create(option.schema);
+        generator->setBufferManager(bufferManager);
+        format = std::make_unique<NES::CsvFormat>(option.schema, bufferManager);
+        startAccept();
+    }
+
+  private:
+    void startAccept() {
+        auto newConnection = std::make_shared<boost::asio::ip::tcp::socket>(acceptor.get_executor());
+        acceptor.async_accept(*newConnection, [this, newConnection](const boost::system::error_code& error) {
+            if (!error) {
+                std::cout << "Accepted connection from " << newConnection->remote_endpoint() << std::endl;
+                startSend(newConnection);
+                startAccept();// Accept the next connection
+            } else {
+                std::cerr << "Error accepting connection: " << error.message() << std::endl;
+            }
+        });
+    }
+
+    void startSend(std::shared_ptr<boost::asio::ip::tcp::socket> socket) {
+        auto buffer = generator->createData(1, 8192);
+        std::string randomTuple = format->getFormattedBuffer(buffer[0]);
+        boost::asio::async_write(*socket,
+                                 boost::asio::buffer(randomTuple),
+                                 [this, socket](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
+                                     if (!error) {
+                                         startSend(socket);// Continue sending random tuples
+                                     } else {
+                                         std::cerr << "Error sending data: " << error.message() << std::endl;
+                                         socket->close();
+                                     }
+                                 });
+    }
+
+    NES::Runtime::BufferManagerPtr bufferManager;
+    std::unique_ptr<AutomaticDataGenerator> generator;
+    std::unique_ptr<NES::CsvFormat> format;
+    boost::asio::ip::tcp::acceptor acceptor;
+};
 
 class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListener {
   public:
@@ -40,16 +90,9 @@ class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListe
 
 const char* data = "Hello World!";
 
-int main(int argc, char* argv[]) {
+int runNetworkSource(Options options) {
     using namespace NES::Network;
     using namespace NES::Runtime;
-    NES::Logger::setupLogging("unikernel_source.log", NES::LogLevel::LOG_INFO);
-    auto optionsResult = Options::fromCLI(argc, argv);
-    if (optionsResult.has_error()) {
-        NES_FATAL_ERROR("Failed to Parse Configuration: {}", optionsResult.error());
-        return 1;
-    }
-    auto options = optionsResult.assume_value();
 
     auto partition_manager = std::make_shared<PartitionManager>();
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
@@ -91,7 +134,7 @@ int main(int argc, char* argv[]) {
             NES_INFO("End of Source");
             break;
         }
-        buffers[0].setSequenceNumber(i+1);
+        buffers[0].setSequenceNumber(i + 1);
         buffers[0].setOriginId(options.originId);
         sink->writeData(buffers[0], *wc);
         sleep(1);
@@ -99,4 +142,32 @@ int main(int argc, char* argv[]) {
 
     sink->shutdown();
     wc->releaseNetworkChannel(options.operatorId, QueryTerminationType::Graceful);
+
+    return 0;
+}
+
+int runTcpSource(Options options) {
+    using namespace NES::Runtime;
+    boost::asio::io_service ioService;
+    TcpServer server(ioService, options);
+    ioService.run();
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    NES::Logger::setupLogging("unikernel_source.log", NES::LogLevel::LOG_INFO);
+    auto optionsResult = Options::fromCLI(argc, argv);
+    if (optionsResult.has_error()) {
+        NES_FATAL_ERROR("Failed to Parse Configuration: {}", optionsResult.error());
+        return 1;
+    }
+    auto options = optionsResult.assume_value();
+
+    if (options.type == NetworkSource) {
+        NES_INFO("Running Network Source");
+        return runNetworkSource(options);
+    } else if (options.type == TcpSource) {
+        NES_INFO("Running TCP Source");
+        return runTcpSource(options);
+    }
 }

@@ -5,8 +5,9 @@
 #ifndef NES_OPTIONS_H
 #define NES_OPTIONS_H
 
-#include <argumentum/argparse.h>
 #include <Identifiers.hpp>
+#include <YAMLModel.h>
+#include <argumentum/argparse.h>
 #include <boost/filesystem.hpp>
 #include <boost/outcome.hpp>
 
@@ -18,13 +19,14 @@ struct Options {
     size_t workerId;
     std::string hostIp = "127.0.0.1";
     uint32_t port = 8082;
-    std::string downstreamIp= "127.0.0.1";
+    std::string downstreamIp = "127.0.0.1";
     uint32_t downstreamPort = 8080;
     NES::NodeId downstreamId;
     NES::OriginId originId;
     NES::PartitionId partitionId;
     NES::SubpartitionId subPartitionId;
     NES::SchemaPtr schema;
+    SourceType type;
 
     using Result = boost::outcome_v2::result<Options, std::string>;
     static Result fromCLI(int argc, char** argv);
