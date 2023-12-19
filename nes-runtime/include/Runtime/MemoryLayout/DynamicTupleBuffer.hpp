@@ -188,6 +188,13 @@ class DynamicTuple {
     void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, BufferManager* bufferManager);
 
     /**
+     * @brief Reads variable sized data and returns it as a string
+     * @param field
+     * @return VarSizedData as a string
+     */
+    std::string readVarSized(std::variant<const uint64_t, const std::string> field);
+
+    /**
      * @brief get a string representation of this dynamic tuple
      * @return a string
      */

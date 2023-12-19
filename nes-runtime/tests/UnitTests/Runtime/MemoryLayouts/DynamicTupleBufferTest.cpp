@@ -64,10 +64,22 @@ class DynamicTupleBufferTest : public Testing::BaseUnitTest, public testing::Wit
 };
 
 TEST_P(DynamicTupleBufferTest, readWriteDynamicBufferTest) {
+    // Reading and writing a full tuple
     for (int i = 0; i < 10; ++i) {
         auto testTuple = std::make_tuple((uint16_t) i, true, i * 2.0);
         dynamicBuffer->pushRecordToBuffer(testTuple);
         ASSERT_EQ((dynamicBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(i)), testTuple);
+    }
+
+    // Reading and writing a full tuple via DynamicTuple and DynamicField
+    for (auto i = 0; i < 10; ++i) {
+        (*dynamicBuffer)[i]["test$t1"].write<uint16_t>(i);
+        (*dynamicBuffer)[i]["test$t2"].write<bool>(i % 2);
+        (*dynamicBuffer)[i]["test$t3"].write<double_t>(i * 42.0);
+
+        ASSERT_EQ((*dynamicBuffer)[i]["test$t1"].read<uint16_t>(), i);
+        ASSERT_EQ((*dynamicBuffer)[i]["test$t2"].read<bool>(), i % 2);
+        ASSERT_EQ((*dynamicBuffer)[i]["test$t3"].read<double_t>(), i * 42.0);
     }
 }
 
@@ -77,6 +89,19 @@ TEST_P(DynamicTupleBufferTest, readWriteDynamicBufferTestVarSizeData) {
         dynamicBufferVarSize->pushRecordToBuffer(testTuple, bufferManager.get());
         ASSERT_EQ((dynamicBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(i)), testTuple);
     }
+
+    // Reading and writing a full tuple via DynamicTuple and DynamicField
+    for (auto i = 0_u64; i < 10; ++i) {
+        (*dynamicBufferVarSize)[i]["test$t1"].write<uint16_t>(i);
+        (*dynamicBufferVarSize)[i]["test$t3"].write<double_t>(i * 42.0);
+        (*dynamicBufferVarSize)[i].writeVarSized("test$t2", "" + std::to_string(i) + std::to_string(i), bufferManager.get());
+        (*dynamicBufferVarSize)[i].writeVarSized("test$t4", std::to_string(i), bufferManager.get());
+
+        ASSERT_EQ((*dynamicBufferVarSize)[i]["test$t1"].read<uint16_t>(), i);
+        ASSERT_EQ((*dynamicBufferVarSize)[i]["test$t3"].read<double_t>(), i * 42.0);
+        ASSERT_EQ((*dynamicBufferVarSize)[i].readVarSized("test$t2"), "" + std::to_string(i) + std::to_string(i));
+        ASSERT_EQ((*dynamicBufferVarSize)[i].readVarSized("test$t4"), std::to_string(i));
+    }
 }
 
 TEST_P(DynamicTupleBufferTest, readWriteDynamicBufferTestFullBuffer) {
@@ -85,6 +110,17 @@ TEST_P(DynamicTupleBufferTest, readWriteDynamicBufferTestFullBuffer) {
         dynamicBuffer->pushRecordToBuffer(testTuple);
         ASSERT_EQ((dynamicBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(i)), testTuple);
     }
+
+    // Reading and writing a full tuple via DynamicTuple and DynamicField
+    for (auto i = 0_u64; i < dynamicBuffer->getCapacity(); ++i) {
+        (*dynamicBuffer)[i]["test$t1"].write<uint16_t>(i);
+        (*dynamicBuffer)[i]["test$t2"].write<bool>(i % 2);
+        (*dynamicBuffer)[i]["test$t3"].write<double_t>(i * 42.0);
+
+        ASSERT_EQ((*dynamicBuffer)[i]["test$t1"].read<uint16_t>(), i);
+        ASSERT_EQ((*dynamicBuffer)[i]["test$t2"].read<bool>(), i % 2);
+        ASSERT_EQ((*dynamicBuffer)[i]["test$t3"].read<double_t>(), i * 42.0);
+    }
 }
 
 TEST_P(DynamicTupleBufferTest, readWriteDynamicBufferTestFullBufferVarSizeData) {
@@ -92,6 +128,19 @@ TEST_P(DynamicTupleBufferTest, readWriteDynamicBufferTestFullBufferVarSizeData) 
         auto testTuple = std::make_tuple((uint16_t) i, "" + std::to_string(i) + std::to_string(i), i * 2.0, std::to_string(i));
         dynamicBufferVarSize->pushRecordToBuffer(testTuple, bufferManager.get());
         ASSERT_EQ((dynamicBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(i)), testTuple);
+    }
+
+    // Reading and writing a full tuple via DynamicTuple and DynamicField
+    for (auto i = 0_u64; i < dynamicBufferVarSize->getCapacity(); ++i) {
+        (*dynamicBufferVarSize)[i]["test$t1"].write<uint16_t>(i);
+        (*dynamicBufferVarSize)[i]["test$t3"].write<double_t>(i * 42.0);
+        (*dynamicBufferVarSize)[i].writeVarSized("test$t2", "" + std::to_string(i) + std::to_string(i), bufferManager.get());
+        (*dynamicBufferVarSize)[i].writeVarSized("test$t4", std::to_string(i), bufferManager.get());
+
+        ASSERT_EQ((*dynamicBufferVarSize)[i]["test$t1"].read<uint16_t>(), i);
+        ASSERT_EQ((*dynamicBufferVarSize)[i]["test$t3"].read<double_t>(), i * 42.0);
+        ASSERT_EQ((*dynamicBufferVarSize)[i].readVarSized("test$t2"), "" + std::to_string(i) + std::to_string(i));
+        ASSERT_EQ((*dynamicBufferVarSize)[i].readVarSized("test$t4"), std::to_string(i));
     }
 }
 

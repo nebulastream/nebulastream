@@ -106,7 +106,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 100);
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (auto i = 0_u64; i < resultBuffer.getNumberOfTuples(); ++i) {
-        ASSERT_EQ(std::get<0>(resultDynamicBuffer.readRecordFromBuffer<std::string>(i)), "test");
+        ASSERT_EQ(resultDynamicBuffer[i].readVarSized("f1"), "test");
     }
 }
 

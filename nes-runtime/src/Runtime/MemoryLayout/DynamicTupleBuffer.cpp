@@ -60,7 +60,7 @@ void DynamicTuple::writeVarSized(std::variant<const uint64_t, const std::string>
         auto index = buffer.storeChildBuffer(childBufferVal);
         std::visit(
             [this, index](const auto& key) {
-                if constexpr (std::is_same_v<std::decay_t<decltype(key)>, uint64_t>
+                if constexpr (std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                               || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>) {
                     (*this)[key].write(index);
                 } else {
@@ -71,6 +71,20 @@ void DynamicTuple::writeVarSized(std::variant<const uint64_t, const std::string>
     } else {
         NES_ERROR("Could not store string {}", value);
     }
+}
+
+std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::string> field) {
+    return std::visit(
+        [this](const auto& key) {
+            if constexpr (std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
+                          || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>) {
+                auto index = (*this)[key].template read<TupleBuffer::NestedTupleBufferKey>();
+                return readVarSizedData(this->buffer, index);
+            } else {
+                NES_THROW_RUNTIME_ERROR("We expect either a uint64_t or a std::string to access a DynamicField!");
+            }
+        },
+        field);
 }
 
 std::string DynamicTuple::toString(const SchemaPtr& schema) {
