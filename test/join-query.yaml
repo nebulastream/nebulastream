@@ -9,51 +9,62 @@ query: |
 topology:
   sink:
     node:
-      ip: "127.0.0.1"
-      resources: 1
+      ip: 127.0.0.1
       port: 8085
+      resources: 1
   workers:
     - node:
         ip: 127.0.0.1
         port: 8080
         resources: 90
-      links: [ sink ]
-    - node:
-        resources: 1
-        ip: "127.0.0.1"
-        port: 8083
       sources:
-        - name: "input1"
+        - name: input1
+          tcp:
+            ip: 127.0.0.1
+            port: 8091
           schema:
             fields:
-              - name: id
-                type: INT64
-              - name: timestamp
-                type: INT64
-      links: [ 2 ]
+              - type: INT64
+                name: id
+              - type: INT64
+                name: timestamp
+      links:
+        - sink
     - node:
-        ip: "127.0.0.1"
+        ip: 127.0.0.1
         port: 8081
         resources: 1
+      links:
+        - '2'
       sources:
-        - name: "input2"
+        - name: input2
+          tcp:
+            ip: 127.0.0.1
+            port: 8090
           schema:
             fields:
-              - name: id
-                type: INT64
-              - name: timestamp
-                type: INT64
-      links: [ 2 ]
+              - type: INT64
+                name: id
+              - type: INT64
+                name: timestamp
     - node:
-        ip: "127.0.0.1"
+        ip: 127.0.0.1
         port: 8084
         resources: 1
+      links:
+        - '2'
       sources:
-        - name: "input3"
+        - name: input3
+          tcp:
+            ip: 127.0.0.1
+            port: 8092
           schema:
             fields:
-              - name: id
-                type: INT64
-              - name: timestamp
-                type: INT64
-      links: [ 2 ]
+              - type: INT64
+                name: id
+              - type: INT64
+                name: timestamp
+
+export_image: localhost:5000/unikernel-export:latest
+upload_image: localhost:5000/unikernel-upload:latest
+build_image: localhost:5000/unikernel-build:latest
