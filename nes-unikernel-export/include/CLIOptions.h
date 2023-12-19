@@ -13,6 +13,7 @@ class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -30,9 +31,24 @@ struct ExportTopologyNodeConfiguration {
     size_t resources;
 };
 
+struct TCPSourceConfiguration {
+    std::string ip;
+    size_t port;
+
+    friend bool operator==(const TCPSourceConfiguration& lhs, const TCPSourceConfiguration& rhs) {
+        return lhs.ip == rhs.ip
+            && lhs.port == rhs.port;
+    }
+
+    friend bool operator!=(const TCPSourceConfiguration& lhs, const TCPSourceConfiguration& rhs) {
+        return !(lhs == rhs);
+    }
+};
+
 struct ExportSourceConfiguration {
     std::string name;
     SchemaConfiguration schema;
+    std::optional<TCPSourceConfiguration> tcp;
 };
 
 struct ExportWorkerConfiguration {
@@ -73,6 +89,22 @@ struct ExportConfiguration {
 
 namespace YAML {
 template<>
+struct convert<TCPSourceConfiguration> {
+    static Node encode(const TCPSourceConfiguration& rhs) {
+        Node node;
+        UNIKERNEL_MODEL_YAML_ENCODE(ip);
+        UNIKERNEL_MODEL_YAML_ENCODE(port);
+        return node;
+    }
+
+    static Node decode(const Node& node, TCPSourceConfiguration& rhs) {
+        UNIKERNEL_MODEL_YAML_DECODE(ip);
+        UNIKERNEL_MODEL_YAML_DECODE(port);
+        return node;
+    }
+};
+
+template<>
 struct convert<ExportTopologyNodeConfiguration> {
     static Node encode(const ExportTopologyNodeConfiguration& rhs) {
         Node node;
@@ -96,12 +128,18 @@ struct convert<ExportSourceConfiguration> {
         Node node;
         UNIKERNEL_MODEL_YAML_ENCODE(name);
         UNIKERNEL_MODEL_YAML_ENCODE(schema);
+        if (rhs.tcp.has_value()) {
+            node["tcp"] = *rhs.tcp;
+        }
         return node;
     };
 
     static Node decode(const Node& node, ExportSourceConfiguration& rhs) {
         UNIKERNEL_MODEL_YAML_DECODE(name);
         UNIKERNEL_MODEL_YAML_DECODE(schema);
+        if (node["tcp"]) {
+            rhs.tcp.emplace(node["tcp"].as<TCPSourceConfiguration>());
+        }
         return node;
     }
 };
@@ -152,6 +190,7 @@ struct convert<ExportWorkerConfiguration> {
         return node;
     }
 };
+
 template<>
 struct convert<ExportTopologySinkConfiguration> {
     static Node encode(const ExportTopologySinkConfiguration& rhs) {
@@ -193,6 +232,7 @@ struct convert<ExportTopologyConfiguration> {
         return node;
     }
 };
+
 template<>
 struct convert<ExportConfiguration> {
     static Node encode(const ExportConfiguration& rhs) {
@@ -208,6 +248,7 @@ struct convert<ExportConfiguration> {
         return node;
     }
 };
+
 template<>
 struct convert<ExportKafkaConfiguration> {
     static Node encode(const ExportKafkaConfiguration& rhs) {
@@ -227,8 +268,9 @@ struct convert<ExportKafkaConfiguration> {
 
 class Options;
 using CLIResult = boost::outcome_v2::result<Options, std::string>;
+
 class Options {
-  public:
+public:
     static CLIResult getCLIOptions(int argc, char** argv);
     std::string getQueryString();
     [[nodiscard]] bool useKafka() const;
@@ -239,7 +281,7 @@ class Options {
     [[nodiscard]] ExportKafkaConfiguration getKafkaConfiguration() const;
     [[nodiscard]] std::string getYAMLOutputPath() const;
 
-  private:
+private:
     ExportConfiguration configuration;
     std::optional<std::string> input;
     size_t bufferSize = 8192;

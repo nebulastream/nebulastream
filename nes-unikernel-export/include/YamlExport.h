@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler.h>
+#include <QueryCompiler.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <YAMLModel.h>
 #include <fstream>
@@ -38,7 +38,7 @@ struct WorkerSubQueryStage {
 struct WorkerSubQuery {
     NES::QueryPlanPtr subplan;
     std::vector<WorkerSubQueryStage> stages;
-    std::map<NES::PipelineId, NES::Network::NetworkSourceDescriptorPtr> sources;
+    std::map<NES::PipelineId, NES::SourceDescriptorPtr> sources;
     std::map<NES::PipelineId, SinkStage> sinks;
 };
 

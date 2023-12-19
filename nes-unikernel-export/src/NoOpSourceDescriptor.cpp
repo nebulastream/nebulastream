@@ -11,26 +11,46 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 */
-#include <Operators/LogicalOperators/Sources/NoOpSourceDescriptor.h>
+#include <NoOpSourceDescriptor.hpp>
 #include <utility>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 
 std::string NES::NoOpSourceDescriptor::toString() const {
     return "NoOpSourceDescriptor";
 }
 
-bool NES::NoOpSourceDescriptor::equal(const NES::SourceDescriptorPtr &other) const {
-    return other->instanceOf<NoOpSourceDescriptor>() && other->getLogicalSourceName() == getLogicalSourceName();
+bool NES::NoOpSourceDescriptor::equal(const NES::SourceDescriptorPtr& other) const {
+    return other->instanceOf<NoOpSourceDescriptor>() &&
+        other->getLogicalSourceName() == getLogicalSourceName() &&
+        other->getSchema() == getSchema() &&
+        other->as<NoOpSourceDescriptor>()->getTcp() == getTcp() &&
+        other->as<NoOpSourceDescriptor>()->getOperatorId() == getOperatorId() &&
+        other->as<NoOpSourceDescriptor>()->getOriginId() == getOriginId();
+
 }
 
 NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::copy() {
-    return std::make_shared<NoOpSourceDescriptor>(schema, getLogicalSourceName());
+    return std::make_shared<NoOpSourceDescriptor>(schema, getLogicalSourceName(), tcp, originId, operatorId);
 }
 
-NES::NoOpSourceDescriptor::NoOpSourceDescriptor(NES::SchemaPtr schemaPtr, std::string logicalSourceName)
-        : SourceDescriptor(std::move(schemaPtr), std::move(logicalSourceName)) {
+NES::NoOpSourceDescriptor::NoOpSourceDescriptor(SchemaPtr schema,
+                                                std::string logicalSourceName,
+                                                std::optional<TCPSourceConfiguration> tcp,
+                                                NES::OriginId originId,
+                                                NES::OperatorId operatorId)
+    : SourceDescriptor(std::move(schema), std::move(logicalSourceName)),
+      tcp(std::move(tcp)),
+      originId(originId),
+      operatorId(operatorId) {
 }
 
-NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::create(NES::SchemaPtr schemaPtr, std::string logicalSourceName) {
-    return std::make_shared<NoOpSourceDescriptor>(std::move(schemaPtr), std::move(logicalSourceName));
+NES::SourceDescriptorPtr NES::NoOpSourceDescriptor::create(NES::SchemaPtr schemaPtr,
+                                                           std::string logicalSourceName,
+                                                           std::optional<TCPSourceConfiguration> tcp,
+                                                           OriginId originId,
+                                                           OperatorId operatorId) {
+    return std::make_shared<NoOpSourceDescriptor>(std::move(schemaPtr),
+                                                  std::move(logicalSourceName),
+                                                  std::move(tcp),
+                                                  originId,
+                                                  operatorId);
 }
