@@ -71,7 +71,7 @@ class RuntimeEventListener;
 #ifndef UNIKERNEL_LIB
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 #else
-using RuntimeEventListenerPtr =RuntimeEventListener*;
+using RuntimeEventListenerPtr = RuntimeEventListener*;
 #endif
 
 class BufferStorage;

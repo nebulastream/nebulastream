@@ -1068,9 +1068,7 @@ TEST_F(TopologyTest, testCommonAncestorIfOneOfTheNodesIsAncestorOfTheOther) {
     EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[2], topologyNodes[6]})), testing::ElementsAre(2));
 
     EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[8], topologyNodes[4]})), testing::ElementsAre(1));
-    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[8], topologyNodes[6]})),
-                testing::ElementsAre(0));
-
+    EXPECT_THAT(getIds(topology->findCommonAncestors({topologyNodes[8], topologyNodes[6]})), testing::ElementsAre(0));
 }
 
 /**

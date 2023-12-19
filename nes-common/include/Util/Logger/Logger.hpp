@@ -124,7 +124,8 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         }                                                                                                                        \
     } while (0)
 
-#define NES_LOG_OS(LogLevel) NES::Logger::getInstance()->createSink(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, LogLevel)
+#define NES_LOG_OS(LogLevel)                                                                                                     \
+    NES::Logger::getInstance()->createSink(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, LogLevel)
 // Creates a log message with log level trace.
 #define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
 // Creates a log message with log level info.

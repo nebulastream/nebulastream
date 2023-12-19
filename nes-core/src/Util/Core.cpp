@@ -148,7 +148,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
 
     return true;
 }
-#endif //UNIKERNEL_TEST_LIBRARY
+#endif//UNIKERNEL_TEST_LIBRARY
 #ifndef UNIKERNEL_EXPORT
 std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(const std::string& csvFile,
                                                                  const SchemaPtr& schema,
@@ -210,7 +210,6 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema) {
     return retVector;
 }
 #endif
-
 
 std::string Util::trim(const std::string& str) {
     size_t start = str.find_first_not_of(" \t\n\r");

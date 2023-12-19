@@ -34,18 +34,17 @@ class RuntimeEventListener
     friend class NES::Network::ExchangeProtocol;
 
 #ifdef UNIKERNEL_LIB
-public:
+  public:
     virtual ~RuntimeEventListener() NES_NOEXCEPT(false) = default;
 #endif
 
-protected:
+  protected:
     /**
      * @brief API method called upon receiving an event
      * @param event
      */
     virtual void onEvent(Runtime::BaseEvent& event) = 0;
 };
-
 
 #ifndef UNIKERNEL_LIB
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;

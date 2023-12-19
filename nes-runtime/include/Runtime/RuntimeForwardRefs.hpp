@@ -52,7 +52,6 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SinkMedium;
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
-
 #ifndef UNIKERNEL_LIB
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
@@ -77,7 +76,7 @@ class RuntimeEventListener;
 #ifndef UNIKERNEL_LIB
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 #else
-using RuntimeEventListenerPtr =RuntimeEventListener*;
+using RuntimeEventListenerPtr = RuntimeEventListener*;
 #endif
 
 class BufferStorage;

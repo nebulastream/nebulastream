@@ -46,6 +46,7 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
     std::shared_ptr<NES::Nautilus::IR::IRGraph> createIR(DumpHelper& dumpHelper, Timer<>& timer);
     std::shared_ptr<NES::Nautilus::IR::IRGraph> setupIR();
     std::shared_ptr<NES::Nautilus::IR::IRGraph> closeIR();
+
   private:
     std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();
     std::string compilationBackend;
