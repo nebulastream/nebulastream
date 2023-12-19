@@ -45,6 +45,9 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
 /**
  * @brief The query deployment phase is responsible for deploying the query plan for a query to respective worker nodes.
  */
@@ -82,13 +85,23 @@ class QueryDeploymentPhase {
      * @throws QueryDeploymentException: Error in call to Elegant acceleration service with code
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
-    void deployQuery(QueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
+    void deployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes);
 
     /**
      * @brief method to start a already deployed query
      * @param queryId
      */
     void startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes);
+
+    /**
+     * @brief apply java UDF acceleration to a query sub plan
+     * @param sharedQueryId the id of the shared query to which the query sub plan belongs
+     * @param executionNode the execution node which hosts the query sub plan
+     * @param querySubPlan the query sub plan
+     */
+    void applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
+                                  const ExecutionNodePtr& executionNode,
+                                  const QueryPlanPtr& querySubPlan) const;
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;

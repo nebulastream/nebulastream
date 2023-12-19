@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Runtime/Events.hpp>
@@ -46,23 +47,20 @@ Version PartitionManager::PartitionConsumerEntry::getVersion() { return consumer
 uint64_t PartitionManager::PartitionConsumerEntry::getDisconnectCount() const { return disconnectCount; }
 
 bool PartitionManager::PartitionConsumerEntry::startNewVersion() {
-    if (!pendingVersion.has_value()) {
+    if (!nextSourceDescriptor.has_value()) {
         return false;
     }
-    consumer->onVersionUpdate(pendingVersion.value().first, pendingVersion->second);
-    pendingVersion = std::nullopt;
+    consumer->onVersionUpdate(nextSourceDescriptor.value());
+    nextSourceDescriptor = std::nullopt;
     disconnectCount = 0;
     return true;
 }
 
-bool PartitionManager::PartitionConsumerEntry::addPendingVersion(Version pendingVersion, NodeLocation pendingSenderLocation) {
-    if (this->pendingVersion.has_value()) {
-        NES_NOT_IMPLEMENTED();
-    }
-    if (pendingVersion == consumer->getVersion()) {
+bool PartitionManager::PartitionConsumerEntry::addNextVersion(const NetworkSourceDescriptor& nextNetworkSourceDescriptor) {
+    if (nextNetworkSourceDescriptor.getVersion() == consumer->getVersion()) {
         return false;
     }
-    this->pendingVersion = {pendingVersion, pendingSenderLocation};
+    this->nextSourceDescriptor = nextNetworkSourceDescriptor;
     return true;
 }
 
@@ -167,10 +165,10 @@ Version PartitionManager::getVersion(NesPartition partition) {
     return false;
 }
 
-void PartitionManager::addPendingVersion(NesPartition partition, Version pendingVersion, NodeLocation pendingSenderLocation) {
+void PartitionManager::addNextVersion(const NetworkSourceDescriptor& nextNetworkSourceDescriptor) {
     std::unique_lock lock(consumerPartitionsMutex);
-    if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
-        it->second.addPendingVersion(pendingVersion, pendingSenderLocation);
+    if (auto it = consumerPartitions.find(nextNetworkSourceDescriptor.getNesPartition()); it != consumerPartitions.end()) {
+        it->second.addNextVersion(nextNetworkSourceDescriptor);
     }
 }
 

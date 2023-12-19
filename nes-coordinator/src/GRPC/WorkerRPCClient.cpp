@@ -101,9 +101,10 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
+//todo #4450: move this logic to deployQuery method
 bool WorkerRPCClient::reconfigureQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
-    QueryId queryId = queryPlan->getQueryId();
-    QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
+    auto queryId = queryPlan->getQueryId();
+    auto querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::reconfigureQuery address={} queryId={} querySubPlanId = {} ", address, queryId, querySubPlanId);
 
     // wrap the query id and the query operators in the protobuf reconfigure query request object.
@@ -119,7 +120,7 @@ bool WorkerRPCClient::reconfigureQuery(const std::string& address, const QueryPl
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->ReconfigureQuery(&context, request, &reply);
+    auto status = workerStub->ReconfigureQuery(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::reconfigureQuery: status ok return success={}", reply.success());

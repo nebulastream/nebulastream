@@ -78,7 +78,7 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     //undeploy queries
     try {
         auto queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan);
-        queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
+        queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::FAILED);
     } catch (NES::Exceptions::RuntimeException& e) {
         throw Exceptions::QueryUndeploymentException(sharedQueryId,
                                                      "Failed to undeploy query with id " + std::to_string(queryId));

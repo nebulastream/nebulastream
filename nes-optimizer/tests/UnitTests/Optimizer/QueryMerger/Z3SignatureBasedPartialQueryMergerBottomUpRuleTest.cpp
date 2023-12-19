@@ -387,7 +387,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerBottomUpRuleTest, testMergingMoreThanTw
 
     auto updatedSharedQueryPlansDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
     NES_INFO("Shared Plan After Merging with Query 2\n{}", updatedSharedQueryPlansDeploy[0]->getQueryPlan()->toString());
-    updatedSharedQueryPlansDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
+    updatedSharedQueryPlansDeploy[0]->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
     //Clear old change log entries by updating the processed till timestamp
     auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

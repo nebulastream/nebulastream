@@ -98,13 +98,13 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
         //undeploy SQP
         queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
-        if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()) {
+        if (SharedQueryPlanStatus::STOPPED == sharedQueryPlan->getStatus()) {
             //Mark all contained queryIdAndCatalogEntryMapping as stopped
             for (auto& involvedQueryIds : sharedQueryPlan->getQueryIds()) {
                 queryCatalogService->updateQueryStatus(involvedQueryIds, QueryState::STOPPED, "Hard Stopped");
             }
             globalQueryPlan->removeSharedQueryPlan(sharedQueryId);
-        } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
+        } else if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
             //Perform placement of updated shared query plan
             NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
             bool placementSuccessful = queryPlacementPhase->execute(sharedQueryPlan);
@@ -119,7 +119,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
             queryDeploymentPhase->execute(sharedQueryPlan);
 
             //Update the shared query plan as deployed
-            sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+            sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
         }
 
         //todo: #3742 FIXME: This is a work-around for an edge case. To reproduce this:

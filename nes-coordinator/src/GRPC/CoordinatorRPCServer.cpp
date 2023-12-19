@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "Plans/Global/Execution/ExecutionNode.hpp"
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
 #include <Catalogs/Topology/TopologyManagerService.hpp>
@@ -23,7 +22,6 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Runtime/OpenCLManager.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -71,12 +69,11 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            LocationServicePtr locationService,
-                                           QueryParsingServicePtr queryParsingService,
-                                           GlobalExecutionPlanPtr globalExecutionPlan)
+                                           QueryParsingServicePtr queryParsingService)
     : queryService(std::move(queryService)), topologyManagerService(std::move(topologyManagerService)),
       sourceCatalogService(std::move(sourceCatalogService)), queryCatalogService(std::move(queryCatalogService)),
       monitoringManager(std::move(monitoringManager)), locationService(std::move(locationService)),
-      queryParsingService(std::move(queryParsingService)), globalExecutionPlan(globalExecutionPlan){};
+      queryParsingService(std::move(queryParsingService)){};
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,
@@ -380,20 +377,6 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
     auto sharedQueryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
 
-    //todo #4438: extract the following logic to a request
-    auto queryStateBefore =
-        queryCatalogService->getEntryForQuery(queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front())->getQueryState();
-    if (queryStateBefore == QueryState::MIGRATING) {
-        std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-        for (const auto& node : executionNodes) {
-            auto candidateSubplan = node->getQuerySubPlan(sharedQueryId, querySubPlanId);
-            if (candidateSubplan != nullptr) {
-                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlanId);
-                auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(candidateSubplan);
-                node->getTopologyNode()->increaseResources(resourceAmount);
-            }
-        }
-    }
     //inform catalog service
     bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryState::SOFT_STOP_COMPLETED);
 

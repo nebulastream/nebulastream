@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -58,7 +59,7 @@ class DataEmitter : public Runtime::RuntimeEventListener {
     /**
      * @brief reconfigure with sink to perform an update of its version
      */
-    virtual void onVersionUpdate(Version, Network::NodeLocation){};
+    virtual void onVersionUpdate(Network::NetworkSourceDescriptor){};
 };
 }// namespace NES
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

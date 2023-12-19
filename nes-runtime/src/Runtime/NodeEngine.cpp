@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -21,6 +19,8 @@
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -634,7 +634,17 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
                                        && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
                                });
         if (it != networkSinks.end()) {
-            networkSink->configureNewReceiverAndPartition(newPartition, newNodeLocation, version);
+            auto waitTime = std::chrono::milliseconds(0);//wait time will be ignored
+            auto retries = 0;                            //retries will be ignored
+            auto numberOfOrigins = 0;                    //number of origins will be ignored
+            auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(newNodeLocation,
+                                                                                     newPartition,
+                                                                                     waitTime,
+                                                                                     retries,
+                                                                                     version,
+                                                                                     numberOfOrigins,
+                                                                                     uniqueNetworkSinkDescriptorId);
+            networkSink->configureNewSinkDescriptor(*reconfiguredSinkDescriptor->as<Network::NetworkSinkDescriptor>());
             return true;
         }
         //query sub plan did not have network sink with specified id
@@ -648,33 +658,37 @@ bool NodeEngine::experimentalReconfigureNetworkSink(uint64_t newNodeId,
 bool NodeEngine::reconfigureSubPlan(QueryPlanPtr& reconfiguredQueryPlan) {
     std::unique_lock lock(engineMutex);
     auto deployedPlanIterator = deployedQEPs.find(reconfiguredQueryPlan->getQuerySubPlanId());
+
+    //if not running sub query plan with the given id exists, return false
     if (deployedPlanIterator == deployedQEPs.end()) {
         return false;
     }
     auto deployedPlan = deployedPlanIterator->second;
+
+    /* iterator over all network sinks of the running plan and apply the new descriptors. If the version number
+     * of the new descriptor is the same as the running version, nothing will be changed */
     for (auto& sink : deployedPlan->getSinks()) {
         auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
         if (networkSink != nullptr) {
             for (auto& reconfiguredSink : reconfiguredQueryPlan->getSinkOperators()) {
                 auto reconfiguredNetworkSink =
                     std::dynamic_pointer_cast<const Network::NetworkSinkDescriptor>(reconfiguredSink->getSinkDescriptor());
-                if (reconfiguredNetworkSink && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
-                    networkSink->scheduleNewReceiverAndPartition(*reconfiguredNetworkSink);
+                if (reconfiguredNetworkSink
+                    && reconfiguredNetworkSink->getUniqueId() == networkSink->getUniqueNetworkSinkDescriptorId()) {
+                    networkSink->scheduleNewDescriptor(*reconfiguredNetworkSink);
                 }
             }
         }
     }
+    // iterate over all network sources and apply the reconfigurations
     for (auto& source : deployedPlan->getSources()) {
         auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(source);
         if (networkSource != nullptr) {
             for (auto& reconfiguredSource : reconfiguredQueryPlan->getSourceOperators()) {
                 auto reconfiguredNetworkSourceDescriptor =
                     std::dynamic_pointer_cast<const Network::NetworkSourceDescriptor>(reconfiguredSource->getSourceDescriptor());
-                //todo: perform reconfiguration through source
-                partitionManager->addPendingVersion(reconfiguredNetworkSourceDescriptor->getNesPartition(),
-                                                    reconfiguredNetworkSourceDescriptor->getVersion(),
-                                                    reconfiguredNetworkSourceDescriptor->getNodeLocation());
-
+                //todo #4449: perform reconfiguration through source
+                partitionManager->addNextVersion(*reconfiguredNetworkSourceDescriptor);
             }
         }
     }

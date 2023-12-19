@@ -125,23 +125,38 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
     return true;
 }
 
-bool GlobalExecutionPlan::removeQuerySubPlanFromNode(NodeId nodeId, SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
-    auto nodeIterator = nodeIdIndex.find(nodeId);
-    if (nodeIterator == nodeIdIndex.end()) {
+bool GlobalExecutionPlan::removeQuerySubPlanFromNode(ExecutionNodeId nodeId,
+                                                     SharedQueryId sharedQueryId,
+                                                     QuerySubPlanId subPlanId) {
+    auto nodeIterator = executionNodeIdIndex.find(nodeId);
+
+    //return false if no node with the given id could be found
+    if (nodeIterator == executionNodeIdIndex.end()) {
         return false;
     }
     auto executionNode = nodeIterator->second;
+
+    //return false if no query sub plan with the given id was found at the node
     if (!executionNode->removeQuerySubPlan(sharedQueryId, subPlanId)) {
         return false;
     }
+
+    /* Check if the node still hosts query sub plans belonging the shared query with the given id. If not, remove
+     * the node from the vector of nodes associated with this shared query*/
     if (executionNode->getQuerySubPlans(sharedQueryId).empty()) {
         auto& mappedNodes = queryIdIndex[sharedQueryId];
         if (mappedNodes.size() == 1) {
+            /* if this was the only node associated with this shared query id, remove the entry for this shared query
+             * from the index */
             queryIdIndex.erase(sharedQueryId);
         } else {
+            /* if other nodes are still hosting sub queries of this shared query, remove only this node, from the list
+             * of nodes which host sub query plans of this shared query */
             mappedNodes.erase(std::find(mappedNodes.begin(), mappedNodes.end(), executionNode));
         }
     }
+
+    // if the node does not host any query sub plans anymore, remove it
     if (executionNode->getAllQuerySubPlans().empty()) {
         removeExecutionNode(nodeId);
     }

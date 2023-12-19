@@ -48,7 +48,7 @@ void GlobalQueryPlan::removeQuery(uint64_t queryId, RequestType requestType) {
         //For failure request query id is nothing but id of the shared query plan
         auto sharedQueryPlan = sharedQueryIdToPlanMap[queryId];
         //Instead of removing query we mark the status of the shared query plan to failed
-        sharedQueryPlan->setStatus(SharedQueryPlanStatus::Failed);
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::FAILED);
     } else if (RequestType::StopQuery == requestType) {
         //Check if the query id present in the Global query Plan
         if (queryIdToSharedQueryIdMap.find(queryId) != queryIdToSharedQueryIdMap.end()) {
@@ -63,10 +63,10 @@ void GlobalQueryPlan::removeQuery(uint64_t queryId, RequestType requestType) {
 
             if (sharedQueryPlan->isEmpty()) {
                 // Mark SQP as stopped if all queries are removed post stop
-                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Stopped);
+                sharedQueryPlan->setStatus(SharedQueryPlanStatus::STOPPED);
             } else {
                 // Mark SQP as updated if after stop more queries are remaining
-                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
+                sharedQueryPlan->setStatus(SharedQueryPlanStatus::UPDATED);
             }
 
             //Remove from the queryId to shared query id map
@@ -88,7 +88,7 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansToDeploy() {
     NES_DEBUG("GlobalQueryPlan: Get the shared query plans to deploy.");
     std::vector<SharedQueryPlanPtr> sharedQueryPlansToDeploy;
     for (auto& [sharedQueryId, sharedQueryPlan] : sharedQueryIdToPlanMap) {
-        if (SharedQueryPlanStatus::Deployed == sharedQueryPlan->getStatus()) {
+        if (SharedQueryPlanStatus::DEPLOYED == sharedQueryPlan->getStatus()) {
             NES_TRACE("GlobalQueryPlan: Skipping! found already deployed shared query plan.");
             continue;
         }
@@ -111,7 +111,7 @@ bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQuer
     NES_INFO("GlobalQueryPlan: updating the shared query metadata information");
     auto sharedQueryId = sharedQueryPlan->getId();
     //Mark the shared query plan as updated post merging new queries
-    sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
+    sharedQueryPlan->setStatus(SharedQueryPlanStatus::UPDATED);
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
     NES_TRACE("GlobalQueryPlan: Updating the Query Id to Shared Query Id map");
     for (auto queryId : sharedQueryPlan->getQueryIds()) {
@@ -126,8 +126,8 @@ void GlobalQueryPlan::removeFailedOrStoppedSharedQueryPlans() {
     for (auto itr = sharedQueryIdToPlanMap.begin(); itr != sharedQueryIdToPlanMap.end();) {
         auto sharedQueryPlan = itr->second;
         //Remove all plans that are stopped or Failed
-        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed
-            || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped) {
+        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::FAILED
+            || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::STOPPED) {
             NES_TRACE("GlobalQueryPlan: Removing! found an empty query meta data.");
             sharedQueryIdToPlanMap.erase(itr++);
             continue;
@@ -142,8 +142,8 @@ void GlobalQueryPlan::removeSharedQueryPlan(QueryId sharedQueryPlanId) {
         throw Exceptions::RuntimeException("GlobalQueryPlan: Cannot remove shared query plan with invalid id.");
     }
     auto sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryPlanId];
-    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped
-        || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed) {
+    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::STOPPED
+        || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::FAILED) {
         NES_TRACE("Found stopped or failed query plan. Removing query plan from shared query plan.");
         sharedQueryIdToPlanMap.erase(sharedQueryPlanId);
     }

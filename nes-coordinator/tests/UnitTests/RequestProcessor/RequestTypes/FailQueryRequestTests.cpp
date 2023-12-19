@@ -136,7 +136,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         NES_DEBUG("Updating Query Plan with global query id : {}", sharedQueryId);
 
         //Check If the shared query plan is newly created
-        ASSERT_EQ(SharedQueryPlanStatus::Created, sharedQueryPlan->getStatus());
+        ASSERT_EQ(SharedQueryPlanStatus::CREATED, sharedQueryPlan->getStatus());
 
         //Perform placement of new shared query plan
         NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
@@ -149,7 +149,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         ASSERT_FALSE(executionNodes.empty());
 
         //Remove the old mapping of the shared query plan
-        if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
+        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
             queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
         }
 
@@ -182,12 +182,12 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         }
 
         //Update the shared query plan as deployed
-        sharedQueryPlan->setStatus(SharedQueryPlanStatus::Deployed);
+        sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
         ASSERT_EQ(queryCatalogService->getEntryForQuery(queryId)->getQueryState(), QueryState::RUNNING);
         ASSERT_NE(globalQueryPlan->getSharedQueryId(queryId), INVALID_SHARED_QUERY_ID);
         ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
-        ASSERT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Deployed);
+        ASSERT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::DEPLOYED);
     }
     std::shared_ptr<Catalogs::Query::QueryCatalog> queryCatalog;
     QueryCatalogServicePtr queryCatalogService;
@@ -248,7 +248,7 @@ TEST_F(FailQueryRequestTest, testValidFailRequestNoSubPlanSpecified) {
                 EXPECT_EQ(subQueryPlanMetaData->getSubQueryStatus(), QueryState::MARKED_FOR_FAILURE);
             }
 
-            EXPECT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::Failed);
+            EXPECT_EQ(globalQueryPlan->getSharedQueryPlan(sharedQueryId)->getStatus(), SharedQueryPlanStatus::FAILED);
         }
     });
     thread->join();

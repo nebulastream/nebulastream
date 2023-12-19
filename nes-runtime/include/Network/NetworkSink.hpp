@@ -17,12 +17,12 @@
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
 
 namespace NES::Network {
-class NetworkSinkDescriptor;
 
 /**
  * @brief This represent a sink operator that acts as a connecting API between query processing and network stack.
@@ -129,7 +129,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newReceiverLocation the location of the node where the new downstream source is located
      * @param newVersion The new version number assigned to this sink
      */
-    void configureNewReceiverAndPartition(NesPartition newPartition, const NodeLocation& newReceiverLocation, Version newVersion);
+    void configureNewSinkDescriptor(const NetworkSinkDescriptor& newNetworkSinkDescriptor);
 
     /**
      * @brief schedule a new receiver location and new receiver partition and versio number to be set for this sink.
@@ -137,13 +137,13 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * pending
      * @return false if the changes have already been applied, true otherwise
      */
-    bool scheduleNewReceiverAndPartition(NetworkSinkDescriptor const& networkSinkDescriptor);
+    bool scheduleNewDescriptor(const NetworkSinkDescriptor& networkSinkDescriptor);
 
     /**
      * @brief apply pending changes to the receiver location, receiver partition and version number
      * @return true if pending changes were found and applied, false if no pending changes could be found
      */
-    bool applyPendingReceiverAndPartition();
+    bool applyNextSinkDescriptor();
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
@@ -180,7 +180,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
     NodeLocation receiverLocation;
-    std::optional<std::tuple<NesPartition, NodeLocation, Version>> pendingReceiver;
+    std::optional<NetworkSinkDescriptor> nextSinkDescriptor;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
     size_t numOfProducers;

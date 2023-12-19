@@ -206,7 +206,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     for (const auto& sink: qep->getSinks()) {
         const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
         if (networkSink) {
-            networkSink->applyPendingReceiverAndPartition();
+            networkSink->applyNextSinkDescriptor();
         }
     }
 

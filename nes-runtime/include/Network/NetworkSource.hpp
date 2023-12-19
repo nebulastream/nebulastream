@@ -141,7 +141,7 @@ class NetworkSource : public DataSource {
      * @brief Reconfigures this sink with ReconfigurationType::UpdateVersion causing it to close event channels to the old
      * upstream sink and open channels to the new one
      */
-    void onVersionUpdate(Version newVersion, Network::NodeLocation newSenderLocation) override;
+    void onVersionUpdate(NetworkSourceDescriptor newDescriptor) override;
 
     /**
     * @brief Getter for the initial version.

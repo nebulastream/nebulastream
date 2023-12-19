@@ -67,12 +67,12 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Remove the old mapping of the shared query plan
     if (SharedQueryPlanStatus::MIGRATING != sharedQueryPlan->getStatus()) {
-        if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
+        if (SharedQueryPlanStatus::UPDATED == sharedQueryPlan->getStatus()) {
             queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
         }
 
         //Reset all sub query plan metadata in the catalog
-        for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+        for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
             queryCatalogService->resetSubQueryMetaData(queryId);
             queryCatalogService->mapSharedQueryPlanId(sharedQueryId, queryId);
         }
@@ -80,10 +80,11 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
 
     //Add sub query plan metadata in the catalog
     for (auto& executionNode : executionNodes) {
-        auto workerId = executionNode->getId();
-        auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
+        const auto workerId = executionNode->getId();
+        const auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
         for (auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
+            //todo #4452: avoid looping over all query ids by changing the structure of the query catalog
             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                 //set metadata only for versions that deploy a new plan, reconfig and undeployment already have their metadata set
                 auto entry = queryCatalogService->getEntryForQuery(queryId);
@@ -95,28 +96,46 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     }
 
     //Mark queries as deployed
-    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+    for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         //do not set migrating queries to deployed status
-        auto newQueryState =
-            sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING ? QueryState::MIGRATING : QueryState::DEPLOYED;
-        queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(newQueryState);
+        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::MIGRATING) {
+            queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::MIGRATING);
+        } else {
+            queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::DEPLOYED);
+        }
     }
 
     deployQuery(sharedQueryId, executionNodes);
     NES_DEBUG("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
 
     //Mark queries as running if they are not in migrating state
-    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+    for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         if (sharedQueryPlan->getStatus() != SharedQueryPlanStatus::MIGRATING) {
             queryCatalogService->getEntryForQuery(queryId)->setQueryStatus(QueryState::RUNNING);
         }
     }
 
     //mark subqueries that were reconfigured as running again
-    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        for (auto& subPlanMetaData : queryCatalogService->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData()) {
-            if (subPlanMetaData->getSubQueryStatus() == QueryState::RECONFIGURE)  {
+    for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
+        for (const auto& subPlanMetaData : queryCatalogService->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData()) {
+            if (subPlanMetaData->getSubQueryStatus() == QueryState::RECONFIGURING)  {
                 subPlanMetaData->updateStatus(QueryState::RUNNING);
+            }
+        }
+    }
+
+    //remove subplans from global query plan if they were stopped due to migration
+    auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
+    for (const auto& node : executionNodes) {
+        auto subPlans = node->getQuerySubPlans(sharedQueryId);
+        for (const auto& querySubPlan : subPlans) {
+            const auto subplanMetaData =
+                queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
+            auto subPlanStatus = subplanMetaData->getSubQueryStatus();
+            if (subPlanStatus == QueryState::MIGRATING) {
+                globalExecutionPlan->removeQuerySubPlanFromNode(node->getId(), sharedQueryId, querySubPlan->getQuerySubPlanId());
+                auto resourceAmount = ExecutionNode::getOccupiedResourcesForSubPlan(querySubPlan);
+                node->getTopologyNode()->increaseResources(resourceAmount);
             }
         }
     }
@@ -125,7 +144,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     startQuery(sharedQueryId, executionNodes);
 }
 
-void QueryDeploymentPhase::deployQuery(QueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes) {
+void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::deployQuery queryId= {}", sharedQueryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
@@ -145,64 +164,18 @@ void QueryDeploymentPhase::deployQuery(QueryId sharedQueryId, const std::vector<
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {}", sharedQueryId, rpcAddress);
 
-        auto topologyNode = executionNode->getTopologyNode();
 
-        for (auto& querySubPlan : querySubPlans) {
+        for (const auto& querySubPlan : querySubPlans) {
             auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
             auto subplanMetaData =
                 queryCatalogService->getEntryForQuery(singleQueryId)->getQuerySubPlanMetaData(querySubPlan->getQuerySubPlanId());
 
-            auto subPlanState = subplanMetaData->getSubQueryStatus();
+            const auto subPlanState = subplanMetaData->getSubQueryStatus();
             switch (subPlanState) {
                 case QueryState::DEPLOYED: {
                     //If accelerate Java UDFs is enabled
                     if (accelerateJavaUDFs) {
-
-                        //Elegant acceleration service call
-                        //1. Fetch the OpenCL Operators
-                        auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
-
-                        //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
-                        for (const auto& openCLOperator : openCLOperators) {
-
-                            //3. Fetch the topology node and compute the topology node payload
-                            nlohmann::json payload;
-                            payload[DEVICE_INFO_KEY] =
-                                std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(topologyNode->getNodeProperty(
-                                    NES::Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
-
-                            //4. Extract the Java UDF metadata
-                            auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
-                            payload["functionCode"] = javaDescriptor->getMethodName();
-
-                            // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
-                            jni::JavaByteCode javaByteCode =
-                                javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
-
-                            //5. Prepare the multi-part message
-                            cpr::Part part1 = {"jsonFile", to_string(payload)};
-                            cpr::Part part2 = {"codeFile", &javaByteCode[0]};
-                            cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
-
-                            //6. Make Acceleration Service Call
-                            cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
-                                                               cpr::Header{{"Content-Type", "application/json"}},
-                                                               multipartPayload,
-                                                               cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
-                            if (response.status_code != 200) {
-                                throw QueryDeploymentException(sharedQueryId,
-                                                               "Error in call to Elegant acceleration service with code "
-                                                                   + std::to_string(response.status_code) + " and msg "
-                                                                   + response.reason);
-                            }
-
-                            nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
-                            //Fetch the acceleration Code
-                            //FIXME: use the correct key
-                            auto openCLCode = jsonResponse["AccelerationCode"];
-                            //6. Set the Open CL code
-                            openCLOperator->setOpenClCode(openCLCode);
-                        }
+                        applyJavaUDFAcceleration(sharedQueryId, executionNode, querySubPlan);
                     }
 
                     //enable this for sync calls
@@ -213,7 +186,7 @@ void QueryDeploymentPhase::deployQuery(QueryId sharedQueryId, const std::vector<
                     completionQueues[queueForExecutionNode] = querySubPlans.size();
                     break;
                 }
-                case QueryState::RECONFIGURE: {
+                case QueryState::RECONFIGURING: {
                     //todo #4440: make non async function for this
                     workerRPCClient->reconfigureQuery(rpcAddress, querySubPlan);
                     break;
@@ -226,6 +199,56 @@ void QueryDeploymentPhase::deployQuery(QueryId sharedQueryId, const std::vector<
     }
     workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} ", sharedQueryId);
+}
+
+void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
+                                                    const ExecutionNodePtr& executionNode,
+                                                    const QueryPlanPtr& querySubPlan) const {//Elegant acceleration service call
+    //1. Fetch the OpenCL Operators
+    auto openCLOperators = querySubPlan->getOperatorByType<OpenCLLogicalOperatorNode>();
+
+    //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
+    for (const auto& openCLOperator : openCLOperators) {
+
+        //3. Fetch the topology node and compute the topology node payload
+        auto topologyNode = executionNode->getTopologyNode();
+        nlohmann::json payload;
+        payload[DEVICE_INFO_KEY] =
+            std::any_cast<std::vector<Runtime::OpenCLDeviceInfo>>(topologyNode->getNodeProperty(
+                Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
+
+        //4. Extract the Java UDF metadata
+        auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
+        payload["functionCode"] = javaDescriptor->getMethodName();
+
+        // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
+        jni::JavaByteCode javaByteCode =
+            javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
+
+        //5. Prepare the multi-part message
+        cpr::Part part1 = {"jsonFile", to_string(payload)};
+        cpr::Part part2 = {"codeFile", &javaByteCode[0]};
+        cpr::Multipart multipartPayload = cpr::Multipart{part1, part2};
+
+        //6. Make Acceleration Service Call
+        cpr::Response response = cpr::Post(cpr::Url{accelerationServiceURL},
+                                           cpr::Header{{"Content-Type", "application/json"}},
+                                           multipartPayload,
+                                           cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
+        if (response.status_code != 200) {
+            throw QueryDeploymentException(sharedQueryId,
+                                           "Error in call to Elegant acceleration service with code "
+                                               + std::to_string(response.status_code) + " and msg "
+                                               + response.reason);
+        }
+
+        nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
+        //Fetch the acceleration Code
+        //FIXME: use the correct key
+        auto openCLCode = jsonResponse["AccelerationCode"];
+        //6. Set the Open CL code
+        openCLOperator->setOpenClCode(openCLCode);
+    }
 }
 
 void QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {

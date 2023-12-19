@@ -74,6 +74,8 @@ struct TestStruct {
 
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
+static constexpr auto INITIAL_VERSION = 0;
+static constexpr auto DEFAULT_NUMBER_OF_ORIGINS = 1;
 
 namespace Network {
 class NetworkStackIntegrationTest : public Testing::BaseIntegrationTest, public testing::WithParamInterface<bool> {
@@ -313,7 +315,6 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
             // register the incoming channel
             auto sink = std::make_shared<NullOutputSink>(recvEngine, 1, 0, 0);
             std::vector<Runtime::Execution::SuccessorExecutablePipeline> succ = {sink};
-            Version sourceVersion = 0;
             auto source = std::make_shared<NetworkSource>(schema,
                                                           recvEngine->getBufferManager(),
                                                           recvEngine->getQueryManager(),
@@ -324,7 +325,7 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           NSOURCE_RETRY_WAIT,
                                                           NSOURCE_RETRIES,
                                                           std::move(succ),
-                                                          sourceVersion);
+                                                          INITIAL_VERSION);
             auto qep = Runtime::Execution::ExecutableQueryPlan::create(0,
                                                                        0,
                                                                        {source},
@@ -369,8 +370,8 @@ TEST_P(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES,
-                                                         1,
-                                                         0);
+                                                         DEFAULT_NUMBER_OF_ORIGINS,
+                                                         INITIAL_VERSION);
         networkSink->preSetup();
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
@@ -571,7 +572,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                          nodeEngineSender,
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
-                                                         NSOURCE_RETRIES, 1, 0);
+                                                         NSOURCE_RETRIES, DEFAULT_NUMBER_OF_ORIGINS, INITIAL_VERSION);
         auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
         auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
 
@@ -907,8 +908,8 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES,
-                                                         1,
-                                                         0);
+                                                         DEFAULT_NUMBER_OF_ORIGINS,
+                                                         INITIAL_VERSION);
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,

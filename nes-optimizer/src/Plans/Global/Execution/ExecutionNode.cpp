@@ -52,15 +52,19 @@ bool ExecutionNode::removeQuerySubPlans(QueryId sharedQueryId) {
     return false;
 }
 
-bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
+bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId) {
     auto sharedPlanIterator = mapOfQuerySubPlans.find(sharedQueryId);
     if (sharedPlanIterator != mapOfQuerySubPlans.end()) {
-        for (auto subPlanIterator = sharedPlanIterator->second.begin(); subPlanIterator != sharedPlanIterator->second.end();
-             ++subPlanIterator) {
-            if ((*subPlanIterator)->getQuerySubPlanId() == subPlanId) {
-                sharedPlanIterator->second.erase(subPlanIterator);
-                return true;
-            }
+        //define a predicate for finding a subplan with the given id
+        auto querySubPlanIdMatches = [querySubPlanId](const QueryPlanPtr& queryPlan) {
+            return queryPlan->getQuerySubPlanId() == querySubPlanId;
+        };
+        //check if a plan with the given id exists and erase it if it was found
+        auto& subPlans = sharedPlanIterator->second;
+        auto querySubPlanToRemove = std::find_if(subPlans.begin(), subPlans.end(), querySubPlanIdMatches);
+        if (querySubPlanToRemove != subPlans.end()) {
+            subPlans.erase(querySubPlanToRemove);
+            return true;
         }
     }
     return false;
@@ -69,10 +73,9 @@ bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlan
 QueryPlanPtr ExecutionNode::getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
     auto sharedPlanIterator = mapOfQuerySubPlans.find(sharedQueryId);
     if (sharedPlanIterator != mapOfQuerySubPlans.end()) {
-        for (auto subPlanIterator = sharedPlanIterator->second.begin(); subPlanIterator != sharedPlanIterator->second.end();
-             ++subPlanIterator) {
-            if ((*subPlanIterator)->getQuerySubPlanId() == subPlanId) {
-                return *subPlanIterator;
+        for (auto& subPlanIterator : sharedPlanIterator->second) {
+            if (subPlanIterator->getQuerySubPlanId() == subPlanId) {
+                return subPlanIterator;
             }
         }
     }
@@ -104,8 +107,9 @@ uint32_t ExecutionNode::getOccupiedResourcesForSubPlan(const QueryPlanPtr& query
     for (const auto& root : roots) {
         NES_DEBUG("ExecutionNode : Iterate the root node using BFS");
         auto bfsIterator = BreadthFirstNodeIterator(root);
-        for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
-            auto visitingOp = (*itr)->as<OperatorNode>();
+        //for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
+        for (auto itr : bfsIterator) {
+            auto visitingOp = (*itr).as<OperatorNode>();
             if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
                 NES_TRACE("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
                 break;
@@ -135,7 +139,7 @@ uint32_t ExecutionNode::getOccupiedResourcesForSubPlan(const QueryPlanPtr& query
             }
         }
     }
-        return occupiedResources;
+    return occupiedResources;
 }
 
 bool ExecutionNode::addNewQuerySubPlan(QueryId sharedQueryId, const QueryPlanPtr& querySubPlan) {
