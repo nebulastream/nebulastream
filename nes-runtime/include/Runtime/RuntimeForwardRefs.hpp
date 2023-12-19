@@ -52,14 +52,21 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SinkMedium;
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
+
+#ifndef UNIKERNEL_LIB
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
 class DataEmitter;
-#ifndef UNIKERNEL_LIB
 using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 #else
-using DataEmitterPtr = DataEmitter*;
+template<typename Config>
+class DataSource;
+template<typename Config>
+using DataSourcePtr = std::shared_ptr<DataSource<Config>>;
+
+class DataEmitter;
+using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 #endif
 
 namespace Runtime {
@@ -135,8 +142,12 @@ class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
 using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
+#ifndef UNIKERNEL_LIB
 using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
-
+#else
+template<typename Config>
+using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource<Config>>, std::weak_ptr<ExecutablePipeline>>;
+#endif
 class ExecutablePipelineStage;
 using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 
