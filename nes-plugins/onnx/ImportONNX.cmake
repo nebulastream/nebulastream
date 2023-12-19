@@ -51,7 +51,11 @@ find_library(onnxruntime_LIBRARY onnxruntime
         PATHS "${CMAKE_CURRENT_BINARY_DIR}/${ONNX_FOLDER_NAME}/lib"
 )
 add_library(onnxruntime SHARED IMPORTED)
-set_property(TARGET onnxruntime PROPERTY IMPORTED_LOCATION "${onnxruntime_LIBRARY}")
+# find_library returns the unversioned filename, which is a symlink to the versioned filename.
+# However, we need to install the versioned filename in the Debian package; otherwise, we install a broken symlink.
+# See: https://gitlab.kitware.com/cmake/cmake/-/issues/23249
+get_filename_component(onxxruntime_LIBRARY ${onnxruntime_LIBRARY} REALPATH)
+set_property(TARGET onnxruntime PROPERTY IMPORTED_LOCATION "${onxxruntime_LIBRARY}")
 set_property(TARGET onnxruntime PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${onnxruntime_INCLUDE_DIRS}")
 set_property(TARGET onnxruntime PROPERTY INTERFACE_COMPILE_OPTIONS "${onnxruntime_CXX_FLAGS}")
 
