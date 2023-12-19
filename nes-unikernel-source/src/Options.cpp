@@ -17,16 +17,27 @@ boost::outcome_v2::result<NES::SchemaPtr, std::string> parseSchema(const SchemaC
 }
 
 static std::pair<WorkerConfiguration, WorkerLinkConfiguration>
-findDownstreamWorker(const EndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers) {
+findDownstreamWorker(const SourceEndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers) {
     for (const auto& worker : workers) {
         for (const auto& sq : worker.subQueries) {
+
+            if (sq.upstream.has_value() && sq.upstream->worker.has_value()) {
+                auto upstream = *sq.upstream->worker;
+                if (upstream.ip == configuration.ip && upstream.port == configuration.port) {
+                    return {worker, upstream};
+                }
+                continue;
+            } else if (sq.upstream.has_value()) {
+                continue;
+            }
+
             std::queue<const WorkerStageConfiguration*> q;
-            q.push(&sq.stages);
+            q.push(&sq.stage.value());
             while (!q.empty()) {
                 auto current = q.front();
                 q.pop();
-                if (current->upstream.has_value()) {
-                    auto upstream = *current->upstream;
+                if (current->upstream.has_value() && current->upstream->worker.has_value()) {
+                    auto upstream = *current->upstream->worker;
                     if (upstream.ip == configuration.ip && upstream.port == configuration.port) {
                         return {worker, upstream};
                     }
@@ -41,6 +52,7 @@ findDownstreamWorker(const EndpointConfiguration& configuration, const std::vect
     }
     NES_THROW_RUNTIME_ERROR("Could not Find Source");
 }
+
 std::optional<long> getSourceIdFromEnvironment() {
     auto envValue = std::getenv("SOURCE_ID");
     if (!envValue) {
@@ -88,20 +100,30 @@ Options::Result Options::fromCLI(int argc, char** argv) {
     if (schemaResult.has_error())
         return schemaResult.as_failure();
     auto schema = schemaResult.value();
-    auto [worker, downstream] = findDownstreamWorker(source, configuration.workers);
 
-    return Options{source.nodeId,
-                   configuration.query.queryID,
-                   source.subQueryID,
-                   downstream.operatorId,
-                   configuration.query.workerID,
-                   source.ip,
-                   source.port,
-                   worker.ip,
-                   worker.port,
-                   worker.nodeId,
-                   source.originId,
-                   downstream.partitionId,
-                   downstream.subpartitionId,
-                   schema};
+    if (source.type == NetworkSource) {
+
+        auto [worker, downstream] = findDownstreamWorker(source, configuration.workers);
+
+        return Options{source.nodeId,
+                       configuration.query.queryID,
+                       source.subQueryID,
+                       downstream.operatorId,
+                       configuration.query.workerID,
+                       source.ip,
+                       source.port,
+                       worker.ip,
+                       worker.port,
+                       worker.nodeId,
+                       source.originId,
+                       downstream.partitionId,
+                       downstream.subpartitionId,
+                       schema,
+                       source.type};
+    } else if (source.type == TcpSource) {
+
+        return Options{0, 0, 0, 0, 0, source.ip, source.port, "", 0, 0, 0, 0, 0, schema, source.type};
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
 }

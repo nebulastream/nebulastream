@@ -9,7 +9,8 @@
 #include <fstream>
 
 class CSVDataGenerator : public NES::Benchmark::DataGeneration::DataGenerator {
-    CSVDataGenerator(std::ifstream file, NES::SchemaPtr schema, bool repeat) : file(std::move(file)), schema(std::move(schema)), repeat(repeat) {}
+    CSVDataGenerator(std::ifstream file, NES::SchemaPtr schema, bool repeat)
+        : file(std::move(file)), schema(std::move(schema)), repeat(repeat) {}
     std::ifstream file;
     NES::SchemaPtr schema;
     bool repeat;
