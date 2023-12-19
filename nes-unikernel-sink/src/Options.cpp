@@ -65,7 +65,8 @@ std::pair<WorkerConfiguration, WorkerLinkConfiguration>
 Options::findUpstreamWorker(const EndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers) {
     for (const auto& worker : workers) {
         for (const auto& sq : worker.subQueries) {
-            NES_ASSERT(sq.type == WorkerDownStreamLinkConfigurationType::node && sq.worker.has_value(), "Unikernel Sink is only needed if kafka is not used");
+            NES_ASSERT(sq.type == WorkerDownStreamLinkConfigurationType::node && sq.worker.has_value(),
+                       "Unikernel Sink is only needed if kafka is not used");
             if (sq.worker->ip == configuration.ip && sq.worker->port == configuration.port) {
                 return {worker, *sq.worker};
             }
