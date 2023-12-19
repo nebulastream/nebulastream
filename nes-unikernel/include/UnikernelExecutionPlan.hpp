@@ -71,15 +71,15 @@ class PipelineImpl<Prev, Stage, Stages...> {
 
 template<UnikernelBackwardsPipelineImpl Prev, typename Source>
 class PipelineImpl<Prev, Source> {
+    using SourceImpl = Source::template Impl<Prev>;
   public:
     static void setup() {
-        auto ctx = UnikernelPipelineExecutionContext::create<Prev>();
-        NES_INFO("Calling Setup for Source {}", Source::Id);
-        Source::setup(ctx);
-        Source::start();
+        NES_INFO("Calling Setup for Source {}", SourceImpl::Id);
+        SourceImpl::setup();
+        SourceImpl::start();
     }
 
-    static void stop() { Source::stop(); }
+    static void stop() { SourceImpl::stop(); }
 };
 
 template<typename... Stages>
