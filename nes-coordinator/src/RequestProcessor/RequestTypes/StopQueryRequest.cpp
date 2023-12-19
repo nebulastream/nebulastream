@@ -75,6 +75,7 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
             throw Exceptions::QueryNotFoundException("Cannot stop query with invalid query id " + std::to_string(queryId)
                                                      + ". Please enter a valid query id.");
         }
+
         //mark single query for hard stop
         if (!queryCatalogService->checkAndMarkForHardStop(queryId)) {
             throw Exceptions::InvalidQueryStateException({QueryState::OPTIMIZING,

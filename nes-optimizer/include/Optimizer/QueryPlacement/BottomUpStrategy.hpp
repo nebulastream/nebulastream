@@ -40,7 +40,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
                                            const TypeInferencePhasePtr& typeInferencePhase,
                                            PlacementMode placementMode);
 
-    bool updateGlobalExecutionPlan(QueryId queryId,
+    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
