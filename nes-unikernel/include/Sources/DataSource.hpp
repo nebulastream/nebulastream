@@ -73,7 +73,7 @@ public:
          * @brief This methods initializes thread-local state. For instance, it creates the local buffer pool and is necessary
          * because we cannot do it in the constructor.
          */
-    virtual void open() { bufferManager = TheBufferManager->createFixedSizeBufferPool(Config::NumberOfLocalBuffers); }
+    virtual void open() { bufferManager = TheBufferManager->createFixedSizeBufferPool(Config::LocalBuffers); }
 
     /**
          * @brief This method cleans up thread-local state for the source.

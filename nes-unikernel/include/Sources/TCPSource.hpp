@@ -231,7 +231,7 @@ public:
         DataSource<TCPConfig>::open();
         NES_TRACE("TCPSource::connected: Trying to create socket.");
         if (sockfd < 0) {
-            sockfd = socket(TCPConfig::SocketDomain, TCPConfig::SocketType, 0);
+            sockfd = socket(AF_INET, SOCK_STREAM, 0);
             NES_TRACE("Socket created with  {}", sockfd);
         }
         if (sockfd < 0) {
@@ -242,7 +242,7 @@ public:
         NES_TRACE("Created socket");
 
         struct sockaddr_in servaddr;
-        servaddr.sin_family = TCPConfig::SocketDomain;
+        servaddr.sin_family = AF_INET;
         servaddr.sin_addr.s_addr = inet_addr(TCPConfig::NodeIP);
         servaddr.sin_port = htons(TCPConfig::Port);// htons is necessary to convert a number to network byte order
 
