@@ -33,7 +33,6 @@
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/NoOpSourceDescriptor.h>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
@@ -306,9 +305,6 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
               magic_enum::enum_name(sourceType));
 
     switch (sourceType) {
-#ifdef UNIKERNEL_EXPORT
-        case SourceType::NOOP_SOURCE: return NoOpSourceDescriptor::create(schema, logicalSourceName);
-#else
         case SourceType::DEFAULT_SOURCE: {
             auto defaultSourceType = physicalSourceType->as<DefaultSourceType>();
             return DefaultSourceDescriptor::create(
@@ -400,7 +396,6 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                  kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
                                                  kafkaSourceType->getBatchSize()->getValue());
         }
-#endif
         default: {
             // check if a plugin can create the correct source descriptor
             for (const auto& plugin : SourceDescriptorPluginRegistry::getPlugins()) {

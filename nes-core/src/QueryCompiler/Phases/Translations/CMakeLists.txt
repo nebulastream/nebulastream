@@ -15,9 +15,6 @@ add_source_files(unikernel-export
         LowerLogicalToPhysicalOperators.cpp
         PhysicalOperatorProvider.cpp
         DefaultPhysicalOperatorProvider.cpp
-        DataSinkProvider.cpp
-        DefaultDataSourceProvider.cpp
-        SourceSharingDataSourceProvider.cpp
         LowerPhysicalToNautilusOperators.cpp
         ExpressionProvider.cpp
 )
