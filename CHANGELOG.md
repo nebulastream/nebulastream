@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.8](https://github.com/nebulastream/nebulastream/tree/v0.6.8) (2023-12-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.7...v0.6.8)
+
+### Bug Fixes 🐛
+
+- \[BUG\] InferModel does not work [\#4435](https://github.com/nebulastream/nebulastream/issues/4435)
+
 ## [v0.6.7](https://github.com/nebulastream/nebulastream/tree/v0.6.7) (2023-12-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.6...v0.6.7)
