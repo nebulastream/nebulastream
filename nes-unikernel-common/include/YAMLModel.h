@@ -42,29 +42,10 @@ struct convert<SchemaField> {
         UNIKERNEL_MODEL_YAML_ENCODE(type);
         return node;
     };
+
     static Node decode(const Node& node, SchemaField& rhs) {
         UNIKERNEL_MODEL_YAML_DECODE(name);
         UNIKERNEL_MODEL_YAML_DECODE(type);
-        return node;
-    };
-};
-}// namespace YAML
-
-struct SchemaConfiguration {
-    std::vector<SchemaField> fields;
-};
-
-namespace YAML {
-template<>
-struct convert<SchemaConfiguration> {
-    static Node encode(const SchemaConfiguration& rhs) {
-        Node node;
-        UNIKERNEL_MODEL_YAML_ENCODE(fields);
-        return node;
-    };
-
-    static Node decode(const Node& node, SchemaConfiguration& rhs) {
-        UNIKERNEL_MODEL_YAML_DECODE(fields);
         return node;
     };
 };
@@ -99,6 +80,36 @@ static NES::BasicType toBasicType(NES::DataTypePtr dt) {
     NES_THROW_RUNTIME_ERROR("Not Implemented");
 }
 
+struct SchemaConfiguration {
+    std::vector<SchemaField> fields;
+
+    SchemaConfiguration() = default;
+
+    SchemaConfiguration(const NES::SchemaPtr& newSchema) {
+        for (const auto& field : newSchema->fields) {
+            fields.emplace_back(field->getName(),
+                                std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
+        }
+    }
+};
+
+namespace YAML {
+template<>
+struct convert<SchemaConfiguration> {
+    static Node encode(const SchemaConfiguration& rhs) {
+        Node node;
+        UNIKERNEL_MODEL_YAML_ENCODE(fields);
+        return node;
+    };
+
+    static Node decode(const Node& node, SchemaConfiguration& rhs) {
+        UNIKERNEL_MODEL_YAML_DECODE(fields);
+        return node;
+    };
+};
+}// namespace YAML
+
+
 struct EndpointConfiguration {
     NES::QuerySubPlanId subQueryID;
     SchemaConfiguration schema;
@@ -108,13 +119,6 @@ struct EndpointConfiguration {
     std::optional<NES::OperatorId> operatorId;
     NES::OriginId originId;
 
-    void setSchema(const NES::SchemaPtr& newSchema) {
-        this->schema.fields.clear();
-        for (const auto& field : newSchema->fields) {
-            this->schema.fields.emplace_back(field->getName(),
-                                             std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
-        }
-    }
 };
 
 namespace YAML {
@@ -186,9 +190,78 @@ struct convert<WorkerLinkConfiguration> {
 };
 }// namespace YAML
 
+struct WorkerTCPSourceConfiguration {
+    std::string ip;
+    size_t port;
+    NES::OriginId originId;
+    SchemaConfiguration schema;
+};
+
+namespace YAML {
+template<>
+struct convert<WorkerTCPSourceConfiguration> {
+
+    static Node encode(const WorkerTCPSourceConfiguration& rhs) {
+        Node node;
+        UNIKERNEL_MODEL_YAML_ENCODE(port);
+        UNIKERNEL_MODEL_YAML_ENCODE(originId);
+        UNIKERNEL_MODEL_YAML_ENCODE(ip);
+        UNIKERNEL_MODEL_YAML_ENCODE(schema);
+        return node;
+    };
+
+    static Node decode(const Node& node, WorkerTCPSourceConfiguration& rhs) {
+        UNIKERNEL_MODEL_YAML_DECODE(port);
+        UNIKERNEL_MODEL_YAML_DECODE(originId);
+        UNIKERNEL_MODEL_YAML_DECODE(ip);
+        UNIKERNEL_MODEL_YAML_DECODE(schema);
+        return node;
+    };
+};
+}
+
+struct WorkerSourceConfiguration {
+    NES::OperatorId operatorId;
+    std::optional<WorkerLinkConfiguration> worker;
+    std::optional<WorkerTCPSourceConfiguration> tcpSource;
+};
+
+namespace YAML {
+template<>
+struct convert<WorkerSourceConfiguration> {
+
+    static Node encode(const WorkerSourceConfiguration& rhs) {
+        Node node;
+        if (rhs.worker.has_value()) {
+            node["worker"] = *rhs.worker;
+        }
+
+        if (rhs.tcpSource.has_value()) {
+            node["tcpSource"] = *rhs.tcpSource;
+        }
+
+        UNIKERNEL_MODEL_YAML_ENCODE(operatorId);
+        return node;
+    };
+
+    static Node decode(const Node& node, WorkerSourceConfiguration& rhs) {
+        if (node["worker"]) {
+            rhs.worker.emplace(node["worker"].as<WorkerLinkConfiguration>());
+        }
+
+        if (node["tcpSource"]) {
+            rhs.tcpSource.emplace(node["tcpSource"].as<WorkerTCPSourceConfiguration>());
+        }
+
+        UNIKERNEL_MODEL_YAML_DECODE(operatorId);
+        return node;
+    };
+};
+}
+
 struct WorkerStageConfiguration {
     std::optional<std::vector<WorkerStageConfiguration>> predecessor;
-    std::optional<WorkerLinkConfiguration> upstream;
+    std::optional<WorkerSourceConfiguration> upstream;
     size_t stageId = 0;
     size_t numberOfOperatorHandlers = 0;
 };
@@ -213,7 +286,7 @@ struct convert<WorkerStageConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(stageId);
         UNIKERNEL_MODEL_YAML_DECODE(numberOfOperatorHandlers);
         if (node["upstream"]) {
-            rhs.upstream = node["upstream"].as<WorkerLinkConfiguration>();
+            rhs.upstream = node["upstream"].as<WorkerSourceConfiguration>();
         }
         if (node["predecessor"]) {
             rhs.predecessor = node["predecessor"].as<std::vector<WorkerStageConfiguration>>();
@@ -232,14 +305,6 @@ struct KafkaSinkConfiguration {
     SchemaConfiguration schema;
     std::string broker;
     std::string topic;
-
-    void setSchema(const NES::SchemaPtr& newSchema) {
-        this->schema.fields.clear();
-        for (const auto& field : newSchema->fields) {
-            this->schema.fields.emplace_back(field->getName(),
-                                             std::string(magic_enum::enum_name(toBasicType(field->getDataType()))));
-        }
-    }
 };
 
 namespace YAML {
@@ -263,7 +328,8 @@ struct convert<KafkaSinkConfiguration> {
 }// namespace YAML
 
 struct WorkerSubQueryConfiguration {
-    WorkerStageConfiguration stages;
+    std::optional<WorkerStageConfiguration> stage;
+    std::optional<WorkerSourceConfiguration> upstream;
     NES::QuerySubPlanId subQueryId;
     size_t outputSchemaSizeInBytes;
     WorkerDownStreamLinkConfigurationType type;
@@ -277,26 +343,43 @@ template<>
 struct convert<WorkerSubQueryConfiguration> {
     static Node encode(const WorkerSubQueryConfiguration& rhs) {
         Node node;
-        UNIKERNEL_MODEL_YAML_ENCODE(stages);
+        if(rhs.stage.has_value()) {
+            node["stage"] = *rhs.stage;
+        }
+        if(rhs.upstream.has_value()) {
+            node["upstream"] = *rhs.upstream;
+        }
         UNIKERNEL_MODEL_YAML_ENCODE(subQueryId);
         UNIKERNEL_MODEL_YAML_ENCODE(outputSchemaSizeInBytes);
         node["type"] = std::string(magic_enum::enum_name(rhs.type));
         switch (rhs.type) {
-            case WorkerDownStreamLinkConfigurationType::node: node["downstream"] = rhs.worker.value(); break;
-            case kafka: node["downstream"] = rhs.kafka.value(); break;
+            case WorkerDownStreamLinkConfigurationType::node: node["downstream"] = rhs.worker.value();
+                break;
+            case kafka: node["downstream"] = rhs.kafka.value();
+                break;
         }
         return node;
     };
 
     static Node decode(const Node& node, WorkerSubQueryConfiguration& rhs) {
-        UNIKERNEL_MODEL_YAML_DECODE(stages);
+        if (node["stage"]){
+            rhs.stage.emplace(node["stage"].as<WorkerStageConfiguration>());
+        }
+
+        if (node["upstream"]){
+            rhs.upstream.emplace(node["upstream"].as<WorkerSourceConfiguration>());
+        }
+
         UNIKERNEL_MODEL_YAML_DECODE(subQueryId);
         UNIKERNEL_MODEL_YAML_DECODE(outputSchemaSizeInBytes);
         auto type = magic_enum::enum_cast<WorkerDownStreamLinkConfigurationType>(node["type"].as<std::string>());
         NES_ASSERT(type.has_value(), "Missing or Invalid type Discriminator");
         switch (type.value()) {
-            case WorkerDownStreamLinkConfigurationType::node: rhs.worker.emplace(node["downstream"].as<WorkerLinkConfiguration>()); break;
-            case kafka: rhs.kafka.emplace(node["downstream"].as<KafkaSinkConfiguration>()); break;
+            case WorkerDownStreamLinkConfigurationType::node: rhs.worker.
+                                                                  emplace(node["downstream"].as<WorkerLinkConfiguration>());
+                break;
+            case kafka: rhs.kafka.emplace(node["downstream"].as<KafkaSinkConfiguration>());
+                break;
         }
         rhs.type = type.value();
         return node;
@@ -322,6 +405,7 @@ struct convert<WorkerConfiguration> {
         UNIKERNEL_MODEL_YAML_ENCODE(subQueries);
         return node;
     };
+
     static Node decode(const Node& node, WorkerConfiguration& rhs) {
         UNIKERNEL_MODEL_YAML_DECODE(ip);
         UNIKERNEL_MODEL_YAML_DECODE(port);
@@ -345,6 +429,7 @@ struct convert<QueryConfiguration> {
         UNIKERNEL_MODEL_YAML_DECODE(workerID);
         return node;
     };
+
     static Node encode(const QueryConfiguration& rhs) {
         YAML::Node node;
         UNIKERNEL_MODEL_YAML_ENCODE(queryID);
@@ -371,6 +456,7 @@ struct convert<Configuration> {
         UNIKERNEL_MODEL_YAML_DECODE(workers);
         return node;
     };
+
     static Node encode(const Configuration& rhs) {
         YAML::Node node;
         UNIKERNEL_MODEL_YAML_ENCODE(sources);
