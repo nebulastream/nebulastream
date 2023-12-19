@@ -39,7 +39,7 @@ BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecution
                                    PlacementMode placementMode)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
 
-bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
+bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
     try {
@@ -48,30 +48,18 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 2. Pin all unpinned operators
-        pinOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
-
-        // 3. Place all pinned operators
-        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        pinOperators(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 3. Compute query sub plans
-        // addNetworkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators)
-
+         auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 4. add network source and sink operators
-        addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        addNetworkOperators(computedQuerySubPlans);
 
-
-
-        // 5. Perform type inference on all updated query plans
-        runTypeInferencePhase(queryId);
-
-        // 6. update execution nodes
-        //updateExecutionNodes();
-
-        // 6. Release the locks from the topology nodes
-        return unlockTopologyNodes();
+        // 5. update execution nodes
+        return updateExecutionNodes(computedQuerySubPlans);
     } catch (std::exception& ex) {
-        throw Exceptions::QueryPlacementException(queryId, ex.what());
+        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }
 

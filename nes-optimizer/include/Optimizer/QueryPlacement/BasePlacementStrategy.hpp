@@ -74,15 +74,15 @@ using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
 
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
-const std::string PINNED_WORKER_ID = "PINNED_NODE_ID";// Property indicating the location where the operator is pinned
-const std::string PROCESSED = "PROCESSED";            // Property indicating if operator was processed for placement
+const std::string PINNED_WORKER_ID = "PINNED_WORKER_ID";// Property indicating the location where the operator is pinned
+const std::string PROCESSED = "PROCESSED";              // Property indicating if operator was processed for placement
 
-std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>>
+using ComputedSubQueryPlans = std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>;
 
-    /**
+/**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
-    class BasePlacementStrategy {
+class BasePlacementStrategy {
 
   public:
     explicit BasePlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -143,33 +143,27 @@ std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>>
     /**
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and compute query
      * sub plans on the designated topology node
+     * @param rootOperator the shared query plan id
      * @param pinnedUpStreamOperators the upstream operators
      * @param pinnedDownStreamOperators the downstream operators
      */
-    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>
-    computeQuerySubPlans(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                         const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+    ComputedSubQueryPlans computeQuerySubPlans(SharedQueryId rootOperator,
+                                               const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                               const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief
-     * @param pinnedUpStreamOperators
-     * @param pinnedDownStreamOperators
+     * @param computedSubQueryPlans
      * @return
      */
-    std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>
-    addNetworkOperators(const std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>& workerIdToRootOperatorsMap,
-                        const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                        const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+    void addNetworkOperators(ComputedSubQueryPlans& computedSubQueryPlans);
 
     /**
      * @brief
-     * @param pinnedUpStreamOperators
-     * @param pinnedDownStreamOperators
+     * @param computedSubQueryPlans
      * @return
      */
-    bool updateExecutionNodes(const std::map<WorkerId, std::vector<QueryPlanPtr>>& updatedQuerySubPlans,
-                              const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                              const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
+    bool updateExecutionNodes(ComputedSubQueryPlans& computedSubQueryPlans);
 
     /**
      * @brief Get Execution node for the input topology node
@@ -243,7 +237,10 @@ std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>>
     std::map<WorkerId, TopologyNodePtr> topologyMap;
     std::map<OperatorId, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
-    std::vector<WorkerId> lockedTopologyNodeIds;
+    std::vector<WorkerId> workerNodeIdsInBFS;
+    std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
+    std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
+    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOperatorMap;
 
   private:
     /**
