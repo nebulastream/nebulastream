@@ -13,7 +13,6 @@
 */
 
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
@@ -58,8 +57,6 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
         operatorType = "PROJECTION";
     } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         operatorType = "UNION";
-    } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
-        operatorType = "BROADCAST";
     } else if (operatorNode->instanceOf<RenameSourceOperatorNode>()) {
         operatorType = "RENAME";
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {

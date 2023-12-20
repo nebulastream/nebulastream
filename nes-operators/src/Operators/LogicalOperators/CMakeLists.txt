@@ -19,7 +19,6 @@ add_source_files(nes-operators
         InferModelLogicalOperatorNode.cpp
         UnionLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
-        BroadcastLogicalOperatorNode.cpp
         BatchJoinLogicalOperatorNode.cpp
         RenameSourceOperatorNode.cpp
         LogicalBinaryOperatorNode.cpp

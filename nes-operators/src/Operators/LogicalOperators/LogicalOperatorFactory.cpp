@@ -13,7 +13,6 @@
 */
 
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
@@ -90,10 +89,6 @@ LogicalBinaryOperatorNodePtr
 LogicalOperatorFactory::createBatchJoinOperator(const Join::Experimental::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
                                                 OperatorId id) {
     return std::make_shared<Experimental::BatchJoinLogicalOperatorNode>(batchJoinDefinition, id);
-}
-
-BroadcastLogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(OperatorId id) {
-    return std::make_shared<BroadcastLogicalOperatorNode>(id);
 }
 
 LogicalUnaryOperatorNodePtr

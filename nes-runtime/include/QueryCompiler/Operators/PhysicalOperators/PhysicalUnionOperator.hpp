@@ -13,11 +13,8 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_
 #define NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_
-#include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
+namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief The physical multiplex operator
  * This operator has multiple upstream operators and forwards it to exactly one down-stream operator.
@@ -31,17 +28,16 @@ namespace PhysicalOperators {
  * DataSource --- OperatorY ---
  *
  */
-class PhysicalMultiplexOperator : public PhysicalOperator, public ExchangeOperatorNode {
+class PhysicalUnionOperator : public PhysicalBinaryOperator {
   public:
-    PhysicalMultiplexOperator(OperatorId id, const SchemaPtr& schema);
+    PhysicalUnionOperator(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema);
+    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema);
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& schema);
-    static PhysicalOperatorPtr create(SchemaPtr schema);
+    static PhysicalOperatorPtr create(const SchemaPtr& schema);
     std::string toString() const override;
     OperatorNodePtr copy() override;
 };
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_

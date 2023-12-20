@@ -55,10 +55,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
@@ -92,9 +92,9 @@ void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const Log
 }
 
 void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const LogicalOperatorNodePtr& operatorNode) {
-    // the multiplex operator has the same schema as the output schema of the operator node.
-    auto multiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(operatorNode->getOutputSchema());
-    operatorNode->insertBetweenThisAndChildNodes(multiplexOperator);
+    // the unionOperator operator has the same schema as the output schema of the operator node.
+    auto unionOperator = PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getOutputSchema());
+    operatorNode->insertBetweenThisAndChildNodes(unionOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) {
@@ -106,9 +106,8 @@ void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOpera
         lowerUnaryOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<BinaryOperatorNode>()) {
         lowerBinaryOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
-        // exchange operators just vanish for now, as we already created an demultiplex operator for all incoming edges.
-        operatorNode->removeAndJoinParentAndChildren();
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
 }
 
@@ -195,8 +194,8 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const QueryPlanPtr&, co
                                         + unionOperator->getLeftInputSchema()->toString() + " but right "
                                         + unionOperator->getRightInputSchema()->toString());
     }
-    auto physicalMultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(unionOperator->getLeftInputSchema());
-    operatorNode->replace(physicalMultiplexOperator);
+    auto physicalUnionOperator = PhysicalOperators::PhysicalUnionOperator::create(unionOperator->getLeftInputSchema());
+    operatorNode->replace(physicalUnionOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
@@ -255,7 +254,7 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
     }
 
     if (children.size() > 1) {
-        auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(std::move(outputSchema));
+        auto demultiplexOperator = PhysicalOperators::PhysicalUnionOperator::create(std::move(outputSchema));
         demultiplexOperator->setOutputSchema(joinOperator->getOutputSchema());
         demultiplexOperator->addParent(joinOperator);
         for (const auto& child : children) {

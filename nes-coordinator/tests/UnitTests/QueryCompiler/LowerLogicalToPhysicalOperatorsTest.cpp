@@ -20,7 +20,6 @@
 #include <Operators/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDefinition.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
@@ -44,10 +43,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
@@ -187,50 +186,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterQuery) {
 /**
  * @brief Input Query Plan:
  *
- * --- Sink 1 --- Braodcast -- Source 1
- *            /
- *           /
- * --- Sink 2
- *
- * Result Query plan:
- *
- * --- Physical Sink 1 --- Physical Demultiplex Operator -- Physical Source 1
- *                      /
- *                     /
- * --- Physical Sink 2
- *
- */
-TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexBroadcastQuery) {
-    auto queryPlan = QueryPlan::create(sourceOp1);
-    auto broadcastOperator = LogicalOperatorFactory::createBroadcastOperator();
-    queryPlan->appendOperatorAsNewRoot(broadcastOperator);
-    queryPlan->appendOperatorAsNewRoot(sinkOp1);
-    sinkOp2->addChild(broadcastOperator);
-    queryPlan->addRootOperator(sinkOp2);
-
-    NES_DEBUG("{}", queryPlan->toString());
-
-    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
-    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
-
-    phase->apply(queryPlan);
-    NES_DEBUG("{}", queryPlan->toString());
-
-    auto iterator = QueryPlanIterator(queryPlan).begin();
-
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
-    ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalDemultiplexOperator>());
-    ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
-}
-
-/**
- * @brief Input Query Plan:
- *
- * --- Sink 1 --- BroadcastOperator -- Source 1
+ * --- Sink 1 --- FilterOperator -- Source 1
  *            /
  *           /
  * --- Sink 2
@@ -305,7 +261,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterMultiplexQuery) {
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalUnionOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
@@ -345,7 +301,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterImplicitMultiplexQuer
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalUnionOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
@@ -497,7 +453,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalJoinBuildOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalUnionOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
@@ -558,7 +514,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalJoinBuildOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalUnionOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
@@ -566,7 +522,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, DISABLED_translateJoinQueryWithMulti
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalJoinBuildOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalUnionOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
@@ -762,7 +718,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateTwoSourceQuery) {
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalUnionOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;

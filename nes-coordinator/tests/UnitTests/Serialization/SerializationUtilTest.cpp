@@ -39,7 +39,6 @@
 #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/Expressions/WhenExpressionNode.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
@@ -588,13 +587,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(unionOp);
         auto unionOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(unionOp->equal(unionOperator));
-    }
-
-    {
-        auto broadcast = LogicalOperatorFactory::createBroadcastOperator();
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(broadcast);
-        auto broadcastOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        EXPECT_TRUE(broadcast->equal(broadcastOperator));
     }
 
     {

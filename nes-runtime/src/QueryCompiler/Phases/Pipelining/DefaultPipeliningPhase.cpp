@@ -15,9 +15,9 @@
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
@@ -163,7 +163,7 @@ void DefaultPipeliningPhase::process(const PipelineQueryPlanPtr& pipelinePlan,
         processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalSinkOperator>()) {
         processSink(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
-    } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalMultiplexOperator>()) {
+    } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalUnionOperator>()) {
         processMultiplex(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalDemultiplexOperator>()) {
         processDemultiplex(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);

@@ -24,7 +24,7 @@ add_source_files(nes-runtime
         PhysicalMapOperator.cpp
         PhysicalMapUDFOperator.cpp
         PhysicalFlatMapUDFOperator.cpp
-        PhysicalMultiplexOperator.cpp
+        PhysicalUnionOperator.cpp
         PhysicalDemultiplexOperator.cpp
         PhysicalWatermarkAssignmentOperator.cpp
         PhysicalScanOperator.cpp
