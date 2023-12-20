@@ -67,8 +67,7 @@ int main(int argc, char* argv[]) {
                                          options.queryId,
                                          os);
     std::vector<NES::DataSinkPtr> pipelines{print_sink};
-    auto source = std::make_shared<
-        NetworkSource>(options.outputSchema, buffer_manager, wc, manager, partition, location, 1000, 200ms, 20, pipelines);
+    auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema, buffer_manager, wc, manager, partition, location, 1000, 200ms, 20, pipelines);
 
     NES_ASSERT(source->bind(), "Bind Failed");
     source->start();
