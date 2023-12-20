@@ -158,8 +158,8 @@ class TCPSource : public DataSource<TCPConfig> {
                 }
                 //if size of received data is not 0 (no data received), push received data to circular buffer
                 else if (bufferSizeReceived != 0) {
-                    NES_DEBUG("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
-                    NES_DEBUG("TCPSOURCE::fillBuffer: print current buffer: {}.", messageBuffer);
+                    NES_TRACE("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
+                    NES_TRACE("TCPSOURCE::fillBuffer: print current buffer: {}.", messageBuffer);
                     //push the received data into the circularBuffer
                     circularBuffer.push(messageBuffer, bufferSizeReceived);
                 }
@@ -173,9 +173,9 @@ class TCPSource : public DataSource<TCPConfig> {
                     inputTupleSize = sizeUntilSearchToken('\n');
                     // allocate buffer with size of tuple
                     messageBuffer = new char[inputTupleSize];
-                    NES_DEBUG("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
+                    NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
                               inputTupleSize);
-                    NES_DEBUG("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());
+                    NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());
                     //copy and delete tuple from circularBuffer, delete tuple separator
                     popped = popGivenNumberOfValues(inputTupleSize, true);
                 } catch (const std::exception& e) {
