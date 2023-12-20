@@ -19,13 +19,19 @@ PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id, const SchemaPtr
     return create(id, schema, schema, schema);
 }
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema) {
+PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id,
+                                                  const SchemaPtr& leftSchema,
+                                                  const SchemaPtr& rightSchema,
+                                                  const SchemaPtr& outputSchema) {
     return std::make_shared<PhysicalUnionOperator>(id, leftSchema, rightSchema, outputSchema);
 }
 
 PhysicalOperatorPtr PhysicalUnionOperator::create(const SchemaPtr& schema) { return create(getNextOperatorId(), schema); }
 
-PhysicalUnionOperator::PhysicalUnionOperator(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema)
+PhysicalUnionOperator::PhysicalUnionOperator(OperatorId id,
+                                             const SchemaPtr& leftSchema,
+                                             const SchemaPtr& rightSchema,
+                                             const SchemaPtr& outputSchema)
     : OperatorNode(id), PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema) {}
 
 std::string PhysicalUnionOperator::toString() const {
