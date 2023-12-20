@@ -81,7 +81,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     //addNetworkSourceAndSinkOperators(queryPlan);
 
     // 7. run the type inference phase
-    runTypeInferencePhase(queryPlan->getQueryId());
+//    runTypeInferencePhase(queryPlan->getQueryId());
 
     // 8. Release the locks from the topology nodes
     return unlockTopologyNodes();

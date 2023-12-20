@@ -82,6 +82,7 @@ OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
+    copy->setOperatorState(operatorState);
     copy->setHashBasedSignature(hashBasedSignature);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);

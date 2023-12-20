@@ -49,7 +49,7 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      * @param pinnedDownStreamOperators
      * @return
      */
-    bool updateGlobalExecutionPlan(QueryId queryId,
+    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
@@ -71,11 +71,11 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
                                  const TypeInferencePhasePtr& typeInferencePhase,
                                  PlacementMode placementMode);
 
-    void performOperatorPlacement(QueryId queryId,
+    void performOperatorPlacement(SharedQueryId sharedQueryId,
                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                   const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
-    void identifyPinningLocation(QueryId queryId,
+    void identifyPinningLocation(SharedQueryId sharedQueryId,
                                  const LogicalOperatorNodePtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
@@ -89,9 +89,9 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
 
     /**
      * @brief removes redundant operators
-     * @param queryId
+     * @param sharedQueryId
      */
-    void performOperatorRedundancyElimination(QueryId queryId);
+    void performOperatorRedundancyElimination(SharedQueryId sharedQueryId);
 };
 }// namespace NES::Optimizer
 

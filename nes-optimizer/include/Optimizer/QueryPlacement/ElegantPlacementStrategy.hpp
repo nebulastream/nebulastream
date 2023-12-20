@@ -52,7 +52,7 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
                                            const TypeInferencePhasePtr& typeInferencePhase,
                                            PlacementMode placementMode);
 
-    bool updateGlobalExecutionPlan(QueryId queryId,
+    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
@@ -83,11 +83,11 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
 
     /**
      * @brief Add pinning information to the operators based on the response received from the external placement service
-     * @param queryId: query id
+     * @param sharedQueryId: shared query id
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @param response: Json representing the placement response received from the external service
      */
-    void pinOperatorsBasedOnElegantService(QueryId queryId,
+    void pinOperatorsBasedOnElegantService(SharedQueryId sharedQueryId,
                                            const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
                                            cpr::Response& response) const;
 

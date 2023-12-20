@@ -26,7 +26,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
   public:
     ~ManualPlacementStrategy() override = default;
 
-    bool updateGlobalExecutionPlan(QueryId queryId,
+    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 

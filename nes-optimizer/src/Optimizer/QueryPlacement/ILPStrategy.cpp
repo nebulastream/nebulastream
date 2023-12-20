@@ -54,11 +54,11 @@ ILPStrategy::ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                          PlacementMode placementMode)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode), z3Context(z3Context) {}
 
-bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
+bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_INFO("Performing placement of the input query plan with id {}", queryId);
+    NES_INFO("Performing placement of the input query plan with id {}", sharedQueryId);
 
     // 1. Find the path where operators need to be placed
     performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -120,11 +120,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         //2.2 Find path between pinned upstream and downstream topology node
         auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
-        auto upstreamTopologyNode = topologyMap[upstreamPinnedNodeId];
+        auto upstreamTopologyNode = workerIdToTopologyNodeMap[upstreamPinnedNodeId];
 
         auto downstreamPinnedNodeId =
             std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID));
-        auto downstreamTopologyNode = topologyMap[downstreamPinnedNodeId];
+        auto downstreamTopologyNode = workerIdToTopologyNodeMap[downstreamPinnedNodeId];
 
         std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
 
@@ -185,7 +185,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         auto currentOverUtilization = z3Context->int_const(overUtilizationId.c_str());// an integer expression of the slack
 
         // Obtain the available slot in the current node
-        TopologyNodePtr topologyNode = topologyMap[topologyID]->as<TopologyNode>();
+        TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[topologyID]->as<TopologyNode>();
         std::any prop = topologyNode->getNodeProperty("slots");
         auto availableSlot = std::any_cast<int>(prop);
 
@@ -220,7 +220,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             int operatorId = std::stoi(topologyID.substr(0, topologyID.find(',')));
             int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(',') + 1));
             LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorId];
-            TopologyNodePtr topologyNode = topologyMap[topologyNodeId];
+            TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[topologyNodeId];
 
             // collect the solution to operatorToTopologyNodeMap
             operatorToTopologyNodeMap.insert(std::make_pair(logicalOperatorNode, topologyNode));
@@ -235,17 +235,14 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     // 8. Pin the operators based on ILP solution.
     pinOperators(z3Model, placementVariables);
 
-    // 8. Perform operator placement.
-    placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+    // 9. Compute query sub plans
+    auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-    // 9. Add network source and sink operators.
-    addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+    // 10. add network source and sink operators
+    addNetworkOperators(computedQuerySubPlans);
 
-    // 10. Run the type inference phase and return.
-    runTypeInferencePhase(queryId);
-
-    // 11. Release the locks from the topology nodes
-    return unlockTopologyNodes();
+    // 11. update execution nodes
+    return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
 }
 
 std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators) {
@@ -253,7 +250,7 @@ std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOpe
     // populate the distance map
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
-        auto topologyNode = topologyMap[nodeId];
+        auto topologyNode = workerIdToTopologyNodeMap[nodeId];
         computeDistance(topologyNode, mileageMap);
     }
     return mileageMap;

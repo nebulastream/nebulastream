@@ -27,8 +27,8 @@ InvalidOperatorStateException::InvalidOperatorStateException(NES::OperatorId ope
     for (const auto& state : expectedState) {
         expectedStatusString << std::string(magic_enum::enum_name(state)) << " ";
     }
-    message = "InvalidOperatorStateException: Operator with id" + std::to_string(operatorId)
-        + "Expected operator state to be in [" + expectedStatusString.str() + "] but found to be in "
+    message = "InvalidOperatorStateException: Operator with id " + std::to_string(operatorId)
+        + ". Expected operator state to be in [" + expectedStatusString.str() + "] but found to be in "
         + std::string(magic_enum::enum_name(actualState));
 }
 

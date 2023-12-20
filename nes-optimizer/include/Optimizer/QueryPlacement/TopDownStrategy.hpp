@@ -30,7 +30,7 @@ class TopDownStrategy : public BasePlacementStrategy {
                                            const TypeInferencePhasePtr& typeInferencePhase,
                                            PlacementMode placementMode);
 
-    bool updateGlobalExecutionPlan(QueryId queryId,
+    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) override;
 
@@ -42,23 +42,19 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     /**
      * @brief place query operators and prepare the global execution plan
-     * @param queryPlan: query plan to place
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @throws exception if the operator can't be placed.
      */
-    void pinOperators(QueryId queryId,
-                      const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+    void pinOperators(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                       const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to place input operator on the input topology node
-     * @param pinnedUpStreamOperator :  the query id
      * @param logicalOperator : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void identifyPinningLocation(QueryId pinnedUpStreamOperator,
-                                 const LogicalOperatorNodePtr& logicalOperator,
+    void identifyPinningLocation(const LogicalOperatorNodePtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators);
 

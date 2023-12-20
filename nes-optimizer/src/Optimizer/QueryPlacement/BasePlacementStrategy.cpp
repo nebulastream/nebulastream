@@ -122,7 +122,7 @@ void BasePlacementStrategy::optimisticPathSelection(const std::set<TopologyNodeP
         findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
 
     //2 Add the selected topology nodes to the topology map
-    topologyMap.clear();
+    workerIdToTopologyNodeMap.clear();
 
     // Temp container for iteration
     std::queue<TopologyNodePtr> topologyNodesInBFSOrder;
@@ -139,13 +139,13 @@ void BasePlacementStrategy::optimisticPathSelection(const std::set<TopologyNodeP
         topologyNodesInBFSOrder.pop();
         // Skip if the topology node was visited previously
         WorkerId idOfTopologyNodeToLock = topologyNodeToLock->getId();
-        if (topologyMap.contains(idOfTopologyNodeToLock)) {
+        if (workerIdToTopologyNodeMap.contains(idOfTopologyNodeToLock)) {
             continue;
         }
 
         // Add to the list of topology nodes for which locks are acquired
         workerNodeIdsInBFS.emplace_back(idOfTopologyNodeToLock);
-        topologyMap[idOfTopologyNodeToLock] = topologyNodeToLock;
+        workerIdToTopologyNodeMap[idOfTopologyNodeToLock] = topologyNodeToLock;
         const auto& downstreamTopologyNodes = topologyNodeToLock->getParents();
         std::for_each(downstreamTopologyNodes.begin(), downstreamTopologyNodes.end(), [&](const NodePtr& topologyNode) {
             topologyNodesInBFSOrder.push(topologyNode->as<TopologyNode>());
@@ -187,7 +187,7 @@ void BasePlacementStrategy::pessimisticPathSelection(
 }
 
 bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes) {
-    topologyMap.clear();
+    workerIdToTopologyNodeMap.clear();
     // Temp container for iteration
     std::queue<TopologyNodePtr> topologyNodesInBFSOrder;
     // Iterate topology nodes in a true breadth first order
@@ -201,7 +201,7 @@ bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<To
         topologyNodesInBFSOrder.pop();
         // Skip if the topology node was visited previously
         WorkerId idOfTopologyNodeToLock = topologyNodeToLock->getId();
-        if (topologyMap.contains(idOfTopologyNodeToLock)) {
+        if (workerIdToTopologyNodeMap.contains(idOfTopologyNodeToLock)) {
             continue;
         }
 
@@ -215,7 +215,7 @@ bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<To
 
         // Add to the list of topology nodes for which locks are acquired
         workerNodeIdsInBFS.emplace_back(idOfTopologyNodeToLock);
-        topologyMap[idOfTopologyNodeToLock] = topologyNodeToLock;
+        workerIdToTopologyNodeMap[idOfTopologyNodeToLock] = topologyNodeToLock;
         const auto& downstreamTopologyNodes = topologyNodeToLock->getParents();
         std::for_each(downstreamTopologyNodes.begin(), downstreamTopologyNodes.end(), [&](const NodePtr& topologyNode) {
             topologyNodesInBFSOrder.push(topologyNode->as<TopologyNode>());
@@ -235,6 +235,7 @@ BasePlacementStrategy::findPath(const std::set<TopologyNodePtr>& topologyNodesWi
                                         topologyNodesWithDownStreamPinnedOperators.end());
 
     //2 Do the path selection
+    // NOTE: this call can be replaced with any arbitrary path selection algorithm
     std::vector<TopologyNodePtr> sourceTopologyNodesInSelectedPath =
         topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
     if (sourceTopologyNodesInSelectedPath.empty()) {
@@ -327,20 +328,26 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
 
     //1. Prepare for iterating over operators in strict BFS order
     // Initialize with the pinned upstream operators
-    std::queue<LogicalOperatorNodePtr> placedOperators;
+    std::queue<LogicalOperatorNodePtr> pinnedOperators;
     std::for_each(pinnedUpStreamOperators.begin(), pinnedUpStreamOperators.end(), [&](const auto& operatorNode) {
-        placedOperators.push(operatorNode);
+        pinnedOperators.push(operatorNode);
     });
 
     //2. Iterate over all placed operators in strict BFS order
-    while (!placedOperators.empty()) {
+    while (!pinnedOperators.empty()) {
 
-        // 2.1. Iterate of the operator and fetch the location where the operator is pinned to be placed
-        auto placedOperator = placedOperators.front();
-        operatorIdToOperatorMap[placedOperator->getId()] = placedOperator;
-        auto copyOfPlacedOperator = placedOperator->copy()->as<LogicalOperatorNode>();// Make a copy of the operator
-        placedOperators.pop();
-        auto pinnedWorkerId = std::any_cast<uint64_t>(placedOperator->getProperty(PINNED_WORKER_ID));
+        // 2.1. Fetch the pinned operator and the worker Id where it is pinned
+        // Skip further processing if operator was processed previously
+        auto pinnedOperator = pinnedOperators.front();
+        pinnedOperators.pop();
+        if (operatorIdToOperatorMap.contains(pinnedOperator->getId())) {
+            continue;
+        }
+        operatorIdToOperatorMap[pinnedOperator->getId()] = pinnedOperator;
+        auto copyOfPinnedOperator = pinnedOperator->copy()->as<LogicalOperatorNode>();// Make a copy of the operator
+        auto pinnedWorkerId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_WORKER_ID));
+        workerIdToResourceConsumedMap[pinnedWorkerId]++;
+        workerIdToPinnedOperatorMap[pinnedWorkerId].emplace_back(pinnedOperator);
 
         // 2.2. If the pinnedWorkerId has already placed query sub plans then compute an updated list of query sub plans
         if (computedSubQueryPlans.contains(pinnedWorkerId)) {
@@ -354,13 +361,17 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             // contains the root operator of already placed query sub plan as its upstream operator
             auto alreadyPlacedQuerySubPlans = computedSubQueryPlans[pinnedWorkerId];
             for (const auto& placedQuerySubPlan : alreadyPlacedQuerySubPlans) {
-
                 bool foundAnUpstreamPlacedOperator = false;
-                for (const auto& rootOperator : placedQuerySubPlan->getRootOperators()) {
-                    if (placedOperator->getChildWithOperatorId(rootOperator->getId())) {
-                        //Add the copy as the parent of the iterated root operator and update the root of the iterated
-                        rootOperator->addParent(copyOfPlacedOperator);
-                        placedQuerySubPlan->removeAsRootOperator(rootOperator);
+                //For all upstream operators of the pinned operator check if they are in the placed query sub plan
+                for (const auto& childOperator : pinnedOperator->getChildren()) {
+                    OperatorId childOperatorId = childOperator->as<OperatorNode>()->getId();
+                    if (placedQuerySubPlan->hasOperatorWithId(childOperatorId)) {
+                        auto placedOperator = placedQuerySubPlan->getOperatorWithId(childOperatorId);
+                        if (placedOperator->getParents().empty()) {
+                            placedQuerySubPlan->removeAsRootOperator(placedOperator);
+                        }
+                        // Add the copy as the parent of the iterated root operator and update the root of the iterated
+                        placedOperator->addParent(copyOfPinnedOperator);
                         foundAnUpstreamPlacedOperator = true;
                     }
                 }
@@ -371,7 +382,7 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                         newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId,
                                                                   placedQuerySubPlan->getQuerySubPlanId(),
                                                                   placedQuerySubPlan->getRootOperators());
-                        newPlacedQuerySubPlan->addRootOperator(copyOfPlacedOperator);
+                        newPlacedQuerySubPlan->addRootOperator(copyOfPinnedOperator);
                     } else {
                         const auto& rootOperators = placedQuerySubPlan->getRootOperators();
                         std::for_each(rootOperators.begin(), rootOperators.end(), [&](const auto& rootOperator) {
@@ -385,15 +396,15 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
 
             //2.2.3. Create a new query sub plan for the operator under consideration if all plans are disjoint.
             if (!newPlacedQuerySubPlan) {
-                if (copyOfPlacedOperator->getOperatorState() == OperatorState::PLACED) {
+                if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                     // Create a temporary query sub plans for the operator as it might need to be merged with another query
                     // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                    newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID, {copyOfPlacedOperator});
+                    newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID, {copyOfPinnedOperator});
                 } else {
                     newPlacedQuerySubPlan =
-                        QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPlacedOperator});
+                        QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPinnedOperator});
                 }
-            } else if (copyOfPlacedOperator->getOperatorState() == OperatorState::PLACED) {
+            } else if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 newPlacedQuerySubPlan->setQuerySubPlanId(INVALID_QUERY_SUB_PLAN_ID);// set invalid query sub plan id
             }
 
@@ -402,25 +413,25 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             computedSubQueryPlans[pinnedWorkerId] = updatedQuerySubPlans;
         } else {// 2.2.1. If no query sub plan placed on the pinned worker node
             QueryPlanPtr newPlacedQuerySubPlan;
-            if (copyOfPlacedOperator->getOperatorState() == OperatorState::PLACED) {
+            if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 // Create a temporary query sub plans for the operator as it might need to be merged with another query
                 // sub plan that is already placed on the execution node. Thus we assign it an invalid sub query plan id.
-                newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID, {copyOfPlacedOperator});
+                newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId, INVALID_QUERY_SUB_PLAN_ID, {copyOfPinnedOperator});
             } else {
                 newPlacedQuerySubPlan =
-                    QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPlacedOperator});
+                    QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPinnedOperator});
             }
             computedSubQueryPlans[pinnedWorkerId] = {newPlacedQuerySubPlan};
         }
 
         //2.3. If the operator is in the state placed then check if it is one of the pinned downstream operator
-        if (placedOperator->getOperatorState() == OperatorState::PLACED) {
+        if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
             //2.3.1. Check if this operator in the pinned downstream operator list.
             const auto& isPinnedDownStreamOperator =
                 std::find_if(pinnedDownStreamOperators.begin(),
                              pinnedDownStreamOperators.end(),
-                             [placedOperator](const auto& pinnedDownStreamOperator) {
-                                 return pinnedDownStreamOperator->getId() == placedOperator->getId();
+                             [pinnedOperator](const auto& pinnedDownStreamOperator) {
+                                 return pinnedDownStreamOperator->getId() == pinnedOperator->getId();
                              });
 
             //2.3.2. If reached the pinned downstream operator then skip further traversal
@@ -430,9 +441,9 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
         }
 
         // 2.4. Add next downstream operators for the traversal
-        auto downStreamOperators = placedOperator->getParents();
+        auto downStreamOperators = pinnedOperator->getParents();
         std::for_each(downStreamOperators.begin(), downStreamOperators.end(), [&](const NodePtr& operatorNode) {
-            placedOperators.push(operatorNode->as<LogicalOperatorNode>());
+            pinnedOperators.push(operatorNode->as<LogicalOperatorNode>());
         });
     }
 
@@ -477,8 +488,6 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
                     std::vector<TopologyNodePtr> topologyNodesBetween =
                         topology->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
 
-                    bool placedNetworkOperator = false;
-
                     QueryPlanPtr querySubPlanWithUpstreamOperator;
 
                     // 8. Fetch all query sub plans placed on the upstream node and find the query sub plan hosting the
@@ -489,19 +498,21 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
                             break;
                         }
                     }
-
                     if (!querySubPlanWithUpstreamOperator) {
-                        //throw exception
+                        NES_ERROR("Unable to find a query sub plan hosting the upstream operator to connect.");
+                        throw Exceptions::RuntimeException(
+                            "Unable to find a query sub plan hosting the upstream operator to connect.");
                     }
 
+                    // Get the schema and operator id for the source network operators
                     auto sourceSchema = upstreamOperatorToConnect->as<LogicalOperatorNode>()->getOutputSchema();
-
                     auto networkSourceOperatorId = getNextOperatorId();
 
                     // 9. Starting from the upstream to downstream topology node and add network sink source pairs.
                     for (uint16_t pathIndex = 0; pathIndex < topologyNodesBetween.size(); pathIndex++) {
 
                         WorkerId currentWorkerId = topologyNodesBetween[pathIndex]->getId();
+
                         if (currentWorkerId == upstreamWorkerId) {
                             // 10. Add a network sink operator as new root operator to the upstream operator to connect
 
@@ -566,7 +577,7 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
     }
 }
 
-bool BasePlacementStrategy::updateExecutionNodes(ComputedSubQueryPlans& computedSubQueryPlans) {
+bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, ComputedSubQueryPlans& computedSubQueryPlans) {
 
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
@@ -578,45 +589,194 @@ bool BasePlacementStrategy::updateExecutionNodes(ComputedSubQueryPlans& computed
             };
         }
 
-        // 2. Perform validation
-        auto globalTopologyNodeCopy = topology->findWorkerWithId(workerNodeId);
-        auto localTopologyNodeCopy = topologyMap[workerNodeId];
-
-        globalTopologyNodeCopy->getAvailableResources();
-        localTopologyNodeCopy->getAvailableResources();
-
+        // 2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
+        // for placing the operators.
+        auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
+        if (!topology->occupyResources(workerNodeId, consumedResources)) {
+            NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
+            return false;
+        }
 
         // 3. Check if the worker node contains pinned upstream operators
+        bool containPinnedUpstreamOperator = false;
+        bool containPinnedDownstreamOperator = false;
         if (pinnedUpStreamTopologyNodeIds.contains(workerNodeId)) {
-
+            containPinnedUpstreamOperator = true;
+        } else if (pinnedDownStreamTopologyNodeIds.contains(workerNodeId)) {
+            containPinnedDownstreamOperator = true;
         }
 
+        // 4. Fetch the execution node to update and placed query sub plans
+        auto topologyNode = workerIdToTopologyNodeMap[workerNodeId];
+        auto executionNode = getExecutionNode(topologyNode);
+        auto placedQuerySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+
+        // 5. Iterate over the placed query sub plans and update execution node
         auto computedQuerySubPlans = computedSubQueryPlans[workerNodeId];
-    }
+        for (const auto& computedQuerySubPlan : computedQuerySubPlans) {
 
-    for (const auto& [workerId, querySubPlans] : computedSubQueryPlans) {
+            // 5.1. Perform the type inference phase on the updated query sub plan and update execution node.
+            if (computedQuerySubPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID) {
+                if (containPinnedUpstreamOperator) {
 
-        if (placementMode == PlacementMode::Optimistic) {
+                    auto pinnedLeafOperators = computedQuerySubPlan->getLeafOperators();
+
+                    std::set<QueryPlanPtr> hostQuerySubPlans;
+                    for (const auto& pinnedLeafOperator : pinnedLeafOperators) {
+
+                        // If the pinned leaf operator is not of type logical source and was already placed.
+                        // Then find and merge the operator with query sub plan containing the placed leaf operator
+                        if (pinnedLeafOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
+
+                            bool foundHostQuerySubPlan = false;
+
+                            // Find and merge with the shared query plan
+                            for (const auto& placedQuerySubPlan : placedQuerySubPlans) {
+
+                                // If the placed query sub plan contains the pinned upstream operator
+                                auto matchingPinnedLeafOperator =
+                                    placedQuerySubPlan->getOperatorWithId(pinnedLeafOperator->getId());
+                                if (matchingPinnedLeafOperator) {
+                                    // Add all newly computed downstream operators to matching placed leaf operator
+                                    for (const auto& downstreamOperator : pinnedLeafOperator->getParents()) {
+                                        downstreamOperator->removeChild(pinnedLeafOperator);
+                                        downstreamOperator->addChild(matchingPinnedLeafOperator);
+                                    }
+                                    hostQuerySubPlans.emplace(placedQuerySubPlan);
+                                    foundHostQuerySubPlan = true;
+                                    break;
+                                }
+                            }
+
+                            // If no query sub plan found that hosts the placed leaf operator
+                            if (!foundHostQuerySubPlan) {
+                                NES_ERROR("Unable to find query sub plan hosting the placed and pinned upstream operator.");
+                                throw Exceptions::RuntimeException(
+                                    "Unable to find query sub plan hosting the placed and pinned upstream operator.");
+                            }
+                        }
+                    }
+
+                    QueryPlanPtr updatedQuerySubPlan;
+                    // Merge the two host query sub plans
+                    if (hostQuerySubPlans.size() > 1) {
+                        for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
+                            if (!updatedQuerySubPlan) {
+                                updatedQuerySubPlan = hostQuerySubPlan;
+                            } else {
+                                for (const auto& hostRootOperators : hostQuerySubPlan->getRootOperators()) {
+                                    updatedQuerySubPlan->addRootOperator(hostRootOperators);
+                                }
+                            }
+                        }
+                    } else {
+                        updatedQuerySubPlan = *(hostQuerySubPlans.begin());
+                    }
+
+                    //In the end, add root operators of computed plan as well.
+                    for (const auto& rootOperator : computedQuerySubPlan->getRootOperators()) {
+                        updatedQuerySubPlan->addRootOperator(rootOperator);
+                    }
+
+                    updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
+                    executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+
+                } else if (containPinnedDownstreamOperator) {
+
+                    auto pinnedRootOperators = computedQuerySubPlan->getRootOperators();
+                    std::set<QueryPlanPtr> hostQuerySubPlans;
+                    for (const auto& pinnedRootOperator : pinnedRootOperators) {
+
+                        // If the pinned leaf operator is not of type logical source and was already placed.
+                        // Then find and merge the operator with query sub plan containing the placed leaf operator
+                        if (pinnedRootOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
+
+                            bool foundHostQuerySubPlan = false;
+
+                            // Find and merge with the shared query plan
+                            for (const auto& placedQuerySubPlan : placedQuerySubPlans) {
+
+                                // If the placed query sub plan contains the pinned upstream operator
+                                auto matchingPinnedRootOperator =
+                                    placedQuerySubPlan->getOperatorWithId(pinnedRootOperator->getId());
+                                if (matchingPinnedRootOperator) {
+                                    // Add all newly computed downstream operators to matching placed leaf operator
+                                    for (const auto& upstreamOperator : pinnedRootOperator->getChildren()) {
+                                        matchingPinnedRootOperator->addChild(upstreamOperator);
+                                    }
+                                    hostQuerySubPlans.emplace(placedQuerySubPlan);
+                                    foundHostQuerySubPlan = true;
+                                    break;
+                                }
+                            }
+
+                            // If no query sub plan found that hosts the placed leaf operator
+                            if (!foundHostQuerySubPlan) {
+                                NES_ERROR("Unable to find query sub plan hosting the placed and pinned upstream operator.");
+                                throw Exceptions::RuntimeException(
+                                    "Unable to find query sub plan hosting the placed and pinned upstream operator.");
+                            }
+                        }
+                    }
+
+                    QueryPlanPtr updatedQuerySubPlan;
+                    // Merge the two host query sub plans
+                    if (hostQuerySubPlans.size() > 1) {
+                        for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
+                            if (!updatedQuerySubPlan) {
+                                updatedQuerySubPlan = hostQuerySubPlan;
+                            } else {
+                                for (const auto& hostRootOperators : hostQuerySubPlan->getRootOperators()) {
+                                    updatedQuerySubPlan->addRootOperator(hostRootOperators);
+                                }
+                            }
+                        }
+                    } else {
+                        updatedQuerySubPlan = *(hostQuerySubPlans.begin());
+                    }
+
+                    updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
+                    executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+                } else {
+                    NES_ERROR("A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
+                              "operator.",
+                              computedQuerySubPlan->toString());
+                    throw Exceptions::RuntimeException(
+                        "A query sub plan with invalid query sub plan found that has no pinned upstream or downstream operator.");
+                }
+            } else {
+                auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
+                executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+            }
         }
 
-        // 2. Fetch the execution node with id = workerId.
-        // 3. Iterate over all query sub plans:
-        //      3.1. Check if "all leaf operators" are in the state "Placed".
-        //              When True:
-        //                      3.1.1. Get from the execution node the query sub plan hosting the operators.
-        //                      3.1.2. Replace the placed operator in the iterated query sub plan with the operators from the fetched query plan.
-        //                      3.1.3. Compute new root operators for the query sub plan.
-        //              When False:
-        //                      3.1.1. Create a new sub query plan.
-        //      3.2. Perform the type inference phase on the updated query sub plan.
-        // 4. Update the topology with new resource values, the execution node with new query sub plan, and operators with state "Placed".
-        // 5. If using optimistic strategy then, release the lock.
+        // 6. Add the execution node to the global execution plan
+        if (!globalExecutionPlan->checkIfExecutionNodeExists(workerNodeId)) {
+            globalExecutionPlan->addExecutionNode(executionNode);
+        } else {
+            globalExecutionPlan->scheduleExecutionNode(executionNode);
+        }
+
+        // 7. Mark all operators as placed on the topology node as placed
+        if (workerIdToPinnedOperatorMap.contains(workerNodeId)) {
+            auto pinnedOperators = workerIdToPinnedOperatorMap[workerNodeId];
+            for (const auto& pinnedOperator : pinnedOperators) {
+                pinnedOperator->setOperatorState(OperatorState::PLACED);
+            }
+        }
+
+        // 8. If using optimistic strategy then, release the lock.
+        if (placementMode == PlacementMode::Optimistic) {
+            if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
+                // Raise an exception
+            }
+        }
     }
 
+    // 9. If using pessimistic strategy then, release all locks.
     if (placementMode == PlacementMode::Pessimistic) {
         return unlockTopologyNodes();
     }
-
     return true;
 }
 
@@ -636,18 +796,13 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
 TopologyNodePtr BasePlacementStrategy::getTopologyNode(WorkerId workerId) {
 
     NES_TRACE("Get the topology node {}", workerId);
-    if (!topologyMap.contains(workerId)) {
+    if (!workerIdToTopologyNodeMap.contains(workerId)) {
         NES_ERROR("Topology node with id {} not considered during the path selection phase.", workerId);
         throw Exceptions::RuntimeException("Topology node with id " + std::to_string(workerId)
                                            + " not considered during the path selection phase.");
     }
 
-    auto topologyNode = topologyMap[workerId];
-    if (topologyNode->getAvailableResources() == 0) {
-        NES_ERROR("Unable to find resources on the physical node for placement of source operator");
-        throw Exceptions::RuntimeException("Unable to find resources on the physical node for placement of source operator");
-    }
-    return topologyNode;
+    return workerIdToTopologyNodeMap[workerId];
 }
 
 LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId,
@@ -685,24 +840,6 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryI
     return LogicalOperatorFactory::createSourceOperator(networkSourceDescriptor, operatorId);
 }
 
-bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
-    NES_DEBUG("Run type inference phase for all the query sub plans to be deployed.");
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    for (const auto& executionNode : executionNodes) {
-        NES_TRACE("Get all query sub plans on the execution node for the query with id {}", queryId);
-        const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
-        for (const auto& querySubPlan : querySubPlans) {
-            auto sinks = querySubPlan->getOperatorByType<SinkLogicalOperatorNode>();
-            for (const auto& sink : sinks) {
-                auto sinkDescriptor = sink->getSinkDescriptor()->as<SinkDescriptor>();
-                sink->setSinkDescriptor(sinkDescriptor);
-            }
-            typeInferencePhase->execute(querySubPlan);
-        }
-    }
-    return true;
-}
-
 void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNode) {
     NES_TRACE("Adding new execution node with id: {}", executionNode->getTopologyNode()->getId());
     //1. Check if the candidateTopologyNode is a root node of the topology
@@ -727,8 +864,8 @@ BasePlacementStrategy::getTopologyNodesForChildrenOperators(const LogicalOperato
             NES_WARNING("unable to find topology for child operator.");
             return {};
         }
-        TopologyNodePtr childTopologyNode =
-            topologyMap[std::any_cast<uint64_t>(child->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID))];
+        TopologyNodePtr childTopologyNode = workerIdToTopologyNodeMap[std::any_cast<uint64_t>(
+            child->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID))];
 
         auto existingNode =
             std::find_if(childTopologyNodes.begin(), childTopologyNodes.end(), [&childTopologyNode](const auto& node) {
@@ -741,76 +878,4 @@ BasePlacementStrategy::getTopologyNodesForChildrenOperators(const LogicalOperato
     NES_DEBUG("returning list of topology nodes where children operators are placed");
     return childTopologyNodes;
 }
-
-QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId queryId,
-                                                                     const LogicalOperatorNodePtr& operatorNode,
-                                                                     const ExecutionNodePtr& executionNode) {
-
-    NES_DEBUG("Get candidate query plan for the operator {} on execution node with id {}",
-              operatorNode->toString(),
-              executionNode->getId());
-
-    // Get all query sub plans for the query id on the execution node
-    std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-    QueryPlanPtr candidateQueryPlan;
-    if (querySubPlans.empty()) {
-        NES_TRACE("BottomUpStrategy: no query plan exists for this query on the executionNode. Returning an empty query plan.");
-        candidateQueryPlan = QueryPlan::create(queryId, PlanIdGenerator::getNextQuerySubPlanId());
-        return candidateQueryPlan;
-    }
-
-    //Check if a query plan already contains the operator
-    for (const auto& querySubPlan : querySubPlans) {
-        if (querySubPlan->hasOperatorWithId(operatorNode->getId())) {
-            return querySubPlan;// return the query sub plan that contains it
-        }
-    }
-
-    // Otherwise find query plans containing the upstream operator
-    std::vector<QueryPlanPtr> queryPlansWithChildren;
-    NES_TRACE("Find query plans with child operators for the input logical operator.");
-    std::vector<NodePtr> children = operatorNode->getChildren();
-    //NOTE: we do not check for parent operators as we are performing bottom up placement.
-    for (auto& child : children) {
-        auto found = std::find_if(querySubPlans.begin(), querySubPlans.end(), [&](const QueryPlanPtr& querySubPlan) {
-            return querySubPlan->hasOperatorWithId(child->as<LogicalOperatorNode>()->getId());
-        });
-
-        if (found != querySubPlans.end()) {
-            NES_TRACE("Found query plan with child operator {}", child->toString());
-            queryPlansWithChildren.push_back(*found);
-            querySubPlans.erase(found);
-        }
-    }
-
-    if (!queryPlansWithChildren.empty()) {
-        executionNode->updateQuerySubPlans(queryId, querySubPlans);
-        // if there are more than 1 query plans containing the child operator, the create a new query plan, add root operators on
-        // it, and return the created query plan
-        if (queryPlansWithChildren.size() > 1) {
-            NES_TRACE("Found more than 1 query plan with the child operators of the input logical operator.");
-            candidateQueryPlan = QueryPlan::create(queryId, PlanIdGenerator::getNextQuerySubPlanId());
-            NES_TRACE("Prepare a new query plan and add the root of the query plans with parent operators as "
-                      "the root of the new query plan.");
-            for (auto& queryPlanWithChildren : queryPlansWithChildren) {
-                for (auto& root : queryPlanWithChildren->getRootOperators()) {
-                    candidateQueryPlan->addRootOperator(root);
-                }
-            }
-            NES_TRACE("return the updated query plan.");
-            return candidateQueryPlan;
-        }
-        // if there is only 1 plan containing the child operator, then return that query plan
-        if (queryPlansWithChildren.size() == 1) {
-            NES_TRACE("Found only 1 query plan with the child operator of the input logical operator. "
-                      "Returning the query plan.");
-            return queryPlansWithChildren[0];
-        }
-    }
-    NES_TRACE("No query plan exists with the child operator of the input logical operator. Returning an empty "
-              "query plan.");
-    candidateQueryPlan = QueryPlan::create(queryId, PlanIdGenerator::getNextQuerySubPlanId());
-    return candidateQueryPlan;
-}
-
 }// namespace NES::Optimizer

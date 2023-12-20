@@ -71,7 +71,7 @@ ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode), serviceURL(serviceURL),
       transferRate(transferRate), timeWeight(timeWeight) {}
 
-bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
+bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
@@ -88,32 +88,29 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                            cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {
             throw Exceptions::QueryPlacementException(
-                queryId,
+                sharedQueryId,
                 "ElegantPlacementStrategy::updateGlobalExecutionPlan: Error in call to Elegant planner with code "
                     + std::to_string(response.status_code) + " and msg " + response.reason);
         }
 
         // 2. Parse the response of the external placement service
-        pinOperatorsBasedOnElegantService(queryId, pinnedDownStreamOperators, response);
+        pinOperatorsBasedOnElegantService(sharedQueryId, pinnedDownStreamOperators, response);
 
-        // 3. Place the operators
-        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 3. Compute query sub plans
+        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 4. add network source and sink operators
-        addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        addNetworkOperators(computedQuerySubPlans);
 
-        // 5. Perform type inference on updated query plans
-        runTypeInferencePhase(queryId);
-
-        // 6. Release the locks from the topology nodes
-        return unlockTopologyNodes();
+        // 5. update execution nodes
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (const std::exception& ex) {
-        throw Exceptions::QueryPlacementException(queryId, ex.what());
+        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }
 
 void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
-    QueryId queryId,
+    SharedQueryId sharedQueryId,
     const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators,
     cpr::Response& response) const {
     nlohmann::json jsonResponse = nlohmann::json::parse(response.text);
@@ -142,7 +139,7 @@ void ElegantPlacementStrategy::pinOperatorsBasedOnElegantService(
         }
 
         if (!pinned) {
-            throw Exceptions::QueryPlacementException(queryId,
+            throw Exceptions::QueryPlacementException(sharedQueryId,
                                                       "Unable to find operator with id " + std::to_string(operatorId)
                                                           + " in the given list of operators.");
         }

@@ -18,8 +18,8 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <set>
 #include <stack>
@@ -143,16 +143,8 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
 
 bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
-    for (const auto& rootOperator : rootOperators) {
-        if (rootOperator->getId() == operatorId) {
-            NES_DEBUG("QueryPlan: Found operator {} in the query plan", queryId);
-            return true;
-        }
-        for (const auto& child : rootOperator->getChildren()) {
-            if (child->as<OperatorNode>()->getChildWithOperatorId(operatorId)) {
-                return true;
-            }
-        }
+    if (getOperatorWithId(operatorId)) {
+        return true;
     }
     NES_DEBUG("QueryPlan: Unable to find operator with matching Id");
     return false;
@@ -161,15 +153,22 @@ bool QueryPlan::hasOperatorWithId(uint64_t operatorId) {
 OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
     NES_DEBUG("QueryPlan: Checking if the operator with id {} exists in the query plan or not", operatorId);
     for (auto rootOperator : rootOperators) {
+
         if (rootOperator->getId() == operatorId) {
             NES_DEBUG("QueryPlan: Found operator {} in the query plan", operatorId);
             return rootOperator;
         }
+
         for (const auto& child : rootOperator->getChildren()) {
             NES_TRACE("QueryPlan: Searching for {} in the children", operatorId);
-            NodePtr found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
-            if (found) {
-                return found->as<OperatorNode>();
+            const auto& childOperator = child->as<OperatorNode>();
+            if (childOperator->getId() == operatorId) {
+                return childOperator;
+            }
+
+            auto matchedOperator = childOperator->getChildWithOperatorId(operatorId);
+            if (matchedOperator) {
+                return matchedOperator->as<OperatorNode>();
             }
         }
     }

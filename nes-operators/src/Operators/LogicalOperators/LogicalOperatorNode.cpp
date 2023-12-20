@@ -64,12 +64,14 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
     //Set the new operator state after validating the previous state
     switch (newOperatorState) {
         case OperatorState::TO_BE_PLACED:
-            //TO_BE_PLACED is the default operator state when it gets created. Therefore, a new set operator status to TO_BE_PLACED
-            // is not expected.
-            throw Exceptions::InvalidOperatorStateException(
-                id,
-                {OperatorState::TO_BE_PLACED, OperatorState::TO_BE_REMOVED, OperatorState::TO_BE_REPLACED, OperatorState::PLACED},
-                this->operatorState);
+            // an operator in the state TO_BE_PLACED or TO_BE_REPLACED can be changed to TO_BE_PLACED
+            if (this->operatorState == OperatorState::TO_BE_PLACED || this->operatorState == OperatorState::TO_BE_REPLACED) {
+                this->operatorState = newOperatorState;
+                break;
+            }
+            throw Exceptions::InvalidOperatorStateException(id,
+                                                            {OperatorState::TO_BE_REMOVED, OperatorState::PLACED},
+                                                            this->operatorState);
         case OperatorState::TO_BE_REMOVED:
             if (this->operatorState != OperatorState::REMOVED) {
                 this->operatorState = OperatorState::TO_BE_REMOVED;
@@ -91,8 +93,7 @@ void LogicalOperatorNode::setOperatorState(NES::OperatorState newOperatorState) 
                 {OperatorState::TO_BE_PLACED, OperatorState::PLACED, OperatorState::TO_BE_REPLACED},
                 this->operatorState);
         case OperatorState::PLACED:
-            if (this->operatorState != OperatorState::REMOVED && this->operatorState != OperatorState::TO_BE_REMOVED
-                && this->operatorState != OperatorState::PLACED) {
+            if (this->operatorState != OperatorState::REMOVED && this->operatorState != OperatorState::TO_BE_REMOVED) {
                 this->operatorState = OperatorState::PLACED;
                 break;
             }

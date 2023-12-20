@@ -66,10 +66,10 @@ class GlobalExecutionPlan {
 
     /**
      * Remove all the query sub plans for the input query
-     * @param queryId : the query id used for removing the input query
+     * @param sharedQueryId : the shared query id used for removing the input query
      * @return true if successful else false
      */
-    bool removeQuerySubPlans(QueryId queryId);
+    bool removeQuerySubPlans(SharedQueryId sharedQueryId);
 
     /**
      * Find is execution node exists.
@@ -106,10 +106,10 @@ class GlobalExecutionPlan {
 
     /**
      * Return list of Execution Serialization used for placing operators of the input query Id
-     * @param queryId : Id of the query
+     * @param sharedQueryId : Id of the shared query
      * @return vector containing execution nodes
      */
-    std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(QueryId queryId);
+    std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(SharedQueryId sharedQueryId);
 
     /**
      * @brief Get all execution nodes in the execution plan
@@ -150,17 +150,17 @@ class GlobalExecutionPlan {
      * Map the input execution node with different sub query plans it has
      * @param executionNode : the input execution node
      */
-    void mapExecutionNodeToQueryId(const ExecutionNodePtr& executionNode);
+    void mapExecutionNodeToSharedQueryId(const ExecutionNodePtr& executionNode);
 
     /**
      * Index based on nodeId for faster access to the execution nodes
      */
-    std::map<ExecutionNodeId, ExecutionNodePtr> executionNodeIdIndex;
+    std::map<ExecutionNodeId, ExecutionNodePtr> executionNodeIdToExecutionNodeMap;
 
     /**
-     * Index based on query Id for faster access to the execution nodes
+     * Index based on shared query Id for faster access to the execution nodes
      */
-    std::map<QueryId, std::vector<ExecutionNodePtr>> queryIdIndex;
+    std::map<SharedQueryId, std::vector<ExecutionNodePtr>> sharedQueryIdToExecutionNodeMap;
 
     /**
      * List Of ExecutionNodes to be deployed. This list contains all nodes with the scheduled flag as false.

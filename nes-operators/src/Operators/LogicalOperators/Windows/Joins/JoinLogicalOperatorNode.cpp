@@ -161,6 +161,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOriginId(originId);
+    copy->setOperatorState(operatorState);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }
