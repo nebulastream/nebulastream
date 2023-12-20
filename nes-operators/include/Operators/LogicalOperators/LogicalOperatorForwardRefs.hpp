@@ -59,9 +59,6 @@ using BinaryOperatorNodePtr = std::shared_ptr<BinaryOperatorNode>;
 class LogicalBinaryOperatorNode;
 using LogicalBinaryOperatorNodePtr = std::shared_ptr<LogicalBinaryOperatorNode>;
 
-class ExchangeOperatorNode;
-using ExchangeOperatorNodePtr = std::shared_ptr<ExchangeOperatorNode>;
-
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 

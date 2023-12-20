@@ -14,5 +14,4 @@
 add_source_files(nes-operators
         BinaryOperatorNode.cpp
         UnaryOperatorNode.cpp
-        ExchangeOperatorNode.cpp
 )

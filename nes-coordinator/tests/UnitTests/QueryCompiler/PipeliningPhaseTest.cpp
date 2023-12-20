@@ -24,10 +24,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
@@ -148,7 +148,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
 TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
     auto source1 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
-    auto multiplex = PhysicalMultiplexOperator::create(SchemaPtr());
+    auto multiplex = PhysicalUnionOperator::create(SchemaPtr());
     auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);
@@ -189,7 +189,7 @@ TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
 TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
     auto source1 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
-    auto multiplex = PhysicalMultiplexOperator::create(SchemaPtr());
+    auto multiplex = PhysicalUnionOperator::create(SchemaPtr());
     auto filter = PhysicalFilterOperator::create(SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
     auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
@@ -290,7 +290,7 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
     auto source1 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source3 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
-    auto multiplex = PhysicalMultiplexOperator::create(SchemaPtr());
+    auto multiplex = PhysicalUnionOperator::create(SchemaPtr());
     auto joinBuildLeft = PhysicalJoinBuildOperator::create(SchemaPtr(),
                                                            SchemaPtr(),
                                                            Join::JoinOperatorHandlerPtr(),

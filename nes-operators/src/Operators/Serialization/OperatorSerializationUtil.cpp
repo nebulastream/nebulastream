@@ -19,7 +19,6 @@
 #include <API/Schema.hpp>
 #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LimitLogicalOperatorNode.hpp>
@@ -112,12 +111,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         auto unionDetails = SerializableOperator_UnionDetails();
         serializedOperator.mutable_details()->PackFrom(unionDetails);
 
-    } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
-        // serialize broadcast operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to BroadcastLogicalOperatorNode");
-        auto broadcastDetails = SerializableOperator_BroadcastDetails();
-        serializedOperator.mutable_details()->PackFrom(broadcastDetails);
-
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         // serialize map operator
         serializeMapOperator(*operatorNode->as<MapLogicalOperatorNode>(), serializedOperator);
@@ -208,11 +201,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         for (const auto& originId : binaryOperator->getRightInputOriginIds()) {
             serializedOperator.add_rightoriginids(originId);
         }
-    } else if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
-        auto exchangeOperator = operatorNode->as<ExchangeOperatorNode>();
-        for (const auto& originId : exchangeOperator->getOutputOriginIds()) {
-            serializedOperator.add_originids(originId);
-        }
     } else {
         auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
         for (const auto& originId : unaryOperator->getInputOriginIds()) {
@@ -264,14 +252,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedUnionDescriptor = SerializableOperator_UnionDetails();
         details.UnpackTo(&serializedUnionDescriptor);
         operatorNode = LogicalOperatorFactory::createUnionOperator(getNextOperatorId());
-
-    } else if (details.Is<SerializableOperator_BroadcastDetails>()) {
-        // de-serialize broadcast operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to BroadcastLogicalOperator");
-        auto serializedBroadcastDescriptor = SerializableOperator_BroadcastDetails();
-        details.UnpackTo(&serializedBroadcastDescriptor);
-        // de-serialize broadcast descriptor
-        operatorNode = LogicalOperatorFactory::createBroadcastOperator(getNextOperatorId());
 
     } else if (details.Is<SerializableOperator_MapDetails>()) {
         // de-serialize map operator
@@ -381,13 +361,6 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             rightOriginIds.push_back(originId);
         }
         binaryOperator->setRightInputOriginIds(rightOriginIds);
-    } else if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
-        auto exchangeOperator = operatorNode->as<ExchangeOperatorNode>();
-        std::vector<uint64_t> originIds;
-        for (const auto& originId : serializedOperator.originids()) {
-            originIds.push_back(originId);
-        }
-        exchangeOperator->setInputOriginIds(originIds);
     } else {
         auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
         std::vector<uint64_t> originIds;
@@ -1684,13 +1657,8 @@ void OperatorSerializationUtil::serializeInputSchema(const OperatorNodePtr& oper
 
     NES_TRACE("OperatorSerializationUtil:: serialize input schema");
         if (!operatorNode->instanceOf<BinaryOperatorNode>()) {
-        if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
-            SchemaSerializationUtil::serializeSchema(operatorNode->as<ExchangeOperatorNode>()->getInputSchema(),
-                                                     serializedOperator.mutable_inputschema());
-        } else {
             SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperatorNode>()->getInputSchema(),
                                                      serializedOperator.mutable_inputschema());
-        }
     } else {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         SchemaSerializationUtil::serializeSchema(binaryOperator->getLeftInputSchema(),
@@ -1704,14 +1672,8 @@ void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorNodePtr op
                                                        SerializableOperator& serializedOperator) {
     // de-serialize operator input schema
     if (!operatorNode->instanceOf<BinaryOperatorNode>()) {
-        if (operatorNode->instanceOf<ExchangeOperatorNode>()) {
-            auto exchangeOperator = operatorNode->as<ExchangeOperatorNode>();
-            exchangeOperator->setInputSchema(
+        operatorNode->as<UnaryOperatorNode>()->setInputSchema(
                 SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
-        } else {
-            operatorNode->as<UnaryOperatorNode>()->setInputSchema(
-                SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
-        }
     } else {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         binaryOperator->setLeftInputSchema(
