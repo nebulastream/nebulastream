@@ -37,11 +37,13 @@ class TcpServer {
         auto newConnection = std::make_shared<boost::asio::ip::tcp::socket>(acceptor.get_executor());
         acceptor.async_accept(*newConnection, [this, newConnection](const boost::system::error_code& error) {
             if (!error) {
-                std::cout << "Accepted connection from " << newConnection->remote_endpoint() << std::endl;
+                std::stringstream ss;
+                ss << newConnection->remote_endpoint();
+                NES_INFO("Accepted connection from {}", ss.str());
                 startSend(newConnection);
                 startAccept();// Accept the next connection
             } else {
-                std::cerr << "Error accepting connection: " << error.message() << std::endl;
+                NES_ERROR("Error Accepting connection: {}", error.message());
             }
         });
     }
