@@ -31,7 +31,7 @@ class SchemaBuffer {
         size_t offset = buffer.getNumberOfTuples() * Schema::TupleSize;
 
         // No Overflow
-        NES_ASSERT(offset + Schema::TupleSize < BufferSize, "Out of Bound Write");
+        NES_ASSERT(offset + Schema::TupleSize <= BufferSize, "Out of Bound Write");
 
         auto tupleMemory = std::span(buffer.getBuffer() + offset, Schema::TupleSize);
         Schema::writeTupleAtBufferAddress(tupleMemory, tuple);
@@ -42,7 +42,7 @@ class SchemaBuffer {
         NES_ASSERT(index < buffer.getNumberOfTuples(), "Out of Bound Read");
         size_t offset = index * Schema::TupleSize;
         // No Overflow
-        NES_ASSERT(offset + Schema::TupleSize < BufferSize, "Out of Bound Read");
+        NES_ASSERT(offset + Schema::TupleSize <= BufferSize, "Out of Bound Read");
 
         auto tupleMemory = std::span(buffer.getBuffer() + offset, Schema::TupleSize);
         return Schema::readTupleAtBufferAddress(tupleMemory);
