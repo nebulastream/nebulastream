@@ -147,12 +147,16 @@ bool OperatorNode::addParent(NodePtr newNode) {
     return false;
 }
 
-NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
+NodePtr OperatorNode::getChildWithOperatorId(OperatorId operatorId) {
 
-    if (id == operatorId) {
-        return shared_from_this();
-    }
-    for (auto& child : children) {
+    for (const auto& child : children) {
+
+        // If the child has a matching Id then return it
+        if(child->as<OperatorNode>()->getId() == operatorId){
+            return child;
+        }
+
+        // Look in for a matching operator in the grand children list
         auto found = child->as<OperatorNode>()->getChildWithOperatorId(operatorId);
         if (found) {
             return found;

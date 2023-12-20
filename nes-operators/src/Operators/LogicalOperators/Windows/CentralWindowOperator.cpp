@@ -54,6 +54,7 @@ OperatorNodePtr CentralWindowOperator::copy() {
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setOperatorState(operatorState);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }

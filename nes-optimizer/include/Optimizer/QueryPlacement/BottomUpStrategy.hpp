@@ -52,24 +52,20 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     /**
      * This method is responsible for pinning the operators to the worker nodes.
-     * @param queryId: query id
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamNodes: pinned downstream operators
      * @throws exception if the operator can't be placed.
      */
-    void pinOperators(QueryId queryId,
-                      const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+    void pinOperators(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                       const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to pin input operator on the input topology node otherwise find appropriate node to pin the operator
-     * @param queryId :  the query id
      * @param logicalOperator : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      * @param pinnedDownStreamOperators: list of pinned downstream node after which placement stops
      */
-    void identifyPinningLocation(QueryId queryId,
-                                 const LogicalOperatorNodePtr& logicalOperator,
+    void identifyPinningLocation(const LogicalOperatorNodePtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
                                  const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 };

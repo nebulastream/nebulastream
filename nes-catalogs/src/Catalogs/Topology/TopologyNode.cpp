@@ -38,7 +38,7 @@ TopologyNodePtr TopologyNode::create(WorkerId workerId,
                                      uint32_t dataPort,
                                      uint16_t resources,
                                      const std::map<std::string, std::any>& properties) {
-    NES_DEBUG("TopologyNode: Creating node with ID {} and resources {}", workerId, resources);
+    NES_DEBUG("Creating node with ID {} and resources {}", workerId, resources);
     return std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, resources, properties);
 }
 
@@ -54,27 +54,39 @@ bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodePropert
 
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
-void TopologyNode::increaseResources(uint16_t freedCapacity) {
-    NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
-    NES_ASSERT(freedCapacity <= usedResources,
-               "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
+bool TopologyNode::increaseResources(uint16_t freedCapacity) {
+    if (freedCapacity > resources) {
+        NES_ERROR("Amount of resources to free {} can not be more than total available resources {}.", freedCapacity, resources);
+        return false;
+    }
+
+    if (freedCapacity > usedResources) {
+        NES_ERROR("Amount of resources to free {} can not be more than actual consumed resources {}.",
+                  freedCapacity,
+                  usedResources);
+        return false;
+    }
     //Update the version number to indicate that the topology node was changed
     incrementVersion();
     usedResources = usedResources - freedCapacity;
+    return true;
 }
 
-void TopologyNode::reduceResources(uint16_t usedCapacity) {
-    NES_DEBUG("TopologyNode: Reducing resources {} Currently occupied {} of {}", usedCapacity, usedResources, resources);
+bool TopologyNode::reduceResources(uint16_t usedCapacity) {
+    NES_DEBUG("Reducing resources {} Currently occupied {} of {}", usedCapacity, usedResources, resources);
     //Update the version number to indicate that the topology node was changed
     incrementVersion();
     if (usedCapacity > resources) {
-        NES_WARNING("PhysicalNode: amount of resources to be used should not be more than actual resources");
+        NES_ERROR("Amount of resources to be used should not be more than actual resources");
+        return false;
     }
 
     if (usedCapacity > (resources - usedResources)) {
-        NES_WARNING("PhysicalNode: amount of resources to be used should not be more than available resources");
+        NES_ERROR("Amount of resources to be used should not be more than available resources");
+        return false;
     }
     usedResources = usedResources + usedCapacity;
+    return true;
 }
 
 TopologyNodePtr TopologyNode::copy() {
@@ -123,8 +135,8 @@ bool TopologyNode::hasNodeProperty(const std::string& key) {
 
 std::any TopologyNode::getNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
-        NES_ERROR("TopologyNode: Property '{}' does not exist", key);
-        NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
+        NES_ERROR("Property '{}' does not exist", key);
+        NES_THROW_RUNTIME_ERROR("Property '" << key << "'does not exist");
     } else {
         return nodeProperties.at(key);
     }
@@ -132,7 +144,7 @@ std::any TopologyNode::getNodeProperty(const std::string& key) {
 
 bool TopologyNode::removeNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
-        NES_ERROR("TopologyNode:  Property '{}' does not exist", key);
+        NES_ERROR("Property '{}' does not exist", key);
         return false;
     }
     nodeProperties.erase(key);
@@ -145,8 +157,8 @@ void TopologyNode::addLinkProperty(const TopologyNodePtr& linkedNode, const Link
 
 LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
-        NES_ERROR("TopologyNode: Link property with node '{}' does not exist", linkedNode->getId());
-        NES_THROW_RUNTIME_ERROR("TopologyNode: Link property to node with id='" << linkedNode->getId() << "' does not exist");
+        NES_ERROR("Link property with node '{}' does not exist", linkedNode->getId());
+        NES_THROW_RUNTIME_ERROR("Link property to node with id='" << linkedNode->getId() << "' does not exist");
     } else {
         return linkProperties.at(linkedNode->getId());
     }
@@ -154,7 +166,7 @@ LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode)
 
 bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
-        NES_ERROR("TopologyNode: Link property to node with id='{}' does not exist", linkedNode->getId());
+        NES_ERROR("Link property to node with id='{}' does not exist", linkedNode->getId());
         return false;
     }
     linkProperties.erase(linkedNode->getId());
@@ -170,14 +182,12 @@ Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
 }
 
 bool TopologyNode::acquireLock() {
-    //NOTE: the below code is not thread safe.
-    // However, as the only callee of this method (Topology::acquireLock) uses a
-    // mutex, implicitly this method becomes thread safe.
 
+    bool expected = false;
+    bool desired = true;
     //Check if no one has locked the topology node already
-    if (!locked) {
+    if (locked.compare_exchange_strong(expected, desired)) {
         //lock the topology node and return true
-        locked = true;
         return true;
     }
     //Someone has already locked the topology node
@@ -185,17 +195,14 @@ bool TopologyNode::acquireLock() {
 }
 
 bool TopologyNode::releaseLock() {
-    //NOTE: the below code is not thread safe.
-    // However, as the only callee of this method (Topology::acquireLock) uses a
-    // mutex, implicitly this method becomes thread safe.
 
+    bool expected = true;
+    bool desired = false;
     //Check if the lock was acquired
-    if (locked) {
+    if (locked.compare_exchange_strong(expected, desired)) {
         //Unlock the topology node and return true
-        locked = false;
         return true;
     }
-
     //Return false as the topology node was not locked
     return false;
 }

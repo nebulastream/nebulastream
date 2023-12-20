@@ -42,28 +42,24 @@ ManualPlacementStrategy::ManualPlacementStrategy(const GlobalExecutionPlanPtr& g
                                                  PlacementMode placementMode)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
 
-bool ManualPlacementStrategy::updateGlobalExecutionPlan(
-    QueryId queryId /*queryId*/,
-    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
-    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
+bool ManualPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
+                                                        const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+                                                        const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     try {
         // 1. Find the path where operators need to be placed
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 2. Place the operators
-        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 2. Compute query sub plans
+        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 3. add network source and sink operators
-        addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        addNetworkOperators(computedQuerySubPlans);
 
-        // 4. Perform type inference on all updated query plans
-        runTypeInferencePhase(queryId);
-
-        // 5. Release the locks from the topology nodes
-        return unlockTopologyNodes();
+        // 4. update execution nodes
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
-        throw Exceptions::QueryPlacementException(queryId, ex.what());
+        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 };
 }// namespace NES::Optimizer

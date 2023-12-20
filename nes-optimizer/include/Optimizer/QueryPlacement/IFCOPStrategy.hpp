@@ -34,7 +34,7 @@ class IFCOPStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
-    bool updateGlobalExecutionPlan(QueryId queryId,
+    bool updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                    const std::set<LogicalOperatorNodePtr>& pinnedUpStreamNodes,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamNodes) override;
 

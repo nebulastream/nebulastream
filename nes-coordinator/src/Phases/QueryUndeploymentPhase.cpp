@@ -63,7 +63,7 @@ void QueryUndeploymentPhase::execute(const SharedQueryId sharedQueryId, SharedQu
 
     for (const auto [id, resourceAmount] : resourceMap) {
         NES_TRACE("QueryUndeploymentPhase: Releasing {} resources for the node {}", resourceAmount, id);
-        topology->increaseResources(id, resourceAmount);
+        topology->releaseResources(id, resourceAmount);
     }
 
     if (!globalExecutionPlan->removeQuerySubPlans(sharedQueryId)) {

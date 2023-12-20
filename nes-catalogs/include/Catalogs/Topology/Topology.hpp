@@ -142,7 +142,7 @@ class Topology {
      * @param amountToIncrease : resources to free
      * @return true if successful
      */
-    bool increaseResources(WorkerId workerId, uint16_t amountToIncrease);
+    bool releaseResources(WorkerId workerId, uint16_t amountToIncrease);
 
     /**
      * @brief Reduce the amount of resources on the node with given id
@@ -150,7 +150,7 @@ class Topology {
      * @param amountToReduce : amount of resources to reduce
      * @return true if successful
      */
-    bool reduceResources(WorkerId workerId, uint16_t amountToReduce);
+    bool occupyResources(WorkerId workerId, uint16_t amountToReduce);
 
     /**
      * @brief Merge the sub graphs starting from the nodes into a single sub-graph

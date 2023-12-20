@@ -30,7 +30,7 @@ bool LogicalUnaryOperatorNode::inferSchema() {
     }
 
     if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("UnaryOperatorNode: this node should have at least one child operator");
+        NES_THROW_RUNTIME_ERROR("UnaryOperatorNode: this operator should have at least one child operator");
     }
 
     auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();

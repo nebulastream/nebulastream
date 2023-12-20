@@ -130,40 +130,29 @@ class BasePlacementStrategy {
                               const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators);
 
     /**
-     * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and assign them to the
-     * designated topology node
-     * @param sharedQueryId id of the query containing operators to place
-     * @param pinnedUpStreamOperators the upstream operators preceeding all operators to place
-     * @param pinnedDownStreamOperators the downstream operators succeeding all operators to place
-     */
-    void placePinnedOperators(SharedQueryId sharedQueryId,
-                              const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                              const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
-
-    /**
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and compute query
      * sub plans on the designated topology node
-     * @param rootOperator the shared query plan id
+     * @param sharedQueryId the shared query plan id
      * @param pinnedUpStreamOperators the upstream operators
      * @param pinnedDownStreamOperators the downstream operators
      */
-    ComputedSubQueryPlans computeQuerySubPlans(SharedQueryId rootOperator,
+    ComputedSubQueryPlans computeQuerySubPlans(SharedQueryId sharedQueryId,
                                                const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
-     * @brief
-     * @param computedSubQueryPlans
-     * @return
+     * @brief Add network source and sink operators
+     * @param computedSubQueryPlans: update the computed sub query plan by adding network source and sink operators
      */
     void addNetworkOperators(ComputedSubQueryPlans& computedSubQueryPlans);
 
     /**
-     * @brief
-     * @param computedSubQueryPlans
-     * @return
+     * @brief Add the computed query sub plans tot he global execution plan
+     * @param sharedQueryId: the shared query plan id
+     * @param computedSubQueryPlans: the computed query sub plans
+     * @return true if global execution plan gets updated successfully else false
      */
-    bool updateExecutionNodes(ComputedSubQueryPlans& computedSubQueryPlans);
+    bool updateExecutionNodes(SharedQueryId sharedQueryId, ComputedSubQueryPlans& computedSubQueryPlans);
 
     /**
      * @brief Get Execution node for the input topology node
@@ -180,39 +169,11 @@ class BasePlacementStrategy {
     TopologyNodePtr getTopologyNode(WorkerId workerId);
 
     /**
-     * @brief Add network source and sinks between query sub plans allocated on different execution nodes
-     * @param sharedQueryId: the shared query plan
-     * @param pinnedUpStreamOperators: the upstream operators of the query plan
-     * @param pinnedDownStreamOperators: the downstream operators of the query plan
-     */
-    void addNetworkSourceAndSinkOperators(SharedQueryId sharedQueryId,
-                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
-                                          const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
-
-    /**
-     * @brief Run the type inference phase for all the query sub plans for the input query id
-     * @param queryId: the input query id
-     * @return true if successful else false
-     */
-    bool runTypeInferencePhase(QueryId queryId);
-
-    /**
      * @brief Get topology node where all children operators of the input operator are placed
      * @param operatorNode: the input operator
      * @return vector of topology nodes where child operator was placed or empty if not all children operators are placed
      */
     std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const LogicalOperatorNodePtr& operatorNode);
-
-    /**
-     * @brief Get the candidate query plan where input operator is to be appended
-     * @param queryId : the query id
-     * @param operatorNode : the candidate operator
-     * @param executionNode : the execution node where operator is to be placed
-     * @return the query plan to which the input operator is to be appended
-     */
-    static QueryPlanPtr getCandidateQueryPlanForOperator(SharedQueryId sharedQueryId,
-                                                         const LogicalOperatorNodePtr& operatorNode,
-                                                         const ExecutionNodePtr& executionNode);
 
     /**
      * @brief Perform locking of all topology nodes selected by the path selection algorithm.
@@ -234,13 +195,13 @@ class BasePlacementStrategy {
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     PlacementMode placementMode;
-    std::map<WorkerId, TopologyNodePtr> topologyMap;
-    std::map<OperatorId, ExecutionNodePtr> operatorToExecutionNodeMap;
-    std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
     std::vector<WorkerId> workerNodeIdsInBFS;
     std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
+    std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
+    std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
     std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOperatorMap;
+    std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>> workerIdToPinnedOperatorMap;
 
   private:
     /**
@@ -267,39 +228,10 @@ class BasePlacementStrategy {
                                                               const TopologyNodePtr& sinkTopologyNode);
 
     /**
-     * @brief Attach network source or sink operator to the given operator
-     * @param queryId : the id of the query
-     * @param upStreamOperator : the logical operator to which source or sink operator need to be attached
-     * @param pinnedDownStreamOperators: the collection of pinned downstream operator after which to stop
-     */
-    void placeNetworkOperator(QueryId queryId,
-                              const LogicalOperatorNodePtr& upStreamOperator,
-                              const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators);
-
-    /**
-     * Check if operator present in the given collection
-     * @param operatorToSearch : operator to search
-     * @param operatorCollection : collection to search into
-     * @return true if successful
-     */
-    bool operatorPresentInCollection(const LogicalOperatorNodePtr& operatorToSearch,
-                                     const std::set<LogicalOperatorNodePtr>& operatorCollection);
-
-    /**
      * @brief Add an execution node as root of the global execution plan
      * @param executionNode: execution node to add as root
      */
     void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
-
-    /**
-     * @brief This method validates if the given upStream and downStream operators are connected to each other directly or via
-     * intermediate query plans
-     * @param upStreamOperator : The up stream operator
-     * @param downStreamOperator : The down stream operator
-     * @return true if operators connected otherwise false
-     */
-    bool isSourceAndDestinationConnected(const LogicalOperatorNodePtr& upStreamOperator,
-                                         const LogicalOperatorNodePtr& downStreamOperator);
 
     /**
      * @brief Select path for placement using pessimistic 2PL strategy

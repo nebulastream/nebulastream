@@ -76,6 +76,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOutputSchema(outputSchema);
+    copy->setOperatorState(operatorState);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }

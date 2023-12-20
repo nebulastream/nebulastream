@@ -102,14 +102,15 @@ class TopologyNode : public Node {
     /**
      * @brief method to reduce the cpu capacity of the node
      * @param uint64_t of the value that has to be subtracted
+     * @return 
      */
-    void reduceResources(uint16_t usedCapacity);
+    bool reduceResources(uint16_t usedCapacity);
 
     /**
      * @brief method to increase CPU capacity
      * @param uint64_t of the vlaue that has to be added
      */
-    void increaseResources(uint16_t freedCapacity);
+    bool increaseResources(uint16_t freedCapacity);
 
     /**
      * @brief Get ip address of the node

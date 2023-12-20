@@ -75,6 +75,7 @@ OperatorNodePtr MapLogicalOperatorNode::copy() {
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
+    copy->setOperatorState(operatorState);
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }

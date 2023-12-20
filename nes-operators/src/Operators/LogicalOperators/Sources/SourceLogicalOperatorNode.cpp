@@ -66,6 +66,7 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
+    copy->setOperatorState(operatorState);
     if (copy->instanceOf<SourceLogicalOperatorNode>()) {
         copy->as<SourceLogicalOperatorNode>()->setProjectSchema(projectSchema);
     }

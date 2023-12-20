@@ -42,7 +42,7 @@ TopDownStrategy::TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPl
                                  PlacementMode placementMode)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
 
-bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
+bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
     try {
@@ -51,26 +51,22 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
         performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 2. Place operators on the selected path
-        pinOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        pinOperators(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. Place pinned operators
-        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 3. Compute query sub plans
+        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 4. add network source and sink operators
-        addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        addNetworkOperators(computedQuerySubPlans);
 
-        // 5. Perform type inference on all updated query plans
-        runTypeInferencePhase(queryId);
-
-        // 6. Release the locks from the topology nodes
-        return unlockTopologyNodes();
+        // 5. update execution nodes
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
-        throw Exceptions::QueryPlacementException(queryId, ex.what());
+        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }
 
-void TopDownStrategy::pinOperators(QueryId queryId,
-                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
+void TopDownStrategy::pinOperators(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
     NES_TRACE("Place all sink operators.");
@@ -83,8 +79,7 @@ void TopDownStrategy::pinOperators(QueryId queryId,
         if (pinnedDownStreamOperator->getOperatorState() == OperatorState::PLACED) {
             //Place all downstream nodes
             for (auto& upStreamOperator : pinnedDownStreamOperator->getChildren()) {
-                identifyPinningLocation(queryId,
-                                        upStreamOperator->as<LogicalOperatorNode>(),
+                identifyPinningLocation(upStreamOperator->as<LogicalOperatorNode>(),
                                         candidateTopologyNode,
                                         pinnedUpStreamOperators);
             }
@@ -94,25 +89,22 @@ void TopDownStrategy::pinOperators(QueryId queryId,
                 throw Exceptions::RuntimeException(
                     "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             }
-            identifyPinningLocation(queryId, pinnedDownStreamOperator, candidateTopologyNode, pinnedUpStreamOperators);
+            identifyPinningLocation(pinnedDownStreamOperator, candidateTopologyNode, pinnedUpStreamOperators);
         }
     }
     NES_DEBUG("Finished pinning all operators.");
 }
 
-void TopDownStrategy::identifyPinningLocation(QueryId queryId,
-                                              const LogicalOperatorNodePtr& logicalOperator,
+void TopDownStrategy::identifyPinningLocation(const LogicalOperatorNodePtr& logicalOperator,
                                               TopologyNodePtr candidateTopologyNode,
                                               const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators) {
 
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
-        auto workerId = std::any_cast<uint64_t>(logicalOperator->getProperty(PINNED_WORKER_ID));
-        operatorToExecutionNodeMap[logicalOperator->getId()] = globalExecutionPlan->getExecutionNodeById(workerId);
         return;
     }
 
-    if (!operatorToExecutionNodeMap.contains(logicalOperator->getId())) {
+    if (!logicalOperator->hasProperty(PINNED_WORKER_ID)) {// If operator is not pinned yet
         NES_DEBUG("Place {}", logicalOperator->toString());
         if ((logicalOperator->hasMultipleChildrenOrParents() || logicalOperator->instanceOf<SourceLogicalOperatorNode>())
             && !logicalOperator->instanceOf<SinkLogicalOperatorNode>()) {
@@ -184,7 +176,10 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
         logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
         logicalOperator->addProperty(PROCESSED, true);
     } else {
-        candidateTopologyNode = operatorToExecutionNodeMap[logicalOperator->getId()]->getTopologyNode();
+        candidateTopologyNode = getTopologyNode(std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID)));
+        //Pin the operator to the candidate node
+        candidateTopologyNode->reduceResources(1);
+        logicalOperator->addProperty(PROCESSED, true);
     }
 
     auto isOperatorAPinnedUpStreamOperator = std::find_if(pinnedUpStreamOperators.begin(),
@@ -200,10 +195,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
 
     NES_TRACE("Place the children operators.");
     for (const auto& upstreamOperator : logicalOperator->getChildren()) {
-        identifyPinningLocation(queryId,
-                                upstreamOperator->as<LogicalOperatorNode>(),
-                                candidateTopologyNode,
-                                pinnedUpStreamOperators);
+        identifyPinningLocation(upstreamOperator->as<LogicalOperatorNode>(), candidateTopologyNode, pinnedUpStreamOperators);
     }
 }
 
@@ -221,8 +213,8 @@ TopDownStrategy::getTopologyNodesForDownStreamOperators(const LogicalOperatorNod
             return {};
         }
 
-        TopologyNodePtr parentTopologyNode =
-            topologyMap[std::any_cast<uint64_t>(downstreamOperator->as_if<OperatorNode>()->getProperty(PINNED_WORKER_ID))];
+        TopologyNodePtr parentTopologyNode = workerIdToTopologyNodeMap[std::any_cast<uint64_t>(
+            downstreamOperator->as_if<OperatorNode>()->getProperty(PINNED_WORKER_ID))];
         parentTopologyNodes.push_back(parentTopologyNode);
     }
     NES_DEBUG("returning list of topology nodes where parent operators are placed");
