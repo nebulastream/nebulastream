@@ -55,6 +55,7 @@ class TcpServer {
                                  boost::asio::buffer(randomTuple),
                                  [this, socket](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
                                      if (!error) {
+                                         std::this_thread::sleep_for(std::chrono::seconds(10));
                                          startSend(socket);// Continue sending random tuples
                                      } else {
                                          std::cerr << "Error sending data: " << error.message() << std::endl;

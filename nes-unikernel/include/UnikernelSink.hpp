@@ -28,6 +28,7 @@ class UnikernelSink {
 
     static void setup() {
         if constexpr (std::is_same_v<typename Config::SinkType, NES::Network::NetworkSink>) {
+            NES_INFO("Calling Setup for NetworkSink");
             UnikernelSink::sink.emplace(
                 1,
                 Config::QueryID,
@@ -41,7 +42,10 @@ class UnikernelSink {
                 1,
                 200ms,
                 100);
+            sink->preSetup();
+            sink->setup();
         } else {
+            NES_INFO("Calling Setup for KafkaSink");
             UnikernelSink::sink.emplace(1, Config::Broker, Config::Topic, Config::QueryID, Config::QuerySubplanID);
         }
     }

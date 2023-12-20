@@ -75,7 +75,6 @@ class PipelineImpl<Prev, Source> {
     static void setup() {
         NES_INFO("Calling Setup for Source {}", SourceImpl::Id);
         SourceImpl::setup();
-        SourceImpl::start();
     }
 
     static void stop() { SourceImpl::stop(); }
@@ -94,8 +93,8 @@ class SubQuery {
 
   public:
     static void setup() {
-        PipelineImpl::setup();
         Sink::setup();
+        PipelineImpl::setup();
     }
     static void stop() {
         PipelineImpl::stop();
