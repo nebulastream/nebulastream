@@ -32,7 +32,7 @@ struct Options {
     static Result fromCLI(int argc, char** argv);
 
     static std::pair<WorkerConfiguration, WorkerLinkConfiguration>
-    findUpstreamWorker(const EndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers);
+    findUpstreamWorker(const SinkEndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers);
 };
 
 #endif//NES_OPTIONS_H

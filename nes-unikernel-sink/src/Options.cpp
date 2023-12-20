@@ -24,7 +24,7 @@ Options::Result Options::fromCLI(int argc, char** argv) {
     std::string filepath = "./testConfig.yaml";
     parser.config().program(argv[0]).description("Unikernel Source");
     params.add_parameter(filepath, "-c", "--config").nargs(1).metavar("PATH").help("path to config.yaml");
-    params.add_parameter(sinkId, "-n", "--source-id")
+    params.add_parameter(sinkId, "-n", "--sink-id")
         .nargs(1)
         .metavar("SINK_ID")
         .help("Id of the source to use (currently index of the sink in the list of sinks)");
@@ -49,7 +49,7 @@ Options::Result Options::fromCLI(int argc, char** argv) {
     return Options{sink.nodeId,
                    configuration.query.queryID,
                    sink.subQueryID,
-                   sink.operatorId.value(),
+                   sink.operatorId,
                    configuration.query.workerID,
                    sink.ip,
                    sink.port,
@@ -62,7 +62,7 @@ Options::Result Options::fromCLI(int argc, char** argv) {
 }
 
 std::pair<WorkerConfiguration, WorkerLinkConfiguration>
-Options::findUpstreamWorker(const EndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers) {
+Options::findUpstreamWorker(const SinkEndpointConfiguration& configuration, const std::vector<WorkerConfiguration>& workers) {
     for (const auto& worker : workers) {
         for (const auto& sq : worker.subQueries) {
             NES_ASSERT(sq.type == WorkerDownStreamLinkConfigurationType::node && sq.worker.has_value(),
