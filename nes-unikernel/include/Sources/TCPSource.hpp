@@ -237,14 +237,13 @@ class TCPSource : public DataSource<TCPConfig> {
             return;
         }
         NES_TRACE("Created socket");
-
         struct sockaddr_in servaddr;
         servaddr.sin_family = AF_INET;
         servaddr.sin_addr.s_addr = inet_addr(TCPConfig::NodeIP);
         servaddr.sin_port = htons(TCPConfig::Port);// htons is necessary to convert a number to network byte order
 
         if (connection < 0) {
-            NES_TRACE("Try connecting to server: {}:{}", TCPConfig::NodeIP, TCPConfig::Port);
+            NES_INFO("Try connecting to server: {}:{}", TCPConfig::NodeIP, TCPConfig::Port);
             connection = connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr));
         }
         if (connection < 0) {
