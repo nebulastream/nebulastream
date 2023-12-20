@@ -27,6 +27,7 @@ class UnikernelSourceImpl {
 
     static void setup() {
         if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
+            NES_INFO("Calling Setup for NetworkSource");
             UnikernelSourceImpl::source.emplace(
                 NES::Network::NesPartition(Config::QueryID,
                                            Config::UpstreamOperatorID,
@@ -36,16 +37,11 @@ class UnikernelSourceImpl {
                 200ms,
                 100,
                 UnikernelPipelineExecutionContext::create<Prev>());
-        } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
-            UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
-        }
-    }
-
-    static void start() {
-        if constexpr (std::same_as<NES::Network::NetworkSource, typename Config::SourceType>) {
             source->bind();
             source->start();
         } else if constexpr (std::same_as<NES::TCPSource<Config>, typename Config::SourceType>) {
+            NES_INFO("Calling Setup for KafkaSource");
+            UnikernelSourceImpl::source.emplace(UnikernelPipelineExecutionContext::create<Prev>());
             source->start();
             source->runningRoutine();
         }
