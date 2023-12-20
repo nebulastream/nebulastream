@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.9](https://github.com/nebulastream/nebulastream/tree/v0.6.9) (2023-12-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.8...v0.6.9)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate removal of `ExchangeOperator` [\#4414](https://github.com/nebulastream/nebulastream/issues/4414)
+
 ## [v0.6.8](https://github.com/nebulastream/nebulastream/tree/v0.6.8) (2023-12-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.7...v0.6.8)
