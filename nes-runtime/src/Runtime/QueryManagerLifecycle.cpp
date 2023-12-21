@@ -203,7 +203,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     }
 
     //apply any pending reconfigurations to the sinks
-    for (const auto& sink: qep->getSinks()) {
+    for (const auto& sink : qep->getSinks()) {
         const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
         if (networkSink) {
             networkSink->applyNextSinkDescriptor();
@@ -214,9 +214,9 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     if (queryToStatisticsMap.contains(qep->getQuerySubPlanId())) {
         auto statistics = queryToStatisticsMap.find(qep->getQuerySubPlanId());
         if (statistics->getTimestampQueryStart() == 0) {
-            auto now =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-                    .count();
+            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                           .count();
             statistics->setTimestampQueryStart(now, true);
         } else {
             NES_DEBUG("Start timestamp already exists, this is expected in case of query reconfiguration");

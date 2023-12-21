@@ -16,8 +16,8 @@
 #define NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
-#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>

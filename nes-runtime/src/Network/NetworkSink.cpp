@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -44,12 +44,12 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t numberOfOrigins,
                          Version version)
     : SinkMedium(
-          std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
-          nodeEngine,
-          numOfProducers,
-          queryId,
-          querySubPlanId,
-          numberOfOrigins),
+        std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
+        nodeEngine,
+        numOfProducers,
+        queryId,
+        querySubPlanId,
+        numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),

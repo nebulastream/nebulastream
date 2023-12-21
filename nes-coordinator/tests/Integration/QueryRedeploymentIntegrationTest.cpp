@@ -70,7 +70,6 @@ class QueryRedeploymentIntegrationTest : public Testing::BaseIntegrationTest, pu
         }
         return numberOfNodes == nodes;
     }
-
 };
 
 constexpr std::chrono::duration<int64_t, std::milli> defaultTimeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
@@ -460,14 +459,15 @@ TEST_P(QueryRedeploymentIntegrationTest, testSinkReconnect) {
 
     //add a pending version to the subplan containing the file sink
     auto reconfiguredSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
-                                                                            networkSourceCrdPartition,
-                                                                            newNodeLocation,
-                                                                            WAIT_TIME,
-                                                                            EVENT_CHANNEL_RETRY_TIMES,
-                                                                            nextVersion);
+                                                                                 networkSourceCrdPartition,
+                                                                                 newNodeLocation,
+                                                                                 WAIT_TIME,
+                                                                                 EVENT_CHANNEL_RETRY_TIMES,
+                                                                                 nextVersion);
 
-    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addNextVersion(*reconfiguredSourceDescriptor->as<Network::NetworkSourceDescriptor>());
-    auto uniqueId = 0; // will be ignored
+    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addNextVersion(
+        *reconfiguredSourceDescriptor->as<Network::NetworkSourceDescriptor>());
+    auto uniqueId = 0;// will be ignored
     auto reconfiguredSinkDescriptor = Network::NetworkSinkDescriptor::create(newNodeLocation,
                                                                              networkSourceWrk3Partition,
                                                                              waitTime,
@@ -859,7 +859,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         waitForFinalCount = false;
         waitForReconfig = true;
         //wait for tuples in order to make sure that the buffer is actually tested
-        while (!waitForReconnect) {}
+        while (!waitForReconnect) {
+        }
 
         //verify that the old partition gets unregistered
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
@@ -1232,12 +1233,13 @@ TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testEndOfStreamWhileBuffering)
     auto networkSourceWrk3Partition = NES::Network::NesPartition(sharedQueryId, networkSrcWrk3Id, 0, 0);
     Network::NodeLocation newNodeLocation(wrk3->getWorkerId(), "localhost", *wrk3DataPort);
     auto reconfigureNetworkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
-                                                                            networkSourceCrdPartition,
-                                                                            newNodeLocation,
-                                                                            WAIT_TIME,
-                                                                            EVENT_CHANNEL_RETRY_TIMES,
-                                                                            nextVersion);
-    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addNextVersion(*reconfigureNetworkSourceDescriptor->as<Network::NetworkSourceDescriptor>());
+                                                                                       networkSourceCrdPartition,
+                                                                                       newNodeLocation,
+                                                                                       WAIT_TIME,
+                                                                                       EVENT_CHANNEL_RETRY_TIMES,
+                                                                                       nextVersion);
+    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addNextVersion(
+        *reconfigureNetworkSourceDescriptor->as<Network::NetworkSourceDescriptor>());
     wrk1->getNodeEngine()->experimentalReconfigureNetworkSink(crd->getNesWorker()->getWorkerId(),
                                                               "localhost",
                                                               *wrk3DataPort,
@@ -1566,12 +1568,13 @@ TEST_P(QueryRedeploymentIntegrationTest, testReconfigureWhileAlreadyBuffering) {
     Version nextVersion = 1;
     Network::NodeLocation newNodeLocation(crd->getNesWorker()->getWorkerId(), "localhost", *wrk3DataPort);
     auto reconfiguredNetworkSourceDescriptor = Network::NetworkSourceDescriptor::create(schema,
-                                                                            networkSourceCrdPartition,
-                                                                            newNodeLocation,
-                                                                            WAIT_TIME,
-                                                                            EVENT_CHANNEL_RETRY_TIMES,
-                                                                            nextVersion);
-    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addNextVersion(*reconfiguredNetworkSourceDescriptor->as<Network::NetworkSourceDescriptor>());
+                                                                                        networkSourceCrdPartition,
+                                                                                        newNodeLocation,
+                                                                                        WAIT_TIME,
+                                                                                        EVENT_CHANNEL_RETRY_TIMES,
+                                                                                        nextVersion);
+    crd->getNesWorker()->getNodeEngine()->getPartitionManager()->addNextVersion(
+        *reconfiguredNetworkSourceDescriptor->as<Network::NetworkSourceDescriptor>());
     crd->getQueryCatalogService()->checkAndMarkForMigration(sharedQueryId, subPlanIdWrk2, QueryState::MIGRATING);
     //retrieve data about running network sink at wrk1
     auto subQueryIds = wrk1->getNodeEngine()->getSubQueryIds(sharedQueryId);
