@@ -48,12 +48,53 @@ class UnikernelPipelineExecutionContext {
         NES_INFO("OpHandler for Stage {} @ {}", currentStageId, static_cast<void*>(opHandler));
         return opHandler;
     }
+
+    static void printHexBuffer(const uint8_t* buffer, std::size_t bufferLength, std::stringstream& ss) {
+        for (std::size_t i = 0; i < bufferLength; i += 16) {
+            std::size_t chunkSize = std::min(static_cast<std::size_t>(16), bufferLength - i);
+            const auto* chunk = buffer + i;
+            ss << std::setw(8) << std::setfill('0') << std::hex << i << ": ";
+
+            for (std::size_t j = 0; j < 16; ++j) {
+                if (j < chunkSize) {
+                    ss << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(static_cast<unsigned char>(chunk[j]))
+                       << ' ';
+                } else {
+                    ss << "   ";// Three spaces for non-existent bytes
+                }
+            }
+
+            ss << "  ";
+            for (std::size_t j = 0; j < chunkSize; ++j) {
+                char c = chunk[j];
+                ss << (std::isprint(c) ? c : '.');
+            }
+
+            ss << std::endl;
+        }
+    }
     void dispatchBuffer(NES::Runtime::TupleBuffer& tb) const {
         NES_INFO("Dispatching to {}", nextStageId);
+
+        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(NES::LogLevel::LOG_DEBUG)) {
+            auto buffer = tb.getBuffer();
+            std::stringstream ss;
+            printHexBuffer(buffer, 32, ss);
+            NES_DEBUG("Buffer Content: \n{}", ss.str());
+        }
+
         emitProxy(tb);
     }
     void emit(NES::Runtime::TupleBuffer& tb) const {
         NES_INFO("Emitting to {}", nextStageId);
+
+        if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= NES::getLogLevel(NES::LogLevel::LOG_DEBUG)) {
+            auto buffer = tb.getBuffer();
+            std::stringstream ss;
+            printHexBuffer(buffer, 32, ss);
+            NES_DEBUG("Buffer Content: \n{}", ss.str());
+        }
+
         emitProxy(tb);
     }
     NES::Runtime::BufferManagerPtr getBufferManager() { return TheBufferManager; }
