@@ -18,7 +18,7 @@ namespace NES::Experimental::Statistics {
 
 StatisticCollectorIdentifier::StatisticCollectorIdentifier(const std::string& logicalSourceName,
                                                            const std::string& physicalSourceName,
-                                                           const TopologyNodeId& nodeId,
+                                                           const WorkerId & nodeId,
                                                            const std::string& fieldName,
                                                            const StatisticCollectorType statisticCollectorType)
     : logicalSourceName(logicalSourceName), physicalSourceName(physicalSourceName), nodeId(nodeId), fieldName(fieldName),
@@ -35,7 +35,7 @@ const std::string& StatisticCollectorIdentifier::getLogicalSourceName() const { 
 
 const std::string& StatisticCollectorIdentifier::getPhysicalSourceName() const { return physicalSourceName; }
 
-const TopologyNodeId& StatisticCollectorIdentifier::getNodeId() const { return nodeId; }
+const WorkerId& StatisticCollectorIdentifier::getNodeId() const { return nodeId; }
 
 const std::string& StatisticCollectorIdentifier::getFieldName() const { return fieldName; }
 

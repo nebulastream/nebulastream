@@ -52,7 +52,7 @@ class StatisticManager {
      * @param allStatistics a reply object will be filled with the desired/specified allStatistics
      * @param nodeID the id of the node on which we are working
      */
-    void probeStatistic(StatisticProbeRequest& probeRequest, ProbeStatisticReply* allStatistics, TopologyNodeId nodeID);
+    void probeStatistic(StatisticProbeRequest& probeRequest, ProbeStatisticReply* allStatistics, WorkerId nodeID);
 
     /**
      * @brief receives a StatisticDeleteRequest and removes the according entries from the StatisticCollectorStorage
@@ -61,7 +61,7 @@ class StatisticManager {
      * @param nodeID the id of the node on which we are working
      * @return returns true on success, otherwise false
      */
-    bool deleteStatistic(StatisticDeleteRequest& deleteRequest, TopologyNodeId nodeID);
+    bool deleteStatistic(StatisticDeleteRequest& deleteRequest, WorkerId nodeID);
 
   private:
     StatisticCollectorStoragePtr statisticCollectorStorage;

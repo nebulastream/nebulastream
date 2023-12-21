@@ -38,7 +38,7 @@ class StatisticCollectorIdentifier {
      */
     StatisticCollectorIdentifier(const std::string& logicalSourceName,
                                  const std::string& physicalSourceName,
-                                 const TopologyNodeId& nodeId,
+                                 const WorkerId & nodeId,
                                  const std::string& fieldName,
                                  const StatisticCollectorType statisticCollectorType);
 
@@ -55,7 +55,7 @@ class StatisticCollectorIdentifier {
     /**
      * @return returns the node on which the statistic was created
      */
-    [[nodiscard]] const TopologyNodeId& getNodeId() const;
+    [[nodiscard]] const WorkerId& getNodeId() const;
 
     /**
      * @return returns the fieldName over which the statistic is generated
@@ -93,7 +93,7 @@ class StatisticCollectorIdentifier {
   private:
     std::string logicalSourceName;
     std::string physicalSourceName;
-    TopologyNodeId nodeId;
+    WorkerId nodeId;
     std::string fieldName;
     StatisticCollectorType statisticCollectorType;
 };

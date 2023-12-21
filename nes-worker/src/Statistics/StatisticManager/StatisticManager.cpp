@@ -28,7 +28,7 @@ StatisticCollectorStoragePtr StatisticManager::getStatisticCollectorStorage() { 
 
 void StatisticManager::probeStatistic(StatisticProbeRequest& probeRequest,
                                       ProbeStatisticReply* allStatistics,
-                                      TopologyNodeId nodeID) {
+                                      WorkerId nodeID) {
 
     auto allPhysicalSourceNames = probeRequest.getPhysicalSourceNames();
     double statistic;
@@ -52,7 +52,7 @@ void StatisticManager::probeStatistic(StatisticProbeRequest& probeRequest,
     return;
 }
 
-bool StatisticManager::deleteStatistic(StatisticDeleteRequest& deleteRequest, TopologyNodeId nodeID) {
+bool StatisticManager::deleteStatistic(StatisticDeleteRequest& deleteRequest, WorkerId nodeID) {
 
     for (auto physicalSourceName : deleteRequest.getPhysicalSourceNames()) {
         auto statisticCollectorIdentifier = StatisticCollectorIdentifier(deleteRequest.getLogicalSourceName(),
