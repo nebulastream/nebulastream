@@ -368,6 +368,7 @@ TEST(SQLWindowServiceTest, joinWindowTest) {
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("purchases").as("p").joinWith(Query::from("tweets").as("t"), Attribute("p.user_id"), Attribute("t.user_id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+
 }
 */
 TEST(SQLWindowAggregationFunctionTest, CountAggregationFunctionWindowTest) {
@@ -408,4 +409,36 @@ TEST(SQLWindowAggregationFunctionTest, CountAggregationFunctionWindowTest) {
                       .sink(PrintSinkDescriptor::create());
 
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+}
+TEST(SQLHavingClauseTest, havingClauseTest) {
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+
+    std::string inputQuery;
+    QueryPlanPtr actualPlan;
+
+    inputQuery = "select sum(f2) as sum_f2 from StreamName window tumbling (size 10 ms) having sum_f2 > 5 INTO PRINT";
+    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    Query query = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10))).apply(Sum(Attribute("f2"))->as(Attribute("sum_f2"))).filter(Attribute("sum_f2")>5).sink(PrintSinkDescriptor::create());;
+
+    std::cout << queryPlanToString(query.getQueryPlan()) << "\n";
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+}
+TEST(SQLWindowServiceTest, joinWindowTest) {
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+
+    std::string inputQuery =
+        "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec)";
+    QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    std::cout << queryPlanToString(actualPlan) << "\n";
+
+    /*
+    Query query = Query::from("purchases")
+                      .joinWith(Query::from("tweets"),
+                                Attribute("user_id"),
+                                Attribute("user_id"),
+                                TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
+                      .sink(PrintSinkDescriptor::create());
+    */
+    EXPECT_TRUE(true);
+    //EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }

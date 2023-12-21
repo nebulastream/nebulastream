@@ -16,7 +16,6 @@ limitations under the License.
 #define NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLHELPER_HPP_
 
 #include <API/QueryAPI.hpp>
-#include <Parsers/NebulaSQL/NebulaSQLOperatorNode.hpp>
 #include <list>
 #include <map>
 #include <string>
@@ -36,9 +35,9 @@ enum NebulaSQLWindowType{
         class NebulaSQLHelper {
           private:
             std::vector<ExpressionNodePtr> projectionFields;
-            std::vector<ExpressionNodePtr> whereClauses;
+            std::list<ExpressionNodePtr> whereClauses;
+            std::list<ExpressionNodePtr> havingClauses;
             std::string source;
-            std::list<ExpressionNodePtr> expressionList;
 
 
 
@@ -52,7 +51,7 @@ enum NebulaSQLWindowType{
 
             std::vector<QueryPlanPtr> queryPlans;
             bool isSelect = false;
-            bool isWhere = false;
+            bool isWhereOrHaving = false;
             bool isFrom = false;
             bool isWindow = false;
             bool isArithmeticBinary = false;
@@ -70,6 +69,8 @@ enum NebulaSQLWindowType{
 
             std::vector<ExpressionNodePtr> expressionBuilder;
 
+
+
             std::vector<FieldAssignmentExpressionNodePtr> mapBuilder;
 
             std::string opBoolean;
@@ -85,14 +86,19 @@ enum NebulaSQLWindowType{
             int identCountHelper = 0;
             int implicitMapCountHelper = 0;
 
+            std::vector<std::pair<ExpressionNodePtr, ExpressionNodePtr>> joinKeys;
+            std::vector<std::string> joinSources;
+            std::vector<ExpressionNodePtr> joinKeyRelationHelper;
+
 
 
             // Getter and Setter
 
-            const std::map<int32_t, NebulaSQLOperatorNode>& getOperatorList() const;
-            const std::list<ExpressionNodePtr>& getExpressions() const;
+            const std::list<ExpressionNodePtr>& getWhereClauses() const;
+            const std::list<ExpressionNodePtr>& getHavingClauses() const;
             const std::vector<ExpressionNodePtr>& getProjectionFields() const;
-            void addExpression(ExpressionNodePtr expressionNode);
+            void addWhereClause(ExpressionNodePtr expressionNode);
+            void addHavingClause(ExpressionNodePtr expressionNode);
             void addProjectionField(ExpressionNodePtr expressionNode);
             const NES::Windowing::WindowTypePtr getWindowType() const;
             void addSource(std::string sourceName);

@@ -15,7 +15,6 @@ limitations under the License.
 #ifndef NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLQUERYPLANCREATOR_HPP_
 #define NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLQUERYPLANCREATOR_HPP_
 
-#include <Parsers/NebulaSQL/NebulaSQLOperatorNode.hpp>
 #include <Parsers/NebulaSQL/gen/NebulaSQLBaseListener.h>
 #include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -44,7 +43,6 @@ namespace NES::Parsers {
             void enterFromClause(NebulaSQLParser::FromClauseContext* context) override;
             void exitSelectClause(NebulaSQLParser::SelectClauseContext* context) override;
             void enterNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context) override;
-            void exitNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context) override;
             void exitFromClause(NebulaSQLParser::FromClauseContext* context) override;
             void enterWhereClause(NebulaSQLParser::WhereClauseContext* context) override;
             void exitWhereClause(NebulaSQLParser::WhereClauseContext* context) override;
@@ -63,10 +61,6 @@ namespace NES::Parsers {
             void exitWindowedAggregationClause(NebulaSQLParser::WindowedAggregationClauseContext* context) override;
             void exitTumblingWindow(NebulaSQLParser::TumblingWindowContext* context) override;
             void exitSlidingWindow(NebulaSQLParser::SlidingWindowContext* context) override;
-            /*
-            void exitCountBasedWindow(NebulaSQLParser::CountBasedWindowContext* context) override;
-            void exitCountBasedTumbling(NebulaSQLParser::CountBasedTumblingContext* context) override;
-             */
             void enterNamedExpression(NebulaSQLParser::NamedExpressionContext* context) override;
             void exitNamedExpression(NebulaSQLParser::NamedExpressionContext* context) override;
             void enterFunctionCall(NebulaSQLParser::FunctionCallContext* context) override;
@@ -99,6 +93,7 @@ namespace NES::Parsers {
             void enterWindowClause(NebulaSQLParser::WindowClauseContext* context) override;
             void exitThresholdMinSizeParameter(NebulaSQLParser::ThresholdMinSizeParameterContext* context) override;
             void enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) override;
+            void exitJoinRelation(NebulaSQLParser::JoinRelationContext* context) override;
         };
 
 

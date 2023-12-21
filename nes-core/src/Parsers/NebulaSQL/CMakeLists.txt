@@ -13,7 +13,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        NebulaSQLOperatorNode.cpp
         NebulaSQLQueryPlanCreator.cpp
         NebulaSQLHelper.cpp
 )

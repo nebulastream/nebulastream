@@ -12,21 +12,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Parsers/NebulaSQL/NebulaSQLOperatorNode.hpp>
 #include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
 
 namespace NES::Parsers {
 
 //Getter and Setter for the map/list entries of each clause
 const std::string NebulaSQLHelper::getSource() const { return this->source; }
-const std::list<ExpressionNodePtr>& NebulaSQLHelper::getExpressions() const { return this->expressionList; }
+const std::list<ExpressionNodePtr>& NebulaSQLHelper::getWhereClauses()const { return this->whereClauses; }
+const std::list<ExpressionNodePtr>& NebulaSQLHelper::getHavingClauses() const { return this->havingClauses; }
+
 const std::vector<ExpressionNodePtr>& NebulaSQLHelper::getProjectionFields() const { return this->projectionFields; }
 
 // methods to update the clauses maps/lists
 void NebulaSQLHelper::addSource(std::string sourceName) { this->source=sourceName; }
-void NebulaSQLHelper::addExpression(ExpressionNodePtr expressionNode) {
-    auto pos = this->expressionList.begin();
-    this->expressionList.insert(pos, expressionNode);
+void NebulaSQLHelper::addWhereClause(NES::ExpressionNodePtr expressionNode){
+    auto pos = this->whereClauses.begin();
+    this->whereClauses.insert(pos, expressionNode);
+}
+void NebulaSQLHelper::addHavingClause(NES::ExpressionNodePtr expressionNode) {
+    auto pos = this->havingClauses.begin();
+    this->havingClauses.insert(pos, expressionNode);
 }
 void NebulaSQLHelper::addProjectionField(ExpressionNodePtr expressionNode) { this->projectionFields.push_back(expressionNode); }
 
