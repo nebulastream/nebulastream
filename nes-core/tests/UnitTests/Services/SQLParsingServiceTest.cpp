@@ -427,18 +427,11 @@ TEST(SQLWindowServiceTest, joinWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery =
-        "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec)";
+        "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     std::cout << queryPlanToString(actualPlan) << "\n";
+    auto query = Query::from("purchases").joinWith(Query::from("tweets"),Attribute("user_id"),Attribute("user_id"),TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(10))).sink(PrintSinkDescriptor::create());
 
-    /*
-    Query query = Query::from("purchases")
-                      .joinWith(Query::from("tweets"),
-                                Attribute("user_id"),
-                                Attribute("user_id"),
-                                TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                      .sink(PrintSinkDescriptor::create());
-    */
-    EXPECT_TRUE(true);
-    //EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    std::cout << queryPlanToString(query.getQueryPlan()) << "\n";
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }

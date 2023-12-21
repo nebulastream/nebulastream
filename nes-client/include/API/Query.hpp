@@ -504,11 +504,6 @@ class Query {
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
 
-  protected:
-    // query plan containing the operators.
-    QueryPlanPtr queryPlan;
-
-  private:
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the Join operation
@@ -524,6 +519,11 @@ class Query {
                     ExpressionItem onRightKey,
                     Windowing::WindowTypePtr const& windowType);
 
+  protected:
+    // query plan containing the operators.
+    QueryPlanPtr queryPlan;
+
+  private:
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the Join operation

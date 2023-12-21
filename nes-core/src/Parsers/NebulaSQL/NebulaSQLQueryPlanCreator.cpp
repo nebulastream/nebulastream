@@ -42,8 +42,6 @@ namespace NES::Parsers {
     }
 
     QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const {
-        std::cout << queryPlanToString(completeQueryPlan) <<"\n";
-
         return completeQueryPlan;
 
         /**
@@ -300,7 +298,7 @@ namespace NES::Parsers {
 
     void NebulaSQLQueryPlanCreator::enterUnquotedIdentifier(NebulaSQLParser::UnquotedIdentifierContext* context) {
         NebulaSQLHelper helper = helpers.top();
-        if(helper.isFrom){
+        if(helper.isFrom && !helper.isJoinRelation){
             helper.newSourceName = context->getText();
         }
         poppush(helper);
@@ -309,23 +307,26 @@ namespace NES::Parsers {
 
 
     void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierContext* context) {
-        // TODO bei enter identifier aus Where oder Select oder Having Attribute erstellen, und auf die liste pushen
-        auto temp = context->getText();
         NebulaSQLHelper helper = helpers.top();
+
+        // Get Index of  Parent Rule to check type of parent rule in conditions
         auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
         size_t parentRuleIndex = -1;
         if (parentContext != nullptr) {
             parentRuleIndex = parentContext->getRuleIndex();
         }
+
         if(( helper.isWhereOrHaving || helper.isSelect || helper.isWindow ) && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex){
+            // add identifiers in select, window, where and having clauses to the expression builder list
             helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
         }else if(helper.isFrom && !helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex){
+            // get main source name
             helper.addSource(context->getText());
         }
-        else if(NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex && !helper.isFunctionCall){
+        else if(NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex && !helper.isFunctionCall && !helper.isJoinRelation){
+            // handle renames of identifiers
             if(helper.isArithmeticBinary){
                 NES_THROW_RUNTIME_ERROR("Why are we here? Just to suffer?");
-
             }
             else if (( helper.isWhereOrHaving || helper.isSelect )){
                     ExpressionNodePtr attr = helper.expressionBuilder.back();
@@ -384,7 +385,7 @@ namespace NES::Parsers {
             if(helper.newSourceName != helper.getSource()){
                 queryPlan = QueryPlanBuilder::addRename(helper.newSourceName, queryPlan);
             }
-            if(helper.windowType != nullptr){
+            if(helper.windowType != nullptr && helper.joinSources.empty()){
                 if (helper.isTimeBasedWindow){
                     queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan, helper.windowType);
                 }
@@ -402,16 +403,16 @@ namespace NES::Parsers {
                 queryPlan->appendOperatorAsNewRoot(op);
 
 
+            } else{
+                // Join Handling
+                //  Vector von StreamName, Linkes Join Attribute, Recchtes Join Attribute
+                for (unsigned long i = 0; i < helper.joinSources.size(); i++) {
+                    auto queryPlanRight = QueryPlanBuilder::createQueryPlan(helper.joinSources[i]);
+                    auto leftKey = helper.joinKeys[i].first;
+                    auto rightKey = helper.joinKeys[i].second;
+                    queryPlan = QueryPlanBuilder::addJoin(queryPlan,queryPlanRight, leftKey, rightKey, helper.windowType, Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
+                }
             }
-            // Join Handling
-            //  Vector von StreamName, Linkes Join Attribute, Recchtes Join Attribute
-            for (unsigned long i = 0; i < helper.joinSources.size(); ++i) {
-                auto queryPlanRight = QueryPlanBuilder::createQueryPlan(helper.joinSources[i]);
-                auto leftKey = helper.joinKeys[i].first;
-                auto rightKey = helper.joinKeys[i].second;
-                queryPlan = QueryPlanBuilder::addJoin(queryPlan,queryPlanRight, leftKey, rightKey, helper.windowType, Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
-            }
-
             for (auto& whereExpr : helper.getWhereClauses()) {
                 queryPlan = QueryPlanBuilder::addFilter(whereExpr, queryPlan);
             }
