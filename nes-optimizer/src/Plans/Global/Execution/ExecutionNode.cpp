@@ -57,17 +57,11 @@ bool ExecutionNode::removeQuerySubPlans(QueryId sharedQueryId) {
 }
 
 bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId) {
-    auto sharedPlanIterator = mapOfQuerySubPlans.find(sharedQueryId);
-    if (sharedPlanIterator != mapOfQuerySubPlans.end()) {
-        //define a predicate for finding a subplan with the given id
-        auto querySubPlanIdMatches = [querySubPlanId](const QueryPlanPtr& queryPlan) {
-            return queryPlan->getQuerySubPlanId() == querySubPlanId;
-        };
-        //check if a plan with the given id exists and erase it if it was found
-        auto& subPlans = sharedPlanIterator->second;
-        auto querySubPlanToRemove = std::find_if(subPlans.begin(), subPlans.end(), querySubPlanIdMatches);
-        if (querySubPlanToRemove != subPlans.end()) {
-            subPlans.erase(querySubPlanToRemove);
+
+    if (mapOfSharedQueryToQuerySubPlans.contains(sharedQueryId)) {
+        auto querySubPlanMap = mapOfSharedQueryToQuerySubPlans[querySubPlanId];
+        if(querySubPlanMap.contains(querySubPlanId)){
+            querySubPlanMap.erase(querySubPlanId);
             return true;
         }
     }
@@ -75,11 +69,11 @@ bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlan
 }
 
 QueryPlanPtr ExecutionNode::getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
-    auto sharedPlanIterator = mapOfQuerySubPlans.find(sharedQueryId);
-    if (sharedPlanIterator != mapOfQuerySubPlans.end()) {
+    auto sharedPlanIterator = mapOfSharedQueryToQuerySubPlans.find(sharedQueryId);
+    if (sharedPlanIterator != mapOfSharedQueryToQuerySubPlans.end()) {
         for (auto& subPlanIterator : sharedPlanIterator->second) {
-            if (subPlanIterator->getQuerySubPlanId() == subPlanId) {
-                return subPlanIterator;
+            if (subPlanIterator.first == subPlanId) {
+                return subPlanIterator.second;
             }
         }
     }
