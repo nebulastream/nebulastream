@@ -268,6 +268,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         if (queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_BALANCED
             || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_PERFORMANCE
             || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_ENERGY) {
+            // Need origin IDs for query compilation.
+            queryPlan = originIdInferencePhase->execute(queryPlan);
             queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
         }
 

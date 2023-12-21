@@ -210,7 +210,10 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
     //2. Iterate over all open CL operators and set the Open CL code returned by the acceleration service
     for (const auto& openCLOperator : openCLOperators) {
 
-        const auto fileName = std::filesystem::path("/Users/hesk/my/work/nes/nebulastream/nes-coordinator/tests/test_data/computeNesMap.cl");
+        const auto fileName = std::filesystem::path("../nes-coordinator/tests/TestData/computeNesMap.cl");
+        if (!exists(fileName)) {
+            NES_FATAL_ERROR("Could not find OpenCL file: {}", fileName.string());
+        }
         std::ifstream openCLFile(fileName, std::fstream::in);
         openCLFile.seekg(0, std::ios_base::end);
         auto fileSize = openCLFile.tellg();
