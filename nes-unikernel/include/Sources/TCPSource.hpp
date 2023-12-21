@@ -40,18 +40,9 @@ class TCPSource : public DataSource<TCPConfig> {
     constexpr static NES::SourceType SourceType = NES::SourceType::TCP_SOURCE;
     /**
      * @brief constructor of a TCP Source
-     * @param schema the schema of the data
-     * @param bufferManager The BufferManager is responsible for: 1. Pooled Buffers: preallocated fixed-size buffers of memory that
      * must be reference counted 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly.
      * They are also subject to reference counting.
-     * @param queryManager comes with functionality to manage the queries
-     * @param tcpSourceType points at current TCPSourceType config object, look at same named file for info
-     * @param operatorId represents a locally running query execution plan
-     * @param originId represents an origin
-     * @param numSourceLocalBuffers number of local source buffers
-     * @param gatheringMode the gathering mode used
-     * @param physicalSourceName the name and unique identifier of a physical source
-     * @param executableSuccessors executable operators coming after this source
+     * @param successor executable operators coming after this source
      */
     explicit TCPSource(NES::Unikernel::UnikernelPipelineExecutionContext successor)
         : DataSource<TCPConfig>(successor), circularBuffer(2048) {}
@@ -158,8 +149,8 @@ class TCPSource : public DataSource<TCPConfig> {
                 }
                 //if size of received data is not 0 (no data received), push received data to circular buffer
                 else if (bufferSizeReceived != 0) {
-                    NES_TRACE("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
-                    NES_TRACE("TCPSOURCE::fillBuffer: print current buffer: {}.", messageBuffer);
+                    NES_DEBUG("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
+                    NES_DEBUG("TCPSOURCE::fillBuffer: print current buffer: {}.", messageBuffer);
                     //push the received data into the circularBuffer
                     circularBuffer.push(messageBuffer, bufferSizeReceived);
                 }
@@ -173,9 +164,9 @@ class TCPSource : public DataSource<TCPConfig> {
                     inputTupleSize = sizeUntilSearchToken('\n');
                     // allocate buffer with size of tuple
                     messageBuffer = new char[inputTupleSize];
-                    NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
+                    NES_DEBUG("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
                               inputTupleSize);
-                    NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());
+                    NES_DEBUG("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());
                     //copy and delete tuple from circularBuffer, delete tuple separator
                     popped = popGivenNumberOfValues(inputTupleSize, true);
                 } catch (const std::exception& e) {
@@ -183,12 +174,12 @@ class TCPSource : public DataSource<TCPConfig> {
                     throw e;
                 }
 
-                NES_TRACE("TCPSOURCE::fillBuffer: Successfully prepared tuples? '{}'", popped);
+                NES_DEBUG("TCPSOURCE::fillBuffer: Successfully prepared tuples? '{}'", popped);
                 //if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
                 if (inputTupleSize != 0 && popped) {
                     std::string buf(messageBuffer, inputTupleSize);
                     auto iss = std::istringstream(buf);
-                    NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
+                    NES_DEBUG("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
                     tupleCount += parseCSVIntoBuffer(iss, tupleBuffer);
                 }
                 delete[] messageBuffer;
@@ -268,7 +259,7 @@ class TCPSource : public DataSource<TCPConfig> {
 
   private:
     int connection = -1;
-    uint64_t tupleSize;
+    uint64_t tupleSize = UINT_MAX;
     uint64_t tuplesThisPass;
     int sockfd = -1;
     CircularBuffer<char> circularBuffer;
