@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 
-#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>

@@ -60,7 +60,6 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
 }
 
-
 void WorkerRPCClient::registerQueryAsync(const std::string& address,
                                          const QueryPlanPtr& queryPlan,
                                          const CompletionQueuePtr& cq) {

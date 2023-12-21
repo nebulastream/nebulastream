@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Util/Logger/Logger.hpp>

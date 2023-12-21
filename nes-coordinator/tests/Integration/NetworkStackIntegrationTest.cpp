@@ -572,7 +572,9 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                          nodeEngineSender,
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
-                                                         NSOURCE_RETRIES, DEFAULT_NUMBER_OF_ORIGINS, INITIAL_VERSION);
+                                                         NSOURCE_RETRIES,
+                                                         DEFAULT_NUMBER_OF_ORIGINS,
+                                                         INITIAL_VERSION);
         auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
         auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
 

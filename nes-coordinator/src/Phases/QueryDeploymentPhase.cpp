@@ -118,7 +118,7 @@ void QueryDeploymentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //mark subqueries that were reconfigured as running again
     for (const auto& queryId : sharedQueryPlan->getQueryIds()) {
         for (const auto& subPlanMetaData : queryCatalogService->getEntryForQuery(queryId)->getAllSubQueryPlanMetaData()) {
-            if (subPlanMetaData->getSubQueryStatus() == QueryState::RECONFIGURING)  {
+            if (subPlanMetaData->getSubQueryStatus() == QueryState::RECONFIGURING) {
                 subPlanMetaData->updateStatus(QueryState::RUNNING);
             }
         }
@@ -163,7 +163,6 @@ void QueryDeploymentPhase::deployQuery(SharedQueryId sharedQueryId, const std::v
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryDeploymentPhase:deployQuery: {} to {}", sharedQueryId, rpcAddress);
-
 
         for (const auto& querySubPlan : querySubPlans) {
             auto singleQueryId = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId).front();
@@ -213,17 +212,15 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
         //3. Fetch the topology node and compute the topology node payload
         auto topologyNode = executionNode->getTopologyNode();
         nlohmann::json payload;
-        payload[DEVICE_INFO_KEY] =
-            std::any_cast<std::vector<Runtime::OpenCLDeviceInfo>>(topologyNode->getNodeProperty(
-                Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
+        payload[DEVICE_INFO_KEY] = std::any_cast<std::vector<Runtime::OpenCLDeviceInfo>>(
+            topologyNode->getNodeProperty(Worker::Configuration::OPENCL_DEVICES))[openCLOperator->getDeviceId()];
 
         //4. Extract the Java UDF metadata
         auto javaDescriptor = openCLOperator->getJavaUDFDescriptor();
         payload["functionCode"] = javaDescriptor->getMethodName();
 
         // The constructor of the Java UDF descriptor ensures that the byte code of the class exists.
-        jni::JavaByteCode javaByteCode =
-            javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
+        jni::JavaByteCode javaByteCode = javaDescriptor->getClassByteCode(javaDescriptor->getClassName()).value();
 
         //5. Prepare the multi-part message
         cpr::Part part1 = {"jsonFile", to_string(payload)};
@@ -238,8 +235,7 @@ void QueryDeploymentPhase::applyJavaUDFAcceleration(SharedQueryId sharedQueryId,
         if (response.status_code != 200) {
             throw QueryDeploymentException(sharedQueryId,
                                            "Error in call to Elegant acceleration service with code "
-                                               + std::to_string(response.status_code) + " and msg "
-                                               + response.reason);
+                                               + std::to_string(response.status_code) + " and msg " + response.reason);
         }
 
         nlohmann::json jsonResponse = nlohmann::json::parse(response.text);

@@ -366,8 +366,13 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         Version version = 5;
         auto numberOfOrigins = 6;
         OperatorId uniqueId = 7;
-        auto sink =
-            Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), retryTimes, version, numberOfOrigins, uniqueId);
+        auto sink = Network::NetworkSinkDescriptor::create(nodeLocation,
+                                                           nesPartition,
+                                                           std::chrono::seconds(1),
+                                                           retryTimes,
+                                                           version,
+                                                           numberOfOrigins,
+                                                           uniqueId);
         SerializableOperator_SinkDetails sinkDescriptor;
         OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(sinkDescriptor);
