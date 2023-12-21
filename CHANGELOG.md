@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.10](https://github.com/nebulastream/nebulastream/tree/v0.6.10) (2023-12-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.9...v0.6.10)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Implement QueryVersionDeploymentPhase [\#4089](https://github.com/nebulastream/nebulastream/issues/4089)
+
+### Bug Fixes 🐛
+
+- \[BUG\] ConcurrentWindowDeploymentTest is randomly failing [\#2872](https://github.com/nebulastream/nebulastream/issues/2872)
+
 ## [v0.6.9](https://github.com/nebulastream/nebulastream/tree/v0.6.9) (2023-12-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.8...v0.6.9)
