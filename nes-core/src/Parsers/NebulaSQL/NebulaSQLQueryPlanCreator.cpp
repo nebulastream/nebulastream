@@ -298,8 +298,18 @@ namespace NES::Parsers {
 
     void NebulaSQLQueryPlanCreator::enterUnquotedIdentifier(NebulaSQLParser::UnquotedIdentifierContext* context) {
         NebulaSQLHelper helper = helpers.top();
+
+        // Get Index of  Parent Rule to check type of parent rule in conditions
+        auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
+        size_t parentRuleIndex = -1;
+        if (parentContext != nullptr) {
+            parentRuleIndex = parentContext->getRuleIndex();
+        }
+
         if(helper.isFrom && !helper.isJoinRelation){
             helper.newSourceName = context->getText();
+        } else if (helper.isJoinRelation && parentRuleIndex == NebulaSQLParser::RuleTableAlias){
+            helper.joinSourceRenames.emplace_back(context->getText());
         }
         poppush(helper);
         NebulaSQLBaseListener::enterUnquotedIdentifier(context);
@@ -382,7 +392,7 @@ namespace NES::Parsers {
             QueryPlanPtr queryPlan;
 
             queryPlan = QueryPlanBuilder::createQueryPlan(helper.getSource());
-            if(helper.newSourceName != helper.getSource()){
+            if(!helper.newSourceName.empty() && helper.newSourceName != helper.getSource()){
                 queryPlan = QueryPlanBuilder::addRename(helper.newSourceName, queryPlan);
             }
             if(helper.windowType != nullptr && helper.joinSources.empty()){
@@ -408,6 +418,9 @@ namespace NES::Parsers {
                 //  Vector von StreamName, Linkes Join Attribute, Recchtes Join Attribute
                 for (unsigned long i = 0; i < helper.joinSources.size(); i++) {
                     auto queryPlanRight = QueryPlanBuilder::createQueryPlan(helper.joinSources[i]);
+                    if(!helper.joinSourceRenames[i].empty() && helper.joinSourceRenames[i] != helper.joinSources[i]){
+                        queryPlanRight = QueryPlanBuilder::addRename(helper.joinSourceRenames[i], queryPlanRight);
+                    }
                     auto leftKey = helper.joinKeys[i].first;
                     auto rightKey = helper.joinKeys[i].second;
                     queryPlan = QueryPlanBuilder::addJoin(queryPlan,queryPlanRight, leftKey, rightKey, helper.windowType, Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
@@ -733,6 +746,9 @@ void NebulaSQLQueryPlanCreator::exitJoinRelation(NebulaSQLParser::JoinRelationCo
             }
             else{
                 NES_ERROR("Join Keys have to be specified explicitely")
+            }
+            if(helper.joinSources.size() == helper.joinSourceRenames.size() + 1){
+                helper.joinSourceRenames.emplace_back("");
             }
             poppush(helper);
             NebulaSQLBaseListener::exitJoinRelation(context);

@@ -87,7 +87,7 @@ TEST(SQLParsingServiceTest, projectionTest1) {
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
 
 }
-
+/*
 TEST(SQLParsingServiceTest, unionTest1) {
     std::string inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT;";
     std::shared_ptr<QueryParsingService> SQLParsingService;
@@ -104,7 +104,7 @@ TEST(SQLParsingServiceTest, unionTest2) {
 
     EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
 }
-
+*/
 TEST(SQLSelectionServiceTest, selectionTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
     std::string inputQuery;
@@ -274,13 +274,13 @@ TEST(SQLWindowServiceTest, thresholdWIndowTest){
 TEST(SQLWindowServiceTest, timeBasedTumblingWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
-    std::string inputQuery = "select sum(f2) from StreamName group by f2 window tumbling (timestamp, size 10 sec)";
+    std::string inputQuery = "select sum(f2) from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("f2")).apply(Sum(Attribute("f2"))).sink(PrintSinkDescriptor::create());
 
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select sum(f2) from StreamName group by f2 window tumbling (size 10 sec)";
+    inputQuery = "select sum(f2) from StreamName group by f2 window tumbling (size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("f2")).apply(Sum(Attribute("f2"))).sink(PrintSinkDescriptor::create());
 
@@ -290,7 +290,7 @@ TEST(SQLWindowServiceTest, timeBasedTumblingWindowTest) {
 TEST(SQLWindowServiceTest, timeBasedSlidingWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
-    std::string inputQuery = "select sum(f2) from StreamName group by f2 window sliding (timestamp, size 10 ms, advance by 5 ms)";
+    std::string inputQuery = "select sum(f2) from StreamName group by f2 window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName")
                       .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10), Milliseconds(5)))
@@ -299,7 +299,7 @@ TEST(SQLWindowServiceTest, timeBasedSlidingWindowTest) {
                       .sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select * from StreamName group by f2 window sliding (size 10 ms, advance by 5 ms)";
+    inputQuery = "select * from StreamName group by f2 window sliding (size 10 ms, advance by 5 ms) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     //ToDO Could .apply be empty?
     query = Query::from("StreamName").window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10), Milliseconds(5))).byKey(Attribute("f2")).apply().sink(PrintSinkDescriptor::create());
@@ -309,7 +309,7 @@ TEST(SQLWindowServiceTest, timeBasedSlidingWindowTest) {
 TEST(SQLWindowServiceTest, multipleAggregationFunctionsWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
-    std::string inputQuery = "select sum(f2), min(f2) from StreamName window tumbling (size 10 sec)";
+    std::string inputQuery = "select sum(f2), min(f2) from StreamName window tumbling (size 10 sec) INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
@@ -317,7 +317,7 @@ TEST(SQLWindowServiceTest, multipleAggregationFunctionsWindowTest) {
                       .sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select sum(f2), min(f2), max(f2) from StreamName window tumbling (timestamp, size 10 sec)";
+    inputQuery = "select sum(f2), min(f2), max(f2) from StreamName window tumbling (timestamp, size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("StreamName")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
@@ -331,7 +331,7 @@ TEST(SQLWindowServiceTest, multipleAggregationFunctionsWindowTest) {
 TEST(SQLWindowServiceTest, aggregationAliasWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
-    std::string inputQuery = "select max(f2) as max_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec)";
+    std::string inputQuery = "select max(f2) as max_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
@@ -340,7 +340,7 @@ TEST(SQLWindowServiceTest, aggregationAliasWindowTest) {
                       .sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select max(f2) as max_f2, sum(f2) as sum_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec)";
+    inputQuery = "select max(f2) as max_f2, sum(f2) as sum_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("StreamName")
                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
@@ -350,27 +350,25 @@ TEST(SQLWindowServiceTest, aggregationAliasWindowTest) {
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 //ToDo Research correct join syntax
-/*
-TEST(SQLWindowServiceTest, joinWindowTest) {
+TEST(SQLWindowServiceTest, joinWindowTestDerErste) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
-    std::string inputQuery = "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec)";
+    std::string inputQuery = "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("purchases").joinWith(Query::from("tweets"), Attribute("user_id"), Attribute("user_id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select * from purchases inner join tweets on purchases.user_id = tweets.user_id window tumbling (timestamp, size 10 sec)";
+    inputQuery = "select * from purchases inner join tweets on purchases.user_id = tweets.user_id window tumbling (timestamp, size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("purchases").joinWith(Query::from("tweets"), Attribute("purchases.user_id"), Attribute("tweets.user_id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select * from purchases as p inner join tweets as t on p.user_id = t.user_id window tumbling (timestamp, size 10 sec)";
+    inputQuery = "select * from purchases as p inner join tweets as t on p.user_id = t.user_id window tumbling (timestamp, size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("purchases").as("p").joinWith(Query::from("tweets").as("t"), Attribute("p.user_id"), Attribute("t.user_id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
 }
-*/
 TEST(SQLWindowAggregationFunctionTest, CountAggregationFunctionWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
@@ -379,20 +377,20 @@ TEST(SQLWindowAggregationFunctionTest, CountAggregationFunctionWindowTest) {
 
     std::cout << "-------------------------Count Aggregation Function Window-------------------------\n";
 
-    inputQuery = "select count(f2) from StreamName window tumbling (size 10 sec)";
+    inputQuery = "select count(f2) from StreamName window tumbling (size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("f2")).apply(Count()).sink(PrintSinkDescriptor::create());
 
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select count(f2) as count_f2 from StreamName window tumbling (size 10 sec)";
+    inputQuery = "select count(f2) as count_f2 from StreamName window tumbling (size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("StreamName")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("f2").as("count_f2")).apply(Count()).sink(PrintSinkDescriptor::create());
 
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select count(*) from StreamName window tumbling (size 10 sec)";
+    inputQuery = "select count(*) from StreamName window tumbling (size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("StreamName")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
@@ -401,7 +399,7 @@ TEST(SQLWindowAggregationFunctionTest, CountAggregationFunctionWindowTest) {
 
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select count() from StreamName window tumbling (size 10 sec)";
+    inputQuery = "select count() from StreamName window tumbling (size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("StreamName")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))

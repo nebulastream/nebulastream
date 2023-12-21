@@ -89,6 +89,7 @@ enum NebulaSQLWindowType{
             std::vector<std::pair<ExpressionNodePtr, ExpressionNodePtr>> joinKeys;
             std::vector<std::string> joinSources;
             std::vector<ExpressionNodePtr> joinKeyRelationHelper;
+            std::vector<std::string> joinSourceRenames;
 
 
 
