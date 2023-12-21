@@ -56,6 +56,9 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 namespace NES::Optimizer {
 
+class BasePlacementStrategy;
+using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
+
 class QueryPlacementPhase;
 using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
 
@@ -107,6 +110,13 @@ class QueryPlacementPhase {
      */
     bool checkIfAllArePinnedOperators(const std::set<LogicalOperatorNodePtr>& pinnedOperators);
 
+    /**
+     * @brief method returns different kind of placement strategies.
+     * @param placementStrategy : name of the strategy
+     * @return instance of type BaseOptimizer
+     */
+    BasePlacementStrategyPtr getStrategy(PlacementStrategy placementStrategy);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
@@ -114,4 +124,4 @@ class QueryPlacementPhase {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
 };
 }// namespace NES::Optimizer
-#endif  // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

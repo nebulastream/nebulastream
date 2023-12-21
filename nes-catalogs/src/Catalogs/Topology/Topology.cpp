@@ -353,7 +353,7 @@ bool Topology::occupyResources(WorkerId workerId, uint16_t amountToReduce) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Reduce {} resources from node with id {}", amountToReduce, workerId);
     if (workerIdToTopologyNode.contains(workerId)) {
-        return workerIdToTopologyNode[workerId]->reduceResources(amountToReduce);
+        return workerIdToTopologyNode[workerId]->occupyResources(amountToReduce);
     }
     NES_WARNING("Topology: Unable to find node with id {}", workerId);
     return false;
@@ -363,7 +363,7 @@ bool Topology::releaseResources(WorkerId workerId, uint16_t amountToIncrease) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Increase {} resources from node with id {}", amountToIncrease, workerId);
     if (workerIdToTopologyNode.contains(workerId)) {
-        return workerIdToTopologyNode[workerId]->increaseResources(amountToIncrease);
+        return workerIdToTopologyNode[workerId]->releaseResources(amountToIncrease);
     }
     NES_WARNING("Topology: Unable to find node with id {}", workerId);
     return false;

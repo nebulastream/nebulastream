@@ -17,7 +17,7 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Util/PlacementMode.hpp>
+#include <Configurations/Enums/PlacementAmenderMode.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -88,7 +88,7 @@ class BasePlacementStrategy {
     explicit BasePlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    const TopologyPtr& topology,
                                    const TypeInferencePhasePtr& typeInferencePhase,
-                                   PlacementMode placementMode);
+                                   PlacementAmenderMode placementMode);
 
     virtual ~BasePlacementStrategy() = default;
 
@@ -194,7 +194,7 @@ class BasePlacementStrategy {
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
-    PlacementMode placementMode;
+    PlacementAmenderMode placementAmenderMode;
     std::vector<WorkerId> workerNodeIdsInBFS;
     std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;

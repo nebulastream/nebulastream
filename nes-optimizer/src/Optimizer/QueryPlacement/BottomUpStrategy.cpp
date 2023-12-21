@@ -29,15 +29,15 @@ namespace NES::Optimizer {
 std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                 const TopologyPtr& topology,
                                                                 const TypeInferencePhasePtr& typeInferencePhase,
-                                                                PlacementMode placementMode) {
-    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode));
+                                                                PlacementAmenderMode placementAmenderMode) {
+    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
 }
 
 BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                    const TopologyPtr& topology,
                                    const TypeInferencePhasePtr& typeInferencePhase,
-                                   PlacementMode placementMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
+                                   PlacementAmenderMode placementAmenderMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                  const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -168,7 +168,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorNodePtr& log
         throw Exceptions::RuntimeException("No node available for further placement of operators");
     }
 
-    candidateTopologyNode->reduceResources(1);
+    candidateTopologyNode->occupyResources(1);
     logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
 
     auto isOperatorAPinnedDownStreamOperator =

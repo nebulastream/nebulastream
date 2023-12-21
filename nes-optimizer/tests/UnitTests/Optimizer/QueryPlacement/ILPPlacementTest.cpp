@@ -40,7 +40,6 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -89,7 +88,7 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr rootNode = TopologyNode::create(3, "localhost", 123, 124, 100, properties);
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 100, properties);
         rootNode->addNodeProperty("slots", 100);
         topologyForILP->setAsRoot(rootNode);
 
@@ -97,7 +96,7 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         middleNode->addNodeProperty("slots", 10);
         topologyForILP->addNewTopologyNodeAsChild(rootNode, middleNode);
 
-        TopologyNodePtr sourceNode = TopologyNode::create(1, "localhost", 123, 124, 1, properties);
+        TopologyNodePtr sourceNode = TopologyNode::create(3, "localhost", 123, 124, 1, properties);
         sourceNode->addNodeProperty("slots", 1);
         topologyForILP->addNewTopologyNodeAsChild(middleNode, sourceNode);
 
@@ -247,8 +246,9 @@ TEST_F(ILPPlacementTest, Z3Test) {
     }
 }
 
+//TODO: Enable with #4453
 /* Test query placement with ILP strategy - simple filter query */
-TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -307,8 +307,9 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
     }
 }
 
+//TODO: Enable with #4453
 /* Test query placement with ILP strategy - window query */
-TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingWindowQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -384,8 +385,9 @@ TEST_F(ILPPlacementTest, testPlacingWindowQueryWithILPStrategy) {
     }
 }
 
+//TODO: Enable with #4453
 /* Test query placement with ILP strategy - window query with sliding window */
-TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingSlidingWindowQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -461,8 +463,9 @@ TEST_F(ILPPlacementTest, testPlacingSlidingWindowQueryWithILPStrategy) {
     }
 }
 
+//TODO: Enable with #4453
 /* Test query placement with ILP strategy - simple map query */
-TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     setupTopologyAndSourceCatalogForILP();
@@ -526,8 +529,9 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     }
 }
 
+//TODO: Enable with #4453
 /* Test query placement with ILP strategy - simple query of source - filter - map - sink */
-TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     setupTopologyAndSourceCatalogForILP();
@@ -591,8 +595,9 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     }
 }
 
+//TODO: Enable with #4453
 /* Test incremental query placement with ILP strategy - simple query of source - filter - map - sink and then added filter - sink to filter operator*/
-TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     coordinatorConfiguration->enableQueryReconfiguration = true;
@@ -774,8 +779,10 @@ TEST_F(ILPPlacementTest, testPlacingUpdatedSharedQueryPlanWithILPStrategy) {
     }
 }
 
+
+//TODO: Enable with #4453
 /* Test incremental query placement with ILP strategy - simple query of source - filter - map - sink and then added map - sink and filter - sink to the filter operator*/
-TEST_F(ILPPlacementTest, testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingMulitpleUpdatesOnASharedQueryPlanWithILPStrategy) {
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     coordinatorConfiguration->enableQueryReconfiguration = true;

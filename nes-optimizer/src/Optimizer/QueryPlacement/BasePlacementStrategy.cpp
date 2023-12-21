@@ -37,9 +37,9 @@ namespace NES::Optimizer {
 BasePlacementStrategy::BasePlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                              const TopologyPtr& topology,
                                              const TypeInferencePhasePtr& typeInferencePhase,
-                                             PlacementMode placementMode)
+                                             PlacementAmenderMode placementAmenderMode)
     : globalExecutionPlan(globalExecutionPlan), topology(topology), typeInferencePhase(typeInferencePhase),
-      placementMode(placementMode) {}
+      placementAmenderMode(placementAmenderMode) {}
 
 bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
@@ -102,12 +102,12 @@ void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorN
     }
 
     //3. Find the path for placement based on the selected placement mode
-    switch (placementMode) {
-        case PlacementMode::Pessimistic: {
+    switch (placementAmenderMode) {
+        case PlacementAmenderMode::PESSIMISTIC: {
             pessimisticPathSelection(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
             break;
         }
-        case PlacementMode::Optimistic: {
+        case PlacementAmenderMode::OPTIMISTIC: {
             optimisticPathSelection(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
             break;
         }
@@ -346,7 +346,10 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
         operatorIdToOperatorMap[pinnedOperator->getId()] = pinnedOperator;
         auto copyOfPinnedOperator = pinnedOperator->copy()->as<LogicalOperatorNode>();// Make a copy of the operator
         auto pinnedWorkerId = std::any_cast<uint64_t>(pinnedOperator->getProperty(PINNED_WORKER_ID));
-        workerIdToResourceConsumedMap[pinnedWorkerId]++;
+        if (pinnedOperator->getOperatorState() == OperatorState::TO_BE_PLACED
+            || pinnedOperator->getOperatorState() == OperatorState::TO_BE_REPLACED) {
+            workerIdToResourceConsumedMap[pinnedWorkerId]++;
+        }
         workerIdToPinnedOperatorMap[pinnedWorkerId].emplace_back(pinnedOperator);
 
         // 2.2. If the pinnedWorkerId has already placed query sub plans then compute an updated list of query sub plans
@@ -582,199 +585,219 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
         // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
-        if (placementMode == PlacementMode::Optimistic) {
+        if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
             //wait till lock is acquired
             while (!topology->acquireLockOnTopologyNode(workerNodeId)) {
                 std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
             };
         }
 
-        // 2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
-        // for placing the operators.
-        auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
-        if (!topology->occupyResources(workerNodeId, consumedResources)) {
-            NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
+        try {
+
+            // 2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
+            // for placing the operators.
+            auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
+            if (!topology->occupyResources(workerNodeId, consumedResources)) {
+                NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
+                return false;
+            }
+
+            // 3. Check if the worker node contains pinned upstream operators
+            bool containPinnedUpstreamOperator = false;
+            bool containPinnedDownstreamOperator = false;
+            if (pinnedUpStreamTopologyNodeIds.contains(workerNodeId)) {
+                containPinnedUpstreamOperator = true;
+            } else if (pinnedDownStreamTopologyNodeIds.contains(workerNodeId)) {
+                containPinnedDownstreamOperator = true;
+            }
+
+            // 4. Fetch the execution node to update and placed query sub plans
+            auto topologyNode = workerIdToTopologyNodeMap[workerNodeId];
+            auto executionNode = getExecutionNode(topologyNode);
+            auto placedQuerySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+
+            // 5. Iterate over the placed query sub plans and update execution node
+            auto computedQuerySubPlans = computedSubQueryPlans[workerNodeId];
+            for (const auto& computedQuerySubPlan : computedQuerySubPlans) {
+
+                // 5.1. Perform the type inference phase on the updated query sub plan and update execution node.
+                if (computedQuerySubPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID) {
+                    if (containPinnedUpstreamOperator) {
+
+                        // Record all placed query sub plans that host pinned leaf operators
+                        std::set<QueryPlanPtr> hostQuerySubPlans;
+
+                        // Iterate over all pinned leaf operators and find a host placed query sub plan that hosts
+                        auto pinnedLeafOperators = computedQuerySubPlan->getLeafOperators();
+                        for (const auto& pinnedLeafOperator : pinnedLeafOperators) {
+
+                            // If the pinned leaf operator is not of type logical source and was already placed.
+                            // Then find and merge the operator with query sub plan containing the placed leaf operator
+                            if (pinnedLeafOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
+
+                                bool foundHostQuerySubPlan = false;
+
+                                // Find and merge with the shared query plan
+                                for (const auto& placedQuerySubPlan : placedQuerySubPlans) {
+
+                                    // If the placed query sub plan contains the pinned upstream operator
+                                    auto matchingPlacedLeafOperator =
+                                        placedQuerySubPlan->getOperatorWithId(pinnedLeafOperator->getId());
+                                    if (matchingPlacedLeafOperator) {
+                                        // Add all newly computed pinned downstream operators to the matching placed leaf operator
+                                        auto pinnedDownstreamOperators = pinnedLeafOperator->getParents();
+                                        for (const auto& pinnedDownstreamOperator : pinnedDownstreamOperators) {
+                                            pinnedDownstreamOperator->removeChild(pinnedLeafOperator);
+                                            pinnedDownstreamOperator->addChild(matchingPlacedLeafOperator);
+                                        }
+                                        hostQuerySubPlans.emplace(placedQuerySubPlan);
+                                        foundHostQuerySubPlan = true;
+                                        break;
+                                    }
+                                }
+
+                                // If no query sub plan found that hosts the placed leaf operator
+                                if (!foundHostQuerySubPlan) {
+                                    NES_ERROR("Unable to find query sub plan hosting the placed and pinned upstream operator.");
+                                    throw Exceptions::RuntimeException(
+                                        "Unable to find query sub plan hosting the placed and pinned upstream operator.");
+                                }
+                            }
+                        }
+
+                        QueryPlanPtr updatedQuerySubPlan;
+                        // Merge the two host query sub plans
+                        if (hostQuerySubPlans.size() > 1) {
+                            for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
+                                if (!updatedQuerySubPlan) {
+                                    updatedQuerySubPlan = hostQuerySubPlan;
+                                } else {
+                                    for (const auto& hostRootOperators : hostQuerySubPlan->getRootOperators()) {
+                                        updatedQuerySubPlan->addRootOperator(hostRootOperators);
+                                    }
+                                }
+                            }
+                        } else {
+                            updatedQuerySubPlan = *(hostQuerySubPlans.begin());
+                        }
+                        NES_INFO("----------------================ {}", updatedQuerySubPlan->toString());
+
+                        //In the end, add root operators of computed plan as well.
+                        for (const auto& rootOperator : computedQuerySubPlan->getRootOperators()) {
+                            updatedQuerySubPlan->addRootOperator(rootOperator);
+                        }
+
+                        NES_INFO("----------------++++++++++++ {}", updatedQuerySubPlan->toString());
+
+                        updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
+                        executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+
+                    } else if (containPinnedDownstreamOperator) {
+
+                        auto pinnedRootOperators = computedQuerySubPlan->getRootOperators();
+                        std::set<QueryPlanPtr> hostQuerySubPlans;
+                        for (const auto& pinnedRootOperator : pinnedRootOperators) {
+
+                            // If the pinned leaf operator is not of type logical source and was already placed.
+                            // Then find and merge the operator with query sub plan containing the placed leaf operator
+                            if (pinnedRootOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
+
+                                bool foundHostQuerySubPlan = false;
+
+                                // Find and merge with the shared query plan
+                                for (const auto& placedQuerySubPlan : placedQuerySubPlans) {
+
+                                    // If the placed query sub plan contains the pinned upstream operator
+                                    auto matchingPinnedRootOperator =
+                                        placedQuerySubPlan->getOperatorWithId(pinnedRootOperator->getId());
+                                    if (matchingPinnedRootOperator) {
+                                        // Add all newly computed downstream operators to matching placed leaf operator
+                                        for (const auto& upstreamOperator : pinnedRootOperator->getChildren()) {
+                                            matchingPinnedRootOperator->addChild(upstreamOperator);
+                                        }
+                                        hostQuerySubPlans.emplace(placedQuerySubPlan);
+                                        foundHostQuerySubPlan = true;
+                                        break;
+                                    }
+                                }
+
+                                // If no query sub plan found that hosts the placed leaf operator
+                                if (!foundHostQuerySubPlan) {
+                                    NES_ERROR("Unable to find query sub plan hosting the placed and pinned upstream operator.");
+                                    throw Exceptions::RuntimeException(
+                                        "Unable to find query sub plan hosting the placed and pinned upstream operator.");
+                                }
+                            }
+                        }
+
+                        QueryPlanPtr updatedQuerySubPlan;
+                        // Merge the two host query sub plans
+                        if (hostQuerySubPlans.size() > 1) {
+                            for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
+                                if (!updatedQuerySubPlan) {
+                                    updatedQuerySubPlan = hostQuerySubPlan;
+                                } else {
+                                    for (const auto& hostRootOperators : hostQuerySubPlan->getRootOperators()) {
+                                        updatedQuerySubPlan->addRootOperator(hostRootOperators);
+                                    }
+                                }
+                            }
+                        } else {
+                            updatedQuerySubPlan = *(hostQuerySubPlans.begin());
+                        }
+
+                        updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
+                        executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+                    } else {
+                        NES_ERROR(
+                            "A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
+                            "operator.",
+                            computedQuerySubPlan->toString());
+                        throw Exceptions::RuntimeException("A query sub plan with invalid query sub plan found that has no "
+                                                           "pinned upstream or downstream operator.");
+                    }
+                } else {
+                    auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
+                    executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
+                }
+            }
+
+            // 6. Add the execution node to the global execution plan
+            if (!globalExecutionPlan->checkIfExecutionNodeExists(workerNodeId)) {
+                globalExecutionPlan->addExecutionNode(executionNode);
+            } else {
+                globalExecutionPlan->scheduleExecutionNode(executionNode);
+            }
+
+            // 7. Mark all operators as placed on the topology node as placed
+            if (workerIdToPinnedOperatorMap.contains(workerNodeId)) {
+                auto pinnedOperators = workerIdToPinnedOperatorMap[workerNodeId];
+                for (const auto& pinnedOperator : pinnedOperators) {
+                    pinnedOperator->setOperatorState(OperatorState::PLACED);
+                }
+            }
+
+            // 8. If using optimistic strategy then, release the lock.
+            if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
+                if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
+                    // Raise an exception
+                }
+            }
+
+        } catch (const std::exception& ex) {// If exception occurred then safely
+            if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
+                if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
+                    // Raise an exception
+                }
+            }
+            if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
+                return unlockTopologyNodes();
+            }
             return false;
         }
-
-        // 3. Check if the worker node contains pinned upstream operators
-        bool containPinnedUpstreamOperator = false;
-        bool containPinnedDownstreamOperator = false;
-        if (pinnedUpStreamTopologyNodeIds.contains(workerNodeId)) {
-            containPinnedUpstreamOperator = true;
-        } else if (pinnedDownStreamTopologyNodeIds.contains(workerNodeId)) {
-            containPinnedDownstreamOperator = true;
-        }
-
-        // 4. Fetch the execution node to update and placed query sub plans
-        auto topologyNode = workerIdToTopologyNodeMap[workerNodeId];
-        auto executionNode = getExecutionNode(topologyNode);
-        auto placedQuerySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
-
-        // 5. Iterate over the placed query sub plans and update execution node
-        auto computedQuerySubPlans = computedSubQueryPlans[workerNodeId];
-        for (const auto& computedQuerySubPlan : computedQuerySubPlans) {
-
-            // 5.1. Perform the type inference phase on the updated query sub plan and update execution node.
-            if (computedQuerySubPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID) {
-                if (containPinnedUpstreamOperator) {
-
-                    auto pinnedLeafOperators = computedQuerySubPlan->getLeafOperators();
-
-                    std::set<QueryPlanPtr> hostQuerySubPlans;
-                    for (const auto& pinnedLeafOperator : pinnedLeafOperators) {
-
-                        // If the pinned leaf operator is not of type logical source and was already placed.
-                        // Then find and merge the operator with query sub plan containing the placed leaf operator
-                        if (pinnedLeafOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
-
-                            bool foundHostQuerySubPlan = false;
-
-                            // Find and merge with the shared query plan
-                            for (const auto& placedQuerySubPlan : placedQuerySubPlans) {
-
-                                // If the placed query sub plan contains the pinned upstream operator
-                                auto matchingPinnedLeafOperator =
-                                    placedQuerySubPlan->getOperatorWithId(pinnedLeafOperator->getId());
-                                if (matchingPinnedLeafOperator) {
-                                    // Add all newly computed downstream operators to matching placed leaf operator
-                                    for (const auto& downstreamOperator : pinnedLeafOperator->getParents()) {
-                                        downstreamOperator->removeChild(pinnedLeafOperator);
-                                        downstreamOperator->addChild(matchingPinnedLeafOperator);
-                                    }
-                                    hostQuerySubPlans.emplace(placedQuerySubPlan);
-                                    foundHostQuerySubPlan = true;
-                                    break;
-                                }
-                            }
-
-                            // If no query sub plan found that hosts the placed leaf operator
-                            if (!foundHostQuerySubPlan) {
-                                NES_ERROR("Unable to find query sub plan hosting the placed and pinned upstream operator.");
-                                throw Exceptions::RuntimeException(
-                                    "Unable to find query sub plan hosting the placed and pinned upstream operator.");
-                            }
-                        }
-                    }
-
-                    QueryPlanPtr updatedQuerySubPlan;
-                    // Merge the two host query sub plans
-                    if (hostQuerySubPlans.size() > 1) {
-                        for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
-                            if (!updatedQuerySubPlan) {
-                                updatedQuerySubPlan = hostQuerySubPlan;
-                            } else {
-                                for (const auto& hostRootOperators : hostQuerySubPlan->getRootOperators()) {
-                                    updatedQuerySubPlan->addRootOperator(hostRootOperators);
-                                }
-                            }
-                        }
-                    } else {
-                        updatedQuerySubPlan = *(hostQuerySubPlans.begin());
-                    }
-
-                    //In the end, add root operators of computed plan as well.
-                    for (const auto& rootOperator : computedQuerySubPlan->getRootOperators()) {
-                        updatedQuerySubPlan->addRootOperator(rootOperator);
-                    }
-
-                    updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
-                    executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
-
-                } else if (containPinnedDownstreamOperator) {
-
-                    auto pinnedRootOperators = computedQuerySubPlan->getRootOperators();
-                    std::set<QueryPlanPtr> hostQuerySubPlans;
-                    for (const auto& pinnedRootOperator : pinnedRootOperators) {
-
-                        // If the pinned leaf operator is not of type logical source and was already placed.
-                        // Then find and merge the operator with query sub plan containing the placed leaf operator
-                        if (pinnedRootOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
-
-                            bool foundHostQuerySubPlan = false;
-
-                            // Find and merge with the shared query plan
-                            for (const auto& placedQuerySubPlan : placedQuerySubPlans) {
-
-                                // If the placed query sub plan contains the pinned upstream operator
-                                auto matchingPinnedRootOperator =
-                                    placedQuerySubPlan->getOperatorWithId(pinnedRootOperator->getId());
-                                if (matchingPinnedRootOperator) {
-                                    // Add all newly computed downstream operators to matching placed leaf operator
-                                    for (const auto& upstreamOperator : pinnedRootOperator->getChildren()) {
-                                        matchingPinnedRootOperator->addChild(upstreamOperator);
-                                    }
-                                    hostQuerySubPlans.emplace(placedQuerySubPlan);
-                                    foundHostQuerySubPlan = true;
-                                    break;
-                                }
-                            }
-
-                            // If no query sub plan found that hosts the placed leaf operator
-                            if (!foundHostQuerySubPlan) {
-                                NES_ERROR("Unable to find query sub plan hosting the placed and pinned upstream operator.");
-                                throw Exceptions::RuntimeException(
-                                    "Unable to find query sub plan hosting the placed and pinned upstream operator.");
-                            }
-                        }
-                    }
-
-                    QueryPlanPtr updatedQuerySubPlan;
-                    // Merge the two host query sub plans
-                    if (hostQuerySubPlans.size() > 1) {
-                        for (const auto& hostQuerySubPlan : hostQuerySubPlans) {
-                            if (!updatedQuerySubPlan) {
-                                updatedQuerySubPlan = hostQuerySubPlan;
-                            } else {
-                                for (const auto& hostRootOperators : hostQuerySubPlan->getRootOperators()) {
-                                    updatedQuerySubPlan->addRootOperator(hostRootOperators);
-                                }
-                            }
-                        }
-                    } else {
-                        updatedQuerySubPlan = *(hostQuerySubPlans.begin());
-                    }
-
-                    updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
-                    executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
-                } else {
-                    NES_ERROR("A query sub plan {} with invalid query sub plan found that has no pinned upstream or downstream "
-                              "operator.",
-                              computedQuerySubPlan->toString());
-                    throw Exceptions::RuntimeException(
-                        "A query sub plan with invalid query sub plan found that has no pinned upstream or downstream operator.");
-                }
-            } else {
-                auto updatedQuerySubPlan = typeInferencePhase->execute(computedQuerySubPlan);
-                executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
-            }
-        }
-
-        // 6. Add the execution node to the global execution plan
-        if (!globalExecutionPlan->checkIfExecutionNodeExists(workerNodeId)) {
-            globalExecutionPlan->addExecutionNode(executionNode);
-        } else {
-            globalExecutionPlan->scheduleExecutionNode(executionNode);
-        }
-
-        // 7. Mark all operators as placed on the topology node as placed
-        if (workerIdToPinnedOperatorMap.contains(workerNodeId)) {
-            auto pinnedOperators = workerIdToPinnedOperatorMap[workerNodeId];
-            for (const auto& pinnedOperator : pinnedOperators) {
-                pinnedOperator->setOperatorState(OperatorState::PLACED);
-            }
-        }
-
-        // 8. If using optimistic strategy then, release the lock.
-        if (placementMode == PlacementMode::Optimistic) {
-            if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
-                // Raise an exception
-            }
-        }
     }
-
     // 9. If using pessimistic strategy then, release all locks.
-    if (placementMode == PlacementMode::Pessimistic) {
+    if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
         return unlockTopologyNodes();
     }
     return true;

@@ -30,15 +30,15 @@ namespace NES::Optimizer {
 BasePlacementStrategyPtr IFCOPStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                const TopologyPtr& topology,
                                                const TypeInferencePhasePtr& typeInferencePhase,
-                                               PlacementMode placementMode) {
-    return std::make_unique<IFCOPStrategy>(IFCOPStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode));
+                                               PlacementAmenderMode placementAmenderMode) {
+    return std::make_unique<IFCOPStrategy>(IFCOPStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
 }
 
 IFCOPStrategy::IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,
                              const TypeInferencePhasePtr& typeInferencePhase,
-                             PlacementMode placementMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
+                             PlacementAmenderMode placementAmenderMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
 
 bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // initiate operatorIdToNodePlacementMap

@@ -16,8 +16,9 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
-#include <Configurations/Enums/QueryMergerRule.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
+#include <Configurations/Enums/PlacementAmenderMode.hpp>
+#include <Configurations/Enums/QueryMergerRule.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -134,6 +135,16 @@ class OptimizerConfiguration : public BaseConfiguration {
         false,
         "Enables NEMO distributed window rule to use central windows instead of the distributed windows. (Default: false)"};
 
+    /**
+     * @brief Indicates the amender mode for performing placement amendment.
+     * PESSIMISTIC -> Use a pessimistic 2PL strategy to concurrently amend operator placements.
+     * OPTIMISTIC -> Use an optimistic OCC strategy to concurrently amend operator placements.
+     */
+    EnumOption<Optimizer::PlacementAmenderMode> placementAmenderMode = {
+        PLACEMENT_AMENDER_MODE_CONFIG,
+        Optimizer::PlacementAmenderMode::PESSIMISTIC,
+        "selects the placement amender mode to use [PESSIMISTIC|OPTIMISTIC]"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&queryBatchSize,
@@ -146,10 +157,11 @@ class OptimizerConfiguration : public BaseConfiguration {
                 &performOnlySourceOperatorExpansion,
                 &performAdvanceSemanticValidation,
                 &enableNemoPlacement,
-                &allowExhaustiveContainmentCheck};
+                &allowExhaustiveContainmentCheck,
+                &placementAmenderMode};
     }
 };
 
 }// namespace NES::Configurations
 
-#endif  // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
+#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
