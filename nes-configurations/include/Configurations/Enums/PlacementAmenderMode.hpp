@@ -18,9 +18,9 @@
 #define NES_PLACEMENTMODE_HPP
 
 namespace NES::Optimizer {
-enum class PlacementMode : uint8_t {
-    Pessimistic = 0,// uses strict 2PL
-    Optimistic = 1  // uses MVOCC
+enum class PlacementAmenderMode : uint8_t {
+    PESSIMISTIC = 0,// uses strict 2PL
+    OPTIMISTIC = 1  // uses OCC
 };
 }// namespace NES::Optimizer
 #endif//NES_PLACEMENTMODE_HPP

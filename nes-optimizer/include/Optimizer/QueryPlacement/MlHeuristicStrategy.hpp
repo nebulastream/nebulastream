@@ -63,13 +63,13 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementMode placementMode);
+                                           PlacementAmenderMode placementAmenderMode);
 
   private:
     explicit MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                  const TopologyPtr& topology,
                                  const TypeInferencePhasePtr& typeInferencePhase,
-                                 PlacementMode placementMode);
+                                 PlacementAmenderMode placementAmenderMode);
 
     void performOperatorPlacement(SharedQueryId sharedQueryId,
                                   const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

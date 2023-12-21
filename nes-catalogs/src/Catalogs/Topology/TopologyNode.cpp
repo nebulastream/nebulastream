@@ -30,7 +30,7 @@ TopologyNode::TopologyNode(WorkerId workerId,
                            uint16_t resources,
                            const std::map<std::string, std::any>& properties)
     : workerId(workerId), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
-      locked(false), version(0), nodeProperties(properties) {}
+      locked(false), nodeProperties(properties) {}
 
 TopologyNodePtr TopologyNode::create(WorkerId workerId,
                                      const std::string& ipAddress,
@@ -54,7 +54,7 @@ bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodePropert
 
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
-bool TopologyNode::increaseResources(uint16_t freedCapacity) {
+bool TopologyNode::releaseResources(uint16_t freedCapacity) {
     if (freedCapacity > resources) {
         NES_ERROR("Amount of resources to free {} can not be more than total available resources {}.", freedCapacity, resources);
         return false;
@@ -66,16 +66,12 @@ bool TopologyNode::increaseResources(uint16_t freedCapacity) {
                   usedResources);
         return false;
     }
-    //Update the version number to indicate that the topology node was changed
-    incrementVersion();
     usedResources = usedResources - freedCapacity;
     return true;
 }
 
-bool TopologyNode::reduceResources(uint16_t usedCapacity) {
+bool TopologyNode::occupyResources(uint16_t usedCapacity) {
     NES_DEBUG("Reducing resources {} Currently occupied {} of {}", usedCapacity, usedResources, resources);
-    //Update the version number to indicate that the topology node was changed
-    incrementVersion();
     if (usedCapacity > resources) {
         NES_ERROR("Amount of resources to be used should not be more than actual resources");
         return false;
@@ -91,9 +87,8 @@ bool TopologyNode::reduceResources(uint16_t usedCapacity) {
 
 TopologyNodePtr TopologyNode::copy() {
     TopologyNodePtr copy = std::make_shared<TopologyNode>(workerId, ipAddress, grpcPort, dataPort, resources, nodeProperties);
-    copy->reduceResources(usedResources);
+    copy->occupyResources(usedResources);
     copy->linkProperties = this->linkProperties;
-    copy->version = this->version;
     return copy;
 }
 

@@ -32,15 +32,15 @@ namespace NES::Optimizer {
 BasePlacementStrategyPtr TopDownStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                  const TopologyPtr& topology,
                                                  const TypeInferencePhasePtr& typeInferencePhase,
-                                                 PlacementMode placementMode) {
-    return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode));
+                                                 PlacementAmenderMode placementAmenderMode) {
+    return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
 }
 
 TopDownStrategy::TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                  const TopologyPtr& topology,
                                  const TypeInferencePhasePtr& typeInferencePhase,
-                                 PlacementMode placementMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
+                                 PlacementAmenderMode placementAmenderMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                 const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -172,13 +172,13 @@ void TopDownStrategy::identifyPinningLocation(const LogicalOperatorNodePtr& logi
         }
 
         //Pin the operator to the candidate node
-        candidateTopologyNode->reduceResources(1);
+        candidateTopologyNode->occupyResources(1);
         logicalOperator->addProperty(PINNED_WORKER_ID, candidateTopologyNode->getId());
         logicalOperator->addProperty(PROCESSED, true);
     } else {
         candidateTopologyNode = getTopologyNode(std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID)));
         //Pin the operator to the candidate node
-        candidateTopologyNode->reduceResources(1);
+        candidateTopologyNode->occupyResources(1);
         logicalOperator->addProperty(PROCESSED, true);
     }
 

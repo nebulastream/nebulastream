@@ -33,13 +33,13 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementMode placementMode);
+                                           PlacementAmenderMode placementMode);
 
   private:
     explicit ManualPlacementStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                      const TopologyPtr& topology,
                                      const TypeInferencePhasePtr& typeInferencePhase,
-                                     PlacementMode placementMode);
+                                     PlacementAmenderMode placementMode);
 };
 
 }// namespace NES::Optimizer

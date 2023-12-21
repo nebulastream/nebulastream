@@ -178,13 +178,25 @@ OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
 
 QueryId QueryPlan::getQueryId() const { return queryId; }
 
-void QueryPlan::setQueryId(QueryId queryId) { QueryPlan::queryId = queryId; }
+void QueryPlan::setQueryId(QueryId queryId) { this->queryId = queryId; }
 
-void QueryPlan::addRootOperator(const OperatorNodePtr& root) { rootOperators.push_back(root); }
+void QueryPlan::addRootOperator(const OperatorNodePtr& newRootOperator) {
+    //Check if a root with the id already present
+    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](const OperatorNodePtr& root) {
+        return newRootOperator->getId() == root->getId();
+    });
+
+    // If not present then add it
+    if (found == rootOperators.end()) {
+        rootOperators.push_back(newRootOperator);
+    } else {
+        NES_WARNING("Root operator with id {} already present int he plan", newRootOperator->getId());
+    }
+}
 
 QuerySubPlanId QueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
-void QueryPlan::setQuerySubPlanId(uint64_t querySubPlanId) { this->querySubPlanId = querySubPlanId; }
+void QueryPlan::setQuerySubPlanId(QuerySubPlanId querySubPlanId) { this->querySubPlanId = querySubPlanId; }
 
 void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
     NES_DEBUG("QueryPlan: removing operator {} as root operator.", root->toString());

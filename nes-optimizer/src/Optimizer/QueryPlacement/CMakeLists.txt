@@ -19,7 +19,6 @@ add_source_files(nes-optimizer
         ManualPlacementStrategy.cpp
         IFCOPStrategy.cpp
 		ILPStrategy.cpp
-        PlacementStrategyFactory.cpp
         ElegantPlacementStrategy.cpp
 #        LowLatencyStrategy.cpp
 #        HighAvailabilityStrategy.cpp

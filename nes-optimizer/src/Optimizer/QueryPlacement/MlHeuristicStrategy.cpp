@@ -18,22 +18,17 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
-#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-
-#include <utility>
 #include <z3++.h>
 
 namespace NES::Optimizer {
@@ -41,16 +36,16 @@ namespace NES::Optimizer {
 std::unique_ptr<BasePlacementStrategy> MlHeuristicStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                    const TopologyPtr& topology,
                                                                    const TypeInferencePhasePtr& typeInferencePhase,
-                                                                   PlacementMode placementMode) {
+                                                                   PlacementAmenderMode placementAmenderMode) {
     return std::make_unique<MlHeuristicStrategy>(
-        MlHeuristicStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode));
+        MlHeuristicStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
 }
 
 MlHeuristicStrategy::MlHeuristicStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                          const TopologyPtr& topology,
                                          const TypeInferencePhasePtr& typeInferencePhase,
-                                         PlacementMode placementMode)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementMode) {}
+                                         PlacementAmenderMode placementAmenderMode)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode) {}
 
 bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                     const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,

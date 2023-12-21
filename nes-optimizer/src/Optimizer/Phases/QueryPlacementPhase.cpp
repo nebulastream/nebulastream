@@ -18,13 +18,20 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacement/ElegantPlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
+#include <Optimizer/QueryPlacement/ILPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
+#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <algorithm>
 #include <utility>
 
@@ -55,13 +62,7 @@ bool QueryPlacementPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
     auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
-    auto placementStrategyPtr =
-        PlacementStrategyFactory::getStrategy(placementStrategy,
-                                              globalExecutionPlan,
-                                              topology,
-                                              typeInferencePhase,
-                                              PlacementMode::Pessimistic,// TODO: make it a runtime configuration
-                                              coordinatorConfiguration);
+    auto placementStrategyPtr = getStrategy(placementStrategy);
 
     bool queryReconfiguration = coordinatorConfiguration->enableQueryReconfiguration;
 
@@ -150,6 +151,49 @@ void QueryPlacementPhase::pinAllSinkOperators(const std::set<LogicalOperatorNode
         if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {
             operatorToCheck->addProperty(PINNED_WORKER_ID, rootNodeId);
         }
+    }
+}
+
+BasePlacementStrategyPtr QueryPlacementPhase::getStrategy(PlacementStrategy placementStrategy) {
+
+    auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
+    auto transferRate = coordinatorConfiguration->elegant.transferRate;
+    auto placementAmenderMode = coordinatorConfiguration->optimizer.placementAmenderMode;
+
+    switch (placementStrategy) {
+        case PlacementStrategy::ILP:
+            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+        case PlacementStrategy::BottomUp:
+            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+        case PlacementStrategy::TopDown:
+            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+        case PlacementStrategy::Manual:
+            return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+        case PlacementStrategy::ELEGANT_PERFORMANCE:
+        case PlacementStrategy::ELEGANT_ENERGY:
+        case PlacementStrategy::ELEGANT_BALANCED:
+            return ElegantPlacementStrategy::create(plannerURL,
+                                                    transferRate,
+                                                    placementStrategy,
+                                                    globalExecutionPlan,
+                                                    topology,
+                                                    typeInferencePhase,
+                                                    placementAmenderMode);
+
+            // #2486        case PlacementStrategy::IFCOP:
+            //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::MlHeuristic:
+            return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode);
+
+        // FIXME: enable them with issue #755
+        //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
+        //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
+        //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
+        //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
+        //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
+        default:
+            throw Exceptions::RuntimeException("Unknown placement strategy type "
+                                               + std::string(magic_enum::enum_name(placementStrategy)));
     }
 }
 }// namespace NES::Optimizer

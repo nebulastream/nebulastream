@@ -117,9 +117,9 @@ class QueryPlan {
     /**
      * add subQuery's rootnode into the current node for merging purpose.
      * Note: improves this when we have to due with multi-root use case.
-     * @param root
+     * @param newRootOperator
      */
-    void addRootOperator(const OperatorNodePtr& root);
+    void addRootOperator(const OperatorNodePtr& newRootOperator);
 
     /**
      * remove the an operator from the root operator list.
