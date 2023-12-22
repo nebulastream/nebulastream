@@ -34,7 +34,6 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
      * @brief Constructor
      * @param maxRetries The maximum amount of retries in case of an error
      */
-     //todo: do not pass resources
     explicit AbstractMultiRequest(uint8_t maxRetries);
 
     /**
@@ -48,7 +47,7 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
 
     /**
      * @brief Indicates if this request has finished its execution
-     * @return true if all work is done and the request can be removed fro mthe queue and destroyed
+     * @return true if all work is done and the request can be removed from the queue and destroyed
      */
     bool isDone();
 
@@ -71,7 +70,7 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
     /**
      * @brief Execute a sub request. If the request queue is empty, this function will block until a request is scheduled
      * @param storageHandle the storage handle used to lock and access resources
-     * @return true if a sub request was executed. False is the request was marked as done and no sub request was
+     * @return true if a sub request was executed. False if this request was already marked as done and no sub request was
      * executed
      */
     bool executeSubRequest();

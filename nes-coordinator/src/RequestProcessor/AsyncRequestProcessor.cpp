@@ -105,20 +105,18 @@ void AsyncRequestProcessor::runningRoutine() {
         if (running) {
             AbstractRequestPtr abstractRequest = asyncRequestQueue.front();
 
-            // remove the request from the queue only if it is done,
-            // otherwise leave it at the front of the queue and acquire more threads for concurrent execution
             auto multiRequest = std::dynamic_pointer_cast<AbstractMultiRequest>(abstractRequest);
-            if (multiRequest && multiRequest->isDone()) {
-            //if (abstractRequest->instanceOf<AbstractMultiRequest>() && abstractRequest->as<AbstractMultiRequest>()->isDone()) {
-                asyncRequestQueue.pop_front();
-                lock.unlock();
-                continue;
-            }
-
-            // if the request is not a multirequest it will not have to acquire more threads than the current one.
-            // it can be removed from the queue
-            if (!multiRequest) {
-            //if (!abstractRequest->instanceOf<AbstractMultiRequest>()) {
+            if (multiRequest != nullptr) {
+                // remove the multi request from the queue only if it is done,
+                // otherwise leave it at the front of the queue and acquire more threads for concurrent execution
+                if (multiRequest->isDone()) {
+                    asyncRequestQueue.pop_front();
+                    lock.unlock();
+                    continue;
+                }
+            } else {
+                // if the request is not a multirequest it will not have to acquire more threads than the current one.
+                // it can be removed from the queue
                 asyncRequestQueue.pop_front();
             }
 
