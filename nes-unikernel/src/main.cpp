@@ -83,7 +83,8 @@ extern "C" [[maybe_unused]] void emitBufferProxy(void* worker_context_ptr, void*
 }
 
 int main() {
-    NES::Logger::setupLogging(NES::LogLevel::LOG_DEBUG);
+    NES::Logger::setupLogging(magic_enum::enum_value<NES::LogLevel>(NES_COMPILE_TIME_LOG_LEVEL));
+    errno = 0;
     auto partition_manager = std::make_shared<NES::Network::PartitionManager>();
     auto exchange_listener = std::make_shared<DummyExchangeProtocolListener>();
     TheBufferManager = std::make_shared<NES::Runtime::BufferManager>();
@@ -95,7 +96,6 @@ int main() {
                                                              NES::Unikernel::CTConfiguration::NodePort,
                                                              std::move(exchange_protocol),
                                                              TheBufferManager);
-
     NES::Unikernel::QueryPlan::setup();
     {
         std::unique_lock lock(m);
