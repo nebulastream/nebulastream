@@ -15,6 +15,7 @@
 #include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
+#include <RequestProcessor/RequestTypes/SubRequestFuture.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <gtest/gtest.h>
 
@@ -66,7 +67,6 @@ class DummyRequest : public AbstractMultiRequest {
   protected:
     void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
     void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-    void postExecution(const StorageHandlerPtr&) override {}
 
   private:
     uint32_t additionValue;

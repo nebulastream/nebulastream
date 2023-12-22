@@ -20,8 +20,8 @@
 #include <utility>
 
 namespace NES::RequestProcessor {
-AbstractRequest::AbstractRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
-    : StorageResourceLocker(requiredResources), responsePromise(), maxRetries(maxRetries) {}
+AbstractRequest::AbstractRequest(const uint8_t maxRetries)
+    : responsePromise(), maxRetries(maxRetries) {}
 
 std::vector<AbstractRequestPtr> AbstractRequest::handleError(const std::exception_ptr& ex,
                                                              const StorageHandlerPtr& storageHandle) {
@@ -69,4 +69,5 @@ void AbstractRequest::setExceptionInPromiseOrRethrow(std::exception_ptr exceptio
     }
 }
 
+void AbstractRequest::setId(RequestId requestId) { this->requestId = requestId; }
 }// namespace NES::RequestProcessor::Experimental

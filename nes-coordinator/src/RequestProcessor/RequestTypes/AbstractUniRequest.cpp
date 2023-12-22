@@ -16,7 +16,7 @@
 namespace NES::RequestProcessor {
 AbstractUniRequest::AbstractUniRequest(const std::vector<ResourceType>& requiredResources,
                                        uint8_t maxRetries)
-    : AbstractRequest(requiredResources, maxRetries) {}
+    : AbstractRequest(maxRetries), StorageResourceLocker(requiredResources) {}
 
 
 std::vector<AbstractRequestPtr> AbstractUniRequest::execute(const StorageHandlerPtr& storageHandle) {
@@ -33,4 +33,6 @@ std::vector<AbstractRequestPtr> AbstractUniRequest::execute(const StorageHandler
     postExecution(storageHandle);
     return followUpRequests;
 }
+
+RequestId AbstractUniRequest::getResourceLockingId() { return requestId; }
 }

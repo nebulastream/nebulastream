@@ -15,6 +15,7 @@
 #include <Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
 #include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
+#include <RequestProcessor/RequestTypes/SubRequestFuture.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,7 +24,7 @@
 namespace NES::RequestProcessor {
 
 AbstractMultiRequest::AbstractMultiRequest(const uint8_t maxRetries)
-    : AbstractRequest({}, maxRetries) {}
+    : AbstractRequest(maxRetries) {}
 
 std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandlerPtr& storageHandle) {
     std::vector<AbstractRequestPtr> result;

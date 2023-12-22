@@ -47,14 +47,21 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 const uint8_t DEFAULT_RETRIES = 1;
 
-class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>, public StorageResourceLocker {
+class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
   public:
     /**
      * @brief constructor
      * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
      */
-    explicit AbstractRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
+    explicit AbstractRequest(uint8_t maxRetries);
+
+    /**
+     * @brief set the id of this object. This has to be done before any resource is locked.
+     * @param requestId
+     */
+    void setId(RequestId requestId);
+
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -158,6 +165,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>, pu
      */
     void setExceptionInPromiseOrRethrow(std::exception_ptr exception);
 
+    RequestId requestId{INVALID_REQUEST_ID};
     std::promise<AbstractRequestResponsePtr> responsePromise;
 
   private:

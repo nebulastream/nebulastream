@@ -18,6 +18,7 @@
 #include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
 #include <RequestProcessor/RequestTypes/AbstractSubRequest.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
+#include <RequestProcessor/RequestTypes/SubRequestFuture.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
 #include <Util/TestUtils.hpp>
@@ -157,7 +158,6 @@ class DummyWaitOnFutureMultiRequest : public AbstractMultiRequest {
   protected:
     void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
     void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-    void postExecution(const StorageHandlerPtr& storageHandler) override { storageHandler->releaseResources(requestId); }
 
   private:
     std::vector<std::pair<std::future<bool>, std::shared_ptr<AbstractSubRequest>>>& listOfResourceLists;
@@ -210,7 +210,6 @@ class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
   protected:
     void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
     void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-    void postExecution(const StorageHandlerPtr&) override {}
 
   private:
     uint32_t additionValue;

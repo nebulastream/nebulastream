@@ -75,9 +75,12 @@ class AbstractSubRequest : public StorageResourceLocker {
      */
     virtual std::any executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
 
+    RequestId getResourceLockingId() override;
+
     std::promise<std::any> responsePromise;
     StorageHandlerPtr storageHandler;
     std::atomic<bool> executionStarted{false};
+    RequestId requestId{INVALID_REQUEST_ID};
 };
 }// namespace NES::RequestProcessor::Experimental
 
