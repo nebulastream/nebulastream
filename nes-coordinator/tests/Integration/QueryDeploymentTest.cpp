@@ -58,7 +58,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     auto query = Query::from("truck").unionWith(Query::from("car"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  //                                  .enableNautilusWorker() Enabled once #4009 is fixed
                                   .addLogicalSource("truck", testSchema)
                                   .addLogicalSource("car", testSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("truck")
@@ -111,7 +110,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  //                                  .enableNautilusWorker() Enabled once #4009 is fixed
                                   .addLogicalSource("car", testSchema)
                                   .addLogicalSource("truck", testSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -199,7 +197,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
 
     auto query = Query::from("test");
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
     for (int i = 0; i < 10; ++i) {
@@ -242,7 +239,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
 
     auto query = Query::from("test");
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test") //2
                                   .attachWorkerWithMemorySourceToCoordinator("test");//3

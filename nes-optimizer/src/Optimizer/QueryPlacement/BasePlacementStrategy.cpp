@@ -486,8 +486,12 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
             auto leafOperators = querySubPlan->getLeafOperators();
             for (const auto& leafOperator : leafOperators) {
 
-                // 3. Check if leaf operator in the state "Placed" then skip the operation
-                if (leafOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED) {
+                // 3. Check if leaf operator in the state "Placed" or is of type Network Source then skip the operation
+                if (leafOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED
+                    || (leafOperator->instanceOf<SourceLogicalOperatorNode>()
+                        && leafOperator->as_if<SourceLogicalOperatorNode>()
+                               ->getSourceDescriptor()
+                               ->instanceOf<Network::NetworkSourceDescriptor>())) {
                     continue;
                 }
 
@@ -565,7 +569,7 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
                                                                                      networkSourceOperatorId,
-                                                                                     topologyNodesBetween[pathIndex]);
+                                                                                     topologyNodesBetween[pathIndex-1]);
 
                             // 13. Generate id for next network source
                             networkSourceOperatorId = getNextOperatorId();
@@ -584,8 +588,7 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
 
                             // 15. add the new query plan
                             if (computedSubQueryPlans.contains(currentWorkerId)) {
-                                auto placedQuerySubPlans = computedSubQueryPlans[currentWorkerId];
-                                placedQuerySubPlans.emplace_back(newQuerySubPlan);
+                                computedSubQueryPlans[currentWorkerId].emplace_back(newQuerySubPlan);
                             } else {
                                 computedSubQueryPlans[currentWorkerId] = {newQuerySubPlan};
                             }
@@ -883,20 +886,6 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryI
                                                                                                   SOURCE_RETRIES,
                                                                                                   0);
     return LogicalOperatorFactory::createSourceOperator(networkSourceDescriptor, operatorId);
-}
-
-void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNode) {
-    NES_TRACE("Adding new execution node with id: {}", executionNode->getTopologyNode()->getId());
-    //1. Check if the candidateTopologyNode is a root node of the topology
-    if (executionNode->getTopologyNode()->getParents().empty()) {
-        //2. Check if the candidateExecutionNode is a root node
-        if (!globalExecutionPlan->checkIfExecutionNodeIsARoot(executionNode->getId())) {
-            if (!globalExecutionPlan->addExecutionNodeAsRoot(executionNode)) {
-                NES_ERROR("failed to add execution node as root");
-                throw Exceptions::RuntimeException("failed to add execution node as root");
-            }
-        }
-    }
 }
 
 std::vector<TopologyNodePtr>
