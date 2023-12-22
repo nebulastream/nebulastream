@@ -808,7 +808,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         auto topologyNode3 = topology->findWorkerWithId(wrk3->getWorkerId());
         auto executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
         executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
-        executionNode3->getTopologyNode()->reduceResources(1);
+        executionNode3->getTopologyNode()->occupyResources(1);
         crd->getGlobalExecutionPlan()->addExecutionNode(executionNode3);
         ASSERT_EQ(crd->getGlobalExecutionPlan()->getExecutionNodesByQueryId(sharedQueryId).size(), 4);
         auto queryDeploymentPhase =
