@@ -28,17 +28,26 @@ class FieldDataGenerator {
 
 template<typename T>
 concept IsInteger = std::is_integral_v<T>;
-template<IsInteger T>
 
-class IncreasingSequence : public FieldDataGenerator {
+template<IsInteger T>
+class IncreasingSequence final : public FieldDataGenerator {
     T current = 0;
 
   public:
     void generate(NES::Runtime::MemoryLayouts::DynamicField& field) override { field.write<T>(current++); }
 };
 
+template<IsInteger T>
+class ConstantSequence final : public FieldDataGenerator {
+    T value;
+
+  public:
+    explicit ConstantSequence(T value) : value(value) {}
+    void generate(NES::Runtime::MemoryLayouts::DynamicField& field) override { field.write<T>(value); }
+};
+
 template<typename T>
-class RandomValues : public FieldDataGenerator {
+class RandomValues final : public FieldDataGenerator {
     std::random_device rd;
     std::mt19937 gen;
     T min;
@@ -57,6 +66,7 @@ class RandomValues : public FieldDataGenerator {
 
 class AutomaticDataGenerator : public NES::Benchmark::DataGeneration::DataGenerator {
     NES::SchemaPtr schema;
+    std::optional<size_t> numberOfTupleToCreate;
     std::unordered_map<std::string, std::unique_ptr<FieldDataGenerator>> generators;
 
   public:
@@ -67,6 +77,10 @@ class AutomaticDataGenerator : public NES::Benchmark::DataGeneration::DataGenera
     NES::SchemaPtr getSchema() override;
     std::string getName() override;
     std::string toString() override;
+    [[nodiscard]] std::optional<size_t> getNumberOfTupleToCreate() const { return numberOfTupleToCreate; }
+    void setNumberOfTupleToCreate(const std::optional<size_t>& numberOfTupleToCreate) {
+        this->numberOfTupleToCreate = numberOfTupleToCreate;
+    }
     static std::unique_ptr<AutomaticDataGenerator> create(NES::SchemaPtr schema);
     NES::Configurations::SchemaTypePtr getSchemaType() override;
 };

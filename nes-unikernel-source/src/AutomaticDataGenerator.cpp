@@ -27,7 +27,10 @@ std::vector<NES::Runtime::TupleBuffer> AutomaticDataGenerator::createData(size_t
         auto tuples_in_buffer = 0;
         auto buffer = allocateBuffer();
         auto dynamicBuffer = NES::Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < dynamicBuffer.getCapacity(); currentRecord++) {
+        auto numberOfTuple = numberOfTupleToCreate.value_or(dynamicBuffer.getCapacity());
+        numberOfTuple = std::min(numberOfTuple, dynamicBuffer.getCapacity());
+
+        for (uint64_t currentRecord = 0; currentRecord < numberOfTuple; currentRecord++) {
             auto currentTuple = dynamicBuffer[currentRecord];
             for (auto& field : schema->fields) {
                 auto dynamicField = currentTuple[field->getName()];
@@ -55,19 +58,19 @@ std::unique_ptr<AutomaticDataGenerator> AutomaticDataGenerator::create(NES::Sche
             auto basicPhysicalType = std::dynamic_pointer_cast<NES::BasicPhysicalType>(physicalType);
             switch (basicPhysicalType->nativeType) {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
-                    generators[attr->getName()] = std::make_unique<IncreasingSequence<int8_t>>();
+                    generators[attr->getName()] = std::make_unique<ConstantSequence<int8_t>>(42);
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_16: {
-                    generators[attr->getName()] = std::make_unique<IncreasingSequence<int16_t>>();
+                    generators[attr->getName()] = std::make_unique<ConstantSequence<int16_t>>(420);
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_32: {
-                    generators[attr->getName()] = std::make_unique<IncreasingSequence<int32_t>>();
+                    generators[attr->getName()] = std::make_unique<ConstantSequence<int32_t>>(4200);
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_64: {
-                    generators[attr->getName()] = std::make_unique<IncreasingSequence<int64_t>>();
+                    generators[attr->getName()] = std::make_unique<ConstantSequence<int64_t>>(42000);
                     break;
                 }
 
