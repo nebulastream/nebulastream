@@ -79,6 +79,8 @@ namespace NES::Parsers {
             void enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) override;
             void exitJoinRelation(NebulaSQLParser::JoinRelationContext* context) override;
             void exitSetOperation(NebulaSQLParser::SetOperationContext* context) override;
+            void enterAggregationClause(NebulaSQLParser::AggregationClauseContext* context) override;
+            void exitAggregationClause(NebulaSQLParser::AggregationClauseContext* context) override;
         };
 
 

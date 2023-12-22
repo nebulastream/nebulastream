@@ -306,8 +306,10 @@ namespace NES::Parsers {
             if (parentContext != nullptr) {
                 parentRuleIndex = parentContext->getRuleIndex();
             }
-
-            if(( helper.isWhereOrHaving || helper.isSelect || helper.isWindow ) && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex){
+            if(helper.isGroupBy){
+                FieldAccessExpressionNodePtr key = FieldAccessExpressionNode::create(context->getText())->as<FieldAccessExpressionNode>();
+                helper.groupByFields.push_back(key);
+            } else if(( helper.isWhereOrHaving || helper.isSelect || helper.isWindow ) && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex){
                 // add identifiers in select, window, where and having clauses to the expression builder list
                 helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
             }else if(helper.isFrom && !helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex){
@@ -392,13 +394,23 @@ namespace NES::Parsers {
                 auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
                 auto distributionType = Windowing::DistributionCharacteristic::createCompleteWindowType();
                 auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-
-                auto windowDefinition = Windowing::LogicalWindowDefinition::create(helper.windowAggs,
-                                                                                   helper.windowType,
-                                                                                   distributionType,
-                                                                                   triggerPolicy,
-                                                                                   triggerAction,
-                                                                                   0);
+                LogicalWindowDefinitionPtr  windowDefinition;
+                if (helper.groupByFields.empty()) {
+                     windowDefinition = Windowing::LogicalWindowDefinition::create(helper.windowAggs,
+                                                                                       helper.windowType,
+                                                                                       distributionType,
+                                                                                       triggerPolicy,
+                                                                                       triggerAction,
+                                                                                       0);
+                } else {
+                     windowDefinition = Windowing::LogicalWindowDefinition::create(helper.groupByFields,
+                                                                                       helper.windowAggs,
+                                                                                       helper.windowType,
+                                                                                       distributionType,
+                                                                                       triggerPolicy,
+                                                                                       triggerAction,
+                                                                                       0);
+                }
                 auto op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
                 queryPlan->appendOperatorAsNewRoot(op);
 
@@ -703,6 +715,20 @@ namespace NES::Parsers {
             NebulaSQLBaseListener::exitSetOperation(context);
 
         }
+
+        void NebulaSQLQueryPlanCreator::enterAggregationClause(NebulaSQLParser::AggregationClauseContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+            helper.isGroupBy = true;
+            poppush(helper);
+            NebulaSQLBaseListener::enterAggregationClause(context);
+        }
+        void NebulaSQLQueryPlanCreator::exitAggregationClause(NebulaSQLParser::AggregationClauseContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+            helper.isGroupBy = false;
+            poppush(helper);
+            NebulaSQLBaseListener::exitAggregationClause(context);
+        }
+
 
     }// namespace NES::Parsers
 

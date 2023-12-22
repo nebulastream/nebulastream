@@ -71,41 +71,7 @@ TEST(SQLParsingServiceTest, simpleSQL) {
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
 }
 
-TEST(SQLParsingServiceTest, projectionTest1) {
-    std::string inputQuery = "select * from StreamName INTO PRINT;";
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr source =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("StreamName"));
-    queryPlan->appendOperatorAsNewRoot(source);
-    LogicalOperatorNodePtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
-    queryPlan->appendOperatorAsNewRoot(sink);
-
-
-
-    EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
-
-}
-
-TEST(SQLParsingServiceTest, unionTest1) {
-    std::string inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT;";
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query=Query::from("cars").project(Attribute("f1")).unionWith(Query::from("bikes").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
-
-    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
-}
-TEST(SQLParsingServiceTest, unionTest2) {
-    std::string inputQuery = "select f1 from cars union select f1 from bikes union select f1 from autos INTO PRINT;";
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query = Query::from("cars").project(Attribute("f1")).unionWith(Query::from("bikes").project(Attribute("f1"))).unionWith(Query::from("autos").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
-    std::cout << queryPlanToString(sqlPlan) << "\n";
-    EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
-}
-
-TEST(SQLSelectionServiceTest, selectionTest) {
+TEST(SQLParsingServiceTest, selectionTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
     std::string inputQuery;
     QueryPlanPtr actualPlan;
@@ -126,7 +92,7 @@ TEST(SQLSelectionServiceTest, selectionTest) {
 
 }
 
-TEST(SQLProjectionServiceTest, projectionTest) {
+TEST(SQLParsingServiceTest, projectionTest) {
     std::string inputQuery;
     QueryPlanPtr actualPlan;
 
@@ -162,7 +128,7 @@ TEST(SQLProjectionServiceTest, projectionTest) {
 
 }
 
-TEST(SQLMergeServiceTest, mergeTest) {
+TEST(SQLParsingServiceTest, mergeTest) {
     std::string inputQuery;
     QueryPlanPtr actualPlan;
 
@@ -184,7 +150,7 @@ TEST(SQLMergeServiceTest, mergeTest) {
 }
 
 
-TEST(SQLMappingServiceTest, mapTest) {
+TEST(SQLParsingServiceTest, mapTest) {
     std::string inputQuery;
     QueryPlanPtr actualPlan;
 
@@ -234,7 +200,7 @@ TEST(SQLMappingServiceTest, mapTest) {
     query = Query::from("StreamName").map(Attribute("mapField0")=Attribute("f1")*Attribute("f2")).map(Attribute("mapField1")=Attribute("f1")+5.0).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
-TEST(SQLWindowServiceTest, globalWindowTest) {
+TEST(SQLParsingServiceTest, globalWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
     std::string inputQuery;
     QueryPlanPtr actualPlan;
@@ -258,7 +224,7 @@ TEST(SQLWindowServiceTest, globalWindowTest) {
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 
-TEST(SQLWindowServiceTest, thresholdWIndowTest){
+TEST(SQLParsingServiceTest, thresholdWIndowTest){
     std::shared_ptr<QueryParsingService> SQLParsingService;
     std::string inputQuery = "select sum(f2) from StreamName WINDOW THRESHOLD (f1>2, 10) INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -271,7 +237,7 @@ TEST(SQLWindowServiceTest, thresholdWIndowTest){
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 
-TEST(SQLWindowServiceTest, timeBasedTumblingWindowTest) {
+TEST(SQLParsingServiceTest, timeBasedTumblingWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery = "select sum(f2) from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT";
@@ -287,7 +253,7 @@ TEST(SQLWindowServiceTest, timeBasedTumblingWindowTest) {
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 
-TEST(SQLWindowServiceTest, timeBasedSlidingWindowTest) {
+TEST(SQLParsingServiceTest, timeBasedSlidingWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery = "select sum(f2) from StreamName group by f2 window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT";
@@ -306,7 +272,7 @@ TEST(SQLWindowServiceTest, timeBasedSlidingWindowTest) {
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 
-TEST(SQLWindowServiceTest, multipleAggregationFunctionsWindowTest) {
+TEST(SQLParsingServiceTest, multipleAggregationFunctionsWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery = "select sum(f2), min(f2) from StreamName window tumbling (size 10 sec) INTO PRINT";
@@ -350,7 +316,7 @@ TEST(SQLWindowServiceTest, aggregationAliasWindowTest) {
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 //ToDo Research correct join syntax
-TEST(SQLWindowServiceTest, joinWindowTestDerErste) {
+TEST(SQLParsingServiceTest, joinWindowTestDerErste) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery = "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT";
@@ -369,7 +335,7 @@ TEST(SQLWindowServiceTest, joinWindowTestDerErste) {
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
 }
-TEST(SQLWindowAggregationFunctionTest, CountAggregationFunctionWindowTest) {
+TEST(SQLParsingServiceTest, CountAggregationFunctionWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery;
@@ -383,10 +349,10 @@ TEST(SQLWindowAggregationFunctionTest, CountAggregationFunctionWindowTest) {
 
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select count(f2) as count_f2 from StreamName window tumbling (size 10 sec) INTO PRINT";
+    inputQuery = "select count(f2) from StreamName window tumbling (size 10 sec) INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("StreamName")
-                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("f2").as("count_f2")).apply(Count()).sink(PrintSinkDescriptor::create());
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("f2")).apply(Count()).sink(PrintSinkDescriptor::create());
 
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
@@ -408,7 +374,7 @@ TEST(SQLWindowAggregationFunctionTest, CountAggregationFunctionWindowTest) {
 
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
-TEST(SQLHavingClauseTest, havingClauseTest) {
+TEST(SQLParsingServiceTest, havingClauseTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery;
@@ -418,22 +384,19 @@ TEST(SQLHavingClauseTest, havingClauseTest) {
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10))).apply(Sum(Attribute("f2"))->as(Attribute("sum_f2"))).filter(Attribute("sum_f2")>5).sink(PrintSinkDescriptor::create());;
 
-    std::cout << queryPlanToString(query.getQueryPlan()) << "\n";
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
-TEST(SQLWindowServiceTest, joinWindowTest) {
+TEST(SQLParsingServiceTest, joinWindowTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery =
         "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    std::cout << queryPlanToString(actualPlan) << "\n";
     auto query = Query::from("purchases").joinWith(Query::from("tweets"),Attribute("user_id"),Attribute("user_id"),TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(10))).sink(PrintSinkDescriptor::create());
 
-    std::cout << queryPlanToString(query.getQueryPlan()) << "\n";
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
-TEST(SubQueryTest,subQueryTest){
+TEST(SQLParsingServiceTest,subQueryTest){
     std::shared_ptr<QueryParsingService> SQLParsingService;
 
     std::string inputQuery = "SELECT *\n"
@@ -444,7 +407,6 @@ TEST(SubQueryTest,subQueryTest){
                              ")\n"
                              "WHERE f1 < 5 INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    std::cout << queryPlanToString(actualPlan) << "\n";
     auto query = Query::from("subStream").project(Attribute("f1")).filter(Attribute("f1")>1).filter(Attribute("f1")<5).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }

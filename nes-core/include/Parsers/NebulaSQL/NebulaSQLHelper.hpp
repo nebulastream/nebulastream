@@ -62,7 +62,7 @@ enum NebulaSQLWindowType{
             std::shared_ptr<Windowing::WindowType> windowType;
             bool isTimeBasedWindow = true;
             bool isSetOperation = false;
-
+            bool isGroupBy;
             std::vector<WindowAggregationDescriptorPtr> windowAggs;
 
             std::vector<ExpressionNodePtr> projections;
@@ -86,7 +86,7 @@ enum NebulaSQLWindowType{
 
             int identCountHelper = 0;
             int implicitMapCountHelper = 0;
-
+            std::vector<FieldAccessExpressionNodePtr> groupByFields;
             std::vector<std::pair<ExpressionNodePtr, ExpressionNodePtr>> joinKeys;
             std::vector<std::string> joinSources;
             std::vector<ExpressionNodePtr> joinKeyRelationHelper;
