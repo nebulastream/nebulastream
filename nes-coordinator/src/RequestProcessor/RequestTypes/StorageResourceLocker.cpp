@@ -20,12 +20,11 @@ StorageResourceLocker::StorageResourceLocker(std::vector<ResourceType> requiredR
     : requiredResources(std::move(requiredResources)) {}
 
 void StorageResourceLocker::preExecution(const StorageHandlerPtr& storageHandle) {
-    storageHandle->acquireResources(requestId, requiredResources);
+    storageHandle->acquireResources(getResourceLockingId(), requiredResources);
 }
 
 void StorageResourceLocker::postExecution(const StorageHandlerPtr& storageHandler) {
-    storageHandler->releaseResources(requestId);
+    storageHandler->releaseResources(getResourceLockingId());
 }
 
-void StorageResourceLocker::setId(RequestId requestId) { this->requestId = requestId; }
 }// namespace NES::RequestProcessor

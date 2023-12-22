@@ -49,4 +49,6 @@ bool AbstractSubRequest::executionHasStarted() {
     return executionStarted.load();
 }
 
+
+RequestId AbstractSubRequest::getResourceLockingId() { return requestId; }
 }// namespace NES::RequestProcessor

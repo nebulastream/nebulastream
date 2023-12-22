@@ -15,7 +15,7 @@
 #define NES_ABSTRACTUNIREQUEST_HPP
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 namespace NES::RequestProcessor {
-class AbstractUniRequest : public AbstractRequest {
+class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker {
   public:
     /**
      * @brief constructor
@@ -33,6 +33,8 @@ class AbstractUniRequest : public AbstractRequest {
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     virtual std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) = 0;
+
+    RequestId getResourceLockingId() override;
 
 };
 }

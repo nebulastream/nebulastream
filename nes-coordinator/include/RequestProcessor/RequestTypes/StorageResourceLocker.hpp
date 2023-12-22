@@ -29,13 +29,6 @@ using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
  * This is the common base class of objects that use a storage handler to lock resources before manipulating them
  */
 class StorageResourceLocker {
-  public:
-    /**
-     * @brief set the id of this object. This has to be done before any resource is locked.
-     * @param requestId
-     */
-    void setId(RequestId requestId);
-
   protected:
     /**
      * @brief Constructor
@@ -54,7 +47,7 @@ class StorageResourceLocker {
      */
     virtual void postExecution(const StorageHandlerPtr& storageHandle);
 
-    RequestId requestId{INVALID_REQUEST_ID};
+    virtual RequestId getResourceLockingId() = 0;
 
   private:
     std::vector<ResourceType> requiredResources;
