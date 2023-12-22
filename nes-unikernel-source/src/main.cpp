@@ -28,6 +28,7 @@ class TcpServer {
         bufferManager->createFixedSizeBufferPool(128);
         generator = AutomaticDataGenerator::create(option.schema);
         generator->setBufferManager(bufferManager);
+        delay = 100ms;
         format = std::make_unique<NES::CsvFormat>(option.schema, bufferManager);
         startAccept();
     }
@@ -55,7 +56,9 @@ class TcpServer {
                                  boost::asio::buffer(randomTuple),
                                  [this, socket](const boost::system::error_code& error, std::size_t /*bytes_transferred*/) {
                                      if (!error) {
-                                         std::this_thread::sleep_for(std::chrono::seconds(10));
+                                         if (delay > 0ms) {
+                                             std::this_thread::sleep_for(delay);
+                                         }
                                          startSend(socket);// Continue sending random tuples
                                      } else {
                                          std::cerr << "Error sending data: " << error.message() << std::endl;
@@ -68,6 +71,7 @@ class TcpServer {
     std::unique_ptr<AutomaticDataGenerator> generator;
     std::unique_ptr<NES::CsvFormat> format;
     boost::asio::ip::tcp::acceptor acceptor;
+    std::chrono::milliseconds delay;
 };
 
 class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListener {
