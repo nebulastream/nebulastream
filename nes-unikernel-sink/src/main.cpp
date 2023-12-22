@@ -13,6 +13,7 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
+#include <Sinks/Mediums/StatisticsMedium.hpp>
 #include <argumentum/argparse.h>
 #include <boost/iostreams/stream.hpp>
 #include <memory>
@@ -38,6 +39,7 @@ class DummyExchangeProtocolListener : public NES::Network::ExchangeProtocolListe
 int main(int argc, char* argv[]) {
     using namespace NES::Network;
     using namespace NES::Runtime;
+    using namespace std::chrono_literals;
     NES::Logger::setupLogging("unikernel_sink.log", NES::LogLevel::LOG_INFO);
     auto optionsResult = Options::fromCLI(argc, argv);
     if (optionsResult.has_error()) {
@@ -60,14 +62,23 @@ int main(int argc, char* argv[]) {
 
     auto wc = std::make_shared<WorkerContext>(options.queryId, buffer_manager, 1);
     boost::iostreams::stream<NES::Logger::LogSink> os(NES_LOG_OS(NES::LogLevel::LOG_INFO));
-    NES::DataSinkPtr print_sink =
-        std::make_shared<NES::PrintSink>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
-                                         1,
-                                         options.subQueryId,
-                                         options.queryId,
-                                         os);
-    std::vector<NES::DataSinkPtr> pipelines{print_sink};
-    auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema, buffer_manager, wc, manager, partition, location, 1000, 200ms, 20, pipelines);
+    NES::DataSinkPtr statisticSink =
+        std::make_shared<NES::StatisticsMedium>(std::make_shared<NES::CsvFormat>(options.outputSchema, buffer_manager),
+                                                1,
+                                                options.subQueryId,
+                                                options.queryId,
+                                                5s);
+    std::vector<NES::DataSinkPtr> pipelines{statisticSink};
+    auto source = std::make_shared<NES::Network::NetworkSource>(options.outputSchema,
+                                                                buffer_manager,
+                                                                wc,
+                                                                manager,
+                                                                partition,
+                                                                location,
+                                                                1000,
+                                                                200ms,
+                                                                20,
+                                                                pipelines);
 
     NES_ASSERT(source->bind(), "Bind Failed");
     source->start();
