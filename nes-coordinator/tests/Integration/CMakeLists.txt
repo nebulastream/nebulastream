@@ -1,6 +1,10 @@
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Integration Test Suite --------------------------------
+
+### NES Connectivity Controller Tests ###
+add_nes_integration_test(filter-push-down-integration-tests "Optimizer/FilterPushDownTest.cpp")
+
 ### NES Connectivity Controller Tests ###
 add_nes_integration_test(connectivity-controller-integration-tests "REST/Controller/ConnectivityControllerTest.cpp")
 

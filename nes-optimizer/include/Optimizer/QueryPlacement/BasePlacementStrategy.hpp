@@ -228,12 +228,6 @@ class BasePlacementStrategy {
                                                               const TopologyNodePtr& sinkTopologyNode);
 
     /**
-     * @brief Add an execution node as root of the global execution plan
-     * @param executionNode: execution node to add as root
-     */
-    void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
-
-    /**
      * @brief Select path for placement using pessimistic 2PL strategy
      * @param topologyNodesWithUpStreamPinnedOperators : topology nodes hosting the pinned upstream operators
      * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators

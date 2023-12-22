@@ -52,10 +52,10 @@ class FilterPushDownTest : public Testing::BaseIntegrationTest {
         coConf->restPort = *restPort;
 
         schema = Schema::create()
-                     ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
-                     ->addField(createField("timestamp", BasicType::UINT64))
-                     ->addField(createField("velocity", BasicType::UINT64))
-                     ->addField(createField("quantity", BasicType::UINT64));
+                     ->addField("sensor_id", DataTypeFactory::createText())
+                     ->addField(createField("timestamp", BasicType::UINT32))
+                     ->addField(createField("velocity", BasicType::UINT32))
+                     ->addField(createField("quantity", BasicType::UINT32));
     }
 
     struct Output {
@@ -95,23 +95,25 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .enableNewRequestExecutor()
                                   .addLogicalSource("QnV1", schema)
-                                  .attachWorkerWithCSVSourceToCoordinator(srcConf1)
-                                  .validate()
-                                  .setupTopology();
+                                  .attachWorkerWithCSVSourceToCoordinator(srcConf1);
 
-    std::vector<Output> expectedOutput = {{1543624260000, 95, 2},
-                                          {1543625520000, 95, 3},
-                                          {1543625940000, 80, 1},
-                                          {1543626120000, 75, 1},
-                                          {1543626420000, 75, 2}};
-    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
-             expectedOutput.size());
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
-    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
-             actualOutput.size());
+    // Expected output
+    std::stringstream expectedOutput;
+    expectedOutput << "1543624260000, 95, 2\n";
+    expectedOutput << "1543625520000, 95, 3\n";
+    expectedOutput << "1543625940000, 80, 1\n";
+    expectedOutput << "1543626120000, 75, 1\n";
+    expectedOutput << "1543626420000, 75, 2\n";
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.validate().setupTopology().runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers =
+        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /* 2.Test
@@ -141,19 +143,23 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithMul) {
                                   .validate()
                                   .setupTopology();
 
-    std::vector<Output> expectedOutput = {{1543624260000, 95, 2},
-                                          {1543625520000, 95, 3},
-                                          {1543625940000, 80, 1},
-                                          {1543626120000, 75, 1},
-                                          {1543626420000, 75, 2}};
-    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
-             expectedOutput.size());
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
-    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
-             actualOutput.size());
+    // Expected output
+    std::stringstream expectedOutput;
+    expectedOutput << "1543624260000, 95, 2\n";
+    expectedOutput << "1543625520000, 95, 3\n";
+    expectedOutput << "1543625940000, 80, 1\n";
+    expectedOutput << "1543626120000, 75, 1\n";
+    expectedOutput << "1543626420000, 75, 2\n";
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers =
+        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 /* 2.Test
@@ -182,19 +188,23 @@ TEST_F(FilterPushDownTest, testSameResultsForPushDownBelowMapWithNewField) {
                                   .validate()
                                   .setupTopology();
 
-    std::vector<Output> expectedOutput = {{1543624260000, 95, 2},
-                                          {1543625520000, 95, 3},
-                                          {1543625940000, 80, 1},
-                                          {1543626120000, 75, 1},
-                                          {1543626420000, 75, 2}};
-    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
-             expectedOutput.size());
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
-    NES_INFO("FilterPushDownTest: Start testCorrectResultsForFilterPushDownBelowTwoMaps expected output size {},",
-             actualOutput.size());
+    // Expected output
+    std::stringstream expectedOutput;
+    expectedOutput << "1543624260000, 95, 2\n";
+    expectedOutput << "1543625520000, 95, 3\n";
+    expectedOutput << "1543625940000, 80, 1\n";
+    expectedOutput << "1543626120000, 75, 1\n";
+    expectedOutput << "1543626420000, 75, 2\n";
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    // Run the query and get the actual dynamic buffers
+    auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
+
+    // Comparing equality
+    const auto outputSchema = testHarness.getOutputSchema();
+    auto tmpBuffers =
+        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto expectedBuffers = TestUtils::createDynamicBuffers(tmpBuffers, outputSchema);
+    EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
 }// namespace NES
