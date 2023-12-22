@@ -40,12 +40,11 @@ class DummySubRequest : public AbstractSubRequest {
 
 class DummyRequest : public AbstractMultiRequest {
   public:
-    DummyRequest(const std::vector<ResourceType>& requiredResources,
-                 uint8_t maxRetries,
+    DummyRequest(uint8_t maxRetries,
                  uint32_t initialValue,
                  uint32_t additionValue,
                  uint32_t returnNewRequestFrequency)
-        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue),
+        : AbstractMultiRequest(maxRetries), responseValue(initialValue), additionValue(additionValue),
           returnNewRequestFrequency(returnNewRequestFrequency){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic() override {
@@ -73,44 +72,6 @@ class DummyRequest : public AbstractMultiRequest {
     uint32_t additionValue;
     uint32_t returnNewRequestFrequency;
 };
-
-//class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
-//  public:
-//    DummyRequestMainThreadHelpsExecution(const std::vector<ResourceType>& requiredResources,
-//                                         uint8_t maxRetries,
-//                                         uint32_t initialValue,
-//                                         uint32_t additionValue,
-//                                         uint32_t returnNewRequestFrequency)
-//        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue),
-//          returnNewRequestFrequency(returnNewRequestFrequency){};
-//
-//    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandler) override {
-//        std::vector<std::future<std::any>> futures;
-//        for (uint32_t i = 0; i < additionValue; ++i) {
-//            futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(responseValue, returnNewRequestFrequency), 0));
-//        }
-//
-//        executeSubRequestWhileQueueNotEmpty(storageHandler);
-//
-//        for (auto& f : futures) {
-//            f.wait();
-//        }
-//        responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
-//        return {};
-//    }
-//
-//    std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
-//    std::atomic<uint32_t> responseValue;
-//
-//  protected:
-//    void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-//    void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-//    void postExecution(const StorageHandlerPtr&) override {}
-//
-//  private:
-//    uint32_t additionValue;
-//    uint32_t returnNewRequestFrequency;
-//};
 
 class DummyStorageHandler : public StorageHandler {
   public:
@@ -141,9 +102,8 @@ TEST_F(AbstractMultiRequestTest, testOneMainThreadOneExecutor) {
     constexpr uint32_t additionsPerIteration = 3;
     constexpr uint32_t responseValue = iterations * additionsPerIteration;
     RequestId requestId = 1;
-    std::vector<ResourceType> requiredResources;
     uint8_t maxRetries = 1;
-    DummyRequest request(requiredResources, maxRetries, 0, responseValue, additionsPerIteration);
+    DummyRequest request(maxRetries, 0, responseValue, additionsPerIteration);
     request.setId(requestId);
     auto future = request.getFuture();
     auto storageHandler = std::make_shared<DummyStorageHandler>();
@@ -163,7 +123,7 @@ TEST_F(AbstractMultiRequestTest, testOneMainThreadTwoExecutors) {
     RequestId requestId = 1;
     std::vector<ResourceType> requiredResources;
     uint8_t maxRetries = 1;
-    DummyRequest request(requiredResources, maxRetries, 0, responseValue, additionsPerIteration);
+    DummyRequest request(maxRetries, 0, responseValue, additionsPerIteration);
     request.setId(requestId);
     auto future = request.getFuture();
     auto storageHandler = std::make_shared<DummyStorageHandler>();
