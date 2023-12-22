@@ -22,8 +22,8 @@
 
 namespace NES::RequestProcessor {
 
-AbstractMultiRequest::AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, const uint8_t maxRetries)
-    : AbstractRequest(requiredResources, maxRetries) {}
+AbstractMultiRequest::AbstractMultiRequest(const uint8_t maxRetries)
+    : AbstractRequest({}, maxRetries) {}
 
 std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandlerPtr& storageHandle) {
     std::vector<AbstractRequestPtr> result;
@@ -33,7 +33,6 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
     if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
         this->storageHandle = storageHandle;
         result = executeRequestLogic();
-        //NES_ASSERT(subRequestQueue.empty(), "Multi request main logic terminated but sub request queue is not empty");
         if (!subRequestQueue.empty()) {
             for (auto& subRequedt: subRequestQueue) {
                 NES_ASSERT(subRequedt->executionHasStarted(), "Not all scheduled requests were executed");
@@ -69,20 +68,6 @@ bool AbstractMultiRequest::executeSubRequest() {
     return true;
 }
 
-void AbstractMultiRequest::executeSubRequestWhileQueueNotEmpty() {
-    while (true) {
-        std::unique_lock lock(workMutex);
-        if (subRequestQueue.empty()) {
-            break;
-        }
-        AbstractSubRequestPtr subRequest = subRequestQueue.front();
-        subRequestQueue.pop_front();
-        lock.unlock();
-
-        subRequest->execute();
-    }
-}
-
 SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {
     NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
     std::promise<std::any> promise;
@@ -95,6 +80,5 @@ SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr 
     subRequestQueue.emplace_back(subRequest);
     cv.notify_all();
     return SubRequestFuture(subRequest, std::move(future));
-
 }
 }// namespace NES::RequestProcessor::Experimental

@@ -21,4 +21,5 @@ add_source_files(nes-coordinator
         AbstractSubRequest.cpp
         StorageResourceLocker.cpp
         AbstractUniRequest.cpp
+        SubRequestFuture.cpp
         )

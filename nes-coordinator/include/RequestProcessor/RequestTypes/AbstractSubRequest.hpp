@@ -32,14 +32,6 @@ using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
 class StorageHandler;
 using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
 
-class SubRequestFuture {
-  public:
-    explicit SubRequestFuture(AbstractSubRequestPtr parentRequest, std::future<std::any> future);
-    std::any get();
-  private:
-    AbstractSubRequestPtr request;
-    std::future<std::any> future;
-};
 /**
  * This class encapsulates parts of a coordinator side requests logic that are to be executed concurrently.
  * Subrequests are scheduled and executed as part of the execution of a MultiRequest

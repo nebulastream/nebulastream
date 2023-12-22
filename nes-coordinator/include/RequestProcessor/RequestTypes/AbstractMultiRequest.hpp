@@ -24,26 +24,24 @@ using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
 class SubRequestFuture;
 
 /**
- * A multi request can acquire multiple threads and has its own internal subrequest queue which it uses to schedule the
- * concurrent execution of of subrequests
+ * A multi request can acquire multiple threads and has its own internal sub request queue which it uses to schedule the
+ * concurrent execution of of sub requests
  */
 class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRequest>, public AbstractRequest {
 
   public:
     /**
      * @brief Constructor
-     * @param requiredResources A list of the resource on which this request will acquire and hold a lock during the
-     * entirety of its execution. Additional resources might be acquired by subrequests created by this request
      * @param maxRetries The maximum amount of retries in case of an error
      */
      //todo: do not pass resources
-    AbstractMultiRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries);
+    explicit AbstractMultiRequest(uint8_t maxRetries);
 
     /**
      * @brief Executes the request logic. The first thread to execute this function for this request will be in charge
      * of scheduling tasks for the following threads
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
-     * request
+     * sub requests
      * @return a list of follow up requests to be executed (can be empty if no further actions are required)
      */
     std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle) override;
@@ -54,31 +52,26 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
      */
     bool isDone();
 
-    /**
-     * @brief Takes subrequests from the queue and executes them and returns when there is no more work to do. This
-     * function has to be called by the main thread of a request before waiting on the return value of a subrequest, if
-     * not, the thread might starve if the request processor is single threaded
-     * @param storageHandle the storage handle used to lock and access resources
-     */
-     //todo: make this protected again and a fried function of subrequest future
-    void executeSubRequestWhileQueueNotEmpty();
-
   protected:
     /**
-     * @brief schedule a subrequest to be executed
+     * @brief schedule a sub request to be executed
      * @param subRequest the request to be executed
-     * @param storageHandle the storage handle used to lock and access resources
-     * @return a future into which the scheduled request will put the results of its computations
+     * @return a wrapper around the future into which the scheduled request will put the results of its computations
      */
     SubRequestFuture scheduleSubRequest(AbstractSubRequestPtr subRequest);
 
+    /**
+     * @brief executes the logic of the main thread. sub requests can be scheduled from withing this function. Access to
+     * any data structure via the storage handler requires scheduling a sub request which will make the resource access
+     * @return a list of follow up requests to returned to the request executor (can be empty if no further actions are required)
+     */
     virtual std::vector<AbstractRequestPtr> executeRequestLogic() = 0;
 
   private:
     /**
-     * @brief Execute a subrequest. If the request queue is empty, this function will block until a request is scheduled
+     * @brief Execute a sub request. If the request queue is empty, this function will block until a request is scheduled
      * @param storageHandle the storage handle used to lock and access resources
-     * @return true if a subrequest was executed. False is the request was marked as done and no subrequest was
+     * @return true if a sub request was executed. False is the request was marked as done and no sub request was
      * executed
      */
     bool executeSubRequest();

@@ -131,10 +131,9 @@ class DummyWaitOnFutureSubRequest : public AbstractSubRequest {
 class DummyWaitOnFutureMultiRequest : public AbstractMultiRequest {
   public:
     DummyWaitOnFutureMultiRequest(
-        const std::vector<ResourceType>& requiredResources,
         uint8_t maxRetries,
         std::vector<std::pair<std::future<bool>, std::shared_ptr<AbstractSubRequest>>>& listOfResourceLists)
-        : AbstractMultiRequest(requiredResources, maxRetries), listOfResourceLists(listOfResourceLists){};
+        : AbstractMultiRequest(maxRetries), listOfResourceLists(listOfResourceLists){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic() override {
         std::vector<SubRequestFuture> responseFutures;
@@ -185,12 +184,11 @@ class DummySubRequest : public AbstractSubRequest {
 //todo: rename
 class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
   public:
-    DummyRequestMainThreadHelpsExecution(const std::vector<ResourceType>& requiredResources,
-                                         uint8_t maxRetries,
+    DummyRequestMainThreadHelpsExecution(uint8_t maxRetries,
                                          uint32_t initialValue,
                                          uint32_t additionValue,
                                          uint32_t returnNewRequestFrequency)
-        : AbstractMultiRequest(requiredResources, maxRetries), responseValue(initialValue), additionValue(additionValue),
+        : AbstractMultiRequest(maxRetries), responseValue(initialValue), additionValue(additionValue),
           returnNewRequestFrequency(returnNewRequestFrequency){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic() override {
@@ -519,8 +517,7 @@ TEST_F(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
         pairs.emplace_back(std::move(pair3));
         pairs.emplace_back(std::move(pair4));
         pairs.emplace_back(std::move(pair5));
-        std::vector<ResourceType> resources;
-        auto multiRequest = std::make_shared<DummyWaitOnFutureMultiRequest>(resources, 0, pairs);
+        auto multiRequest = std::make_shared<DummyWaitOnFutureMultiRequest>(0, pairs);
 
         //get 2pl handler
         std::promise<bool> handlerGetterPromise;
@@ -575,7 +572,6 @@ TEST_F(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
         ASSERT_EQ(twoplhandler->getNextAvailableTicket(ResourceType::QueryCatalogService),
                   nextAvailableTicketQueryCatalogService);
 
-        auto threadCount = coordinatorConfig->requestExecutorThreads.getValue();
         auto multiRequestId = processor->runAsync(multiRequest);
         runPromise3.set_value(true);
 
@@ -584,9 +580,7 @@ TEST_F(AsyncRequestProcessorTest, testWaitingForLockMultiRequest) {
 
         auto timeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
-        //todo: ticket count does not match here
-        //while (twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology - 1) {
-            while (twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
+        while (twoplhandler->getNextAvailableTicket(ResourceType::Topology) < nextAvailableTicketTopology) {
             if (std::chrono::system_clock::now() > start_timestamp + timeoutInSec) {
                 FAIL();
             }
@@ -758,11 +752,7 @@ TEST_P(AsyncRequestProcessorTest, submitMultiRequest) {
     constexpr uint32_t additionsPerIteration = 3;
     constexpr uint32_t responseValue = iterations * additionsPerIteration;
     try {
-        auto request = std::make_shared<DummyRequestMainThreadHelpsExecution>(std::vector<ResourceType>{},
-                                                                              0,
-                                                                              0,
-                                                                              responseValue,
-                                                                              additionsPerIteration);
+        auto request = std::make_shared<DummyRequestMainThreadHelpsExecution>(0, 0, responseValue, additionsPerIteration);
         auto future = request->getFuture();
         auto queryId = processor->runAsync(request);
         EXPECT_NE(queryId, INVALID_REQUEST_ID);

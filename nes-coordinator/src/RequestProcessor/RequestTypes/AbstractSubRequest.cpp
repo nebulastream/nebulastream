@@ -48,11 +48,5 @@ bool AbstractSubRequest::execute() {
 bool AbstractSubRequest::executionHasStarted() {
     return executionStarted.load();
 }
-SubRequestFuture::SubRequestFuture(AbstractSubRequestPtr parentRequest, std::future<std::any> future) : request(std::move(parentRequest)), future(std::move(future)) {}
-
-std::any SubRequestFuture::get() {
-    request->execute();
-    return future.get();
-}
 
 }// namespace NES::RequestProcessor
