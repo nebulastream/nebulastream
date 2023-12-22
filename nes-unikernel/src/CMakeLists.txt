@@ -3,6 +3,7 @@ add_source_files(unikernel-lib
         NetworkSink.cpp
         NetworkSource.cpp
         SinkMedium.cpp
+        Util/CircularBuffer.cpp
 #        Sources/TCPSource.cpp
 )
 
