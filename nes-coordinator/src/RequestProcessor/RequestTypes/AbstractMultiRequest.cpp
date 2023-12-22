@@ -33,7 +33,12 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
     if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
         this->storageHandle = storageHandle;
         result = executeRequestLogic();
-        NES_ASSERT(subRequestQueue.empty(), "Multi request main logic terminated but sub request queue is not empty");
+        //NES_ASSERT(subRequestQueue.empty(), "Multi request main logic terminated but sub request queue is not empty");
+        if (!subRequestQueue.empty()) {
+            for (auto& subRequedt: subRequestQueue) {
+                NES_ASSERT(subRequedt->executionHasStarted(), "Not all scheduled requests were executed");
+            }
+        }
         std::unique_lock lock(workMutex);
         done = true;
         lock.unlock();
@@ -78,7 +83,7 @@ void AbstractMultiRequest::executeSubRequestWhileQueueNotEmpty() {
     }
 }
 
-SubRequestFuturePtr AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {
+SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {
     NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
     std::promise<std::any> promise;
     auto future = promise.get_future();
@@ -89,9 +94,7 @@ SubRequestFuturePtr AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestP
     std::unique_lock lock(workMutex);
     subRequestQueue.emplace_back(subRequest);
     cv.notify_all();
-    auto subRequestFuture = std::make_shared<SubRequestFuture>(subRequest, std::move(future));
-    //return SubRequestFuture();
-    return subRequestFuture;
+    return SubRequestFuture(subRequest, std::move(future));
 
 }
 }// namespace NES::RequestProcessor::Experimental

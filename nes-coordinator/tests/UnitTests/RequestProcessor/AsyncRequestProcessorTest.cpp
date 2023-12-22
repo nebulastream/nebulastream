@@ -137,7 +137,7 @@ class DummyWaitOnFutureMultiRequest : public AbstractMultiRequest {
         : AbstractMultiRequest(requiredResources, maxRetries), listOfResourceLists(listOfResourceLists){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic() override {
-        std::vector<SubRequestFuturePtr> responseFutures;
+        std::vector<SubRequestFuture> responseFutures;
         responseFutures.reserve(listOfResourceLists.size());
         for (auto& [future, subRequest] : listOfResourceLists) {
             future.get();
@@ -146,7 +146,7 @@ class DummyWaitOnFutureMultiRequest : public AbstractMultiRequest {
 
         std::shared_ptr<DummyWaitOnFutureResponse> response;
         for (auto& f : responseFutures) {
-            response = std::any_cast<std::shared_ptr<DummyWaitOnFutureResponse>>(f->get());
+            response = std::any_cast<std::shared_ptr<DummyWaitOnFutureResponse>>(f.get());
         }
         //todo: do not return the storage handler
         responsePromise.set_value(response);
@@ -194,13 +194,13 @@ class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
           returnNewRequestFrequency(returnNewRequestFrequency){};
 
     std::vector<AbstractRequestPtr> executeRequestLogic() override {
-        std::vector<SubRequestFuturePtr> futures;
+        std::vector<SubRequestFuture> futures;
         for (uint32_t i = 0; i < additionValue; ++i) {
             futures.push_back(scheduleSubRequest(std::make_shared<DummySubRequest>(responseValue, returnNewRequestFrequency)));
         }
 
         for (auto& f : futures) {
-            f->get();
+            f.get();
         }
         responsePromise.set_value(std::make_shared<DummyMultiResponse>(responseValue));
         return {};

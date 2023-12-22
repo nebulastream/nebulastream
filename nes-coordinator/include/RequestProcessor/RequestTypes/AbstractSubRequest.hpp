@@ -74,6 +74,8 @@ class AbstractSubRequest : public StorageResourceLocker {
     void setPromise(std::promise<std::any> promise);
 
     void setStorageHandler(StorageHandlerPtr storageHandler);
+
+    bool executionHasStarted();
   protected:
     /**
      * @brief Execute this subrequests logic
