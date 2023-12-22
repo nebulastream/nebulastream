@@ -51,7 +51,6 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
   public:
     /**
      * @brief constructor
-     * @param requiredResources: as list of resource types which indicates which resources will be accessed t oexecute the request
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
      */
     explicit AbstractRequest(uint8_t maxRetries);
@@ -61,7 +60,6 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * @param requestId
      */
     void setId(RequestId requestId);
-
 
     /**
      * @brief Acquires locks on the needed resources and executes the request logic
@@ -116,7 +114,10 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      */
     template<class RequestType>
     bool instanceOf() {
-        return std::dynamic_pointer_cast<RequestType>(this->shared_from_this()) != nullptr;
+        if (dynamic_cast<RequestType*>(this)) {
+            return true;
+        }
+        return false;
     };
 
     /**
