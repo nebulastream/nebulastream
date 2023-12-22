@@ -15,15 +15,15 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Catalogs/Topology/AbstractHealthCheckService.hpp>
-#include <Catalogs/Topology/TopologyManagerService.hpp>
-#include <Util/Mobility/Waypoint.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Mobility/SpatialTypeUtility.hpp>
+#include <Util/Mobility/Waypoint.hpp>
 #include <Util/SpatialUtils.hpp>
 #include <utility>
 
@@ -40,11 +40,11 @@ void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckS
 }
 
 WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
-                                                      const std::string& address,
-                                                      const int64_t grpcPort,
-                                                      const int64_t dataPort,
-                                                      const uint16_t numberOfSlots,
-                                                      std::map<std::string, std::any> workerProperties) {
+                                                const std::string& address,
+                                                const int64_t grpcPort,
+                                                const int64_t dataPort,
+                                                const uint16_t numberOfSlots,
+                                                std::map<std::string, std::any> workerProperties) {
     NES_TRACE("TopologyManagerService: Register Node address={} numberOfSlots={}", address, numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -92,6 +92,8 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
         return INVALID_WORKER_NODE_ID;
     }
 
+    topology->registerTopologyNode(std::move(newTopologyNode));
+
     const TopologyNodePtr rootNode = topology->getRoot();
 
     if (!rootNode) {
@@ -99,7 +101,7 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
         topology->setAsRoot(newTopologyNode);
     } else {
         NES_DEBUG("TopologyManagerService::registerWorker: add link to the root node {}", rootNode->toString());
-        topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
+        topology->addTopologyNodeAsChild(rootNode->getId(), newTopologyNode->getId());
     }
 
     if (healthCheckService) {
@@ -150,28 +152,9 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
         return false;
     }
 
-    TopologyNodePtr childPhysicalNode = topology->findWorkerWithId(childId);
-    if (!childPhysicalNode) {
-        NES_ERROR("TopologyManagerService::AddParent: source node {} does not exists", childId);
-        return false;
-    }
-    NES_DEBUG("TopologyManagerService::AddParent: source node {} exists", childId);
-
-    TopologyNodePtr parentPhysicalNode = topology->findWorkerWithId(parentId);
-    if (!parentPhysicalNode) {
-        NES_ERROR("TopologyManagerService::AddParent: sensorParent node {} does not exists", parentId);
-        return false;
-    }
     NES_DEBUG("TopologyManagerService::AddParent: sensorParent node  {}  exists", parentId);
 
-    auto children = parentPhysicalNode->getChildren();
-    for (const auto& child : children) {
-        if (child->as<TopologyNode>()->getId() == childId) {
-            NES_ERROR("TopologyManagerService::AddParent: nodes {} and {} already exists", childId, parentId);
-            return false;
-        }
-    }
-    bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
+    bool added = topology->addTopologyNodeAsChild(parentId, childId);
     if (added) {
         NES_DEBUG("TopologyManagerService::AddParent: created link successfully new topology is=");
         topology->print();
@@ -304,7 +287,7 @@ bool TopologyManagerService::addGeoLocation(WorkerId topologyNodeId,
                                             NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
 
     auto topologyNode = topology->findWorkerWithId(topologyNodeId);
-    if (!topologyNode) {
+    if (!topology->nodeWithWorkerIdExists(topologyNodeId)) {
         NES_ERROR("Unable to find node with id {}", topologyNodeId);
         return false;
     }
@@ -357,8 +340,7 @@ bool TopologyManagerService::removeGeoLocation(WorkerId topologyNodeId) {
     return locationIndex->removeNodeFromSpatialIndex(topologyNodeId);
 }
 
-std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
-TopologyManagerService::getGeoLocationForNode(WorkerId nodeId) {
+std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> TopologyManagerService::getGeoLocationForNode(WorkerId nodeId) {
     return locationIndex->getGeoLocationForNode(nodeId);
 }
 }// namespace NES
