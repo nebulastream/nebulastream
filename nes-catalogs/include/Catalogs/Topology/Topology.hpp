@@ -17,6 +17,7 @@
 
 #include <Identifiers.hpp>
 #include <any>
+#include <folly/Synchronized.h>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -25,7 +26,6 @@
 
 namespace NES {
 
-//if no other values is supplied to the getClosestNodePosition() function, it will use this search radius to try to find a node
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
@@ -51,15 +51,22 @@ class Topology {
     TopologyNodePtr getRoot();
 
     /**
-     * @brief This method will add the new node as child to the provided parent node
-     * @param parent : the pointer to the parent physical node
-     * @param newNode : the new physical node.
-     * @return true if successful
+     * @brief Register a new node in the topology map without creating parent child relationship
+     * @param newTopologyNode : the shared pointer of the new node
+     * @return true if registered else false
      */
-    bool addNewTopologyNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode);
+    bool registerTopologyNode(TopologyNodePtr&& newTopologyNode);
 
     /**
-     * @brief This method will remove a given physical node
+     * @brief This method will add the a topology node as child to the parent with provided Id
+     * @param parentWorkerId : the id of the parent topology node
+     * @param childWorkerId : the new topology node.
+     * @return true if successful if one or both node does not exists then false
+     */
+    bool addTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWorkerId);
+
+    /**
+     * @brief This method will remove a given topology node
      * @param nodeToRemove : the node to be removed
      * @return true if successful
      */
@@ -73,44 +80,15 @@ class Topology {
     TopologyNodePtr findWorkerWithId(WorkerId workerId);
 
     /**
-     * @brief This method will return a subgraph containing all the paths between start and destination node.
-     * Note: this method will only look for the destination node only in the parent nodes of the start node.
-     * @param startNode: the physical start node
-     * @param destinationNode: the destination start node
-     * @return physical location of the leaf node in the graph.
-     */
-    std::optional<TopologyNodePtr> findAllPathBetween(const TopologyNodePtr& startNode, const TopologyNodePtr& destinationNode);
-
-    /**
-     * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
-     * @param sourceNodes: the topology nodes where to start the path identification
-     * @param destinationNodes: the topology nodes where to end the path identification
-     * @return a vector of start/upstream topology nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
-     */
-    std::vector<TopologyNodePtr> findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
-                                                 const std::vector<TopologyNodePtr>& destinationNodes);
-
-    /**
-     * @brief checks if a Physical Node with workerId exists
+     * @brief checks if a topology node with workerId exists
      * @param workerId: workerId of the node
      * @return true if exists, false otherwise
      */
     bool nodeWithWorkerIdExists(WorkerId workerId);
 
     /**
-     * @brief Print the current topology information
-     */
-    void print();
-
-    /**
-     * @brief Return graph as string
-     * @return string object representing topology information
-     */
-    std::string toString();
-
-    /**
-     * @brief Add a Physical node as the root node of the topology
-     * @param physicalNode: Physical node to be set as root node
+     * @brief Add a topology node as the root node of the topology
+     * @param physicalNode: topology node to be set as root node
      */
     void setAsRoot(const TopologyNodePtr& physicalNode);
 
@@ -153,69 +131,22 @@ class Topology {
     bool occupySlots(WorkerId workerId, uint16_t amountToOccupy);
 
     /**
-     * @brief Merge the sub graphs starting from the nodes into a single sub-graph
-     * @param startNodes : start nodes of the sub-graphs to be merged
-     * @return start nodes of the merged sub-graph
+     * @brief Print the current topology information
      */
-    static std::vector<TopologyNodePtr> mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes);
+    void print();
 
     /**
-     * @brief Find the immediate common ancestor for the set of Topology nodes
-     * @param topologyNodes: the set of topology nodes
-     * @return the immediate common ancestor.
+     * @brief Return graph as string
+     * @return string object representing topology information
      */
-    TopologyNodePtr findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes);
-
-    /**
-     * @brief Find the immediate common child for the set of Topology nodes
-     * @param topologyNodes: the set of topology nodes
-     * @return the immediate common child.
-     */
-    static TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
-
-    /**
-     * @brief Find a node location that can be reachable from both the
-     * @param childNodes: list of child nodes to be reachable
-     * @param parenNodes: list of parent nodes to be reachable
-     * @return common node else nullptr
-     */
-    TopologyNodePtr findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes, std::vector<TopologyNodePtr> parenNodes);
-
-    /**
-     * @brief Find the set of nodes (inclusive of) between a source and destination topology node
-     * @param sourceNode : the source topology node
-     * @param destinationNode : the destination topology node
-     * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
-     */
-    std::vector<TopologyNodePtr> findNodesBetween(const TopologyNodePtr& sourceNode, const TopologyNodePtr& destinationNode);
-
-    /**
-     * @brief Find the set of shared nodes (inclusive of) between a set of source and destination topology nodes
-     * @param sourceNodes : the source topology nodes
-     * @param destinationNodes : the destination topology nodes
-     * @return returns a vector of nodes (inclusive of) between a source and destination topology node if no path exists then an empty vector
-     */
-    std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
-                                                  std::vector<TopologyNodePtr> destinationNodes);
+    std::string toString();
 
   private:
-    static constexpr int BASE_MULTIPLIER = 10000;
-
     explicit Topology();
 
-    /**
-     * @brief Find if searched node is in the parent list of the test node or its parents parent list
-     * @param testNode: the test node
-     * @param searchedNodes: the searched node
-     * @return the node where the searched node is found
-     */
-    TopologyNodePtr
-    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<WorkerId, TopologyNodePtr>& uniqueNodes);
-
     //TODO: At present we assume that we have only one root node
-    TopologyNodePtr rootNode;
-    std::mutex topologyLock;
-    std::map<WorkerId, TopologyNodePtr> workerIdToTopologyNode;
+    WorkerId rootWorkerId;
+    folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
 };
 }// namespace NES
 #endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
