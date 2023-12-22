@@ -177,7 +177,7 @@ Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
 }
 
 bool TopologyNode::acquireLock() {
-
+    //NOTE: Dear reviewer, I will fix it in #4456
     bool expected = false;
     bool desired = true;
     //Check if no one has locked the topology node already
@@ -190,7 +190,7 @@ bool TopologyNode::acquireLock() {
 }
 
 bool TopologyNode::releaseLock() {
-
+    //NOTE: Dear reviewer, I will fix it in #4456
     bool expected = true;
     bool desired = false;
     //Check if the lock was acquired

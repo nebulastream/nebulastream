@@ -37,6 +37,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -2299,19 +2300,19 @@ TEST_F(QueryPlacementTest, testConcurrentOperatorPlacementUsingOptimisticBottomU
 /*
  * Test query placement using BottomUp strategy for two queries:
  *
- * Q1: Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create())
+ * Q1: Query::from("car").filter(Attribute("id") < 45).map(Attribute("value") = 45).sink(PrintSinkDescriptor::create())
  * Q2: Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create())
  *
  * On the following topology:
  *
- * Topology: rootNode(6)---srcNode1(4)
+ * Topology: rootNode(2)---srcNode1(2)
  *                     \
- *                      ---srcNode2 (4)
+ *                      ---srcNode2 (2)
  *
  *  We perform both placements concurrently using the optimistic approach.
- *  The Expectations are that both placements should be successful and should result in a consistent global exec
+ *  The Expectations are that Q1 will fails but Q2 will succeed.
  */
-TEST_F(QueryPlacementTest, DISABLED_testConcurrentOperatorPlacementUsingOptimisticBottomUpStrategy2) {
+TEST_F(QueryPlacementTest, testIfCanPlaceQueryAfterPlacementFailureConcurrentOperatorPlacementUsingOptimisticBottomUpStrategy) {
 
     setupTopologyAndSourceCatalog({2, 2, 2});
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -2324,75 +2325,142 @@ TEST_F(QueryPlacementTest, DISABLED_testConcurrentOperatorPlacementUsingOptimist
     std::vector<QueryPlanPtr> queryPlans;
     std::vector<SharedQueryPlanPtr> sharedQueryPlans;
     auto numOfQueries = 2;
-    for (uint16_t i = 0; i < numOfQueries; i++) {
-        Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-        QueryPlanPtr queryPlan = query.getQueryPlan();
 
-        queryPlan = queryReWritePhase->execute(queryPlan);
-        queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
-        typeInferencePhase->execute(queryPlan);
+    //Setup the query that can not be placed
+    Query query1 =
+        Query::from("car").filter(Attribute("id") < 45).map(Attribute("value") = 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
 
-        topologySpecificQueryRewrite->execute(queryPlan);
-        typeInferencePhase->execute(queryPlan);
-        auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
-        auto sharedQueryPlanId = sharedQueryPlan->getId();
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+    typeInferencePhase->execute(queryPlan1);
 
-        //Record the plans
-        queryPlans.emplace_back(queryPlan);
-        sharedQueryPlans.emplace_back(sharedQueryPlan);
-    }
+    topologySpecificQueryRewrite->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan1);
+    auto sharedQueryPlan1 = SharedQueryPlan::create(queryPlan1);
+    auto sharedQueryPlanId1 = sharedQueryPlan1->getId();
+
+    //Record the plans
+    queryPlans.emplace_back(queryPlan1);
+    sharedQueryPlans.emplace_back(sharedQueryPlan1);
+
+    //Setup the query that can be placed
+    Query query2 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
+    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+    typeInferencePhase->execute(queryPlan2);
+
+    topologySpecificQueryRewrite->execute(queryPlan2);
+    typeInferencePhase->execute(queryPlan2);
+    auto sharedQueryPlan2 = SharedQueryPlan::create(queryPlan2);
+    auto sharedQueryPlanId2 = sharedQueryPlan1->getId();
+
+    //Record the plans
+    queryPlans.emplace_back(queryPlan2);
+    sharedQueryPlans.emplace_back(sharedQueryPlan2);
 
     // Initiate placement requests
-    std::vector<std::future<bool>> placementResults;
-    for (auto i = 0; i < numOfQueries; i++) {
-        std::future<bool> placementResult = std::async(std::launch::async, [&, index = i]() {
-            auto queryPlacementPhaseInstance = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                                      topology,
-                                                                                      typeInferencePhase,
-                                                                                      coordinatorConfiguration);
-            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]);
-        });
-        placementResults.emplace_back(std::move(placementResult));
-    }
+    auto queryPlacementPhaseInstance1 =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    EXPECT_THROW(queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]), Exceptions::QueryPlacementException);
 
-    // Make sure both placement succeeded
-    for (uint16_t i = 0; i < numOfQueries; i++) {
-        EXPECT_TRUE(placementResults[i].get());
-    }
+    auto queryPlacementPhaseInstance2 =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    EXPECT_TRUE(queryPlacementPhaseInstance2->execute(sharedQueryPlans[1]));
 
-    // Check the execution plan for both shared query plans
-    for (uint16_t i = 0; i < numOfQueries; i++) {
-        std::vector<ExecutionNodePtr> executionNodes =
-            globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[i]->getId());
+    // Check the execution plan for failed shared query plans
+    //Assertion
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[0]->getId());
+    ASSERT_EQ(executionNodes.size(), 0u);
 
-        //Assertion
-        ASSERT_EQ(executionNodes.size(), 3u);
-        for (const auto& executionNode : executionNodes) {
-            if (executionNode->getId() == 1u) {
-                std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlans[i]->getId());
-                ASSERT_EQ(querySubPlans.size(), 1u);
-                auto querySubPlan = querySubPlans[0u];
-                std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-                ASSERT_EQ(actualRootOperators.size(), 1u);
-                OperatorNodePtr actualRootOperator = actualRootOperators[0];
-                ASSERT_EQ(actualRootOperator->getId(), queryPlans[i]->getRootOperators()[0]->getId());
-                ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
-                for (const auto& children : actualRootOperator->getChildren()) {
-                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
-                }
-            } else {
-                EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-                std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryPlans[i]->getId());
-                ASSERT_EQ(querySubPlans.size(), 1u);
-                auto querySubPlan = querySubPlans[0];
-                std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-                ASSERT_EQ(actualRootOperators.size(), 1u);
-                OperatorNodePtr actualRootOperator = actualRootOperators[0];
-                EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-                for (const auto& children : actualRootOperator->getChildren()) {
-                    EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
-                }
-            }
-        }
-    }
+    // Check the execution plan for success shared query plans
+    //Assertion
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[1]->getId());
+    ASSERT_EQ(executionNodes.size(), 3u);
+}
+
+/*
+ * Test query placement using BottomUp strategy for two queries:
+ *
+ * Q1: Query::from("car").filter(Attribute("id") < 45).map(Attribute("value") = 45).sink(PrintSinkDescriptor::create())
+ * Q2: Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create())
+ *
+ * On the following topology:
+ *
+ * Topology: rootNode(2)---srcNode1(2)
+ *                     \
+ *                      ---srcNode2 (2)
+ *
+ *  We perform both placements concurrently using the pessimistic approach.
+ *  The Expectations are that Q1 will fails but Q2 will succeed.
+ */
+TEST_F(QueryPlacementTest, testIfCanPlaceQueryAfterPlacementFailureConcurrentOperatorPlacementUsingPessimisticBottomUpStrategy) {
+
+    setupTopologyAndSourceCatalog({1, 2, 2});
+    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfiguration->optimizer.placementAmenderMode = Optimizer::PlacementAmenderMode::PESSIMISTIC;
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+
+    // Setup Queries
+    std::vector<QueryPlanPtr> queryPlans;
+    std::vector<SharedQueryPlanPtr> sharedQueryPlans;
+    auto numOfQueries = 2;
+
+    //Setup the query that can not be placed
+    Query query1 =
+        Query::from("car").filter(Attribute("id") < 45).map(Attribute("value") = 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+
+    queryPlan1 = queryReWritePhase->execute(queryPlan1);
+    queryPlan1->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+    typeInferencePhase->execute(queryPlan1);
+
+    topologySpecificQueryRewrite->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan1);
+    auto sharedQueryPlan1 = SharedQueryPlan::create(queryPlan1);
+    auto sharedQueryPlanId1 = sharedQueryPlan1->getId();
+
+    //Record the plans
+    queryPlans.emplace_back(queryPlan1);
+    sharedQueryPlans.emplace_back(sharedQueryPlan1);
+
+    //Setup the query that can be placed
+    Query query2 = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+
+    queryPlan2 = queryReWritePhase->execute(queryPlan2);
+    queryPlan2->setPlacementStrategy(Optimizer::PlacementStrategy::BottomUp);
+    typeInferencePhase->execute(queryPlan2);
+
+    topologySpecificQueryRewrite->execute(queryPlan2);
+    typeInferencePhase->execute(queryPlan2);
+    auto sharedQueryPlan2 = SharedQueryPlan::create(queryPlan2);
+    auto sharedQueryPlanId2 = sharedQueryPlan1->getId();
+
+    //Record the plans
+    queryPlans.emplace_back(queryPlan2);
+    sharedQueryPlans.emplace_back(sharedQueryPlan2);
+
+    // Initiate placement requests
+    auto queryPlacementPhaseInstance1 =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    EXPECT_THROW(queryPlacementPhaseInstance1->execute(sharedQueryPlans[0]), Exceptions::QueryPlacementException);
+
+    auto queryPlacementPhaseInstance2 =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
+    EXPECT_TRUE(queryPlacementPhaseInstance2->execute(sharedQueryPlans[1]));
+
+    // Check the execution plan for failed shared query plans
+    //Assertion
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[0]->getId());
+    ASSERT_EQ(executionNodes.size(), 0u);
+
+    // Check the execution plan for success shared query plans
+    //Assertion
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryPlans[1]->getId());
+    ASSERT_EQ(executionNodes.size(), 3u);
 }

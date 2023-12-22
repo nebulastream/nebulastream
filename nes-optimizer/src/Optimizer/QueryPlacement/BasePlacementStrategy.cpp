@@ -320,7 +320,7 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
     // 10: {
     //      N1: {(1, INVALID, OP1-->OP2), (1, INVALID, OP3)}
     //      N2: {(1, 3, {OP2,OP4}->OP5->OP6->OP7)}
-    //      N3: {(1, INVALID, OP9), (1, INVALID, OP8->OP9)} //Note: shared query plan id was changed to INVALID id as pinned operator found
+    //      N3: {(1, INVALID, OP10), (1, INVALID, OP8->OP9)} //Note: shared query plan id was changed to INVALID id as pinned operator found
     //    }
 
     // Create a map of computed query sub plans
@@ -455,6 +455,23 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
 
 void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedSubQueryPlans) {
 
+    // Iterate over all computed query sub plans and then add network source and sink operators
+    //
+    // Input:
+    // {
+    //    N1: {(1, INVALID, OP1-->OP2), (1, INVALID, OP3)}
+    //    N2: {(1, 3, {OP2,OP4}->OP5->OP6->OP7)}
+    //    N3: {(1, INVALID, OP9), (1, INVALID, OP8->OP9)} //Note: shared query plan id was changed to INVALID id as pinned operator found
+    // }
+    //
+    // Updated Map:
+    // {
+    //    N1: {(1, INVALID, OP1-->OP2-->NSnk), (1, INVALID, OP3-->NSnk)}
+    //    N2: {(1, 3, {NSrc-->OP2, NSrc-->OP4}-->OP5-->OP6-->{NSnk, OP7-->NSnk})}
+    //    N3: {(1, INVALID, NSrc-->OP9), (1, INVALID, NSrc-->OP8-->OP9)}
+    // }
+    //
+
     // Iterate over all computed sub query plans and add network source and sink operators.
     for (const auto& [workerId, querySubPlans] : computedSubQueryPlans) {
         auto downstreamTopologyNode = getTopologyNode(workerId);
@@ -586,7 +603,7 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
 
         // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
         if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
-            //wait till lock is acquired
+            //1.1. wait till lock is acquired
             while (!topology->acquireLockOnTopologyNode(workerNodeId)) {
                 std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
             };
@@ -594,7 +611,7 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
 
         try {
 
-            // 2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
+            // 1.2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
             // for placing the operators.
             auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
             if (!topology->occupyResources(workerNodeId, consumedResources)) {
@@ -602,7 +619,7 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                 return false;
             }
 
-            // 3. Check if the worker node contains pinned upstream operators
+            // 1.3. Check if the worker node contains pinned upstream operators
             bool containPinnedUpstreamOperator = false;
             bool containPinnedDownstreamOperator = false;
             if (pinnedUpStreamTopologyNodeIds.contains(workerNodeId)) {
@@ -611,16 +628,16 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                 containPinnedDownstreamOperator = true;
             }
 
-            // 4. Fetch the execution node to update and placed query sub plans
+            // 1.4. Fetch the execution node to update and placed query sub plans
             auto topologyNode = workerIdToTopologyNodeMap[workerNodeId];
             auto executionNode = getExecutionNode(topologyNode);
             auto placedQuerySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
 
-            // 5. Iterate over the placed query sub plans and update execution node
+            // 1.5. Iterate over the placed query sub plans and update execution node
             auto computedQuerySubPlans = computedSubQueryPlans[workerNodeId];
             for (const auto& computedQuerySubPlan : computedQuerySubPlans) {
 
-                // 5.1. Perform the type inference phase on the updated query sub plan and update execution node.
+                // 1.5.1. Perform the type inference phase on the updated query sub plan and update execution node.
                 if (computedQuerySubPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID) {
                     if (containPinnedUpstreamOperator) {
 
@@ -680,15 +697,10 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                         } else {
                             updatedQuerySubPlan = *(hostQuerySubPlans.begin());
                         }
-                        NES_INFO("----------------================ {}", updatedQuerySubPlan->toString());
-
                         //In the end, add root operators of computed plan as well.
                         for (const auto& rootOperator : computedQuerySubPlan->getRootOperators()) {
                             updatedQuerySubPlan->addRootOperator(rootOperator);
                         }
-
-                        NES_INFO("----------------++++++++++++ {}", updatedQuerySubPlan->toString());
-
                         updatedQuerySubPlan = typeInferencePhase->execute(updatedQuerySubPlan);
                         executionNode->addNewQuerySubPlan(updatedQuerySubPlan->getQueryId(), updatedQuerySubPlan);
 
@@ -762,14 +774,14 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                 }
             }
 
-            // 6. Add the execution node to the global execution plan
+            // 1.6. Add the execution node to the global execution plan
             if (!globalExecutionPlan->checkIfExecutionNodeExists(workerNodeId)) {
                 globalExecutionPlan->addExecutionNode(executionNode);
             } else {
                 globalExecutionPlan->scheduleExecutionNode(executionNode);
             }
 
-            // 7. Mark all operators as placed on the topology node as placed
+            // 1.7. Mark all operators as placed on the topology node as placed
             if (workerIdToPinnedOperatorMap.contains(workerNodeId)) {
                 auto pinnedOperators = workerIdToPinnedOperatorMap[workerNodeId];
                 for (const auto& pinnedOperator : pinnedOperators) {
@@ -777,26 +789,26 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                 }
             }
 
-            // 8. If using optimistic strategy then, release the lock.
+            // 1.8. If using optimistic strategy then, release the lock.
             if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
                 if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
-                    // Raise an exception
+                    NES_ERROR("Unable to release lock on the locked node {}.", workerNodeId);
+                    throw Exceptions::RuntimeException("Unable to release lock on the locked node.");
                 }
             }
-
         } catch (const std::exception& ex) {// If exception occurred then safely
             if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
                 if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
-                    // Raise an exception
+                    NES_ERROR("Unable to release lock on the locked node {}.", workerNodeId);
+                    throw Exceptions::RuntimeException("Unable to release lock on the locked node.");
                 }
             }
-            if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
-                return unlockTopologyNodes();
-            }
-            return false;
+            // NOTE: For pessimistic the locking will take place in the
+            // catch block of the child class
+            throw ex;
         }
     }
-    // 9. If using pessimistic strategy then, release all locks.
+    // 1.9. If using pessimistic strategy then, release all locks.
     if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
         return unlockTopologyNodes();
     }
@@ -840,8 +852,14 @@ LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId 
     Version sinkVersion = 0;
     OperatorId id = getNextOperatorId();
     auto numberOfOrigins = 0;
-    return LogicalOperatorFactory::createSinkOperator(
-        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, SINK_RETRY_WAIT, SINK_RETRIES, sinkVersion, numberOfOrigins, id), id);
+    return LogicalOperatorFactory::createSinkOperator(Network::NetworkSinkDescriptor::create(nodeLocation,
+                                                                                             nesPartition,
+                                                                                             SINK_RETRY_WAIT,
+                                                                                             SINK_RETRIES,
+                                                                                             sinkVersion,
+                                                                                             numberOfOrigins,
+                                                                                             id),
+                                                      id);
 }
 
 LogicalOperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId,

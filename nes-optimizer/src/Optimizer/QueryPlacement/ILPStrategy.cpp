@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperatorNode.hpp>
+#include <Optimizer/Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
@@ -58,191 +59,201 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                             const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::set<LogicalOperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_INFO("Performing placement of the input query plan with id {}", sharedQueryId);
+    try {
+        NES_INFO("Performing placement of the input query plan with id {}", sharedQueryId);
 
-    // 1. Find the path where operators need to be placed
-    performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
+        // 1. Find the path where operators need to be placed
+        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-    z3::optimize opt(*z3Context);
-    std::map<std::string, z3::expr> placementVariables;
-    std::map<OperatorId, z3::expr> operatorPositionMap;
-    std::map<uint64_t, z3::expr> nodeUtilizationMap;
-    std::map<uint64_t, double> nodeMileageMap = computeMileage(pinnedUpStreamOperators);
+        z3::optimize opt(*z3Context);
+        std::map<std::string, z3::expr> placementVariables;
+        std::map<OperatorId, z3::expr> operatorPositionMap;
+        std::map<uint64_t, z3::expr> nodeUtilizationMap;
+        std::map<uint64_t, double> nodeMileageMap = computeMileage(pinnedUpStreamOperators);
 
-    // 2. Construct the placementVariable, compute distance, utilization and mileages
-    for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
+        // 2. Construct the placementVariable, compute distance, utilization and mileages
+        for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
 
-        //2.1 Find all path between pinned upstream and downstream operators
-        std::vector<NodePtr> operatorPath;
-        operatorPath.push_back(pinnedUpStreamOperator);
-        while (!operatorPath.back()->getParents().empty()) {
+            //2.1 Find all path between pinned upstream and downstream operators
+            std::vector<NodePtr> operatorPath;
+            operatorPath.push_back(pinnedUpStreamOperator);
+            while (!operatorPath.back()->getParents().empty()) {
 
-            //Before further processing please identify if the operator to be processed is among the collection of pinned downstream operators
-            auto& operatorToProcess = operatorPath.back();
-            auto isPinnedDownStreamOperator = std::find_if(
-                pinnedDownStreamOperators.begin(),
-                pinnedDownStreamOperators.end(),
-                [operatorToProcess](const LogicalOperatorNodePtr& pinnedDownStreamOperator) {
-                    return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperatorNode>()->getId();
-                });
+                //Before further processing please identify if the operator to be processed is among the collection of pinned downstream operators
+                auto& operatorToProcess = operatorPath.back();
+                auto isPinnedDownStreamOperator = std::find_if(
+                    pinnedDownStreamOperators.begin(),
+                    pinnedDownStreamOperators.end(),
+                    [operatorToProcess](const LogicalOperatorNodePtr& pinnedDownStreamOperator) {
+                        return pinnedDownStreamOperator->getId() == operatorToProcess->as_if<LogicalOperatorNode>()->getId();
+                    });
 
-            //Skip further processing if encountered pinned downstream operator
-            if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
-                NES_DEBUG("Found pinned downstream operator. Skipping further downstream operators.");
-                break;
-            }
+                //Skip further processing if encountered pinned downstream operator
+                if (isPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
+                    NES_DEBUG("Found pinned downstream operator. Skipping further downstream operators.");
+                    break;
+                }
 
-            //Look for the next downstream operators and add them to the path.
-            auto downstreamOperators = operatorToProcess->getParents();
+                //Look for the next downstream operators and add them to the path.
+                auto downstreamOperators = operatorToProcess->getParents();
 
-            if (downstreamOperators.empty()) {
-                NES_ERROR("Unable to find pinned downstream operator.");
-                return false;
-            }
-
-            uint16_t unplacedDownStreamOperatorCount = 0;
-            for (auto& downstreamOperator : downstreamOperators) {
-
-                // FIXME: (issue #2290) Assuming a tree structure, hence a node can only have a single parent. However, a query can have
-                //  multiple sinks or parents.
-                if (unplacedDownStreamOperatorCount > 1) {
-                    NES_ERROR("Current implementation can not place plan with multiple downstream operators.");
+                if (downstreamOperators.empty()) {
+                    NES_ERROR("Unable to find pinned downstream operator.");
                     return false;
                 }
 
-                // Only include unplaced operators in the path
-                if (downstreamOperator->as_if<LogicalOperatorNode>()->getOperatorState() != OperatorState::PLACED) {
-                    operatorPath.push_back(downstreamOperator);
-                    unplacedDownStreamOperatorCount++;
+                uint16_t unplacedDownStreamOperatorCount = 0;
+                for (auto& downstreamOperator : downstreamOperators) {
+
+                    // FIXME: (issue #2290) Assuming a tree structure, hence a node can only have a single parent. However, a query can have
+                    //  multiple sinks or parents.
+                    if (unplacedDownStreamOperatorCount > 1) {
+                        NES_ERROR("Current implementation can not place plan with multiple downstream operators.");
+                        return false;
+                    }
+
+                    // Only include unplaced operators in the path
+                    if (downstreamOperator->as_if<LogicalOperatorNode>()->getOperatorState() != OperatorState::PLACED) {
+                        operatorPath.push_back(downstreamOperator);
+                        unplacedDownStreamOperatorCount++;
+                    }
+                }
+            }
+
+            //2.2 Find path between pinned upstream and downstream topology node
+            auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
+            auto upstreamTopologyNode = workerIdToTopologyNodeMap[upstreamPinnedNodeId];
+
+            auto downstreamPinnedNodeId =
+                std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID));
+            auto downstreamTopologyNode = workerIdToTopologyNodeMap[downstreamPinnedNodeId];
+
+            std::vector<TopologyNodePtr> topologyPath =
+                topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
+
+            while (!topologyPath.back()->getParents().empty()) {
+                //FIXME #2290: path with multiple parents not supported
+                if (topologyPath[0]->getParents().size() > 1) {
+                    NES_ERROR("Current implementation can not place operators on topology with multiple paths.");
+                    return false;
+                }
+                topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
+            }
+
+            //2.3 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
+            addConstraints(opt,
+                           operatorPath,
+                           topologyPath,
+                           placementVariables,
+                           operatorPositionMap,
+                           nodeUtilizationMap,
+                           nodeMileageMap);
+        }
+
+        // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))
+        auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
+
+        for (auto const& [operatorID, position] : operatorPositionMap) {
+            LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorID]->as<LogicalOperatorNode>();
+            if (logicalOperatorNode->getParents().empty()) {
+                continue;
+            }
+
+            //Loop over downstream operators and compute network cost
+            for (const auto& downStreamOperator : logicalOperatorNode->getParents()) {
+                OperatorId downStreamOperatorId = downStreamOperator->as_if<LogicalOperatorNode>()->getId();
+                //Only consider nodes that are to be placed
+                if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
+
+                    auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
+                    NES_DEBUG("distance: {} {}", operatorID, distance.to_string());
+                    double output;
+                    if (!logicalOperatorNode->hasProperty("output")) {
+                        output = getDefaultOperatorOutput(logicalOperatorNode);
+                    } else {
+                        std::any prop = logicalOperatorNode->getProperty("output");
+                        output = std::any_cast<double>(prop);
+                    }
+                    cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
                 }
             }
         }
+        NES_DEBUG("cost_net: {}", cost_net.to_string());
 
-        //2.2 Find path between pinned upstream and downstream topology node
-        auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
-        auto upstreamTopologyNode = workerIdToTopologyNodeMap[upstreamPinnedNodeId];
+        // 4. Calculate the node over-utilization cost.
+        // Over-utilization cost = sum of the over-utilization of all nodes
+        auto overUtilizationCost = z3Context->int_val(0);// initialize the over-utilization cost with 0
+        for (auto const& [topologyID, utilization] : nodeUtilizationMap) {
+            std::string overUtilizationId = "S" + std::to_string(topologyID);
+            auto currentOverUtilization = z3Context->int_const(overUtilizationId.c_str());// an integer expression of the slack
 
-        auto downstreamPinnedNodeId =
-            std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID));
-        auto downstreamTopologyNode = workerIdToTopologyNodeMap[downstreamPinnedNodeId];
+            // Obtain the available slot in the current node
+            TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[topologyID]->as<TopologyNode>();
+            std::any prop = topologyNode->getNodeProperty("slots");
+            auto availableSlot = std::any_cast<int>(prop);
 
-        std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
+            opt.add(currentOverUtilization >= 0);// we only penalize over-utilization, hence its value should be >= 0.
+            opt.add(utilization - currentOverUtilization <= availableSlot);// formula for the over-utilization
 
-        while (!topologyPath.back()->getParents().empty()) {
-            //FIXME #2290: path with multiple parents not supported
-            if (topologyPath[0]->getParents().size() > 1) {
-                NES_ERROR("Current implementation can not place operators on topology with multiple paths.");
-                return false;
-            }
-            topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
+            overUtilizationCost = overUtilizationCost + currentOverUtilization;
         }
 
-        //2.3 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
-        addConstraints(opt,
-                       operatorPath,
-                       topologyPath,
-                       placementVariables,
-                       operatorPositionMap,
-                       nodeUtilizationMap,
-                       nodeMileageMap);
-    }
+        auto weightOverUtilization = z3Context->real_val(std::to_string(this->overUtilizationCostWeight).c_str());
+        auto weightNetwork = z3Context->real_val(std::to_string(this->networkCostWeight).c_str());
 
-    // 3. Calculate the network cost. (Network cost = sum over all operators (output of operator * distance of operator))
-    auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
+        // 5. Optimize ILP problem and print solution.
+        opt.minimize(weightNetwork * cost_net
+                     + weightOverUtilization * overUtilizationCost);// where the actual optimization happen
 
-    for (auto const& [operatorID, position] : operatorPositionMap) {
-        LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorID]->as<LogicalOperatorNode>();
-        if (logicalOperatorNode->getParents().empty()) {
-            continue;
+        // 6. Check if we have solution, return false if that is not the case
+        if (z3::sat != opt.check()) {
+            NES_ERROR("Solver failed.");
+            return false;
         }
 
-        //Loop over downstream operators and compute network cost
-        for (const auto& downStreamOperator : logicalOperatorNode->getParents()) {
-            OperatorId downStreamOperatorId = downStreamOperator->as_if<LogicalOperatorNode>()->getId();
-            //Only consider nodes that are to be placed
-            if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
+        // At this point, we already get the solution.
+        // 7. Get the model to retrieve the optimization solution.
+        auto z3Model = opt.get_model();
+        NES_DEBUG("ILPStrategy:model: {}", z3Model.to_string());
+        NES_INFO("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
 
-                auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
-                NES_DEBUG("distance: {} {}", operatorID, distance.to_string());
-                double output;
-                if (!logicalOperatorNode->hasProperty("output")) {
-                    output = getDefaultOperatorOutput(logicalOperatorNode);
-                } else {
-                    std::any prop = logicalOperatorNode->getProperty("output");
-                    output = std::any_cast<double>(prop);
-                }
-                cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
+        // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
+        std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
+        for (auto const& [topologyID, P] : placementVariables) {
+            if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
+                int operatorId = std::stoi(topologyID.substr(0, topologyID.find(',')));
+                int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(',') + 1));
+                LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorId];
+                TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[topologyNodeId];
+
+                // collect the solution to operatorToTopologyNodeMap
+                operatorToTopologyNodeMap.insert(std::make_pair(logicalOperatorNode, topologyNode));
             }
         }
-    }
-    NES_DEBUG("cost_net: {}", cost_net.to_string());
 
-    // 4. Calculate the node over-utilization cost.
-    // Over-utilization cost = sum of the over-utilization of all nodes
-    auto overUtilizationCost = z3Context->int_val(0);// initialize the over-utilization cost with 0
-    for (auto const& [topologyID, utilization] : nodeUtilizationMap) {
-        std::string overUtilizationId = "S" + std::to_string(topologyID);
-        auto currentOverUtilization = z3Context->int_const(overUtilizationId.c_str());// an integer expression of the slack
-
-        // Obtain the available slot in the current node
-        TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[topologyID]->as<TopologyNode>();
-        std::any prop = topologyNode->getNodeProperty("slots");
-        auto availableSlot = std::any_cast<int>(prop);
-
-        opt.add(currentOverUtilization >= 0);// we only penalize over-utilization, hence its value should be >= 0.
-        opt.add(utilization - currentOverUtilization <= availableSlot);// formula for the over-utilization
-
-        overUtilizationCost = overUtilizationCost + currentOverUtilization;
-    }
-
-    auto weightOverUtilization = z3Context->real_val(std::to_string(this->overUtilizationCostWeight).c_str());
-    auto weightNetwork = z3Context->real_val(std::to_string(this->networkCostWeight).c_str());
-
-    // 5. Optimize ILP problem and print solution.
-    opt.minimize(weightNetwork * cost_net + weightOverUtilization * overUtilizationCost);// where the actual optimization happen
-
-    // 6. Check if we have solution, return false if that is not the case
-    if (z3::sat != opt.check()) {
-        NES_ERROR("Solver failed.");
-        return false;
-    }
-
-    // At this point, we already get the solution.
-    // 7. Get the model to retrieve the optimization solution.
-    auto z3Model = opt.get_model();
-    NES_DEBUG("ILPStrategy:model: {}", z3Model.to_string());
-    NES_INFO("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
-
-    // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
-    std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
-    for (auto const& [topologyID, P] : placementVariables) {
-        if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
-            int operatorId = std::stoi(topologyID.substr(0, topologyID.find(',')));
-            int topologyNodeId = std::stoi(topologyID.substr(topologyID.find(',') + 1));
-            LogicalOperatorNodePtr logicalOperatorNode = operatorMap[operatorId];
-            TopologyNodePtr topologyNode = workerIdToTopologyNodeMap[topologyNodeId];
-
-            // collect the solution to operatorToTopologyNodeMap
-            operatorToTopologyNodeMap.insert(std::make_pair(logicalOperatorNode, topologyNode));
+        NES_INFO("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
+        for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
+            NES_INFO("Operator {} is executed on Topology Node {}", operatorNode->toString(), topologyNode->toString());
         }
+
+        // 8. Pin the operators based on ILP solution.
+        pinOperators(z3Model, placementVariables);
+
+        // 9. Compute query sub plans
+        auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+        // 10. add network source and sink operators
+        addNetworkOperators(computedQuerySubPlans);
+
+        // 11. update execution nodes
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
+    } catch (std::exception& ex) {
+        //Release all locked topology nodes in case of pessimistic approach
+        if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
+            unlockTopologyNodes();
+        }
+        throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
-
-    NES_INFO("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
-    for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
-        NES_INFO("Operator {} is executed on Topology Node {}", operatorNode->toString(), topologyNode->toString());
-    }
-
-    // 8. Pin the operators based on ILP solution.
-    pinOperators(z3Model, placementVariables);
-
-    // 9. Compute query sub plans
-    auto computedQuerySubPlans = computeQuerySubPlans(sharedQueryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
-
-    // 10. add network source and sink operators
-    addNetworkOperators(computedQuerySubPlans);
-
-    // 11. update execution nodes
-    return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
 }
 
 std::map<uint64_t, double> ILPStrategy::computeMileage(const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators) {
