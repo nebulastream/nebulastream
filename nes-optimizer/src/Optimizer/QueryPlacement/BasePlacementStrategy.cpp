@@ -616,6 +616,10 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
             auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
             if (!topology->occupyResources(workerNodeId, consumedResources)) {
                 NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
+                if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
+                    NES_ERROR("Unable to release lock on the locked node {}.", workerNodeId);
+                    throw Exceptions::RuntimeException("Unable to release lock on the locked node.");
+                }
                 return false;
             }
 
