@@ -33,312 +33,299 @@ limitations under the License.
 #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 
 namespace NES::Parsers {
-    std::string queryPlanToString(const QueryPlanPtr queryPlan) {
-        std::regex r2("[0-9]");
-        std::regex r1("  ");
-        std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
-        queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
-        return queryPlanStr;
-    }
-
-    QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const {
-        return completeQueryPlan;
-
-        /**
-
-        //ExpressionNodePtr predicate = helper.getWhereClauses().at(0);
-        //queryPlan = QueryPlanBuilder::addFilter(predicate, queryPlan);
-        if (!helper.getProjectionFields().empty())
-            queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
-        //queryPlan = QueryPlanBuilder::addLimit(helper.getLimit(), queryPlan);
-        //queryPlan = QueryPlanBuilder::addRename(helper.getNewName(),queryPlan);
-        //queryPlan = QueryPlanBuilder::addMap(helper.getMapExpression(),queryPlan);
-        // TODO: Implement logic to handle the union of 2 queryPlan
-        //queryPlan = QueryPlanBuilder::addUnion(queryPlan,queryPlan);
-        //queryPlan = QueryPlanBuilder::addJoin();
-        //queryPlan = QueryPlanBuilder::assignWatermark(queryPlan,helper.getWatermarkStrategieDescriptor());
-        //queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan,helper.getWindowType());
-        **/
-    }
-    Windowing::TimeMeasure NebulaSQLQueryPlanCreator::buildTimeMeasure(int size, const std::string& timebase){
-
-
-        if (timebase == "MS") {
-            return  Milliseconds(size) ;
-        } else if (timebase == "SEC") {
-            return Seconds(size);
-        } else if (timebase == "MIN"){
-            return Minutes(size);
-        } else if (timebase == "HOUR"){
-            return Hours(size);
-        } else {
-            return Milliseconds(0);
+        std::string queryPlanToString(const QueryPlanPtr queryPlan) {
+            std::regex r2("[0-9]");
+            std::regex r1("  ");
+            std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
+            queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
+            return queryPlanStr;
         }
-    }
 
-    void NebulaSQLQueryPlanCreator::poppush(NebulaSQLHelper helper){
-        helpers.pop();
-        helpers.push(helper);
-    }
+        QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const {
+            if(sink != nullptr){
+                return QueryPlanBuilder::addSink(queryPlans.top(),sink);
 
-    void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context) {
-        helpers.top().isSelect=true;
-        NebulaSQLBaseListener::enterSelectClause(context);
-
-    }
-
-    void NebulaSQLQueryPlanCreator::enterFromClause(NebulaSQLParser::FromClauseContext* context) {
-        helpers.top().isFrom= true;
-        NebulaSQLBaseListener::enterFromClause(context);
-
-    }
-
-    void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseContext *context) {
-        if (context->sinkType()) {
-            auto sinkType = context->sinkType()->getText();
-            SinkDescriptorPtr sinkDescriptor;
-            if (sinkType == "PRINT") {
-                sinkDescriptor = NES::PrintSinkDescriptor::create();
+            }else{
+                return queryPlans.top();
             }
-            if (sinkType == "FILE") {
-                sinkDescriptor = NES::FileSinkDescriptor::create(context->getText());
+        }
+        Windowing::TimeMeasure NebulaSQLQueryPlanCreator::buildTimeMeasure(int size, const std::string& timebase){
+
+
+            if (timebase == "MS") {
+                return  Milliseconds(size) ;
+            } else if (timebase == "SEC") {
+                return Seconds(size);
+            } else if (timebase == "MIN"){
+                return Minutes(size);
+            } else if (timebase == "HOUR"){
+                return Hours(size);
+            } else {
+                return Milliseconds(0);
             }
-            if (sinkType == "MQTT") {
-                auto mqttContext = context->sinkType()->sinkTypeMQTT();
-                std::string adress = mqttContext->mqttHostLabel->getText();
-                std::string topic = mqttContext->topic->getText();
-                std::string user = mqttContext->user->getText();
-                int maxBufferedMSGs = std::stoi(mqttContext->maxBufferedMSGs->getText());
-                std::string timeUnits = mqttContext->mqttTimeUnitLabel->getText();
-                MQTTSinkDescriptor::TimeUnits timeUnit = MQTTSinkDescriptor::TimeUnits::seconds;
-                if (timeUnits == "nanoseconds"){
-                    timeUnit = MQTTSinkDescriptor::TimeUnits::nanoseconds;
+        }
+
+        void NebulaSQLQueryPlanCreator::poppush(NebulaSQLHelper helper){
+            helpers.pop();
+            helpers.push(helper);
+        }
+
+        void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context) {
+            helpers.top().isSelect=true;
+            NebulaSQLBaseListener::enterSelectClause(context);
+
+        }
+
+        void NebulaSQLQueryPlanCreator::enterFromClause(NebulaSQLParser::FromClauseContext* context) {
+            helpers.top().isFrom= true;
+            NebulaSQLBaseListener::enterFromClause(context);
+
+        }
+
+        void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseContext *context) {
+            if (context->sinkType()) {
+                auto sinkType = context->sinkType()->getText();
+                SinkDescriptorPtr sinkDescriptor;
+                if (sinkType == "PRINT") {
+                    sinkDescriptor = NES::PrintSinkDescriptor::create();
                 }
-                if (timeUnits == "milliseconds"){
-                    timeUnit = MQTTSinkDescriptor::TimeUnits::milliseconds;
+                if (sinkType == "FILE") {
+                    sinkDescriptor = NES::FileSinkDescriptor::create(context->getText());
                 }
+                if (sinkType == "MQTT") {
+                    auto mqttContext = context->sinkType()->sinkTypeMQTT();
+                    std::string adress = mqttContext->mqttHostLabel->getText();
+                    std::string topic = mqttContext->topic->getText();
+                    std::string user = mqttContext->user->getText();
+                    int maxBufferedMSGs = std::stoi(mqttContext->maxBufferedMSGs->getText());
+                    std::string timeUnits = mqttContext->mqttTimeUnitLabel->getText();
+                    MQTTSinkDescriptor::TimeUnits timeUnit = MQTTSinkDescriptor::TimeUnits::seconds;
+                    if (timeUnits == "nanoseconds"){
+                        timeUnit = MQTTSinkDescriptor::TimeUnits::nanoseconds;
+                    }
+                    if (timeUnits == "milliseconds"){
+                        timeUnit = MQTTSinkDescriptor::TimeUnits::milliseconds;
+                    }
 
-                int messageDelay = std::stoi(mqttContext->messageDelay->getText());
-                MQTTSinkDescriptor::ServiceQualities qos = MQTTSinkDescriptor::ServiceQualities::exactlyOnce;
-                if(mqttContext->qualityOfService->getText() == "atMostOnce"){
-                    qos = MQTTSinkDescriptor::ServiceQualities::atMostOnce;
+                    int messageDelay = std::stoi(mqttContext->messageDelay->getText());
+                    MQTTSinkDescriptor::ServiceQualities qos = MQTTSinkDescriptor::ServiceQualities::exactlyOnce;
+                    if(mqttContext->qualityOfService->getText() == "atMostOnce"){
+                        qos = MQTTSinkDescriptor::ServiceQualities::atMostOnce;
+                    }
+                    if(mqttContext->qualityOfService->getText() == "atLeastOnce"){
+                        qos = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
+                    }
+                    bool asynchronousClient = mqttContext->asynchronousClient->getText() == "true";
+                    sinkDescriptor = NES::MQTTSinkDescriptor::create(std::move(adress),std::move(topic),std::move(user),maxBufferedMSGs,timeUnit,messageDelay,qos,asynchronousClient);
                 }
-                if(mqttContext->qualityOfService->getText() == "atLeastOnce"){
-                    qos = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
+                if (sinkType == "ZMQ") {
+                    auto zmqContext = context->sinkType()->sinkTypeZMQ();
+                    std::string host = zmqContext->host()->getText();
+                    int port = std::stoi(zmqContext->port()->getText());
+                    sinkDescriptor = NES::ZmqSinkDescriptor::create(host,port);
                 }
-                bool asynchronousClient = mqttContext->asynchronousClient->getText() == "true";
-                sinkDescriptor = NES::MQTTSinkDescriptor::create(std::move(adress),std::move(topic),std::move(user),maxBufferedMSGs,timeUnit,messageDelay,qos,asynchronousClient);
+                if (sinkType == "Kafka") {
+                    auto kafkaContext = context->sinkType()->sinkTypeKafka();
+                    std::string sinkFormat = kafkaContext->kafkaKeyword()->getText();
+                    std::string broker = kafkaContext->broker->getText();
+                    std::string topic = kafkaContext->topic->getText();
+                    uint64_t timeout = std::stoull(kafkaContext->timeout->getText());
+                    sinkDescriptor = NES::KafkaSinkDescriptor::create(sinkFormat,topic,broker,timeout);
+                }
+                if (sinkType == "OPC") {
+                    auto opcContext = context->sinkType()->sinkTypeOPC();
+                    std::string url = opcContext->url->getText();
+                    std::string nodeId = opcContext->nodeId->getText();
+                    std::string user = opcContext->user->getText();
+                    std::string password = opcContext->password->getText();
+                    //sinkDescriptor = NES::OPCSinkDescriptor::create(url,nodeId,user,password);
+                    //gibt es nicht?
+                }
+                if (sinkType == "NullOutput") {
+                    sinkDescriptor = NES::NullOutputSinkDescriptor::create();
+                }
+                sink = sinkDescriptor;
             }
-            if (sinkType == "ZMQ") {
-                auto zmqContext = context->sinkType()->sinkTypeZMQ();
-                std::string host = zmqContext->host()->getText();
-                int port = std::stoi(zmqContext->port()->getText());
-                sinkDescriptor = NES::ZmqSinkDescriptor::create(host,port);
-            }
-            if (sinkType == "Kafka") {
-                auto kafkaContext = context->sinkType()->sinkTypeKafka();
-                std::string sinkFormat = kafkaContext->kafkaKeyword()->getText();
-                std::string broker = kafkaContext->broker->getText();
-                std::string topic = kafkaContext->topic->getText();
-                uint64_t timeout = std::stoull(kafkaContext->timeout->getText());
-                sinkDescriptor = NES::KafkaSinkDescriptor::create(sinkFormat,topic,broker,timeout);
-            }
-            if (sinkType == "OPC") {
-                auto opcContext = context->sinkType()->sinkTypeOPC();
-                std::string url = opcContext->url->getText();
-                std::string nodeId = opcContext->nodeId->getText();
-                std::string user = opcContext->user->getText();
-                std::string password = opcContext->password->getText();
-                //sinkDescriptor = NES::OPCSinkDescriptor::create(url,nodeId,user,password);
-                //gibt es nicht?
-            }
-            if (sinkType == "NullOutput") {
-                sinkDescriptor = NES::NullOutputSinkDescriptor::create();
-            }
+        }
+
+
+        void NebulaSQLQueryPlanCreator::enterNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context) {
             NebulaSQLHelper helper = helpers.top();
-            helper.sinkDescriptor.push_back(sinkDescriptor);
+            helper.expressionBuilder.clear();
+            poppush(helper);
+            NebulaSQLBaseListener::enterNamedExpressionSeq(context);
+        }
+
+        void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinaryContext* context) {
+
+            NebulaSQLHelper helper = helpers.top();
+            NES::ExpressionNodePtr expression;
+
+            auto rightExpression = helper.expressionBuilder.back();
+            helper.expressionBuilder.pop_back();
+            auto leftExpression = helper.expressionBuilder.back();
+            helper.expressionBuilder.pop_back();
+
+            std::string opText = context->op->getText();
+
+            if (opText == "AND") {
+                expression = NES::AndExpressionNode::create(leftExpression, rightExpression);
+            }
+            else if (opText == "OR") {
+                expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
+            }
+
+            helper.expressionBuilder.push_back(expression);
             poppush(helper);
         }
-    }
-
-
-    void NebulaSQLQueryPlanCreator::enterNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context) {
-        NebulaSQLHelper helper = helpers.top();
-        helper.expressionBuilder.clear();
-        poppush(helper);
-        NebulaSQLBaseListener::enterNamedExpressionSeq(context);
-    }
-
-    void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinaryContext* context) {
-
-        NebulaSQLHelper helper = helpers.top();
-        NES::ExpressionNodePtr expression;
-
-        auto rightExpression = helper.expressionBuilder.back();
-        helper.expressionBuilder.pop_back();
-        auto leftExpression = helper.expressionBuilder.back();
-        helper.expressionBuilder.pop_back();
-
-        std::string opText = context->op->getText();
-
-        if (opText == "AND") {
-            expression = NES::AndExpressionNode::create(leftExpression, rightExpression);
-        }
-        else if (opText == "OR") {
-            expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
-        }
-
-        helper.expressionBuilder.push_back(expression);
-        poppush(helper);
-    }
-    void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context) {
-        ExpressionNodePtr expressionNode;
-        NebulaSQLHelper helper = helpers.top();
-        for (const ExpressionNodePtr& selectExpression : helper.expressionBuilder) {
-            helper.addProjectionField(selectExpression);
-        }
-        helper.expressionBuilder.clear();
-        poppush(helper);
-        helpers.top().isSelect= false;
-        NebulaSQLBaseListener::exitSelectClause(context);
-
-    }
-    void NebulaSQLQueryPlanCreator::exitFromClause(NebulaSQLParser::FromClauseContext* context) {
-        helpers.top().isFrom= false;
-        NebulaSQLBaseListener::exitFromClause(context);
-    }
-    void NebulaSQLQueryPlanCreator::enterWhereClause(NebulaSQLParser::WhereClauseContext* context) {
-        helpers.top().isWhereOrHaving = true;
-        NebulaSQLHelper helper = helpers.top();
-        poppush(helper);
-        NebulaSQLBaseListener::enterWhereClause(context);
-
-    }
-    void NebulaSQLQueryPlanCreator::exitWhereClause(NebulaSQLParser::WhereClauseContext* context) {
-        helpers.top().isWhereOrHaving = false;
-        NebulaSQLHelper helper = helpers.top();
-        if(helper.expressionBuilder.size()!=1){
-            NES_ERROR("Zuviele Expressions oder zuwenige,warum??");
-        }
-        helper.addWhereClause(helper.expressionBuilder.back());
-        helper.expressionBuilder.clear();
-        poppush(helper);
-        NebulaSQLBaseListener::exitWhereClause(context);
-
-    }
-    void NebulaSQLQueryPlanCreator::enterComparisonOperator(NebulaSQLParser::ComparisonOperatorContext* context) {
-        NebulaSQLHelper helper = helpers.top();
-
-        helper.opBoolean = context->getText();
-        auto temp = context->getText();
-        poppush(helper);
-        NebulaSQLBaseListener::enterComparisonOperator(context);
-    }
-    void NebulaSQLQueryPlanCreator::enterConstantDefault(NebulaSQLParser::ConstantDefaultContext* context) {
-        auto temp = context->getText();
-
-        NebulaSQLBaseListener::enterConstantDefault(context);
-    }
-    void NebulaSQLQueryPlanCreator::enterArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) {
-        auto temp = context->getText();
-
-        NES::ExpressionNodePtr arithmeticBinaryExpr = NES::Attribute(context->getText()).getExpressionNode();
-    }
-    void NebulaSQLQueryPlanCreator::exitArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) {
-        NebulaSQLHelper helper = helpers.top();
-        NES::ExpressionNodePtr expression;
-
-        auto rightExpression = helper.expressionBuilder.back();
-        helper.expressionBuilder.pop_back();
-        auto leftExpression = helper.expressionBuilder.back();
-        helper.expressionBuilder.pop_back();
-
-        std::string opText = context->op->getText();
-        if (opText == "*"){
-            expression = leftExpression * rightExpression;
-        }
-        else if (opText == "/"){
-            expression = leftExpression / rightExpression;
-        }
-        else if (opText == "+"){
-            expression = leftExpression + rightExpression;
-        }
-        else if (opText == "-"){
-            expression = leftExpression - rightExpression;
-        }
-        else if (opText == "%"){
-            expression = leftExpression % rightExpression;
-        }
-        helper.expressionBuilder.push_back(expression);
-        poppush(helper);
-    }
-    void NebulaSQLQueryPlanCreator::exitArithmeticUnary(NebulaSQLParser::ArithmeticUnaryContext* context){
-        NebulaSQLHelper helper = helpers.top();
-        NES::ExpressionNodePtr expression;
-
-        auto innerExpression = helper.expressionBuilder.back();
-        helper.expressionBuilder.pop_back();
-
-        std::string opText = context->op->getText();
-
-        if (opText == "+"){
-            expression = innerExpression;
-        }
-        else if (opText == "-"){
-            expression = -1*innerExpression;
-        }
-        else if (opText == "~"){
-            NES_WARNING("Operation tilde not supported yeet")
-        }
-        helper.expressionBuilder.push_back(expression);
-        poppush(helper);
-
-
-    }
-
-    void NebulaSQLQueryPlanCreator::enterUnquotedIdentifier(NebulaSQLParser::UnquotedIdentifierContext* context) {
-        NebulaSQLHelper helper = helpers.top();
-
-        // Get Index of  Parent Rule to check type of parent rule in conditions
-        auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
-        size_t parentRuleIndex = -1;
-        if (parentContext != nullptr) {
-            parentRuleIndex = parentContext->getRuleIndex();
-        }
-
-        if(helper.isFrom && !helper.isJoinRelation){
-            helper.newSourceName = context->getText();
-        } else if (helper.isJoinRelation && parentRuleIndex == NebulaSQLParser::RuleTableAlias){
-            helper.joinSourceRenames.emplace_back(context->getText());
-        }
-        poppush(helper);
-        NebulaSQLBaseListener::enterUnquotedIdentifier(context);
-    }
-
-
-    void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierContext* context) {
-        NebulaSQLHelper helper = helpers.top();
-
-        // Get Index of  Parent Rule to check type of parent rule in conditions
-        auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
-        size_t parentRuleIndex = -1;
-        if (parentContext != nullptr) {
-            parentRuleIndex = parentContext->getRuleIndex();
-        }
-
-        if(( helper.isWhereOrHaving || helper.isSelect || helper.isWindow ) && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex){
-            // add identifiers in select, window, where and having clauses to the expression builder list
-            helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
-        }else if(helper.isFrom && !helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex){
-            // get main source name
-            helper.addSource(context->getText());
-        }
-        else if(NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex && !helper.isFunctionCall && !helper.isJoinRelation){
-            // handle renames of identifiers
-            if(helper.isArithmeticBinary){
-                NES_THROW_RUNTIME_ERROR("Why are we here? Just to suffer?");
+        void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context) {
+            ExpressionNodePtr expressionNode;
+            NebulaSQLHelper helper = helpers.top();
+            for (const ExpressionNodePtr& selectExpression : helper.expressionBuilder) {
+                helper.addProjectionField(selectExpression);
             }
-            else if (( helper.isWhereOrHaving || helper.isSelect )){
+            helper.expressionBuilder.clear();
+            poppush(helper);
+            helpers.top().isSelect= false;
+            NebulaSQLBaseListener::exitSelectClause(context);
+
+        }
+        void NebulaSQLQueryPlanCreator::exitFromClause(NebulaSQLParser::FromClauseContext* context) {
+            helpers.top().isFrom= false;
+            NebulaSQLBaseListener::exitFromClause(context);
+        }
+        void NebulaSQLQueryPlanCreator::enterWhereClause(NebulaSQLParser::WhereClauseContext* context) {
+            helpers.top().isWhereOrHaving = true;
+            NebulaSQLHelper helper = helpers.top();
+            poppush(helper);
+            NebulaSQLBaseListener::enterWhereClause(context);
+
+        }
+        void NebulaSQLQueryPlanCreator::exitWhereClause(NebulaSQLParser::WhereClauseContext* context) {
+            helpers.top().isWhereOrHaving = false;
+            NebulaSQLHelper helper = helpers.top();
+            if(helper.expressionBuilder.size()!=1){
+                NES_ERROR("Zuviele Expressions oder zuwenige,warum??");
+            }
+            helper.addWhereClause(helper.expressionBuilder.back());
+            helper.expressionBuilder.clear();
+            poppush(helper);
+            NebulaSQLBaseListener::exitWhereClause(context);
+
+        }
+        void NebulaSQLQueryPlanCreator::enterComparisonOperator(NebulaSQLParser::ComparisonOperatorContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+
+            helper.opBoolean = context->getText();
+            auto temp = context->getText();
+            poppush(helper);
+            NebulaSQLBaseListener::enterComparisonOperator(context);
+        }
+        void NebulaSQLQueryPlanCreator::enterConstantDefault(NebulaSQLParser::ConstantDefaultContext* context) {
+            auto temp = context->getText();
+
+            NebulaSQLBaseListener::enterConstantDefault(context);
+        }
+        void NebulaSQLQueryPlanCreator::enterArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) {
+            auto temp = context->getText();
+
+            NES::ExpressionNodePtr arithmeticBinaryExpr = NES::Attribute(context->getText()).getExpressionNode();
+        }
+        void NebulaSQLQueryPlanCreator::exitArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+            NES::ExpressionNodePtr expression;
+
+            auto rightExpression = helper.expressionBuilder.back();
+            helper.expressionBuilder.pop_back();
+            auto leftExpression = helper.expressionBuilder.back();
+            helper.expressionBuilder.pop_back();
+
+            std::string opText = context->op->getText();
+            if (opText == "*"){
+                expression = leftExpression * rightExpression;
+            }
+            else if (opText == "/"){
+                expression = leftExpression / rightExpression;
+            }
+            else if (opText == "+"){
+                expression = leftExpression + rightExpression;
+            }
+            else if (opText == "-"){
+                expression = leftExpression - rightExpression;
+            }
+            else if (opText == "%"){
+                expression = leftExpression % rightExpression;
+            }
+            helper.expressionBuilder.push_back(expression);
+            poppush(helper);
+        }
+        void NebulaSQLQueryPlanCreator::exitArithmeticUnary(NebulaSQLParser::ArithmeticUnaryContext* context){
+            NebulaSQLHelper helper = helpers.top();
+            NES::ExpressionNodePtr expression;
+
+            auto innerExpression = helper.expressionBuilder.back();
+            helper.expressionBuilder.pop_back();
+
+            std::string opText = context->op->getText();
+
+            if (opText == "+"){
+                expression = innerExpression;
+            }
+            else if (opText == "-"){
+                expression = -1*innerExpression;
+            }
+            else if (opText == "~"){
+                NES_WARNING("Operation tilde not supported yeet")
+            }
+            helper.expressionBuilder.push_back(expression);
+            poppush(helper);
+
+
+        }
+
+        void NebulaSQLQueryPlanCreator::enterUnquotedIdentifier(NebulaSQLParser::UnquotedIdentifierContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+
+            // Get Index of  Parent Rule to check type of parent rule in conditions
+            auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
+            size_t parentRuleIndex = -1;
+            if (parentContext != nullptr) {
+                parentRuleIndex = parentContext->getRuleIndex();
+            }
+
+            if(helper.isFrom && !helper.isJoinRelation){
+                helper.newSourceName = context->getText();
+            } else if (helper.isJoinRelation && parentRuleIndex == NebulaSQLParser::RuleTableAlias){
+                helper.joinSourceRenames.emplace_back(context->getText());
+            }
+            poppush(helper);
+            NebulaSQLBaseListener::enterUnquotedIdentifier(context);
+        }
+
+
+        void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierContext* context) {
+            NebulaSQLHelper helper = helpers.top();
+
+            // Get Index of  Parent Rule to check type of parent rule in conditions
+            auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
+            size_t parentRuleIndex = -1;
+            if (parentContext != nullptr) {
+                parentRuleIndex = parentContext->getRuleIndex();
+            }
+
+            if(( helper.isWhereOrHaving || helper.isSelect || helper.isWindow ) && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex){
+                // add identifiers in select, window, where and having clauses to the expression builder list
+                helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
+            }else if(helper.isFrom && !helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex){
+                // get main source name
+                helper.addSource(context->getText());
+            }
+            else if(NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex && !helper.isFunctionCall && !helper.isJoinRelation){
+                // handle renames of identifiers
+                if(helper.isArithmeticBinary){
+                    NES_THROW_RUNTIME_ERROR("Why are we here? Just to suffer?");
+                }
+                else if (( helper.isWhereOrHaving || helper.isSelect )){
                     ExpressionNodePtr attr = helper.expressionBuilder.back();
                     helper.expressionBuilder.pop_back();
                     if(helper.identCountHelper == 1){
@@ -352,21 +339,21 @@ namespace NES::Parsers {
                     }
 
 
+                }
             }
-        }
-        else if (helper.isFunctionCall && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex) {
-            auto aggFunc = helper.windowAggs.back();
-            helper.windowAggs.pop_back();
-            aggFunc = aggFunc->as(Attribute(context->getText()));
-            helper.windowAggs.push_back(aggFunc);
-        }
-        else if(helper.isJoinRelation && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex){
-            helper.joinKeyRelationHelper.push_back(Attribute(context->getText()));
-        }
-        else if(helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex){
-            helper.joinSources.push_back(context->getText());
-        }
-        poppush(helper);
+            else if (helper.isFunctionCall && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex) {
+                auto aggFunc = helper.windowAggs.back();
+                helper.windowAggs.pop_back();
+                aggFunc = aggFunc->as(Attribute(context->getText()));
+                helper.windowAggs.push_back(aggFunc);
+            }
+            else if(helper.isJoinRelation && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex){
+                helper.joinKeyRelationHelper.push_back(Attribute(context->getText()));
+            }
+            else if(helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex){
+                helper.joinSources.push_back(context->getText());
+            }
+            poppush(helper);
         }
 
         void NebulaSQLQueryPlanCreator::exitIdentifier(NebulaSQLParser::IdentifierContext* context) {
@@ -384,6 +371,19 @@ namespace NES::Parsers {
 
         void NebulaSQLQueryPlanCreator::enterPrimaryQuery(NebulaSQLParser::PrimaryQueryContext* context) {
             NebulaSQLHelper helper;
+
+            // Get Index of  Parent Rule to check type of parent rule in conditions
+            auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
+            size_t parentRuleIndex = -1;
+            if (parentContext != nullptr) {
+                parentRuleIndex = parentContext->getRuleIndex();
+            }
+
+            // PrimaryQuery is a queryterm too, but if it's a child of a queryterm we are in a union!
+            if (parentRuleIndex == NebulaSQLParser::RuleQueryTerm){
+                helper.isSetOperation = true;
+            }
+
             helpers.push(helper);
             NebulaSQLBaseListener::enterPrimaryQuery(context);
         }
@@ -443,17 +443,15 @@ namespace NES::Parsers {
                     queryPlan = QueryPlanBuilder::addFilter(havingExpr, queryPlan);
                 }
             }
-            for (auto& sink : helper.sinkDescriptor) {
-                queryPlan = QueryPlanBuilder::addSink(queryPlan, sink);
-            }
+
 
             for(const QueryPlanPtr& qp : helper.queryPlans){
                 QueryId subQueryId = qp->getQueryId();
                 queryPlan->setQuerySubPlanId(subQueryId);
             }
             helpers.pop();
-            if(helpers.empty()){
-                completeQueryPlan = queryPlan;
+            if(helpers.empty() || helper.isSetOperation){
+                queryPlans.push(queryPlan);
             }else{
                 NebulaSQLHelper subQueryHelper = helpers.top();
                 subQueryHelper.queryPlans.push_back(queryPlan);
@@ -519,10 +517,10 @@ namespace NES::Parsers {
         void NebulaSQLQueryPlanCreator::exitThresholdBasedWindow(NebulaSQLParser::ThresholdBasedWindowContext* context) {
             NebulaSQLHelper helper = helpers.top();
             if(helper.minimumCount != -1) {
-                    helper.windowType = Windowing::ThresholdWindow::of(helper.expressionBuilder.back(), helper.minimumCount);
+                helper.windowType = Windowing::ThresholdWindow::of(helper.expressionBuilder.back(), helper.minimumCount);
             }
             else {
-                    helper.windowType = Windowing::ThresholdWindow::of(helper.expressionBuilder.back());
+                helper.windowType = Windowing::ThresholdWindow::of(helper.expressionBuilder.back());
             }
             helper.isTimeBasedWindow = false;
             poppush(helper);
@@ -549,12 +547,12 @@ namespace NES::Parsers {
             NebulaSQLHelper helper = helpers.top();
             // handle implicit maps when no "AS" is supplied, but a rename is needed
             if (!helper.isFunctionCall && !helper.expressionBuilder.empty() && helper.isSelect && helper.identCountHelper > 1 && context->children.size() == 1){
-                    std::string implicitFieldName = "mapField" + std::to_string(helper.implicitMapCountHelper);
-                    ExpressionNodePtr attr = helper.expressionBuilder.back();
-                    helper.expressionBuilder.pop_back();
-                    helper.mapBuilder.push_back(Attribute(implicitFieldName) = attr);
+                std::string implicitFieldName = "mapField" + std::to_string(helper.implicitMapCountHelper);
+                ExpressionNodePtr attr = helper.expressionBuilder.back();
+                helper.expressionBuilder.pop_back();
+                helper.mapBuilder.push_back(Attribute(implicitFieldName) = attr);
 
-                    helper.implicitMapCountHelper++;
+                helper.implicitMapCountHelper++;
             }
             helper.isFunctionCall = false;
             poppush(helper);
@@ -577,7 +575,7 @@ namespace NES::Parsers {
             helpers.top().isWhereOrHaving = false;
             NebulaSQLHelper helper = helpers.top();
             if(helper.expressionBuilder.size()!=1){
-                    NES_ERROR("Zuviele Expressions oder zuwenige,warum??");
+                NES_ERROR("Zuviele Expressions oder zuwenige,warum??");
             }
             helper.addHavingClause(helper.expressionBuilder.back());
             helper.expressionBuilder.clear();
@@ -599,19 +597,19 @@ namespace NES::Parsers {
                 helper.expressionBuilder.pop_back();
                 std::string op = context->children.at(1)->getText();
                 if (op == ">") {
-                        expression = NES::GreaterExpressionNode::create(leftExpression, rightExpression);
+                    expression = NES::GreaterExpressionNode::create(leftExpression, rightExpression);
                 } else if (op == "<") {
-                        expression = NES::LessExpressionNode::create(leftExpression, rightExpression);
+                    expression = NES::LessExpressionNode::create(leftExpression, rightExpression);
                 } else if (op == ">=") {
-                        expression = NES::GreaterEqualsExpressionNode::create(leftExpression, rightExpression);
+                    expression = NES::GreaterEqualsExpressionNode::create(leftExpression, rightExpression);
                 } else if (op == "<=") {
-                        expression = NES::LessEqualsExpressionNode::create(leftExpression, rightExpression);
+                    expression = NES::LessEqualsExpressionNode::create(leftExpression, rightExpression);
                 } else if (op == "==") {
-                        expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
+                    expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
                 }
                 helper.expressionBuilder.push_back(expression);
                 poppush(helper);
-        }
+            }
             NebulaSQLBaseListener::enterComparison(context);
         }
         void NebulaSQLQueryPlanCreator::exitAggregationClause(NebulaSQLParser::AggregationClauseContext* context) {
@@ -672,7 +670,7 @@ namespace NES::Parsers {
             NebulaSQLBaseListener::exitSingleStatement(context);
         }
 
-void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContext* context) {
+        void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContext* context) {
             NebulaSQLHelper helper = helpers.top();
             NES::ExpressionNodePtr expression;
 
@@ -683,18 +681,18 @@ void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContex
             helper.expressionBuilder.push_back(expression);
             poppush(helper);
             NebulaSQLBaseListener::exitLogicalNot(context);
-}
+        }
 
-void NebulaSQLQueryPlanCreator::exitConstantDefault(NebulaSQLParser::ConstantDefaultContext* context) {
+        void NebulaSQLQueryPlanCreator::exitConstantDefault(NebulaSQLParser::ConstantDefaultContext* context) {
             NebulaSQLHelper helper = helpers.top();
             helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
             poppush(helper);
-}
+        }
 
-void NebulaSQLQueryPlanCreator::exitRealIdent(NebulaSQLParser::RealIdentContext* context) {
+        void NebulaSQLQueryPlanCreator::exitRealIdent(NebulaSQLParser::RealIdentContext* context) {
             NebulaSQLBaseListener::exitRealIdent(context);
-}
-void NebulaSQLQueryPlanCreator::exitFunctionCall(NebulaSQLParser::FunctionCallContext* context) {
+        }
+        void NebulaSQLQueryPlanCreator::exitFunctionCall(NebulaSQLParser::FunctionCallContext* context) {
             NebulaSQLHelper helper = helpers.top();
             auto funcName = context->children[0]->getText();
             if(funcName == "count"){
@@ -724,28 +722,28 @@ void NebulaSQLQueryPlanCreator::exitFunctionCall(NebulaSQLParser::FunctionCallCo
                 NES_THROW_RUNTIME_ERROR("Invalid Aggregation Function: "+funcName);
             }
             poppush(helper);
-}
-void NebulaSQLQueryPlanCreator::exitThresholdMinSizeParameter(NebulaSQLParser::ThresholdMinSizeParameterContext* context) {
+        }
+        void NebulaSQLQueryPlanCreator::exitThresholdMinSizeParameter(NebulaSQLParser::ThresholdMinSizeParameterContext* context) {
             NebulaSQLHelper helper = helpers.top();
             helper.minimumCount = std::stoi(context->getText());
             poppush(helper);
-}
+        }
 
-void NebulaSQLQueryPlanCreator::enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) {
+        void NebulaSQLQueryPlanCreator::enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) {
             NebulaSQLHelper helper = helpers.top();
             helper.identCountHelper++;
             poppush(helper);
             NebulaSQLBaseListener::enterValueExpressionDefault(context);
 
-}
-void NebulaSQLQueryPlanCreator::exitJoinRelation(NebulaSQLParser::JoinRelationContext* context) {
+        }
+        void NebulaSQLQueryPlanCreator::exitJoinRelation(NebulaSQLParser::JoinRelationContext* context) {
             NebulaSQLHelper helper = helpers.top();
             helper.isJoinRelation = false;
             if(helper.joinKeyRelationHelper.size()>=2){
                 helper.joinKeys.emplace_back(helper.joinKeyRelationHelper[0],helper.joinKeyRelationHelper[1]);
             }
             else{
-                NES_ERROR("Join Keys have to be specified explicitely")
+                NES_ERROR("Join Keys have to be specified explicitly")
             }
             if(helper.joinSources.size() == helper.joinSourceRenames.size() + 1){
                 helper.joinSourceRenames.emplace_back("");
@@ -754,8 +752,28 @@ void NebulaSQLQueryPlanCreator::exitJoinRelation(NebulaSQLParser::JoinRelationCo
             NebulaSQLBaseListener::exitJoinRelation(context);
 
 
-}
+        }
 
+        void NebulaSQLQueryPlanCreator::exitSetOperation(NebulaSQLParser::SetOperationContext* context) {
+            if(queryPlans.size() < 2)
+                NES_ERROR("Union does not have sufficient amount of QueryPlans for unifiying");
 
-}// namespace NES::Parsers
+            auto rightQuery = queryPlans.top();
+            queryPlans.pop();
+            auto leftQuery = queryPlans.top();
+            queryPlans.pop();
+            auto queryPlan = QueryPlanBuilder::addUnion(leftQuery,rightQuery);
+            if (!helpers.empty()){
+                // we are in a subquery
+                auto helper = helpers.top();
+                helper.queryPlans.push_back(queryPlan);
+                poppush(helper);
+            } else {
+                queryPlans.push(queryPlan );
+            }
+            NebulaSQLBaseListener::exitSetOperation(context);
+
+        }
+
+    }// namespace NES::Parsers
 

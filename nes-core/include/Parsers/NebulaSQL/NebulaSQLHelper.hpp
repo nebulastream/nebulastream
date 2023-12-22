@@ -61,6 +61,7 @@ enum NebulaSQLWindowType{
             bool hasMultipleAttributes = false;
             std::shared_ptr<Windowing::WindowType> windowType;
             bool isTimeBasedWindow = true;
+            bool isSetOperation = false;
 
             std::vector<WindowAggregationDescriptorPtr> windowAggs;
 

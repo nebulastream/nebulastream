@@ -30,10 +30,12 @@ limitations under the License.
 namespace NES::Parsers {
         class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener{
           private:
-            std::string currentLeftExp;
-            std::string currentRightExp;
             std::stack<NebulaSQLHelper> helpers;
             QueryPlanPtr completeQueryPlan;
+            std::stack<bool> isSetOperation;
+            SinkDescriptorPtr sink;
+            std::stack<QueryPlanPtr> queryPlans;
+
 
           public:
             QueryPlanPtr getQueryPlan() const;
@@ -94,6 +96,7 @@ namespace NES::Parsers {
             void exitThresholdMinSizeParameter(NebulaSQLParser::ThresholdMinSizeParameterContext* context) override;
             void enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context) override;
             void exitJoinRelation(NebulaSQLParser::JoinRelationContext* context) override;
+            void exitSetOperation(NebulaSQLParser::SetOperationContext* context) override;
         };
 
 

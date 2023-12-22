@@ -87,7 +87,7 @@ TEST(SQLParsingServiceTest, projectionTest1) {
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(sqlPlan));
 
 }
-/*
+
 TEST(SQLParsingServiceTest, unionTest1) {
     std::string inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT;";
     std::shared_ptr<QueryParsingService> SQLParsingService;
@@ -101,10 +101,10 @@ TEST(SQLParsingServiceTest, unionTest2) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
     QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("cars").project(Attribute("f1")).unionWith(Query::from("bikes").project(Attribute("f1"))).unionWith(Query::from("autos").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
-
+    std::cout << queryPlanToString(sqlPlan) << "\n";
     EXPECT_EQ(queryPlanToString(sqlPlan), queryPlanToString(query.getQueryPlan()));
 }
-*/
+
 TEST(SQLSelectionServiceTest, selectionTest) {
     std::shared_ptr<QueryParsingService> SQLParsingService;
     std::string inputQuery;
