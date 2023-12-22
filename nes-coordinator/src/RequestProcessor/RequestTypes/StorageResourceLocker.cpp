@@ -26,5 +26,4 @@ void StorageResourceLocker::preExecution(const StorageHandlerPtr& storageHandle)
 void StorageResourceLocker::postExecution(const StorageHandlerPtr& storageHandler) {
     storageHandler->releaseResources(getResourceLockingId());
 }
-
 }// namespace NES::RequestProcessor
