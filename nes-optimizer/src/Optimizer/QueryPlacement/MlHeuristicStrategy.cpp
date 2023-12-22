@@ -71,6 +71,10 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 5. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
+        //Release all locked topology nodes in case of pessimistic approach
+        if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
+            unlockTopologyNodes();
+        }
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }

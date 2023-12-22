@@ -30,7 +30,8 @@ std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(const GlobalExec
                                                                 const TopologyPtr& topology,
                                                                 const TypeInferencePhasePtr& typeInferencePhase,
                                                                 PlacementAmenderMode placementAmenderMode) {
-    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
+    return std::make_unique<BottomUpStrategy>(
+        BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
 }
 
 BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -59,6 +60,10 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 5. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
+        //Release all locked topology nodes in case of pessimistic approach
+        if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
+            unlockTopologyNodes();
+        }
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }
