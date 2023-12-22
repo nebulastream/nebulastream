@@ -22,7 +22,6 @@ class AbstractSubRequest;
 using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
 
 class SubRequestFuture;
-using SubRequestFuturePtr = std::shared_ptr<SubRequestFuture>;
 
 /**
  * A multi request can acquire multiple threads and has its own internal subrequest queue which it uses to schedule the
@@ -71,7 +70,7 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
      * @param storageHandle the storage handle used to lock and access resources
      * @return a future into which the scheduled request will put the results of its computations
      */
-    SubRequestFuturePtr scheduleSubRequest(AbstractSubRequestPtr subRequest);
+    SubRequestFuture scheduleSubRequest(AbstractSubRequestPtr subRequest);
 
     virtual std::vector<AbstractRequestPtr> executeRequestLogic() = 0;
 
