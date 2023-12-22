@@ -114,9 +114,9 @@ TEST(SQLSelectionServiceTest, selectionTest) {
     std::cout << "-------------------------Selection-------------------------\n";
 
     // Test case for simple selection
-    inputQuery = "select * from StreamName where f1 > 10*3 INTO PRINT";
+    inputQuery = "select f1 from StreamName where f1 > 10*3 INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query = Query::from("StreamName").filter(Attribute("f1")>30).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("StreamName").project(Attribute("f1")).filter(Attribute("f1")>30).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     inputQuery = "select * from StreamName where (f1 > 10 AND f2 < 10) INTO PRINT";
@@ -171,13 +171,13 @@ TEST(SQLMergeServiceTest, mergeTest) {
     std::cout << "-------------------------Merge-------------------------\n";
 
     // Test case for simple merge
-    inputQuery = "select f1 from cars union select f1 from bikes";
+    inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     Query query = Query::from("cars").project(Attribute("f1")).unionWith(Query::from("bikes").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     // Test case for merge with multiple unions
-    inputQuery = "select f1 from cars union select f1 from bikes union select f1 from autos";
+    inputQuery = "select f1 from cars union select f1 from bikes union select f1 from autos INTO PRINT";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
     query = Query::from("cars").project(Attribute("f1")).unionWith(Query::from("bikes").project(Attribute("f1"))).unionWith(Query::from("autos").project(Attribute("f1"))).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
@@ -431,5 +431,20 @@ TEST(SQLWindowServiceTest, joinWindowTest) {
     auto query = Query::from("purchases").joinWith(Query::from("tweets"),Attribute("user_id"),Attribute("user_id"),TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(10))).sink(PrintSinkDescriptor::create());
 
     std::cout << queryPlanToString(query.getQueryPlan()) << "\n";
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+}
+TEST(SubQueryTest,subQueryTest){
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+
+    std::string inputQuery = "SELECT *\n"
+                             "FROM (\n"
+                             "    SELECT f1\n"
+                             "    FROM subStream\n"
+                             "    WHERE f1 > 1\n"
+                             ")\n"
+                             "WHERE f1 < 5 INTO PRINT";
+    QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    std::cout << queryPlanToString(actualPlan) << "\n";
+    auto query = Query::from("subStream").project(Attribute("f1")).filter(Attribute("f1")>1).filter(Attribute("f1")<5).sink(PrintSinkDescriptor::create());
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
