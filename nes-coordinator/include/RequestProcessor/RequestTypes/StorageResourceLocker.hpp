@@ -47,6 +47,10 @@ class StorageResourceLocker {
      */
     virtual void postExecution(const StorageHandlerPtr& storageHandle);
 
+    /**
+     * @brief get an id that identifies this object to lock resources for exclusive use by this object
+     * @return the id
+     */
     virtual RequestId getResourceLockingId() = 0;
 
   private:

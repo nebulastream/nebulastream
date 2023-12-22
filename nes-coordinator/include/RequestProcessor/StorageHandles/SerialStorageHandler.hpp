@@ -36,7 +36,7 @@ class SerialStorageHandler : public StorageHandler {
      * -lockManager
      * @return shared pointer to the serial storage manager
      */
-    static StorageHandlerPtr create(StorageDataStructures& storageDataStructures);
+    static StorageHandlerPtr create(StorageDataStructures storageDataStructures);
 
     /**
      * @brief Obtain a mutable topology handle.

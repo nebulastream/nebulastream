@@ -40,8 +40,7 @@ class AbstractSubRequest : public StorageResourceLocker {
   public:
     /**
      * @brief Constructor
-     * @param requiredResources the resources required by this request. The parent request has to ensure that it does
-     * not create subrequests that try to lock resources that have already been locked by the parent request
+     * @param requiredResources the resources required to be locked by this request.
      */
     explicit AbstractSubRequest(std::vector<ResourceType> requiredResources);
 
@@ -51,30 +50,40 @@ class AbstractSubRequest : public StorageResourceLocker {
     virtual ~AbstractSubRequest() = default;
 
     /**
-     * @brief lock resources, execute this subrequests logic and release resources
-     * @param requiredResources the resources required by this request. Must not be already locked by the parent request.
+     * @brief lock resources, execute this sub request's logic and release resources
      */
     //todo #4433: move to common base class with abstract request
     bool execute();
 
     /**
-     * @brief obtain a future into which the results of this subrequests execution will be placed on completion
+     * @brief obtain a future into which the results of this sub request's execution will be placed on completion
      * @return a future containing the results
      */
-    //std::future<std::any> getFuture();
+    std::future<std::any> getFuture();
 
-    void setPromise(std::promise<std::any> promise);
-
+    /**
+     * @brief set the storage handler to be used for resource access by this sub request
+     * @param storageHandler a pointer to the storage handler
+     */
     void setStorageHandler(StorageHandlerPtr storageHandler);
 
+    /**
+     * @brief check if this request has already been picked up by a thread to execute it
+     * @return true if execution has started or already finished, false otherwise
+     */
     bool executionHasStarted();
+
   protected:
     /**
-     * @brief Execute this subrequests logic
-     * @param storageHandler
+     * @brief Execute this sub request's logic
+     * @param storageHandler the storage handler to be used for resource access
      */
     virtual std::any executeSubRequestLogic(const StorageHandlerPtr& storageHandler) = 0;
 
+    /**
+     * @brief get an id that identifies this object to lock resources for exclusive use by this object
+     * @return the id
+     */
     RequestId getResourceLockingId() override;
 
     std::promise<std::any> responsePromise;

@@ -62,8 +62,8 @@ RequestId AsyncRequestProcessor::runAsync(AbstractRequestPtr request) {
         return INVALID_REQUEST_ID;
     }
     RequestId requestId = storageHandler->generateRequestId();
-    std::unique_lock lock(workMutex);
     request->setId(requestId);
+    std::unique_lock lock(workMutex);
     asyncRequestQueue.emplace_back(std::move(request));
     cv.notify_all();
     return requestId;

@@ -34,14 +34,16 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
     if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
         this->storageHandle = storageHandle;
         result = executeRequestLogic();
+        std::unique_lock lock(workMutex);
+        done = true;
+        lock.unlock();
+
+        //verify that all requests have been executed
         if (!subRequestQueue.empty()) {
             for (auto& subRequedt: subRequestQueue) {
                 NES_ASSERT(subRequedt->executionHasStarted(), "Not all scheduled requests were executed");
             }
         }
-        std::unique_lock lock(workMutex);
-        done = true;
-        lock.unlock();
         cv.notify_all();
         return result;
     }
@@ -71,9 +73,7 @@ bool AbstractMultiRequest::executeSubRequest() {
 
 SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {
     NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
-    std::promise<std::any> promise;
-    auto future = promise.get_future();
-    subRequest->setPromise(std::move(promise));
+    auto future = subRequest->getFuture();
 
     subRequest->setStorageHandler(storageHandle);
 

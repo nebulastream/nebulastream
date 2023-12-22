@@ -22,7 +22,8 @@ namespace NES::RequestProcessor {
 AbstractSubRequest::AbstractSubRequest(std::vector<ResourceType> requiredResources)
     : StorageResourceLocker(std::move(requiredResources)) {}
 
-void AbstractSubRequest::setPromise(std::promise<std::any> promise) { responsePromise = std::move(promise); }
+std::future<std::any> AbstractSubRequest::getFuture() { return responsePromise.get_future(); }
+
 void AbstractSubRequest::setStorageHandler(StorageHandlerPtr storageHandler) { this->storageHandler = std::move(storageHandler); }
 
 bool AbstractSubRequest::execute() {
@@ -48,7 +49,6 @@ bool AbstractSubRequest::execute() {
 bool AbstractSubRequest::executionHasStarted() {
     return executionStarted.load();
 }
-
 
 RequestId AbstractSubRequest::getResourceLockingId() { return requestId; }
 }// namespace NES::RequestProcessor

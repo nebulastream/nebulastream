@@ -125,6 +125,7 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
     * @tparam RequestType: a subclass ob AbstractRequest
     * @return returns a shared pointer of the given type
     */
+    //todo #4457: write unit test for this
     template<class RequestType>
     std::shared_ptr<RequestType> as() {
         if (instanceOf<RequestType>()) {

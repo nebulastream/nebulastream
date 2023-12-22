@@ -57,12 +57,16 @@ void TwoPhaseLockingStorageHandler::acquireResources(const RequestId requestId, 
 }
 
 void TwoPhaseLockingStorageHandler::releaseResources(const RequestId requestId) {
+    //iterate over all resources
     for (const auto resourceType : resourceTypeList) {
         auto& holder = getHolder(resourceType);
+
+        //if the resouce is not held by the request, proceed to the next resource
         if (holder.holderId != requestId) {
             continue;
         }
 
+        //lock the holder data, increase the ticket number for the ticket to be served and notify all waiting threads
         std::unique_lock lock(holder.mutex);
         holder.holderId = INVALID_REQUEST_ID;
         TicketId nextTicket = holder.currentTicket + 1;

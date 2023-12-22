@@ -148,7 +148,6 @@ class DummyWaitOnFutureMultiRequest : public AbstractMultiRequest {
         for (auto& f : responseFutures) {
             response = std::any_cast<std::shared_ptr<DummyWaitOnFutureResponse>>(f.get());
         }
-        //todo: do not return the storage handler
         responsePromise.set_value(response);
         return {};
     }
@@ -182,9 +181,9 @@ class DummySubRequest : public AbstractSubRequest {
 };
 
 //todo: rename
-class DummyRequestMainThreadHelpsExecution : public AbstractMultiRequest {
+class DummyMultiRequest : public AbstractMultiRequest {
   public:
-    DummyRequestMainThreadHelpsExecution(uint8_t maxRetries,
+    DummyMultiRequest(uint8_t maxRetries,
                                          uint32_t initialValue,
                                          uint32_t additionValue,
                                          uint32_t returnNewRequestFrequency)
@@ -751,7 +750,7 @@ TEST_P(AsyncRequestProcessorTest, submitMultiRequest) {
     constexpr uint32_t additionsPerIteration = 3;
     constexpr uint32_t responseValue = iterations * additionsPerIteration;
     try {
-        auto request = std::make_shared<DummyRequestMainThreadHelpsExecution>(0, 0, responseValue, additionsPerIteration);
+        auto request = std::make_shared<DummyMultiRequest>(0, 0, responseValue, additionsPerIteration);
         auto future = request->getFuture();
         auto queryId = processor->runAsync(request);
         EXPECT_NE(queryId, INVALID_REQUEST_ID);
