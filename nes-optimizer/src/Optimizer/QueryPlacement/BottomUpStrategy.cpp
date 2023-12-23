@@ -64,6 +64,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
             unlockTopologyNodes();
         }
+        NES_ERROR("Exception occurred during bottom up placement: {}", ex.what());
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }

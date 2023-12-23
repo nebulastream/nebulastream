@@ -364,28 +364,61 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             // contains the root operator of already placed query sub plan as its upstream operator
             auto alreadyPlacedQuerySubPlans = computedSubQueryPlans[pinnedWorkerId];
             for (const auto& placedQuerySubPlan : alreadyPlacedQuerySubPlans) {
-                bool foundAnUpstreamPlacedOperator = false;
-                //For all upstream operators of the pinned operator check if they are in the placed query sub plan
+
+                //2.2.2.1. For all upstream operators of the pinned operator check if they are in the placed query sub plan
+                bool foundConnectedUpstreamPlacedOperator = false;
                 for (const auto& childOperator : pinnedOperator->getChildren()) {
                     OperatorId childOperatorId = childOperator->as<OperatorNode>()->getId();
                     if (placedQuerySubPlan->hasOperatorWithId(childOperatorId)) {
                         auto placedOperator = placedQuerySubPlan->getOperatorWithId(childOperatorId);
-                        if (placedOperator->getParents().empty()) {
-                            placedQuerySubPlan->removeAsRootOperator(placedOperator);
-                        }
+                        //Remove the placed operator as the root
+                        placedQuerySubPlan->removeAsRootOperator(placedOperator);
                         // Add the copy as the parent of the iterated root operator and update the root of the iterated
                         placedOperator->addParent(copyOfPinnedOperator);
-                        foundAnUpstreamPlacedOperator = true;
+                        foundConnectedUpstreamPlacedOperator = true;
                     }
                 }
 
-                if (foundAnUpstreamPlacedOperator) {// If an upstream operator found as the root operator of query sub
-                                                    // plan then create a new or merge it with the new query sub plan.
+                // 2.2.2.2. For all downstream operators of the pinned operator check if they are in the placed query sub plan
+                bool foundConnectedDownstreamPlacedOperator = false;
+                for (const auto& parentOperator : pinnedOperator->getParents()) {
+                    OperatorId parentOperatorId = parentOperator->as<OperatorNode>()->getId();
+                    if (placedQuerySubPlan->hasOperatorWithId(parentOperatorId)) {
+                        auto placedOperator = placedQuerySubPlan->getOperatorWithId(parentOperatorId);
+                        // Add the copy as the parent of the iterated root operator and update the root of the iterated
+                        placedOperator->addChild(copyOfPinnedOperator);
+
+                        // Check if all upstream operators of the considered pinnedOperator are co-located on same node
+                        // We will use this information to compute network source and sink operators
+                        auto actualPlacedOperator = operatorIdToOperatorMap[placedOperator->getId()];
+                        if (actualPlacedOperator->getChildren().size() == placedOperator->getChildren().size()) {
+                            placedOperator->addProperty(CO_LOCATED_UPSTREAM_OPERATORS, true);
+                        }
+                        foundConnectedDownstreamPlacedOperator = true;
+                    }
+                }
+
+                if (foundConnectedUpstreamPlacedOperator) {// If an upstream operator found in the placed query sub
+                                                           // plan then create a new or merge the placed query plan with
+                                                           // the new query sub plan.
                     if (!newPlacedQuerySubPlan) {
                         newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId,
                                                                   placedQuerySubPlan->getQuerySubPlanId(),
                                                                   placedQuerySubPlan->getRootOperators());
                         newPlacedQuerySubPlan->addRootOperator(copyOfPinnedOperator);
+                    } else {
+                        const auto& rootOperators = placedQuerySubPlan->getRootOperators();
+                        std::for_each(rootOperators.begin(), rootOperators.end(), [&](const auto& rootOperator) {
+                            newPlacedQuerySubPlan->addRootOperator(rootOperator);
+                        });
+                    }
+                } else if (foundConnectedDownstreamPlacedOperator) {// If a downstream operator found in the placed query sub
+                                                                    // plan then create a new or merge the placed
+                                                                    // query plan \with the previous new query sub plan.
+                    if (!newPlacedQuerySubPlan) {
+                        newPlacedQuerySubPlan = QueryPlan::create(sharedQueryId,
+                                                                  placedQuerySubPlan->getQuerySubPlanId(),
+                                                                  placedQuerySubPlan->getRootOperators());
                     } else {
                         const auto& rootOperators = placedQuerySubPlan->getRootOperators();
                         std::for_each(rootOperators.begin(), rootOperators.end(), [&](const auto& rootOperator) {
@@ -415,6 +448,8 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
             updatedQuerySubPlans.emplace_back(newPlacedQuerySubPlan);
             computedSubQueryPlans[pinnedWorkerId] = updatedQuerySubPlans;
         } else {// 2.2.1. If no query sub plan placed on the pinned worker node
+
+            // Create a new placed query sub plan
             QueryPlanPtr newPlacedQuerySubPlan;
             if (pinnedOperator->getOperatorState() == OperatorState::PLACED) {
                 // Create a temporary query sub plans for the operator as it might need to be merged with another query
@@ -424,7 +459,15 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                 newPlacedQuerySubPlan =
                     QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {copyOfPinnedOperator});
             }
+
+            //2.2.2. Add the new query sub plan to the list
             computedSubQueryPlans[pinnedWorkerId] = {newPlacedQuerySubPlan};
+        }
+
+        // Check if all upstream operators of the considered pinnedOperator are co-located on same node
+        // We will use this information to compute network source and sink operators
+        if (copyOfPinnedOperator->getChildren().size() == pinnedOperator->getChildren().size()) {
+            copyOfPinnedOperator->addProperty(CO_LOCATED_UPSTREAM_OPERATORS, true);
         }
 
         //2.3. If the operator is in the state placed then check if it is one of the pinned downstream operator
@@ -482,39 +525,58 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
             // shared query id
             auto sharedQueryId = querySubPlan->getQueryId();
 
-            // 2. Iterate over all leaf operators
-            auto leafOperators = querySubPlan->getLeafOperators();
-            for (const auto& leafOperator : leafOperators) {
+            // 2. Fetch all logical operators whose upstream logical operators are missing.
+            // In the previous call, we stored this information by setting the property
+            // CO_LOCATED_UPSTREAM_OPERATORS for all operators with co-located upstream operators
+            std::vector<OperatorNodePtr> candidateOperators;
+            for (const auto& operatorNode : querySubPlan->getAllOperators()) {
+                if (!operatorNode->hasProperty(CO_LOCATED_UPSTREAM_OPERATORS)) {
+                    candidateOperators.emplace_back(operatorNode);
+                }
+            }
 
-                // 3. Check if leaf operator in the state "Placed" or is of type Network Source then skip the operation
-                if (leafOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED
-                    || (leafOperator->instanceOf<SourceLogicalOperatorNode>()
-                        && leafOperator->as_if<SourceLogicalOperatorNode>()
+            // 3. Iterate over all candidate operators and add network source sink operators
+            for (const auto& candidateOperator : candidateOperators) {
+
+                // 4. Check if candidate operator in the state "Placed" or is of type Network Source or Sink then skip
+                // the operation
+                if (candidateOperator->as<LogicalOperatorNode>()->getOperatorState() == OperatorState::PLACED
+                    || (candidateOperator->instanceOf<SourceLogicalOperatorNode>()
+                        && candidateOperator->as_if<SourceLogicalOperatorNode>()
                                ->getSourceDescriptor()
-                               ->instanceOf<Network::NetworkSourceDescriptor>())) {
+                               ->instanceOf<Network::NetworkSourceDescriptor>())
+                    || (candidateOperator->instanceOf<SinkLogicalOperatorNode>()
+                        && candidateOperator->as_if<SinkLogicalOperatorNode>()
+                               ->getSinkDescriptor()
+                               ->instanceOf<Network::NetworkSinkDescriptor>())) {
                     continue;
                 }
 
-                auto originalLeafOperator = operatorIdToOperatorMap[leafOperator->getId()];
+                auto originalCandidateOperator = operatorIdToOperatorMap[candidateOperator->getId()];
 
-                // 4. For each leaf operator not in the state "Placed" find the topology node hosting the immediate
+                // 5. For each candidate operator not in the state "Placed" find the topology node hosting the immediate
                 // upstream logical operators.
-                for (const auto& upstreamOperator : originalLeafOperator->getChildren()) {
+                for (const auto& upstreamOperator : originalCandidateOperator->getChildren()) {
 
-                    // 5. Fetch the id of the topology node hosting the upstream operator to connect.
+                    // 6. Fetch the id of the topology node hosting the upstream operator to connect.
                     const auto& upstreamOperatorToConnect = upstreamOperator->as<LogicalOperatorNode>();
                     auto upstreamWorkerId = std::any_cast<WorkerId>(upstreamOperatorToConnect->getProperty(PINNED_WORKER_ID));
 
-                    // 6. Get the upstream topology node.
+                    // 7. If both operators are co-located we do not need to add network source or sink
+                    if (workerId == upstreamWorkerId) {
+                        continue;
+                    }
+
+                    // 8. Get the upstream topology node.
                     auto upstreamTopologyNode = getTopologyNode(upstreamWorkerId);
 
-                    // 7. Find topology nodes connecting the iterated workerId and pinnedUpstreamWorkerId.
+                    // 9. Find topology nodes connecting the iterated workerId and pinnedUpstreamWorkerId.
                     std::vector<TopologyNodePtr> topologyNodesBetween =
                         topology->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
 
                     QueryPlanPtr querySubPlanWithUpstreamOperator;
 
-                    // 8. Fetch all query sub plans placed on the upstream node and find the query sub plan hosting the
+                    // 10. Fetch all query sub plans placed on the upstream node and find the query sub plan hosting the
                     // upstream operator to connect.
                     for (const auto& upstreamQuerySubPlan : computedSubQueryPlans[upstreamWorkerId]) {
                         if (upstreamQuerySubPlan->hasOperatorWithId(upstreamOperatorToConnect->getId())) {
@@ -522,30 +584,31 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
                             break;
                         }
                     }
+
                     if (!querySubPlanWithUpstreamOperator) {
                         NES_ERROR("Unable to find a query sub plan hosting the upstream operator to connect.");
                         throw Exceptions::RuntimeException(
                             "Unable to find a query sub plan hosting the upstream operator to connect.");
                     }
 
-                    // Get the schema and operator id for the source network operators
+                    // 11. Get the schema and operator id for the source network operators
                     auto sourceSchema = upstreamOperatorToConnect->as<LogicalOperatorNode>()->getOutputSchema();
                     auto networkSourceOperatorId = getNextOperatorId();
 
-                    // 9. Starting from the upstream to downstream topology node and add network sink source pairs.
+                    // 12. Starting from the upstream to downstream topology node and add network sink source pairs.
                     for (uint16_t pathIndex = 0; pathIndex < topologyNodesBetween.size(); pathIndex++) {
 
                         WorkerId currentWorkerId = topologyNodesBetween[pathIndex]->getId();
 
                         if (currentWorkerId == upstreamWorkerId) {
-                            // 10. Add a network sink operator as new root operator to the upstream operator to connect
+                            // 13. Add a network sink operator as new root operator to the upstream operator to connect
 
-                            // 11. create network sink operator to attach.
+                            // 14. create network sink operator to attach.
                             auto networkSinkOperator = createNetworkSinkOperator(sharedQueryId,
                                                                                  networkSourceOperatorId,
                                                                                  topologyNodesBetween[pathIndex + 1]);
 
-                            // 12. Find the upstream operator to connect in the matched query sub plan
+                            // 14. Find the upstream operator to connect in the matched query sub plan
                             auto operatorToConnectInMatchedPlan =
                                 querySubPlanWithUpstreamOperator->getOperatorWithId(upstreamOperatorToConnect->getId());
                             operatorToConnectInMatchedPlan->addParent(networkSinkOperator);
@@ -553,40 +616,40 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
                             querySubPlanWithUpstreamOperator->addRootOperator(networkSinkOperator);
 
                         } else if (currentWorkerId == workerId) {
-                            // 10. Add a network source operator to the leaf operator.
+                            // 12. Add a network source operator to the leaf operator.
 
-                            // 11. create network source operator
+                            // 13. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
                                                                                      networkSourceOperatorId,
                                                                                      topologyNodesBetween[pathIndex - 1]);
-                            leafOperator->addChild(networkSourceOperator);
+                            candidateOperator->addChild(networkSourceOperator);
                             break;
                         } else {
-                            // 10. Compute a network source sink plan.
+                            // 12. Compute a network source sink plan.
 
-                            // 11. create network source operator
+                            // 13. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
                                                                                      networkSourceOperatorId,
-                                                                                     topologyNodesBetween[pathIndex-1]);
+                                                                                     topologyNodesBetween[pathIndex - 1]);
 
-                            // 13. Generate id for next network source
+                            // 14. Generate id for next network source
                             networkSourceOperatorId = getNextOperatorId();
 
-                            // 12. create network sink operator to attach.
+                            // 15. create network sink operator to attach.
                             auto networkSinkOperator = createNetworkSinkOperator(sharedQueryId,
                                                                                  networkSourceOperatorId,
                                                                                  topologyNodesBetween[pathIndex + 1]);
 
-                            // 13. add network source as the child
+                            // 16. add network source as the child
                             networkSinkOperator->addChild(networkSourceOperator);
 
-                            // 14. create the query sub plan
+                            // 17. create the query sub plan
                             auto newQuerySubPlan =
                                 QueryPlan::create(sharedQueryId, PlanIdGenerator::getNextQuerySubPlanId(), {networkSinkOperator});
 
-                            // 15. add the new query plan
+                            // 18. add the new query plan
                             if (computedSubQueryPlans.contains(currentWorkerId)) {
                                 computedSubQueryPlans[currentWorkerId].emplace_back(newQuerySubPlan);
                             } else {
@@ -803,13 +866,16 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                     throw Exceptions::RuntimeException("Unable to release lock on the locked node.");
                 }
             }
-        } catch (const std::exception& ex) {// If exception occurred then safely
+        } catch (std::exception& ex) {// If exception occurred then safely
             if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
                 if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
                     NES_ERROR("Unable to release lock on the locked node {}.", workerNodeId);
                     throw Exceptions::RuntimeException("Unable to release lock on the locked node.");
                 }
             }
+
+            NES_ERROR("Exception occurred during pinned operator placement {}.", ex.what());
+
             // NOTE: For pessimistic the locking will take place in the
             // catch block of the child class
             throw ex;

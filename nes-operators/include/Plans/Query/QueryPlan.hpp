@@ -76,6 +76,13 @@ class QueryPlan {
     static QueryPlanPtr create();
 
     /**
+     * @brief Get all operators in the query plan
+     * @return vector of operators
+     */
+    std::set<OperatorNodePtr> getAllOperators();
+
+
+    /**
      * @brief Get all source operators
      * @return vector of logical source operators
      */
@@ -92,15 +99,6 @@ class QueryPlan {
      * @param operatorNode : new operator
      */
     void appendOperatorAsNewRoot(const OperatorNodePtr& operatorNode);
-
-    /**
-     * @brief Pre-pend the pre-existing operator to the leaf of the query plan.
-     * Note: Pre-existing operators are the operators that are already part of another
-     * query plan and are getting moved to another query plan or are the system created network sink or source operators
-     * Note: this operation will add the pre-existing operator without assigning it a new Id.
-     * @param operatorNode
-     */
-    void prependOperatorAsLeafNode(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Returns string representation of the query.
@@ -126,14 +124,6 @@ class QueryPlan {
      * @param root
      */
     void removeAsRootOperator(OperatorNodePtr root);
-
-    /**
-    * Replaces a particular oldOperator with a newOperator new one.
-    * @param oldOperator
-    * @param newOperator
-    * @return true if operator was replaced.
-    */
-    bool replaceOperator(const OperatorNodePtr& oldOperator, const OperatorNodePtr& newOperator);
 
     /**
      * replaces a particular root operator with a new one.

@@ -122,7 +122,7 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
         if (instanceOf<SourceType>()) {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
         }
-        throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
+        throw std::logic_error("PhysicalSourceType:: we performed an invalid cast of operator " + this->toString() + " to type "
                                + typeid(SourceType).name());
     }
 
