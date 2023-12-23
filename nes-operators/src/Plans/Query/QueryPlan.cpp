@@ -210,7 +210,7 @@ void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
         return rootOperator->getId() == root->getId();
     });
     if (found != rootOperators.end()) {
-        NES_TRACE(
+        NES_DEBUG(
             "QueryPlan: Found root operator in the root operator list. Removing the operator as the root of the query plan.",
             root->toString());
         rootOperators.erase(found);

@@ -421,6 +421,8 @@ BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
                                                                   placedQuerySubPlan->getRootOperators());
                     } else {
                         const auto& rootOperators = placedQuerySubPlan->getRootOperators();
+                        //NOTE: Remove the copy Of pinnedOperator as the root operator
+                        newPlacedQuerySubPlan->removeAsRootOperator(copyOfPinnedOperator);
                         std::for_each(rootOperators.begin(), rootOperators.end(), [&](const auto& rootOperator) {
                             newPlacedQuerySubPlan->addRootOperator(rootOperator);
                         });
