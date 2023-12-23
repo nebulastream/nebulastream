@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <cinttypes>
-
 #ifndef NES_PLACEMENTMODE_HPP
 #define NES_PLACEMENTMODE_HPP
+
+#include <cstdint>
 
 namespace NES::Optimizer {
 enum class PlacementAmenderMode : uint8_t {
