@@ -19,8 +19,8 @@
 
 namespace NES::Optimizer {
 enum class PlacementAmenderMode : uint8_t {
-    PESSIMISTIC = 0,// uses strict 2PL
-    OPTIMISTIC = 1  // uses OCC
+    PESSIMISTIC,// uses strict 2PL
+    OPTIMISTIC  // uses OCC
 };
 }// namespace NES::Optimizer
 #endif//NES_PLACEMENTMODE_HPP

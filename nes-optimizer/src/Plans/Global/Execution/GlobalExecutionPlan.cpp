@@ -121,7 +121,7 @@ bool GlobalExecutionPlan::removeExecutionNode(ExecutionNodeId id) {
 }
 
 bool GlobalExecutionPlan::removeQuerySubPlans(SharedQueryId sharedQueryId) {
-    if (sharedQueryIdToExecutionNodeMap.contains(sharedQueryId)) {
+    if (!sharedQueryIdToExecutionNodeMap.contains(sharedQueryId)) {
         NES_DEBUG("No query with id {} exists in the system", sharedQueryId);
         return false;
     }
