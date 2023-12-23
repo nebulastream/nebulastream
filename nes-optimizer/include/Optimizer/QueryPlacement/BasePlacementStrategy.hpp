@@ -76,6 +76,7 @@ using PlacementMatrix = std::vector<std::vector<bool>>;
 
 const std::string PINNED_WORKER_ID = "PINNED_WORKER_ID";// Property indicating the location where the operator is pinned
 const std::string PROCESSED = "PROCESSED";              // Property indicating if operator was processed for placement
+const std::string CO_LOCATED_UPSTREAM_OPERATORS = "CO_LOCATED_UPSTREAM_OPERATORS";              // Property indicating if operator was processed for placement
 
 using ComputedSubQueryPlans = std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>;
 
