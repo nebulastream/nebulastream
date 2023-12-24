@@ -58,26 +58,20 @@ bool ExecutionNode::removeQuerySubPlans(QueryId sharedQueryId) {
 
 bool ExecutionNode::removeQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId) {
 
+    //Check if the map contains an entry for the shared query id
     if (mapOfSharedQueryToQuerySubPlans.contains(sharedQueryId)) {
-        auto querySubPlanMap = mapOfSharedQueryToQuerySubPlans[querySubPlanId];
-        if(querySubPlanMap.contains(querySubPlanId)){
+        auto querySubPlanMap = mapOfSharedQueryToQuerySubPlans[sharedQueryId];
+        //Check if query sub plan exists in the map
+        if (querySubPlanMap.contains(querySubPlanId)) {
             querySubPlanMap.erase(querySubPlanId);
+            //If no query sub plan exist then remove the entry from the mapOfSharedQueryToQuerySubPlans
+            if (querySubPlanMap.empty()) {
+                mapOfSharedQueryToQuerySubPlans.erase(sharedQueryId);
+            }
             return true;
         }
     }
     return false;
-}
-
-QueryPlanPtr ExecutionNode::getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId) {
-    auto sharedPlanIterator = mapOfSharedQueryToQuerySubPlans.find(sharedQueryId);
-    if (sharedPlanIterator != mapOfSharedQueryToQuerySubPlans.end()) {
-        for (auto& subPlanIterator : sharedPlanIterator->second) {
-            if (subPlanIterator.first == subPlanId) {
-                return subPlanIterator.second;
-            }
-        }
-    }
-    return {};
 }
 
 uint32_t ExecutionNode::getOccupiedResources(QueryId sharedQueryId) {

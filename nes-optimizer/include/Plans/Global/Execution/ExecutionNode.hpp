@@ -137,14 +137,6 @@ class ExecutionNode : public Node {
      */
     static uint32_t getOccupiedResourcesForSubPlan(const QueryPlanPtr& querySubPlan) ;
 
-    /**
-     * @brief returns a pointer to a specific query sub plan
-     * @param sharedQueryId the id of the shared query to which the sub plan belongs
-     * @param subPlanId the id of the sub plan itself
-     * @return A pointer to the sub plan
-     */
-    QueryPlanPtr getQuerySubPlan(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
-
   private:
     explicit ExecutionNode(const TopologyNodePtr& physicalNode);
 

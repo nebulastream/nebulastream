@@ -37,15 +37,9 @@ class GlobalExecutionPlan {
     static GlobalExecutionPlanPtr create();
 
     /**
-     * Add execution node as parent of another execution node. If the node already exists then simply update the node.
-     * @param childId: id of the child node
-     * @param parentExecutionNode: the parent execution node
-     * @return true if operation succeeds
-     */
-    bool addExecutionNodeAsParentTo(ExecutionNodeId childId, const ExecutionNodePtr& parentExecutionNode);
-
-    /**
-     * Add execution node without any connectivity
+     * @brief Add execution node and automatically add parent child relation ship with existing execution nodes.
+     * @param executionNode: the execution node to add
+     * @return true if added else false
      */
     bool addExecutionNode(const ExecutionNodePtr& executionNode);
 
@@ -79,13 +73,6 @@ class GlobalExecutionPlan {
     bool checkIfExecutionNodeExists(ExecutionNodeId id);
 
     /**
-     * Check if the executionNode is a root node.
-     * @param id: id of the execution node.
-     * @return true if execution node with given id is a root node.
-     */
-    bool checkIfExecutionNodeIsARoot(ExecutionNodeId id);
-
-    /**
      * Get the execution node
      * @param id: id of the execution node
      * @return true if operation succeeds
@@ -93,29 +80,11 @@ class GlobalExecutionPlan {
     ExecutionNodePtr getExecutionNodeById(ExecutionNodeId id);
 
     /**
-     * Get the nodes to be scheduled/deployed
-     * @return vector of execution nodes to be scheduled
-     */
-    std::vector<ExecutionNodePtr> getExecutionNodesToSchedule();
-
-    /**
-     * Get root nodes
-     * @return vector containing all root nodes
-     */
-    std::vector<ExecutionNodePtr> getRootNodes();
-
-    /**
      * Return list of Execution Serialization used for placing operators of the input query Id
      * @param sharedQueryId : Id of the shared query
      * @return vector containing execution nodes
      */
     std::vector<ExecutionNodePtr> getExecutionNodesByQueryId(SharedQueryId sharedQueryId);
-
-    /**
-     * @brief Get all execution nodes in the execution plan
-     * @return list of execution nodes
-     */
-    std::vector<ExecutionNodePtr> getAllExecutionNodes();
 
     /**
      * Get the execution plan as string representation
@@ -138,12 +107,12 @@ class GlobalExecutionPlan {
 
     /**
      * @brief removes a query subplan if it exists at a specific node
-     * @param nodeId the id of the node hosting the subplans
+     * @param executionNodeId the id of the node hosting the subplans
      * @param sharedQueryId the id of the shared query to which the subplan belongs
      * @param subPlanId the id of the subplan
      * @return true if the subplan was found and removed, false if it could not be found
      */
-    bool removeQuerySubPlanFromNode(ExecutionNodeId nodeId, SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
+    bool removeQuerySubPlanFromNode(ExecutionNodeId executionNodeId, SharedQueryId sharedQueryId, QuerySubPlanId subPlanId);
 
   private:
     /**
