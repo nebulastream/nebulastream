@@ -22,20 +22,17 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Mobility/SpatialTypeUtility.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/SpatialUtils.hpp>
 #include <utility>
 
 namespace NES {
 
-TopologyManagerService::TopologyManagerService(TopologyPtr topology,
-                                               NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex)
-    : topology(std::move(topology)), locationIndex(std::move(locationIndex)) {
+TopologyManagerService::TopologyManagerService(const TopologyPtr& topology) : topology(topology) {
     NES_DEBUG("TopologyManagerService()");
 }
 
-void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckService) {
+void TopologyManagerService::setHealthService(const HealthCheckServicePtr& healthCheckService) {
     this->healthCheckService = healthCheckService;
 }
 
@@ -94,14 +91,14 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
 
     topology->registerTopologyNode(std::move(newTopologyNode));
 
-    const TopologyNodePtr rootNode = topology->getRoot();
+    auto rootTopologyNodeId = topology->getRootTopologyNodeId();
 
-    if (!rootNode) {
+    if (rootTopologyNodeId == INVALID_WORKER_NODE_ID) {
         NES_DEBUG("TopologyManagerService::registerWorker: tree is empty so this becomes new root");
-        topology->setAsRoot(newTopologyNode);
+        topology->setRootTopologyNodeId(newTopologyNode);
     } else {
-        NES_DEBUG("TopologyManagerService::registerWorker: add link to the root node {}", rootNode->toString());
-        topology->addTopologyNodeAsChild(rootNode->getId(), newTopologyNode->getId());
+        NES_DEBUG("TopologyManagerService::registerWorker: add link to the root node {}", rootTopologyNodeId);
+        topology->addTopologyNodeAsChild(rootTopologyNodeId, newTopologyNode->getId());
     }
 
     if (healthCheckService) {
@@ -114,12 +111,10 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
     return id;
 }
 
-bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
+bool TopologyManagerService::unregisterNode(WorkerId nodeId) {
+
     NES_DEBUG("TopologyManagerService::UnregisterNode: try to disconnect sensor with id  {}", nodeId);
-    std::unique_lock<std::mutex> lock(registerDeregisterNode);
-
     TopologyNodePtr physicalNode = topology->findWorkerWithId(nodeId);
-
     if (!physicalNode) {
         NES_ERROR("CoordinatorActor: node with id not found  {}", nodeId);
         return false;
@@ -164,19 +159,19 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
     return false;
 }
 
-bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
-    NES_DEBUG("TopologyManagerService::removeParent: childId= {}  parentId= {}", childId, parentId);
+bool TopologyManagerService::removeAsParent(uint64_t childId, uint64_t parentId) {
+    NES_DEBUG("TopologyManagerService::removeAsParent: childId= {}  parentId= {}", childId, parentId);
 
     TopologyNodePtr childNode = topology->findWorkerWithId(childId);
     if (!childNode) {
-        NES_ERROR("TopologyManagerService::removeParent: source node {} does not exists", childId);
+        NES_ERROR("TopologyManagerService::removeAsParent: source node {} does not exists", childId);
         return false;
     }
-    NES_DEBUG("TopologyManagerService::removeParent: source node  {}  exists", childId);
+    NES_DEBUG("TopologyManagerService::removeAsParent: source node  {}  exists", childId);
 
     TopologyNodePtr parentNode = topology->findWorkerWithId(parentId);
     if (!parentNode) {
-        NES_ERROR("TopologyManagerService::removeParent: sensorParent node {} does not exists", childId);
+        NES_ERROR("TopologyManagerService::removeAsParent: sensorParent node {} does not exists", childId);
         return false;
     }
 
@@ -188,7 +183,7 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
     });
 
     if (found == children.end()) {
-        NES_ERROR("TopologyManagerService::removeParent: nodes {} and {} are not connected", childId, parentId);
+        NES_ERROR("TopologyManagerService::removeAsParent: nodes {} and {} are not connected", childId, parentId);
         return false;
     }
 
@@ -197,14 +192,14 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
         }
     }
 
-    NES_DEBUG("TopologyManagerService::removeParent: nodes connected");
+    NES_DEBUG("TopologyManagerService::removeAsParent: nodes connected");
 
-    bool success = topology->removeNodeAsChild(parentNode, childNode);
+    bool success = topology->removeTopologyNodeAsChild(parentNode, childNode);
     if (!success) {
-        NES_ERROR("TopologyManagerService::removeParent: edge between {} and {} could not be removed", childId, parentId);
+        NES_ERROR("TopologyManagerService::removeAsParent: edge between {} and {} could not be removed", childId, parentId);
         return false;
     }
-    NES_DEBUG("TopologyManagerService::removeParent: successful");
+    NES_DEBUG("TopologyManagerService::removeAsParent: successful");
     return true;
 }
 
@@ -213,12 +208,12 @@ TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return
 WorkerId TopologyManagerService::getNextWorkerId() { return ++topologyNodeIdCounter; }
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of future movement
-std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>>
-TopologyManagerService::getNodesIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius) {
-    return locationIndex->getNodeIdsInRange(center, radius);
+std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
+TopologyManagerService::getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius) {
+    return topology->getTopologyNodeIdsInRange(center, radius);
 }
 
-TopologyNodePtr TopologyManagerService::getRootNode() { return topology->getRoot(); }
+WorkerId TopologyManagerService::getRootTopologyNodeId() { return topology->getRootTopologyNodeId(); }
 
 bool TopologyManagerService::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     return topology->removeTopologyNode(nodeToRemove);
@@ -226,60 +221,7 @@ bool TopologyManagerService::removePhysicalNode(const TopologyNodePtr& nodeToRem
 
 nlohmann::json TopologyManagerService::getTopologyAsJson() {
     NES_INFO("TopologyController: getting topology as JSON");
-
-    nlohmann::json topologyJson{};
-    auto root = topology->getRoot();
-    std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
-    std::deque<TopologyNodePtr> childToAdd;
-
-    std::vector<nlohmann::json> nodes = {};
-    std::vector<nlohmann::json> edges = {};
-
-    while (!parentToAdd.empty()) {
-        // Current topology node to add to the JSON
-        TopologyNodePtr currentNode = parentToAdd.front();
-        nlohmann::json currentNodeJsonValue{};
-
-        parentToAdd.pop_front();
-        // Add properties for current topology node
-        currentNodeJsonValue["id"] = currentNode->getId();
-        currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
-        currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
-        if (currentNode->getSpatialNodeType() != NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            auto geoLocation = getGeoLocationForNode(currentNode->getId());
-            auto locationInfo = nlohmann::json{};
-            if (geoLocation.has_value() && geoLocation.value().isValid()) {
-                locationInfo["latitude"] = geoLocation.value().getLatitude();
-                locationInfo["longitude"] = geoLocation.value().getLongitude();
-            }
-            currentNodeJsonValue["location"] = locationInfo;
-        }
-        currentNodeJsonValue["nodeType"] = Spatial::Util::SpatialTypeUtility::toString(currentNode->getSpatialNodeType());
-
-        auto children = currentNode->getChildren();
-        for (const auto& child : children) {
-            // Add edge information for current topology node
-            nlohmann::json currentEdgeJsonValue{};
-            currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
-            currentEdgeJsonValue["target"] = currentNode->getId();
-            edges.push_back(currentEdgeJsonValue);
-
-            childToAdd.push_back(child->as<TopologyNode>());
-        }
-
-        if (parentToAdd.empty()) {
-            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
-            childToAdd.clear();
-        }
-
-        nodes.push_back(currentNodeJsonValue);
-    }
-    NES_INFO("TopologyController: no more topology node to add");
-
-    // add `nodes` and `edges` JSON array to the final JSON result
-    topologyJson["nodes"] = nodes;
-    topologyJson["edges"] = edges;
-    return topologyJson;
+    topology->toJson();
 }
 
 //All of these methods can be moved to Location service

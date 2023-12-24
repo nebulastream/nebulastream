@@ -291,11 +291,11 @@ bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParen
             return coordinatorStub->ReplaceParent(&context, request, reply);
         }
         bool onSuccess(const ReplaceParentReply& reply) override {
-            NES_DEBUG("CoordinatorRPCClient::removeParent: status ok return success={}", reply.success());
+            NES_DEBUG("CoordinatorRPCClient::removeAsParent: status ok return success={}", reply.success());
             return reply.success();
         }
         bool onPartialFailure(const Status& status) override {
-            NES_DEBUG(" CoordinatorRPCClient::removeParent error={}: {}", status.error_code(), status.error_message());
+            NES_DEBUG(" CoordinatorRPCClient::removeAsParent error={}: {}", status.error_code(), status.error_message());
             return false;
         }
         bool onFailure() override { return false; }
@@ -309,7 +309,7 @@ bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParen
 uint64_t CoordinatorRPCClient::getId() const { return workerId; }
 
 bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
-    NES_DEBUG("CoordinatorRPCClient: removeParent parentId{} workerId={}", parentId, workerId);
+    NES_DEBUG("CoordinatorRPCClient: removeAsParent parentId{} workerId={}", parentId, workerId);
 
     RemoveParentRequest request;
     request.set_parentid(parentId);
@@ -329,11 +329,11 @@ bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
             return coordinatorStub->RemoveParent(&context, request, reply);
         }
         bool onSuccess(const RemoveParentReply& reply) override {
-            NES_DEBUG("CoordinatorRPCClient::removeParent: status ok return success={}", reply.success());
+            NES_DEBUG("CoordinatorRPCClient::removeAsParent: status ok return success={}", reply.success());
             return reply.success();
         }
         bool onPartialFailure(const Status& status) override {
-            NES_DEBUG(" CoordinatorRPCClient::removeParent error={}: {}", status.error_code(), status.error_message());
+            NES_DEBUG(" CoordinatorRPCClient::removeAsParent error={}: {}", status.error_code(), status.error_message());
             return false;
         }
         bool onFailure() override { return false; }

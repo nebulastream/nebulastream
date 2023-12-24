@@ -239,9 +239,9 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request = {}", request->DebugString());
 
-    bool success = topologyManagerService->removeParent(request->childid(), request->oldparent());
+    bool success = topologyManagerService->removeAsParent(request->childid(), request->oldparent());
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::ReplaceParent success removeParent");
+        NES_DEBUG("CoordinatorRPCServer::ReplaceParent success removeAsParent");
         bool success2 = topologyManagerService->addParent(request->childid(), request->newparent());
         if (success2) {
             NES_DEBUG("CoordinatorRPCServer::ReplaceParent success addParent topo=");
@@ -262,7 +262,7 @@ Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRe
 Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequest* request, RemoveParentReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RemoveParent: request = {}", request->DebugString());
 
-    bool success = topologyManagerService->removeParent(request->childid(), request->parentid());
+    bool success = topologyManagerService->removeAsParent(request->childid(), request->parentid());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
         reply->set_success(true);
@@ -308,8 +308,9 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
     std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>> inRange =
-        topologyManagerService->getNodesIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation(request->geolocation()),
-                                                   request->radius());
+        topologyManagerService->getTopologyNodeIdsInRange(
+            NES::Spatial::DataTypes::Experimental::GeoLocation(request->geolocation()),
+            request->radius());
 
     for (auto elem : inRange) {
         NES::Spatial::Protobuf::WorkerLocationInfo* workerInfo = reply->add_nodes();

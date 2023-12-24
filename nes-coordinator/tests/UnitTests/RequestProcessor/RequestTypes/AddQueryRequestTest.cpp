@@ -87,7 +87,7 @@ class AddQueryRequestTest : public Testing::BaseUnitTest {
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
         topology = Topology::create();
-        topology->setAsRoot(physicalNode);
+        topology->setRootTopologyNodeId(physicalNode);
         globalQueryPlan = GlobalQueryPlan::create();
         globalExecutionPlan = GlobalExecutionPlan::create();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();

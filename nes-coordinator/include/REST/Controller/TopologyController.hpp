@@ -119,7 +119,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         }
     }
 
-    ENDPOINT("DELETE", "/removeParent", removeParent, BODY_STRING(String, request)) {
+    ENDPOINT("DELETE", "/removeAsParent", removeParent, BODY_STRING(String, request)) {
         try {
             std::string req = request.getValue("{}");
             //check if json is valid
@@ -133,12 +133,12 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
-            bool removed = topologyManagerService->removeParent(childId, parentId);
+            bool removed = topologyManagerService->removeAsParent(childId, parentId);
             if (removed) {
                 NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully");
             } else {
                 NES_ERROR("TopologyController::handlePost:addParent: Failed");
-                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeParent: Failed");
+                return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeAsParent: Failed");
             }
             //Prepare the response
             nlohmann::json response;

@@ -231,7 +231,7 @@ TEST_F(TopologyControllerTest, testRemoveParent) {
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 2;
-    auto asyncResp = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/removeParent"},
+    auto asyncResp = cpr::DeleteAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/removeAsParent"},
                                       cpr::Header{{"Content-Type", "application/json"}},
                                       cpr::Body{request.dump()},
                                       cpr::ConnectTimeout{3000},

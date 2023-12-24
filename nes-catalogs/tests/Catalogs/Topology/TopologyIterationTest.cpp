@@ -61,7 +61,7 @@ class TopologyIteratorTest : public Testing::BaseUnitTest {
 TEST_F(TopologyIteratorTest, testLinearTopology) {
     TopologyPtr topology = Topology::create();
 
-    topology->setAsRoot(rootNode);
+    topology->setRootTopologyNodeId(rootNode);
 
     bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
@@ -97,7 +97,7 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
 TEST_F(TopologyIteratorTest, testMultipleSources) {
     TopologyPtr topology = Topology::create();
 
-    topology->setAsRoot(rootNode);
+    topology->setRootTopologyNodeId(rootNode);
 
     bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
@@ -141,7 +141,7 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
 TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
     TopologyPtr topology = Topology::create();
 
-    topology->setAsRoot(rootNode);
+    topology->setRootTopologyNodeId(rootNode);
 
     bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
@@ -193,7 +193,7 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
 TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
     TopologyPtr topology = Topology::create();
 
-    topology->setAsRoot(rootNode);
+    topology->setRootTopologyNodeId(rootNode);
 
     bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
@@ -247,7 +247,7 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
 TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
     TopologyPtr topology = Topology::create();
 
-    topology->setAsRoot(rootNode);
+    topology->setRootTopologyNodeId(rootNode);
 
     bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
@@ -312,7 +312,7 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
 TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
     TopologyPtr topology = Topology::create();
 
-    topology->setAsRoot(rootNode);
+    topology->setRootTopologyNodeId(rootNode);
 
     bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
