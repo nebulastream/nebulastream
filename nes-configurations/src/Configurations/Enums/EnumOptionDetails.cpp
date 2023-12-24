@@ -12,18 +12,19 @@
     limitations under the License.
 */
 
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Configurations/Enums/PipeliningStrategy.hpp>
-#include <Configurations/Enums/WindowingStrategy.hpp>
-#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Configurations/Enums/EnumOptionDetails.hpp>
 #include <Configurations/Enums/MemoryLayoutPolicy.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
+#include <Configurations/Enums/PipeliningStrategy.hpp>
+#include <Configurations/Enums/PlacementAmenderMode.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Enums/QueryExecutionMode.hpp>
 #include <Configurations/Enums/QueryMergerRule.hpp>
-#include <Configurations/Enums/EnumOptionDetails.hpp>
-#include <Configurations/Enums/DumpMode.hpp>
-#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Configurations {
@@ -41,5 +42,6 @@ template class EnumOption<NES::Spatial::Mobility::Experimental::LocationProvider
 template class EnumOption<NES::Optimizer::QueryMergerRule>;
 template class EnumOption<NES::LogLevel>;
 template class EnumOption<NES::Optimizer::MemoryLayoutPolicy>;
+template class EnumOption<NES::Optimizer::PlacementAmenderMode>;
 
 }// namespace NES::Configurations
