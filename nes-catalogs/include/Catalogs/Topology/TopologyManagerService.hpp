@@ -34,20 +34,13 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class AbstractHealthCheckService;
 using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 
-namespace Spatial::Index::Experimental {
-enum class NodeType;
-
-class LocationIndex;
-using LocationIndexPtr = std::shared_ptr<LocationIndex>;
-}// namespace Spatial::Index::Experimental
-
 /**
  * @brief: This class is responsible for registering/unregistering nodes and adding and removing parentNodes.
  */
 class TopologyManagerService {
 
   public:
-    TopologyManagerService(TopologyPtr topology, NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex);
+    TopologyManagerService(const TopologyPtr& topology);
 
     /**
      * @brief registers a worker.
@@ -110,7 +103,7 @@ class TopologyManagerService {
      * @param parentId
      * @return bool indicating success
      */
-    bool removeParent(uint64_t childId, uint64_t parentId);
+    bool removeAsParent(uint64_t childId, uint64_t parentId);
 
     /**
      * @brief returns a pointer to the node with the specified id
@@ -127,13 +120,13 @@ class TopologyManagerService {
      * @return vector of pairs containing node ids and the corresponding location
      */
     std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
-    getNodesIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation center, double radius);
+    getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius);
 
     /**
-     * Method to return the root node
-     * @return root node
+     * Method to return the root node id
+     * @return root node id
      */
-    TopologyNodePtr getRootNode();
+    WorkerId getRootTopologyNodeId();
 
     /**
      * @brief This method will remove a given physical node
@@ -146,7 +139,7 @@ class TopologyManagerService {
      * Sets the health service
      * @param healthCheckService
      */
-    void setHealthService(HealthCheckServicePtr healthCheckService);
+    void setHealthService(const HealthCheckServicePtr& healthCheckService);
 
     /**
      * Get the geo location of the node
@@ -164,10 +157,8 @@ class TopologyManagerService {
 
   private:
     TopologyPtr topology;
-    std::mutex registerDeregisterNode;
     std::atomic_uint64_t topologyNodeIdCounter = 0;
     HealthCheckServicePtr healthCheckService;
-    NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
 
     /**
      * @brief method to generate the next (monotonically increasing) topology node id

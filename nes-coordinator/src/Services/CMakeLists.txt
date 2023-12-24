@@ -17,5 +17,4 @@ add_source_files(nes-coordinator
         RequestProcessorService.cpp
         QueryParsingService.cpp
         CoordinatortHealthCheckService.cpp
-        LocationService.cpp
 )

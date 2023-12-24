@@ -112,7 +112,7 @@ class TopologyTimelineTest : public Testing::BaseIntegrationTest {
 TEST_F(TopologyTimelineTest, testNoChangesPresent) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
-    topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
+    topology->setRootTopologyNodeId(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
     topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(1),
                                         TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
     topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(2),
@@ -129,7 +129,7 @@ TEST_F(TopologyTimelineTest, testNoChangesPresent) {
 TEST_F(TopologyTimelineTest, testUpdatingMultiplePredictions) {
     auto topology = Topology::create();
     std::map<std::string, std::any> properties;
-    topology->setAsRoot(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
+    topology->setRootTopologyNodeId(TopologyNode::create(1, "localhost", 4001, 5001, 4, properties));
     topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(1),
                                         TopologyNode::create(2, "localhost", 4001, 5001, 4, properties));
     topology->addNewTopologyNodeAsChild(topology->findWorkerWithId(2),

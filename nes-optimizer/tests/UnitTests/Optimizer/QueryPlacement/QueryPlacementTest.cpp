@@ -92,7 +92,7 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
 
         TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0], properties);
         rootNode->addNodeProperty("tf_installed", true);
-        topology->setAsRoot(rootNode);
+        topology->setRootTopologyNodeId(rootNode);
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1], properties);
         sourceNode1->addNodeProperty("tf_installed", true);
@@ -1022,7 +1022,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     auto srcNode = TopologyNode::create(2, "localhost", 4002, 5002, 4, properties);
 
     TopologyPtr topology = Topology::create();
-    topology->setAsRoot(sinkNode);
+    topology->setRootTopologyNodeId(sinkNode);
 
     topology->addNewTopologyNodeAsChild(sinkNode, midNode);
     topology->addNewTopologyNodeAsChild(midNode, srcNode);
@@ -1146,7 +1146,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     auto srcNode2 = TopologyNode::create(4, "localhost", 4004, 5004, 4, properties);
 
     TopologyPtr topology = Topology::create();
-    topology->setAsRoot(sinkNode);
+    topology->setRootTopologyNodeId(sinkNode);
 
     topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
     topology->addNewTopologyNodeAsChild(sinkNode, midNode2);
@@ -1292,7 +1292,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4, properties);
 
     TopologyPtr topology = Topology::create();
-    topology->setAsRoot(sinkNode);
+    topology->setRootTopologyNodeId(sinkNode);
 
     topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
     topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
@@ -1413,7 +1413,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4, properties);
 
     TopologyPtr topology = Topology::create();
-    topology->setAsRoot(sinkNode);
+    topology->setRootTopologyNodeId(sinkNode);
 
     topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
     topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
@@ -1530,7 +1530,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthTightResourcesConstrains) {
     auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 2, properties);
 
     TopologyPtr topology = Topology::create();
-    topology->setAsRoot(sinkNode);
+    topology->setRootTopologyNodeId(sinkNode);
 
     topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
     topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
@@ -1642,7 +1642,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrains) {
     auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 1, properties);
 
     TopologyPtr topology = Topology::create();
-    topology->setAsRoot(sinkNode);
+    topology->setRootTopologyNodeId(sinkNode);
 
     topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
     topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
@@ -1759,7 +1759,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrainsInAJo
     auto srcNode2 = TopologyNode::create(3, "localhost", 4003, 5004, 1, properties);
 
     TopologyPtr topology = Topology::create();
-    topology->setAsRoot(sinkNode);
+    topology->setRootTopologyNodeId(sinkNode);
 
     topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
     topology->addNewTopologyNodeAsChild(midNode1, srcNode1);

@@ -195,13 +195,13 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
     node4->addLinkProperty(node5, linkProperty);
 
     topologyManagerService->addParent(3, 2);
-    topologyManagerService->removeParent(3, 1);
+    topologyManagerService->removeAsParent(3, 1);
 
     topologyManagerService->addParent(4, 3);
-    topologyManagerService->removeParent(4, 1);
+    topologyManagerService->removeAsParent(4, 1);
 
     topologyManagerService->addParent(5, 4);
-    topologyManagerService->removeParent(5, 1);
+    topologyManagerService->removeAsParent(5, 1);
 }
 
 /**

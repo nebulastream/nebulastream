@@ -21,16 +21,38 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <vector>
 
 namespace NES {
+
+namespace Spatial {
+
+namespace Index::Experimental {
+enum class NodeType;
+
+class LocationIndex;
+using LocationIndexPtr = std::shared_ptr<LocationIndex>;
+}// namespace Index::Experimental
+
+namespace DataTypes::Experimental {
+class GeoLocation;
+}
+
+namespace Mobility::Experimental {
+class ReconnectPoint;
+}
+
+}// namespace Spatial
 
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+
+using TopologyNodeWLock = std::shared_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
@@ -42,13 +64,19 @@ class Topology {
      * @brief Factory to create instance of topology
      * @return shared pointer to the topology
      */
-    static TopologyPtr create();
+    static TopologyPtr create(const Spatial::Index::Experimental::LocationIndexPtr& locationIndex);
 
     /**
-     * @brief Get the root node of the topology
-     * @return root of the topology
+     * @brief Get the ID of root topology node
+     * @return root of the worker id of the root topology node
      */
-    TopologyNodePtr getRoot();
+    WorkerId getRootTopologyNodeId();
+
+    /**
+     * @brief Set as a topology node as the root node of the topology
+     * @param workerId: id of root topology node
+     */
+    void setRootTopologyNodeId(WorkerId workerId);
 
     /**
      * @brief Register a new node in the topology map without creating parent child relationship
@@ -87,10 +115,13 @@ class Topology {
     bool nodeWithWorkerIdExists(WorkerId workerId);
 
     /**
-     * @brief Add a topology node as the root node of the topology
-     * @param physicalNode: topology node to be set as root node
+     * @brief Get topology nodes with the given radius of the geo location
+     * @param center : the center geo location
+     * @param radius : the radius
+     * @return map of topology node id and the geo location
      */
-    void setAsRoot(const TopologyNodePtr& physicalNode);
+    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
+    getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius);
 
     /**
      * @brief Remove links between
@@ -98,21 +129,14 @@ class Topology {
      * @param childNode
      * @return
      */
-    bool removeNodeAsChild(const TopologyNodePtr& parentNode, const TopologyNodePtr& childNode);
+    bool removeTopologyNodeAsChild(const TopologyNodePtr& parentNode, const TopologyNodePtr& childNode);
 
     /**
      * @brief acquire the lock on the topology node
      * @param workerId : the id of the topology node
      * @return true if successfully acquired the lock else false
      */
-    bool acquireLockOnTopologyNode(WorkerId workerId);
-
-    /**
-     * @brief release the lock on the topology node
-     * @param workerId : the id of the topology node
-     * @return true if successfully released the lock else false
-     */
-    bool releaseLockOnTopologyNode(WorkerId workerId);
+    TopologyNodeWLock acquireLockOnTopologyNode(WorkerId workerId);
 
     /**
      * @brief Increase the amount of resources on the node with the id
@@ -131,9 +155,101 @@ class Topology {
     bool occupySlots(WorkerId workerId, uint16_t amountToOccupy);
 
     /**
+     * Get a json containing the id and the location of any node. In case the node is neither a field nor a mobile node,
+     * the "location" attribute will be null
+     * @param workerId : the id of the requested node
+     * @return a json in the format:
+        {
+            "id": <node id>,
+            "location":
+                  {
+                      "latitude": <latitude>,
+                      "longitude": <longitude>
+                  }
+        }
+     */
+    nlohmann::json requestNodeLocationDataAsJson(WorkerId workerId);
+
+    /**
+     * @brief get a list of all mobile nodes in the system with known locations and their current positions as well as their parent nodes. Mobile nodes without known locations will not appear in the list
+     * @return a json list in the format:
+     * {
+     *      "edges":
+     *          [
+     *              {
+     *                  "source": <node id>,
+     *                  "target": <node id>
+     *              }
+     *          ],
+     *      "nodes":
+     *          [
+     *              {
+     *                  "id": <node id>,
+     *                  "location":
+     *                      {
+     *                          "latitude": <latitude>,
+     *                          "longitude": <longitude>
+     *                      }
+     *              }
+     *          ]
+     *  }
+     */
+    nlohmann::json requestLocationAndParentDataFromAllMobileNodes();
+
+    /**
+     * @brief get information about a mobile workers predicted trajectory the last update position of the devices local
+     * node index and the scheduled reconnects of the device
+     * @param workerId : the id of the mobile device
+     * @return a json in the format:
+     * {
+        "indexUpdatePosition": [
+            <latitude>
+            <longitude>
+        ],
+        "pathEnd": [
+            <latitude>
+            <longitude>
+        ],
+        "pathStart": [
+            <latitude>
+            <longitude>
+        ],
+        "reconnectPoints": [
+            {
+                "id": <parent id>,
+                "reconnectPoint": [
+                    <latitude>
+                    <longitude>
+                ],
+                "time": <timestamp>
+            },
+            ...
+        ]
+        }
+     */
+    nlohmann::json requestReconnectScheduleAsJson(WorkerId workerId);
+
+    /**
+     * @brief update the information saved at the coordinator side about a mobile devices predicted next reconnect
+     * @param mobileWorkerId : The id of the mobile worker whose predicted reconnect has changed
+     * @param reconnectNodeId : The id of the expected new parent after the next reconnect
+     * @param location : The expected location at which the device will reconnect
+     * @param time : The expected time at which the device will reconnect
+     * @return true if the information was processed correctly
+     */
+    bool updatePredictedReconnect(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+                                  const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions);
+
+    /**
      * @brief Print the current topology information
      */
     void print();
+
+    /**
+     * @brief Return graph as JSON
+     * @return JSON object representing topology information
+     */
+    nlohmann::json toJson();
 
     /**
      * @brief Return graph as string
@@ -142,11 +258,39 @@ class Topology {
     std::string toString();
 
   private:
-    explicit Topology();
+    /**
+     * @brief convert a Location to a json representing the same coordinates
+     * @param geoLocation : The location object to convert
+     * @return a json array in the format:
+     * [
+     *   <latitude>,
+     *   <longitude>,
+     * ]
+     */
+    static nlohmann::json convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
+
+    /**
+     * Use a node id and a Location to construct a Json representation containing these values.
+     * @param workerId : the nodes id
+     * @param geoLocation : the nodes location. if this is a nullptr then the "location" attribute of the returned json will be null.
+     * @return a json in the format:
+        {
+            "id": <node id>,
+            "location": [
+                <latitude>,
+                <longitude>
+            ]
+        }
+     */
+    static nlohmann::json convertNodeLocationInfoToJson(WorkerId workerId,
+                                                        Spatial::DataTypes::Experimental::GeoLocation geoLocation);
+
+    explicit Topology(const Spatial::Index::Experimental::LocationIndexPtr& locationIndex);
 
     //TODO: At present we assume that we have only one root node
     WorkerId rootWorkerId;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
+    NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
 };
 }// namespace NES
 #endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

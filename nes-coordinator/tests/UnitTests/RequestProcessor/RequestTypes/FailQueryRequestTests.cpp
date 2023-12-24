@@ -101,7 +101,7 @@ class FailQueryRequestTest : public Testing::BaseIntegrationTest {
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         rootNode = TopologyNode::create(id, address, grpcPort, dataPort, resources, properties);
-        topology->setAsRoot(rootNode);
+        topology->setRootTopologyNodeId(rootNode);
         ++id;
         ++grpcPort;
         ++dataPort;

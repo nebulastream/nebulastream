@@ -90,7 +90,7 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
 
         TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 100, properties);
         rootNode->addNodeProperty("slots", 100);
-        topologyForILP->setAsRoot(rootNode);
+        topologyForILP->setRootTopologyNodeId(rootNode);
 
         TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 10, properties);
         middleNode->addNodeProperty("slots", 10);
