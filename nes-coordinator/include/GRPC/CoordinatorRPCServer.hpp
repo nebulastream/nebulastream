@@ -41,6 +41,9 @@ using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
+class CoordinatorHealthCheckService;
+using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
+
 namespace Monitoring {
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
@@ -61,15 +64,15 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param sourceCatalogService : the instance of the steam catalog service
      * @param queryCatalogService : the instance of monitoring service
      * @param monitoringService : the instance of monitoring service
-     * @param globalExecutionPlan : the instance of global execution plan todo #4438: remove this param
+     * @param coordinatorHealthCheckService : coordinator health check service
      */
     explicit CoordinatorRPCServer(QueryServicePtr queryService,
                                   TopologyManagerServicePtr topologyManagerService,
                                   SourceCatalogServicePtr sourceCatalogService,
                                   QueryCatalogServicePtr queryCatalogService,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
-                                  LocationServicePtr locationService,
-                                  QueryParsingServicePtr queryParsingService);
+                                  QueryParsingServicePtr queryParsingService,
+                                  CoordinatorHealthCheckServicePtr coordinatorHealthCheckService);
     /**
      * @brief RPC Call to register a node
      * @param context: the server context
@@ -253,9 +256,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     SourceCatalogServicePtr sourceCatalogService;
     QueryCatalogServicePtr queryCatalogService;
     Monitoring::MonitoringManagerPtr monitoringManager;
-    LocationServicePtr locationService;
     QueryParsingServicePtr queryParsingService;
-    //GlobalExecutionPlanPtr globalExecutionPlan;
+    CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
 };
 }// namespace NES
 
