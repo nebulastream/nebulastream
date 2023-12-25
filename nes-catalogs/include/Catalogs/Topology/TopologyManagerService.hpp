@@ -136,12 +136,6 @@ class TopologyManagerService {
     bool removeTopologyNode(WorkerId nodeToRemove);
 
     /**
-     * Sets the health service
-     * @param healthCheckService
-     */
-    void setHealthService(const HealthCheckServicePtr& healthCheckService);
-
-    /**
      * Get the geo location of the node
      * @param workerId : node id of the worker
      * @return GeoLocation of the node
@@ -158,7 +152,6 @@ class TopologyManagerService {
   private:
     TopologyPtr topology;
     std::atomic_uint64_t topologyNodeIdCounter = 0;
-    HealthCheckServicePtr healthCheckService;
 
     /**
      * @brief method to generate the next (monotonically increasing) topology node id

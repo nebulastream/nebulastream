@@ -120,7 +120,7 @@ TopologyNodePtr Topology::getCopyOfTopologyNodeWithId(WorkerId workerId) {
 }
 
 bool Topology::nodeWithWorkerIdExists(WorkerId workerId) {
-    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.rlock();
     return lockedWorkerIdToTopologyNodeMap->contains(workerId);
 }
 
@@ -173,12 +173,215 @@ TopologyNodeWLock Topology::lockTopologyNode(WorkerId workerId) {
     return nullptr;
 }
 
-std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
-Topology::getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius) {
-    return locationIndex->getNodeIdsInRange(center, radius);
+std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<WorkerId>& sourceTopologyNodeIds,
+                                                       const std::vector<WorkerId>& destinationTopologyNodeIds) {
+
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+
+    NES_INFO("Topology: Finding path between set of start and destination nodes");
+    std::vector<TopologyNodePtr> startNodesOfGraph;
+    for (const auto& sourceNodeId : sourceTopologyNodeIds) {
+        NES_TRACE("Topology: Finding all paths between the source node {} and a set of destination nodes", sourceNodeId);
+
+        auto sourceTopologyNode = (*(*lockedWorkerIdToTopologyNodeMap)[sourceNodeId].rlock());
+        std::map<WorkerId, TopologyNodePtr> mapOfUniqueNodes;
+        TopologyNodePtr startNodeOfGraph = find(sourceTopologyNode, destinationTopologyNodeIds, mapOfUniqueNodes);
+        NES_TRACE("Topology: Validate if all destination nodes reachable");
+        for (const auto& destinationNode : destinationTopologyNodeIds) {
+            if (mapOfUniqueNodes.find(destinationNode->getId()) == mapOfUniqueNodes.end()) {
+                NES_ERROR("Topology: Unable to find path between source node {} and destination node{}",
+                          sourceNodeId->toString(),
+                          destinationNode->toString());
+                return {};
+            }
+        }
+        NES_TRACE("Topology: Push the start node of the graph into a collection of start nodes");
+        startNodesOfGraph.push_back(startNodeOfGraph);
+    }
+    NES_TRACE("Topology: Merge all found sub-graphs together to create a single sub graph and return the set of start nodes of "
+              "the merged graph.");
+    return mergeSubGraphs(startNodesOfGraph);
 }
 
-NES::Spatial::Index::Experimental::LocationIndexPtr Topology::getLocationIndex() { return locationIndex; }
+std::optional<TopologyNodePtr> Topology::findAllPathBetween(const TopologyNodePtr& sourceNode,
+                                                            const TopologyNodePtr& destinationNode) {
+
+    auto lockedWorkerIdToTopologyNodeMap = workerIdToTopologyNode.wlock();
+
+    NES_DEBUG("Topology: Finding path between {} and {}", sourceNode->toString(), destinationNode->toString());
+
+    std::optional<TopologyNodePtr> result;
+    std::vector<TopologyNodePtr> searchedNodes{destinationNode};
+    std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
+    TopologyNodePtr found = find(sourceNode, searchedNodes, mapOfUniqueNodes);
+    if (found) {
+        NES_DEBUG("Topology: Found path between {} and {}", sourceNode->toString(), destinationNode->toString());
+        return found;
+    }
+    NES_WARNING("Topology: Unable to find path between {} and {}", sourceNode->toString(), destinationNode->toString());
+    return result;
+}
+
+std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes) {
+    NES_INFO("Topology: Merge {} sub-graphs to create a single sub-graph", startNodes.size());
+
+    NES_DEBUG("Topology: Compute a map storing number of times a node occurred in different sub-graphs");
+    std::map<WorkerId, uint32_t> nodeCountMap;
+    for (const auto& startNode : startNodes) {
+        NES_TRACE("Topology: Fetch all ancestor nodes of the given start node");
+        const std::vector<NodePtr> family = startNode->getAndFlattenAllAncestors();
+        NES_TRACE(
+            "Topology: Iterate over the family members and add the information in the node count map about the node occurrence");
+        for (const auto& member : family) {
+            WorkerId workerId = member->as<TopologyNode>()->getId();
+            if (nodeCountMap.find(workerId) != nodeCountMap.end()) {
+                NES_TRACE("Topology: Family member already present increment the occurrence count");
+                uint32_t count = nodeCountMap[workerId];
+                nodeCountMap[workerId] = count + 1;
+            } else {
+                NES_TRACE("Topology: Add family member into the node count map");
+                nodeCountMap[workerId] = 1;
+            }
+        }
+    }
+
+    NES_DEBUG("Topology: Iterate over each sub-graph and compute a single merged sub-graph");
+    std::vector<TopologyNodePtr> result;
+    std::map<WorkerId, TopologyNodePtr> mergedGraphNodeMap;
+    for (const auto& startNode : startNodes) {
+        NES_DEBUG(
+            "Topology: Check if the node already present in the new merged graph and add a copy of the node if not present");
+        if (mergedGraphNodeMap.find(startNode->getId()) == mergedGraphNodeMap.end()) {
+            TopologyNodePtr copyOfStartNode = startNode->copy();
+            NES_DEBUG("Topology: Add the start node to the list of start nodes for the new merged graph");
+            result.push_back(copyOfStartNode);
+            mergedGraphNodeMap[startNode->getId()] = copyOfStartNode;
+        }
+        NES_DEBUG("Topology: Iterate over the ancestry of the start node and add the eligible nodes to new merged graph");
+        TopologyNodePtr childNode = startNode;
+        while (childNode) {
+            NES_TRACE("Topology: Get all parents of the child node to select the next parent to traverse.");
+            std::vector<NodePtr> parents = childNode->getParents();
+            TopologyNodePtr selectedParent;
+            if (parents.size() > 1) {
+                NES_TRACE("Topology: Found more than one parent for the node");
+                NES_TRACE("Topology: Iterate over all parents and select the parent node that has the max cost value.");
+                double maxCost = 0;
+                for (auto& parent : parents) {
+
+                    NES_TRACE("Topology: Get all ancestor of the node and aggregate their occurrence counts.");
+                    std::vector<NodePtr> family = parent->getAndFlattenAllAncestors();
+                    double occurrenceCount = 0;
+                    for (auto& member : family) {
+                        occurrenceCount = occurrenceCount + nodeCountMap[member->as<TopologyNode>()->getId()];
+                    }
+
+                    NES_TRACE("Topology: Compute cost by multiplying aggregate occurrence count with base multiplier and "
+                              "dividing the result by the number of nodes in the path.");
+                    double cost = (occurrenceCount * BASE_MULTIPLIER) / family.size();
+
+                    if (cost > maxCost) {
+                        NES_TRACE("Topology: The cost is more than max cost found till now.");
+                        if (selectedParent) {
+                            NES_TRACE("Topology: Remove the previously selected parent as parent to the current child node.");
+                            childNode->removeParent(selectedParent);
+                        }
+                        maxCost = cost;
+                        NES_TRACE("Topology: Mark this parent as next selected parent.");
+                        selectedParent = parent->as<TopologyNode>();
+                    } else {
+                        NES_TRACE("Topology: The cost is less than max cost found till now.");
+                        if (selectedParent) {
+                            NES_TRACE("Topology: Remove this parent as parent to the current child node.");
+                            childNode->removeParent(parent);
+                        }
+                    }
+                }
+            } else if (parents.size() == 1) {
+                NES_TRACE("Topology: Found only one parent for the current child node");
+                NES_TRACE("Topology: Set the parent as next parent to traverse");
+                selectedParent = parents[0]->as<TopologyNode>();
+            }
+
+            if (selectedParent) {
+                NES_TRACE("Topology: Found a new next parent to traverse");
+                if (mergedGraphNodeMap.find(selectedParent->getId()) != mergedGraphNodeMap.end()) {
+                    NES_TRACE("Topology: New next parent is already present in the new merged graph.");
+                    TopologyNodePtr equivalentParentNode = mergedGraphNodeMap[selectedParent->getId()];
+                    TopologyNodePtr equivalentChildNode = mergedGraphNodeMap[childNode->getId()];
+                    NES_TRACE("Topology: Add the existing node, with id same as new next parent, as parent to the existing node "
+                              "with id same as current child node");
+                    equivalentChildNode->addParent(equivalentParentNode);
+                } else {
+                    NES_TRACE("Topology: New next parent is not present in the new merged graph.");
+                    NES_TRACE(
+                        "Topology: Add copy of new next parent as parent to the existing child node in the new merged graph.");
+                    TopologyNodePtr copyOfSelectedParent = selectedParent->copy();
+                    TopologyNodePtr equivalentChildNode = mergedGraphNodeMap[childNode->getId()];
+                    equivalentChildNode->addParent(copyOfSelectedParent);
+                    mergedGraphNodeMap[selectedParent->getId()] = copyOfSelectedParent;
+                }
+            }
+            NES_TRACE("Topology: Assign new selected parent as next child node to traverse.");
+            childNode = selectedParent;
+        }
+    }
+
+    return result;
+}
+
+TopologyNodePtr Topology::find(TopologyNodePtr testNode,
+                               std::vector<TopologyNodePtr> searchedNodes,
+                               std::map<WorkerId, TopologyNodePtr>& uniqueNodes) {
+
+    NES_TRACE("Topology: check if test node is one of the searched node");
+    auto found = std::find_if(searchedNodes.begin(), searchedNodes.end(), [&](const TopologyNodePtr& searchedNode) {
+        return searchedNode->getId() == testNode->getId();
+    });
+
+    if (found != searchedNodes.end()) {
+        NES_DEBUG("Topology: found the destination node");
+        if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
+            NES_TRACE("Topology: Insert the information about the test node in the unique node map");
+            const TopologyNodePtr copyOfTestNode = testNode->copy();
+            uniqueNodes[testNode->getId()] = copyOfTestNode;
+        }
+        NES_TRACE("Topology: Insert the information about the test node in the unique node map");
+        return uniqueNodes[testNode->getId()];
+    }
+
+    std::vector<NodePtr> parents = testNode->getParents();
+    std::vector<NodePtr> updatedParents;
+    //filters out all parents that are marked for maintenance, as these should be ignored during path finding
+    for (auto& parent : parents) {
+        if (!parent->as<TopologyNode>()->isUnderMaintenance()) {
+            updatedParents.push_back(parent);
+        }
+    }
+
+    if (updatedParents.empty()) {
+        NES_WARNING("Topology: reached end of the tree but destination node not found.");
+        return nullptr;
+    }
+
+    TopologyNodePtr foundNode = nullptr;
+    for (auto& parent : updatedParents) {
+        TopologyNodePtr foundInParent = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
+        if (foundInParent) {
+            NES_TRACE("Topology: found the destination node as the parent of the physical node.");
+            if (!foundNode) {
+                if (uniqueNodes.find(testNode->getId()) == uniqueNodes.end()) {
+                    const TopologyNodePtr copyOfTestNode = testNode->copy();
+                    uniqueNodes[testNode->getId()] = copyOfTestNode;
+                }
+                foundNode = uniqueNodes[testNode->getId()];
+            }
+            NES_TRACE("Topology: Adding found node as parent to the copy of testNode.");
+            foundNode->addParent(foundInParent);
+        }
+    }
+    return foundNode;
+}
 
 nlohmann::json Topology::toJson() {
 
@@ -288,6 +491,11 @@ std::string Topology::toString() {
 }
 
 void Topology::print() { NES_DEBUG("Topology print:{}", toString()); }
+
+std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
+Topology::getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius) {
+    return locationIndex->getNodeIdsInRange(center, radius);
+}
 
 bool Topology::addGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
 

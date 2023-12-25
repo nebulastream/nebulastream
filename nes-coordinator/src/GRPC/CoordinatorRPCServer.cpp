@@ -23,7 +23,7 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Runtime/OpenCLManager.hpp>
-#include <Services/LocationService.hpp>
+#include <Services/CoordinatorHealthCheckService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -68,12 +68,12 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            SourceCatalogServicePtr sourceCatalogService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
-                                           LocationServicePtr locationService,
-                                           QueryParsingServicePtr queryParsingService)
+                                           QueryParsingServicePtr queryParsingService,
+                                           CoordinatorHealthCheckServicePtr coordinatorHealthCheckService)
     : queryService(std::move(queryService)), topologyManagerService(std::move(topologyManagerService)),
       sourceCatalogService(std::move(sourceCatalogService)), queryCatalogService(std::move(queryCatalogService)),
-      monitoringManager(std::move(monitoringManager)), locationService(std::move(locationService)),
-      queryParsingService(std::move(queryParsingService)){};
+      monitoringManager(std::move(monitoringManager)), queryParsingService(std::move(queryParsingService)),
+      coordinatorHealthCheckService(std::move(coordinatorHealthCheckService)){};
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,
@@ -96,6 +96,13 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     deserializeOpenCLDeviceInfo(workerProperties[NES::Worker::Configuration::OPENCL_DEVICES],
                                 registrationRequest->opencldevices());
 
+    // check if an inactive worker with workerId already exists
+    if (coordinatorHealthCheckService && coordinatorHealthCheckService->isWorkerInactive(configWorkerId)) {
+        // node is re-registering (was inactive and became active again)
+        NES_TRACE("TopologyManagerService::registerWorker: node with worker id {} is re-registering", configWorkerId);
+        coordinatorHealthCheckService->removeNodeFromHealthCheck(configWorkerId);
+    }
+
     NES_DEBUG("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
     WorkerId workerId =
         topologyManagerService->registerWorker(configWorkerId, address, grpcPort, dataPort, slots, workerProperties);
@@ -115,13 +122,19 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     registrationMetrics->getValue<Monitoring::RegistrationMetrics>().nodeId = workerId;
     monitoringManager->addMonitoringData(workerId, registrationMetrics);
 
-    if (workerId != 0) {
+    if (coordinatorHealthCheckService) {
+        std::string grpcAddress = address + ":" + std::to_string(grpcPort);
+        //add node to health check
+        coordinatorHealthCheckService->addNodeToHealthCheck(workerId, grpcAddress);
+    }
+
+    if (workerId != INVALID_WORKER_NODE_ID) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id={}", workerId);
         reply->set_workerid(workerId);
         return Status::OK;
     }
     NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
-    reply->set_workerid(0);
+    reply->set_workerid(INVALID_WORKER_NODE_ID);
     return Status::CANCELLED;
 }
 
@@ -129,17 +142,24 @@ Status
 CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request ={}", request->DebugString());
 
-    auto spatialType = topologyManagerService->findNodeWithId(request->workerid())->getSpatialNodeType();
-    bool success = topologyManagerService->removeGeoLocation(request->workerid())
+    google::protobuf::uint64 workerId = request->workerid();
+    auto spatialType = topologyManagerService->findNodeWithId(workerId)->getSpatialNodeType();
+    bool success = topologyManagerService->removeGeoLocation(workerId)
         || spatialType == NES::Spatial::Experimental::SpatialType::NO_LOCATION
         || spatialType == NES::Spatial::Experimental::SpatialType::INVALID;
     if (success) {
-        if (!topologyManagerService->unregisterNode(request->workerid())) {
+        if (!topologyManagerService->unregisterNode(workerId)) {
             NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
             reply->set_success(false);
             return Status::CANCELLED;
         }
-        monitoringManager->removeMonitoringNode(request->workerid());
+        
+        if (coordinatorHealthCheckService) {
+            //remove node to health check
+            coordinatorHealthCheckService->removeNodeFromHealthCheck(workerId);
+        }
+        
+        monitoringManager->removeMonitoringNode(workerId);
         NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
         reply->set_success(true);
         return Status::OK;
@@ -403,7 +423,8 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
         removedReconnects.emplace_back(
             NES::Spatial::Mobility::Experimental::ReconnectPoint{location, toRemove.id(), toRemove.time()});
     }
-    bool success = locationService->updatePredictedReconnect(addedReconnects, removedReconnects);
+    //FIXME: Call the code to update the predictions
+    bool success = false;
     reply->set_success(success);
     if (success) {
         return Status::OK;

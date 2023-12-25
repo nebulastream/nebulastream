@@ -27,19 +27,13 @@ class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 /**
- * @brief This is a utility class that help path between topology nodes
+ * @brief This is a utility class that operates on the topology nodes to find different types of topology nodes between
+ * given pair of topology nodes.
  */
 class PathFinder {
 
   public:
     PathFinder(WorkerId rootTopologyNodeId);
-
-    /**
-     * @brief Merge the sub graphs starting from the nodes into a single sub-graph
-     * @param startNodes : start nodes of the sub-graphs to be merged
-     * @return start nodes of the merged sub-graph
-     */
-    static std::vector<TopologyNodePtr> mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes);
 
     /**
      * @brief Find the immediate common ancestor for the set of Topology nodes
@@ -80,35 +74,8 @@ class PathFinder {
     std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
                                                   std::vector<TopologyNodePtr> destinationNodes);
 
-    /**
-     * @brief This method will return a subgraph containing all the paths between start and destination node.
-     * Note: this method will only look for the destination node only in the parent nodes of the start node.
-     * @param startNode: the physical start node
-     * @param destinationNode: the destination start node
-     * @return physical location of the leaf node in the graph.
-     */
-    std::optional<TopologyNodePtr> findAllPathBetween(const TopologyNodePtr& startNode, const TopologyNodePtr& destinationNode);
-
-    /**
-     * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
-     * @param sourceNodes: the topology nodes where to start the path identification
-     * @param destinationNodes: the topology nodes where to end the path identification
-     * @return a vector of start/upstream topology nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
-     */
-    std::vector<TopologyNodePtr> findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
-                                                 const std::vector<TopologyNodePtr>& destinationNodes);
-
   private:
-    /**
-     * @brief Find if searched node is in the parent list of the test node or its parents parent list
-     * @param testNode: the test node
-     * @param searchedNodes: the searched node
-     * @return the node where the searched node is found
-     */
-    TopologyNodePtr
-    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<WorkerId, TopologyNodePtr>& uniqueNodes);
     WorkerId rootTopologyNodeId;
-    static constexpr int BASE_MULTIPLIER = 10000;
 };
 }// namespace NES
 

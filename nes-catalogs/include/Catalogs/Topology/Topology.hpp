@@ -162,6 +162,24 @@ class Topology {
     bool occupySlots(WorkerId workerId, uint16_t amountToOccupy);
 
     /**
+     * @brief This method will return a "duplicate" subgraph containing all the paths between start and destination node.
+     * Note: this method will only look for the destination nodes that are parent nodes of the source node.
+     * @param sourceNode: the source topology node
+     * @param destinationNode: the destination topology node
+     * @return topology nodes representing the source nodes of the returned subgraph.
+     */
+    std::optional<TopologyNodePtr> findAllPathBetween(const TopologyNodePtr& sourceNode, const TopologyNodePtr& destinationNode);
+
+    /**
+     * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
+     * @param sourceTopologyNodeIds: the topology nodes where to start the path identification
+     * @param destinationTopologyNodeIds: the topology nodes where to end the path identification
+     * @return a vector of start/upstream topology nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
+     */
+    std::vector<TopologyNodePtr> findPathBetween(const std::vector<WorkerId>& sourceTopologyNodeIds,
+                                                 const std::vector<WorkerId>& destinationTopologyNodeIds);
+
+    /**
      * @brief Get topology nodes with the given radius of the geo location
      * @param center : the center geo location
      * @param radius : the radius
@@ -199,12 +217,6 @@ class Topology {
      * @return true if successful
      */
     bool removeGeoLocation(WorkerId workerId);
-
-    /**
-     * @brief Get the shared pointer to the location index
-     * @return location index
-     */
-    NES::Spatial::Index::Experimental::LocationIndexPtr getLocationIndex();
 
     /**
      * Get a json containing the id and the location of any node. In case the node is neither a field nor a mobile node,
@@ -310,6 +322,9 @@ class Topology {
     std::string toString();
 
   private:
+
+    explicit Topology();
+
     /**
      * @brief convert a Location to a json representing the same coordinates
      * @param geoLocation : The location object to convert
@@ -337,12 +352,27 @@ class Topology {
     static nlohmann::json convertNodeLocationInfoToJson(WorkerId workerId,
                                                         Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
-    explicit Topology();
+    /**
+     * @brief Merge the sub graphs starting from the nodes into a single sub-graph
+     * @param startNodes : start nodes of the sub-graphs to be merged
+     * @return start nodes of the merged sub-graph
+     */
+    static std::vector<TopologyNodePtr> mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes);
+
+    /**
+     * @brief Find if searched node is in the parent list of the test node or its parents parent list
+     * @param testNode: the test node
+     * @param searchedNodes: the searched node
+     * @return the node where the searched node is found
+     */
+    TopologyNodePtr
+    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<WorkerId, TopologyNodePtr>& uniqueNodes);
 
     //TODO: At present we assume that we have only one root node
     WorkerId rootWorkerId;
     folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
+    static constexpr int BASE_MULTIPLIER = 10000;
 };
 }// namespace NES
 #endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

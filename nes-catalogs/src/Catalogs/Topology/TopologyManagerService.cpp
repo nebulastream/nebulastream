@@ -31,10 +31,6 @@ TopologyManagerService::TopologyManagerService(const TopologyPtr& topology) : to
     NES_DEBUG("TopologyManagerService()");
 }
 
-void TopologyManagerService::setHealthService(const HealthCheckServicePtr& healthCheckService) {
-    this->healthCheckService = healthCheckService;
-}
-
 WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
                                                 const std::string& address,
                                                 const int64_t grpcPort,
@@ -47,29 +43,11 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
 
     WorkerId id;
     // if worker is started with a workerId
-    if (workerId != INVALID_WORKER_NODE_ID) {
-        // check if an active worker with workerId already exists
-        if (topology->nodeWithWorkerIdExists(workerId)) {
-            NES_WARNING("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new "
-                        "worker id will be assigned.",
-                        workerId);
-            id = getNextWorkerId();
-        }
-        // check if an inactive worker with workerId already exists
-        else if (healthCheckService && healthCheckService->isWorkerInactive(workerId)) {
-            // node is re-registering (was inactive and became active again)
-            NES_TRACE("TopologyManagerService::registerWorker: node with worker id {} is reregistering", workerId);
-            id = workerId;
-            healthCheckService->removeNodeFromHealthCheck(id);
-        } else {
-            // there is no active worker with workerId and there is no inactive worker with workerId, therefore
-            // simply assign next available workerId
-            id = getNextWorkerId();
-        }
-    }
-
-    if (workerId == INVALID_WORKER_NODE_ID) {
-        // worker does not have a workerId yet => assign next available workerId
+    // then check if an active worker with workerId already exists
+    if (workerId != INVALID_WORKER_NODE_ID && topology->nodeWithWorkerIdExists(workerId)) {
+        NES_WARNING("TopologyManagerService::registerWorker: node with worker id {} already exists and is running. A new "
+                    "worker id will be assigned.",
+                    workerId);
         id = getNextWorkerId();
     }
 
@@ -90,12 +68,6 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
         topology->addTopologyNodeAsChild(rootTopologyNodeId, workerId);
     }
 
-    if (healthCheckService) {
-        std::string grpcAddress = address + ":" + std::to_string(grpcPort);
-        //add node to health check
-        healthCheckService->addNodeToHealthCheck(workerId, grpcAddress);
-    }
-
     NES_DEBUG("TopologyManagerService::registerWorker: topology after insert = ");
     topology->print();
     return id;
@@ -108,11 +80,6 @@ bool TopologyManagerService::unregisterNode(WorkerId workerId) {
     if (!topology->nodeWithWorkerIdExists(workerId)) {
         NES_ERROR("Topology node with id not found  {}", workerId);
         return false;
-    }
-
-    if (healthCheckService) {
-        //remove node to health check
-        healthCheckService->removeNodeFromHealthCheck(workerId);
     }
 
     //todo: remove mobile nodes here too?
@@ -167,7 +134,6 @@ WorkerId TopologyManagerService::getRootTopologyNodeId() { return topology->getR
 bool TopologyManagerService::removeTopologyNode(WorkerId nodeToRemove) { return topology->removeTopologyNode(nodeToRemove); }
 
 nlohmann::json TopologyManagerService::getTopologyAsJson() {
-    NES_INFO("TopologyController: getting topology as JSON");
     return topology->toJson();
 }
 
