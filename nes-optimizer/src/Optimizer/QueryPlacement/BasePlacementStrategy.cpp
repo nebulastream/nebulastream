@@ -43,10 +43,8 @@ BasePlacementStrategy::BasePlacementStrategy(const GlobalExecutionPlanPtr& globa
 
 bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
-void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan,
-                                         const TopologyPtr& topology,
-                                         NES::Optimizer::PlacementMatrix& matrix) {
-    std::vector<TopologyNodePtr> topologyNodes;
+void BasePlacementStrategy::pinOperators(QueryPlanPtr, const TopologyPtr&, NES::Optimizer::PlacementMatrix&) {
+    /*std::vector<TopologyNodePtr> topologyNodes;
     auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
     for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
         topologyNodes.emplace_back((*itr)->as<TopologyNode>());
@@ -63,14 +61,13 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan,
                 operators[j]->as<LogicalOperatorNode>()->addProperty(PINNED_WORKER_ID, topologyNodes[i]->getId());
             }
         }
-    }
+    }*/
 }
 
 void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorNodePtr>& upStreamPinnedOperators,
                                                  const std::set<LogicalOperatorNodePtr>& downStreamPinnedOperators) {
 
     //1. Find the topology nodes that will host upstream operators
-    std::set<TopologyNodePtr> topologyNodesWithUpStreamPinnedOperators;
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_WORKER_ID);
         if (!value.has_value()) {
@@ -79,15 +76,13 @@ void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorN
                 + pinnedOperator->toString());
         }
         WorkerId workerId = std::any_cast<uint64_t>(value);
-        pinnedUpStreamTopologyNodeIds.emplace(workerId);
-        auto topologyNode = topology->findWorkerWithId(workerId);
         //NOTE: Add the physical node to the set (we used set here to prevent inserting duplicate physical node in-case of self join or
         // two physical sources located on same physical node)
-        topologyNodesWithUpStreamPinnedOperators.insert(topologyNode);
+        pinnedUpStreamTopologyNodeIds.emplace(workerId);
+        auto topologyNode = topology->getCopyOfTopologyNodeWithId(workerId);
     }
 
     //2. Find the topology nodes that will host downstream operators
-    std::set<TopologyNodePtr> topologyNodesWithDownStreamPinnedOperators;
     for (const auto& pinnedOperator : downStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_WORKER_ID);
         if (!value.has_value()) {
@@ -97,25 +92,23 @@ void BasePlacementStrategy::performPathSelection(const std::set<LogicalOperatorN
         }
         WorkerId workerId = std::any_cast<uint64_t>(value);
         pinnedDownStreamTopologyNodeIds.emplace(workerId);
-        auto nodeWithPhysicalSource = topology->findWorkerWithId(workerId);
-        topologyNodesWithDownStreamPinnedOperators.insert(nodeWithPhysicalSource);
     }
 
     //3. Find the path for placement based on the selected placement mode
     switch (placementAmenderMode) {
         case PlacementAmenderMode::PESSIMISTIC: {
-            pessimisticPathSelection(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
+            pessimisticPathSelection(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
             break;
         }
         case PlacementAmenderMode::OPTIMISTIC: {
-            optimisticPathSelection(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
+            optimisticPathSelection(pinnedUpStreamTopologyNodeIds, pinnedDownStreamTopologyNodeIds);
             break;
         }
     }
 }
 
-void BasePlacementStrategy::optimisticPathSelection(const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
-                                                    const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators) {
+void BasePlacementStrategy::optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                                    const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     //1 Performs path selection
     std::vector<TopologyNodePtr> sourceTopologyNodesInSelectedPath =
@@ -153,9 +146,8 @@ void BasePlacementStrategy::optimisticPathSelection(const std::set<TopologyNodeP
     }
 }
 
-void BasePlacementStrategy::pessimisticPathSelection(
-    const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
-    const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators) {
+void BasePlacementStrategy::pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                                     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
     bool success = false;
     uint8_t retryCount = 0;
     std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
@@ -206,7 +198,7 @@ bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<To
         }
 
         //Try to acquire the lock
-        if (!topology->acquireLockOnTopologyNode(idOfTopologyNodeToLock)) {
+        if (!topology->lockTopologyNode(idOfTopologyNodeToLock)) {
             NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", idOfTopologyNodeToLock);
             //Release all the acquired locks as part of back-off and retry strategy.
             unlockTopologyNodes();
@@ -225,8 +217,8 @@ bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<To
 }
 
 std::vector<TopologyNodePtr>
-BasePlacementStrategy::findPath(const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
-                                const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators) {
+BasePlacementStrategy::findPath(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     //1 Create the pinned upstream and downstream topology node vector
     std::vector upstreamTopologyNodes(topologyNodesWithUpStreamPinnedOperators.begin(),
@@ -672,7 +664,7 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
         // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
         if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
             //1.1. wait till lock is acquired
-            while (!topology->acquireLockOnTopologyNode(workerNodeId)) {
+            while (!topology->lockTopologyNode(workerNodeId)) {
                 std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
             };
         }

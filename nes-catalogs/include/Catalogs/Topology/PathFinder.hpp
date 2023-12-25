@@ -32,6 +32,8 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class PathFinder {
 
   public:
+    PathFinder(WorkerId rootTopologyNodeId);
+
     /**
      * @brief Merge the sub graphs starting from the nodes into a single sub-graph
      * @param startNodes : start nodes of the sub-graphs to be merged
@@ -105,7 +107,7 @@ class PathFinder {
      */
     TopologyNodePtr
     find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<WorkerId, TopologyNodePtr>& uniqueNodes);
-
+    WorkerId rootTopologyNodeId;
     static constexpr int BASE_MULTIPLIER = 10000;
 };
 }// namespace NES

@@ -275,7 +275,7 @@ void GlobalQueryPlanUpdatePhase::processRemoveTopologyNodeRequest(
     }
 
     //3. Get the topology node with removed node id
-    TopologyNodePtr removedTopologyNode = topology->findWorkerWithId(removedNodeId);
+    TopologyNodePtr removedTopologyNode = topology->getCopyOfTopologyNodeWithId(removedNodeId);
 
     //4. Fetch upstream and downstream topology nodes connected via the removed topology node
     auto downstreamTopologyNodes = removedTopologyNode->getParents();

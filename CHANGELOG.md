@@ -1465,7 +1465,7 @@
 
 ### Bug Fixes 🐛
 
-- \[BUG\] On a worker failure Topology::removePhysicalNode rootNode-\>remove\(nodeToRemove\) is called [\#3881](https://github.com/nebulastream/nebulastream/issues/3881)
+- \[BUG\] On a worker failure Topology::removeTopologyNode rootNode-\>remove\(nodeToRemove\) is called [\#3881](https://github.com/nebulastream/nebulastream/issues/3881)
 
 ## [v0.5.128](https://github.com/nebulastream/nebulastream/tree/v0.5.128) (2023-07-01)
 

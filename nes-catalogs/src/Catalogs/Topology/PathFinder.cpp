@@ -20,6 +20,8 @@
 
 namespace NES {
 
+PathFinder::PathFinder(NES::WorkerId rootTopologyNodeId) : rootTopologyNodeId(rootTopologyNodeId) {}
+
 std::vector<TopologyNodePtr> PathFinder::findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
                                                          const std::vector<TopologyNodePtr>& destinationNodes) {
 
@@ -237,7 +239,7 @@ TopologyNodePtr PathFinder::findCommonAncestor(std::vector<TopologyNodePtr> topo
 
     //Check if one of the input node is a root node of the topology
     auto found = std::find_if(topologyNodes.begin(), topologyNodes.end(), [&](const TopologyNodePtr& topologyNode) {
-        return rootNode->getId() == topologyNode->getId();
+        return rootTopologyNodeId == topologyNode->getId();
     });
 
     // If a root node found in the input nodes then return the root topology node
@@ -338,7 +340,7 @@ TopologyNodePtr PathFinder::findCommonChild(std::vector<TopologyNodePtr> topolog
 }
 
 TopologyNodePtr PathFinder::findCommonNodeBetween(std::vector<TopologyNodePtr> childNodes,
-                                                std::vector<TopologyNodePtr> parenNodes) {
+                                                  std::vector<TopologyNodePtr> parenNodes) {
     NES_DEBUG("Topology: Find a common ancestor node for the input children nodes.");
     TopologyNodePtr commonAncestorForChildren = findCommonAncestor(std::move(childNodes));
     if (!commonAncestorForChildren) {

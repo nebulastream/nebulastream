@@ -38,10 +38,8 @@ void CoordinatorHealthCheckService::startHealthCheck() {
         setThreadName("nesHealth");
         auto waitTime = std::chrono::seconds(this->coordinatorConfiguration->coordinatorHealthCheckWaitTime.getValue());
         while (isRunning) {
-            for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
-                auto nodeIp = node.second->getIpAddress();
-                auto nodeGrpcPort = node.second->getGrpcPort();
-                std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+            for (auto node : topologyIdToRPCAddressMap.lock_table()) {
+                std::string destAddress = node.second;
 
                 //check health
                 NES_TRACE("NesCoordinator::healthCheck: checking node= {}", destAddress);
@@ -53,12 +51,12 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                     }
                 } else {
                     NES_WARNING("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
-                    if (topologyManagerService->getRootTopologyNodeId()->getId() == node.second->getId()) {
+                    if (topologyManagerService->getRootTopologyNodeId() == node.first) {
                         NES_WARNING("The failing node is the root node so we cannot delete it");
                         shutdownRPC->set_value(true);
                         return;
                     } else {
-                        auto ret = topologyManagerService->removePhysicalNode(node.second);
+                        auto ret = topologyManagerService->removeTopologyNode(node.first);
                         inactiveWorkers.insert(node.first);
                         if (ret) {
                             NES_TRACE("NesCoordinator::healthCheck: remove node={} successfully", destAddress);

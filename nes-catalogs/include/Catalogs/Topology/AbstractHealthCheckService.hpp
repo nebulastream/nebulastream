@@ -68,13 +68,13 @@ class AbstractHealthCheckService {
      * Method to add a node for health checking
      * @param node pointer to the node in the topology
      */
-    void addNodeToHealthCheck(TopologyNodePtr node);
+    void addNodeToHealthCheck(WorkerId workerId, const std::string& rpcAddress);
 
     /**
      * Method to remove a node from the health checking
-     * @param node pointer to the node in the topology
+     * @param workerId id to the node in the topology
      */
-    void removeNodeFromHealthCheck(TopologyNodePtr node);
+    void removeNodeFromHealthCheck(WorkerId workerId);
 
     /**
      * Method to return if the health server is still running
@@ -89,18 +89,11 @@ class AbstractHealthCheckService {
      */
     bool isWorkerInactive(WorkerId workerId);
 
-    /**
-     * Method to return a worker from healthcheck by its id
-     * @param workerId id of the worker
-     * @return worker with workerId
-     */
-    TopologyNodePtr getWorkerByWorkerId(WorkerId workerId);
-
   protected:
     std::shared_ptr<std::thread> healthCheckingThread;
     std::atomic<bool> isRunning = false;
     std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();
-    cuckoohash_map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
+    cuckoohash_map<WorkerId, std::string> topologyIdToRPCAddressMap;
     uint64_t id;
     std::string healthServiceName;
     std::condition_variable cv;
@@ -110,4 +103,4 @@ class AbstractHealthCheckService {
 
 }// namespace NES
 
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_

@@ -805,7 +805,7 @@ TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
         queryPlan3->getSinkOperators().front()->inferSchema();
 
         //deploy new query
-        auto topologyNode3 = topology->findWorkerWithId(wrk3->getWorkerId());
+        auto topologyNode3 = topology->getCopyOfTopologyNodeWithId(wrk3->getWorkerId());
         auto executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
         executionNode3->addNewQuerySubPlan(sharedQueryId, queryPlan3);
         executionNode3->getTopologyNode()->occupySlots(1);

@@ -52,7 +52,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-using TopologyNodeWLock = std::shared_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
+using TopologyNodeWLock = std::unique_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
@@ -64,7 +64,7 @@ class Topology {
      * @brief Factory to create instance of topology
      * @return shared pointer to the topology
      */
-    static TopologyPtr create(const Spatial::Index::Experimental::LocationIndexPtr& locationIndex);
+    static TopologyPtr create();
 
     /**
      * @brief Get the ID of root topology node
@@ -83,7 +83,23 @@ class Topology {
      * @param newTopologyNode : the shared pointer of the new node
      * @return true if registered else false
      */
-    bool registerTopologyNode(TopologyNodePtr&& newTopologyNode);
+
+    /**
+     * @brief Register a new topology node in the topology
+     * @param workerId : the id of the topology node
+     * @param address : the host name
+     * @param grpcPort : the grpc post
+     * @param dataPort : data post
+     * @param numberOfSlots : number of slots
+     * @param workerProperties : the properties
+     * @return true if successful
+     */
+    bool registerTopologyNode(WorkerId workerId,
+                              const std::string& address,
+                              const int64_t grpcPort,
+                              const int64_t dataPort,
+                              const uint16_t numberOfSlots,
+                              std::map<std::string, std::any> workerProperties);
 
     /**
      * @brief This method will add the a topology node as child to the parent with provided Id
@@ -95,17 +111,25 @@ class Topology {
 
     /**
      * @brief This method will remove a given topology node
-     * @param nodeToRemove : the node to be removed
+     * @param topologyNodeId : the node to be removed
      * @return true if successful
      */
-    bool removeTopologyNode(const TopologyNodePtr& nodeToRemove);
+    bool removeTopologyNode(WorkerId topologyNodeId);
 
     /**
-     * @brief This method will find a given worker node by its id
-     * @param workerId : the id of the worker
-     * @return Topology node if found else nullptr
+     * @brief Remove links between two nodes
+     * @param parentWorkerId: parent topology node id
+     * @param childWorkerId: child topology node id
+     * @return true if successful
      */
-    TopologyNodePtr findWorkerWithId(WorkerId workerId);
+    bool removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWorkerId);
+
+    /**
+     * @brief This method will find ad return a copy of the topology node with given worker id
+     * @param workerId : the id of the topology node
+     * @return Topology node copy if found else nullptr
+     */
+    TopologyNodePtr getCopyOfTopologyNodeWithId(WorkerId workerId);
 
     /**
      * @brief checks if a topology node with workerId exists
@@ -115,28 +139,11 @@ class Topology {
     bool nodeWithWorkerIdExists(WorkerId workerId);
 
     /**
-     * @brief Get topology nodes with the given radius of the geo location
-     * @param center : the center geo location
-     * @param radius : the radius
-     * @return map of topology node id and the geo location
-     */
-    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
-    getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius);
-
-    /**
-     * @brief Remove links between
-     * @param parentNode
-     * @param childNode
-     * @return
-     */
-    bool removeTopologyNodeAsChild(const TopologyNodePtr& parentNode, const TopologyNodePtr& childNode);
-
-    /**
      * @brief acquire the lock on the topology node
      * @param workerId : the id of the topology node
      * @return true if successfully acquired the lock else false
      */
-    TopologyNodeWLock acquireLockOnTopologyNode(WorkerId workerId);
+    TopologyNodeWLock lockTopologyNode(WorkerId workerId);
 
     /**
      * @brief Increase the amount of resources on the node with the id
@@ -153,6 +160,51 @@ class Topology {
      * @return true if successful
      */
     bool occupySlots(WorkerId workerId, uint16_t amountToOccupy);
+
+    /**
+     * @brief Get topology nodes with the given radius of the geo location
+     * @param center : the center geo location
+     * @param radius : the radius
+     * @return map of topology node id and the geo location
+     */
+    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
+    getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius);
+
+    /**
+     * Add GeoLocation of a worker node
+     * @param workerId : worker node id
+     * @param geoLocation : location of the worker node
+     * @return true if successful
+     */
+    bool addGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+
+    /**
+     * Get the geo location of the node
+     * @param nodeId : node id of the worker
+     * @return GeoLocation of the node
+     */
+    std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getGeoLocationForNode(WorkerId nodeId);
+
+    /**
+     * Update GeoLocation of a worker node
+     * @param workerId : worker node id
+     * @param geoLocation : location of the worker node
+     * @return true if successful
+     */
+    bool updateGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+
+    /**
+     * Remove geolocation of worker node
+     * @param workerId : worker id whose location is to be removed
+     * @return true if successful
+     */
+    bool removeGeoLocation(WorkerId workerId);
+
+    /**
+     * @brief Get the shared pointer to the location index
+     * @return location index
+     */
+    NES::Spatial::Index::Experimental::LocationIndexPtr getLocationIndex();
 
     /**
      * Get a json containing the id and the location of any node. In case the node is neither a field nor a mobile node,
@@ -285,7 +337,7 @@ class Topology {
     static nlohmann::json convertNodeLocationInfoToJson(WorkerId workerId,
                                                         Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
-    explicit Topology(const Spatial::Index::Experimental::LocationIndexPtr& locationIndex);
+    explicit Topology();
 
     //TODO: At present we assume that we have only one root node
     WorkerId rootWorkerId;
