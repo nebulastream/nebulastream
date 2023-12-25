@@ -84,7 +84,7 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
 
     for (auto nodeId : nodeIds) {
         NES_DEBUG("MonitoringManager: Registering monitoring plan for worker id= {}", std::to_string(nodeId));
-        TopologyNodePtr node = topology->findWorkerWithId(nodeId);
+        TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(nodeId);
 
         if (node) {
             auto nodeIp = node->getIpAddress();
@@ -121,7 +121,7 @@ nlohmann::json MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
     auto plan = getMonitoringPlan(nodeId);
 
     //getMonitoringPlan(..) checks if node exists, so no further check necessary
-    TopologyNodePtr node = topology->findWorkerWithId(nodeId);
+    TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(nodeId);
     auto nodeIp = node->getIpAddress();
     auto nodeGrpcPort = node->getGrpcPort();
     std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
@@ -156,7 +156,7 @@ void MonitoringManager::removeMonitoringNode(uint64_t nodeId) {
 
 MonitoringPlanPtr MonitoringManager::getMonitoringPlan(WorkerId nodeId) {
     if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {
-        TopologyNodePtr node = topology->findWorkerWithId(nodeId);
+        TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(nodeId);
         if (node) {
             NES_DEBUG("MonitoringManager: No registered plan found. Returning default plan for node {}", std::to_string(nodeId));
             return MonitoringPlan::defaultPlan();

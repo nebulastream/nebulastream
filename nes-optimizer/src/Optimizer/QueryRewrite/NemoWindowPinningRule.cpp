@@ -125,7 +125,7 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
     for (auto child : operatorNode->getAndFlattenAllChildren(true)) {
         if (child->as_if<OperatorNode>()->hasProperty(NES::Optimizer::PINNED_WORKER_ID)) {
             auto nodeId = std::any_cast<uint64_t>(child->as_if<OperatorNode>()->getProperty(NES::Optimizer::PINNED_WORKER_ID));
-            TopologyNodePtr node = topology->findWorkerWithId(nodeId);
+            TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(nodeId);
             for (auto& parent : node->getParents()) {
                 auto parentId = std::any_cast<uint64_t>(parent->as_if<TopologyNode>()->getId());
 
@@ -151,7 +151,7 @@ NemoWindowPinningRule::getMergerNodes(OperatorNodePtr operatorNode, uint64_t sha
         }
     }
     std::vector<std::pair<TopologyNodePtr, WatermarkAssignerLogicalOperatorNodePtr>> rootOperators;
-    auto rootId = topology->getRoot()->getId();
+    auto rootId = topology->getRootTopologyNodeId();
 
     //get the root operators
     if (nodePlacement.contains(rootId)) {

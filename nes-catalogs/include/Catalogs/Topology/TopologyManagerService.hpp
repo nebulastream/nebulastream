@@ -61,33 +61,33 @@ class TopologyManagerService {
 
     /**
      * Add GeoLocation of a worker node
-     * @param topologyNodeId : worker node id
+     * @param workerId : worker node id
      * @param geoLocation : location of the worker node
      * @return true if successful
      */
-    bool addGeoLocation(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool addGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
      * Update GeoLocation of a worker node
-     * @param topologyNodeId : worker node id
+     * @param workerId : worker node id
      * @param geoLocation : location of the worker node
      * @return true if successful
      */
-    bool updateGeoLocation(WorkerId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+    bool updateGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
 
     /**
      * Remove geolocation of worker node
-     * @param topologyNodeId : worker id whose location is to be removed
+     * @param workerId : worker id whose location is to be removed
      * @return true if successful
      */
-    bool removeGeoLocation(WorkerId topologyNodeId);
+    bool removeGeoLocation(WorkerId workerId);
 
     /**
      * @brief unregister an existing node
-     * @param nodeId
+     * @param workerId
      * @return bool indicating success
      */
-    bool unregisterNode(uint64_t nodeId);
+    bool unregisterNode(uint64_t workerId);
 
     /**
      * @brief method to ad a new parent to a node
@@ -133,7 +133,7 @@ class TopologyManagerService {
      * @param nodeToRemove : the node to be removed
      * @return true if successful
      */
-    bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
+    bool removeTopologyNode(WorkerId nodeToRemove);
 
     /**
      * Sets the health service
@@ -143,10 +143,10 @@ class TopologyManagerService {
 
     /**
      * Get the geo location of the node
-     * @param nodeId : node id of the worker
+     * @param workerId : node id of the worker
      * @return GeoLocation of the node
      */
-    std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getGeoLocationForNode(WorkerId nodeId);
+    std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getGeoLocationForNode(WorkerId workerId);
 
     /**
       * @brief function to obtain JSON representation of a NES Topology

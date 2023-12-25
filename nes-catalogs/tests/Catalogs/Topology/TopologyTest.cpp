@@ -165,7 +165,7 @@ TEST_F(TopologyTest, removeNodeWithNonRootParent) {
     success = topology->removeTopologyNode(childNode4);
     EXPECT_TRUE(success);
 
-    TopologyNodePtr node = topology->findWorkerWithId(4u);
+    TopologyNodePtr node = topology->getCopyOfTopologyNodeWithId(4u);
     EXPECT_TRUE(node == nullptr);
 }
 
@@ -817,16 +817,16 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
     auto topNodes = {topologyNodes.at(4), topologyNodes.at(5)};
     auto commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 1);
-    topology->findWorkerWithId(1)->setForMaintenance(true);
+    topology->getCopyOfTopologyNodeWithId(1)->setForMaintenance(true);
     commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 2);
-    topology->findWorkerWithId(2)->setForMaintenance(true);
+    topology->getCopyOfTopologyNodeWithId(2)->setForMaintenance(true);
     commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 3);
-    topology->findWorkerWithId(3)->setForMaintenance(true);
+    topology->getCopyOfTopologyNodeWithId(3)->setForMaintenance(true);
     commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor == nullptr);
-    topology->findWorkerWithId(1)->setForMaintenance(false);
+    topology->getCopyOfTopologyNodeWithId(1)->setForMaintenance(false);
     commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 1);
 }
@@ -870,16 +870,16 @@ TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
     auto topNodes = {topologyNodes.at(1), topologyNodes.at(2)};
     auto commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 4);
-    topology->findWorkerWithId(4)->setForMaintenance(true);
+    topology->getCopyOfTopologyNodeWithId(4)->setForMaintenance(true);
     commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 5);
-    topology->findWorkerWithId(5)->setForMaintenance(true);
+    topology->getCopyOfTopologyNodeWithId(5)->setForMaintenance(true);
     commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 3);
-    topology->findWorkerWithId(3)->setForMaintenance(true);
+    topology->getCopyOfTopologyNodeWithId(3)->setForMaintenance(true);
     commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild == nullptr);
-    topology->findWorkerWithId(4)->setForMaintenance(false);
+    topology->getCopyOfTopologyNodeWithId(4)->setForMaintenance(false);
     commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 4);
 }
@@ -932,7 +932,7 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     //try to find a new node onto which we could potentially migrate the subqueries on node 5.
     //this node must be reachable from node 7 and 8 as well as 1 and 2.
     //In this topology the only such node is node 3
-    topology->findWorkerWithId(5)->setForMaintenance(true);
+    topology->getCopyOfTopologyNodeWithId(5)->setForMaintenance(true);
 
     auto childNodes = {topologyNodes.at(7), topologyNodes.at(8)};
     auto parentNodes = {topologyNodes.at(1), topologyNodes.at(2)};

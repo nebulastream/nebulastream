@@ -233,8 +233,8 @@ class BasePlacementStrategy {
      * @param topologyNodesWithUpStreamPinnedOperators : topology nodes hosting the pinned upstream operators
      * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators
      */
-    void pessimisticPathSelection(const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
-                                  const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators);
+    void pessimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                  const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
 
     /**
      * @brief Select path for placement using optimistic approach where no locks are acquired on chosen topology nodes
@@ -242,8 +242,8 @@ class BasePlacementStrategy {
      * @param topologyNodesWithUpStreamPinnedOperators : topology nodes hosting the pinned upstream operators
      * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators
      */
-    void optimisticPathSelection(const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
-                                 const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators);
+    void optimisticPathSelection(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                 const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
 
     /**
      * @brief call the appropriate find path method on the topology to select the placement path
@@ -251,8 +251,8 @@ class BasePlacementStrategy {
      * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators
      * @return the upstream topology nodes of the selected path
      */
-    std::vector<TopologyNodePtr> findPath(const std::set<TopologyNodePtr>& topologyNodesWithUpStreamPinnedOperators,
-                                          const std::set<TopologyNodePtr>& topologyNodesWithDownStreamPinnedOperators);
+    std::vector<TopologyNodePtr> findPath(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                          const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
 
   private:
     //Number of retries to connect to downstream source operators

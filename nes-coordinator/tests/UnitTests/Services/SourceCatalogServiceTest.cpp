@@ -121,7 +121,7 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     EXPECT_TRUE(successRegisterLogicalSource);
 
     // common case
-    TopologyNodePtr physicalNode = topology->findWorkerWithId(nodeId);
+    TopologyNodePtr physicalNode = topology->getCopyOfTopologyNodeWithId(nodeId);
     bool successRegisterPhysicalSource = sourceCatalogService->registerPhysicalSource(physicalNode,
                                                                                       physicalSource->getPhysicalSourceName(),
                                                                                       physicalSource->getLogicalSourceName());

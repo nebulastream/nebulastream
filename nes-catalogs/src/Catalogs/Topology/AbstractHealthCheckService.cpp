@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Catalogs/Topology/AbstractHealthCheckService.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -44,22 +44,21 @@ void AbstractHealthCheckService::stopHealthCheck() {
     }
 }
 
-void AbstractHealthCheckService::addNodeToHealthCheck(TopologyNodePtr node) {
-    NES_DEBUG("HealthCheckService: adding node with id {}", node->getId());
-    auto exists = nodeIdToTopologyNodeMap.contains(node->getId());
+void AbstractHealthCheckService::addNodeToHealthCheck(WorkerId workerId, const std::string& rpcAddress) {
+    NES_DEBUG("HealthCheckService: adding node with id {}", workerId);
+    auto exists = topologyIdToRPCAddressMap.contains(workerId);
     if (exists) {
-        NES_THROW_RUNTIME_ERROR("HealthCheckService want to add node that already exists id=" << node->getId());
+        NES_THROW_RUNTIME_ERROR("HealthCheckService want to add node that already exists id=" << workerId);
     }
-    nodeIdToTopologyNodeMap.insert(node->getId(), node);
+    topologyIdToRPCAddressMap.insert(workerId, rpcAddress);
 }
 
-void AbstractHealthCheckService::removeNodeFromHealthCheck(TopologyNodePtr node) {
-    auto exists = nodeIdToTopologyNodeMap.contains(node->getId());
-    if (!exists) {
-        NES_THROW_RUNTIME_ERROR("HealthCheckService want to remove a node that does not exists id=" << node->getId());
+void AbstractHealthCheckService::removeNodeFromHealthCheck(WorkerId workerId) {
+    if (!topologyIdToRPCAddressMap.contains(workerId)) {
+        NES_THROW_RUNTIME_ERROR("HealthCheckService want to remove a node that does not exists id=" << workerId);
     }
-    NES_DEBUG("HealthCheckService: removing node with id {}", node->getId());
-    nodeIdToTopologyNodeMap.erase(node->getId());
+    NES_DEBUG("HealthCheckService: removing node with id {}", workerId);
+    topologyIdToRPCAddressMap.erase(workerId);
 }
 
 bool AbstractHealthCheckService::getRunning() { return isRunning; }
@@ -74,16 +73,6 @@ bool AbstractHealthCheckService::isWorkerInactive(WorkerId workerId) {
     }
     NES_DEBUG("HealthCheckService: node with id {} is active", workerId);
     return false;
-}
-
-TopologyNodePtr AbstractHealthCheckService::getWorkerByWorkerId(WorkerId workerId) {
-    for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
-        if (node.first == workerId) {
-            NES_DEBUG("AbstractHealthCheckService: Found worker with id {}", workerId);
-            return node.second;
-        }
-    }
-    return nullptr;
 }
 
 }// namespace NES

@@ -23,7 +23,6 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/Waypoint.hpp>
-#include <Util/SpatialUtils.hpp>
 #include <utility>
 
 namespace NES {
@@ -43,13 +42,10 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
                                                 const uint16_t numberOfSlots,
                                                 std::map<std::string, std::any> workerProperties) {
     NES_TRACE("TopologyManagerService: Register Node address={} numberOfSlots={}", address, numberOfSlots);
-    std::unique_lock<std::mutex> lock(registerDeregisterNode);
-
     NES_DEBUG("TopologyManagerService::registerWorker: topology before insert");
     NES_DEBUG("", topology->toString());
 
     WorkerId id;
-
     // if worker is started with a workerId
     if (workerId != INVALID_WORKER_NODE_ID) {
         // check if an active worker with workerId already exists
@@ -61,13 +57,10 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
         }
         // check if an inactive worker with workerId already exists
         else if (healthCheckService && healthCheckService->isWorkerInactive(workerId)) {
-            // node is reregistering (was inactive and became active again)
+            // node is re-registering (was inactive and became active again)
             NES_TRACE("TopologyManagerService::registerWorker: node with worker id {} is reregistering", workerId);
             id = workerId;
-            TopologyNodePtr workerWithOldConfig = healthCheckService->getWorkerByWorkerId(id);
-            if (workerWithOldConfig) {
-                healthCheckService->removeNodeFromHealthCheck(workerWithOldConfig);
-            }
+            healthCheckService->removeNodeFromHealthCheck(id);
         } else {
             // there is no active worker with workerId and there is no inactive worker with workerId, therefore
             // simply assign next available workerId
@@ -82,28 +75,25 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
 
     NES_DEBUG("TopologyManagerService::registerWorker: register node");
 
-    TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots, workerProperties);
-
-    if (!newTopologyNode) {
+    if (!topology->registerTopologyNode(workerId, address, grpcPort, dataPort, numberOfSlots, workerProperties)) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
         return INVALID_WORKER_NODE_ID;
     }
-
-    topology->registerTopologyNode(std::move(newTopologyNode));
 
     auto rootTopologyNodeId = topology->getRootTopologyNodeId();
 
     if (rootTopologyNodeId == INVALID_WORKER_NODE_ID) {
         NES_DEBUG("TopologyManagerService::registerWorker: tree is empty so this becomes new root");
-        topology->setRootTopologyNodeId(newTopologyNode);
+        topology->setRootTopologyNodeId(workerId);
     } else {
         NES_DEBUG("TopologyManagerService::registerWorker: add link to the root node {}", rootTopologyNodeId);
-        topology->addTopologyNodeAsChild(rootTopologyNodeId, newTopologyNode->getId());
+        topology->addTopologyNodeAsChild(rootTopologyNodeId, workerId);
     }
 
     if (healthCheckService) {
+        std::string grpcAddress = address + ":" + std::to_string(grpcPort);
         //add node to health check
-        healthCheckService->addNodeToHealthCheck(newTopologyNode);
+        healthCheckService->addNodeToHealthCheck(workerId, grpcAddress);
     }
 
     NES_DEBUG("TopologyManagerService::registerWorker: topology after insert = ");
@@ -111,43 +101,36 @@ WorkerId TopologyManagerService::registerWorker(WorkerId workerId,
     return id;
 }
 
-bool TopologyManagerService::unregisterNode(WorkerId nodeId) {
+bool TopologyManagerService::unregisterNode(WorkerId workerId) {
 
-    NES_DEBUG("TopologyManagerService::UnregisterNode: try to disconnect sensor with id  {}", nodeId);
-    TopologyNodePtr physicalNode = topology->findWorkerWithId(nodeId);
-    if (!physicalNode) {
-        NES_ERROR("CoordinatorActor: node with id not found  {}", nodeId);
+    NES_DEBUG("TopologyManagerService::UnregisterNode: try to disconnect sensor with id  {}", workerId);
+    TopologyNodePtr physicalNode = topology->getCopyOfTopologyNodeWithId(workerId);
+    if (!topology->nodeWithWorkerIdExists(workerId)) {
+        NES_ERROR("Topology node with id not found  {}", workerId);
         return false;
     }
 
     if (healthCheckService) {
         //remove node to health check
-        healthCheckService->removeNodeFromHealthCheck(physicalNode);
+        healthCheckService->removeNodeFromHealthCheck(workerId);
     }
 
     //todo: remove mobile nodes here too?
     auto spatialType = physicalNode->getSpatialNodeType();
     if (spatialType == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
-        removeGeoLocation(nodeId);
+        topology->removeGeoLocation(workerId);
     }
 
     NES_DEBUG("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
-    bool successTopology = topology->removeTopologyNode(physicalNode);
+    bool successTopology = topology->removeTopologyNode(workerId);
     NES_DEBUG("TopologyManagerService::UnregisterNode: success in topology is  {}", successTopology);
 
     return successTopology;
 }
 
-bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
+bool TopologyManagerService::addParent(WorkerId childId, WorkerId parentId) {
     NES_DEBUG("TopologyManagerService::addParent: childId= {}  parentId= {}", childId, parentId);
-
-    if (childId == parentId) {
-        NES_ERROR("TopologyManagerService::AddParent: cannot add link to itself");
-        return false;
-    }
-
-    NES_DEBUG("TopologyManagerService::AddParent: sensorParent node  {}  exists", parentId);
 
     bool added = topology->addTopologyNodeAsChild(parentId, childId);
     if (added) {
@@ -159,42 +142,8 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
     return false;
 }
 
-bool TopologyManagerService::removeAsParent(uint64_t childId, uint64_t parentId) {
-    NES_DEBUG("TopologyManagerService::removeAsParent: childId= {}  parentId= {}", childId, parentId);
-
-    TopologyNodePtr childNode = topology->findWorkerWithId(childId);
-    if (!childNode) {
-        NES_ERROR("TopologyManagerService::removeAsParent: source node {} does not exists", childId);
-        return false;
-    }
-    NES_DEBUG("TopologyManagerService::removeAsParent: source node  {}  exists", childId);
-
-    TopologyNodePtr parentNode = topology->findWorkerWithId(parentId);
-    if (!parentNode) {
-        NES_ERROR("TopologyManagerService::removeAsParent: sensorParent node {} does not exists", childId);
-        return false;
-    }
-
-    NES_DEBUG("TopologyManagerService::AddParent: sensorParent node  {}  exists", parentId);
-
-    std::vector<NodePtr> children = parentNode->getChildren();
-    auto found = std::find_if(children.begin(), children.end(), [&childId](const NodePtr& node) {
-        return node->as<TopologyNode>()->getId() == childId;
-    });
-
-    if (found == children.end()) {
-        NES_ERROR("TopologyManagerService::removeAsParent: nodes {} and {} are not connected", childId, parentId);
-        return false;
-    }
-
-    for (auto& child : children) {
-        if (child->as<TopologyNode>()->getId() == childId) {
-        }
-    }
-
-    NES_DEBUG("TopologyManagerService::removeAsParent: nodes connected");
-
-    bool success = topology->removeTopologyNodeAsChild(parentNode, childNode);
+bool TopologyManagerService::removeAsParent(WorkerId childId, WorkerId parentId) {
+    bool success = topology->removeTopologyNodeAsChild(parentId, childId);
     if (!success) {
         NES_ERROR("TopologyManagerService::removeAsParent: edge between {} and {} could not be removed", childId, parentId);
         return false;
@@ -203,7 +152,7 @@ bool TopologyManagerService::removeAsParent(uint64_t childId, uint64_t parentId)
     return true;
 }
 
-TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return topology->findWorkerWithId(nodeId); }
+TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return topology->getCopyOfTopologyNodeWithId(nodeId); }
 
 WorkerId TopologyManagerService::getNextWorkerId() { return ++topologyNodeIdCounter; }
 
@@ -215,74 +164,26 @@ TopologyManagerService::getTopologyNodeIdsInRange(Spatial::DataTypes::Experiment
 
 WorkerId TopologyManagerService::getRootTopologyNodeId() { return topology->getRootTopologyNodeId(); }
 
-bool TopologyManagerService::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
-    return topology->removeTopologyNode(nodeToRemove);
-}
+bool TopologyManagerService::removeTopologyNode(WorkerId nodeToRemove) { return topology->removeTopologyNode(nodeToRemove); }
 
 nlohmann::json TopologyManagerService::getTopologyAsJson() {
     NES_INFO("TopologyController: getting topology as JSON");
-    topology->toJson();
+    return topology->toJson();
 }
 
-//All of these methods can be moved to Location service
-bool TopologyManagerService::addGeoLocation(WorkerId topologyNodeId,
-                                            NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
-
-    auto topologyNode = topology->findWorkerWithId(topologyNodeId);
-    if (!topology->nodeWithWorkerIdExists(topologyNodeId)) {
-        NES_ERROR("Unable to find node with id {}", topologyNodeId);
-        return false;
-    }
-
-    if (geoLocation.isValid() && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
-        NES_DEBUG("added node with geographical location: {}, {}", geoLocation.getLatitude(), geoLocation.getLongitude());
-        locationIndex->initializeFieldNodeCoordinates(topologyNodeId, std::move(geoLocation));
-    } else {
-        NES_DEBUG("added node is a non field node");
-        if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            locationIndex->addMobileNode(topologyNode->getId(), std::move(geoLocation));
-            NES_DEBUG("added node is a mobile node");
-        } else {
-            NES_DEBUG("added node is a non mobile node");
-        }
-    }
-    return true;
+bool TopologyManagerService::addGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
+    return topology->addGeoLocation(workerId, std::move(geoLocation));
 }
 
-bool TopologyManagerService::updateGeoLocation(WorkerId topologyNodeId,
+bool TopologyManagerService::updateGeoLocation(WorkerId workerId,
                                                NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
-
-    auto topologyNode = topology->findWorkerWithId(topologyNodeId);
-    if (!topologyNode) {
-        NES_ERROR("Unable to find node with id {}", topologyNodeId);
-        return false;
-    }
-
-    if (geoLocation.isValid() && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
-        NES_DEBUG("added node with geographical location: {}, {}", geoLocation.getLatitude(), geoLocation.getLongitude());
-        locationIndex->updateFieldNodeCoordinates(topologyNodeId, std::move(geoLocation));
-    } else {
-        NES_DEBUG("added node is a non field node");
-        if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            locationIndex->addMobileNode(topologyNode->getId(), std::move(geoLocation));
-            NES_DEBUG("added node is a mobile node");
-        } else {
-            NES_DEBUG("added node is a non mobile node");
-        }
-    }
-    return true;
+    return topology->updateGeoLocation(workerId, std::move(geoLocation));
 }
 
-bool TopologyManagerService::removeGeoLocation(WorkerId topologyNodeId) {
-    auto topologyNode = topology->findWorkerWithId(topologyNodeId);
-    if (!topologyNode) {
-        NES_ERROR("Unable to find node with id {}", topologyNodeId);
-        return false;
-    }
-    return locationIndex->removeNodeFromSpatialIndex(topologyNodeId);
-}
+bool TopologyManagerService::removeGeoLocation(WorkerId workerId) { return topology->removeGeoLocation(workerId); }
 
-std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> TopologyManagerService::getGeoLocationForNode(WorkerId nodeId) {
-    return locationIndex->getGeoLocationForNode(nodeId);
+std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
+TopologyManagerService::getGeoLocationForNode(WorkerId workerId) {
+    return topology->getGeoLocationForNode(workerId);
 }
 }// namespace NES

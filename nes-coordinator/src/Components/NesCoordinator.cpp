@@ -75,19 +75,19 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
-    topology = Topology::create();
+
 
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     queryParsingService = QueryParsingService::create(jitCompiler);
-    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
+    topology = Topology::create();
+    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
@@ -130,7 +130,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   z3Context);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
-    locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
 
     monitoringService = std::make_shared<MonitoringService>(topology, queryService, queryCatalogService, enableMonitoring);
     monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);

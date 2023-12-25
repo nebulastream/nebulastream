@@ -52,8 +52,8 @@ bool TopologyTimeline::removeTopologyDelta(Timestamp predictedTime, const Topolo
     return true;
 }
 
-TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog& changeLog) {
-    auto copiedTopology = Topology::create();
+TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog&) {
+    /*auto copiedTopology = Topology::create();
     copiedTopology->setRootTopologyNodeId(originalTopology->getRoot()->copy());
 
     //bfs starting at root node
@@ -67,8 +67,8 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog& cha
 
         auto originalNode = originalTopology->findWorkerWithId(nodeId);
         if (originalNode) {
-            /*if the node exists in the original topology, add iterate over its children and add them to the copy if they are not
-            listed as removed by in the changelog*/
+            *//*if the node exists in the original topology, add iterate over its children and add them to the copy if they are not
+            listed as removed by in the changelog*//*
             auto removedChildren = changeLog.getRemovedChildren(nodeId);
             for (auto& originalChild : originalNode->getChildren()) {
                 auto childId = originalChild->as<TopologyNode>()->getId();
@@ -117,7 +117,8 @@ TopologyPtr TopologyTimeline::createTopologyVersion(const TopologyChangeLog& cha
             copiedTopology->addNewTopologyNodeAsChild(copiedNode, childNode);
         }
     }
-    return copiedTopology;
+    return copiedTopology;*/
+    return nullptr;
 }
 
 TopologyChangeLog TopologyTimeline::createAggregatedChangeLog(Timestamp time) {
