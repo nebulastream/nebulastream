@@ -53,7 +53,7 @@ class FlatMapPythonUDF : public ExecutableOperator {
     const std::string pythonCompiler;
 
     void createInputPojo(Record& record, Value<MemRef>& handler) const;
-    Record extractRecordFromObject(const Value<MemRef>& handler, const Value<MemRef>& outputPojoPtr) const;
+    Record extractRecordFromObject(const Value<MemRef>& outputPojoPtr) const;
 };
 
 }// namespace NES::Runtime::Execution::Operators

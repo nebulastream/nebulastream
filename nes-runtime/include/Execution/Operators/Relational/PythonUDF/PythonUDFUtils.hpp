@@ -56,6 +56,7 @@ int64_t transformLongType(void* outputPtr, int position, int tupleSize);
 int16_t transformShortType(void* outputPtr, int position, int tupleSize);
 int8_t transformByteType(void* outputPtr, int position, int tupleSize);
 void finalizePython(void* state);
+void freeObject(void* object);
 };// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_

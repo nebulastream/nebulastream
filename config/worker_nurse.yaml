@@ -33,7 +33,7 @@ numberOfBuffersPerWorker: 1024
 numberOfBuffersInSourceLocalBufferPool: 128
 
 # Size of buffer to pass data through the system
-bufferSizeInBytes: 131072
+bufferSizeInBytes: 1310720
 
 # Set parentId of NES Worker node
 parentId: 0
@@ -84,28 +84,28 @@ queryCompiler:
 #                         BinarySource (ToDo: Make source available))
 physicalSources:
   # Set logical stream name where this stream is added to
-  - logicalSourceName: points
+  - logicalSourceName: wearable_data
     # Set physical stream name
-    physicalSourceName: points_1
+    physicalSourceName: nurse_1
     # Define source type, also need to specify source configurations for source type below
     type: CSV_SOURCE
     # CSVSource and its needed configuration params
     configuration:
       ###### Define only the following configurations for CSV stream
       # Set file path
-      filePath: "/home/hpham/nebulastream/nebulastream/config/points.csv"
+      filePath: "/home/hpham/datasets/nurse/merged_data_cleaned.csv"
       # Skip first line of the file
       skipHeader: true
       # Set delimiter, e.g. ',' or '.'
       #delimiter: ","
       # Set number of buffers to produce, i.e. how often the read csv file is repeated
-      numberOfBuffersToProduce: 1024
+      numberOfBuffersToProduce: 7143
       # Set number of tuples to produce per buffer
-      numberOfTuplesToProducePerBuffer: 10
+      numberOfTuplesToProducePerBuffer: 1400
       # Set sampling interval of source
-      #sourceGatheringInterval: 1
+      sourceGatheringInterval: 10
       # Set gathering mode between [interval|ingestion|adaptive]
-      #sourceGatheringMode: interval
+      #sourceGatheringMode: ingestion
       # Set input data format
       #inputFormat: JSON
 
@@ -156,7 +156,7 @@ physicalSources:
       # Set password, needed for: OPCSource
       #password:
 
-#mobility:
+  #mobility:
   # Set the radius within which the device should download information about field node positions
   #nodeInfoDownloadRadius: 20000
   # Set the distance threshold to the outer edge of the radius which will trigger downloading new node info

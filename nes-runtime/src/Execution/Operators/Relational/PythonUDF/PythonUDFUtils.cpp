@@ -322,5 +322,9 @@ void finalizePython(void* state) {
     handler->finalize();
 }
 
+void freeObject(void* object) {
+    Py_DecRef((PyObject*) object);
+}
+
 
 }// namespace NES::Runtime::Execution::Operators

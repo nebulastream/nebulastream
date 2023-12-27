@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Relational/PythonUDF/FlatMapPythonUDF.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
@@ -227,19 +228,45 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
         } else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>()) {
             // creating the python udf handler
-            const auto pythonUDFDescriptor = udfDescriptor->as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
-            const auto functionString = pythonUDFDescriptor->getFunctionString();
-            const auto pythonCompiler = pythonUDFDescriptor->getPythonCompiler();
+
+            const auto pythonUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
+            const auto functionString = "def decision_tree_udf_ts(X, Y, Z, EDA, HR, TEMP, timestamp):\n"
+                                        "    if EDA <= 30.899999618530273:\n"
+                                        "        if TEMP <= 0.17193949967622757:\n"
+                                        "            if EDA <= 28.100000381469727:\n"
+                                        "                return (1, timestamp)\n"
+                                        "            else:  # if EDA > 28.100000381469727\n"
+                                        "                return (2, timestamp)\n"
+                                        "        else:  # if TEMP > 0.17193949967622757\n"
+                                        "            if TEMP <= 0.5806570053100586:\n"
+                                        "                return (0, timestamp)\n"
+                                        "            else:  # if TEMP > 0.5806570053100586\n"
+                                        "                return (2, timestamp)\n"
+                                        "    else:  # if EDA > 30.899999618530273\n"
+                                        "        if Z <= 126.5:\n"
+                                        "            if TEMP <= 20.87917423248291:\n"
+                                        "                return (2, timestamp)\n"
+                                        "            else:  # if TEMP > 20.87917423248291\n"
+                                        "                return (2, timestamp)\n"
+                                        "        else:  # if Z > 126.5\n"
+                                        "            if EDA <= 34.96000099182129:\n"
+                                        "                return (2, timestamp)\n"
+                                        "            else:  # if EDA > 34.96000099182129\n"
+                                        "                return (1, timestamp)";//pythonUDFDescriptor->getFunctionString();
+            const auto pythonCompiler = "cpython";//pythonUDFDescriptor->getPythonCompiler();
             const auto modulesToImport = pythonUDFDescriptor->getModulesToImport();
 
+            NES_DEBUG("Schema {}", udfOutputSchema->toString());
             const auto handler = std::make_shared<Runtime::Execution::Operators::PythonUDFOperatorHandler>(functionString,
                                                                                                            methodName,
                                                                                                            modulesToImport,
                                                                                                            pythonCompiler,
                                                                                                            udfInputSchema,
                                                                                                            udfOutputSchema);
+            NES_DEBUG("Schema {}", udfInputSchema->toString());
             operatorHandlers.push_back(handler);
             const auto indexForThisHandler = operatorHandlers.size() - 1;
+            NES_INFO("Lower node:{} to NautilusOperator. MAPUDF OPERATOR PYTHON", operatorNode->toString());
 
             // auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
             auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(indexForThisHandler,
@@ -247,12 +274,13 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                                               operatorOutputSchema,
                                                                                               pythonCompiler);
             parentOperator->setChild(mapPythonUDF);
+            NES_INFO("Lower node:{} to NautilusOperator. ENDE PYTHON", operatorNode->toString());
             return mapPythonUDF;
 #endif// NAUTILUS_PYTHON_UDF_ENABLED
         } else {
             NES_NOT_IMPLEMENTED();
         }
-#ifdef ENABLE_JNI
+
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFlatMapUDFOperator>()) {
         // for creating the handler that the nautilus udf operator needs to execute the udf
         const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalFlatMapUDFOperator>();
@@ -266,7 +294,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         const auto operatorOutputSchema = udfOperator->getOutputSchema();
 
         if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
-
+#ifdef ENABLE_JNI
             // creating the java udf handler
             const auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
             const auto className = javaUDFDescriptor->getClassName();
@@ -293,8 +321,58 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                                                                                   operatorOutputSchema);
             parentOperator->setChild(flatMapJavaUDF);
             return flatMapJavaUDF;
-        }
 #endif// ENABLE_JNI
+#ifdef NAUTILUS_PYTHON_UDF_ENABLED
+        } else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>()) {
+            // creating the python udf handler
+
+            const auto pythonUDFDescriptor = Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
+            const auto functionString = "def tumbling_window_udf(label, timestamp):\n"
+                                        "    global collector\n"
+                                        "    if len(collector) == 0:\n"
+                                        "        collector.append(timestamp)\n"
+                                        "        collector.append(1)\n"
+                                        "        return []\n"
+                                        "    else:\n"
+                                        "        twentyfourhrs = 60 * 1000\n"
+                                        "        treshold = collector[0] + twentyfourhrs\n"
+                                        "        if timestamp < treshold:\n"
+                                        "            collector[1] = collector[1] + 1\n"
+                                        "            return []\n"
+                                        "        else:\n"
+                                        "            # 24 hrs over\n"
+                                        "            collector[0] = timestamp\n"
+                                        "            result = collector[1]\n"
+                                        "            collector[1] = 0\n"
+                                        "            return [result]";//pythonUDFDescriptor->getFunctionString();
+            const auto pythonCompiler = "cpython";//pythonUDFDescriptor->getPythonCompiler();
+            const auto modulesToImport = pythonUDFDescriptor->getModulesToImport();
+
+            NES_DEBUG("Schema {}", udfOutputSchema->toString());
+            const auto handler = std::make_shared<Runtime::Execution::Operators::PythonUDFOperatorHandler>(functionString,
+                                                                                                           methodName,
+                                                                                                           modulesToImport,
+                                                                                                           pythonCompiler,
+                                                                                                           udfInputSchema,
+                                                                                                           udfOutputSchema);
+            NES_DEBUG("Schema {}", udfInputSchema->toString());
+            operatorHandlers.push_back(handler);
+            const auto indexForThisHandler = operatorHandlers.size() - 1;
+            NES_INFO("Lower node:{} to NautilusOperator. MAPUDF OPERATOR PYTHON", operatorNode->toString());
+
+            // auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
+            auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::FlatMapPythonUDF>(indexForThisHandler,
+                                                                                              operatorInputSchema,
+                                                                                              operatorOutputSchema,
+                                                                                              pythonCompiler);
+            parentOperator->setChild(mapPythonUDF);
+            NES_INFO("Lower node:{} to NautilusOperator. ENDE PYTHON", operatorNode->toString());
+            return mapPythonUDF;
+#endif// NAUTILUS_PYTHON_UDF_ENABLED
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
+
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
                         ->getOperatorHandler()

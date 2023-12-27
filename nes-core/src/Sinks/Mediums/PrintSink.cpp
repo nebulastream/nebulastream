@@ -18,6 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <string>
+#include <filesystem>
 #include <utility>
 
 namespace NES {
@@ -56,6 +57,15 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
     outputStream << buffer << std::endl;
     updateWatermarkCallback(inputBuffer);
+    auto executeFile = std::filesystem::current_path().string() + "/dump/send_zmq.csv";
+    std::ofstream outputFileExecute;
+    outputFileExecute.open(executeFile, std::ios_base::app);
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    std::chrono::system_clock::duration tp = now.time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(tp).count();
+    outputFileExecute << sentBuffer << "," << millis << "\n";
+    outputFileExecute.close();
+    sentBuffer++;
     return true;
 }
 

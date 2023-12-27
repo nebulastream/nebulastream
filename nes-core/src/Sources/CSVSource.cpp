@@ -28,6 +28,8 @@
 #include <utility>
 #include <vector>
 
+#include <filesystem>
+
 namespace NES {
 
 CSVSource::CSVSource(SchemaPtr schema,
@@ -166,6 +168,15 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     generatedBuffers++;
     NES_TRACE("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
     NES_TRACE("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+
+    auto executeFile = std::filesystem::current_path().string() + "/dump/ingestion_time.csv";
+    std::ofstream outputFileExecute;
+    outputFileExecute.open(executeFile, std::ios_base::app);
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    std::chrono::system_clock::duration tp = now.time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(tp).count();
+    outputFileExecute << generatedBuffers << "," << millis << "\n";
+    outputFileExecute.close();
 }
 
 SourceType CSVSource::getType() const { return SourceType::CSV_SOURCE; }

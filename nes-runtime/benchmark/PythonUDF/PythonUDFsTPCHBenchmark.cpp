@@ -36,8 +36,8 @@ class BenchmarkRunner {
 
         NES::Logger::setupLogging("BenchmarkRunner.log", NES::LogLevel::LOG_DEBUG);
         provider = ExecutablePipelineProviderRegistry::getPlugin(compiler).get();
-        table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
-        bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 1000);
+        table_bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 2500);
+        bm = std::make_shared<Runtime::BufferManager>(8 * 1024 * 1024, 2000);
         wc = std::make_shared<WorkerContext>(0, bm, 100);
         tables = TPCHTableGenerator(table_bm, targetScaleFactor).generate();
         options.setOptimize(true);
@@ -51,7 +51,7 @@ class BenchmarkRunner {
         for (uint64_t i = 0; i < iterations; i++) {
             Timer compileTimeTimer("Compilation");
             Timer executionTimeTimer("Execution");
-            runQuery(compileTimeTimer, executionTimeTimer, sumPythonCompilation, sumPythonExecution);
+            runQuery(compileTimeTimer, executionTimeTimer, &sumPythonCompilation, &sumPythonExecution);
             sumCompilation += compileTimeTimer.getPrintTime();
             sumExecution += executionTimeTimer.getPrintTime();
             NES_INFO("Run {} compilation time {}, execution time {}",
@@ -79,7 +79,7 @@ class BenchmarkRunner {
     };
 
     virtual ~BenchmarkRunner() = default;
-    virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double sumPythonCompilation, double sumPythonExecution) = 0;
+    virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double* sumPythonCompilation, double* sumPythonExecution) = 0;
 
   protected:
     uint64_t iterations = 10;
@@ -120,8 +120,8 @@ class BenchmarkRunnerMultipleTimer {
         for (uint64_t i = 0; i < iterations; i++) {
             Timer compileTimeTimer("Compilation");
             Timer executionTimeTimer("Execution");
-            runQuery(compileTimeTimer, executionTimeTimer, sumPythonCompilationShipDate, sumPythonCompilationDiscount, sumPythonCompilationQuantity,
-                     sumPythonExecutionShipDate, sumPythonExecutionDiscount, sumPythonExecutionQuantity);
+            runQuery(compileTimeTimer, executionTimeTimer, &sumPythonCompilationShipDate, &sumPythonCompilationDiscount, &sumPythonCompilationQuantity,
+                     &sumPythonExecutionShipDate, &sumPythonExecutionDiscount, &sumPythonExecutionQuantity);
             sumCompilation += compileTimeTimer.getPrintTime();
             sumExecution += executionTimeTimer.getPrintTime();
             NES_INFO("Run {} compilation time {}, execution time {}",
@@ -134,10 +134,26 @@ class BenchmarkRunnerMultipleTimer {
                  compiler,
                  (sumCompilation / (double) iterations),
                  (sumExecution / (double) iterations));
+
+        double totalCompilationTime = (sumCompilation / (double) iterations);
+        double totalExecutionTime = (sumExecution / (double) iterations);
+        double totalLatencyTime = totalCompilationTime + totalExecutionTime;
+        double totalPythonCompilationTimeShipDate = (sumPythonCompilationShipDate / (double) iterations);
+        double totalPythonCompilationTimeDiscount = (sumPythonCompilationDiscount / (double) iterations);
+        double totalPythonCompilationTimeQuantity = (sumPythonCompilationQuantity / (double) iterations);
+        double totalPythonExecutionTimeShipDate = (sumPythonExecutionShipDate / (double) iterations);
+        double totalPythonExecutionTimeDiscount = (sumPythonExecutionDiscount / (double) iterations);
+        double totalPythonExecutionTimeQuantity = (sumPythonExecutionQuantity / (double) iterations);
+
+        auto executeFile = std::filesystem::current_path().string() + "/dump/measurements_tpc_h.csv";
+        std::ofstream outputFileExecute;
+        outputFileExecute.open(executeFile, std::ios_base::app);
+        outputFileExecute << "tpc_h_query6_multiple" << ", " << compiler << ", " << pythonCompiler << ", " << totalCompilationTime << ", " << totalExecutionTime << ", " << totalLatencyTime << ", " << totalPythonCompilationTimeShipDate << ", " << totalPythonCompilationTimeDiscount << ", " << totalPythonCompilationTimeQuantity << ", " << totalPythonExecutionTimeShipDate << ", " << totalPythonExecutionTimeDiscount << ", " << totalPythonExecutionTimeQuantity << "\n";
+        outputFileExecute.close();
     };
 
     virtual ~BenchmarkRunnerMultipleTimer() = default;
-    virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double sumPythonCompilationShipDate, double sumPythonCompilationDiscount, double sumPythonCompilationQuantity, double sumPythonExecutionShipDate, double sumPythonExecutionDiscount, double sumPythonExecutionQuantity) = 0;
+    virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double* sumPythonCompilationShipDate, double* sumPythonCompilationDiscount, double* sumPythonCompilationQuantity, double* sumPythonExecutionShipDate, double* sumPythonExecutionDiscount, double* sumPythonExecutionQuantity) = 0;
 
   protected:
     uint64_t iterations = 10;
@@ -155,7 +171,7 @@ class BenchmarkRunnerMultipleTimer {
 class Query6Runner : public BenchmarkRunner {
   public:
     Query6Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler,  std::string pythonCompiler) : BenchmarkRunner(targetScaleFactor, compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double* sumPythonCompilation, double* sumPythonExecution) override {
         auto& lineitems = tables[TPCHTable::LineItem];
         auto plan = TPCH_Query6_Python::getPipelinePlan(tables, bm, pythonCompiler);
         compileTimeTimer.start();
@@ -180,16 +196,22 @@ class Query6Runner : public BenchmarkRunner {
         emitExecutablePipeline->stop(*pipeline2.ctx);
 
         auto handler = pipeline1.ctx->getOperatorHandler<PythonUDFOperatorHandler>(1);
-        sumPythonExecution += handler->getSumExecution();
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+
+        double sumPythonExec = *sumPythonExecution;
+        double sumPythonComp = *sumPythonCompilation;
+        sumPythonExec += handler->getSumExecution();
+        sumPythonComp += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", sumPythonComp, sumPythonExec);
+
+        *sumPythonExecution = sumPythonExec;
+        *sumPythonCompilation = sumPythonComp;
     }
 };
 
 class Query6RunnerFlatMap : public BenchmarkRunner {
   public:
     Query6RunnerFlatMap(TPCH_Scale_Factor targetScaleFactor, std::string compiler,  std::string pythonCompiler) : BenchmarkRunner(targetScaleFactor, compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double* sumPythonCompilation, double* sumPythonExecution) override {
         auto& lineitems = tables[TPCHTable::LineItem];
         auto plan = TPCH_Query6_Python_FlatMap::getPipelinePlan(tables, bm, pythonCompiler);
         compileTimeTimer.start();
@@ -209,16 +231,21 @@ class Query6RunnerFlatMap : public BenchmarkRunner {
         aggExecutablePipeline->stop(*pipeline1.ctx);
 
         auto handler = pipeline1.ctx->getOperatorHandler<PythonUDFOperatorHandler>(0);
-        sumPythonExecution += handler->getSumExecution();
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        double sumPythonExec = *sumPythonExecution;
+        double sumPythonComp = *sumPythonCompilation;
+        sumPythonExec += handler->getSumExecution();
+        sumPythonComp += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", sumPythonComp, sumPythonExec);
+
+        *sumPythonExecution = sumPythonExec;
+        *sumPythonCompilation = sumPythonComp;
     }
 };
 
 class Query6RunnerPandas : public BenchmarkRunner {
   public:
     Query6RunnerPandas(TPCH_Scale_Factor targetScaleFactor, std::string compiler,  std::string pythonCompiler) : BenchmarkRunner(targetScaleFactor, compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double* sumPythonCompilation, double* sumPythonExecution) override {
         auto& lineitems = tables[TPCHTable::LineItem];
         auto plan = TPCH_Query6_Python_Pandas::getPipelinePlan(tables, bm, pythonCompiler);
         compileTimeTimer.start();
@@ -244,16 +271,21 @@ class Query6RunnerPandas : public BenchmarkRunner {
         emitExecutablePipeline->stop(*pipeline2.ctx);
 
         auto handler = pipeline1.ctx->getOperatorHandler<PythonUDFOperatorHandler>(1);
-        sumPythonExecution += handler->getSumExecution();
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        double sumPythonExec = *sumPythonExecution;
+        double sumPythonComp = *sumPythonCompilation;
+        sumPythonExec += handler->getSumExecution();
+        sumPythonComp += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", sumPythonComp, sumPythonExec);
+
+        *sumPythonExecution = sumPythonExec;
+        *sumPythonCompilation = sumPythonComp;
     }
 };
 
 class Query6RunnerMultipleUDFs : public BenchmarkRunnerMultipleTimer {
   public:
     Query6RunnerMultipleUDFs(TPCH_Scale_Factor targetScaleFactor, std::string compiler,  std::string pythonCompiler) : BenchmarkRunnerMultipleTimer(targetScaleFactor, compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double sumPythonCompilationShipDate, double sumPythonCompilationDiscount, double sumPythonCompilationQuantity, double sumPythonExecutionShipDate, double sumPythonExecutionDiscount, double sumPythonExecutionQuantity) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double* sumPythonCompilationShipDate, double* sumPythonCompilationDiscount, double* sumPythonCompilationQuantity, double* sumPythonExecutionShipDate, double* sumPythonExecutionDiscount, double* sumPythonExecutionQuantity) override {
         auto& lineitems = tables[TPCHTable::LineItem];
         auto plan = TPCH_Query6_Python_Multiple_UDFs::getPipelinePlan(tables, bm, pythonCompiler);
         compileTimeTimer.start();
@@ -281,19 +313,19 @@ class Query6RunnerMultipleUDFs : public BenchmarkRunnerMultipleTimer {
         emitExecutablePipeline->stop(*pipeline2.ctx);
 
         auto handlerShipDate = pipeline1.ctx->getOperatorHandler<PythonUDFOperatorHandler>(1);
-        sumPythonExecutionShipDate += handlerShipDate->getSumExecution();
-        sumPythonCompilationShipDate += handlerShipDate->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonExecutionShipDate, sumPythonCompilationShipDate);
+        *sumPythonExecutionShipDate += handlerShipDate->getSumExecution();
+        *sumPythonCompilationShipDate += handlerShipDate->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilationShipDate, *sumPythonExecutionShipDate);
 
         auto handlerDiscount = pipeline1.ctx->getOperatorHandler<PythonUDFOperatorHandler>(2);
-        sumPythonExecutionDiscount += handlerDiscount->getSumExecution();
-        sumPythonCompilationDiscount += handlerDiscount->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonExecutionDiscount, sumPythonCompilationDiscount);
+        *sumPythonExecutionDiscount += handlerDiscount->getSumExecution();
+        *sumPythonCompilationDiscount += handlerDiscount->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonExecutionDiscount, *sumPythonCompilationDiscount);
 
         auto handlerQuantity = pipeline1.ctx->getOperatorHandler<PythonUDFOperatorHandler>(3);
-        sumPythonExecutionQuantity += handlerQuantity->getSumExecution();
-        sumPythonCompilationQuantity += handlerQuantity->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonExecutionQuantity, sumPythonCompilationQuantity);
+        *sumPythonExecutionQuantity += handlerQuantity->getSumExecution();
+        *sumPythonCompilationQuantity += handlerQuantity->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonExecutionQuantity, *sumPythonCompilationQuantity);
     }
 };
 }// namespace NES::Runtime::Execution
@@ -301,13 +333,13 @@ class Query6RunnerMultipleUDFs : public BenchmarkRunnerMultipleTimer {
 int main(int, char**) {
     NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F1;
     std::vector<std::string> compilers = {"PipelineCompiler","CPPPipelineCompiler"};
-    std::vector<std::string> pythonCompilers = {"cpython", "cython", "nuitka", "numba", "nuitka"};
-
     //std::vector<std::string> pythonCompilers = {"cpython", "cython", "nuitka"};
+
+    std::vector<std::string> pythonCompilers = {"cpython", "cython", "nuitka", "numba", "pypy"};
     for (const auto& c : compilers) {
         for (const auto& pythonCompiler : pythonCompilers) {
-            //NES::Runtime::Execution::Query6Runner(targetScaleFactor, c, pythonCompiler).run();
-            NES::Runtime::Execution::Query6RunnerFlatMap(targetScaleFactor, c, pythonCompiler).run();
+            NES::Runtime::Execution::Query6Runner(targetScaleFactor, c, pythonCompiler).run();
+            //NES::Runtime::Execution::Query6RunnerFlatMap(targetScaleFactor, c, pythonCompiler).run();
             //NES::Runtime::Execution::Query6RunnerPandas(targetScaleFactor, c, pythonCompiler).run();
             //NES::Runtime::Execution::Query6RunnerMultipleUDFs(targetScaleFactor, c, pythonCompiler).run();
         }

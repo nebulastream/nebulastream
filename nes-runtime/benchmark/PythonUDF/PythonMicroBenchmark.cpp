@@ -51,8 +51,8 @@ class MicroBenchmarkRunner {
 
         NES::Logger::setupLogging("MicroBenchmarkRunner.log", NES::LogLevel::LOG_DEBUG);
         provider = ExecutablePipelineProviderRegistry::getPlugin(compiler).get();
-        table_bm = std::make_shared<Runtime::BufferManager>(100 * 1024 * 1024, 2048);
-        bm = std::make_shared<Runtime::BufferManager>(10 * 1024 * 1024, 1024);
+        table_bm = std::make_shared<Runtime::BufferManager>(100 * 1024 * 1024, 12500);
+        bm = std::make_shared<Runtime::BufferManager>(10 * 1024 * 1024, 12500);
         wc = std::make_shared<WorkerContext>(0, bm, 1000);
         options.setOptimize(true);
         options.setDumpToFile(false);
@@ -66,7 +66,7 @@ class MicroBenchmarkRunner {
             Timer compileTimeTimer("Compilation");
             Timer executionTimeTimer("Execution");
 
-            runQuery(compileTimeTimer, executionTimeTimer, sumPythonExecution, sumPythonCompilation);
+            runQuery(compileTimeTimer, executionTimeTimer, &sumPythonCompilation, &sumPythonExecution);
             sumCompilation += compileTimeTimer.getPrintTime();
             sumExecution += executionTimeTimer.getPrintTime();
             NES_INFO("Run {} compilation time {}, execution time {}",
@@ -86,11 +86,12 @@ class MicroBenchmarkRunner {
         double totalExecutionTime = (sumExecution / (double) iterations);
         double totalLatencyTime = totalCompilationTime + totalExecutionTime;
         double totalPythonCompilationTime = (sumPythonCompilation / (double) iterations);
+        double totalPythonExecutionTime = (sumPythonExecution / (double) iterations);
 
         auto executeFile = std::filesystem::current_path().string() + "/dump/measurements.csv";
         std::ofstream outputFileExecute;
         outputFileExecute.open(executeFile, std::ios_base::app);
-        outputFileExecute << getUDFName() << ", " << compiler << ", " << pythonCompiler << ", " << bufferSize << ", " << numberOfBuffers << ", " << totalCompilationTime << ", " << totalExecutionTime << ", " << totalLatencyTime << ", " << totalPythonCompilationTime << "\n";
+        outputFileExecute << getUDFName() << ", " << compiler << ", " << pythonCompiler << ", " << bufferSize << ", " << numberOfBuffers << ", " << totalCompilationTime << ", " << totalExecutionTime << ", " << totalLatencyTime << ", " << totalPythonCompilationTime << ", " << totalPythonExecutionTime << "\n";
         outputFileExecute.close();
     };
 
@@ -158,7 +159,7 @@ class MicroBenchmarkRunner {
     }
 
     virtual ~MicroBenchmarkRunner() = default;
-    virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double sumPythonCompilation, double sumPythonExecution) = 0;
+    virtual void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer, double* sumPythonCompilation, double* sumPythonExecution) = 0;
     virtual std::string getUDFName() = 0;
   protected:
     uint64_t iterations = 10;
@@ -180,17 +181,17 @@ class MicroBenchmarkRunner {
     // linear reg 1250.0 Buffer
     // kmeans 625.0 Buffer
 
-    uint64_t numberOfBuffers = 95;
+    uint64_t numberOfBuffers = 1;//250 * 10;
     //std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>> tables;
 };
 
 class SimpleFilterQueryNumericalNES : public MicroBenchmarkRunner {
   public:
     SimpleFilterQueryNumericalNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        sumPythonExecution += 0;
-        sumPythonCompilation += 0;
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
+        *sumPythonExecution += 0;
+        *sumPythonCompilation += 0;
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
 
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         schema->addField("x", BasicType::INT64);
@@ -240,10 +241,10 @@ class SimpleFilterQueryNumericalNES : public MicroBenchmarkRunner {
 class SimpleMapQueryNES : public MicroBenchmarkRunner {
   public:
     SimpleMapQueryNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        sumPythonExecution += 0;
-        sumPythonCompilation += 0;
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
+        *sumPythonExecution += 0;
+        *sumPythonCompilation += 0;
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
 
         auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         schema->addField("x", BasicType::INT64);
@@ -293,10 +294,10 @@ class SimpleMapQueryNES : public MicroBenchmarkRunner {
 class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
   public:
     SimpleProjectionQueryNES(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
-        sumPythonExecution += 0;
-        sumPythonCompilation += 0;
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
+        *sumPythonExecution += 0;
+        *sumPythonCompilation += 0;
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("x", BasicType::INT64)
@@ -360,7 +361,7 @@ class SimpleProjectionQueryNES : public MicroBenchmarkRunner {
 class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
   public:
     SimpleFilterQueryNumericalUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
 
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def filter_numerical(x):"
@@ -391,8 +392,8 @@ class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
 
         executablePipeline->stop(pipelineContext);
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -401,8 +402,8 @@ class SimpleFilterQueryNumericalUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -414,7 +415,7 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
   public:
     SimpleMapQueryUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def simple_map(x):"
                                "\n\ty = x + 10"
@@ -428,7 +429,8 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
         compileTimeTimer.start();
         auto pipeline = initPipelineOperator(schema, schema, bm);
         // auto dummyBuffer = NES::Runtime::TupleBuffer(); // from the TPCHBenchmark
-        auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
+        auto bufferMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, table_bm->getBufferSize());
+        auto buffer = initInputBuffer<int64_t>(variableName, table_bm, bufferMemoryLayout);
         auto executablePipeline = provider->create(pipeline, options);
         auto handler = initMapHandler(function, functionName, modulesToImport, pythonCompiler, schema, schema);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -446,8 +448,8 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -457,12 +459,12 @@ class SimpleMapQueryUDF : public MicroBenchmarkRunner {
         outputFileExecute.close();
 
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
-        return "map_udf";
+        return "map_udf_throughput";
     }
 };
 
@@ -470,7 +472,7 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
   public:
     SimpleProjectionQueryUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def simple_projection(x, y, z):"
                                "\n\treturn x\n";
@@ -529,8 +531,8 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -539,8 +541,8 @@ class SimpleProjectionQueryUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -554,7 +556,7 @@ class NumbaExampleUDF : public MicroBenchmarkRunner {
   public:
     NumbaExampleUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         //modulesToImport.insert({"numpy", "np"});
         std::string function = "def go_fast(x):"
@@ -590,8 +592,8 @@ class NumbaExampleUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -600,8 +602,8 @@ class NumbaExampleUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -613,7 +615,7 @@ class BlackScholesNumPyUDF : public MicroBenchmarkRunner {
   public:
     BlackScholesNumPyUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         modulesToImport.insert({"numpy", "np"});
         std::string function = "def black_scholes_np_udf(stockPrice, optionStrike, optionYears, Riskfree, Volatility):\n"
@@ -718,8 +720,8 @@ class BlackScholesNumPyUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -728,8 +730,8 @@ class BlackScholesNumPyUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -741,7 +743,7 @@ class BlackScholesUDF : public MicroBenchmarkRunner {
   public:
     BlackScholesUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         modulesToImport.insert({"math", ""});
         std::string function = "def black_scholes_udf(stockPrice, optionStrike, optionYears, Riskfree, Volatility):\n"
@@ -853,8 +855,8 @@ class BlackScholesUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -863,8 +865,8 @@ class BlackScholesUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -878,7 +880,7 @@ class StringConcatUDF : public MicroBenchmarkRunner {
   public:
     StringConcatUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def concat_string(input):\n"
                                "\treturn input +\"test\"";
@@ -941,8 +943,8 @@ class StringConcatUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -951,8 +953,8 @@ class StringConcatUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -964,7 +966,7 @@ class StringWordCountUDF : public MicroBenchmarkRunner {
   public:
     StringWordCountUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def wordcount(sentence):\n"
                                "\twords = sentence.split(\" \")\n"
@@ -1028,8 +1030,8 @@ class StringWordCountUDF : public MicroBenchmarkRunner {
 
         executablePipeline->stop(pipelineContext);
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -1038,8 +1040,8 @@ class StringWordCountUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -1051,7 +1053,7 @@ class StringAverageWordLengthUDF : public MicroBenchmarkRunner {
   public:
     StringAverageWordLengthUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def avg_word_length(sentence):\n"
                                "\twords = sentence.split()\n"
@@ -1115,8 +1117,8 @@ class StringAverageWordLengthUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -1125,8 +1127,8 @@ class StringAverageWordLengthUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -1138,7 +1140,7 @@ class BooleanUDF : public MicroBenchmarkRunner {
   public:
     BooleanUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         std::string function = "def boolean_udf(check, value):\n"
                                "\tif check:\n"
@@ -1202,8 +1204,8 @@ class BooleanUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -1212,8 +1214,8 @@ class BooleanUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -1225,7 +1227,7 @@ class LinearRegression : public MicroBenchmarkRunner {
   public:
     LinearRegression(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
         modulesToImport.insert({"sklearn.datasets", ""});
         modulesToImport.insert({"sklearn.linear_model", ""});
@@ -1282,8 +1284,8 @@ class LinearRegression : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -1292,8 +1294,8 @@ class LinearRegression : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -1305,14 +1307,11 @@ class KMeansUDF : public MicroBenchmarkRunner {
   public:
     KMeansUDF(std::string compiler, std::string pythonCompiler) : MicroBenchmarkRunner(compiler, pythonCompiler){};
 
-    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double sumPythonCompilation, double sumPythonExecution) override {
+    void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer,  double* sumPythonCompilation, double* sumPythonExecution) override {
         std::map<std::string, std::string> modulesToImport;
-        modulesToImport.insert({"numpy", "np"});
-        std::string function = "def np_dot_udf(x, y):\n"
-                               "\tX = [[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]]\n"
-                               "\tkmeans = sklearn.cluster.KMeans(n_clusters=2, random_state=0, n_init=\"auto\").fit(X)\n"
-                               "\tprediction = kmeans.predict([[x, y]]).item()\n"
-                               "\treturn prediction";
+        //modulesToImport.insert({"numpy", "np"});
+        std::string function = "def kmeans_udf(x, y):\n"
+                               "\treturn 1";
         std::string functionName = "kmeans_udf";
 
         auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
@@ -1338,7 +1337,7 @@ class KMeansUDF : public MicroBenchmarkRunner {
         auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
         pipeline->setRootOperator(scanOperator);
 
-        auto buffer = table_bm->getBufferBlocking();
+        auto buffer = bm->getBufferBlocking();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(inputMemoryLayout, buffer);
 
         // set seed
@@ -1373,8 +1372,8 @@ class KMeansUDF : public MicroBenchmarkRunner {
         executablePipeline->stop(pipelineContext);
 
 
-        sumPythonExecution += handler->getSumExecution();
-        double avg_exec = (sumPythonExecution / (numberOfBuffers * bufferSize));
+        *sumPythonExecution += handler->getSumExecution();
+        double avg_exec = (*sumPythonExecution / (numberOfBuffers * bufferSize));
         NES_INFO("avg python udf execution time {}", avg_exec);
         auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
 
@@ -1383,8 +1382,8 @@ class KMeansUDF : public MicroBenchmarkRunner {
         outputFileExecute << avg_exec << "\n";
         outputFileExecute.close();
 
-        sumPythonCompilation += handler->getCompilationTime();
-        NES_INFO("sumPython {}, {}", sumPythonCompilation, sumPythonExecution);
+        *sumPythonCompilation += handler->getCompilationTime();
+        NES_INFO("sumPython {}, {}", *sumPythonCompilation, *sumPythonExecution);
     }
 
     std::string getUDFName() override {
@@ -1401,8 +1400,8 @@ void deleteContentInFile(std::string filePath) {
 }
 
 int main(int, char**) {
-    std::vector<std::string> compilers = {"PipelineCompiler", "CPPPipelineCompiler"};
-    std::vector<std::string> pythonCompilers = {"cython"};
+    std::vector<std::string> compilers = {"CPPPipelineCompiler"};
+    std::vector<std::string> pythonCompilers = { "numba"};
     auto executeFile = std::filesystem::current_path().string() + "/dump/executepython.txt";
     deleteContentInFile(executeFile);
     for (const auto& c : compilers) {
@@ -1412,7 +1411,7 @@ int main(int, char**) {
             outputFileExecute << pythonCompiler << "-" << c << "\n";
             outputFileExecute.close();
 
-            NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
+            //NES::Runtime::Execution::SimpleFilterQueryNumericalUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleFilterQueryNumericalNES(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleMapQueryUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::SimpleMapQueryNES(c, pythonCompiler).run();
@@ -1428,7 +1427,7 @@ int main(int, char**) {
 
             //NES::Runtime::Execution::BooleanUDF(c, pythonCompiler).run();
             //NES::Runtime::Execution::LinearRegression(c, pythonCompiler).run();
-            //NES::Runtime::Execution::KMeansUDF(c, pythonCompiler).run();
+            NES::Runtime::Execution::KMeansUDF(c, pythonCompiler).run();
         }
     }
 }

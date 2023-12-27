@@ -23,6 +23,9 @@
 #include <utility>
 #include <zmq.hpp>
 
+#include <filesystem>
+#include <chrono>
+
 namespace NES {
 
 SinkMediumTypes ZmqSink::getSinkMediumType() { return SinkMediumTypes::ZMQ_SINK; }
@@ -118,7 +121,6 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     } else {
         NES_DEBUG("ZmqSink::getData: schema already written");
     }
-
     auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
     NES_DEBUG("ZmqSink: writes buffer with tupleCnt ={} watermark={} content=\n{}",
               inputBuffer.getNumberOfTuples(),
@@ -133,7 +135,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         zmq::message_t envelope{&(envelopeData[0]), sizeof(envelopeData)};
         if (auto const sentEnvelope = socket.send(envelope, zmq::send_flags::sndmore).value_or(0);
             sentEnvelope != sizeof(envelopeData)) {
-            NES_WARNING("ZmqSink: data payload send NOT successful");
+            NES_WARNING("ZmqSink1: data payload send NOT successful");
             return false;
         }
 
@@ -141,11 +143,19 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         // Copying the entire payload here to avoid UB.
         zmq::message_t payload{buffer.data(), buffer.size()};
         if (auto const sentPayload = socket.send(payload, zmq::send_flags::none).value_or(0);
-            sentPayload != inputBuffer.getBufferSize()) {
-            NES_WARNING("ZmqSink: data send NOT successful");
+            sentPayload != buffer.size()) {
+            NES_WARNING("ZmqSink2: data send NOT successful");
             return false;
         }
         NES_DEBUG("ZmqSink: data send successful");
+        auto executeFile = std::filesystem::current_path().string() + "/dump/send_zmq.csv";
+        std::ofstream outputFileExecute;
+        outputFileExecute.open(executeFile, std::ios_base::app);
+        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        std::chrono::system_clock::duration tp = now.time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(tp).count();
+        outputFileExecute << sentBuffer << "," << millis << "\n";
+        outputFileExecute.close();
         return true;
 
     } catch (const zmq::error_t& ex) {
