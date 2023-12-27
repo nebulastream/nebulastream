@@ -84,8 +84,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // 7. run the type inference phase
     //    runTypeInferencePhase(queryPlan->getQueryId());
 
-    // 8. Release the locks from the topology nodes
-    return unlockTopologyNodes();
+    return false;
 }
 
 PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr) {

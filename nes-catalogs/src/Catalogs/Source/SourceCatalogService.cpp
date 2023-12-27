@@ -17,7 +17,6 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogService.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -29,13 +28,11 @@ SourceCatalogService::SourceCatalogService(Catalogs::Source::SourceCatalogPtr so
     NES_ASSERT(this->sourceCatalog, "sourceCatalogPtr has to be valid");
 }
 
-bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
-                                                  const std::string& physicalSourceName,
-                                                  const std::string& logicalSourceName) {
-    if (!topologyNode) {
-        NES_ERROR("SourceCatalogService::RegisterPhysicalSource node not found");
-        return false;
-    }
+bool SourceCatalogService::registerPhysicalSource(const std::string& physicalSourceName,
+                                                  const std::string& logicalSourceName,
+                                                  WorkerId topologyNodeId) {
+
+    std::unique_lock<std::mutex> lock(mutex);
 
     if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
         NES_ERROR("SourceCatalogService::RegisterPhysicalSource logical source does not exist {}", logicalSourceName);
@@ -44,14 +41,12 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
 
     NES_DEBUG("SourceCatalogService::RegisterPhysicalSource: try to register physical node id {} physical source= {} logical "
               "source= {}",
-              topologyNode->getId(),
+              topologyNodeId,
               physicalSourceName,
               logicalSourceName);
-    std::unique_lock<std::mutex> lock(addRemovePhysicalSource);
     auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName);
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, topologyNodeId);
     bool success = sourceCatalog->addPhysicalSource(logicalSourceName, sce);
     if (!success) {
         NES_ERROR("SourceCatalogService::RegisterPhysicalSource: adding physical source was not successful.");
@@ -60,23 +55,19 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
     return success;
 }
 
-bool SourceCatalogService::unregisterPhysicalSource(TopologyNodePtr topologyNode,
-                                                    const std::string& physicalSourceName,
-                                                    const std::string& logicalSourceName) {
+bool SourceCatalogService::unregisterPhysicalSource(const std::string& physicalSourceName,
+                                                    const std::string& logicalSourceName,
+                                                    WorkerId topologyNodeId) {
     NES_DEBUG(
         "SourceCatalogService::UnregisterPhysicalSource: try to remove physical source with name {} logical name {} workerId= {}",
         physicalSourceName,
         logicalSourceName,
-        topologyNode->getId());
-    std::unique_lock<std::mutex> lock(addRemovePhysicalSource);
+        topologyNodeId);
+    std::unique_lock<std::mutex> lock(mutex);
 
-    if (!topologyNode) {
-        NES_DEBUG("SourceCatalogService::UnregisterPhysicalSource: sensor not found with workerId {}", topologyNode->getId());
-        return false;
-    }
-    NES_DEBUG("SourceCatalogService: node= {}", topologyNode->toString());
+    NES_DEBUG("SourceCatalogService: node= {}", topologyNodeId);
 
-    bool success = sourceCatalog->removePhysicalSource(logicalSourceName, physicalSourceName, topologyNode->getId());
+    bool success = sourceCatalog->removePhysicalSource(logicalSourceName, physicalSourceName, topologyNodeId);
     if (!success) {
         NES_ERROR("SourceCatalogService::RegisterPhysicalSource: removing physical source was not successful.");
         return false;
@@ -88,42 +79,42 @@ bool SourceCatalogService::registerLogicalSource(const std::string& logicalSourc
     NES_DEBUG("SourceCatalogService::registerLogicalSource: register logical source= {} schema= {}",
               logicalSourceName,
               schema->toString());
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceCatalog->addLogicalSource(logicalSourceName, std::move(schema));
 }
 
 bool SourceCatalogService::updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema) {
     NES_DEBUG("SourceCatalogService::update logical source {} with schema {}", logicalSourceName, schema->toString());
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceCatalog->updateLogicalSource(logicalSourceName, std::move(schema));
 }
 
 bool SourceCatalogService::unregisterLogicalSource(const std::string& logicalSourceName) {
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    std::unique_lock<std::mutex> lock(mutex);
     NES_DEBUG("SourceCatalogService::unregisterLogicalSource: register logical source= {}", logicalSourceName);
     bool success = sourceCatalog->removeLogicalSource(logicalSourceName);
     return success;
 }
 
 LogicalSourcePtr SourceCatalogService::getLogicalSource(const std::string& logicalSourceName) {
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    std::unique_lock<std::mutex> lock(mutex);
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     return std::make_shared<LogicalSource>(*logicalSource);
 }
 
 std::map<std::string, std::string> SourceCatalogService::getAllLogicalSourceAsString() {
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceCatalog->getAllLogicalSourceAsString();
 }
 
 std::vector<Catalogs::Source::SourceCatalogEntryPtr>
 SourceCatalogService::getPhysicalSources(const std::string& logicalSourceName) {
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceCatalog->getPhysicalSources(logicalSourceName);
 }
 
 bool SourceCatalogService::reset() {
-    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceCatalog->reset();
 }
 }//namespace NES

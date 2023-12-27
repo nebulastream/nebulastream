@@ -43,7 +43,6 @@
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
-#include <Services/LocationService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
@@ -75,7 +74,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
-
 
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -220,7 +218,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalQueryPlan,
                                               udfCatalog,
                                               worker->getNodeEngine()->getBufferManager(),
-                                              locationService,
                                               allowedOrigin);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
@@ -232,11 +229,10 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-    healthCheckService =
+    coordinatorHealthCheckService =
         std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, HEALTH_SERVICE_NAME, coordinatorConfiguration);
-    topologyManagerService->setHealthService(healthCheckService);
     NES_DEBUG("NesCoordinator start health check");
-    healthCheckService->startHealthCheck();
+    coordinatorHealthCheckService->startHealthCheck();
 
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
@@ -259,7 +255,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
     if (isRunning.compare_exchange_strong(expected, false)) {
 
         NES_DEBUG("NesCoordinator::stop health check");
-        healthCheckService->stopHealthCheck();
+        coordinatorHealthCheckService->stopHealthCheck();
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
@@ -324,8 +320,8 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
                                  sourceCatalogService,
                                  queryCatalogService,
                                  monitoringService->getMonitoringManager(),
-                                 locationService,
-                                 queryParsingService);
+                                 queryParsingService,
+                                 coordinatorHealthCheckService);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());

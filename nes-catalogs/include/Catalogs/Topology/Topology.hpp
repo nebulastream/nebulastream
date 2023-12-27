@@ -52,7 +52,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-using TopologyNodeWLock = std::unique_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
+using TopologyNodeWLock = std::shared_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
@@ -125,6 +125,16 @@ class Topology {
     bool removeTopologyNodeAsChild(WorkerId parentWorkerId, WorkerId childWorkerId);
 
     /**
+     * @brief Add properties to the link between parent and child topology node
+     * @param parentWorkerId : the parent topology node id
+     * @param childWorkerId : the child topology node id
+     * @param bandwidthInMBPS : the link bandwidth in Mega bytes per second
+     * @param latencyInMS : the link latency in milliseconds
+     * @return true if successful else false
+     */
+    bool addLinkProperty(WorkerId parentWorkerId, WorkerId childWorkerId, uint64_t bandwidthInMBPS, uint64_t latencyInMS);
+
+    /**
      * @brief This method will find ad return a copy of the topology node with given worker id
      * @param workerId : the id of the topology node
      * @return Topology node copy if found else nullptr
@@ -162,16 +172,23 @@ class Topology {
     bool occupySlots(WorkerId workerId, uint16_t amountToOccupy);
 
     /**
+     * @brief Get all registered topology nodes
+     * @return vector of topology nodes
+     */
+    std::vector<WorkerId> getAllRegisteredNodeIds();
+
+    /**
      * @brief This method will return a "duplicate" subgraph containing all the paths between start and destination node.
      * Note: this method will only look for the destination nodes that are parent nodes of the source node.
-     * @param sourceNode: the source topology node
-     * @param destinationNode: the destination topology node
+     * @param sourceTopologyNodeId: the source topology node
+     * @param destinationTopologyNodeId: the destination topology node
      * @return topology nodes representing the source nodes of the returned subgraph.
      */
-    std::optional<TopologyNodePtr> findAllPathBetween(const TopologyNodePtr& sourceNode, const TopologyNodePtr& destinationNode);
+    std::optional<TopologyNodePtr> findAllPathBetween(WorkerId sourceTopologyNodeId, WorkerId destinationTopologyNodeId);
 
     /**
      * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
+     * Note: the returned sub graph is a duplicate of the original sub graph. During the
      * @param sourceTopologyNodeIds: the topology nodes where to start the path identification
      * @param destinationTopologyNodeIds: the topology nodes where to end the path identification
      * @return a vector of start/upstream topology nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
@@ -185,8 +202,8 @@ class Topology {
      * @param radius : the radius
      * @return map of topology node id and the geo location
      */
-    std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
-    getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius);
+    std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+    getTopologyNodeIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation center, double radius);
 
     /**
      * Add GeoLocation of a worker node
@@ -217,6 +234,12 @@ class Topology {
      * @return true if successful
      */
     bool removeGeoLocation(WorkerId workerId);
+
+    /**
+     * @brief: Prepare the topology payload for the elegant placement service
+     * @param json representing the payload
+     */
+    void getElegantPayload(nlohmann::json& payload);
 
     /**
      * Get a json containing the id and the location of any node. In case the node is neither a field nor a mobile node,
@@ -261,50 +284,6 @@ class Topology {
     nlohmann::json requestLocationAndParentDataFromAllMobileNodes();
 
     /**
-     * @brief get information about a mobile workers predicted trajectory the last update position of the devices local
-     * node index and the scheduled reconnects of the device
-     * @param workerId : the id of the mobile device
-     * @return a json in the format:
-     * {
-        "indexUpdatePosition": [
-            <latitude>
-            <longitude>
-        ],
-        "pathEnd": [
-            <latitude>
-            <longitude>
-        ],
-        "pathStart": [
-            <latitude>
-            <longitude>
-        ],
-        "reconnectPoints": [
-            {
-                "id": <parent id>,
-                "reconnectPoint": [
-                    <latitude>
-                    <longitude>
-                ],
-                "time": <timestamp>
-            },
-            ...
-        ]
-        }
-     */
-    nlohmann::json requestReconnectScheduleAsJson(WorkerId workerId);
-
-    /**
-     * @brief update the information saved at the coordinator side about a mobile devices predicted next reconnect
-     * @param mobileWorkerId : The id of the mobile worker whose predicted reconnect has changed
-     * @param reconnectNodeId : The id of the expected new parent after the next reconnect
-     * @param location : The expected location at which the device will reconnect
-     * @param time : The expected time at which the device will reconnect
-     * @return true if the information was processed correctly
-     */
-    bool updatePredictedReconnect(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
-                                  const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions);
-
-    /**
      * @brief Print the current topology information
      */
     void print();
@@ -322,7 +301,6 @@ class Topology {
     std::string toString();
 
   private:
-
     explicit Topology();
 
     /**
@@ -350,7 +328,7 @@ class Topology {
         }
      */
     static nlohmann::json convertNodeLocationInfoToJson(WorkerId workerId,
-                                                        Spatial::DataTypes::Experimental::GeoLocation geoLocation);
+                                                        NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * @brief Merge the sub graphs starting from the nodes into a single sub-graph

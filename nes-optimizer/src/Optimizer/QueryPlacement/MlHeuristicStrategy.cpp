@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Catalogs/Topology/PathFinder.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
@@ -71,10 +72,6 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 5. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
-        //Release all locked topology nodes in case of pessimistic approach
-        if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
-            unlockTopologyNodes();
-        }
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }
@@ -86,25 +83,25 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(SharedQueryId sha
         Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
 
     for (auto executionNode : executionNodes) {
-        auto querysubplans = executionNode->getQuerySubPlans(sharedQueryId);
+        auto querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
 
         SignatureEqualityUtilPtr signatureEqualityUtil = SignatureEqualityUtil::create(context);
 
-        if (querysubplans.size() >= 2) {
+        if (querySubPlans.size() >= 2) {
             std::vector<QuerySignaturePtr> signatures;
             std::vector<int> querysubplansToRemove;
 
-            for (auto qsp : querysubplans) {
+            for (auto qsp : querySubPlans) {
                 signatureInferencePhase->execute(qsp);
                 auto sinkOperator = qsp->getSinkOperators().at(0);
                 signatures.push_back(sinkOperator->as<LogicalUnaryOperatorNode>()->getZ3Signature());
             }
-            for (int i = 0; i < (int) querysubplans.size() - 1; ++i) {
-                for (int j = i + 1; j < (int) querysubplans.size(); ++j) {
+            for (int i = 0; i < (int) querySubPlans.size() - 1; ++i) {
+                for (int j = i + 1; j < (int) querySubPlans.size(); ++j) {
                     if (!std::count(querysubplansToRemove.begin(), querysubplansToRemove.end(), j)
                         && signatureEqualityUtil->checkEquality(signatures[i], signatures[j])) {
-                        auto targetRootOperator = querysubplans[i]->getSourceOperators().at(0)->getParents().at(0);
-                        auto hostRootOperator = querysubplans[j]->getSourceOperators().at(0)->getParents().at(0);
+                        auto targetRootOperator = querySubPlans[i]->getSourceOperators().at(0)->getParents().at(0);
+                        auto hostRootOperator = querySubPlans[j]->getSourceOperators().at(0)->getParents().at(0);
                         auto hostRootChildren = hostRootOperator->getChildren();
 
                         for (auto& hostChild : hostRootChildren) {
@@ -118,10 +115,10 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(SharedQueryId sha
                 }
             }
             for (int i = (int) querysubplansToRemove.size() - 1; i >= 0; i--) {
-                querysubplans.erase(querysubplans.begin() + querysubplansToRemove[i]);
+                querySubPlans.erase(querySubPlans.begin() + querysubplansToRemove[i]);
             }
         }
-        executionNode->updateQuerySubPlans(sharedQueryId, querysubplans);
+        executionNode->updateQuerySubPlans(sharedQueryId, querySubPlans);
     }
     NES_DEBUG("Updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
 }
@@ -209,7 +206,7 @@ void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
             if (childTopologyNodes.size() == 1) {
                 candidateTopologyNode = childTopologyNodes[0];
             } else {
-                candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
+                candidateTopologyNode = pathFinder->findCommonAncestor(childTopologyNodes);
             }
             if (!candidateTopologyNode) {
                 NES_ERROR("Unable to find a common ancestor topology node to place the binary operator, "

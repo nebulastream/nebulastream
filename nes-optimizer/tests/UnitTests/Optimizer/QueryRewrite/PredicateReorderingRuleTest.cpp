@@ -32,7 +32,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <iostream>
 
 using namespace NES;
 
@@ -62,15 +61,13 @@ class PredicateReorderingRuleTest : public Testing::BaseIntegrationTest {
         auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
         PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
         LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-        Catalogs::Source::SourceCatalogEntryPtr sce1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+        auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
         sourceCatalog->addPhysicalSource("default_logical", sce1);
     }
 };
 
 TEST_F(PredicateReorderingRuleTest, testReorderingChain) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -117,8 +114,7 @@ TEST_F(PredicateReorderingRuleTest, testReorderingChain) {
 }
 
 TEST_F(PredicateReorderingRuleTest, testReorderingChainNotApplicable) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -159,8 +155,7 @@ TEST_F(PredicateReorderingRuleTest, testReorderingChainNotApplicable) {
 }
 
 TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -241,8 +236,7 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively
 }
 
 TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare

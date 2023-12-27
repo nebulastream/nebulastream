@@ -19,21 +19,20 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/TopologyNode.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
+#include <Util/Mobility/SpatialType.hpp>
 
 using namespace NES;
 
@@ -63,8 +62,7 @@ class FilterMergeRuleTest : public Testing::BaseIntegrationTest {
         auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
         PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
         LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-        Catalogs::Source::SourceCatalogEntryPtr sce1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+        auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
         sourceCatalog->addPhysicalSource("default_logical", sce1);
     }
 
@@ -87,8 +85,7 @@ class FilterMergeRuleTest : public Testing::BaseIntegrationTest {
 };
 
 TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -130,8 +127,7 @@ TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
 }
 
 TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -178,8 +174,7 @@ TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
 }
 
 TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -264,8 +259,7 @@ TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
 }
 
 TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
@@ -313,8 +307,7 @@ TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween) {
 }
 
 TEST_F(FilterMergeRuleTest, testMergeNotPossibleOneFilter) {
-    Catalogs::Source::SourceCatalogPtr sourceCatalog =
-        std::make_shared<Catalogs::Source::SourceCatalog>();
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare

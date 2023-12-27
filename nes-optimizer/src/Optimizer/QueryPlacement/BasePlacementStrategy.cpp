@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/PathFinder.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -39,7 +40,10 @@ BasePlacementStrategy::BasePlacementStrategy(const GlobalExecutionPlanPtr& globa
                                              const TypeInferencePhasePtr& typeInferencePhase,
                                              PlacementAmenderMode placementAmenderMode)
     : globalExecutionPlan(globalExecutionPlan), topology(topology), typeInferencePhase(typeInferencePhase),
-      placementAmenderMode(placementAmenderMode) {}
+      placementAmenderMode(placementAmenderMode) {
+    //Initialize path finder
+    pathFinder = std::make_shared<PathFinder>((topology->getRootTopologyNodeId()));
+}
 
 bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
@@ -198,12 +202,14 @@ bool BasePlacementStrategy::lockTopologyNodesInSelectedPath(const std::vector<To
         }
 
         //Try to acquire the lock
-        if (!topology->lockTopologyNode(idOfTopologyNodeToLock)) {
+        TopologyNodeWLock lock = topology->lockTopologyNode(idOfTopologyNodeToLock);
+        if (!lock) {
             NES_ERROR("Unable to Lock the topology node {} selected in the path selection.", idOfTopologyNodeToLock);
-            //Release all the acquired locks as part of back-off and retry strategy.
-            unlockTopologyNodes();
+            /*            //Release all the acquired locks as part of back-off and retry strategy.
+            unlockTopologyNodes();*/
             return false;
         }
+        lockedTopologyNodeMap[idOfTopologyNodeToLock] = std::move(lock);
 
         // Add to the list of topology nodes for which locks are acquired
         workerNodeIdsInBFS.emplace_back(idOfTopologyNodeToLock);
@@ -236,7 +242,7 @@ BasePlacementStrategy::findPath(const std::set<WorkerId>& topologyNodesWithUpStr
     return sourceTopologyNodesInSelectedPath;
 }
 
-bool BasePlacementStrategy::unlockTopologyNodes() {
+/*bool BasePlacementStrategy::unlockTopologyNodes() {
     NES_INFO("Releasing locks for all locked topology nodes.");
     //1 Check if there are nodes on which locks are acquired
     if (workerNodeIdsInBFS.empty()) {
@@ -255,7 +261,7 @@ bool BasePlacementStrategy::unlockTopologyNodes() {
         }
     });
     return true;
-}
+}*/
 
 ComputedSubQueryPlans
 BasePlacementStrategy::computeQuerySubPlans(SharedQueryId sharedQueryId,
@@ -566,7 +572,7 @@ void BasePlacementStrategy::addNetworkOperators(ComputedSubQueryPlans& computedS
 
                     // 9. Find topology nodes connecting the iterated workerId and pinnedUpstreamWorkerId.
                     std::vector<TopologyNodePtr> topologyNodesBetween =
-                        topology->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
+                        pathFinder->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
 
                     QueryPlanPtr querySubPlanWithUpstreamOperator;
 
@@ -661,25 +667,24 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
 
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
+        TopologyNodeWLock lockedTopologyNode;
+
         // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
         if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
             //1.1. wait till lock is acquired
-            while (!topology->lockTopologyNode(workerNodeId)) {
+            while (!(lockedTopologyNode = topology->lockTopologyNode(workerNodeId))) {
                 std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
             };
+        } else {
+            lockedTopologyNode = std::move(lockedTopologyNodeMap[workerNodeId]);
         }
 
         try {
-
             // 1.2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
             // for placing the operators.
             auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
-            if (!topology->occupySlots(workerNodeId, consumedResources)) {
+            if (!lockedTopologyNode->operator*()->occupySlots(consumedResources)) {
                 NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
-                if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
-                    NES_ERROR("Unable to release lock on the locked node {}.", workerNodeId);
-                    throw Exceptions::RuntimeException("Unable to release lock on the locked node.");
-                }
                 return false;
             }
 
@@ -852,32 +857,12 @@ bool BasePlacementStrategy::updateExecutionNodes(SharedQueryId sharedQueryId, Co
                     pinnedOperator->setOperatorState(OperatorState::PLACED);
                 }
             }
-
-            // 1.8. If using optimistic strategy then, release the lock.
-            if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
-                if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
-                    NES_ERROR("Unable to release lock on the locked node {}.", workerNodeId);
-                    throw Exceptions::RuntimeException("Unable to release lock on the locked node.");
-                }
-            }
         } catch (std::exception& ex) {// If exception occurred then safely
-            if (placementAmenderMode == PlacementAmenderMode::OPTIMISTIC) {
-                if (!topology->releaseLockOnTopologyNode(workerNodeId)) {
-                    NES_ERROR("Unable to release lock on the locked node {}.", workerNodeId);
-                    throw Exceptions::RuntimeException("Unable to release lock on the locked node.");
-                }
-            }
-
             NES_ERROR("Exception occurred during pinned operator placement {}.", ex.what());
-
             // NOTE: For pessimistic the locking will take place in the
             // catch block of the child class
             throw ex;
         }
-    }
-    // 1.9. If using pessimistic strategy then, release all locks.
-    if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
-        return unlockTopologyNodes();
     }
     return true;
 }

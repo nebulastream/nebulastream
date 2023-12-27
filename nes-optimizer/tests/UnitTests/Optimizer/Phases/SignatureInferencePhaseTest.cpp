@@ -72,8 +72,8 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     auto logicalSource = LogicalSource::create("default_logical", Schema::create());
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>();
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    auto sce =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
     sourceCatalog->addPhysicalSource("default_logical", sce);
 
     auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);

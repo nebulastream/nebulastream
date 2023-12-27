@@ -14,31 +14,28 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Catalogs::Source {
 
-SourceCatalogEntry::SourceCatalogEntry(PhysicalSourcePtr physicalSource,
-                                       LogicalSourcePtr logicalSource,
-                                       TopologyNodePtr topologyNode)
-    : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), node(std::move(topologyNode)) {}
+SourceCatalogEntry::SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId)
+    : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId) {}
 
 SourceCatalogEntryPtr
-SourceCatalogEntry::create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, TopologyNodePtr topologyNode) {
-    return std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
+SourceCatalogEntry::create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId) {
+    return std::make_shared<SourceCatalogEntry>(SourceCatalogEntry(physicalSource, logicalSource, topologyNodeId));
 }
 
 const PhysicalSourcePtr& SourceCatalogEntry::getPhysicalSource() const { return physicalSource; }
 
 const LogicalSourcePtr& SourceCatalogEntry::getLogicalSource() const { return logicalSource; }
 
-const TopologyNodePtr& SourceCatalogEntry::getNode() const { return node; }
+WorkerId SourceCatalogEntry::getTopologyNodeId() const { return topologyNodeId; }
 
 std::string SourceCatalogEntry::toString() {
     std::stringstream ss;
     ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource
-       << " on node=" + std::to_string(node->getId());
+       << " on node=" + std::to_string(topologyNodeId);
     return ss.str();
 }
 }// namespace NES::Catalogs::Source

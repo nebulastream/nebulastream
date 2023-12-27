@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/PathFinder.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -25,15 +26,14 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include <utility>
-
 namespace NES::Optimizer {
 
 BasePlacementStrategyPtr TopDownStrategy::create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                  const TopologyPtr& topology,
                                                  const TypeInferencePhasePtr& typeInferencePhase,
                                                  PlacementAmenderMode placementAmenderMode) {
-    return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
+    return std::make_unique<TopDownStrategy>(
+        TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode));
 }
 
 TopDownStrategy::TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -62,10 +62,6 @@ bool TopDownStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 5. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
-        //Release all locked topology nodes in case of pessimistic approach
-        if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
-            unlockTopologyNodes();
-        }
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }
@@ -125,7 +121,7 @@ void TopDownStrategy::identifyPinningLocation(const LogicalOperatorNodePtr& logi
             std::vector<TopologyNodePtr> childNodes = getTopologyNodesForUpStreamOperators(logicalOperator);
 
             NES_TRACE("Find a node reachable from all child and parent topology nodes.");
-            candidateTopologyNode = topology->findCommonNodeBetween(childNodes, parentTopologyNodes);
+            candidateTopologyNode = pathFinder->findCommonNodeBetween(childNodes, parentTopologyNodes);
 
             if (!candidateTopologyNode) {
                 NES_ERROR("Unable to find the candidate topology node for placing Nary operator {}", logicalOperator->toString());
@@ -160,7 +156,7 @@ void TopDownStrategy::identifyPinningLocation(const LogicalOperatorNodePtr& logi
             std::vector<TopologyNodePtr> childNodes = getTopologyNodesForUpStreamOperators(logicalOperator);
             NES_TRACE("Find a node reachable from all child and parent topology nodes.");
             //FIXME: we are considering only one root topology node currently
-            auto candidateTopologyNodes = topology->findNodesBetween(childNodes, {candidateTopologyNode});
+            auto candidateTopologyNodes = pathFinder->findNodesBetween(childNodes, {candidateTopologyNode});
             for (const auto& topologyNodes : candidateTopologyNodes) {
                 if (topologyNodes && topologyNodes->getAvailableResources() > 0) {
                     candidateTopologyNode = topologyNodes;

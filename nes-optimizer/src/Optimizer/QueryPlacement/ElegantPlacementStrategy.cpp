@@ -16,6 +16,7 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Elegant/ElegantPayloadKeys.hpp>
 #include <Operators/LogicalOperators/OpenCLLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
@@ -36,7 +37,6 @@ namespace NES::Optimizer {
 const std::string ElegantPlacementStrategy::sourceCodeKey = "sourceCode";
 
 BasePlacementStrategyPtr ElegantPlacementStrategy::create(const std::string& serviceURL,
-                                                          const float transferRate,
                                                           PlacementStrategy placementStrategy,
                                                           const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                           const TopologyPtr& topology,
@@ -53,7 +53,6 @@ BasePlacementStrategyPtr ElegantPlacementStrategy::create(const std::string& ser
     }
 
     return std::make_unique<ElegantPlacementStrategy>(ElegantPlacementStrategy(serviceURL,
-                                                                               transferRate,
                                                                                timeWeight,
                                                                                globalExecutionPlan,
                                                                                topology,
@@ -62,14 +61,13 @@ BasePlacementStrategyPtr ElegantPlacementStrategy::create(const std::string& ser
 }
 
 ElegantPlacementStrategy::ElegantPlacementStrategy(const std::string& serviceURL,
-                                                   const float transferRate,
                                                    const float timeWeight,
                                                    const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                    const TopologyPtr& topology,
                                                    const TypeInferencePhasePtr& typeInferencePhase,
                                                    PlacementAmenderMode placementAmenderMode)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, placementAmenderMode), serviceURL(serviceURL),
-      transferRate(transferRate), timeWeight(timeWeight) {}
+      timeWeight(timeWeight) {}
 
 bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                          const std::set<LogicalOperatorNodePtr>& pinnedUpStreamOperators,
@@ -105,10 +103,6 @@ bool ElegantPlacementStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQue
         // 5. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (const std::exception& ex) {
-        //Release all locked topology nodes in case of pessimistic approach
-        if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
-            unlockTopologyNodes();
-        }
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }
@@ -225,49 +219,6 @@ void ElegantPlacementStrategy::prepareQueryPayload(const std::set<LogicalOperato
     payload[OPERATOR_GRAPH_KEY] = nodes;
 }
 
-void ElegantPlacementStrategy::prepareTopologyPayload(nlohmann::json& payload) {
-    NES_DEBUG("Getting the json representation of available nodes");
-    auto root = topology->getRoot();
-    std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
-    std::deque<TopologyNodePtr> childToAdd;
-
-    std::vector<nlohmann::json> nodes = {};
-    std::vector<nlohmann::json> edges = {};
-
-    while (!parentToAdd.empty()) {
-        // Current topology node to add to the JSON
-        TopologyNodePtr currentNode = parentToAdd.front();
-        nlohmann::json currentNodeJsonValue{};
-        parentToAdd.pop_front();
-
-        // Add properties for current topology node
-        currentNodeJsonValue[NODE_ID_KEY] = currentNode->getId();
-        currentNodeJsonValue[NODE_TYPE_KEY] = "stationary";// always set to stationary
-        currentNodeJsonValue[DEVICES_KEY] = std::any_cast<std::vector<NES::Runtime::OpenCLDeviceInfo>>(
-            currentNode->getNodeProperty(NES::Worker::Configuration::OPENCL_DEVICES));
-
-        auto children = currentNode->getChildren();
-        for (const auto& child : children) {
-            // Add edge information for current topology node
-            nlohmann::json currentEdgeJsonValue{};
-            currentEdgeJsonValue[LINK_ID_KEY] =
-                std::to_string(child->as<TopologyNode>()->getId()) + "-" + std::to_string(currentNode->getId());
-            currentEdgeJsonValue[TRANSFER_RATE_KEY] = transferRate;
-            edges.push_back(currentEdgeJsonValue);
-            childToAdd.push_back(child->as<TopologyNode>());
-        }
-
-        if (parentToAdd.empty()) {
-            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
-            childToAdd.clear();
-        }
-
-        nodes.push_back(currentNodeJsonValue);
-    }
-    NES_INFO("no more topology nodes to add");
-
-    payload[AVAILABLE_NODES_KEY] = nodes;
-    payload[NETWORK_DELAYS_KEY] = edges;
-}
+void ElegantPlacementStrategy::prepareTopologyPayload(nlohmann::json& payload) { topology->getElegantPayload(payload); }
 
 }// namespace NES::Optimizer

@@ -256,8 +256,8 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    auto sce =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode);
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->addPhysicalSource("default_logical", sce);

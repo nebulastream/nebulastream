@@ -14,10 +14,10 @@
 #ifndef NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
 
+#include <Catalogs/Topology/TopologyManagerService.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/DTOs/ErrorResponse.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
-#include <Services/LocationService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
@@ -37,10 +37,10 @@ class LocationController : public oatpp::web::server::api::ApiController {
      */
     LocationController(const std::shared_ptr<ObjectMapper>& objectMapper,
                        const oatpp::String& completeRouterPrefix,
-                       const LocationServicePtr& locationService,
+                       const TopologyManagerServicePtr& topologyManagerService,
                        const ErrorHandlerPtr& errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), locationService(locationService),
-          errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
+          topologyManagerService(topologyManagerService), errorHandler(errorHandler) {}
 
     /**
      * Create a shared object of the API controller
@@ -49,15 +49,15 @@ class LocationController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<LocationController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                      const LocationServicePtr& locationService,
+                                                      const TopologyManagerServicePtr& topologyManagerService,
                                                       const std::string& routerPrefixAddition,
                                                       const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, locationService, errorHandler);
+        return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, topologyManagerService, errorHandler);
     }
 
     ENDPOINT("GET", "", getLocationInformationOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
-        auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeId);
+        auto nodeLocationJson = topologyManagerService->requestNodeLocationDataAsJson(nodeId);
         if (nodeLocationJson == nullptr) {
             NES_ERROR("node with id {} does not exist", nodeId);
             return errorHandler->handleError(Status::CODE_404, "No node with Id: " + std::to_string(nodeId));
@@ -66,21 +66,16 @@ class LocationController : public oatpp::web::server::api::ApiController {
     }
 
     ENDPOINT("GET", "/allMobile", getLocationDataOfAllMobileNodes) {
-        auto locationsJson = locationService->requestLocationAndParentDataFromAllMobileNodes();
+        auto locationsJson = topologyManagerService->requestLocationAndParentDataFromAllMobileNodes();
         return createResponse(Status::CODE_200, locationsJson.dump());
     }
 
     ENDPOINT("GET", "/reconnectSchedule", getReconnectionScheduleOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
-        auto reconnectScheduleJson = locationService->requestReconnectScheduleAsJson(nodeId);
-        if (reconnectScheduleJson == nullptr) {
-            NES_ERROR("node with id {} does not exist", nodeId);
-            return errorHandler->handleError(Status::CODE_400, "No node with Id: " + std::to_string(nodeId));
-        }
-        return createResponse(Status::CODE_200, reconnectScheduleJson.dump());
+        return errorHandler->handleError(Status::CODE_404, "Endpoint Not Implemented");
     }
 
   private:
-    LocationServicePtr locationService;
+    TopologyManagerServicePtr topologyManagerService;
     ErrorHandlerPtr errorHandler;
 };
 }// namespace NES::REST::Controller

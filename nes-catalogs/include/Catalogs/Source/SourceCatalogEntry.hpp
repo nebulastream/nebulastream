@@ -18,11 +18,9 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <Identifiers.hpp>
 
 namespace NES {
-
-class TopologyNode;
-using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
@@ -50,13 +48,13 @@ class SourceCatalogEntry {
      * @brief Create the shared pointer for the source catalog entry
      * @param physicalSource: physical source name
      * @param logicalSource: the logical source name
-     * @param topologyNode: the topology topologyNode
+     * @param topologyNodeId: the if of topology node
      * @return shared pointer to Source catalog entry
      */
     static SourceCatalogEntryPtr
-    create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, TopologyNodePtr topologyNode);
+    create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
 
-    explicit SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, TopologyNodePtr topologyNode);
+    //    explicit SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
 
     /**
      * @brief Get the physical source
@@ -74,7 +72,7 @@ class SourceCatalogEntry {
      * @brief Get the topology node
      * @return the shared pointer to the topology node
      */
-    const TopologyNodePtr& getNode() const;
+    WorkerId getTopologyNodeId() const;
 
     /**
      * @brief Get the string rep of the source catalog entry
@@ -83,11 +81,19 @@ class SourceCatalogEntry {
     std::string toString();
 
   private:
+    /**
+     * @brief Constructor
+     * @param physicalSource : the physical source pointer
+     * @param logicalSource : the logical source pointer
+     * @param topologyNodeId : the topology node id
+     */
+    explicit SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
+
     PhysicalSourcePtr physicalSource;
     LogicalSourcePtr logicalSource;
-    TopologyNodePtr node;
+    WorkerId topologyNodeId;
 };
 }// namespace Catalogs::Source
 }// namespace NES
 
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_

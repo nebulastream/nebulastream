@@ -122,13 +122,13 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::BaseUnitTest {
 
         //Physical source1
         auto physicalSource1 = PhysicalSource::create(DefaultSourceType::create("source1", "physicalSource1"));
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource1, sourceNode1);
+        auto sourceCatalogEntry1 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, sourceNode1);
 
         //Physical source2
         auto physicalSource2 = PhysicalSource::create(DefaultSourceType::create("source2", "physicalSource2"));
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource2, sourceNode2);
+        auto sourceCatalogEntry2 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource2, sourceNode2);
 
         sourceCatalog->addPhysicalSource("source1", sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource("source2", sourceCatalogEntry2);
@@ -493,8 +493,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleComplexQueryPlan
 
     auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
     auto physicalSource = PhysicalSource::create("example", "test1");
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
+    auto sourceCatalogEntry1 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, node);
     sourceCatalog->addPhysicalSource("example", sourceCatalogEntry1);
 
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
@@ -540,8 +540,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
     auto physicalSource = PhysicalSource::create("example", "test1");
     auto logicalSource = sourceCatalog->getLogicalSource("example");
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);
+    auto sourceCatalogEntry1 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, node);
     sourceCatalog->addPhysicalSource("example", sourceCatalogEntry1);
 
     //Prepare

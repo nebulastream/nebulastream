@@ -38,11 +38,11 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedTreeBasedQueryContainmentMergerRule.hpp>
-#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <QueryValidation/SyntacticQueryValidation.hpp>
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
@@ -107,37 +107,33 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
         auto csvSourceWindTurbine = CSVSourceType::create("windTurbines", "windTurbines");
         LogicalSourcePtr windTurbinesLogicalSource = LogicalSource::create("windTurbines", schema);
         PhysicalSourcePtr windTurbinesPhysicalSource = PhysicalSource::create(csvSourceWindTurbine);
-        Catalogs::Source::SourceCatalogEntryPtr sce1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(windTurbinesPhysicalSource,
-                                                                   windTurbinesLogicalSource,
-                                                                   physicalNode);
+        auto sce1 = Catalogs::Source::SourceCatalogEntry::create(windTurbinesPhysicalSource,
+                                                                 windTurbinesLogicalSource,
+                                                                 physicalNode->getId());
         sourceCatalog->addPhysicalSource("windTurbines", sce1);
 
         auto csvSourceSolarPanel1 = CSVSourceType::create("solarPanels1", "solarPanels1");
         LogicalSourcePtr solarPanels1LogicalSource = LogicalSource::create("solarPanels1", schema);
         PhysicalSourcePtr solarPanels1PhysicalSource = PhysicalSource::create(csvSourceSolarPanel1);
-        Catalogs::Source::SourceCatalogEntryPtr sce2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(solarPanels1PhysicalSource,
-                                                                   solarPanels1LogicalSource,
-                                                                   physicalNode);
+        auto sce2 = Catalogs::Source::SourceCatalogEntry::create(solarPanels1PhysicalSource,
+                                                                 solarPanels1LogicalSource,
+                                                                 physicalNode->getId());
         sourceCatalog->addPhysicalSource("solarPanels2", sce2);
 
         LogicalSourcePtr solarPanels2LogicalSource = LogicalSource::create("solarPanels2", schema);
         auto csvSourceSolarPanel2 = CSVSourceType::create("solarPanels2", "solarPanels2");
         PhysicalSourcePtr solarPanels2PhysicalSource = PhysicalSource::create(csvSourceSolarPanel2);
-        Catalogs::Source::SourceCatalogEntryPtr sce3 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(solarPanels2PhysicalSource,
-                                                                   solarPanels2LogicalSource,
-                                                                   physicalNode);
+        auto sce3 = Catalogs::Source::SourceCatalogEntry::create(solarPanels2PhysicalSource,
+                                                                 solarPanels2LogicalSource,
+                                                                 physicalNode->getId());
         sourceCatalog->addPhysicalSource("solarPanels2", sce3);
 
         auto csvSourceHouseHolds = CSVSourceType::create("households", "households");
         LogicalSourcePtr householdsLogicalSource = LogicalSource::create("households", schemaHouseholds);
         PhysicalSourcePtr householdsPhysicalSource = PhysicalSource::create(csvSourceHouseHolds);
-        Catalogs::Source::SourceCatalogEntryPtr sce4 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(householdsPhysicalSource,
-                                                                   householdsLogicalSource,
-                                                                   physicalNode);
+        auto sce4 = Catalogs::Source::SourceCatalogEntry::create(householdsPhysicalSource,
+                                                                 householdsLogicalSource,
+                                                                 physicalNode->getId());
         sourceCatalog->addPhysicalSource("households", sce4);
     }
 };

@@ -28,11 +28,9 @@
 #endif
 
 namespace NES {
+
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
-
-class AbstractHealthCheckService;
-using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 
 /**
  * @brief: This class is responsible for registering/unregistering nodes and adding and removing parentNodes.
@@ -120,7 +118,7 @@ class TopologyManagerService {
      * @return vector of pairs containing node ids and the corresponding location
      */
     std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
-    getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius);
+    getTopologyNodeIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation center, double radius);
 
     /**
      * Method to return the root node id
@@ -148,6 +146,48 @@ class TopologyManagerService {
       * @return JSON representation of the Topology
       */
     nlohmann::json getTopologyAsJson();
+
+    /**
+     * Get a json containing the id and the location of any node. In case the node is neither a field nor a mobile node,
+     * the "location" attribute will be null
+     * @param workerId : the id of the requested node
+     * @return a json in the format:
+        {
+            "id": <node id>,
+            "location":
+                  {
+                      "latitude": <latitude>,
+                      "longitude": <longitude>
+                  }
+        }
+     */
+    nlohmann::json requestNodeLocationDataAsJson(WorkerId workerId);
+
+    /**
+     * @brief get a list of all mobile nodes in the system with known locations and their current positions as well as their parent nodes. Mobile nodes without known locations will not appear in the list
+     * @return a json list in the format:
+     * {
+     *      "edges":
+     *          [
+     *              {
+     *                  "source": <node id>,
+     *                  "target": <node id>
+     *              }
+     *          ],
+     *      "nodes":
+     *          [
+     *              {
+     *                  "id": <node id>,
+     *                  "location":
+     *                      {
+     *                          "latitude": <latitude>,
+     *                          "longitude": <longitude>
+     *                      }
+     *              }
+     *          ]
+     *  }
+     */
+    nlohmann::json requestLocationAndParentDataFromAllMobileNodes();
 
   private:
     TopologyPtr topology;

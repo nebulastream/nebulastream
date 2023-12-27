@@ -135,8 +135,8 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
             auto physicalSource =
                 PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
             //Map physical source and topology node
-            Catalogs::Source::SourceCatalogEntryPtr sce =
-                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
+            auto sce =
+                Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, topologyNode);
             streamCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
     }

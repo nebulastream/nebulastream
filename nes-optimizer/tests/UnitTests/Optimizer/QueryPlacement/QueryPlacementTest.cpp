@@ -89,18 +89,19 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+        properties["tf_installed"] = true;
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0], properties);
-        rootNode->addNodeProperty("tf_installed", true);
-        topology->setRootTopologyNodeId(rootNode);
+        int rootNodeId = 1;
+        topology->registerTopologyNode(rootNodeId, "localhost", 123, 124, resources[0], properties);
+        topology->setRootTopologyNodeId(rootNodeId);
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1], properties);
-        sourceNode1->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
+        int sourceNode1Id = 2;
+        topology->registerTopologyNode(sourceNode1Id, "localhost", 123, 124, resources[1], properties);
+        topology->addTopologyNodeAsChild(rootNodeId, sourceNode1Id);
 
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2], properties);
-        sourceNode2->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
+        int sourceNode2Id = 3;
+        topology->registerTopologyNode(sourceNode2Id, "localhost", 123, 124, resources[2], properties);
+        topology->addTopologyNodeAsChild(rootNodeId, sourceNode2Id);
 
         auto carSchema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         const std::string carSourceName = "car";
@@ -114,10 +115,10 @@ class QueryPlacementTest : public Testing::BaseUnitTest {
         csvSourceTypeForCar->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSourceForCar = PhysicalSource::create(csvSourceTypeForCar);
 
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceForCar, logicalSource, sourceNode1);
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceForCar, logicalSource, sourceNode2);
+        auto sourceCatalogEntry1 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceForCar, logicalSource, sourceNode1Id);
+        auto sourceCatalogEntry2 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceForCar, logicalSource, sourceNode2Id);
 
         sourceCatalog->addPhysicalSource(carSourceName, sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource(carSourceName, sourceCatalogEntry2);
@@ -1017,18 +1018,19 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
-    auto midNode = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
-    auto srcNode = TopologyNode::create(2, "localhost", 4002, 5002, 4, properties);
-
     TopologyPtr topology = Topology::create();
-    topology->setRootTopologyNodeId(sinkNode);
 
-    topology->addNewTopologyNodeAsChild(sinkNode, midNode);
-    topology->addNewTopologyNodeAsChild(midNode, srcNode);
+    int rootNodeId = 0;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 4, properties);
+    topology->setRootTopologyNodeId(rootNodeId);
 
-    ASSERT_TRUE(sinkNode->containAsChild(midNode));
-    ASSERT_TRUE(midNode->containAsChild(srcNode));
+    int middleNodeId = 1;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
+
+    int sourceNodeId = 2;
+    topology->registerTopologyNode(sourceNodeId, "localhost", 4002, 5002, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId, sourceNodeId);
 
     // Prepare the source and schema
     auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
@@ -1041,8 +1043,8 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    auto sourceCatalogEntry1 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNodeId);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     // Prepare the query
@@ -1139,24 +1141,27 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
-    auto midNode2 = TopologyNode::create(2, "localhost", 4002, 5002, 4, properties);
-    auto srcNode1 = TopologyNode::create(3, "localhost", 4003, 5003, 4, properties);
-    auto srcNode2 = TopologyNode::create(4, "localhost", 4004, 5004, 4, properties);
-
     TopologyPtr topology = Topology::create();
-    topology->setRootTopologyNodeId(sinkNode);
 
-    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
-    topology->addNewTopologyNodeAsChild(sinkNode, midNode2);
-    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
-    topology->addNewTopologyNodeAsChild(midNode2, srcNode2);
+    int rootNodeId = 0;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 4, properties);
+    topology->setRootTopologyNodeId(rootNodeId);
 
-    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
-    ASSERT_TRUE(sinkNode->containAsChild(midNode2));
-    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
-    ASSERT_TRUE(midNode2->containAsChild(srcNode2));
+    int middleNodeId1 = 1;
+    topology->registerTopologyNode(middleNodeId1, "localhost", 4001, 5001, 4, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId1);
+
+    int middleNodeId2 = 2;
+    topology->registerTopologyNode(middleNodeId2, "localhost", 4001, 5001, 4, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId2);
+
+    int sourceNodeId1 = 3;
+    topology->registerTopologyNode(sourceNodeId1, "localhost", 4002, 5002, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId1, sourceNodeId1);
+
+    int sourceNodeId2 = 4;
+    topology->registerTopologyNode(sourceNodeId2, "localhost", 4002, 5002, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId2, sourceNodeId2);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1171,10 +1176,10 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
+    auto sourceCatalogEntry1 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNodeId1);
+    auto sourceCatalogEntry2 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNodeId2);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
 
@@ -1287,18 +1292,17 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
-    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4, properties);
-
     TopologyPtr topology = Topology::create();
-    topology->setRootTopologyNodeId(sinkNode);
 
-    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
-    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
-
-    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
-    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
+    WorkerId rootNodeId = 0;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->setRootTopologyNodeId(rootNodeId);
+    WorkerId middleNodeId = 1;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
+    WorkerId srcNodeId = 2;
+    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1316,8 +1320,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    auto sourceCatalogEntry1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, srcNodeId);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car")
@@ -1408,18 +1411,17 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
-    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4, properties);
-
     TopologyPtr topology = Topology::create();
-    topology->setRootTopologyNodeId(sinkNode);
 
-    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
-    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
-
-    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
-    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
+    WorkerId rootNodeId = 0;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->setRootTopologyNodeId(rootNodeId);
+    WorkerId middleNodeId = 1;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
+    WorkerId srcNodeId = 2;
+    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1437,8 +1439,8 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSource = PhysicalSource::create(csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    auto sourceCatalogEntry1 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, srcNodeId);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car")
@@ -1525,18 +1527,17 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthTightResourcesConstrains) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 1, properties);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 1, properties);
-    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 2, properties);
-
     TopologyPtr topology = Topology::create();
-    topology->setRootTopologyNodeId(sinkNode);
 
-    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
-    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
-
-    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
-    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
+    WorkerId rootNodeId = 0;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->setRootTopologyNodeId(rootNodeId);
+    WorkerId middleNodeId = 1;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
+    WorkerId srcNodeId = 2;
+    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1554,8 +1555,8 @@ TEST_F(QueryPlacementTest, testTopDownPlacementWthTightResourcesConstrains) {
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     auto physicalSourceCar = PhysicalSource::create(csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSource, srcNode1);
+    auto sourceCatalogEntry1 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSource, srcNodeId);
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car").filter(Attribute("value") > 1).sink(NullOutputSinkDescriptor::create());
@@ -1637,18 +1638,17 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrains) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 1, properties);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 1, properties);
-    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 1, properties);
-
     TopologyPtr topology = Topology::create();
-    topology->setRootTopologyNodeId(sinkNode);
 
-    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
-    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
-
-    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
-    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
+    WorkerId rootNodeId = 0;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->setRootTopologyNodeId(rootNodeId);
+    WorkerId middleNodeId = 1;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
+    WorkerId srcNodeId = 2;
+    topology->registerTopologyNode(srcNodeId, "localhost", 4003, 5003, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
     NES_DEBUG("QueryPlacementTest:: topology: {}", topology->toString());
 
@@ -1667,8 +1667,8 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrains) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
 
     auto physicalSourceCar = PhysicalSource::create(csvSourceType);
-    Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSource, srcNode1);
+    auto sourceCatalogEntry1 =
+        Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSource, srcNodeId);
 
     sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
@@ -1753,21 +1753,20 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrainsInAJo
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 1, properties);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 5, properties);
-    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 1, properties);
-    auto srcNode2 = TopologyNode::create(3, "localhost", 4003, 5004, 1, properties);
-
     TopologyPtr topology = Topology::create();
-    topology->setRootTopologyNodeId(sinkNode);
 
-    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
-    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
-    topology->addNewTopologyNodeAsChild(midNode1, srcNode2);
-
-    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
-    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
-    ASSERT_TRUE(midNode1->containAsChild(srcNode2));
+    WorkerId rootNodeId = 0;
+    topology->registerTopologyNode(rootNodeId, "localhost", 4000, 5000, 14, properties);
+    topology->setRootTopologyNodeId(rootNodeId);
+    WorkerId middleNodeId = 1;
+    topology->registerTopologyNode(middleNodeId, "localhost", 4001, 5001, 4, properties);
+    topology->addTopologyNodeAsChild(rootNodeId, middleNodeId);
+    WorkerId srcNodeId1 = 2;
+    topology->registerTopologyNode(srcNodeId1, "localhost", 4003, 5003, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId1);
+    WorkerId srcNodeId2 = 3;
+    topology->registerTopologyNode(srcNodeId2, "localhost", 4003, 5003, 4, properties);
+    topology->addTopologyNodeAsChild(middleNodeId, srcNodeId2);
 
     NES_INFO("Topology:\n{}", topology->toString());
 
@@ -1788,8 +1787,8 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrainsInAJo
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(csvSourceType);
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+        auto sourceCatalogEntry1 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, srcNodeId1);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
     }
     {
@@ -1800,9 +1799,9 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementWthTightResourcesConstrainsInAJo
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(csvSourceType);
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
-        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+        auto sourceCatalogEntry2 =
+           Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, srcNodeId2);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
     }
 
     Query query = Query::from("car1")

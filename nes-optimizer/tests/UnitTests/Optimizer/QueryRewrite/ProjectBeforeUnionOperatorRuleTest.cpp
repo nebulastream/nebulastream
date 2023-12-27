@@ -69,10 +69,10 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::BaseUnitTest {
         PhysicalSourcePtr physicalSource1 = PhysicalSource::create("x", "x1");
         PhysicalSourcePtr physicalSource2 = PhysicalSource::create("y", "y1");
 
-        Catalogs::Source::SourceCatalogEntryPtr sce1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource1, physicalNode);
-        Catalogs::Source::SourceCatalogEntryPtr sce2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource2, physicalNode);
+        auto sce1 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, physicalNode->getId());
+        auto sce2 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource2, physicalNode->getId());
 
         sourceCatalog->addPhysicalSource("x", sce1);
         sourceCatalog->addPhysicalSource("y", sce2);

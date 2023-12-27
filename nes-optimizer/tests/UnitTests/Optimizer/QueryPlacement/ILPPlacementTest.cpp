@@ -87,25 +87,24 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+        properties["slots"] = 100;
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 100, properties);
-        rootNode->addNodeProperty("slots", 100);
-        topologyForILP->setRootTopologyNodeId(rootNode);
+        WorkerId rootNodeId = 1;
+        topologyForILP->registerTopologyNode(rootNodeId, "localhost", 123, 124, 100, properties);
+        topologyForILP->setRootTopologyNodeId(rootNodeId);
 
-        TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 10, properties);
-        middleNode->addNodeProperty("slots", 10);
-        topologyForILP->addNewTopologyNodeAsChild(rootNode, middleNode);
+        WorkerId middleNodeId = 2;
+        properties["slots"] = 10;
+        topologyForILP->registerTopologyNode(middleNodeId, "localhost", 123, 124, 10, properties);
+        topologyForILP->addTopologyNodeAsChild(rootNodeId, middleNodeId);
 
-        TopologyNodePtr sourceNode = TopologyNode::create(3, "localhost", 123, 124, 1, properties);
-        sourceNode->addNodeProperty("slots", 1);
-        topologyForILP->addNewTopologyNodeAsChild(middleNode, sourceNode);
+        WorkerId srcNodeId = 3;
+        properties["slots"] = 1;
+        topologyForILP->registerTopologyNode(srcNodeId, "localhost", 123, 124, 1, properties);
+        topologyForILP->addTopologyNodeAsChild(middleNodeId, srcNodeId);
 
-        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-
-        sourceNode->addLinkProperty(middleNode, linkProperty);
-        middleNode->addLinkProperty(sourceNode, linkProperty);
-        middleNode->addLinkProperty(rootNode, linkProperty);
-        rootNode->addLinkProperty(middleNode, linkProperty);
+        topologyForILP->addLinkProperty(middleNodeId, srcNodeId, 512, 100);
+        topologyForILP->addLinkProperty(rootNodeId, middleNodeId, 512, 100);
 
         auto schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         const std::string sourceName = "car";
@@ -117,8 +116,8 @@ class ILPPlacementTest : public Testing::BaseUnitTest {
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(csvSourceType);
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+        auto sourceCatalogEntry1 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, srcNodeId);
         sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
     }
 
@@ -778,7 +777,6 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingUpdatedSharedQueryPlanWithILPStrate
         }
     }
 }
-
 
 //TODO: Enable with #4453
 /* Test incremental query placement with ILP strategy - simple query of source - filter - map - sink and then added map - sink and filter - sink to the filter operator*/
