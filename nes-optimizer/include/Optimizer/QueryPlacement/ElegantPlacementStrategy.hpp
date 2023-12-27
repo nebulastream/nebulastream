@@ -45,7 +45,6 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
      * @return shared pointer to the placement strategy
      */
     static BasePlacementStrategyPtr create(const std::string& serviceURL,
-                                           const float transferRate,
                                            PlacementStrategy placementStrategy,
                                            const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
@@ -58,7 +57,6 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
 
   private:
     explicit ElegantPlacementStrategy(const std::string& serviceURL,
-                                      const float transferRate,
                                       const float timeWeight,
                                       const GlobalExecutionPlanPtr& globalExecutionPlan,
                                       const TopologyPtr& topology,
@@ -99,35 +97,9 @@ class ElegantPlacementStrategy : public BasePlacementStrategy {
     void addJavaUdfByteCodeField(const OperatorNodePtr& logicalOperator, nlohmann::json& node);
 
     std::string serviceURL;
-    float transferRate;
     float timeWeight;
 
     const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
-
-    //Query payload constants
-    const std::string OPERATOR_GRAPH_KEY = "operatorGraph";
-    const std::string OPERATOR_ID_KEY = "operatorId";
-    const std::string CHILDREN_KEY = "children";
-    const std::string CONSTRAINT_KEY = "constraint";
-    const std::string INPUT_DATA_KEY = "inputData";
-    const std::string JAVA_UDF_FIELD_KEY = "javaUdfField";
-
-    //Topology payload constants
-    const std::string DEVICE_ID_KEY = "deviceID";
-    const std::string DEVICES_KEY = "devices";
-    const std::string NODE_ID_KEY = "nodeId";
-    const std::string NODE_TYPE_KEY = "nodeType";
-
-    //Network delay payload constants
-    const std::string NETWORK_DELAYS_KEY = "networkDelays";
-    const std::string LINK_ID_KEY = "linkID";
-    const std::string TRANSFER_RATE_KEY = "transferRate";
-    const std::string TIME_WEIGHT_KEY = "time_weight";
-
-    //Response payload constants
-    const std::string AVAILABLE_NODES_KEY = "availNodes";
-    const std::string PLACEMENT_KEY = "placement";
-
     const std::string EMPTY_STRING;
 };
 

@@ -131,8 +131,8 @@ class MlHeuristicPlacementTest : public Testing::BaseUnitTest {
         auto physicalSource = PhysicalSource::create(csvSourceType);
 
         for (int source : sources) {
-            Catalogs::Source::SourceCatalogEntryPtr streamCatalogEntry =
-                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, nodes[source]);
+            auto streamCatalogEntry =
+                Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodes[source]);
             sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 

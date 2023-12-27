@@ -83,13 +83,13 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         LogicalSourcePtr logicalSourceA = sourceCatalog->getLogicalSource("A");
 
         PhysicalSourcePtr physicalSourceA1 = PhysicalSource::create(DefaultSourceType::create("A", "A1"));
-        Catalogs::Source::SourceCatalogEntryPtr sceA1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA1, logicalSourceA, physicalNode);
+        auto sceA1 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceA1, logicalSourceA, physicalNode->getId());
         sourceCatalog->addPhysicalSource("A", sceA1);
 
         PhysicalSourcePtr physicalSourceA2 = PhysicalSource::create(DefaultSourceType::create("A", "A2"));
-        Catalogs::Source::SourceCatalogEntryPtr sceA2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceA2, logicalSourceA, physicalNode);
+        auto sceA2 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceA2, logicalSourceA, physicalNode->getId());
         sourceCatalog->addPhysicalSource("A", sceA2);
 
         auto schemaB = Schema::create()->addField("id", BasicType::INT32)->addField("value", BasicType::UINT32);
@@ -97,8 +97,8 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         LogicalSourcePtr logicalSourceB = sourceCatalog->getLogicalSource("B");
 
         PhysicalSourcePtr physicalSourceB1 = PhysicalSource::create(DefaultSourceType::create("B", "B1"));
-        Catalogs::Source::SourceCatalogEntryPtr sceB1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceB1, logicalSourceB, physicalNode);
+        auto sceB1 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceB1, logicalSourceB, physicalNode->getId());
         sourceCatalog->addPhysicalSource("B", sceB1);
     }
 };
@@ -264,10 +264,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
     auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source3);
-    auto dummyWindowDefinition = LogicalWindowDefinition::create({},
-                                                                 WindowTypePtr(),
-                                                                 DistributionCharacteristicPtr(),
-                                                                 0);
+    auto dummyWindowDefinition = LogicalWindowDefinition::create({}, WindowTypePtr(), DistributionCharacteristicPtr(), 0);
     auto window = LogicalOperatorFactory::createCentralWindowSpecializedOperator(dummyWindowDefinition)->as<WindowOperatorNode>();
     queryPlan->appendOperatorAsNewRoot(window);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());

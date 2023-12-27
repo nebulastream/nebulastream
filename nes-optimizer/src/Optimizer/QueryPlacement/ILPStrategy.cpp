@@ -122,14 +122,12 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
 
             //2.2 Find path between pinned upstream and downstream topology node
             auto upstreamPinnedNodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
-            auto upstreamTopologyNode = workerIdToTopologyNodeMap[upstreamPinnedNodeId];
 
             auto downstreamPinnedNodeId =
                 std::any_cast<uint64_t>(operatorPath.back()->as_if<LogicalOperatorNode>()->getProperty(PINNED_WORKER_ID));
-            auto downstreamTopologyNode = workerIdToTopologyNodeMap[downstreamPinnedNodeId];
 
             std::vector<TopologyNodePtr> topologyPath =
-                topology->findPathBetween({upstreamTopologyNode}, {downstreamTopologyNode});
+                topology->findPathBetween({upstreamPinnedNodeId}, {downstreamPinnedNodeId});
 
             while (!topologyPath.back()->getParents().empty()) {
                 //FIXME #2290: path with multiple parents not supported
@@ -248,10 +246,6 @@ bool ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 11. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
-        //Release all locked topology nodes in case of pessimistic approach
-        if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
-            unlockTopologyNodes();
-        }
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
 }
@@ -283,7 +277,7 @@ void ILPStrategy::computeDistance(const TopologyNodePtr& node, std::map<uint64_t
     if (mileages.find(parentID) == mileages.end()) {
         computeDistance(parent, mileages);
     }
-    mileages[topologyID] = 1.0 / node->getLinkProperty(parent)->bandwidth + mileages[parentID];
+    mileages[topologyID] = 1.0 / node->getLinkProperty(parentID)->bandwidth + mileages[parentID];
 }
 
 void ILPStrategy::addConstraints(z3::optimize& opt,

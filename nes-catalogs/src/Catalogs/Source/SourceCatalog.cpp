@@ -24,7 +24,7 @@
 
 namespace NES::Catalogs::Source {
 
-SourceCatalog::SourceCatalog(){
+SourceCatalog::SourceCatalog() {
     NES_DEBUG("SourceCatalog: construct source catalog");
     addDefaultSources();
     NES_DEBUG("SourceCatalog: construct source catalog successfully");
@@ -97,13 +97,13 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
         for (const SourceCatalogEntryPtr& sourceCatalogEntry : physicalSources) {
             auto physicalSourceToTest = sourceCatalogEntry->getPhysicalSource();
             NES_DEBUG("test node id={} phyStr={}",
-                      sourceCatalogEntry->getNode()->getId(),
+                      sourceCatalogEntry->getTopologyNodeId(),
                       physicalSourceToTest->getPhysicalSourceName());
             if (physicalSourceToTest->getPhysicalSourceName()
                     == newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
-                && sourceCatalogEntry->getNode()->getId() == newSourceCatalogEntry->getNode()->getId()) {
+                && sourceCatalogEntry->getTopologyNodeId() == newSourceCatalogEntry->getTopologyNodeId()) {
                 NES_ERROR("SourceCatalog: node with id={} name={} already exists",
-                          sourceCatalogEntry->getNode()->getId(),
+                          sourceCatalogEntry->getTopologyNodeId(),
                           physicalSourceToTest->getPhysicalSourceName());
                 return false;
             }
@@ -124,13 +124,13 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     }
 
-    NES_DEBUG("SourceCatalog: physical source with id={} successful added", newSourceCatalogEntry->getNode()->getId());
+    NES_DEBUG("SourceCatalog: physical source with id={} successful added", newSourceCatalogEntry->getTopologyNodeId());
     return true;
 }
 
 bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
                                          const std::string& physicalSourceName,
-                                         std::uint64_t hashId) {
+                                         WorkerId topologyNodeId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("SourceCatalog: search for logical source in removePhysicalSource() {}", logicalSourceName);
 
@@ -138,25 +138,25 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
         NES_ERROR("SourceCatalog: logical source {} does not exists when trying to remove physical source with hashId {}",
                   logicalSourceName,
-                  hashId);
+                  topologyNodeId);
         return false;
     }
     NES_DEBUG("SourceCatalog: logical source {} exists try to remove physical source{} from node {}",
               logicalSourceName,
               physicalSourceName,
-              hashId);
+              topologyNodeId);
     for (auto entry = logicalToPhysicalSourceMapping[logicalSourceName].cbegin();
          entry != logicalToPhysicalSourceMapping[logicalSourceName].cend();
          entry++) {
         NES_DEBUG("test node id={} phyStr={}",
-                  entry->get()->getNode()->getId(),
+                  entry->get()->getTopologyNodeId(),
                   entry->get()->getPhysicalSource()->getPhysicalSourceName());
-        NES_DEBUG("test to be deleted id={} phyStr={}", hashId, physicalSourceName);
+        NES_DEBUG("test to be deleted id={} phyStr={}", topologyNodeId, physicalSourceName);
         if (entry->get()->getPhysicalSource()->getPhysicalSourceName() == physicalSourceName) {
-            NES_DEBUG("SourceCatalog: node with name={} exists try match hashId {}", physicalSourceName, hashId);
+            NES_DEBUG("SourceCatalog: node with name={} exists try match hashId {}", physicalSourceName, topologyNodeId);
 
-            if (entry->get()->getNode()->getId() == hashId) {
-                NES_DEBUG("SourceCatalog: node with id={} name={} exists try to erase", hashId, physicalSourceName);
+            if (entry->get()->getTopologyNodeId() == topologyNodeId) {
+                NES_DEBUG("SourceCatalog: node with id={} name={} exists try to erase", topologyNodeId, physicalSourceName);
                 logicalToPhysicalSourceMapping[logicalSourceName].erase(entry);
                 NES_DEBUG("SourceCatalog: number of entries afterwards {}",
                           logicalToPhysicalSourceMapping[logicalSourceName].size());
@@ -166,10 +166,10 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
     }
     NES_DEBUG("SourceCatalog: physical source {} does not exist on node with id {} and with logicalSourceName {}",
               physicalSourceName,
-              hashId,
+              topologyNodeId,
               logicalSourceName);
 
-    NES_DEBUG("SourceCatalog: physical source {} does not exist on node with id {}", physicalSourceName, hashId);
+    NES_DEBUG("SourceCatalog: physical source {} does not exist on node with id {}", physicalSourceName, topologyNodeId);
     return false;
 }
 
@@ -207,9 +207,9 @@ bool SourceCatalog::testIfLogicalSourceExistsInLogicalToPhysicalMapping(const st
         != logicalToPhysicalSourceMapping.end();
 }
 
-std::vector<TopologyNodePtr> SourceCatalog::getSourceNodesForLogicalSource(const std::string& logicalSourceName) {
+std::vector<WorkerId> SourceCatalog::getSourceNodesForLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
-    std::vector<TopologyNodePtr> listOfSourceNodes;
+    std::vector<WorkerId> listOfSourceNodes;
 
     //get current physical source for this logical source
     std::vector<SourceCatalogEntryPtr> physicalSources = logicalToPhysicalSourceMapping[logicalSourceName];
@@ -219,7 +219,7 @@ std::vector<TopologyNodePtr> SourceCatalog::getSourceNodesForLogicalSource(const
     }
 
     for (const SourceCatalogEntryPtr& entry : physicalSources) {
-        listOfSourceNodes.push_back(entry->getNode());
+        listOfSourceNodes.push_back(entry->getTopologyNodeId());
     }
 
     return listOfSourceNodes;

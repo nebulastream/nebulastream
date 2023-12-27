@@ -79,20 +79,20 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::BaseUnitTest {
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create(DefaultSourceType::create("car", "testCar"));
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        auto sourceCatalogEntry1 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
 
         auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create(DefaultSourceType::create("bike", "testBike"));
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
+        auto sourceCatalogEntry2 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceBike, logicalSourceBike, sourceNode1->getId());
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry2);
 
         auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create(DefaultSourceType::create("truck", "testTruck"));
-        Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry3 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        auto sourceCatalogEntry3 =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSourceCar, logicalSourceCar, sourceNode1->getId());
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }

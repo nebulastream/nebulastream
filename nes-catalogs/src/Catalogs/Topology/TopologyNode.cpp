@@ -93,18 +93,18 @@ std::string TopologyNode::toString() const {
     return ss.str();
 }
 
-bool TopologyNode::containAsParent(NodePtr node) {
+bool TopologyNode::containAsParent(NodePtr parentTopologyNode) {
     std::vector<NodePtr> ancestors = this->getAndFlattenAllAncestors();
-    auto found = std::find_if(ancestors.begin(), ancestors.end(), [node](const NodePtr& familyMember) {
-        return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
+    auto found = std::find_if(ancestors.begin(), ancestors.end(), [parentTopologyNode](const NodePtr& familyMember) {
+        return familyMember->as<TopologyNode>()->getId() == parentTopologyNode->as<TopologyNode>()->getId();
     });
     return found != ancestors.end();
 }
 
-bool TopologyNode::containAsChild(NodePtr node) {
+bool TopologyNode::containAsChild(NodePtr childTopologyNode) {
     std::vector<NodePtr> children = this->getAndFlattenAllChildren(false);
-    auto found = std::find_if(children.begin(), children.end(), [node](const NodePtr& familyMember) {
-        return familyMember->as<TopologyNode>()->getId() == node->as<TopologyNode>()->getId();
+    auto found = std::find_if(children.begin(), children.end(), [childTopologyNode](const NodePtr& familyMember) {
+        return familyMember->as<TopologyNode>()->getId() == childTopologyNode->as<TopologyNode>()->getId();
     });
     return found != children.end();
 }
@@ -138,16 +138,16 @@ bool TopologyNode::removeNodeProperty(const std::string& key) {
     return true;
 }
 
-void TopologyNode::addLinkProperty(const TopologyNodePtr& linkedNode, const LinkPropertyPtr& topologyLink) {
-    linkProperties.insert(std::make_pair(linkedNode->getId(), topologyLink));
+void TopologyNode::addLinkProperty(WorkerId linkedNodeId, const LinkPropertyPtr& topologyLink) {
+    linkProperties.insert(std::make_pair(linkedNodeId, topologyLink));
 }
 
-LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode) {
-    if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
-        NES_ERROR("Link property with node '{}' does not exist", linkedNode->getId());
+LinkPropertyPtr TopologyNode::getLinkProperty(WorkerId linkedNodeId) {
+    if (!linkProperties.contains(linkedNodeId)) {
+        NES_ERROR("Link property with node '{}' does not exist", linkedNodeId);
         return nullptr;
     } else {
-        return linkProperties.at(linkedNode->getId());
+        return linkProperties.at(linkedNodeId);
     }
 }
 

@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Topology/PathFinder.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -60,10 +61,6 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         // 5. update execution nodes
         return updateExecutionNodes(sharedQueryId, computedQuerySubPlans);
     } catch (std::exception& ex) {
-        //Release all locked topology nodes in case of pessimistic approach
-        if (placementAmenderMode == PlacementAmenderMode::PESSIMISTIC) {
-            unlockTopologyNodes();
-        }
         NES_ERROR("Exception occurred during bottom up placement: {}", ex.what());
         throw Exceptions::QueryPlacementException(sharedQueryId, ex.what());
     }
@@ -124,7 +121,7 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorNodePtr& log
         if (childTopologyNodes.size() == 1) {
             candidateTopologyNode = childTopologyNodes[0];
         } else {
-            candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
+            candidateTopologyNode = pathFinder->findCommonAncestor(childTopologyNodes);
         }
 
         if (!candidateTopologyNode) {

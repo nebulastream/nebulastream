@@ -124,8 +124,8 @@ TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return
 WorkerId TopologyManagerService::getNextWorkerId() { return ++topologyNodeIdCounter; }
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of future movement
-std::vector<std::pair<WorkerId, Spatial::DataTypes::Experimental::GeoLocation>>
-TopologyManagerService::getTopologyNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius) {
+std::vector<std::pair<WorkerId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+TopologyManagerService::getTopologyNodeIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation center, double radius) {
     return topology->getTopologyNodeIdsInRange(center, radius);
 }
 
@@ -133,9 +133,7 @@ WorkerId TopologyManagerService::getRootTopologyNodeId() { return topology->getR
 
 bool TopologyManagerService::removeTopologyNode(WorkerId nodeToRemove) { return topology->removeTopologyNode(nodeToRemove); }
 
-nlohmann::json TopologyManagerService::getTopologyAsJson() {
-    return topology->toJson();
-}
+nlohmann::json TopologyManagerService::getTopologyAsJson() { return topology->toJson(); }
 
 bool TopologyManagerService::addGeoLocation(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     return topology->addGeoLocation(workerId, std::move(geoLocation));
@@ -151,5 +149,13 @@ bool TopologyManagerService::removeGeoLocation(WorkerId workerId) { return topol
 std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
 TopologyManagerService::getGeoLocationForNode(WorkerId workerId) {
     return topology->getGeoLocationForNode(workerId);
+}
+
+nlohmann::json TopologyManagerService::requestNodeLocationDataAsJson(WorkerId workerId) {
+    return topology->requestNodeLocationDataAsJson(workerId);
+}
+
+nlohmann::json TopologyManagerService::requestLocationAndParentDataFromAllMobileNodes() {
+    return topology->requestLocationAndParentDataFromAllMobileNodes();
 }
 }// namespace NES

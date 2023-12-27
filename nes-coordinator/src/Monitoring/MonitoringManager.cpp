@@ -15,7 +15,6 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QueryCatalogService.hpp>
-#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Components/NesCoordinator.hpp>

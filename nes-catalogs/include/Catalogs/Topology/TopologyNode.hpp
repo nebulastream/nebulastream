@@ -139,9 +139,9 @@ class TopologyNode : public Node {
      */
     TopologyNodePtr copy();
 
-    bool containAsParent(NodePtr node) override;
+    bool containAsParent(NodePtr parentTopologyNode) override;
 
-    bool containAsChild(NodePtr node) override;
+    bool containAsChild(NodePtr childTopologyNode) override;
 
     /**
      * @brief Add a new property to the stored properties map
@@ -173,17 +173,17 @@ class TopologyNode : public Node {
 
     /**
      * @brief add a new link property to the stored properties map
-     * @param linked topology node to which the property will be associated
-     * @param value of the link property
+     * @param linkedTopologyNodeId topology node to which the property will be associated
+     * @param linkProperty the link property
      */
-    void addLinkProperty(const TopologyNodePtr& linkedNode, const LinkPropertyPtr& topologyLink);
+    void addLinkProperty(WorkerId linkedTopologyNodeId, const LinkPropertyPtr& linkProperty);
 
     /**
      * @brief get a the value of a link property
-     * @param linked topology node associated with the link property to retrieve
+     * @param linkedTopologyNodeId topology node associated with the link property to retrieve
      * @return value of the link property
      */
-    LinkPropertyPtr getLinkProperty(const TopologyNodePtr& linkedNode);
+    LinkPropertyPtr getLinkProperty(WorkerId linkedTopologyNodeId);
 
     /**
      * @brief remove a a link property from the stored map
@@ -224,7 +224,7 @@ class TopologyNode : public Node {
     /**
      * @brief A field to store a map of the id of the linked nodes and its link property
      */
-    std::map<uint64_t, LinkPropertyPtr> linkProperties;
+    std::map<WorkerId, LinkPropertyPtr> linkProperties;
 };
 }// namespace NES
 

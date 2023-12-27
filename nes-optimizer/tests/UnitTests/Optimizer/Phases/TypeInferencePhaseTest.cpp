@@ -221,8 +221,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
     LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
 
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
     sourceCatalog->addPhysicalSource("default_logical", sce);
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
@@ -254,8 +253,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
     LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
 
-    Catalogs::Source::SourceCatalogEntryPtr sce =
-        std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
     sourceCatalog->addPhysicalSource("default_logical", sce);
     auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
@@ -1467,9 +1465,8 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
                             ->addField(createField("s$input1", BasicType::FLOAT32))
                             ->addField(createField("s$input2", BasicType::UINT64));
 
-    auto udfInputSchema = Schema::create()
-                              ->addField(createField("input1", BasicType::FLOAT32))
-                              ->addField(createField("input2", BasicType::UINT64));
+    auto udfInputSchema =
+        Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource", sourceSchema);
 
@@ -1505,12 +1502,11 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
 TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto sourceSchema = Schema::create()
-                           ->addField(createField("s$input1", BasicType::FLOAT32))
-                           ->addField(createField("s$input2", BasicType::UINT64));
+                            ->addField(createField("s$input1", BasicType::FLOAT32))
+                            ->addField(createField("s$input2", BasicType::UINT64));
 
-    auto udfInputSchema = Schema::create()
-                              ->addField(createField("input1", BasicType::FLOAT32))
-                              ->addField(createField("input2", BasicType::UINT64));
+    auto udfInputSchema =
+        Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource1", sourceSchema);
     streamCatalog->addLogicalSource("logicalSource2", sourceSchema);
@@ -1558,9 +1554,8 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
                             ->addField(createField("s$input1", BasicType::FLOAT32))
                             ->addField(createField("s$input2", BasicType::UINT64));
 
-    auto udfInputSchema = Schema::create()
-                              ->addField(createField("input1", BasicType::FLOAT32))
-                              ->addField(createField("input2", BasicType::UINT64));
+    auto udfInputSchema =
+        Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource1", sourceSchema);
     streamCatalog->addLogicalSource("logicalSource2", sourceSchema);

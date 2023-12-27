@@ -35,6 +35,8 @@ class PathFinder {
   public:
     PathFinder(WorkerId rootTopologyNodeId);
 
+    virtual ~PathFinder() = default;
+
     /**
      * @brief Find the immediate common ancestor for the set of Topology nodes
      * @param topologyNodes: the set of topology nodes
@@ -47,7 +49,7 @@ class PathFinder {
      * @param topologyNodes: the set of topology nodes
      * @return the immediate common child.
      */
-    static TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
+    TopologyNodePtr findCommonChild(std::vector<TopologyNodePtr> topologyNodes);
 
     /**
      * @brief Find a node location that can be reachable from both the

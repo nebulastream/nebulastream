@@ -73,11 +73,8 @@ class LogicalSourceExpansionRuleTest : public Testing::BaseUnitTest {
         auto csvSourceType = CSVSourceType::create("default_logical", "test_stream");
         PhysicalSourcePtr physicalSource = PhysicalSource::create(csvSourceType);
         LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
-        Catalogs::Source::SourceCatalogEntryPtr sce1 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
-        Catalogs::Source::SourceCatalogEntryPtr sce2 =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
-
+        auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode1->getId());
+        auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode2->getId());
         sourceCatalog->addPhysicalSource("default_logical", sce1);
         sourceCatalog->addPhysicalSource("default_logical", sce2);
     }
@@ -98,7 +95,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1u);
@@ -132,7 +129,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 2U);
@@ -169,7 +166,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 2U);
@@ -192,7 +189,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1U);
@@ -220,7 +217,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
+    std::vector<WorkerId> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size() * 2);
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1U);

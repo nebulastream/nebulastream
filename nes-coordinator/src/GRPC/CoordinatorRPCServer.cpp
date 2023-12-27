@@ -153,12 +153,12 @@ CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerReq
             reply->set_success(false);
             return Status::CANCELLED;
         }
-        
+
         if (coordinatorHealthCheckService) {
             //remove node to health check
             coordinatorHealthCheckService->removeNodeFromHealthCheck(workerId);
         }
-        
+
         monitoringManager->removeMonitoringNode(workerId);
         NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
         reply->set_success(true);
@@ -173,11 +173,10 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
-    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
     for (const auto& physicalSourceDefinition : request->physicalsourcetypes()) {
-        bool success = sourceCatalogService->registerPhysicalSource(physicalNode,
-                                                                    physicalSourceDefinition.physicalsourcename(),
-                                                                    physicalSourceDefinition.logicalsourcename());
+        bool success = sourceCatalogService->registerPhysicalSource(physicalSourceDefinition.physicalsourcename(),
+                                                                    physicalSourceDefinition.logicalsourcename(),
+                                                                    request->workerid());
         if (!success) {
             NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource failed");
             reply->set_success(false);
@@ -194,9 +193,9 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
                                                       UnregisterPhysicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource: request ={}", request->DebugString());
 
-    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
-    bool success =
-        sourceCatalogService->unregisterPhysicalSource(physicalNode, request->physicalsourcename(), request->logicalsourcename());
+    bool success = sourceCatalogService->unregisterPhysicalSource(request->physicalsourcename(),
+                                                                  request->logicalsourcename(),
+                                                                  request->workerid());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource success");

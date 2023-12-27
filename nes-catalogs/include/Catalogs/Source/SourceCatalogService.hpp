@@ -15,14 +15,13 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
 
+#include <Identifiers.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
 
 namespace NES {
-class TopologyNode;
-using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -48,25 +47,24 @@ class SourceCatalogService {
 
     /**
      * @brief method to register a physical source
-     * @param topologyNode : the topology node
      * @param logicalSourceName: logical source name
      * @param physicalSourceName: physical source name
+     * @param topologyNodeId : the topology node id
      * @return bool indicating success
      */
-    bool registerPhysicalSource(TopologyNodePtr topologyNode,
-                                const std::string& physicalSourceName,
-                                const std::string& logicalSourceName);
+    bool
+    registerPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
 
     /**
      * @brief method to unregister a physical source
-     * @param topologyNode : the topology node
      * @param logicalSourceName: logical source name
      * @param physicalSourceName: physical source name
+     * @param topologyNodeId : the topology node id
      * @return bool indicating success
      */
-    bool unregisterPhysicalSource(TopologyNodePtr topologyNode,
-                                  const std::string& physicalSourceName,
-                                  const std::string& logicalSourceName);
+    bool unregisterPhysicalSource(const std::string& physicalSourceName,
+                                  const std::string& logicalSourceName,
+                                  WorkerId topologyNodeId);
 
     /**
      * @brief method to register a logical source
@@ -119,9 +117,8 @@ class SourceCatalogService {
 
   private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    std::mutex addRemoveLogicalSource;
-    std::mutex addRemovePhysicalSource;
+    std::mutex mutex;
 };
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 }// namespace NES
-#endif  // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_

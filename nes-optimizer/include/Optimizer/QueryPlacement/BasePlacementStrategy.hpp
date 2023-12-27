@@ -16,8 +16,9 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Configurations/Enums/PlacementAmenderMode.hpp>
+#include <Plans/Utils/PlanIdGenerator.hpp>
+#include <folly/Synchronized.h>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -28,9 +29,6 @@
 
 namespace NES {
 
-class NESExecutionPlan;
-using NESExecutionPlanPtr = std::shared_ptr<NESExecutionPlan>;
-
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
@@ -39,6 +37,14 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
+using TopologyNodeWLock = std::shared_ptr<folly::Synchronized<TopologyNodePtr>::WLockedPtr>;
+
+class PathFinder;
+using PathFinderPtr = std::shared_ptr<PathFinder>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -54,9 +60,6 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
-
-class NetworkSinkDescriptor;
-using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 
 namespace Catalogs::Source {
 class SourceCatalog;
@@ -76,7 +79,8 @@ using PlacementMatrix = std::vector<std::vector<bool>>;
 
 const std::string PINNED_WORKER_ID = "PINNED_WORKER_ID";// Property indicating the location where the operator is pinned
 const std::string PROCESSED = "PROCESSED";              // Property indicating if operator was processed for placement
-const std::string CO_LOCATED_UPSTREAM_OPERATORS = "CO_LOCATED_UPSTREAM_OPERATORS";              // Property indicating if operator was processed for placement
+const std::string CO_LOCATED_UPSTREAM_OPERATORS =
+    "CO_LOCATED_UPSTREAM_OPERATORS";// Property indicating if operator was processed for placement
 
 using ComputedSubQueryPlans = std::unordered_map<WorkerId, std::vector<QueryPlanPtr>>;
 
@@ -185,24 +189,19 @@ class BasePlacementStrategy {
      */
     bool lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes);
 
-    /**
+/*    *//**
      * @brief Perform unlocking of all topology nodes on which the lock was acquired.
      * We following an order inverse of the lock acquisition. This allows us to prevent starvation situation.
      * @return true if successful else false
-     */
-    bool unlockTopologyNodes();
+     *//*
+    bool unlockTopologyNodes();*/
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
+    PathFinderPtr pathFinder;
     PlacementAmenderMode placementAmenderMode;
-    std::vector<WorkerId> workerNodeIdsInBFS;
-    std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
-    std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
     std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
-    std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
-    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOperatorMap;
-    std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>> workerIdToPinnedOperatorMap;
 
   private:
     /**
@@ -268,6 +267,14 @@ class BasePlacementStrategy {
     //Time interval in which to retry
     static constexpr auto PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(1000);
     static constexpr auto MAX_PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(120000);
+    // Metadata
+    std::vector<WorkerId> workerNodeIdsInBFS;
+    std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
+    std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
+    std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
+    std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;
+    std::unordered_map<OperatorId, LogicalOperatorNodePtr> operatorIdToOperatorMap;
+    std::unordered_map<WorkerId, std::vector<LogicalOperatorNodePtr>> workerIdToPinnedOperatorMap;
 };
 }// namespace NES::Optimizer
 #endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

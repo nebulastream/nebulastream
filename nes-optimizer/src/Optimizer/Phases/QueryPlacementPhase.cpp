@@ -146,7 +146,7 @@ bool QueryPlacementPhase::checkIfAllArePinnedOperators(const std::set<LogicalOpe
 }
 
 void QueryPlacementPhase::pinAllSinkOperators(const std::set<LogicalOperatorNodePtr>& operators) {
-    uint64_t rootNodeId = topology->getRoot()->getId();
+    uint64_t rootNodeId = topology->getRootTopologyNodeId();
     for (const auto& operatorToCheck : operators) {
         if (!operatorToCheck->hasProperty(PINNED_WORKER_ID) && operatorToCheck->instanceOf<SinkLogicalOperatorNode>()) {
             operatorToCheck->addProperty(PINNED_WORKER_ID, rootNodeId);
@@ -157,7 +157,6 @@ void QueryPlacementPhase::pinAllSinkOperators(const std::set<LogicalOperatorNode
 BasePlacementStrategyPtr QueryPlacementPhase::getStrategy(PlacementStrategy placementStrategy) {
 
     auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
-    auto transferRate = coordinatorConfiguration->elegant.transferRate;
     auto placementAmenderMode = coordinatorConfiguration->optimizer.placementAmenderMode;
 
     switch (placementStrategy) {
@@ -173,7 +172,6 @@ BasePlacementStrategyPtr QueryPlacementPhase::getStrategy(PlacementStrategy plac
         case PlacementStrategy::ELEGANT_ENERGY:
         case PlacementStrategy::ELEGANT_BALANCED:
             return ElegantPlacementStrategy::create(plannerURL,
-                                                    transferRate,
                                                     placementStrategy,
                                                     globalExecutionPlan,
                                                     topology,

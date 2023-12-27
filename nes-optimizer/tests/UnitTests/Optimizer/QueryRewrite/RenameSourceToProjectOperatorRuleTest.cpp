@@ -65,8 +65,8 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::BaseUnitTest {
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         LogicalSourcePtr logicalSource = LogicalSource::create("x", schema);
-        Catalogs::Source::SourceCatalogEntryPtr sce =
-            std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+        auto sce =
+            Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, physicalNode->getId());
         sourceCatalog->addLogicalSource("src", schema);
         sourceCatalog->addPhysicalSource("src", sce);
     }

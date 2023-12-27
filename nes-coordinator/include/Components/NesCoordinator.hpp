@@ -83,8 +83,8 @@ using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
-class AbstractHealthCheckService;
-using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
+class CoordinatorHealthCheckService;
+using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
 
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
@@ -239,7 +239,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     NesWorkerPtr worker;
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
-    HealthCheckServicePtr healthCheckService;
+    CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogServicePtr queryCatalogService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;

@@ -139,8 +139,8 @@ class NemoPlacementTest : public Testing::BaseUnitTest {
             csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
 
             auto physicalSource = PhysicalSource::create(csvSourceType);
-            Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
-                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, nodes[i]);
+            auto sourceCatalogEntry1 =
+                Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodes[i]);
             sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
         }
     }

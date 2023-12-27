@@ -24,7 +24,6 @@ add_nes_unit_test(optimizer-unit-tests "UnitTests/Optimizer/Phases/TypeInference
         "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/PredicateReorderingRuleTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/FilterSplitUpRuleTest.cpp"
-        "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp"
         "UnitTests/Optimizer/Phases/OriginIdInferencePhaseTest.cpp"
         "UnitTests/Optimizer/Phases/MemoryLayoutSelectionPhaseTest.cpp"
         "UnitTests/Optimizer/QueryRewrite/LogicalSourceExpansionRuleTest.cpp"

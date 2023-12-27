@@ -52,15 +52,13 @@ RestServer::RestServer(std::string host,
                        GlobalQueryPlanPtr globalQueryPlan,
                        Catalogs::UDF::UDFCatalogPtr udfCatalog,
                        Runtime::BufferManagerPtr bufferManager,
-                       LocationServicePtr locationService,
                        std::optional<std::string> corsAllowedOrigin)
     : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalogService(std::move(queryCatalogService)),
       globalExecutionPlan(std::move(globalExecutionPlan)), queryService(std::move(queryService)),
       globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
       topologyManagerService(std::move(topologyManagerService)), udfCatalog(std::move(udfCatalog)),
-      locationService(std::move(locationService)), monitoringService(std::move(monitoringService)),
-      queryParsingService(std::move(queryParsingService)), bufferManager(std::move(bufferManager)),
-      corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
+      monitoringService(std::move(monitoringService)), queryParsingService(std::move(queryParsingService)),
+      bufferManager(std::move(bufferManager)), corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
 
 bool RestServer::start() {
     NES_INFO("Starting Oatpp Server on {}:{}", host, std::to_string(port));
@@ -131,7 +129,7 @@ void RestServer::run() {
                                                                                      errorHandler,
                                                                                      "/sourceCatalog");
     auto locationController =
-        REST::Controller::LocationController::create(objectMapper, locationService, "/location", errorHandler);
+        REST::Controller::LocationController::create(objectMapper, topologyManagerService, "/location", errorHandler);
     auto monitoringController = REST::Controller::MonitoringController::create(objectMapper,
                                                                                monitoringService,
                                                                                bufferManager,

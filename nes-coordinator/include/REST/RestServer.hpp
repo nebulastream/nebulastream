@@ -86,7 +86,6 @@ class RestServer {
      * @param globalQueryPlan
      * @param udfCatalog
      * @param bufferManager
-     * @param locationServicePtr
      * @param corsAllowedOrigin
      */
     RestServer(std::string host,
@@ -102,7 +101,6 @@ class RestServer {
                GlobalQueryPlanPtr globalQueryPlan,
                Catalogs::UDF::UDFCatalogPtr udfCatalog,
                Runtime::BufferManagerPtr bufferManager,
-               LocationServicePtr locationServicePtr,
                std::optional<std::string> corsAllowedOrigin);
 
     /**
@@ -134,7 +132,6 @@ class RestServer {
     SourceCatalogServicePtr sourceCatalogService;
     TopologyManagerServicePtr topologyManagerService;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
-    LocationServicePtr locationService;
     MonitoringServicePtr monitoringService;
     QueryParsingServicePtr queryParsingService;
     Runtime::BufferManagerPtr bufferManager;
